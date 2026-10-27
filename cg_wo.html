@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>도금 작업지시 순서</title>
-<meta name="description" content="도금 SSCHB1010 이 고른 소재 코일을 어떤 순서로 돌릴지 제안 — 전환 때 들어가는 더미 최소(3개월 실적), 넓은 폭 → 좁은 폭. MES 순서와 비교">
+<meta name="description" content="도금 작업지시 대상 선정 화면에 올라온 소재 코일을 어떤 순서로 돌릴지 제안 — 사양이 바뀔 때 들어가는 더미가 적게, 넓은 폭 → 좁은 폭. 화면에 올라온 순서와 비교">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610230112">
+<link rel="stylesheet" href="ui/theme.css?v=2610270032">
 <style>
 .wo-how { border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); padding: 10px 14px; margin: 0 0 12px; }
 .wo-how summary { cursor: pointer; font-weight: 700; }
@@ -74,11 +74,15 @@ table.t.cond.lgt td.num { text-align: right !important; font-variant-numeric: ta
 .lgs.ok { background: color-mix(in srgb, var(--brand-2) 16%, transparent); color: var(--brand-2); }
 .lgs.no { background: var(--sub); color: var(--muted, #667); }
 .lgs.mid { background: var(--warn-bg); color: var(--warn); }
-table.t.cond:not(.dtab):not(.lgt) td:first-child, table.t.cond:not(.dtab):not(.lgt) td:last-child { white-space: nowrap !important; }
+table.t.cond:not(.dtab):not(.lgt):not(.wbx) td:first-child, table.t.cond:not(.dtab):not(.lgt):not(.wbx) td:last-child { white-space: nowrap !important; }
+.wb-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px 20px; }
+.wb h3 { font-size: 15px; margin: 4px 0 6px; } .wb-ck { margin: 0 0 6px; line-height: 1.5; }
+table.t.cond.wb-t { margin: 4px 0; } table.t.cond.wb-t td.num { text-align: right !important; font-variant-numeric: tabular-nums; }
+.wb-cats { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; font-size: 14px; }
 </style>
 </head>
 <body>
-<header id="shell" data-page="cgwo" data-crumb="도금" data-title="작업지시 순서" data-sub="1010 이 고른 소재 코일을 어떤 순서로 돌릴지 — 제안만, MES 에는 쓰지 않음 (틀 — 자료·조건 들어오는 대로 채움)"></header>
+<header id="shell" data-page="cgwo" data-crumb="도금" data-title="작업지시 순서" data-sub="MES 작업지시 대상 선정 화면에 올라온 소재 코일을 어떤 순서로 돌릴지 제안 — 참고용, MES에는 쓰지 않음"></header>
 <main class="wrap">
   <div class="docmeta" id="wo-meta"></div>
   <div id="wo-main" style="margin-top:12px">
@@ -89,9 +93,9 @@ table.t.cond:not(.dtab):not(.lgt) td:first-child, table.t.cond:not(.dtab):not(.l
     </section>
   </div>
 </main>
-<footer class="foot"><div class="wrap"><span>원자료: MES SSCHB1010(SSCH.PF_CG_FORECAST_ORD)·지시 코일(PF_CG_ORD_DATA)·도금 코일 실적·후처리 실적 · 전환 기준: 3개월 실적 더미(잠정)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610230112"></script>
-<script src="engine/crypto.js?v=2610230112"></script>
-<script src="cg_wo.js?v=2610230112"></script>
+<footer class="foot"><div class="wrap"><span>원자료: MES 작업지시 대상 선정 화면(SSCHB1010)·작업지시 코일·도금 코일 실적·후처리 실적 · 더미 기준: 지난 1년 코일 실적</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2610270032"></script>
+<script src="engine/crypto.js?v=2610270032"></script>
+<script src="cg_wo.js?v=2610270032"></script>
 </body>
 </html>
