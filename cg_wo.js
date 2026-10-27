@@ -1,5 +1,5 @@
 /* 도금 작업지시 순서 제안: published/cg_wo_proposal.enc.json (tools/cg_wo_sequence.py)
-   라인 탭 → 요약(1010 대상 · 제안대로면 · 예상 더미 · MES 비교) → 표면사상 묶음 → 날짜별 제안 순서(하루 띠) → 편성 조건 · 더미 기준표(접힘 유지) */
+   라인 탭 → 요약(1010 대상 · 제안대로면 · 예상 더미 · MES 비교) → 표면사상 묶음 → 날짜별 제안 순서(하루 띠, 계약번호-행번 단위 — 10/28 사용자) → 현장 시계 */
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
@@ -28,14 +28,14 @@
         : '<div class="sp2 bk">후처리·도유 — 아직 모름(이 코일의 주문이 아직 연결 안 됨)</div>');
     return `<tr${dn ? ' class="hasdn"' : ''}><td class="c"><b>${x.seq}</b></td>`
       + `<td class="tm">${dn ? `<span class="bk">더미 ${tm(x.downStart, day)}</span><br>` : ''}<b>${tm(x.start, day)}</b> – ${tm(x.end, day)}</td>`
-      + `<td class="l"><b>${esc(x.raw)}</b>${x.conf ? '' : '<span class="gt gt3">미확정</span>'}<br><span class="bk">${x.con ? esc(x.con) : '주문 미연결'}</span></td>`
+      + `<td class="l">${x.con ? `<b>${esc(x.con)}</b>` : '<span class="bk">계약 미연결</span>'}${x.conf ? '' : '<span class="gt gt3">미확정</span>'}<br><span class="bk">소재 ${esc(x.raw)}</span></td>`
       + `<td class="c">${md(x.req) || '-'}</td>`
       + `<td class="l wr">${spec}</td>`
       + `<td class="num" title="톤은 추정(대상 선정 화면에 무게가 없음): 같은 두께·폭 코일의 보통 무게 × 코일 ${esc(x.cnt)}개 · 시간당 생산량 = ${esc(x.tphSrc)}"><b>${n1(x.t)}t</b> · ${n0(x.runMin)}분<br><span class="bk">추정 ${esc(x.cnt)}코일 · ${n1(x.tph)}t/h</span></td>`
       + `<td class="l chg">${(x.chg || []).map((c) => `<div>${esc(c)}</div>`).join('')}</td>`
       + `<td class="l wr">${(x.downs || []).length ? ((x.downs.length > 1 && dn) ? `<div class="wo-ds">합계 ${n1(x.exp)}분</div>` : '') + x.downs.map((d) => `<div class="wo-dl"><b>${esc(d.c)}</b> <span class="wo-dm">${n1(d.m)}분</span><div class="bk">${esc(d.b)}</div></div>`).join('') : '<span class="bk">없음</span>'}</td></tr>`;
   }
-  const HEAD = '<thead><tr><th>순서</th><th>시간 (추정)</th><th class="l">소재 코일 · 주문</th><th>생산요청일</th><th class="l">두께 × 폭 · 후처리 · 도유</th><th>톤 · 생산</th><th class="l">앞 코일과 바뀌는 것</th><th class="l">예상 더미 (분 · 근거)</th></tr></thead>';
+  const HEAD = '<thead><tr><th>순서</th><th>시간 (추정)</th><th class="l">계약번호-행번 · 소재</th><th>생산요청일</th><th class="l">두께 × 폭 · 후처리 · 도유</th><th>톤 · 생산</th><th class="l">앞 코일과 바뀌는 것</th><th class="l">예상 더미 (분 · 근거)</th></tr></thead>';
   const NC = 8;
   const mins = (s, d) => { if (!s) return 0; const y = +d.slice(0, 4), t = Date.UTC(y, +s.slice(0, 2) - 1, +s.slice(3, 5), +s.slice(6, 8), +s.slice(9, 11)), b = Date.UTC(y, +d.slice(5, 7) - 1, +d.slice(8, 10), 7, 0); return Math.max(0, Math.min(1440, (t - b) / 6e4)); };   // 하루 = 07시~다음날 07시(MES 일수 기준, 10/22 사용자)
   function strip(v, d, byS) {
@@ -192,8 +192,9 @@
       + '</div>'
       + (v.n ? `<div class="wo-cmp${gain < 0 ? ' bad' : ''}"><b>화면에 올라온 순서와 비교</b> — 같은 ${n0(v.n)}코일을 대상 선정 화면에 올라온 순서대로 돌리면 예상 더미 ${n1(v.mes)}분 (사양 바뀜 ${n0(v.mesChg)}번) → 제안이 <b>${gain >= 0 ? `${n1(gain)}분 짧음` : `${n1(-gain)}분 김`}</b> <span class="bk">(같은 더미 기준표로 계산)</span></div>` : '')
       + (blk ? `<div class="cgbs"><span class="bk">표면사상 묶음</span> ${blk}</div>` : '')
-      + '</section>' + boardCard(line)
-      + (v.n ? `<section class="card"><h2>제안 순서 <small class="bk">날짜별 · 줄마다 그 코일 앞에 생길 더미와 생산</small></h2><div class="strip-lg"><span>날짜 줄 아래 막대 = 그날 07시~다음날 07시 라인 사용:</span><span><i class="sr"></i>생산(코일)</span><span><i class="sd"></i>예상 더미</span><span>빈 칸 = 제안 대상 아닌 시간(앞 지시 작업·대기)</span></div>${table(v)}</section>` : '<section class="card"><p>대상 선정 화면에 올라온 코일이 없습니다.</p></section>');
+      + '</section>'
+      + (v.n ? `<section class="card"><h2>제안 순서 <small class="bk">날짜별 · 같은 계약번호-행번은 붙여서</small></h2><div class="strip-lg"><span>날짜 줄 아래 막대 = 그날 07시~다음날 07시 라인 사용:</span><span><i class="sr"></i>생산(코일)</span><span><i class="sd"></i>예상 더미</span><span>빈 칸 = 제안 대상 아닌 시간(앞 지시 작업·대기)</span></div>${table(v)}</section>` : '<section class="card"><p>대상 선정 화면에 올라온 코일이 없습니다.</p></section>')
+      + boardCard(line);
     $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; render(); });
     bindTabs();
     if (window.UI) UI.reveal($('wo-main'));
