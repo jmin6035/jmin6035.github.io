@@ -19,7 +19,7 @@
   try { SWAP = localStorage.getItem('cgl-cal-swap2') !== '0'; } catch (e) { /* 무시 */ }
   const MV_KEY = () => 'cgl-cal-moves|' + O.asOf;               // 옮기기 임시본(이 브라우저) — '다음 주 확정'을 눌러야 저장
   const compat = (df, f) => !!f && (f === df || String(f).split('-')[0] === df || (f === 'AZ·MAC' && (df === 'AZ' || df === 'MAC')));
-  const KD = { 확정: '작업지시', 편성: '소재 있음', 예상: '입고 예정' };   // 화면에 보이는 이름(10/28 사용자 '편성·예상이 뭐야')
+  const KD = { 확정: '지시 대상', 편성: '소재 있음', 예상: '입고 예정' };   // 화면에 보이는 이름(10/28 사용자 '편성·예상이 뭐야')
   const cellOf = (ln, d) => O.lines[ln][O.days.indexOf(d)];
   const r1 = (v) => Math.round(v * 10) / 10;
   /* 날짜 안 순서(10/28 재질 규칙 반영): 작업지시는 MES 순서 그대로, 나머지는 재질(등급)끼리 묶고 → 넓은 폭 → 좁은 폭, 같은 폭은 얇은 것 먼저.
@@ -242,7 +242,7 @@
   function check(it, ln, tl, td) {                           // 옮길 수 있나 + 안 되면 가장 가까운 가능한 날(강종·소재·라인·작업 규칙 모두)
     const c = cellOf(tl, td), why = [];
     if (c.cap < 1) why.push('라인 정지');
-    else if (c.cap - (c.conf || 0) < 0.5) why.push('이 날은 MES 작업지시로 이미 꽉 참');
+    else if (c.cap - (c.conf || 0) < 0.5) why.push('이 날은 작업지시 대상 코일로 이미 꽉 참');
     else if (!compat(c.fam, it.fam)) why.push(`${c.fam} 가동일(${it.fam} 주문은 M/C 없이 불가)`);
     if (it.kind === '예상' && it.avail && it.avail > td) why.push(`소재 투입 ${md(it.avail)}부터`);
     if (!why.length) { const r = ruleOk(it, tl, td); if (r) why.push(`작업 규칙 — ${r}`); }
@@ -303,15 +303,26 @@
 
   function kpis() {
     const S = O.summary, tot = (k) => LINES.reduce((s, l) => s + (S[l][k] || 0), 0);
-    const win = O.risk.filter((r) => !r.od), mis = LINES.filter((l) => (S[l].mis || []).length), fl = mis.reduce((s, l) => s + S[l].mis.length, 0);
-    const misTxt = mis.map((l) => { const D = S[l].mis, c0 = O.lines[l][O.days.indexOf(D[0])], ut = (c0.flag || '').match(/\(([^)]*까지)\)/); return `${l} ${D.map(md).join('·')}: 계획은 ${c0.event || c0.fam}, 현장은 ${(c0.fieldFam || []).join('·')} 작업지시${ut ? ' ' + ut[1] : ''} → 강종 교체가 계획보다 늦음`; }).join(' · ');
+    const win = O.risk.filter((r) => !r.od);
+    // 재계획 강종 vs 현장: ① 작업지시 대상 코일(예상 시각)이 재계획 강종과 다른 날 ② MES 도금생산예정일에서 그날 가장 많은 강종이 재계획과 다른 날
+    const dset = new Set(), parts = [];
+    LINES.forEach((l) => {
+      const A = S[l].mis || [], B = S[l].mesMis || [];
+      [...A, ...B.map((x) => x.d)].forEach((d) => dset.add(l + d));
+      const t = [];
+      if (A.length) { const c0 = O.lines[l][O.days.indexOf(A[0])], ut = (c0.flag || '').match(/\(([^)]*까지)\)/); t.push(`재계획 ${A.map(md).join('·')} ${c0.event || c0.fam} · 작업지시 대상은 ${(c0.fieldFam || []).join('·')}${ut ? ' ' + ut[1] : ''}`); }
+      const B2 = B.filter((x) => !A.includes(x.d));
+      if (B2.length) { const m = {}; B2.forEach((x) => { const k = `${x.plan}→${x.mes}`; (m[k] = m[k] || []).push(x); }); Object.entries(m).forEach(([, X]) => t.push(`${md(X[0].d)}${X.length > 1 ? '~' + md(X[X.length - 1].d) : ''} 재계획 ${X[0].plan} · MES 생산예정 ${X[0].mes} ${n0(X.reduce((s, x) => s + x.t, 0))}t`)); }
+      if (t.length) parts.push(`<b>${l}</b> ${t.join(' · ')}`);
+    });
+    const fl = dset.size, misTxt = parts.join('<br>');
     const jgMin = Math.min(...O.jg.map((j) => j.cumSched - j.cumPlan));
     const k = (l, v, b, tone) => `<div class="kpi${tone ? ' tone-' + tone : ''}"><div class="l">${l}</div><div class="v">${v}</div><div class="b">${b}</div></div>`;
     return '<div class="kpis" style="margin:0 0 14px">'
-      + k('2주 라인 능력', `${n0(tot('cap'))}<small>t</small>`, `작업지시 ${n0(tot('conf'))} · 소재 있음 ${n0(tot('plan'))} · 입고 예정 ${n0(tot('fcst'))} · 빈칸 ${n0(tot('gap'))}`, tot('gap') > 0 ? 'warn' : 'brand')
+      + k('2주 라인 능력', `${n0(tot('cap'))}<small>t</small>`, `지시 대상 ${n0(tot('conf'))} · 소재 있음 ${n0(tot('plan'))} · 입고 예정 ${n0(tot('fcst'))} · 빈칸 ${n0(tot('gap'))}`, tot('gap') > 0 ? 'warn' : 'brand')
       + k('이미 늦은 주문', `${n0(O.odT)}<small>t · ${O.nOd}건</small>`, `필요 생산일이 이미 지났는데 아직 생산 전 — 2주 안에 먼저 넣음${(O.shipMiss || []).length ? ` · 그중 입항일 지난 수출 ${O.shipMiss.length}건(입항 지남, 배선 변경 확인)` : ''}`, O.odT > 0 ? 'bad' : 'good')
       + k('2주 안에 못 넣는 주문', `${win.length}<small>건 · ${n0(win.reduce((s, r) => s + r.t, 0))}t</small>`, '이번 2주에 필요한데 칸이 없음(소재 없음·능력 부족)', win.length ? 'warn' : 'good')
-      + k('강종 날짜 · 계획과 현장 다름', `${fl}<small>일</small>`, fl ? misTxt : '재계획 강종과 현장 작업지시가 맞음', fl ? 'bad' : 'good')
+      + k('강종 날짜 · 재계획과 현장 다름', `${fl}<small>일</small>`, fl ? misTxt : '재계획 강종과 작업지시 대상·MES 생산예정이 맞음', fl ? 'bad' : 'good')
       + k('자가재(컬러 투입) 진도', jgMin >= 0 ? '<span class="gv">계획 이상</span>' : `<span class="bv">${n0(-jgMin)}t 부족</span>`, '재계획 자가재 누계 대비 캘린더 누계(가장 모자란 날)', jgMin >= 0 ? 'good' : 'bad')
       + '</div>';
   }
@@ -347,7 +358,7 @@
   function calCard() {
     const nw = nextWeek();
     return '<section class="card"><h2>라인별 2주 <small>칸을 누르면 그날 작업 순서</small></h2>'
-      + '<div class="lg"><span><i style="background:var(--c-conf)"></i>작업지시 = MES에 지시됨</span><span><i style="background:var(--c-plan)"></i>소재 있음 = 소재 들어온 주문</span>'
+      + '<div class="lg"><span><i style="background:var(--c-conf)"></i>지시 대상 = MES 1010 작업지시 대상 코일(제안 순서·예상 시각)</span><span><i style="background:var(--c-plan)"></i>소재 있음 = 소재 들어온 주문</span>'
       + '<span><i style="background:var(--c-fcst)"></i>입고 예정 = 소재 들어올 주문(입고 + 5일부터)</span><span><i style="background:var(--c-gap)"></i>빈칸</span>'
       + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>노랑 = M/C(강종 교체)</span><span><i style="background:var(--bad)"></i>빨간 줄 = 확인 필요(현장 강종 ≠ 계획 · 능력 초과 · 재질 순서)</span>'
       + `<span>능력·강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순(수출 = 입항 − 2일 · 내수 = 납기 − 1일${O.expNeed && O.expNeed.due ? ` · 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 1일` : ''})</span></div>`
@@ -426,7 +437,7 @@
         + `<td class="sz">${i.thk != null ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw"><b>${esc(i.grp || '')}</b></td>`
         + `<td class="num"><b>${n1(i.tt)}</b>${i.extra ? `<div class="sub xs">${KD[i.xk]} ${n1(i.extra)}</div>` : ''}${conTxt(i, ln, d)}</td>`
         + `<td class="dt2">${[i.arr ? `입항 <b>${md(i.arr)}</b>` : i.due ? `납기 ${md(i.due)}` : '', need].filter(Boolean).join(' · ')}${tags ? `<div>${tags}</div>` : ''}</td>`
-        + `<td class="act">${i.kind === '확정' ? '<span class="sub">MES 지시됨</span>' : `<button type="button" class="lnk mvb" data-k="${k}">옮기기·톤</button><button type="button" class="lnk rmb" data-k="${k}" title="이 날에서 빼서 아래 「칸에 못 들어간 주문」 목록(노란 줄)으로">빼기</button>`}</td></tr>`
+        + `<td class="act">${i.kind === '확정' ? '<span class="sub">1010 대상 · 순서 고정</span>' : `<button type="button" class="lnk mvb" data-k="${k}">옮기기·톤</button><button type="button" class="lnk rmb" data-k="${k}" title="이 날에서 빼서 아래 「칸에 못 들어간 주문」 목록(노란 줄)으로">빼기</button>`}</td></tr>`
         + (i.kind === '확정' ? '' : `<tr class="mvr" id="mvr-${k}" hidden><td></td><td colspan="7"><div class="mvw"><b>${esc(i.con)}</b><input type="number" class="mvt" value="${n1(i.t)}" min="0.1" max="${i.t}" step="0.1" aria-label="옮길 톤">t 를`
           + `<select class="mv" data-k="${k}" aria-label="옮길 날짜"><option value="">날짜 고르기…</option>${moveOpts(i, ln, d)}</select>(으)로 <button type="button" class="go2" data-k="${k}" disabled>옮기기</button></div><div class="pv" id="pv-${k}"></div>`
           + `<div class="mvw" style="margin-top:8px"><b>이 날 톤</b><input type="number" class="mvs" data-k="${k}" value="${+(+i.t).toFixed(1)}" min="0" max="${maxT(i, ln)}" step="0.1" aria-label="이 날 톤">t 로 <button type="button" class="go3" data-k="${k}" disabled>톤 바꾸기</button><span class="sub">최대 ${n0(maxT(i, ln))}t(이 계약 남은 양)</span></div><div class="pv" id="pv3-${k}"></div></td></tr>`);
@@ -446,13 +457,13 @@
     let body = c.flag ? `<div class="fgl">⚠ ${esc(c.flag)}${c.flag.startsWith('재질') ? '' : ' — '}${c.flag.startsWith('재질') ? '' : c.flag.startsWith('계획') ? '현장 순서가 우선. M/C·강종 날짜를 재계획에 반영할지 확인' : c.flag.startsWith('옮긴') || c.flag.startsWith('확정본에') ? 'M/C 없이는 이날 생산 불가 — 다른 날로 옮기기' : '능력보다 많음 — 일부를 다른 날로 옮기기'}</div>` : '';
     if (c.why) body += `<div class="fgl" style="background:var(--warn-bg);color:var(--warn)">빈칸 ${n0(c.gap)}t — ${esc(c.why)}</div>`;
     body += '<div class="how"><div><b>이 날에 들어온 기준</b> 필요 생산일(수출 = 입항 − 2일, 내수 = 납기 − 1일) 빠른 주문부터, 그날 라인·강종이 맞는 것을 능력만큼 · 소재 있는 주문 먼저, 입고 예정 주문은 입고 + 5일부터</div>'
-      + '<div><b>순서</b> 작업지시 = MES 순서 그대로 · 나머지 = 현장 규칙(같은 재질끼리 묶고 → 넓은 폭 → 좁은 폭, 같은 폭이면 얇은 것 먼저, 재질 차례는 바로 못 잇는 짝이 붙지 않게)</div>'
+      + '<div><b>순서</b> 지시 대상 = 「작업지시 순서」 화면 제안 순서·예상 시각 그대로 · 나머지 = 현장 규칙(같은 재질끼리 묶고 → 넓은 폭 → 좁은 폭, 같은 폭이면 얇은 것 먼저, 재질 차례는 바로 못 잇는 짝이 붙지 않게)</div>'
       + '<div><b>옮기기</b> 24시간 연속 가동 = 라인마다 한 줄 순서. 고른 날 맨 앞에 끼워 넣고 뒤 주문은 순서대로 밀림(능력 초과 없음) · 불가 = 강종(M/C)·소재 입고일·라인 정지·작업 규칙(그날 주문과 두께 차 0.3mm·두께비 1.3배·후처리 같은 층·재질 온도 AZ CQ↔EDDQ·Gr.E, PosMAC Gr.C↔DQ계·CQ↔DDQ) → 모두 지키는 가장 가까운 날 제시 · 코일 단위 최종 확인은 작업지시 순서 · 「다음 주 확정」을 눌러야 저장</div></div>';
     body += c.items.length ? `<table class="it cmp"><colgroup><col style="width:10%"><col style="width:19%"><col style="width:17%"><col style="width:9%"><col style="width:6%"><col style="width:11%"><col style="width:17%"><col style="width:11%"></colgroup>`
       + `<thead><tr><th>상태 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 재질 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">이 날 톤 · 계약 전체</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
       : `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
-    dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>${famCh(c.fam)}${c.event ? ' · ' + esc(c.event) : ''}</span><span>능력 <b>${n0(c.cap)}t</b> = ${[['작업지시', c.conf], ['소재 있음', c.plan], ['입고 예정', c.fcst], ['빈칸', c.gap]].filter(([, v]) => v >= 0.5).map(([k, v]) => `${k} ${n0(v)}`).join(' + ')}</span>`
-      + `${pg ? `<span>재계획: ${pg}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
+    dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>${famCh(c.fam)}${c.event ? ' · ' + esc(c.event) : ''}</span><span>능력 <b>${n0(c.cap)}t</b> = ${[['지시 대상', c.conf], ['소재 있음', c.plan], ['입고 예정', c.fcst], ['빈칸', c.gap]].filter(([, v]) => v >= 0.5).map(([k, v]) => `${k} ${n0(v)}`).join(' + ')}</span>`
+      + `${pg ? `<span>재계획: ${pg}</span>` : ''}${Object.keys(c.mesFam || {}).length ? `<span title="MES 도금생산예정일(1010 대상 선정 원본)에 이 날로 잡힌 소재">MES 생산예정: ${Object.entries(c.mesFam).map(([f, t]) => `${f} ${n0(t)}`).join(' · ')}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
     $('cc-x').onclick = () => dlg.close();
     $('cc-csv').onclick = () => csv(c.items, `도금_${ln}_${d}.csv`);
     dlg.querySelectorAll('button.mvb').forEach((b) => b.onclick = () => { const r = $('mvr-' + b.dataset.k); r.hidden = !r.hidden; });
