@@ -359,16 +359,16 @@
       + '<div class="lg"><span><i style="background:var(--c-conf)"></i>지시 대상 = MES 1010 작업지시 대상 코일(제안 순서·예상 시각)</span><span><i style="background:var(--c-plan)"></i>소재 있음 = 소재 들어온 주문</span>'
       + '<span><i style="background:var(--c-fcst)"></i>입고 예정 = 소재 들어올 주문(입고 + 5일부터)</span><span><i style="background:var(--c-gap)"></i>빈칸</span>'
       + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>노랑 = M/C(강종 교체)</span><span><i style="background:var(--bad)"></i>빨간 줄 = 확인 필요(현장 강종 ≠ 계획 · 능력 초과 · 재질 순서)</span>'
-      + `<span>능력·강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순(수출 = 입항 − 2일 · 내수 = 납기 − 1일${O.expNeed && O.expNeed.due ? ` · 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 1일` : ''})</span></div>`
+      + `<span>능력 = 제원치 · 강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순(수출 = 입항 − 2일 · 내수 = 납기 − 1일${O.expNeed && O.expNeed.due ? ` · 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 1일` : ''})</span></div>`
       + grpLine()
       + moveBar()
       + `<div class="wk">${weekTable(O.days.slice(0, 7), nw)}</div><div class="wk">${weekTable(O.days.slice(7, 14), nw)}</div></section>`;
   }
-  function grpLine() {                                       // 하루 생산량은 가동 캘린더(최신 재계획)와 같고, 그룹 구성만 실제 주문 기준
+  function grpLine() {                                       // 하루 능력 = 제원치(주문진도 2주 생산량과 같음), 강종 = 가동 캘린더(최신 재계획), 그룹 구성은 실제 주문
     const P = {}, C = {};
     LINES.forEach((l) => O.lines[l].forEach((c) => { Object.entries(c.planGrp || {}).forEach(([g, v]) => { P[g] = (P[g] || 0) + v; }); c.items.forEach((i) => { const g = i.grp || '?'; C[g] = (C[g] || 0) + i.t; }); }));
     const G = [...new Set([...Object.keys(P), ...Object.keys(C)])].sort((a, b) => (P[b] || 0) - (P[a] || 0));
-    return `<p class="msg" style="margin:0 0 10px">하루 생산량·강종 = 가동 캘린더(최신 재계획)와 같음 · 그룹 구성은 실제 주문·소재로 채움 — <b>2주 그룹별 재계획 → 실제 주문</b>: ${G.map((g) => { const d = (C[g] || 0) - (P[g] || 0); return `${esc(g)} ${n0(P[g] || 0)} → <b${Math.abs(d) > 500 ? ` style="color:${d < 0 ? 'var(--bad)' : 'var(--brand-2)'}"` : ''}>${n0(C[g] || 0)}</b>`; }).join(' · ')}</p>`;
+    return `<p class="msg" style="margin:0 0 10px">하루 능력 = 제원치(주문진도 「2주 생산량」과 같은 값) · 강종 = 가동 캘린더(최신 재계획) · 그룹 구성은 실제 주문·소재로 채움 — <b>2주 그룹별 재계획 → 실제 주문</b>: ${G.map((g) => { const d = (C[g] || 0) - (P[g] || 0); return `${esc(g)} ${n0(P[g] || 0)} → <b${Math.abs(d) > 500 ? ` style="color:${d < 0 ? 'var(--bad)' : 'var(--brand-2)'}"` : ''}>${n0(C[g] || 0)}</b>`; }).join(' · ')}</p>`;
   }
   function opText(m) {
     const ln2 = (l) => (l ? ` ${l}` : '');
