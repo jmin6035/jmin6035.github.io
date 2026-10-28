@@ -6,7 +6,7 @@
 <title>도금 업무 캘린더</title>
 <meta name="description" content="도금 수주 업무 달력 — 날짜·오전/오후별 할 일, 누르면 왜·순서·보는 곳·기준·결과물">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610281005">
+<link rel="stylesheet" href="ui/theme.css?v=2610281012">
 <style>
 main.wrap { max-width: none; }
 :root { --k-plan: #dce6f2; --k-plan-i: #1b3f5f; --k-mat: #fce4cc; --k-mat-i: #8a4b08; --k-prod: #ddf0df; --k-prod-i: #1e6b2e; --k-due: #f9dcdc; --k-due-i: #9b1c1c; --k-rep: #eceff3; --k-rep-i: #374151; --k-fix: #2e7d32; --k-fix-i: #fff; }
@@ -27,7 +27,7 @@ main.wrap { max-width: none; }
 .nav b { font-size: 20px; min-width: 130px; text-align: center; }
 .nav button { font: inherit; border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 8px; padding: 4px 12px; cursor: pointer; }
 .cal { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) 64px 64px; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
-.cal > div { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 6px; min-height: 120px; background: var(--surface); }
+.cal > div { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 8px; min-height: 100px; background: var(--surface); }
 .cal > .hd { min-height: 0; text-align: center; font-weight: 800; padding: 8px 4px; background: var(--brand); color: #fff; white-space: nowrap; }
 .cal > .hd.we { background: var(--ink-3); }
 .cal > .we { background: var(--sub); }
@@ -35,7 +35,7 @@ main.wrap { max-width: none; }
 .cal > .on { box-shadow: inset 0 0 0 2px var(--brand-2); }
 .dn { font-weight: 800; font-size: 15px; margin: 0 0 6px; }
 .dn.sun { color: var(--bad); }
-.hf { font-size: 12.5px; font-weight: 700; color: var(--ink-3); margin: 6px 0 3px; letter-spacing: .04em; }
+.hf { font-size: 13.5px; font-weight: 700; color: var(--ink-2); margin: 6px 0 3px; letter-spacing: .04em; }
 .adh { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .adh .ch { width: auto; margin: 0; }
 .note { font-size: 13.5px; color: var(--ink-2); margin: 10px 0 0; }
@@ -69,8 +69,8 @@ dialog.tk::backdrop { background: rgba(15, 23, 32, .45); }
   <dialog class="tk" id="tk-dlg"></dialog>
 </main>
 <footer class="foot"><div class="wrap"><span>원본: 도금 수주 업무 카드(엑셀 「도금 수주 업무 정리」와 같음)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610281005"></script>
-<script src="engine/crypto.js?v=2610281005"></script>
-<script src="cg_tasks.js?v=2610281005"></script>
+<script src="ui/shell.js?v=2610281012"></script>
+<script src="engine/crypto.js?v=2610281012"></script>
+<script src="cg_tasks.js?v=2610281012"></script>
 </body>
 </html>

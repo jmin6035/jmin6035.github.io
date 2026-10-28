@@ -228,7 +228,7 @@
   function calCard() {
     const nw = nextWeek();
     return '<section class="card"><h2>라인별 2주 <small>칸을 누르면 그날 작업 순서</small></h2>'
-      + '<div class="lg"><span><i style="background:var(--c-conf)"></i>확정 = 현장 작업지시(1010)</span><span><i style="background:var(--c-plan)"></i>편성 = 소재 있는 주문</span>'
+      + '<div class="lg"><span><i style="background:var(--c-conf)"></i>확정 = 현장 작업지시(MES)</span><span><i style="background:var(--c-plan)"></i>편성 = 소재 있는 주문</span>'
       + '<span><i style="background:var(--c-fcst)"></i>예상 = 입고 예정 소재(입고 + 5일)</span><span><i style="background:var(--c-gap)"></i>빈칸</span>'
       + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>노랑 = M/C(강종 교체)</span><span><i style="background:var(--bad)"></i>빨간 줄 = 계획≠현장</span>'
       + `<span>능력·강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순(수출 = 입항 − 4일${O.expNeed && O.expNeed.due ? `, 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 3일` : ''})</span></div>`

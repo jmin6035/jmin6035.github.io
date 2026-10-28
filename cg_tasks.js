@@ -31,7 +31,6 @@
     return out.sort((a, b) => (a.cat === '확정' ? -1 : 0) - (b.cat === '확정' ? -1 : 0) || (a.when[0] === 'M' ? -1 : 0) - (b.when[0] === 'M' ? -1 : 0));
   }
   const chip = (t, big) => `<button type="button" class="ch k-${esc(t.cat)}${t.when[0] === 'M' || big ? ' b' : ''}" data-id="${esc(t.id)}">${esc(t.cal || t.name)}</button>`;
-  const daily = (h) => { const L = O.tasks.filter((t) => t.when[0] === 'D' && t.when[1] === h); return `<button type="button" class="ch dy" data-id="${L[0].id}">매일 · ${h === 'am' ? '실적·순서·납기 점검' : '소재 연결·내일 순서 확정'}</button>`; };
   function monthMap(y, m) {
     const mon = {};
     O.tasks.filter((t) => t.when[0] === 'M').forEach((t) => bizDays(y, m, t.when[1]).forEach((d) => { (mon[`${d.getDate()}|${t.when[2]}`] = mon[`${d.getDate()}|${t.when[2]}`] || []).push(t); }));
@@ -54,15 +53,16 @@
       }
       const inm = d.getMonth() === M, we = wd(d) > 4;
       let body = '';
-      if (inm && !we) body = ['am', 'pm'].map((h) => `<div class="hf">${HALF[h]}</div>${itemsOf(d, h, mon).map((t) => chip(t)).join('')}${daily(h)}`).join('');
+      if (inm && !we) body = ['am', 'pm'].map((h) => { const L = itemsOf(d, h, mon); return L.length ? `<div class="hf">${HALF[h]}</div>${L.map((t) => chip(t)).join('')}` : ''; }).join('');   // 매일 할 일은 칸마다 반복하지 않고 아래 한 줄로
       cells += `<div class="${!inm ? 'out' : we ? 'we' : ''}${inm && iso(d) === today ? ' on' : ''}"><div class="dn${wd(d) === 6 ? ' sun' : ''}">${inm ? d.getDate() : ''}</div>${body}</div>`;
     }
     const lg = CAT.map(([k, n]) => `<span class="ch k-${k}" style="width:auto;margin:0;cursor:default">${n}</span>`).join('');
     const adh = O.tasks.filter((t) => t.when[0] === 'C').map((t) => chip(t)).join('');
     return `<section class="card"><div class="nav"><button type="button" id="tk-prev" aria-label="이전 달">‹</button><b>${Y}년 ${M + 1}월</b><button type="button" id="tk-next" aria-label="다음 달">›</button><button type="button" id="tk-now">이번 달</button></div>`
       + `<div class="lg">${lg}</div><div class="cal">${cells}</div>`
+      + `<div class="adh"><span class="hf" style="margin:6px 4px 0 0">매일</span>${O.tasks.filter((t) => t.when[0] === 'D').map((t) => `<button type="button" class="ch k-${esc(t.cat)}" data-id="${t.id}" style="width:auto;margin:0">${HALF[t.when[1]]} · ${esc(t.name)}</button>`).join('')}</div>`
       + `<div class="adh"><span class="hf" style="margin:6px 4px 0 0">수시</span>${adh}</div>`
-      + '<p class="note">굵은 글씨 = 월 1회 · 보통 = 매주 · 점선 = 매일 · 날짜가 주말이면 다음 영업일(공휴일 미반영)</p></section>';
+      + '<p class="note">굵은 글씨 = 월 1회 · 보통 = 매주 · 날짜가 주말이면 다음 영업일(공휴일 미반영)</p></section>';
   }
   function linkify(s) {                                                    // '포털: 주문진도 · 실적' · '포털 [주문진도]' → 해당 화면 링크
     const L = O.links || {};
