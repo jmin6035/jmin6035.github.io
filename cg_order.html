@@ -6,30 +6,70 @@
 <title>도금 주문진도</title>
 <meta name="description" content="도금 계약-행번별 주문서 전체 흐름 — F/H 발주·포스코 진행·입고·생산예정·생산, 필요 입고일 대비 여유와 앞당김 대상">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610280436">
+<link rel="stylesheet" href="ui/theme.css?v=2610280509">
 <style>
 main.wrap { max-width: none; }
-.od-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 0 0 12px; }
-.od-kpi button { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; cursor: pointer; font: inherit; color: inherit; }
+.od-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; margin: 0 0 14px; }
+.od-kpi button { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 14px; cursor: pointer; font: inherit; color: inherit; }
 .od-kpi button[aria-pressed="true"] { border-color: var(--brand-2); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-2) 30%, transparent); }
-.od-kpi .l { font-size: 13px; color: var(--ink-2); } .od-kpi .v { font-size: 22px; font-weight: 800; } .od-kpi .bad .v, .od-kpi .v.bad { color: var(--bad); } .od-kpi .v.warn { color: var(--warn); }
-.od-flt { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; font-size: 14px; }
-.od-flt input, .od-flt select { font: inherit; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: inherit; }
-table.t.od { font-size: 14px; table-layout: fixed; width: 100%; min-width: 1180px; }
-table.t.od th { padding: 9px 8px; font-size: 13.5px; text-align: left !important; }
-table.t.od td { padding: 8px; vertical-align: top !important; line-height: 1.45; white-space: normal !important; text-align: left !important; }
+.od-kpi .l { font-size: 14px; color: var(--ink-2); } .od-kpi .v { font-size: 24px; font-weight: 800; } .od-kpi .v.bad { color: var(--bad); } .od-kpi .v.warn { color: var(--warn); }
+.od-note { font-size: 14px; color: var(--ink-2); margin: 0 0 10px; line-height: 1.6; }
+.od-wait { font-size: 14px; background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; }
+.od-flt { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 14px; font-size: 15px; }
+.od-flt .lb { font-weight: 700; }
+.od-flt input, .od-flt select { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: inherit; }
+.od-flt input { min-width: 260px; flex: 1 1 260px; max-width: 420px; }
+.od-flt .cnt { color: var(--ink-2); white-space: nowrap; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; border: 0; background: var(--surface); color: inherit; padding: 6px 14px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--brand-2); color: #fff; font-weight: 700; }
+button.lnk { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+.og-sum { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.og-chip { display: inline-block; padding: 6px 12px; border: 1px solid var(--line); border-radius: 18px; font-size: 14.5px; color: inherit; text-decoration: none; white-space: nowrap; }
+.og-chip .bad, .gs.bad { color: var(--bad); } .og-chip .warn, .gs.warn { color: var(--warn); }
+.og { border: 1px solid var(--line); border-radius: 12px; margin: 0 0 18px; overflow: hidden; scroll-margin-top: 70px; }
+.og-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; padding: 12px 16px; background: var(--tint-2); border-bottom: 1px solid var(--line); }
+.og-h h2 { margin: 0; font-size: 19px; }
+.og-s { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 15px; }
+.gs { white-space: nowrap; } .gs.est { color: var(--ink-2); }
+.og-b { padding: 6px 10px 10px; }
+details.sg { border-bottom: 1px solid var(--line); }
+details.sg:last-child { border-bottom: 0; }
+details.sg > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; padding: 10px 8px; cursor: pointer; font-size: 15px; list-style: none; }
+details.sg > summary::-webkit-details-marker { display: none; }
+details.sg > summary::before { content: '▸'; color: var(--ink-2); width: 12px; }
+details.sg[open] > summary::before { content: '▾'; }
+details.sg > summary:hover { background: var(--sub); }
+.sn { font-weight: 800; font-size: 16px; min-width: 180px; }
+.ss { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+table.t.od { font-size: 14.5px; table-layout: fixed; width: 100%; min-width: 1240px; margin: 0 0 8px; }
+table.t.od th { padding: 9px 10px; font-size: 14px; text-align: left !important; white-space: nowrap; }
+table.t.od th.num { text-align: right !important; }
+table.t.od td { padding: 10px; vertical-align: top !important; line-height: 1.55; white-space: normal !important; text-align: left !important; word-break: keep-all; overflow-wrap: anywhere; }
 table.t.od td.num { text-align: right !important; font-variant-numeric: tabular-nums; }
-table.t.od .bk { font-size: 12px; color: var(--ink-3); }
-.st { display: inline-block; border-radius: 10px; padding: 1px 8px; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+table.t.od td.num b, table.t.od td.num .sub, table.t.od td.num .rem, table.t.od td.num div { white-space: nowrap; }
+table.t.od td.nw { white-space: nowrap !important; }
+.con { font-weight: 800; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sub { font-size: 13.5px; color: var(--ink-2); }
+.sz { font-weight: 700; font-size: 15px; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.ch { display: inline-block; border-radius: 6px; padding: 1px 8px; font-size: 14px; font-weight: 700; background: var(--sub); color: var(--ink); white-space: nowrap; }
+.ch small { font-size: 12.5px; font-weight: 600; opacity: .8; }
+.ch.exp { background: var(--tint-2); color: var(--brand-2); } .ch.dom { background: var(--sub); }
+.ch.fam-AL { background: #e6f0fb; color: #1d5a96; } .ch.fam-AZ, .ch.fam-AZMAC { background: #eef6e8; color: #3d6b1f; } .ch.fam-MAC { background: #f3ecfb; color: #5b2f8f; }
+.rem { color: var(--warn); font-weight: 700; }
+.st { display: inline-block; border-radius: 10px; padding: 2px 9px; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
 .st.hurry { background: var(--warn-bg); color: var(--warn); } .st.late { background: var(--bad-bg); color: var(--bad); } .st.ok { background: var(--good-bg); color: var(--good); } .st.mid { background: var(--tint-2); color: var(--brand-2); } .st.na { background: var(--sub); color: var(--ink-2); }
-.stg { display: inline-block; background: var(--tint-2); border-radius: 5px; padding: 0 6px; margin: 0 4px 3px 0; font-size: 12.5px; white-space: nowrap; }
+.stg { display: inline-block; background: var(--tint-2); border-radius: 5px; padding: 1px 7px; margin: 0 4px 4px 0; font-size: 13.5px; white-space: nowrap; }
 .stg.cur { background: var(--warn-bg); color: var(--warn); font-weight: 700; }
-.sl.neg { color: var(--bad); font-weight: 700; } .sl.pos { color: var(--good); }
-.od-note { font-size: 13px; color: var(--ink-2); margin: 0 0 10px; }
+.sl { white-space: nowrap; } .sl.neg { color: var(--bad); font-weight: 700; } .sl.pos { color: var(--good); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ch.fam-AL { background: #1d3550; color: #9cc6f0; } :root:not([data-theme="light"]) .ch.fam-AZ, :root:not([data-theme="light"]) .ch.fam-AZMAC { background: #23381a; color: #b5dc95; } :root:not([data-theme="light"]) .ch.fam-MAC { background: #34244a; color: #d2b6f2; } }
+:root[data-theme="dark"] .ch.fam-AL { background: #1d3550; color: #9cc6f0; } :root[data-theme="dark"] .ch.fam-AZ, :root[data-theme="dark"] .ch.fam-AZMAC { background: #23381a; color: #b5dc95; } :root[data-theme="dark"] .ch.fam-MAC { background: #34244a; color: #d2b6f2; }
 </style>
 </head>
 <body>
-<header id="shell" data-page="cgorder" data-crumb="도금" data-title="주문진도" data-sub="계약-행번별 주문서 전체 흐름 — F/H 발주 · 포스코 진행 · 입고 · 생산예정 · 생산 · 필요 입고일 대비 여유"></header>
+<header id="shell" data-page="cgorder" data-crumb="도금" data-title="주문진도" data-sub="판매그룹 → 목적지·고객사·담당자별 주문서 흐름 — F/H 발주 · 포스코 진행 · 입고 · 생산 · 필요 입고일 대비 여유"></header>
 <main class="wrap">
   <div class="docmeta" id="od-meta"></div>
   <div id="od-main" style="margin-top:12px">
@@ -41,8 +81,8 @@ table.t.od .bk { font-size: 12px; color: var(--ink-3); }
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>원자료: MES 소재 발주·입고·주문진행(포스코 진행)·도금생산예정일·작업지시·코일 실적·주문 상세</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610280436"></script>
-<script src="engine/crypto.js?v=2610280436"></script>
-<script src="cg_order.js?v=2610280436"></script>
+<script src="ui/shell.js?v=2610280509"></script>
+<script src="engine/crypto.js?v=2610280509"></script>
+<script src="cg_order.js?v=2610280509"></script>
 </body>
 </html>
