@@ -159,7 +159,7 @@
       const h = hard(c.line || '', seq[k - 1], seq[k], c.fam);
       if (h.startsWith('재질') && !c.flag) {
         const gre = [seq[k - 1].grade, seq[k].grade].includes('GRE');
-        c.flag = `${h} — 사이에 ${gre ? '극저(DQ·DDQ) 1개' : 'DQ·DDQ'} 필요(그날 없음) · 그 날로 옮기거나 극저 주문 넣기`; c.flagS = h.replace(' 바로 못 이음', ' 사이 극저 필요');
+        c.flag = `${h} — 사이에 ${gre ? '극저(ULC, 극저탄소강: DQ·DDQ) 1개' : 'DQ·DDQ'} 필요(그날 없음) · 그 날로 옮기거나 극저 주문 넣기`; c.flagS = h.replace(' 바로 못 이음', ' 사이 극저(ULC) 필요');
         break;
       }
     }
