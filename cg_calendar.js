@@ -157,6 +157,7 @@
     c.gap = c.cap - fill >= 0.5 ? r1(c.cap - fill) : 0;
     c.grp = Object.fromEntries(Object.entries(g).sort((a, b) => b[1] - a[1]));
     c.late = c.items.filter((i) => i.late).length;
+    c.lateE = c.items.filter((i) => i.late && i.exp && i.arr).length;   // 입항일 이후 생산(필요 생산일 = 입항 − 1일을 넘김)
     c.hrs = r1(c.items.reduce((s, i) => s + i.t / tphOf(c.line, i), 0));   // 이 칸 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리는 시간
     c.mvIn = c.items.filter((i) => i.moved).length;
     c.flag = c.flag0; c.flagS = c.flagS0; c.why = c.why0;
@@ -342,8 +343,8 @@
       + `<div class="tv">${n0(fill)}<small>t</small>${c.gap ? ` <small style="color:var(--bad);font-weight:800">빈칸 ${n0(c.gap)}</small>` : ''}</div>`
       + `<div class="gl">${gs}</div>`
       + (c.flag ? `<div class="fg">⚠ ${esc(c.flagS || c.flag)}</div>` : '')
-      + (c.hAvail && c.hrs > c.hAvail + 0.5 ? `<div class="hr" title="이 칸 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리면 ${n1(c.hrs)}시간 — 가동 가능 ${n1(c.hAvail)}시간(24h × 제원치 가동률)보다 김">⏱ ${n1(c.hrs)}h > ${n1(c.hAvail)}h</div>` : '')
-      + (c.late ? `<div class="lt" title="이 날 생산하면 필요 생산일(수출 입항 − 2일 · 내수 납기 − 1일)보다 늦어지는 주문">필요일보다 늦음 ${c.late}건</div>` : '')
+      + (c.hAvail && Math.abs(c.hrs - c.hAvail) >= 0.5 ? `<div class="hr ${c.hrs > c.hAvail ? 'ov' : 'un'}" title="이 칸 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리면 ${n1(c.hrs)}시간 · 가동 가능 ${n1(c.hAvail)}시간(24h × 제원치 가동률) — 생산은 이어서 하므로 ${c.hrs > c.hAvail ? '못 돌린 몫은 다음 날로 넘어감' : '남는 시간은 다음 날 주문을 당겨서 돌림'}">⏱ ${c.hrs > c.hAvail ? '초과' : '남음'} ${n1(Math.abs(c.hrs - c.hAvail))}h</div>` : '')
+      + (c.late ? `<div class="lt" title="이 날 생산하면 입항일(수출) · 납기(내수)에 못 맞추는 주문 — 필요 생산일 = 입항 − 1일 · 납기 − 1일">${[c.lateE ? `입항일 초과 ${c.lateE}건` : '', c.late - c.lateE ? `납기 초과 ${c.late - c.lateE}건` : ''].filter(Boolean).join(' · ')}</div>` : '')
       + (c.mvIn || c.mvOut ? `<div class="mvc">옮김${c.mvIn ? ` 들어옴 ${c.mvIn}` : ''}${c.mvOut ? ` 나감 ${c.mvOut}` : ''}</div>` : '')
       + '</button>';
   }
@@ -367,7 +368,7 @@
       + '<div class="lg"><span><i style="background:var(--c-conf)"></i>지시 대상 = MES 1010 작업지시 대상 코일(제안 순서·예상 시각)</span><span><i style="background:var(--c-plan)"></i>소재 있음 = 소재 들어온 주문</span>'
       + '<span><i style="background:repeating-linear-gradient(135deg, var(--c-plan) 0 2px, var(--c-fcst) 2px 5px)"></i>입고 예정 = 소재 들어올 주문(입고 + 5일부터)</span><span><i style="background:var(--c-gap);box-shadow:inset 0 0 0 1px var(--line)"></i>빈칸</span>'
       + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>노랑 = M/C(강종 교체)</span><span><i style="background:var(--bad)"></i>빨간 줄 = 확인 필요(현장 강종 ≠ 계획 · 능력 초과 · 재질 순서)</span>'
-      + `<span>능력 = 제원치 · 강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순(수출 = 입항 − 2일 · 내수 = 납기 − 1일${O.expNeed && O.expNeed.due ? ` · 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 1일` : ''})</span></div>`
+      + `<span>능력 = 제원치 · 강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순(수출 = 입항 − 1일 · 내수 = 납기 − 1일${O.expNeed && O.expNeed.due ? ` · 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 1일` : ''})</span></div>`
       + grpLine()
       + moveBar()
       + `<div class="wk">${weekTable(O.days.slice(0, 7), nw)}</div><div class="wk">${weekTable(O.days.slice(7, 14), nw)}</div></section>`;
@@ -431,7 +432,8 @@
     });
     return L.map((i) => {
       const k = i.k;
-      const need = i.od ? `<span class="bd od" title="필요 생산일이 이미 지남">필요 ${md(i.need)} 지남</span>` : i.late ? `<span class="bd late" title="이 날 생산하면 필요 생산일보다 늦음">필요 ${md(i.need)}보다 늦음</span>` : i.need ? `필요 <b>${md(i.need)}</b>` : '';
+      const ea = i.exp && i.arr, dl = ea ? `입항 ${md(i.arr)}` : `납기 ${md(i.due)}`;
+      const need = i.od ? `<span class="bd od" title="필요 생산일(${ea ? '입항' : '납기'} − 1일)이 이미 지남">${dl} 지남</span>` : i.late ? `<span class="bd late" title="이 날 생산하면 ${ea ? '입항일' : '납기'}에 못 맞춤">${ea ? '입항일' : '납기'} 초과</span>` : i.need ? `필요 <b>${md(i.need)}</b>` : '';
       const tags = [i.moved ? `<span class="bd mv">옮김 ← ${md(i.moved.fd)}${i.moved.fl !== ln ? ' ' + i.moved.fl : ''}</span>` : i.shift ? `<span class="bd ${i.shift === '뒤로 밀림' ? 'late' : 'mv'}" title="다른 주문을 옮기거나 넣어서 날짜가 바뀜">${i.shift}</span>` : i.locked ? '<span class="bd mv">확정본</span>' : '',
         i.matLate ? `<span class="bd od">소재 ${md(i.avail)}부터</span>` : '', i.shipMiss ? '<span class="bd od" title="배 입항일이 지났는데 아직 생산 전 — 배선 변경 확인">입항 지남</span>' : ''].filter(Boolean).join(' ');
       const seq = i.kind === '확정' ? (i.seq || k + 1) : ++n;
@@ -440,7 +442,7 @@
         + `<td><span class="chs1">${famCh(i.fam)}${i.grade ? `<span class="ch gr">${esc(GRN[i.grade] || i.grade)}</span>` : ''}${i.exp ? '<span class="ch exp">수출</span>' : '<span class="ch">내수</span>'}${i.cot ? `<span class="ch">${esc(i.cot)}</span>` : ''}${i.aft ? `<span class="ch">${esc(i.aft)}</span>` : ''}</span></td>`
         + `<td class="sz">${i.thk != null ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw"><b>${esc(i.grp || '')}</b></td>`
         + `<td class="num"><b>${n1(i.tt)}</b>${i.extra ? `<div class="sub xs">${KD[i.xk]} ${n1(i.extra)}</div>` : ''}${conTxt(i, ln, d)}</td>`
-        + `<td class="dt2">${[i.arr ? `입항 <b>${md(i.arr)}</b>` : i.due ? `납기 ${md(i.due)}` : '', need].filter(Boolean).join(' · ')}${tags ? `<div>${tags}</div>` : ''}</td>`
+        + `<td class="dt2">${[i.od ? '' : i.arr ? `입항 <b>${md(i.arr)}</b>` : i.due ? `납기 ${md(i.due)}` : '', need].filter(Boolean).join(' · ')}${tags ? `<div>${tags}</div>` : ''}</td>`
         + `<td class="act">${i.kind === '확정' ? '<span class="sub">1010 대상 · 순서 고정</span>' : `<button type="button" class="lnk mvb" data-k="${k}">옮기기·톤</button><button type="button" class="lnk rmb" data-k="${k}" title="이 날에서 빼서 아래 「칸에 못 들어간 주문」 목록(노란 줄)으로">빼기</button>`}</td></tr>`
         + (i.kind === '확정' ? '' : `<tr class="mvr" id="mvr-${k}" hidden><td></td><td colspan="7"><div class="mvw"><b>${esc(i.con)}</b><input type="number" class="mvt" value="${n1(i.t)}" min="0.1" max="${i.t}" step="0.1" aria-label="옮길 톤">t 를`
           + `<select class="mv" data-k="${k}" aria-label="옮길 날짜"><option value="">날짜 고르기…</option>${moveOpts(i, ln, d)}</select>(으)로 <button type="button" class="go2" data-k="${k}" disabled>옮기기</button></div><div class="pv" id="pv-${k}"></div>`
