@@ -303,14 +303,15 @@
 
   function kpis() {
     const S = O.summary, tot = (k) => LINES.reduce((s, l) => s + (S[l][k] || 0), 0);
-    const win = O.risk.filter((r) => !r.od), fl = LINES.reduce((s, l) => s + (S[l].flags || 0), 0);
+    const win = O.risk.filter((r) => !r.od), mis = LINES.filter((l) => (S[l].mis || []).length), fl = mis.reduce((s, l) => s + S[l].mis.length, 0);
+    const misTxt = mis.map((l) => { const D = S[l].mis, c0 = O.lines[l][O.days.indexOf(D[0])], ut = (c0.flag || '').match(/\(([^)]*까지)\)/); return `${l} ${D.map(md).join('·')}: 계획은 ${c0.event || c0.fam}, 현장은 ${(c0.fieldFam || []).join('·')} 작업지시${ut ? ' ' + ut[1] : ''} → 강종 교체가 계획보다 늦음`; }).join(' · ');
     const jgMin = Math.min(...O.jg.map((j) => j.cumSched - j.cumPlan));
     const k = (l, v, b, tone) => `<div class="kpi${tone ? ' tone-' + tone : ''}"><div class="l">${l}</div><div class="v">${v}</div><div class="b">${b}</div></div>`;
     return '<div class="kpis" style="margin:0 0 14px">'
       + k('2주 라인 능력', `${n0(tot('cap'))}<small>t</small>`, `작업지시 ${n0(tot('conf'))} · 소재 있음 ${n0(tot('plan'))} · 입고 예정 ${n0(tot('fcst'))} · 빈칸 ${n0(tot('gap'))}`, tot('gap') > 0 ? 'warn' : 'brand')
       + k('이미 늦은 주문', `${n0(O.odT)}<small>t · ${O.nOd}건</small>`, `필요 생산일이 이미 지났는데 아직 생산 전 — 2주 안에 먼저 넣음${(O.shipMiss || []).length ? ` · 그중 입항일 지난 수출 ${O.shipMiss.length}건(입항 지남, 배선 변경 확인)` : ''}`, O.odT > 0 ? 'bad' : 'good')
       + k('2주 안에 못 넣는 주문', `${win.length}<small>건 · ${n0(win.reduce((s, r) => s + r.t, 0))}t</small>`, '이번 2주에 필요한데 칸이 없음(소재 없음·능력 부족)', win.length ? 'warn' : 'good')
-      + k('계획 ≠ 현장 지시', `${fl}<small>일</small>`, fl ? LINES.flatMap((l) => O.lines[l].filter((c) => c.flag).map((c) => `${l} ${md(c.d)}`)).join(' · ') : '재계획 강종과 현장 작업지시가 맞음', fl ? 'bad' : 'good')
+      + k('강종 날짜 · 계획과 현장 다름', `${fl}<small>일</small>`, fl ? misTxt : '재계획 강종과 현장 작업지시가 맞음', fl ? 'bad' : 'good')
       + k('자가재(컬러 투입) 진도', jgMin >= 0 ? '<span class="gv">계획 이상</span>' : `<span class="bv">${n0(-jgMin)}t 부족</span>`, '재계획 자가재 누계 대비 캘린더 누계(가장 모자란 날)', jgMin >= 0 ? 'good' : 'bad')
       + '</div>';
   }
@@ -348,7 +349,7 @@
     return '<section class="card"><h2>라인별 2주 <small>칸을 누르면 그날 작업 순서</small></h2>'
       + '<div class="lg"><span><i style="background:var(--c-conf)"></i>작업지시 = MES에 지시됨</span><span><i style="background:var(--c-plan)"></i>소재 있음 = 소재 들어온 주문</span>'
       + '<span><i style="background:var(--c-fcst)"></i>입고 예정 = 소재 들어올 주문(입고 + 5일부터)</span><span><i style="background:var(--c-gap)"></i>빈칸</span>'
-      + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>노랑 = M/C(강종 교체)</span><span><i style="background:var(--bad)"></i>빨간 줄 = 계획≠현장</span>'
+      + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>노랑 = M/C(강종 교체)</span><span><i style="background:var(--bad)"></i>빨간 줄 = 확인 필요(현장 강종 ≠ 계획 · 능력 초과 · 재질 순서)</span>'
       + `<span>능력·강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순(수출 = 입항 − 2일 · 내수 = 납기 − 1일${O.expNeed && O.expNeed.due ? ` · 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 1일` : ''})</span></div>`
       + grpLine()
       + moveBar()
