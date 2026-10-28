@@ -454,9 +454,6 @@
     const pg = Object.entries(c.planGrp || {}).filter(([, v]) => v >= 1).map(([g, v]) => `${g} ${n0(v)}`).join(' · ');
     let body = c.flag ? `<div class="fgl">⚠ ${esc(c.flag)}${c.flag.startsWith('재질') ? '' : ' — '}${c.flag.startsWith('재질') ? '' : c.flag.startsWith('계획') ? '현장 순서가 우선. M/C·강종 날짜를 재계획에 반영할지 확인' : c.flag.startsWith('옮긴') || c.flag.startsWith('확정본에') ? 'M/C 없이는 이날 생산 불가 — 다른 날로 옮기기' : '능력보다 많음 — 일부를 다른 날로 옮기기'}</div>` : '';
     if (c.why) body += `<div class="fgl" style="background:var(--warn-bg);color:var(--warn)">빈칸 ${n0(c.gap)}t — ${esc(c.why)}</div>`;
-    body += '<div class="how"><div><b>이 날에 들어온 기준</b> 필요 생산일(수출 = 입항 − 2일, 내수 = 납기 − 1일) 빠른 주문부터, 그날 라인·강종이 맞는 것을 능력만큼 · 소재 있는 주문 먼저, 입고 예정 주문은 입고 + 5일부터</div>'
-      + '<div><b>순서</b> 지시 대상 = 「작업지시 순서」 화면 제안 순서·예상 시각 그대로 · 나머지 = 현장 규칙(같은 재질끼리 묶고 → 넓은 폭 → 좁은 폭, 같은 폭이면 얇은 것 먼저, 재질 차례는 바로 못 잇는 짝이 붙지 않게)</div>'
-      + '<div><b>옮기기</b> 24시간 연속 가동 = 라인마다 한 줄 순서. 고른 날 맨 앞에 끼워 넣고 뒤 주문은 순서대로 밀림(능력 초과 없음) · 불가 = 강종(M/C)·소재 입고일·라인 정지·작업 규칙(그날 주문과 두께 차 0.3mm·두께비 1.3배·후처리 같은 층·재질 온도 AZ CQ↔EDDQ·Gr.E, PosMAC Gr.C↔DQ계·CQ↔DDQ) → 모두 지키는 가장 가까운 날 제시 · 코일 단위 최종 확인은 작업지시 순서 · 「다음 주 확정」을 눌러야 저장</div></div>';
     body += c.items.length ? `<table class="it cmp"><colgroup><col style="width:10%"><col style="width:19%"><col style="width:17%"><col style="width:9%"><col style="width:6%"><col style="width:11%"><col style="width:17%"><col style="width:11%"></colgroup>`
       + `<thead><tr><th>상태 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 재질 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">이 날 톤 · 계약 전체</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
       : `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
