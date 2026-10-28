@@ -18,52 +18,117 @@
   const MV_KEY = () => 'cgl-cal-moves|' + O.asOf;               // 옮기기 임시본(이 브라우저) — '다음 주 확정'을 눌러야 저장
   const compat = (df, f) => !!f && (f === df || String(f).split('-')[0] === df || (f === 'AZ·MAC' && (df === 'AZ' || df === 'MAC')));
   const cellOf = (ln, d) => O.lines[ln][O.days.indexOf(d)];
+  const r1 = (v) => Math.round(v * 10) / 10;
+  const sortDay = (a) => a.sort((x, y) => (x.kind === '확정' ? 0 : 1) - (y.kind === '확정' ? 0 : 1) || (x.kind === '확정' ? (x.seq || 0) - (y.seq || 0) : (y.wdt || 0) - (x.wdt || 0) || (x.thk || 9) - (y.thk || 9)));
+  /* 24시간 연속 가동 = 라인마다 한 줄로 이어진 생산 순서(10/28 사용자 '도금은 24시간이라 옮기면 캐파 초과·규칙 못 지키는 날도 있다').
+     순서를 날짜별 능력으로 잘라 칸에 담음. 옮기기 = 고른 날 맨 앞에 끼워 넣기 → 뒤 주문이 순서대로 밀림(능력 초과 없음).
+     못 들어가는 칸: 강종 다름(M/C 전후) · 입고 전 소재 · 라인 정지 → 그 조각은 다음 맞는 날로 */
+  const fits = (p, c, d) => c.cap >= 1 && compat(c.fam, p.fam) && !(p.kind === '예상' && p.avail && p.avail > d) && !(p.pin && p.pin > d);
+  function slice(ln, fixed, seq) {
+    const cells = fixed[ln].map((c) => Object.assign({}, c, { items: c.items.slice() }));
+    let rest = seq.map((p) => Object.assign({}, p));
+    const out = [];
+    cells.forEach((c, di) => {
+      const d = O.days[di], keep = [];
+      let left = c.cap - c.items.reduce((a, i) => a + i.t, 0);
+      for (const p of rest) {
+        if (left < 0.5 || !fits(p, c, d)) { keep.push(p); continue; }
+        const t = Math.min(left, p.t);
+        if (t < p.t - 0.05) keep.push(Object.assign({}, p, { t: r1(p.t - t) }));
+        const x = Object.assign({}, p, { t: r1(t), day: d });
+        c.items.push(x); out.push(x); left -= t;
+      }
+      rest = keep;
+    });
+    rest.forEach((p) => out.push(Object.assign(p, { day: null })));
+    return { cells, seq: out, out: rest };
+  }
+  function simulate(moves) {
+    const fixed = {}, seqs = {}, res = {};
+    LINES.forEach((ln) => {
+      fixed[ln] = O.base[ln].map((c) => Object.assign({}, c, { items: c.items.filter((i) => i.kind === '확정') }));
+      seqs[ln] = [];
+      O.base[ln].forEach((c, di) => {                         // 처음 순서 = 날짜 순, 같은 날은 필요일 빠른 것 먼저(밀릴 때 덜 급한 것이 밀림)
+        const non = c.items.filter((i) => i.kind !== '확정').map((i) => Object.assign({}, i, { day: O.days[di], d0: O.days[di] }));
+        non.sort((a, b) => String(a.need || '9').localeCompare(String(b.need || '9')));
+        seqs[ln].push(...non);
+      });
+      res[ln] = slice(ln, fixed, seqs[ln]); seqs[ln] = res[ln].seq;
+    });
+    (moves || []).forEach((m) => {
+      const q = seqs[m.fl] || [], k = q.findIndex((p) => p.con === m.con && p.kind === m.kind && p.day === m.fd);
+      if (k < 0 || !seqs[m.tl]) { m.bad = true; return; }
+      m.bad = false;
+      const p = q[k];
+      let mv;
+      if (m.t < p.t - 0.05) { p.t = r1(p.t - m.t); mv = Object.assign({}, p, { t: m.t }); } else { mv = p; q.splice(k, 1); }
+      Object.assign(mv, { moved: { fd: m.fd, fl: m.fl }, pin: m.td });
+      const tq = seqs[m.tl];
+      let at = tq.findIndex((x) => x.day === null || x.day >= m.td);
+      if (at < 0) at = tq.length;
+      tq.splice(at, 0, mv);
+      [...new Set([m.fl, m.tl])].forEach((ln) => { res[ln] = slice(ln, fixed, seqs[ln]); seqs[ln] = res[ln].seq; });
+    });
+    return res;
+  }
+  function lastDay(res) {                                    // 계약번호-행번 → 마지막 생산일(2주 밖이면 '9')
+    const m = {};
+    LINES.forEach((ln) => res[ln].seq.forEach((p) => { const d = p.day || '9'; if (!m[p.con] || d > m[p.con]) m[p.con] = d; }));
+    return m;
+  }
   function recalc(c) {
-    const s = { 확정: 0, 편성: 0, 예상: 0 }, g = {};
-    c.items.forEach((i) => { s[i.kind] += i.t; g[i.grp || '?'] = (g[i.grp || '?'] || 0) + i.t; });
-    c.conf = s.확정; c.plan = s.편성; c.fcst = s.예상;
-    const fill = s.확정 + s.편성 + s.예상;
-    c.gap = c.cap - fill >= 0.5 ? Math.round((c.cap - fill) * 10) / 10 : 0;
+    const s2 = { 확정: 0, 편성: 0, 예상: 0 }, g = {};
+    c.items.forEach((i) => { s2[i.kind] += i.t; g[i.grp || '?'] = (g[i.grp || '?'] || 0) + i.t; });
+    c.conf = s2.확정; c.plan = s2.편성; c.fcst = s2.예상;
+    const fill = s2.확정 + s2.편성 + s2.예상;
+    c.gap = c.cap - fill >= 0.5 ? r1(c.cap - fill) : 0;
     c.grp = Object.fromEntries(Object.entries(g).sort((a, b) => b[1] - a[1]));
     c.late = c.items.filter((i) => i.late).length;
     c.mvIn = c.items.filter((i) => i.moved).length;
-    const bad = [...new Set(c.items.filter((i) => i.moved && !compat(c.fam, i.fam)).map((i) => i.fam))];
-    c.flag = c.flag0; c.flagS = c.flagS0;
-    if (!c.flag && bad.length) { c.flag = `옮긴 ${bad.join('·')} 주문 — 그날 계획 강종 ${c.fam}`; c.flagS = `${bad.join('·')} 주문 · 계획 ${c.fam}`; }
-    if (!c.flag && fill - c.cap >= 5) { c.flag = `배정 ${n0(fill)}t > 능력 ${n0(c.cap)}t`; c.flagS = `능력 초과 ${n0(fill - c.cap)}t`; }
-    if (c.mvOut && c.gap) c.why = '주문을 다른 날로 옮겨서 빔';
+    c.flag = c.flag0; c.flagS = c.flagS0; c.why = c.why0;
+    if (c.mvOut && c.gap) c.why = '옮긴 뒤 이 강종으로 채울 주문이 없음';
   }
   function applyMoves() {
-    O.lines = JSON.parse(JSON.stringify(O.base));
-    LINES.forEach((ln) => O.lines[ln].forEach((c) => { c.flag0 = c.flag; c.flagS0 = c.flagS; c.mvOut = 0; }));
-    MOVES.forEach((m) => {
-      const a = cellOf(m.fl, m.fd), b = cellOf(m.tl, m.td);
-      const k = a ? a.items.findIndex((i) => i.con === m.con && i.kind === m.kind && !i.moved) : -1;
-      if (!b || k < 0) { m.bad = true; return; }
-      let it = a.items[k];
-      if (m.t < it.t - 0.05) { it.t = Math.round((it.t - m.t) * 10) / 10; it = Object.assign({}, it, { t: m.t }); }   // 일부만 옮김
-      else a.items.splice(k, 1);
-      it.moved = { fd: m.fd, fl: m.fl };
-      it.late = !!(it.need && it.need >= O.asOf && it.need < m.td);
-      it.matLate = it.kind === '예상' && !!it.avail && it.avail > m.td;
-      a.mvOut = (a.mvOut || 0) + 1;
-      b.items.push(it);
-      if (m.swap) {                                            // 넘치는 만큼 그날 주문 중 필요일 늦은 것을 원래 날로(자리 바꾸기)
-        let over = b.items.reduce((s2, i) => s2 + i.t, 0) - b.cap;
-        const cand = b.items.filter((i) => i.kind !== '확정' && !i.moved && compat(a.fam, i.fam) && (i.pline === '공용' || i.pline === m.fl || !i.pline)).sort((x, y) => String(y.need || '9') < String(x.need || '9') ? -1 : 1);
-        for (const i of cand) {
-          if (over < 0.5) break;
-          const q = Math.min(i.t, Math.round(over * 10) / 10);
-          let mv = i;
-          if (q < i.t - 0.05) { i.t = Math.round((i.t - q) * 10) / 10; mv = Object.assign({}, i, { t: q }); } else b.items.splice(b.items.indexOf(i), 1);
-          mv.moved = { fd: m.td, fl: m.tl, swap: true };
-          mv.late = !!(mv.need && mv.need >= O.asOf && mv.need < m.fd);
-          a.items.push(mv); over -= q;
-        }
-      }
-      b.items.sort((x, y) => (x.kind === '확정' ? 0 : 1) - (y.kind === '확정' ? 0 : 1) || (x.kind === '확정' ? (x.seq || 0) - (y.seq || 0) : (y.wdt || 0) - (x.wdt || 0) || (x.thk || 9) - (y.thk || 9)));
+    const res = simulate(MOVES), L0 = lastDay(simulate([])), L1 = lastDay(res);
+    O.lines = {}; O.out = {};
+    LINES.forEach((ln) => {
+      O.lines[ln] = res[ln].cells.map((c, di) => {
+        const d = O.days[di];
+        c.flag0 = O.base[ln][di].flag; c.flagS0 = O.base[ln][di].flagS; c.why0 = O.base[ln][di].why;
+        c.items.forEach((i) => {
+          if (i.kind === '확정') return;
+          i.late = !!(i.need && i.need >= O.asOf && i.need < d);
+          i.shift = !i.moved && L1[i.con] !== L0[i.con] ? (L1[i.con] > L0[i.con] ? '밀림' : '당겨짐') : '';
+        });
+        c.mvOut = MOVES.filter((m) => !m.bad && m.fl === ln && m.fd === d).length;
+        sortDay(c.items); recalc(c);
+        return c;
+      });
+      O.out[ln] = res[ln].out.filter((p) => p.t >= 0.5);
     });
-    LINES.forEach((ln) => O.lines[ln].forEach(recalc));
+  }
+  function check(it, ln, tl, td) {                           // 옮길 수 있나 + 안 되면 가장 가까운 가능한 날
+    const c = cellOf(tl, td), why = [];
+    if (c.cap < 1) why.push('라인 정지');
+    else if (!compat(c.fam, it.fam)) why.push(`${c.fam} 가동일(${it.fam} 주문은 M/C 없이 불가)`);
+    if (it.kind === '예상' && it.avail && it.avail > td) why.push(`소재 투입 ${md(it.avail)}부터`);
+    if (!why.length) return { ok: true };
+    const lines = it.pline === '공용' ? LINES : [tl];
+    const cand = [];
+    lines.forEach((l) => O.days.forEach((d) => { const cc = cellOf(l, d); if (fits(Object.assign({}, it, { pin: null }), cc, d) && !(l === ln && d === it.day0)) cand.push([Math.abs(dt(d) - dt(td)), d < td ? 0 : 1, l, d]); }));
+    cand.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const bef = cand.find((x) => x[3] < td), aft = cand.find((x) => x[3] > td);
+    return { ok: false, why: why.join(' · '), alt: [bef, aft].filter(Boolean).map((x) => [x[2], x[3]]) };
+  }
+  function preview(it, ln, d, tl, td, t) {                   // 옮기면 무엇이 바뀌나: 밀리는 주문 · 새로 늦어지는 주문 · 2주 밖으로 밀림
+    const cur = simulate(MOVES), nxt = simulate([...MOVES.map((m) => Object.assign({}, m)), { con: it.con, kind: it.kind, t, fl: ln, fd: d, tl, td }]);
+    const a = lastDay(cur), b = lastDay(nxt), late = (res) => { const m = {}; LINES.forEach((l) => res[l].seq.forEach((p) => { if (p.need && p.need >= O.asOf && (p.day === null || p.need < p.day)) m[p.con] = p; })); return m; };
+    const la = late(cur), lb = late(nxt);
+    const pushed = Object.keys(b).filter((k) => k !== it.con && b[k] > (a[k] || '0'));
+    const newLate = Object.keys(lb).filter((k) => !la[k] && k !== it.con).map((k) => lb[k]);
+    const outT = (res) => LINES.reduce((s2, l) => s2 + res[l].out.reduce((x, p) => x + p.t, 0), 0);
+    const land = LINES.flatMap((l) => nxt[l].seq.filter((p) => p.con === it.con && p.moved && p.pin === td).map((p) => p.day));
+    return { pushed: pushed.length, newLate, outDiff: outT(nxt) - outT(cur), land: land[0] };
   }
   const saveMoves = () => { try { localStorage.setItem(MV_KEY(), JSON.stringify(MOVES)); } catch (e) { /* 무시 */ } };
   try { rk = localStorage.getItem(RK_KEY) || 'win'; } catch (e) { /* 무시 */ }
@@ -129,20 +194,20 @@
       + `<div class="wk">${weekTable(O.days.slice(0, 7), nw)}</div><div class="wk">${weekTable(O.days.slice(7, 14), nw)}</div></section>`;
   }
   function moveBar() {
-    if (!MOVES.length) return '<p class="msg" style="margin:0 0 10px">날짜를 바꾸려면 칸을 눌러 주문 오른쪽 「옮기기」에서 고르세요(소재 있음·입고 예정 주문만, 현장 지시된 것은 MES에서).</p>';
+    if (!MOVES.length) return '<p class="msg" style="margin:0 0 10px">날짜를 바꾸려면 칸을 눌러 주문 오른쪽 「옮기기」(소재 있음·입고 예정 주문만, 현장 지시된 것은 MES에서). 24시간 연속 가동이라 옮기면 뒤 주문이 순서대로 밀림.</p>';
+    const outs = LINES.flatMap((l) => (O.out[l] || []).map((p) => [l, p])), oT = outs.reduce((a, [, p]) => a + p.t, 0);
     return `<div class="mvbar"><b>옮긴 주문 ${MOVES.length}건</b><span class="msg">임시 — 아래 「다음 주 확정」을 눌러야 저장되고 다음 날 계산에도 그대로 반영</span><button type="button" class="lnk" id="mv-clear">모두 되돌리기</button><ul>`
-      + MOVES.map((m, k) => `<li${m.bad ? ' class="bad"' : ''}><b>${esc(m.con)}</b> ${n0(m.t)}t · ${m.fl === m.tl ? m.fl : ''} ${mdw(m.fd)}${m.fl !== m.tl ? ` ${m.fl}` : ''} → <b>${mdw(m.td)}${m.fl !== m.tl ? ` ${m.tl}` : ''}</b>${m.swap ? ' <span class="sub">(넘치면 자리 바꾸기)</span>' : ''}${m.bad ? ' · 원래 칸에 없음(자료 갱신)' : ''} <button type="button" class="lnk" data-undo="${k}">되돌리기</button></li>`).join('')
-      + '</ul></div>';
+      + MOVES.map((m, k) => `<li${m.bad ? ' class="bad"' : ''}><b>${esc(m.con)}</b> ${n0(m.t)}t · ${m.fl} ${mdw(m.fd)} → <b>${mdw(m.td)}${m.fl !== m.tl ? ` ${m.tl}` : ''}</b>${m.bad ? ' · 원래 칸에 없음(자료 갱신)' : ''} <button type="button" class="lnk" data-undo="${k}">되돌리기</button></li>`).join('')
+      + `</ul>${oT >= 1 ? `<span class="msg" style="color:var(--bad)">밀려서 2주 밖으로 나간 주문 ${outs.length}조각 ${n0(oT)}t: ${outs.slice(0, 6).map(([l, p]) => `${esc(p.con)} ${n0(p.t)}t`).join(' · ')}${outs.length > 6 ? ' …' : ''}</span>` : ''}</div>`;
   }
 
   const who = (i) => [i.cus && esc(i.cus), i.dst && `<span class="nw">→ ${esc(i.dst)}</span>`, i.man && `<span class="nw">담당 ${esc(i.man)}</span>`].filter(Boolean).join(' · ');
-  function moveOpts(i, ln, d) {                              // 옮길 날 목록: 남은 능력 · 경고(강종 다름 · 넘침 · 소재 입고 전)
+  function moveOpts(i, ln, d) {                              // 옮길 날 목록: 안 되는 날은 이유와 함께(고르면 가장 가까운 가능한 날 제시)
     const lines = i.pline === '공용' ? LINES : [i.pline || ln], opt = [];
     lines.forEach((l) => O.days.forEach((dd) => {
       if (l === ln && dd === d) return;
-      const c = cellOf(l, dd), left = c.cap - c.conf - c.plan - c.fcst;
-      const warn = [!compat(c.fam, i.fam) ? `강종 ${c.fam || '-'}` : '', left < i.t ? `넘침 ${n0(i.t - Math.max(0, left))}t` : '', i.kind === '예상' && i.avail && i.avail > dd ? `소재 ${md(i.avail)}부터` : ''].filter(Boolean);
-      opt.push(`<option value="${l}|${dd}">${mdw(dd)}${l !== ln ? ' ' + l : ''} · 남은 ${n0(Math.max(0, left))}t${warn.length ? ' ⚠ ' + warn.join(' ') : ''}</option>`);
+      const ck = check(Object.assign({}, i, { day0: d }), ln, l, dd);
+      opt.push(`<option value="${l}|${dd}">${mdw(dd)}${l !== ln ? ' ' + l : ''}${ck.ok ? '' : ' — 불가'}</option>`);
     }));
     return opt.join('');
   }
@@ -161,7 +226,7 @@
     return L.map((i) => {
       const k = i.k;
       const need = i.od ? `<span class="bd od">밀림 ${md(i.need)}</span>` : i.late ? `<span class="bd late">늦음 ${md(i.need)}</span>` : i.need ? `필요 <b>${md(i.need)}</b>` : '';
-      const tags = [i.moved ? `<span class="bd mv">${i.moved.swap ? '자리 바꿈' : '옮김'} ← ${md(i.moved.fd)}${i.moved.fl !== ln ? ' ' + i.moved.fl : ''}</span>` : i.locked ? '<span class="bd mv">확정본</span>' : '',
+      const tags = [i.moved ? `<span class="bd mv">옮김 ← ${md(i.moved.fd)}${i.moved.fl !== ln ? ' ' + i.moved.fl : ''}</span>` : i.shift ? `<span class="bd ${i.shift === '밀림' ? 'late' : 'mv'}">${i.shift}</span>` : i.locked ? '<span class="bd mv">확정본</span>' : '',
         i.matLate ? `<span class="bd od">소재 ${md(i.avail)}부터</span>` : '', i.shipMiss ? '<span class="bd od">배 놓침</span>' : ''].filter(Boolean).join(' ');
       const seq = i.kind === '확정' ? (i.seq || k + 1) : ++n;
       return `<tr class="r${i.kind}"><td class="sq"><span class="kd k${i.kind}">${i.kind}</span> ${seq}</td>`
@@ -172,7 +237,7 @@
         + `<td class="nw dt2">${[i.arr ? `입항 <b>${md(i.arr)}</b>` : i.due ? `납기 ${md(i.due)}` : '', need].filter(Boolean).join(' · ')}${tags ? `<div>${tags}</div>` : ''}</td>`
         + `<td class="nw">${i.kind === '확정' ? '<span class="sub">MES 지시됨</span>' : `<button type="button" class="lnk mvb" data-k="${k}">옮기기</button>`}</td></tr>`
         + (i.kind === '확정' ? '' : `<tr class="mvr" id="mvr-${k}" hidden><td></td><td colspan="7"><div class="mvw"><b>${esc(i.con)}</b><input type="number" class="mvt" value="${(+i.t).toFixed(1)}" min="0.1" max="${i.t}" step="0.1" aria-label="옮길 톤">t 를`
-          + `<select class="mv" aria-label="옮길 날짜"><option value="">날짜 고르기…</option>${moveOpts(i, ln, d)}</select>(으)로 <button type="button" class="go2" data-k="${k}">옮기기</button></div></td></tr>`);
+          + `<select class="mv" data-k="${k}" aria-label="옮길 날짜"><option value="">날짜 고르기…</option>${moveOpts(i, ln, d)}</select>(으)로 <button type="button" class="go2" data-k="${k}" disabled>옮기기</button></div><div class="pv" id="pv-${k}"></div></td></tr>`);
     }).join('');
   }
   function csv(rows, name) {
@@ -188,10 +253,9 @@
     const pg = Object.entries(c.planGrp || {}).filter(([, v]) => v >= 1).map(([g, v]) => `${g} ${n0(v)}`).join(' · ');
     let body = c.flag ? `<div class="fgl">⚠ ${esc(c.flag)} — ${c.flag.startsWith('계획') ? '현장 순서가 우선. M/C·강종 날짜를 재계획에 반영할지 확인' : c.flag.startsWith('옮긴') || c.flag.startsWith('확정본에') ? 'M/C 없이는 이날 생산 불가 — 다른 날로 옮기기' : '능력보다 많음 — 일부를 다른 날로 옮기기'}</div>` : '';
     if (c.why) body += `<div class="fgl" style="background:var(--warn-bg);color:var(--warn)">빈칸 ${n0(c.gap)}t — ${esc(c.why)}</div>`;
-    let sw = true; try { sw = localStorage.getItem('cgl-cal-swap') !== '0'; } catch (e) { /* 무시 */ }
     body += '<div class="how"><div><b>이 날에 들어온 기준</b> 필요 생산일(수출 = 입항 − 4일, 내수 = 납기 − 3일) 빠른 주문부터, 그날 라인·강종이 맞는 것을 능력만큼 · 소재 있음(편성) 먼저, 입고 예정(예상)은 입고 + 5일부터</div>'
       + '<div><b>순서</b> 확정 = MES 작업지시 순서 그대로 · 편성·예상 = 현장 규칙(넓은 폭 → 좁은 폭, 같은 폭이면 얇은 것 먼저)</div>'
-      + `<div><b>옮기기</b> 고른 날 칸에 넣고 그 날 순서는 위 규칙으로 다시 정렬 · <label><input type="checkbox" id="mv-swap"${sw ? ' checked' : ''}> 그 날이 넘치면 그 날 주문 중 필요일 가장 늦은 것을 이 날로 바꿔 넣기</label> · 「다음 주 확정」을 눌러야 저장</div></div>`;
+      + '<div><b>옮기기</b> 24시간 연속 가동 = 라인마다 한 줄 순서. 고른 날 맨 앞에 끼워 넣고 뒤 주문은 순서대로 밀림(능력 초과 없음) · 강종(M/C)·소재 입고일이 안 맞는 날은 불가 → 가능한 가장 가까운 날 제시 · 「다음 주 확정」을 눌러야 저장</div></div>';
     body += c.items.length ? `<table class="it cmp"><colgroup><col style="width:9%"><col style="width:25%"><col style="width:17%"><col style="width:10%"><col style="width:6%"><col style="width:7%"><col style="width:18%"><col style="width:8%"></colgroup>`
       + `<thead><tr><th>구분 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">톤</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
       : `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
@@ -200,13 +264,30 @@
     $('cc-x').onclick = () => dlg.close();
     $('cc-csv').onclick = () => csv(c.items, `도금_${ln}_${d}.csv`);
     dlg.querySelectorAll('button.mvb').forEach((b) => b.onclick = () => { const r = $('mvr-' + b.dataset.k); r.hidden = !r.hidden; });
+    const tOf = (r, it) => { const v = +r.querySelector('.mvt').value; return Math.min(it.t, v > 0 ? r1(v) : it.t); };
+    const show = (k) => {                                    // 날짜를 고르면: 불가 이유 + 가까운 가능한 날 / 가능하면 영향(밀림·새로 늦음·2주 밖)
+      const r = $('mvr-' + k), it = c.items[+k], sel = r.querySelector('select.mv'), go = r.querySelector('button.go2'), pv = $('pv-' + k);
+      if (!sel.value) { pv.innerHTML = ''; go.disabled = true; return; }
+      const [tl, td] = sel.value.split('|'), ck = check(Object.assign({}, it, { day0: d }), ln, tl, td);
+      if (!ck.ok) {
+        go.disabled = true;
+        pv.innerHTML = `<span class="no">불가 — ${mdw(td)} ${tl}: ${esc(ck.why)}</span>${ck.alt.length ? ` · 가능한 가장 가까운 날 ${ck.alt.map(([l, dd]) => `<button type="button" class="lnk alt" data-v="${l}|${dd}">${mdw(dd)}${l !== tl ? ' ' + l : ''}</button>`).join(' ')}` : ' · 2주 안에 가능한 날 없음'}`;
+        pv.querySelectorAll('button.alt').forEach((x) => x.onclick = () => { sel.value = x.dataset.v; show(k); });
+        return;
+      }
+      const P = preview(it, ln, d, tl, td, tOf(r, it));
+      go.disabled = false;
+      pv.innerHTML = `<span class="ok">가능</span> · ${P.land ? `${mdw(P.land)} 생산` : '2주 안에 못 들어감'} · 뒤 주문 ${P.pushed}건 순서대로 밀림`
+        + (P.newLate.length ? ` · <span class="no">새로 늦어지는 주문 ${P.newLate.length}건: ${P.newLate.slice(0, 4).map((p) => `${esc(p.con)}(필요 ${md(p.need)})`).join(', ')}${P.newLate.length > 4 ? ' …' : ''}</span>` : ' · 새로 늦어지는 주문 없음')
+        + (P.outDiff >= 1 ? ` · <span class="no">2주 밖으로 ${n0(P.outDiff)}t 밀림</span>` : '');
+    };
+    dlg.querySelectorAll('select.mv').forEach((x) => x.onchange = () => show(x.dataset.k));
+    dlg.querySelectorAll('input.mvt').forEach((x) => x.onchange = () => show(x.closest('tr').id.slice(4)));
     dlg.querySelectorAll('button.go2').forEach((b) => b.onclick = () => {
       const r = $('mvr-' + b.dataset.k), it = c.items[+b.dataset.k], v = r.querySelector('select.mv').value;
       if (!v) { r.querySelector('select.mv').focus(); return; }
-      const [tl, td] = v.split('|'), tin = +r.querySelector('.mvt').value;
-      const t = Math.min(it.t, tin > 0 ? Math.round(tin * 10) / 10 : it.t);
-      MOVES.push({ con: it.con, kind: it.kind, t, fl: ln, fd: d, tl, td, swap: $('mv-swap').checked });
-      try { localStorage.setItem('cgl-cal-swap', $('mv-swap').checked ? '1' : '0'); } catch (e) { /* 무시 */ }
+      const [tl, td] = v.split('|'), t = tOf(r, it);
+      MOVES.push({ con: it.con, kind: it.kind, t, fl: ln, fd: d, tl, td });
       saveMoves(); applyMoves(); render();
       if (window.UI && UI.toast) UI.toast(`${it.con} ${n0(t)}t → ${mdw(td)} ${tl}`);
       openDay(ln, d);
