@@ -97,12 +97,19 @@
     if (MO.lock && (milp.late > 0.5 || milp.short > 0.5)) {
       // 고정안에 지연·결품 → M/C 를 옮기면 얼마나 줄어드는지 계산(게시하지 않음, 사람이 결정)
       log && log(`M/C 고정안: 지연 ${GP.fmt(milp.late)}톤·일, 결품 ${GP.fmt(milp.short)}t → 고정을 푼 경우 계산(제안용)`);
-      const free = GP.runMILP(highs, rem, Object.assign({}, PS, { timeLimit1: 120, timeLimit2: 120, phase2Mode: 'fast' }), log, Object.assign({}, MO, { lock: null }));   // 제안용 — 2분 제한
+      let free = null;
+      try { free = GP.runMILP(highs, rem, Object.assign({}, PS, { timeLimit1: 120, timeLimit2: 120, phase2Mode: 'fast' }), log, Object.assign({}, MO, { lock: null })); }   // 제안용 — 2분 제한
+      catch (e) {                                                  // 2026-10-28: 2분 안에 해를 못 찾으면 제안만 빼고 고정안으로 계속(예전엔 전체가 멈춤)
+        lockNotes.push(`M/C 이동 제안 계산이 2분 안에 안 끝나 생략(${String(e.message || e).slice(0, 60)}) — 고정안 그대로`);
+        log && log(lockNotes[lockNotes.length - 1]);
+      }
+      if (free) {
       const sw = (st) => { const o = []; for (const l of P.lines) { const ds = GP.dateRange(act.t0, H.D1); for (let i = 1; i < ds.length; i++) { const a = st[`${l}|${ds[i - 1]}`], b = st[`${l}|${ds[i]}`]; if (a && b && a !== b) o.push(`${ds[i]}|${l}|${a}→${b}`); } } return o; };
       const A = sw(milp.state), B = sw(free.state);
       proposal = { lockedLate: milp.late, lockedShort: milp.short, lockedK: milp.K, freeLate: free.late, freeShort: free.short, freeK: free.K,
         drop: A.filter((x) => !B.includes(x)), add: B.filter((x) => !A.includes(x)) };
       log && log(`이동 제안: M/C ${milp.K}→${free.K}회, 지연 ${GP.fmt(milp.late)}→${GP.fmt(free.late)}톤·일, 결품 ${GP.fmt(milp.short)}→${GP.fmt(free.short)}t (빼기 ${proposal.drop.join(', ') || '-'} / 넣기 ${proposal.add.join(', ') || '-'})`);
+      }
     }
     const lev = GP.runLevel(highs, rem, PS, milp.state, log, MO);
     const rows = act.rows.concat(lev.rows).sort((p, q) => (p.join('\u0001') < q.join('\u0001') ? -1 : 1));
