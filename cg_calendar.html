@@ -6,10 +6,10 @@
 <title>도금 2주 생산 캘린더</title>
 <meta name="description" content="라인별 2주 생산 캘린더 — 현장 작업지시(확정)·소재 있는 주문(편성)·입고 예정(예상)을 라인 능력에 채움, 수요일 확정·준수율">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610281500">
+<link rel="stylesheet" href="ui/theme.css?v=2610281509">
 <style>
 main.wrap { max-width: none; }
-:root { --c-conf: #2e7d32; --c-plan: #3774a1; --c-fcst: #9cc3e2; --c-gap: #e3e7ec; }
+:root { --c-conf: #2e7d32; --c-plan: #3774a1; --c-fcst: #8fb8dc; --c-gap: #f4f6f8; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-conf: #4caf50; --c-plan: #5b9bd0; --c-fcst: #2f4f6c; --c-gap: #2a3038; } }
 :root[data-theme="dark"] { --c-conf: #4caf50; --c-plan: #5b9bd0; --c-fcst: #2f4f6c; --c-gap: #2a3038; }
 .lg { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--ink-2); margin: 0 0 12px; }
@@ -17,7 +17,9 @@ main.wrap { max-width: none; }
 .wk { overflow-x: auto; margin: 0 0 16px; }
 .wk h3 { font-size: 16px; margin: 0 0 8px; }
 table.cg { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 980px; table-layout: fixed; }
-table.cg th, table.cg td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 0; vertical-align: top; }
+table.cg th, table.cg td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 0; vertical-align: top; height: 1px; }
+table.cg td > button.cell { height: 100%; } button.cell > * { flex-shrink: 0; }
+tr.dsum td { padding: 6px 8px; text-align: right; font-size: 16px; font-variant-numeric: tabular-nums; background: var(--tint-2); } tr.dsum td small { font-size: 12px; color: var(--ink-2); margin-left: 1px; } tr.dsum td .sub { font-size: 12px; color: var(--ink-2); font-weight: 400; }
 table.cg tr > :first-child { border-left: 1px solid var(--line); width: 74px; }
 table.cg thead th { background: var(--brand); color: #fff; font-size: 14px; font-weight: 800; padding: 7px 4px; text-align: center; white-space: nowrap; }
 table.cg thead th.we { background: var(--ink-3); }
@@ -38,17 +40,19 @@ button.cell.mc { background: #fff3bf; } button.cell.mc:hover { background: #ffec
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fam-AL { background: #1d3550; color: #9cc6f0; } :root:not([data-theme="light"]) .fam-AZ { background: #23381a; color: #b5dc95; } :root:not([data-theme="light"]) .fam-MAC { background: #34244a; color: #d2b6f2; } }
 :root[data-theme="dark"] .fam-AL { background: #1d3550; color: #9cc6f0; } :root[data-theme="dark"] .fam-AZ { background: #23381a; color: #b5dc95; } :root[data-theme="dark"] .fam-MAC { background: #34244a; color: #d2b6f2; }
 .ev { font-size: 12.5px; font-weight: 800; color: var(--warn); white-space: nowrap; }
-.bar { display: flex; height: 10px; border-radius: 3px; overflow: hidden; background: var(--c-gap); margin: 0 0 6px; }
+.bar { display: flex; flex-wrap: nowrap; gap: 0; align-items: stretch; height: 10px; border-radius: 3px; overflow: hidden; background: var(--c-gap); box-shadow: inset 0 0 0 1px var(--line); margin: 0 0 6px; }   /* 공통 .bar(툴바: 줄바꿈·간격 8px)와 이름이 같아 되돌림 — 안 그러면 막대 조각이 다음 줄로 밀려 칸이 덜 찬 것처럼 보임 */
 .bar i { display: block; height: 100%; }
-.bar .c { background: var(--c-conf); } .bar .p { background: var(--c-plan); } .bar .f { background: var(--c-fcst); }
+.bar .c { background: var(--c-conf); } .bar .p { background: var(--c-plan); } .bar .f { background: repeating-linear-gradient(135deg, var(--c-plan) 0 2px, var(--c-fcst) 2px 5px); }
 .tv { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .tv small { font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin-left: 2px; }
 .gl { font-size: 13px; line-height: 1.5; margin-top: 3px; font-variant-numeric: tabular-nums; }
 .gl span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fg { font-size: 12.5px; font-weight: 800; color: var(--bad); margin-top: 4px; line-height: 1.35; word-break: keep-all; }
+.fg { font-size: 12.5px; font-weight: 800; color: var(--bad); margin-top: 4px; line-height: 1.35; word-break: keep-all; overflow-wrap: anywhere; white-space: normal; }
+.hr { font-size: 12.5px; font-weight: 700; color: var(--bad); margin-top: 2px; white-space: nowrap; }
 .lt { font-size: 12.5px; font-weight: 700; color: var(--warn); margin-top: 2px; white-space: nowrap; }
-td.jg { padding: 7px 8px; font-size: 13.5px; font-variant-numeric: tabular-nums; line-height: 1.5; background: var(--surface); }
+table.cg td.jg { vertical-align: top; padding: 7px 10px; font-size: 13.5px; font-variant-numeric: tabular-nums; line-height: 1.5; background: var(--surface); }
 td.jg b { font-size: 15px; } td.jg .bad { color: var(--bad); font-weight: 800; } td.jg .good { color: var(--good); font-weight: 700; }
+td.jg .jr { display: flex; justify-content: space-between; gap: 6px; } td.jg .jr span { color: var(--ink-2); } td.jg .jr.bad span, td.jg .jr.good span { color: inherit; } td.jg .jr.bad b { color: var(--bad); } td.jg .jr.good b { color: var(--good); }
 td.jg .mk { display: inline-block; font-size: 12px; background: var(--tint-2); border-radius: 4px; padding: 0 5px; margin-top: 2px; white-space: nowrap; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 0 0 12px; flex-wrap: wrap; }
 .seg button { font: inherit; border: 0; background: var(--surface); color: inherit; padding: 6px 14px; cursor: pointer; white-space: nowrap; }
@@ -136,8 +140,8 @@ button.lnk { font: inherit; font-size: 13.5px; border: 1px solid var(--line); ba
   <dialog class="dd" id="cc-dlg"></dialog>
 </main>
 <footer class="foot"><div class="wrap"><span>원본: MES 작업지시 · 주문진도(F/H·포스코·입고) · 최신 재계획(라인 능력·강종)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610281500"></script>
-<script src="engine/crypto.js?v=2610281500"></script>
-<script src="cg_calendar.js?v=2610281500"></script>
+<script src="ui/shell.js?v=2610281509"></script>
+<script src="engine/crypto.js?v=2610281509"></script>
+<script src="cg_calendar.js?v=2610281509"></script>
 </body>
 </html>

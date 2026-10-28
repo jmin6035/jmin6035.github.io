@@ -16,7 +16,7 @@
   const mdw = (s) => `${md(s)}(${DOW[dt(s).getDay()]})`;
   const LINES = ['1CGL', '2CGL'];
   let O = null, PW = '', rk = 'win', MOVES = [], SWAP = true, NRM = null;
-  try { SWAP = localStorage.getItem('cgl-cal-swap2') !== '0'; } catch (e) { /* 무시 */ }
+  // 날이 넘치면 항상 필요일 늦은 주문을 빼서 아래 목록으로(10/28 사용자 '넣다 뺐다' · 「밀기」 선택은 고르기 전엔 바뀌는 게 없어 헷갈림 → 뺌)
   const MV_KEY = () => 'cgl-cal-moves|' + O.asOf;               // 옮기기 임시본(이 브라우저) — '다음 주 확정'을 눌러야 저장
   const compat = (df, f) => !!f && (f === df || String(f).split('-')[0] === df || (f === 'AZ·MAC' && (df === 'AZ' || df === 'MAC')));
   const KD = { 확정: '지시 대상', 편성: '소재 있음', 예상: '입고 예정' };   // 화면에 보이는 이름(10/28 사용자 '편성·예상이 뭐야')
@@ -145,6 +145,10 @@
     LINES.forEach((ln) => res[ln].seq.forEach((p) => { const d = p.day || '9'; if (!m[p.con] || d > m[p.con]) m[p.con] = d; }));
     return m;
   }
+  const tphOf = (ln, i) => {                                  // cg_wo_sequence.speed 와 같은 표(라인|두께 0.1|폭 100 → t/hr)
+    const S = O.speed || {}, th = +i.thk || 0.6, wd = +i.wdt || 1200;
+    return Math.max(5, S[`${ln}|${(Math.trunc(th * 10) / 10).toFixed(1)}|${Math.floor(wd / 100) * 100}`] || S[ln] || 30);
+  };
   function recalc(c) {
     const s2 = { 확정: 0, 편성: 0, 예상: 0 }, g = {};
     c.items.forEach((i) => { s2[i.kind] += i.t; g[i.grp || '?'] = (g[i.grp || '?'] || 0) + i.t; });
@@ -153,6 +157,7 @@
     c.gap = c.cap - fill >= 0.5 ? r1(c.cap - fill) : 0;
     c.grp = Object.fromEntries(Object.entries(g).sort((a, b) => b[1] - a[1]));
     c.late = c.items.filter((i) => i.late).length;
+    c.hrs = r1(c.items.reduce((s, i) => s + i.t / tphOf(c.line, i), 0));   // 이 칸 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리는 시간
     c.mvIn = c.items.filter((i) => i.moved).length;
     c.flag = c.flag0; c.flagS = c.flagS0; c.why = c.why0;
     const seq = c.items.filter((i) => i.kind !== '확정' && i.grade);   // 날짜 안 순서(재질 차례)대로 이었을 때 바로 못 잇는 짝이 남으면 = 사이에 다른 재질이 필요
@@ -179,7 +184,7 @@
           i.shift = !i.moved && L1[i.con] !== L0[i.con] ? (L1[i.con] > L0[i.con] ? '뒤로 밀림' : '앞당겨짐') : '';
         });
         c.mvOut = MOVES.filter((m) => !m.bad && m.fl === ln && m.fd === d).length;
-        sortDay(c.items, c.fam); recalc(c);
+        c.line = ln; sortDay(c.items, c.fam); recalc(c);
         return c;
       });
       O.out[ln] = res[ln].out.filter((p) => p.t >= 0.5);
@@ -337,7 +342,8 @@
       + `<div class="tv">${n0(fill)}<small>t</small>${c.gap ? ` <small style="color:var(--bad);font-weight:800">빈칸 ${n0(c.gap)}</small>` : ''}</div>`
       + `<div class="gl">${gs}</div>`
       + (c.flag ? `<div class="fg">⚠ ${esc(c.flagS || c.flag)}</div>` : '')
-      + (c.late ? `<div class="lt">필요일 넘김 ${c.late}건</div>` : '')
+      + (c.hAvail && c.hrs > c.hAvail + 0.5 ? `<div class="hr" title="이 칸 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리면 ${n1(c.hrs)}시간 — 가동 가능 ${n1(c.hAvail)}시간(24h × 제원치 가동률)보다 김">⏱ ${n1(c.hrs)}h > ${n1(c.hAvail)}h</div>` : '')
+      + (c.late ? `<div class="lt" title="이 날 생산하면 필요 생산일(수출 입항 − 2일 · 내수 납기 − 1일)보다 늦어지는 주문">필요일보다 늦음 ${c.late}건</div>` : '')
       + (c.mvIn || c.mvOut ? `<div class="mvc">옮김${c.mvIn ? ` 들어옴 ${c.mvIn}` : ''}${c.mvOut ? ` 나감 ${c.mvOut}` : ''}</div>` : '')
       + '</button>';
   }
@@ -348,16 +354,18 @@
     const rows = LINES.map((ln) => `<tr><th>${ln}<small>${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small></th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}</tr>`).join('');
     const jg = days.map((d) => {
       const j = O.jg[idx(d)], df = j.cumSched - j.cumPlan;
-      return `<td class="jg" title="재계획 = 가동계획이 이 날까지 만들기로 한 자가재(컬러 투입분) 누계 · 캘린더 = 이 화면에 넣은 자가재 주문 누계(${md(O.days[0])}부터)"><div>재계획 <b>${n0(j.cumPlan)}</b></div><div>캘린더 <b>${n0(j.cumSched)}</b></div><div class="${df < 0 ? 'bad' : 'good'}">${df < 0 ? `${n0(-df)} 부족` : `+${n0(df)} 앞섬`}</div>${j.mark ? `<span class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 끝내야 할 자가재">컬러 마감 ${n0(j.mark)}t</span>` : ''}</td>`;
+      return `<td class="jg" title="재계획 = 가동계획이 이 날까지 만들기로 한 자가재(컬러 투입분) 누계 · 캘린더 = 이 화면에 넣은 자가재 주문 누계(${md(O.days[0])}부터)"><div class="jr"><span>재계획</span><b>${n0(j.cumPlan)}</b></div><div class="jr"><span>캘린더</span><b>${n0(j.cumSched)}</b></div><div class="jr ${df < 0 ? 'bad' : 'good'}"><span>${df < 0 ? '부족' : '많음'}</span><b>${n0(Math.abs(df))}</b></div>${j.mark ? `<div class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 끝내야 할 자가재">컬러 마감 ${n0(j.mark)}t</div>` : (O.jg.some((x) => x.mark) ? '<div class="mk" style="visibility:hidden">-</div>' : '')}</td>`;
     }).join('');
-    return `<table class="cg"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}<tr><th>자가재 누계<small>재계획 대비</small></th>${jg}</tr></tbody></table>`;
+    const sumD = (d) => LINES.reduce((s, l) => { const c = O.lines[l][idx(d)]; return s + c.conf + c.plan + c.fcst; }, 0);
+    const tot = `<tr class="dsum"><th>하루 합<small>${n0(days.reduce((s, d) => s + sumD(d), 0))}t</small></th>${days.map((d) => `<td><b>${n0(sumD(d))}</b><small>t</small><div class="sub">${LINES.map((l) => n0(O.lines[l][idx(d)].conf + O.lines[l][idx(d)].plan + O.lines[l][idx(d)].fcst)).join(' + ')}</div></td>`).join('')}</tr>`;
+    return `<table class="cg"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}${tot}<tr><th>자가재 누계<small>재계획 대비</small></th>${jg}</tr></tbody></table>`;
   }
 
   function calCard() {
     const nw = nextWeek();
     return '<section class="card"><h2>라인별 2주 <small>칸을 누르면 그날 작업 순서</small></h2>'
       + '<div class="lg"><span><i style="background:var(--c-conf)"></i>지시 대상 = MES 1010 작업지시 대상 코일(제안 순서·예상 시각)</span><span><i style="background:var(--c-plan)"></i>소재 있음 = 소재 들어온 주문</span>'
-      + '<span><i style="background:var(--c-fcst)"></i>입고 예정 = 소재 들어올 주문(입고 + 5일부터)</span><span><i style="background:var(--c-gap)"></i>빈칸</span>'
+      + '<span><i style="background:repeating-linear-gradient(135deg, var(--c-plan) 0 2px, var(--c-fcst) 2px 5px)"></i>입고 예정 = 소재 들어올 주문(입고 + 5일부터)</span><span><i style="background:var(--c-gap);box-shadow:inset 0 0 0 1px var(--line)"></i>빈칸</span>'
       + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>노랑 = M/C(강종 교체)</span><span><i style="background:var(--bad)"></i>빨간 줄 = 확인 필요(현장 강종 ≠ 계획 · 능력 초과 · 재질 순서)</span>'
       + `<span>능력 = 제원치 · 강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순(수출 = 입항 − 2일 · 내수 = 납기 − 1일${O.expNeed && O.expNeed.due ? ` · 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 1일` : ''})</span></div>`
       + grpLine()
@@ -377,14 +385,12 @@
     if (m.op === 'set') return `<b>${esc(m.con)}</b> ${mdw(m.fd)}${ln2(m.fl)} 톤 ${n0(m.from)} → <b>${n0(m.t)}t</b>${m.short ? ` <span class="sub">(더 당겨 올 물량 없음 ${n0(m.short)}t)</span>` : ''}`;
     return `<b>${esc(m.con)}</b> ${n0(m.t)}t · ${m.fl} ${mdw(m.fd)} → <b>${mdw(m.td)}${m.fl !== m.tl ? ` ${m.tl}` : ''}</b>`;
   }
-  function swapBox() {
-    return `<div class="swb"><b>날이 넘칠 때</b><label><input type="radio" name="swp" value="1"${SWAP ? ' checked' : ''}> 필요일 늦은 주문을 빼서 아래 목록으로</label><label><input type="radio" name="swp" value="0"${SWAP ? '' : ' checked'}> 뒤 주문을 순서대로 밀기</label></div>`;
-  }
+
   function moveBar() {
-    if (!MOVES.length) return swapBox() + '<p class="msg" style="margin:0 0 10px">칸을 누르면 주문마다 「옮기기·톤」 · 「빼기」, 아래 「칸에 못 들어간 주문」은 「넣기」 — 넣고 빼면서 맞추면 됨.</p>';
+    if (!MOVES.length) return '<p class="msg" style="margin:0 0 10px">칸을 누르면 주문마다 「옮기기·톤」 · 「빼기」, 아래 「칸에 못 들어간 주문」은 「넣기」 — 넣고 빼면서 맞추면 됨.</p>';
     const rmT = (O.removed || []).reduce((a, p) => a + p.t, 0);
     const outs = LINES.flatMap((l) => (O.out[l] || []).map((p) => [l, p])), oT = outs.reduce((a, [, p]) => a + p.t, 0);
-    return swapBox() + `<div class="mvbar"><b>바꾼 것 ${MOVES.length}건</b>${rmT >= 0.5 ? `<span class="msg">뺀 주문 ${(O.removed || []).length}건 ${n0(rmT)}t → 아래 목록 「뺀 주문」</span>` : ''}<span class="msg">${dirty() ? '아직 저장 안 됨 — 아래 「다음 주 생산 확정」에서 저장' : '확정본에 저장됨'}</span><button type="button" class="lnk" id="mv-clear">모두 되돌리기</button><ul>`
+    return `<div class="mvbar"><b>바꾼 것 ${MOVES.length}건</b>${rmT >= 0.5 ? `<span class="msg">뺀 주문 ${(O.removed || []).length}건 ${n0(rmT)}t → 아래 목록 「뺀 주문」</span>` : ''}<span class="msg">${dirty() ? '아직 저장 안 됨 — 아래 「다음 주 생산 확정」에서 저장' : '확정본에 저장됨'}</span><button type="button" class="lnk" id="mv-clear">모두 되돌리기</button><ul>`
       + MOVES.map((m, k) => `<li${m.bad ? ' class="bad"' : ''}>${opText(m)}${m.bad ? ' · 원래 칸에 없음(자료 갱신)' : ''} <button type="button" class="lnk" data-undo="${k}">되돌리기</button></li>`).join('')
       + `</ul>${oT >= 1 ? `<span class="msg" style="color:var(--bad)">밀려서 2주 밖으로 나간 주문 ${outs.length}조각 ${n0(oT)}t: ${outs.slice(0, 6).map(([l, p]) => `${esc(p.con)} ${n0(p.t)}t`).join(' · ')}${outs.length > 6 ? ' …' : ''}</span>` : ''}</div>`;
   }
@@ -425,7 +431,7 @@
     });
     return L.map((i) => {
       const k = i.k;
-      const need = i.od ? `<span class="bd od" title="필요 생산일이 이미 지남">필요 ${md(i.need)} 지남</span>` : i.late ? `<span class="bd late" title="이 날 생산하면 필요 생산일보다 늦음">필요 ${md(i.need)} 넘김</span>` : i.need ? `필요 <b>${md(i.need)}</b>` : '';
+      const need = i.od ? `<span class="bd od" title="필요 생산일이 이미 지남">필요 ${md(i.need)} 지남</span>` : i.late ? `<span class="bd late" title="이 날 생산하면 필요 생산일보다 늦음">필요 ${md(i.need)}보다 늦음</span>` : i.need ? `필요 <b>${md(i.need)}</b>` : '';
       const tags = [i.moved ? `<span class="bd mv">옮김 ← ${md(i.moved.fd)}${i.moved.fl !== ln ? ' ' + i.moved.fl : ''}</span>` : i.shift ? `<span class="bd ${i.shift === '뒤로 밀림' ? 'late' : 'mv'}" title="다른 주문을 옮기거나 넣어서 날짜가 바뀜">${i.shift}</span>` : i.locked ? '<span class="bd mv">확정본</span>' : '',
         i.matLate ? `<span class="bd od">소재 ${md(i.avail)}부터</span>` : '', i.shipMiss ? '<span class="bd od" title="배 입항일이 지났는데 아직 생산 전 — 배선 변경 확인">입항 지남</span>' : ''].filter(Boolean).join(' ');
       const seq = i.kind === '확정' ? (i.seq || k + 1) : ++n;
@@ -458,7 +464,7 @@
       + `<thead><tr><th>상태 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 재질 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">이 날 톤 · 계약 전체</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
       : `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
     dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>${famCh(c.fam)}${c.event ? ' · ' + esc(c.event) : ''}</span><span>능력 <b>${n0(c.cap)}t</b> = ${[['지시 대상', c.conf], ['소재 있음', c.plan], ['입고 예정', c.fcst], ['빈칸', c.gap]].filter(([, v]) => v >= 0.5).map(([k, v]) => `${k} ${n0(v)}`).join(' + ')}</span>`
-      + `${pg ? `<span>재계획: ${pg}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
+      + `${c.hAvail ? `<span title="이 날 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리는 시간 / 가동 가능 시간(24h × 제원치 가동률)">가동 ${n1(c.hrs)}h / 가능 ${n1(c.hAvail)}h</span>` : ''}${pg ? `<span>재계획: ${pg}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
     $('cc-x').onclick = () => dlg.close();
     $('cc-csv').onclick = () => csv(c.items, `도금_${ln}_${d}.csv`);
     dlg.querySelectorAll('button.mvb').forEach((b) => b.onclick = () => { const r = $('mvr-' + b.dataset.k); r.hidden = !r.hidden; });
@@ -638,7 +644,6 @@
     $('cc-main').querySelectorAll('#cc-rk button').forEach((b) => b.onclick = () => { rk = b.dataset.rk; try { localStorage.setItem(RK_KEY, rk); } catch (e) { /* 무시 */ } render(); });
     $('cc-save').onclick = save;
     bindRisk();
-    document.querySelectorAll('input[name="swp"]').forEach((x) => x.onchange = () => { SWAP = x.value === '1'; try { localStorage.setItem('cgl-cal-swap2', x.value); } catch (e) { /* 무시 */ } });
     if ($('mv-clear')) $('mv-clear').onclick = () => { MOVES = []; saveMoves(); applyMoves(); render(); };
     $('cc-main').querySelectorAll('[data-undo]').forEach((b) => b.onclick = () => { MOVES.splice(+b.dataset.undo, 1); saveMoves(); applyMoves(); render(); });
     if (window.UI) UI.reveal($('cc-main'));
