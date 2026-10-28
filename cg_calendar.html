@@ -6,7 +6,7 @@
 <title>도금 2주 생산 캘린더</title>
 <meta name="description" content="라인별 2주 생산 캘린더 — 현장 작업지시(확정)·소재 있는 주문(편성)·입고 예정(예상)을 라인 능력에 채움, 수요일 확정·준수율">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610281238">
+<link rel="stylesheet" href="ui/theme.css?v=2610281247">
 <style>
 main.wrap { max-width: none; }
 :root { --c-conf: #2e7d32; --c-plan: #3774a1; --c-fcst: #9cc3e2; --c-gap: #e3e7ec; }
@@ -88,7 +88,8 @@ dialog.dd::backdrop { background: rgba(15, 23, 32, .45); }
 .cf input { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: inherit; width: 140px; }
 .cf button.go { font: inherit; font-weight: 800; border: 0; background: var(--brand-2); color: #fff; border-radius: 8px; padding: 8px 16px; cursor: pointer; white-space: nowrap; }
 .cf button.go:disabled { opacity: .5; cursor: default; }
-.msg { font-size: 14px; color: var(--ink-2); }
+.msg { font-size: 14px; color: var(--ink-2); } .msg .no, b.no { color: var(--bad); } b.okc { color: var(--good); }
+#cc-who { width: 150px; font-size: 13.5px; }
 table.it.cmp { table-layout: fixed; font-size: 14px; }
 table.it.cmp td { padding: 6px 8px; vertical-align: middle; }
 table.it.cmp th { padding: 6px 8px; font-size: 13px; }
@@ -130,8 +131,8 @@ button.lnk { font: inherit; font-size: 13.5px; border: 1px solid var(--line); ba
   <dialog class="dd" id="cc-dlg"></dialog>
 </main>
 <footer class="foot"><div class="wrap"><span>원본: MES 작업지시 · 주문진도(F/H·포스코·입고) · 최신 재계획(라인 능력·강종)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610281238"></script>
-<script src="engine/crypto.js?v=2610281238"></script>
-<script src="cg_calendar.js?v=2610281238"></script>
+<script src="ui/shell.js?v=2610281247"></script>
+<script src="engine/crypto.js?v=2610281247"></script>
+<script src="cg_calendar.js?v=2610281247"></script>
 </body>
 </html>
