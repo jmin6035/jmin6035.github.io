@@ -106,6 +106,11 @@
       });
       O.out[ln] = res[ln].out.filter((p) => p.t >= 0.5);
     });
+    O.byCon = {};                                            // 계약번호-행번 → 2주 안 날짜별 톤 + 2주 밖(한 계약의 코일 전체량을 날짜별로 나눠 봄)
+    LINES.forEach((ln) => {
+      O.lines[ln].forEach((c) => c.items.forEach((i) => { const m = (O.byCon[i.con] = O.byCon[i.con] || { days: [], out: 0 }); m.days.push([ln, c.d, i.t]); }));
+      O.out[ln].forEach((p) => { const m = (O.byCon[p.con] = O.byCon[p.con] || { days: [], out: 0 }); m.out += p.t; });
+    });
   }
   /* 작업 규칙(docs/13, cg_wo_sequence 관문과 같은 값): 앞뒤 두께 차 0.3mm(2CGL 0.4t 미만 0.2) · 두께비 1.3배 · 2CGL 후처리 같은 층 다른 약액 바로 이음 금지.
      폭은 넓은 폭 → 좁은 폭, 넓힘 한도(AL 10mm·그 밖 30mm) 넘으면 새 단위(허용). 계약 단위 근사 — 코일 단위 최종 확인은 작업지시 순서 화면 */
@@ -255,6 +260,12 @@
     }));
     return opt.join('');
   }
+  function conTxt(i, ln, d) {                               // 이 계약 전체: 주문량 · 이미 생산 · 다른 날 · 2주 밖
+    const m = O.byCon[i.con] || { days: [], out: 0 }, oth = m.days.filter(([l, dd]) => !(l === ln && dd === d));
+    const rest = (i.ordT || 0) - (i.prodT || 0) - m.days.reduce((a, x) => a + x[2], 0);   // 주문량 − 생산 − 2주 캘린더 = 그 뒤(2주 밖·허용차)
+    const parts = [i.ordT ? `계약 ${n0(i.ordT)}` : '', i.prodT >= 0.5 ? `생산 ${n0(i.prodT)}` : '', oth.length ? `다른 날 ${oth.slice(0, 2).map(([l, dd, t]) => `${md(dd)}${l !== ln ? ' ' + l : ''} ${n0(t)}`).join('·')}${oth.length > 2 ? '…' : ''}` : '', rest >= 5 ? `2주 뒤 ${n0(rest)}` : ''].filter(Boolean);
+    return parts.length ? `<div class="sub xs" title="${esc(parts.join(' · '))}">${parts.join(' · ')}</div>` : '';
+  }
   function itemRows(L0, ln, d) {
     let n = 0;
     const L = [], at = {};                                    // 같은 주문의 편성·예상 조각은 한 줄로(옮기기는 앞 조각 기준)
@@ -277,7 +288,7 @@
         + `<td><div class="con">${esc(i.con)}</div><div class="sub one">${who(i)}</div></td>`
         + `<td><span class="chs1">${famCh(i.fam)}${i.exp ? '<span class="ch exp">수출</span>' : '<span class="ch">내수</span>'}${i.cot ? `<span class="ch">${esc(i.cot)}</span>` : ''}${i.aft ? `<span class="ch">${esc(i.aft)}</span>` : ''}</span></td>`
         + `<td class="sz">${i.thk != null ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw"><b>${esc(i.grp || '')}</b></td>`
-        + `<td class="num"><b>${(+i.tt).toFixed(1)}</b>${i.extra ? `<div class="sub xs">${i.xk} ${(+i.extra).toFixed(1)}</div>` : ''}</td>`
+        + `<td class="num"><b>${(+i.tt).toFixed(1)}</b>${i.extra ? `<div class="sub xs">${i.xk} ${(+i.extra).toFixed(1)}</div>` : ''}${conTxt(i, ln, d)}</td>`
         + `<td class="nw dt2">${[i.arr ? `입항 <b>${md(i.arr)}</b>` : i.due ? `납기 ${md(i.due)}` : '', need].filter(Boolean).join(' · ')}${tags ? `<div>${tags}</div>` : ''}</td>`
         + `<td class="nw">${i.kind === '확정' ? '<span class="sub">MES 지시됨</span>' : `<button type="button" class="lnk mvb" data-k="${k}">옮기기</button>`}</td></tr>`
         + (i.kind === '확정' ? '' : `<tr class="mvr" id="mvr-${k}" hidden><td></td><td colspan="7"><div class="mvw"><b>${esc(i.con)}</b><input type="number" class="mvt" value="${(+i.t).toFixed(1)}" min="0.1" max="${i.t}" step="0.1" aria-label="옮길 톤">t 를`
@@ -300,8 +311,8 @@
     body += '<div class="how"><div><b>이 날에 들어온 기준</b> 필요 생산일(수출 = 입항 − 4일, 내수 = 납기 − 3일) 빠른 주문부터, 그날 라인·강종이 맞는 것을 능력만큼 · 소재 있음(편성) 먼저, 입고 예정(예상)은 입고 + 5일부터</div>'
       + '<div><b>순서</b> 확정 = MES 작업지시 순서 그대로 · 편성·예상 = 현장 규칙(넓은 폭 → 좁은 폭, 같은 폭이면 얇은 것 먼저)</div>'
       + '<div><b>옮기기</b> 24시간 연속 가동 = 라인마다 한 줄 순서. 고른 날 맨 앞에 끼워 넣고 뒤 주문은 순서대로 밀림(능력 초과 없음) · 불가 = 강종(M/C)·소재 입고일·라인 정지·작업 규칙(그날 주문과 두께 차 0.3mm·두께비 1.3배·후처리 같은 층) → 모두 지키는 가장 가까운 날 제시 · 코일 단위 최종 확인은 작업지시 순서 · 「다음 주 확정」을 눌러야 저장</div></div>';
-    body += c.items.length ? `<table class="it cmp"><colgroup><col style="width:9%"><col style="width:25%"><col style="width:17%"><col style="width:10%"><col style="width:6%"><col style="width:7%"><col style="width:18%"><col style="width:8%"></colgroup>`
-      + `<thead><tr><th>구분 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">톤</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
+    body += c.items.length ? `<table class="it cmp"><colgroup><col style="width:8%"><col style="width:23%"><col style="width:16%"><col style="width:9%"><col style="width:5%"><col style="width:12%"><col style="width:15%"><col style="width:7%"></colgroup>`
+      + `<thead><tr><th>구분 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">이 날 톤 · 계약 전체</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
       : `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
     dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>${famCh(c.fam)}${c.event ? ' · ' + esc(c.event) : ''}</span><span>능력 <b>${n0(c.cap)}t</b> = ${[['확정', c.conf], ['편성', c.plan], ['예상', c.fcst], ['빈칸', c.gap]].filter(([, v]) => v >= 0.5).map(([k, v]) => `${k} ${n0(v)}`).join(' + ')}</span>`
       + `${pg ? `<span>재계획: ${pg}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
