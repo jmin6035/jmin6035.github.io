@@ -25,13 +25,13 @@
     const t = x.trt;
     const spec = `<div class="sp1">${x.thick} × ${n0(x.width)} <span class="bk">· 표면사상 ${esc(x.sur)}${t && t.cot ? ` · 도금량 ${esc(t.cot)}` : ''}</span></div>`
       + (t ? `<div class="sp2" title="${esc(t.src)}"><b>후처리</b> ${esc(t.aft || '-')} <span class="bk">${esc(t.aftNm || '')}</span></div><div class="sp2"><b>도유</b> ${esc(t.oil || '-')} <span class="bk">${esc(t.oilNm || '')}</span></div>`
-        : '<div class="sp2 bk">후처리·도유 — 아직 모름(이 코일의 주문이 아직 연결 안 됨)</div>');
+        : `<div class="sp2 bk">후처리·도유 — ${x.con ? '주문 사양 조회 대기' : '모름(계약 미연결)'}</div>`);
     return `<tr${dn ? ' class="hasdn"' : ''}><td class="c"><b>${x.seq}</b></td>`
       + `<td class="tm">${dn ? `<span class="bk">더미 ${tm(x.downStart, day)}</span><br>` : ''}<b>${tm(x.start, day)}</b> – ${tm(x.end, day)}</td>`
       + `<td class="l">${x.con ? `<b>${esc(x.con)}</b>` : '<span class="bk">계약 미연결</span>'}${x.conf ? '' : '<span class="gt gt3">미확정</span>'}<br><span class="bk">소재 ${esc(x.raw)}</span></td>`
       + `<td class="c">${md(x.req) || '-'}</td>`
       + `<td class="l wr">${spec}</td>`
-      + `<td class="num" title="톤은 추정(대상 선정 화면에 무게가 없음): 같은 두께·폭 코일의 보통 무게 × 코일 ${esc(x.cnt)}개 · 시간당 생산량 = ${esc(x.tphSrc)}"><b>${n1(x.t)}t</b> · ${n0(x.runMin)}분<br><span class="bk">추정 ${esc(x.cnt)}코일 · ${n1(x.tph)}t/h</span></td>`
+      + `<td class="num" title="${x.wgt ? '톤 = 소재 입고 무게' : `톤은 추정: 같은 두께·폭 코일의 보통 무게 × 코일 ${esc(x.cnt)}개`} · 시간당 생산량 = ${esc(x.tphSrc)}"><b>${n1(x.t)}t</b> · ${n0(x.runMin)}분<br><span class="bk">${x.wgt ? `소재 무게 · 제품 ${esc(x.cnt)}코일` : `추정 ${esc(x.cnt)}코일`} · ${n1(x.tph)}t/h</span></td>`
       + `<td class="l chg">${(x.chg || []).map((c) => `<div>${esc(c)}</div>`).join('')}</td>`
       + `<td class="l wr">${(x.downs || []).length ? ((x.downs.length > 1 && dn) ? `<div class="wo-ds">합계 ${n1(x.exp)}분</div>` : '') + x.downs.map((d) => `<div class="wo-dl"><b>${esc(d.c)}</b> <span class="wo-dm">${n1(d.m)}분</span><div class="bk">${esc(d.b)}</div></div>`).join('') : '<span class="bk">없음</span>'}</td></tr>`;
   }
@@ -51,12 +51,12 @@
       if (x.day !== cur) {
         cur = x.day;
         const s = (v.days || {})[cur] || {};
-        h += `<tr class="day"><td colspan="${NC}"><div class="dayh"><b>${dayNm(cur)}</b><span>${n0(s.n)}코일 · ${n0(s.t)}t(추정) · 생산 ${hm(s.run || 0)} · <em>예상 더미 ${n1(s.down)}분</em></span></div>${strip(v, cur, byS)}</td></tr>`;
+        h += `<tr class="day"><td colspan="${NC}"><div class="dayh"><b>${dayNm(cur)}</b><span>${n0(s.n)}코일 · ${n0(s.t)}t · 생산 ${hm(s.run || 0)} · <em>예상 더미 ${n1(s.down)}분</em></span></div>${strip(v, cur, byS)}</td></tr>`;
       }
       h += row(x, cur);
     });
     return `<div class="scroll"><table class="t wo cgwo"><colgroup><col style="width:4%"><col style="width:10%"><col style="width:13%"><col style="width:7%"><col style="width:17%"><col style="width:10%"><col style="width:18%"><col style="width:21%"></colgroup>${HEAD}<tbody>${h}</tbody></table></div>`
-      + '<p class="hint lg"><i class="sr"></i>생산 <i class="sd"></i>예상 더미(앞 코일과 바뀜) — 띠에 마우스를 올리면 내용이 보입니다. 시각·톤은 추정(대상 선정 화면에 무게가 없음)</p>';
+      + '<p class="hint lg"><i class="sr"></i>생산 <i class="sd"></i>예상 더미(앞 코일과 바뀜) — 띠에 마우스를 올리면 내용이 보입니다. 시각은 추정 · 톤은 소재 입고 무게(없는 코일만 추정)</p>';
   }
 
   function conditions(l) {
@@ -186,14 +186,14 @@
     $('wo-main').innerHTML = tabs() + (O.missing && O.missing.length ? `<div class="miss"><b>아직 안 들어온 자료·조건</b> — ${O.missing.map(esc).join(' / ')}</div>` : '')
       + `<section class="card"><div class="seg" id="wo-lines">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l} <small>${O.lines[l].n}코일</small></button>`).join('')}</div>`
       + '<div class="kpis" style="margin-top:12px">'
-      + `<div class="kpi"><div class="l">돌릴 대상</div><div class="v">${n0(v.n)}<small>코일 ${n0(v.tSum)}t</small></div><div class="b">대상 선정 화면 · 그중 확정 ${n0(v.nConf)}코일 · 톤은 추정 · 가동계획상 ${esc(md(v.day))} 강종 ${esc(plan)}</div></div>`
+      + `<div class="kpi"><div class="l">돌릴 대상</div><div class="v">${n0(v.n)}<small>코일 ${n0(v.tSum)}t</small></div><div class="b">대상 선정 화면 · 그중 확정 ${n0(v.nConf)}코일 · 가동계획상 ${esc(md(v.day))} 강종 ${esc(plan)}</div></div>`
       + `<div class="kpi"><div class="l">제안 순서대로면</div><div class="v">${v.until ? esc(tm(v.until)) : '-'}<small>까지</small></div><div class="b">${esc(tm(v.from))} 출발 · 생산 ${hm(v.runSum || 0)}</div></div>`
       + `<div class="kpi"><div class="l">예상 더미 (제안 순서)</div><div class="v wv">${n1(v.ours)}<small>분</small></div><div class="b">사양 바뀜 ${n0(v.oursChg)}번</div></div>`
       + '</div>'
       + (v.n ? `<div class="wo-cmp${gain < 0 ? ' bad' : ''}"><b>화면에 올라온 순서와 비교</b> — 같은 ${n0(v.n)}코일을 대상 선정 화면에 올라온 순서대로 돌리면 예상 더미 ${n1(v.mes)}분 (사양 바뀜 ${n0(v.mesChg)}번) → 제안이 <b>${gain >= 0 ? `${n1(gain)}분 짧음` : `${n1(-gain)}분 김`}</b> <span class="bk">(같은 더미 기준표로 계산)</span></div>` : '')
       + (blk ? `<div class="cgbs"><span class="bk">표면사상 묶음</span> ${blk}</div>` : '')
       + '</section>'
-      + (v.n ? `<section class="card"><h2>제안 순서 <small class="bk">날짜별 · 같은 계약번호-행번은 붙여서</small></h2><div class="strip-lg"><span>날짜 줄 아래 막대 = 그날 07시~다음날 07시 라인 사용:</span><span><i class="sr"></i>생산(코일)</span><span><i class="sd"></i>예상 더미</span><span>빈 칸 = 제안 대상 아닌 시간(앞 지시 작업·대기)</span></div>${table(v)}</section>` : '<section class="card"><p>대상 선정 화면에 올라온 코일이 없습니다.</p></section>')
+      + (v.n ? `<section class="card"><h2>제안 순서 <small class="bk">날짜별 · 같은 계약번호-행번은 붙여서</small></h2><div class="strip-lg"><span>날짜 줄 아래 막대 = 그날 07시~다음날 07시 라인 사용:</span><span><i class="sr"></i>생산(코일)</span><span><i class="sd"></i>예상 더미</span><span>빈 칸 = 제안 대상 아닌 시간(앞 지시 작업·대기)</span></div>${table(v)}</section>` : `<section class="card"><p>지금 대상 선정 화면에 ${esc(line)} 코일이 없습니다${v.lastDay ? ` <span class="bk">(마지막 ${md(v.lastDay)})</span>` : ''}.</p></section>`)
       + boardCard(line);
     $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; render(); });
     bindTabs();
