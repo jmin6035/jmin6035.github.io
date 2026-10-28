@@ -16,7 +16,7 @@
   const F = {
     act: ['조치 필요', (x) => x.hurry || x.lateIn || x.chk || x.st === '미발주'],
     late: ['소재 지연', (x) => x.lateIn],
-    hurry: ['앞당김 필요', (x) => x.hurry],
+    hurry: ['포스코 독촉', (x) => x.hurry],
     chk: ['입고 확인 필요', (x) => x.chk],
     posco: ['포스코 진행', (x) => x.st === '포스코 진행' || x.st.startsWith('발주')],
     ready: ['입고 완료', (x) => x.st === '입고 완료'],
@@ -32,7 +32,7 @@
   if (!BY[by]) by = 'dst';
   function stBadge(x) {
     if (x.lateIn) return '<span class="st late">소재 지연</span>';
-    if (x.hurry) return '<span class="st hurry">앞당김 필요</span>';
+    if (x.hurry) return '<span class="st hurry" title="필요 입고 3주 안인데 아직 열연 이전 — 포스코에 진행을 당겨 달라고 요청">포스코 독촉</span>';
     if (x.chk) return '<span class="st hurry">입고 확인</span>';
     const c = { '입고 완료': 'ok', '생산 중': 'mid', '생산 완료': 'ok', '미발주': 'late' }[x.st] || 'na';
     return `<span class="st ${c}">${esc(x.st)}</span>`;
@@ -79,7 +79,7 @@
   const HEAD = '<thead><tr><th>상태</th><th>계약번호-행번</th><th>제품 · 두께×폭</th><th>고객사·담당·목적지</th><th>납기 · 입항</th><th class="num">F/H 발주</th><th>포스코 진행</th><th class="num">입고 · 미입고</th><th class="num">생산</th><th class="num">필요 입고</th></tr></thead>';
   const sumOf = (L) => ({ n: L.length, rem: L.reduce((s, x) => s + (x.remIn || 0), 0), hurry: L.filter((x) => x.hurry).length, chk: L.filter((x) => x.chk).length, late: L.filter((x) => x.lateIn).length, est: L.filter((x) => x.grpSrc && x.grpSrc !== '주문').length, need: L.filter((x) => x.remIn > 0.5).map((x) => x.needIn).filter(Boolean).sort()[0] });
   const stat = (S) => `<span class="gs"><b>${n0(S.n)}</b>건</span><span class="gs">미입고 <b>${n0(S.rem)}</b>t</span>`
-    + (S.late ? `<span class="gs bad">소재 지연 <b>${S.late}</b></span>` : '') + (S.hurry ? `<span class="gs warn">앞당김 <b>${S.hurry}</b></span>` : '') + (S.chk ? `<span class="gs warn">입고 확인 <b>${S.chk}</b></span>` : '')
+    + (S.late ? `<span class="gs bad">소재 지연 <b>${S.late}</b></span>` : '') + (S.hurry ? `<span class="gs warn">독촉 <b>${S.hurry}</b></span>` : '') + (S.chk ? `<span class="gs warn">입고 확인 <b>${S.chk}</b></span>` : '')
     + (S.need ? `<span class="gs">가장 급한 필요 입고 <b>${md(S.need)}</b></span>` : '');
   function sub(name, L) {
     const S = sumOf(L);
@@ -136,14 +136,14 @@
     $('od-meta').textContent = `${O.asOf} 기준 · 납기 −30일 ~ +90일 계약`;
     const wait = [!O.hasRun && '포스코 진행', !O.hasCus && '고객사·담당자', !O.hasFull && '목적지'].filter(Boolean);
     $('od-main').innerHTML = coverCard() + `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 주문진도</h2><div class="od-kpi" id="od-kpi">${kpi}</div>`
-      + `<p class="od-note">필요 입고일 = 내수 납기 −${O.basis.leadIn + O.basis.prep}일 · 수출 입항 −${O.basis.leadIn + O.basis.prep + 1}일 · 예상 입고 = F/H 인도기한 ${O.dleOff}일 · 앞당김 = 필요 입고 3주 안 + 아직 열연 이전 · 입고 확인 = 필요 입고 2주 안 미입고 · 소재 지연 = 필요 입고일 지남</p>`
+      + `<p class="od-note">필요 입고일 = 내수 납기 −${O.basis.leadIn + O.basis.prep}일 · 수출 입항 −${O.basis.leadIn + O.basis.prep + 1}일 · 예상 입고 = F/H 인도기한 ${O.dleOff}일 · 포스코 독촉 = 필요 입고 3주 안인데 아직 열연 이전 · 입고 확인 = 필요 입고 2주 안 미입고 · 소재 지연 = 필요 입고일 지남</p>`
       + (wait.length ? `<p class="od-wait">⏳ ${wait.join(' · ')}: 다음 자동 실행(07:35) 뒤</p>` : '')
       + `<div class="od-flt"><span class="lb">묶음</span><span class="seg" id="od-by">${Object.keys(BY).map((b) => `<button type="button" data-b="${b}" aria-pressed="${b === by}">${BY[b][0]}별</button>`).join('')}</span>`
       + `<select id="od-ln" aria-label="라인"><option value="">라인 전체</option><option${ln === '1CGL' ? ' selected' : ''}>1CGL</option><option${ln === '2CGL' ? ' selected' : ''}>2CGL</option></select>`
       + `<select id="od-ex" aria-label="내수·수출"><option value="">내수·수출</option><option value="E"${ex === 'E' ? ' selected' : ''}>수출</option><option value="D"${ex === 'D' ? ' selected' : ''}>내수</option></select>`
       + `<input id="od-q" placeholder="계약번호·고객사·담당자·목적지 찾기" value="${esc(q)}"><span class="cnt">${n0(S.n)}건 · 미입고 ${n0(S.rem)}t</span>`
       + '<button type="button" class="lnk" id="od-open">모두 펼치기</button><button type="button" class="lnk" id="od-close">모두 접기</button></div>'
-      + (byG.length ? `<nav class="og-sum">${byG.map(([g, v], gi) => { const s = sumOf(v); return `<a href="#og-${gi}" class="og-chip"><b>${esc(g)}</b> ${n0(s.n)}건${s.late ? ` · <span class="bad">지연 ${s.late}</span>` : ''}${s.hurry ? ` · <span class="warn">앞당김 ${s.hurry}</span>` : ''}${s.chk ? ` · <span class="warn">입고 확인 ${s.chk}</span>` : ''}</a>`; }).join('')}</nav>` : '<p class="od-note">해당 계약이 없습니다.</p>')
+      + (byG.length ? `<nav class="og-sum">${byG.map(([g, v], gi) => { const s = sumOf(v); return `<a href="#og-${gi}" class="og-chip"><b>${esc(g)}</b> ${n0(s.n)}건${s.late ? ` · <span class="bad">지연 ${s.late}</span>` : ''}${s.hurry ? ` · <span class="warn">독촉 ${s.hurry}</span>` : ''}${s.chk ? ` · <span class="warn">입고 확인 ${s.chk}</span>` : ''}</a>`; }).join('')}</nav>` : '<p class="od-note">해당 계약이 없습니다.</p>')
       + byG.map(([g, v], gi) => group(g, v, gi)).join('') + '</section>';
     $('od-kpi').querySelectorAll('button').forEach((b) => b.onclick = () => { flt = b.dataset.f; render(); });
     $('od-by').querySelectorAll('button').forEach((b) => b.onclick = () => { by = b.dataset.b; try { localStorage.setItem(BY_KEY, by); } catch (e) { /* 무시 */ } render(); });
