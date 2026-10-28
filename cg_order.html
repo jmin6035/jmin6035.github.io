@@ -6,7 +6,7 @@
 <title>도금 주문진도</title>
 <meta name="description" content="도금 계약-행번별 주문서 전체 흐름 — F/H 발주·포스코 진행·입고·생산예정·생산, 필요 입고일 대비 여유와 포스코 독촉 대상">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610282329">
+<link rel="stylesheet" href="ui/theme.css?v=2610282348">
 <style>
 main.wrap { max-width: none; }
 .od-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; margin: 0 0 14px; }
@@ -48,18 +48,25 @@ table.t.od th { padding: 9px 10px; font-size: 14px; text-align: left !important;
 table.t.od th.num { text-align: right !important; }
 table.t.od td { padding: 10px; vertical-align: top !important; line-height: 1.55; white-space: normal !important; text-align: left !important; word-break: keep-all; overflow-wrap: anywhere; }
 table.t.od td.num { text-align: right !important; font-variant-numeric: tabular-nums; }
-table.t.od td.num b, table.t.od td.num .sub, table.t.od td.num .rem, table.t.od td.num div { white-space: nowrap; }
+table.t.od td.num b, table.t.od td.num .rem, table.t.od td.num .sub { white-space: nowrap; } table.t.od td.num div { white-space: normal; }
 table.t.od td.nw { white-space: nowrap !important; }
 .nmw { display: block; overflow: hidden; word-break: keep-all; overflow-wrap: normal; }
 .con { font-weight: 800; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .sub { font-size: 13.5px; color: var(--ink-2); }
-.sz { font-weight: 700; font-size: 15px; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sz { font-weight: 700; font-size: 15px; margin-top: 4px; font-variant-numeric: tabular-nums; } .sz .sub { white-space: nowrap; } .spc .nw { white-space: normal; overflow-wrap: anywhere; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .ch { display: inline-block; border-radius: 6px; padding: 1px 8px; font-size: 14px; font-weight: 700; background: var(--sub); color: var(--ink); white-space: nowrap; }
 .ch small { font-size: 12.5px; font-weight: 600; opacity: .8; }
 .ch.exp { background: var(--tint-2); color: var(--brand-2); } .ch.dom { background: var(--sub); }
 .ch.fam-AL { background: #e6f0fb; color: #1d5a96; } .ch.fam-AZ, .ch.fam-AZMAC { background: #eef6e8; color: #3d6b1f; } .ch.fam-MAC { background: #f3ecfb; color: #5b2f8f; }
 .rem { color: var(--warn); font-weight: 700; }
+.pbar { display: flex; gap: 2px; margin: 2px 0 4px; letter-spacing: -.03em; }
+.pbar .ps { flex: 1; height: 14px; border-radius: 3px; }
+.pbar.ph { margin: 3px 0 0; } .pbar.ph span { flex: 1; text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.pbar .ps.done { background: #6f8fb0; color: #fff; } .pbar .ps.cur { background: #e8890c; color: #fff; } .pbar .ps.todo { background: var(--grid); color: var(--ink-2); } .pbar .ps.in { background: #2e7d32; color: #fff; }
+.pn { font-size: 13px; font-weight: 700; color: #b45f06; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pbar .ps.done { background: #4d6680; } :root:not([data-theme="light"]) .pn { color: #f0a35e; } }
+:root[data-theme="dark"] .pbar .ps.done { background: #4d6680; } :root[data-theme="dark"] .pn { color: #f0a35e; }
 .done { color: var(--good); font-weight: 700; }
 .st { display: inline-block; border-radius: 10px; padding: 2px 9px; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
 .st.hurry { background: var(--warn-bg); color: var(--warn); } .st.late { background: var(--bad-bg); color: var(--bad); } .st.ok { background: var(--good-bg); color: var(--good); } .st.mid { background: var(--tint-2); color: var(--brand-2); } .st.na { background: var(--sub); color: var(--ink-2); }
@@ -109,8 +116,8 @@ table.gt .neg { color: var(--bad); } table.gt .wrn { color: var(--warn); } table
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>원자료: MES 소재 발주·입고·주문진행(포스코 진행)·도금생산예정일·작업지시·코일 실적·주문 상세</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610282329"></script>
-<script src="engine/crypto.js?v=2610282329"></script>
-<script src="cg_order.js?v=2610282329"></script>
+<script src="ui/shell.js?v=2610282348"></script>
+<script src="engine/crypto.js?v=2610282348"></script>
+<script src="cg_order.js?v=2610282348"></script>
 </body>
 </html>
