@@ -21,7 +21,11 @@
   const KD = { 확정: '작업지시', 편성: '소재 있음', 예상: '입고 예정' };   // 화면에 보이는 이름(10/28 사용자 '편성·예상이 뭐야')
   const cellOf = (ln, d) => O.lines[ln][O.days.indexOf(d)];
   const r1 = (v) => Math.round(v * 10) / 10;
-  const sortDay = (a) => a.sort((x, y) => (x.kind === '확정' ? 0 : 1) - (y.kind === '확정' ? 0 : 1) || (x.kind === '확정' ? (x.seq || 0) - (y.seq || 0) : (y.wdt || 0) - (x.wdt || 0) || (x.thk || 9) - (y.thk || 9)));
+  /* 날짜 안 순서(10/28 재질 규칙 반영): 작업지시는 MES 순서 그대로, 나머지는 재질(등급)끼리 묶고 → 넓은 폭 → 좁은 폭, 같은 폭은 얇은 것 먼저.
+     등급 차례는 바로 못 잇는 짝이 붙지 않게(녹취 10/27): AZ·AL = Gr.E → DDQ → EDDQ → DQ → CQ → 구조용, PosMAC = Gr.E → Gr.C → CQ → DQ → DDQ → EDDQ */
+  const GRANK = { AZ: { GRE: 0, DDQ: 1, EDDQ: 2, DQ: 3, CQ: 4, GRB: 5, GRC: 6, GRD: 7 }, MAC: { GRE: 0, GRC: 1, CQ: 2, GRB: 2.5, GRD: 2.7, DQ: 3, DDQ: 4, EDDQ: 5, LFQ: 3.5 } };
+  const gRank = (fam, g) => { const R = GRANK[String(fam || '').startsWith('MAC') ? 'MAC' : 'AZ']; return g && R[g] != null ? R[g] : 4.5; };
+  const sortDay = (a, fam) => a.sort((x, y) => (x.kind === '확정' ? 0 : 1) - (y.kind === '확정' ? 0 : 1) || (x.kind === '확정' ? (x.seq || 0) - (y.seq || 0) : gRank(fam, x.grade) - gRank(fam, y.grade) || (y.wdt || 0) - (x.wdt || 0) || (x.thk || 9) - (y.thk || 9)));
   /* 24시간 연속 가동 = 라인마다 한 줄로 이어진 생산 순서(10/28 사용자 '도금은 24시간이라 옮기면 캐파 초과·규칙 못 지키는 날도 있다').
      순서를 날짜별 능력으로 잘라 칸에 담음. 옮기기 = 고른 날 맨 앞에 끼워 넣기 → 뒤 주문이 순서대로 밀림(능력 초과 없음).
      못 들어가는 칸: 강종 다름(M/C 전후) · 입고 전 소재 · 라인 정지 → 그 조각은 다음 맞는 날로 */
@@ -150,6 +154,15 @@
     c.late = c.items.filter((i) => i.late).length;
     c.mvIn = c.items.filter((i) => i.moved).length;
     c.flag = c.flag0; c.flagS = c.flagS0; c.why = c.why0;
+    const seq = c.items.filter((i) => i.kind !== '확정' && i.grade);   // 날짜 안 순서(재질 차례)대로 이었을 때 바로 못 잇는 짝이 남으면 = 사이에 다른 재질이 필요
+    for (let k = 1; k < seq.length; k++) {
+      const h = hard(c.line || '', seq[k - 1], seq[k], c.fam);
+      if (h.startsWith('재질') && !c.flag) {
+        const gre = [seq[k - 1].grade, seq[k].grade].includes('GRE');
+        c.flag = `${h} — 사이에 ${gre ? '극저(DQ·DDQ) 1개' : 'DQ·DDQ'} 필요(그날 없음) · 그 날로 옮기거나 극저 주문 넣기`; c.flagS = h.replace(' 바로 못 이음', ' 사이 극저 필요');
+        break;
+      }
+    }
     if (c.mvOut && c.gap) c.why = '옮긴 뒤 이 강종으로 채울 주문이 없음';
   }
   function applyMoves() {
@@ -165,7 +178,7 @@
           i.shift = !i.moved && L1[i.con] !== L0[i.con] ? (L1[i.con] > L0[i.con] ? '뒤로 밀림' : '앞당겨짐') : '';
         });
         c.mvOut = MOVES.filter((m) => !m.bad && m.fl === ln && m.fd === d).length;
-        sortDay(c.items); recalc(c);
+        sortDay(c.items, c.fam); recalc(c);
         return c;
       });
       O.out[ln] = res[ln].out.filter((p) => p.t >= 0.5);
@@ -181,7 +194,13 @@
      폭은 넓은 폭 → 좁은 폭, 넓힘 한도(AL 10mm·그 밖 30mm) 넘으면 새 단위(허용). 계약 단위 근사 — 코일 단위 최종 확인은 작업지시 순서 화면 */
   const TRT_NO = { '2CGL': [['KX', 'IX'], ['TX', 'SX', 'RX', 'QX', 'MX', 'GX', 'DP', 'DA', 'BX', 'BP'], ['LX', 'NX']] };
   const tg = (l, c) => (TRT_NO[l] || []).findIndex((g) => g.includes(c));
-  function hard(l, a, b) {
+  const MAT_NO = { AZ: [['CQ', 'EDDQ'], ['CQ', 'GRE']], MAC: [['GRC', 'LFQ'], ['GRC', 'DQ'], ['GRC', 'DDQ'], ['GRC', 'EDDQ'], ['CQ', 'DDQ'], ['CQ', 'EDDQ']] };
+  const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E', GRB: '구조용' };
+  function hard(l, a, b, fam) {
+    if (a.grade && b.grade && a.grade !== b.grade && fam) {   // 재질 온도: 바로 못 잇는 짝(올리든 내리든)
+      const f = String(fam).startsWith('MAC') ? 'MAC' : fam === 'AZ' ? 'AZ' : '';
+      if ((MAT_NO[f] || []).some(([p, q]) => (a.grade === p && b.grade === q) || (a.grade === q && b.grade === p))) return `재질 ${GRN[a.grade] || a.grade}↔${GRN[b.grade] || b.grade} 바로 못 이음`;
+    }
     if (!a.thk || !b.thk) return '';
     const lim = l === '2CGL' && Math.min(a.thk, b.thk) < 0.4 ? 0.2 : 0.3, d2 = Math.abs(a.thk - b.thk), r = Math.max(a.thk, b.thk) / Math.min(a.thk, b.thk);
     if (d2 > lim + 1e-6) return `두께 ${a.thk.toFixed(2)}↔${b.thk.toFixed(2)}(차 ${d2.toFixed(2)}mm > ${lim})`;
@@ -190,13 +209,14 @@
     if (g >= 0 && a.aft !== b.aft && g === tg(l, b.aft)) return `후처리 ${a.aft}→${b.aft} 같은 층`;
     return '';
   }
-  function daySeq(l, items) {                               // 현장 방식 순서(넓은 폭부터, 규칙 지키는 것 중 가장 가까운 폭, 없으면 새 단위)
-    const rest = items.filter((i) => i.thk && i.wdt).map((i) => ({ thk: +i.thk, wdt: +i.wdt, aft: i.aft, fam: i.fam }));
+  function daySeq(l, items, fam) {                          // 현장 방식 순서(넓은 폭부터, 규칙 지키는 것 중 가장 가까운 폭, 없으면 새 단위)
+    const rest = items.filter((i) => i.thk && i.wdt).map((i) => ({ thk: +i.thk, wdt: +i.wdt, aft: i.aft, fam: i.fam, grade: i.grade }));
     if (!rest.length) return [];
     rest.sort((a, b) => b.wdt - a.wdt);
     const out = [rest.shift()];
     while (rest.length) {
-      const cur = out[out.length - 1], ok = rest.filter((x) => !hard(l, cur, x)), lim = String(cur.fam || '').startsWith('AL') ? 10 : 30;
+      const cur = out[out.length - 1], okAll = rest.filter((x) => !hard(l, cur, x, fam)), same = okAll.filter((x) => (x.grade || '') === (cur.grade || ''));
+      const ok = same.length ? same : okAll, lim = String(cur.fam || '').startsWith('AL') ? 10 : 30;   // 같은 재질 먼저(폭보다 재질), 없으면 규칙 지키는 것
       const nx = ok.filter((x) => x.wdt <= cur.wdt + lim).sort((a, b) => b.wdt - a.wdt)[0] || ok.sort((a, b) => b.wdt - a.wdt)[0]
         || rest.slice().sort((a, b) => Math.abs(a.thk - cur.thk) - Math.abs(b.thk - cur.thk))[0];
       rest.splice(rest.indexOf(nx), 1); out.push(nx);
@@ -205,9 +225,11 @@
   }
   function ruleOk(it, l, d) {                                // 그날 순서 어딘가에 앞뒤 규칙을 지키며 끼울 자리가 있나
     if (!it.thk) return '';
-    const sq = daySeq(l, cellOf(l, d).items.filter((i) => i.con !== it.con)), x = { thk: +it.thk, wdt: +it.wdt, aft: it.aft };
+    const c0 = cellOf(l, d), sq = daySeq(l, c0.items.filter((i) => i.con !== it.con), c0.fam), x = { thk: +it.thk, wdt: +it.wdt, aft: it.aft, grade: it.grade };
     if (!sq.length) return '';
-    for (let k = 0; k <= sq.length; k++) if ((!sq[k - 1] || !hard(l, sq[k - 1], x)) && (!sq[k] || !hard(l, x, sq[k]))) return '';
+    for (let k = 0; k <= sq.length; k++) if ((!sq[k - 1] || !hard(l, sq[k - 1], x, c0.fam)) && (!sq[k] || !hard(l, x, sq[k], c0.fam))) return '';
+    const mat = sq.map((q) => hard(l, q, x, c0.fam)).find((h) => h.startsWith('재질'));
+    if (mat && sq.every((q) => hard(l, q, x, c0.fam))) return `${mat}(그날 ${[...new Set(sq.map((q) => GRN[q.grade] || q.grade || '?'))].join('·')})`;
     const th = sq.map((q) => q.thk), lim = l === '2CGL' && x.thk < 0.4 ? 0.2 : 0.3;
     const lo = Math.max(x.thk / 1.3, x.thk - lim), hi = Math.min(x.thk * 1.3, x.thk + lim);
     const nearAft = sq.some((q) => !hard(l, q, Object.assign({}, x, { aft: q.aft })));
@@ -395,7 +417,7 @@
       const seq = i.kind === '확정' ? (i.seq || k + 1) : ++n;
       return `<tr class="r${i.kind}"><td class="sq"><span class="kd k${i.kind}">${KD[i.kind]}</span> ${seq}</td>`
         + `<td><div class="con">${esc(i.con)}</div><div class="sub one">${who(i)}</div></td>`
-        + `<td><span class="chs1">${famCh(i.fam)}${i.exp ? '<span class="ch exp">수출</span>' : '<span class="ch">내수</span>'}${i.cot ? `<span class="ch">${esc(i.cot)}</span>` : ''}${i.aft ? `<span class="ch">${esc(i.aft)}</span>` : ''}</span></td>`
+        + `<td><span class="chs1">${famCh(i.fam)}${i.grade ? `<span class="ch gr">${esc(GRN[i.grade] || i.grade)}</span>` : ''}${i.exp ? '<span class="ch exp">수출</span>' : '<span class="ch">내수</span>'}${i.cot ? `<span class="ch">${esc(i.cot)}</span>` : ''}${i.aft ? `<span class="ch">${esc(i.aft)}</span>` : ''}</span></td>`
         + `<td class="sz">${i.thk != null ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw"><b>${esc(i.grp || '')}</b></td>`
         + `<td class="num"><b>${(+i.tt).toFixed(1)}</b>${i.extra ? `<div class="sub xs">${KD[i.xk]} ${(+i.extra).toFixed(1)}</div>` : ''}${conTxt(i, ln, d)}</td>`
         + `<td class="nw dt2">${[i.arr ? `입항 <b>${md(i.arr)}</b>` : i.due ? `납기 ${md(i.due)}` : '', need].filter(Boolean).join(' · ')}${tags ? `<div>${tags}</div>` : ''}</td>`
@@ -416,13 +438,13 @@
   function openDay(ln, d) {
     const c = O.lines[ln][O.days.indexOf(d)], dlg = $('cc-dlg');
     const pg = Object.entries(c.planGrp || {}).filter(([, v]) => v >= 1).map(([g, v]) => `${g} ${n0(v)}`).join(' · ');
-    let body = c.flag ? `<div class="fgl">⚠ ${esc(c.flag)} — ${c.flag.startsWith('계획') ? '현장 순서가 우선. M/C·강종 날짜를 재계획에 반영할지 확인' : c.flag.startsWith('옮긴') || c.flag.startsWith('확정본에') ? 'M/C 없이는 이날 생산 불가 — 다른 날로 옮기기' : '능력보다 많음 — 일부를 다른 날로 옮기기'}</div>` : '';
+    let body = c.flag ? `<div class="fgl">⚠ ${esc(c.flag)}${c.flag.startsWith('재질') ? '' : ' — '}${c.flag.startsWith('재질') ? '' : c.flag.startsWith('계획') ? '현장 순서가 우선. M/C·강종 날짜를 재계획에 반영할지 확인' : c.flag.startsWith('옮긴') || c.flag.startsWith('확정본에') ? 'M/C 없이는 이날 생산 불가 — 다른 날로 옮기기' : '능력보다 많음 — 일부를 다른 날로 옮기기'}</div>` : '';
     if (c.why) body += `<div class="fgl" style="background:var(--warn-bg);color:var(--warn)">빈칸 ${n0(c.gap)}t — ${esc(c.why)}</div>`;
     body += '<div class="how"><div><b>이 날에 들어온 기준</b> 필요 생산일(수출 = 입항 − 4일, 내수 = 납기 − 3일) 빠른 주문부터, 그날 라인·강종이 맞는 것을 능력만큼 · 소재 있는 주문 먼저, 입고 예정 주문은 입고 + 5일부터</div>'
-      + '<div><b>순서</b> 작업지시 = MES 순서 그대로 · 나머지 = 현장 규칙(넓은 폭 → 좁은 폭, 같은 폭이면 얇은 것 먼저)</div>'
-      + '<div><b>옮기기</b> 24시간 연속 가동 = 라인마다 한 줄 순서. 고른 날 맨 앞에 끼워 넣고 뒤 주문은 순서대로 밀림(능력 초과 없음) · 불가 = 강종(M/C)·소재 입고일·라인 정지·작업 규칙(그날 주문과 두께 차 0.3mm·두께비 1.3배·후처리 같은 층) → 모두 지키는 가장 가까운 날 제시 · 코일 단위 최종 확인은 작업지시 순서 · 「다음 주 확정」을 눌러야 저장</div></div>';
+      + '<div><b>순서</b> 작업지시 = MES 순서 그대로 · 나머지 = 현장 규칙(같은 재질끼리 묶고 → 넓은 폭 → 좁은 폭, 같은 폭이면 얇은 것 먼저, 재질 차례는 바로 못 잇는 짝이 붙지 않게)</div>'
+      + '<div><b>옮기기</b> 24시간 연속 가동 = 라인마다 한 줄 순서. 고른 날 맨 앞에 끼워 넣고 뒤 주문은 순서대로 밀림(능력 초과 없음) · 불가 = 강종(M/C)·소재 입고일·라인 정지·작업 규칙(그날 주문과 두께 차 0.3mm·두께비 1.3배·후처리 같은 층·재질 온도 AZ CQ↔EDDQ·Gr.E, PosMAC Gr.C↔DQ계·CQ↔DDQ) → 모두 지키는 가장 가까운 날 제시 · 코일 단위 최종 확인은 작업지시 순서 · 「다음 주 확정」을 눌러야 저장</div></div>';
     body += c.items.length ? `<table class="it cmp"><colgroup><col style="width:8%"><col style="width:23%"><col style="width:16%"><col style="width:9%"><col style="width:5%"><col style="width:12%"><col style="width:15%"><col style="width:7%"></colgroup>`
-      + `<thead><tr><th>상태 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">이 날 톤 · 계약 전체</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
+      + `<thead><tr><th>상태 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 재질 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">이 날 톤 · 계약 전체</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
       : `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
     dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>${famCh(c.fam)}${c.event ? ' · ' + esc(c.event) : ''}</span><span>능력 <b>${n0(c.cap)}t</b> = ${[['작업지시', c.conf], ['소재 있음', c.plan], ['입고 예정', c.fcst], ['빈칸', c.gap]].filter(([, v]) => v >= 0.5).map(([k, v]) => `${k} ${n0(v)}`).join(' + ')}</span>`
       + `${pg ? `<span>재계획: ${pg}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
