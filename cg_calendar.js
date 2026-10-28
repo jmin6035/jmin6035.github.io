@@ -532,9 +532,9 @@
   const addedCons = () => new Set(MOVES.filter((m) => m.op === 'add' && !m.bad).map((m) => m.con));
   function riskCard() {
     const T = {
-      rm: ['뺀 주문 · 다시 넣기', (r) => r.rm],
-      win: ['2주 안에 필요 · 못 넣음', (r) => !r.od && !r.rm],
-      od: ['이미 늦은 주문 · 못 넣음', (r) => r.od && !r.stale && !r.rm],
+      rm: ['뺀 주문', (r) => r.rm],
+      win: ['2주 안에 만들어야 함', (r) => !r.od && !r.rm],
+      od: ['이미 늦음', (r) => r.od && !r.stale && !r.rm],
       st: ['30일 넘게 늦음 · 취소/잔량 확인', (r) => r.stale && !r.rm],
     };
     const AD = addedCons();
