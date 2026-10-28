@@ -327,7 +327,7 @@
       + k('이미 늦은 주문', `${n0(O.odT)}<small>t · ${O.nOd}건</small>`, `필요 생산일이 이미 지났는데 아직 생산 전 — 2주 안에 먼저 넣음${(O.shipMiss || []).length ? ` · 그중 입항일 지난 수출 ${O.shipMiss.length}건(입항 지남, 배선 변경 확인)` : ''}`, O.odT > 0 ? 'bad' : 'good')
       + k('2주 안에 못 넣는 주문', `${win.length}<small>건 · ${n0(win.reduce((s, r) => s + r.t, 0))}t</small>`, '이번 2주에 필요한데 칸이 없음(소재 없음·능력 부족)', win.length ? 'warn' : 'good')
       + k('강종 날짜 · 재계획과 현장 다름', `${fl}<small>일</small>`, fl ? misTxt : '재계획 강종과 작업지시 대상이 맞음', fl ? 'bad' : 'good')
-      + k('자가재(컬러 투입) 진도', jgMin >= 0 ? '<span class="gv">충분</span>' : `<span class="bv">${n0(-jgMin)}t 부족</span>`, '컬러 투입에 필요한 자가재 누계 대비 이 캘린더에 넣은 양(가장 모자란 날)', jgMin >= 0 ? 'good' : 'bad')
+      + k('자가재(컬러 투입) 진도', jgMin >= 0 ? '<span class="gv">충분</span>' : `<span class="bv">${n0(-jgMin)}t 부족</span>`, '컬러 계획(투입 일정) 대비 도금 생산 누계 — 가장 모자란 날', jgMin >= 0 ? 'good' : 'bad')
       + '</div>';
   }
 
@@ -351,15 +351,19 @@
   function weekTable(days, nw) {
     const head = days.map((d) => { const wd = dt(d).getDay(); return `<th class="${nw.includes(d) ? 'nx' : wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}${nw.includes(d) ? '<small>수요일 확정 대상</small>' : ''}</th>`; }).join('');
     const idx = (d) => O.days.indexOf(d);
-    const hrsOf = (ln) => { const C = O.lines[ln].slice(0, idx(days[days.length - 1]) + 1), h = C.reduce((s, c) => s + (c.hrs || 0), 0), a = C.reduce((s, c) => s + (c.hAvail || 0), 0); return a ? { r: h / a, over: h - a, last: idx(days[days.length - 1]) === O.days.length - 1 } : null; };   // 첫날부터 이 주 끝까지 누계(24시간 이어서 생산 — 앞뒤 날·주끼리 맞춰짐)
-    const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small>${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small>${hr ? `<small class="hs" title="첫날부터 이 주 끝까지 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리는 시간 ÷ 가동 가능 시간(24h × 제원치 가동률). 24시간 이어서 생산하므로 하루·한 주가 넘치거나 남아도 앞뒤와 맞춰짐">시간 ${Math.round(hr.r * 100)}%</small>${hr.last && hr.over >= 1 ? `<small class="hs ov" title="2주 주문을 다 돌리는 데 가동 가능 시간보다 ${n1(hr.over)}시간 더 걸림 → 마지막 날 뒤로 넘어감">2주 밖 ${n0(hr.over)}h</small>` : ''}` : ''}</th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}</tr>`; }).join('');
+    const hrsOf = (ln) => {                                   // 2주 전체를 24시간 이어서 돌렸을 때 마지막 날 뒤로 넘어가는 양(T/Hr 시간 기준) — 하루·한 주 넘침은 다음 날로 이어져 생산되므로 안 보여 줌
+      if (idx(days[days.length - 1]) !== O.days.length - 1) return null;
+      const C = O.lines[ln], h = C.reduce((s, c) => s + (c.hrs || 0), 0), a = C.reduce((s, c) => s + (c.hAvail || 0), 0), t = C.reduce((s, c) => s + c.conf + c.plan + c.fcst, 0);
+      return h - a >= 1 ? { h: h - a, t: (h - a) * t / h } : null;
+    };
+    const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small>${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small>${hr ? `<small class="hs ov" title="2주 주문을 T/Hr(같은 두께·폭 3개월 실적)로 24시간 이어서 돌리면 가동 가능 시간(24h × 제원치 가동률)보다 ${n1(hr.h)}시간 더 걸림 → 약 ${n0(hr.t)}t 은 ${md(O.days[O.days.length - 1])} 뒤에 생산">2주 밖 ${n0(hr.t)}t</small>` : ''}</th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}</tr>`; }).join('');
     const jg = days.map((d) => {
       const j = O.jg[idx(d)], df = j.cumSched - j.cumPlan;
-      return `<td class="jg" title="필요 = 컬러 라인 투입 일정에 맞추려면 이 날까지 도금에서 만들어야 할 자가재 누계(가동계획 기준) · 넣음 = 이 캘린더에 넣은 자가재 주문 누계(${md(O.days[0])}부터)"><div class="jr"><span>필요</span><b>${n0(j.cumPlan)}</b></div><div class="jr"><span>넣음</span><b>${n0(j.cumSched)}</b></div><div class="jr ${df < 0 ? 'bad' : 'good'}"><span>${df < 0 ? '부족' : '많음'}</span><b>${n0(Math.abs(df))}</b></div>${j.mark ? `<div class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 끝내야 할 자가재">컬러 마감 ${n0(j.mark)}t</div>` : (O.jg.some((x) => x.mark) ? '<div class="mk" style="visibility:hidden">-</div>' : '')}</td>`;
+      return `<td class="jg" title="컬러 계획 = 컬러 라인 투입 일정에 맞추려면 이 날까지 도금에서 만들어 둬야 할 자가재 누계(가동계획 기준) · 도금 생산 = 이 캘린더대로 도금에서 만드는 자가재 누계(${md(O.days[0])}부터)"><div class="jr"><span>컬러 계획</span><b>${n0(j.cumPlan)}</b></div><div class="jr"><span>도금 생산</span><b>${n0(j.cumSched)}</b></div><div class="jr ${df < 0 ? 'bad' : 'good'}"><span>${df < 0 ? '부족' : '여유'}</span><b>${n0(Math.abs(df))}</b></div>${j.mark ? `<div class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 끝내야 할 자가재">컬러 마감 ${n0(j.mark)}t</div>` : (O.jg.some((x) => x.mark) ? '<div class="mk" style="visibility:hidden">-</div>' : '')}</td>`;
     }).join('');
     const sumD = (d) => LINES.reduce((s, l) => { const c = O.lines[l][idx(d)]; return s + c.conf + c.plan + c.fcst; }, 0);
     const tot = `<tr class="dsum"><th>하루 합<small>${n0(days.reduce((s, d) => s + sumD(d), 0))}t</small></th>${days.map((d) => `<td><b>${n0(sumD(d))}</b><small>t</small><div class="sub">${LINES.map((l) => n0(O.lines[l][idx(d)].conf + O.lines[l][idx(d)].plan + O.lines[l][idx(d)].fcst)).join(' + ')}</div></td>`).join('')}</tr>`;
-    return `<table class="cg"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}${tot}<tr><th>자가재 누계<small>컬러 투입분</small></th>${jg}</tr></tbody></table>`;
+    return `<table class="cg"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}${tot}<tr><th>자가재<small>누계</small></th>${jg}</tr></tbody></table>`;
   }
 
   function calCard() {
