@@ -107,15 +107,52 @@
       O.out[ln] = res[ln].out.filter((p) => p.t >= 0.5);
     });
   }
-  function check(it, ln, tl, td) {                           // 옮길 수 있나 + 안 되면 가장 가까운 가능한 날
+  /* 작업 규칙(docs/13, cg_wo_sequence 관문과 같은 값): 앞뒤 두께 차 0.3mm(2CGL 0.4t 미만 0.2) · 두께비 1.3배 · 2CGL 후처리 같은 층 다른 약액 바로 이음 금지.
+     폭은 넓은 폭 → 좁은 폭, 넓힘 한도(AL 10mm·그 밖 30mm) 넘으면 새 단위(허용). 계약 단위 근사 — 코일 단위 최종 확인은 작업지시 순서 화면 */
+  const TRT_NO = { '2CGL': [['KX', 'IX'], ['TX', 'SX', 'RX', 'QX', 'MX', 'GX', 'DP', 'DA', 'BX', 'BP'], ['LX', 'NX']] };
+  const tg = (l, c) => (TRT_NO[l] || []).findIndex((g) => g.includes(c));
+  function hard(l, a, b) {
+    if (!a.thk || !b.thk) return '';
+    const lim = l === '2CGL' && Math.min(a.thk, b.thk) < 0.4 ? 0.2 : 0.3, d2 = Math.abs(a.thk - b.thk), r = Math.max(a.thk, b.thk) / Math.min(a.thk, b.thk);
+    if (d2 > lim + 1e-6) return `두께 ${a.thk.toFixed(2)}↔${b.thk.toFixed(2)}(차 ${d2.toFixed(2)}mm > ${lim})`;
+    if (r > 1.3 + 1e-6) return `두께 ${a.thk.toFixed(2)}↔${b.thk.toFixed(2)}(${r.toFixed(2)}배 > 1.3)`;
+    const g = tg(l, a.aft);
+    if (g >= 0 && a.aft !== b.aft && g === tg(l, b.aft)) return `후처리 ${a.aft}→${b.aft} 같은 층`;
+    return '';
+  }
+  function daySeq(l, items) {                               // 현장 방식 순서(넓은 폭부터, 규칙 지키는 것 중 가장 가까운 폭, 없으면 새 단위)
+    const rest = items.filter((i) => i.thk && i.wdt).map((i) => ({ thk: +i.thk, wdt: +i.wdt, aft: i.aft, fam: i.fam }));
+    if (!rest.length) return [];
+    rest.sort((a, b) => b.wdt - a.wdt);
+    const out = [rest.shift()];
+    while (rest.length) {
+      const cur = out[out.length - 1], ok = rest.filter((x) => !hard(l, cur, x)), lim = String(cur.fam || '').startsWith('AL') ? 10 : 30;
+      const nx = ok.filter((x) => x.wdt <= cur.wdt + lim).sort((a, b) => b.wdt - a.wdt)[0] || ok.sort((a, b) => b.wdt - a.wdt)[0]
+        || rest.slice().sort((a, b) => Math.abs(a.thk - cur.thk) - Math.abs(b.thk - cur.thk))[0];
+      rest.splice(rest.indexOf(nx), 1); out.push(nx);
+    }
+    return out;
+  }
+  function ruleOk(it, l, d) {                                // 그날 순서 어딘가에 앞뒤 규칙을 지키며 끼울 자리가 있나
+    if (!it.thk) return '';
+    const sq = daySeq(l, cellOf(l, d).items.filter((i) => i.con !== it.con)), x = { thk: +it.thk, wdt: +it.wdt, aft: it.aft };
+    if (!sq.length) return '';
+    for (let k = 0; k <= sq.length; k++) if ((!sq[k - 1] || !hard(l, sq[k - 1], x)) && (!sq[k] || !hard(l, x, sq[k]))) return '';
+    const th = sq.map((q) => q.thk), lim = l === '2CGL' && x.thk < 0.4 ? 0.2 : 0.3;
+    const lo = Math.max(x.thk / 1.3, x.thk - lim), hi = Math.min(x.thk * 1.3, x.thk + lim);
+    const nearAft = sq.some((q) => !hard(l, q, Object.assign({}, x, { aft: q.aft })));
+    return nearAft ? `후처리 ${x.aft}와 같은 층 다른 약액이 앞뒤에 옴` : `그날 두께 ${Math.min(...th).toFixed(2)}~${Math.max(...th).toFixed(2)}t — ${x.thk.toFixed(2)}t 앞뒤에 올 ${lo.toFixed(2)}~${hi.toFixed(2)}t 없음(두께 차 ${lim}mm·1.3배)`;
+  }
+  function check(it, ln, tl, td) {                           // 옮길 수 있나 + 안 되면 가장 가까운 가능한 날(강종·소재·라인·작업 규칙 모두)
     const c = cellOf(tl, td), why = [];
     if (c.cap < 1) why.push('라인 정지');
     else if (!compat(c.fam, it.fam)) why.push(`${c.fam} 가동일(${it.fam} 주문은 M/C 없이 불가)`);
     if (it.kind === '예상' && it.avail && it.avail > td) why.push(`소재 투입 ${md(it.avail)}부터`);
+    if (!why.length) { const r = ruleOk(it, tl, td); if (r) why.push(`작업 규칙 — ${r}`); }
     if (!why.length) return { ok: true };
     const lines = it.pline === '공용' ? LINES : [tl];
     const cand = [];
-    lines.forEach((l) => O.days.forEach((d) => { const cc = cellOf(l, d); if (fits(Object.assign({}, it, { pin: null }), cc, d) && !(l === ln && d === it.day0)) cand.push([Math.abs(dt(d) - dt(td)), d < td ? 0 : 1, l, d]); }));
+    lines.forEach((l) => O.days.forEach((d) => { const cc = cellOf(l, d); if (fits(Object.assign({}, it, { pin: null }), cc, d) && !(l === ln && d === it.day0) && !ruleOk(it, l, d)) cand.push([Math.abs(dt(d) - dt(td)), d < td ? 0 : 1, l, d]); }));
     cand.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
     const bef = cand.find((x) => x[3] < td), aft = cand.find((x) => x[3] > td);
     return { ok: false, why: why.join(' · '), alt: [bef, aft].filter(Boolean).map((x) => [x[2], x[3]]) };
@@ -124,11 +161,11 @@
     const cur = simulate(MOVES), nxt = simulate([...MOVES.map((m) => Object.assign({}, m)), { con: it.con, kind: it.kind, t, fl: ln, fd: d, tl, td }]);
     const a = lastDay(cur), b = lastDay(nxt), late = (res) => { const m = {}; LINES.forEach((l) => res[l].seq.forEach((p) => { if (p.need && p.need >= O.asOf && (p.day === null || p.need < p.day)) m[p.con] = p; })); return m; };
     const la = late(cur), lb = late(nxt);
-    const pushed = Object.keys(b).filter((k) => k !== it.con && b[k] > (a[k] || '0'));
+    const pushed = Object.keys(b).filter((k) => k !== it.con && b[k] > (a[k] || '0')), pulled = Object.keys(b).filter((k) => k !== it.con && a[k] && b[k] < a[k]);
     const newLate = Object.keys(lb).filter((k) => !la[k] && k !== it.con).map((k) => lb[k]);
     const outT = (res) => LINES.reduce((s2, l) => s2 + res[l].out.reduce((x, p) => x + p.t, 0), 0);
     const land = LINES.flatMap((l) => nxt[l].seq.filter((p) => p.con === it.con && p.moved && p.pin === td).map((p) => p.day));
-    return { pushed: pushed.length, newLate, outDiff: outT(nxt) - outT(cur), land: land[0] };
+    return { pushed: pushed.length, pulled: pulled.length, newLate, outDiff: outT(nxt) - outT(cur), land: land[0] };
   }
   const saveMoves = () => { try { localStorage.setItem(MV_KEY(), JSON.stringify(MOVES)); } catch (e) { /* 무시 */ } };
   try { rk = localStorage.getItem(RK_KEY) || 'win'; } catch (e) { /* 무시 */ }
@@ -190,8 +227,15 @@
       + '<span><i style="background:var(--c-fcst)"></i>예상 = 입고 예정 소재(입고 + 5일)</span><span><i style="background:var(--c-gap)"></i>빈칸</span>'
       + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>노랑 = M/C(강종 교체)</span><span><i style="background:var(--bad)"></i>빨간 줄 = 계획≠현장</span>'
       + `<span>능력·강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순(수출 = 입항 − 4일${O.expNeed && O.expNeed.due ? `, 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 3일` : ''})</span></div>`
+      + grpLine()
       + moveBar()
       + `<div class="wk">${weekTable(O.days.slice(0, 7), nw)}</div><div class="wk">${weekTable(O.days.slice(7, 14), nw)}</div></section>`;
+  }
+  function grpLine() {                                       // 하루 생산량은 가동 캘린더(최신 재계획)와 같고, 그룹 구성만 실제 주문 기준
+    const P = {}, C = {};
+    LINES.forEach((l) => O.lines[l].forEach((c) => { Object.entries(c.planGrp || {}).forEach(([g, v]) => { P[g] = (P[g] || 0) + v; }); c.items.forEach((i) => { const g = i.grp || '?'; C[g] = (C[g] || 0) + i.t; }); }));
+    const G = [...new Set([...Object.keys(P), ...Object.keys(C)])].sort((a, b) => (P[b] || 0) - (P[a] || 0));
+    return `<p class="msg" style="margin:0 0 10px">하루 생산량·강종 = 가동 캘린더(최신 재계획)와 같음 · 그룹 구성은 실제 주문·소재로 채움 — <b>2주 그룹별 재계획 → 주문 편성</b>: ${G.map((g) => { const d = (C[g] || 0) - (P[g] || 0); return `${esc(g)} ${n0(P[g] || 0)} → <b${Math.abs(d) > 500 ? ` style="color:${d < 0 ? 'var(--bad)' : 'var(--brand-2)'}"` : ''}>${n0(C[g] || 0)}</b>`; }).join(' · ')}</p>`;
   }
   function moveBar() {
     if (!MOVES.length) return '<p class="msg" style="margin:0 0 10px">날짜를 바꾸려면 칸을 눌러 주문 오른쪽 「옮기기」(소재 있음·입고 예정 주문만, 현장 지시된 것은 MES에서). 24시간 연속 가동이라 옮기면 뒤 주문이 순서대로 밀림.</p>';
@@ -255,7 +299,7 @@
     if (c.why) body += `<div class="fgl" style="background:var(--warn-bg);color:var(--warn)">빈칸 ${n0(c.gap)}t — ${esc(c.why)}</div>`;
     body += '<div class="how"><div><b>이 날에 들어온 기준</b> 필요 생산일(수출 = 입항 − 4일, 내수 = 납기 − 3일) 빠른 주문부터, 그날 라인·강종이 맞는 것을 능력만큼 · 소재 있음(편성) 먼저, 입고 예정(예상)은 입고 + 5일부터</div>'
       + '<div><b>순서</b> 확정 = MES 작업지시 순서 그대로 · 편성·예상 = 현장 규칙(넓은 폭 → 좁은 폭, 같은 폭이면 얇은 것 먼저)</div>'
-      + '<div><b>옮기기</b> 24시간 연속 가동 = 라인마다 한 줄 순서. 고른 날 맨 앞에 끼워 넣고 뒤 주문은 순서대로 밀림(능력 초과 없음) · 강종(M/C)·소재 입고일이 안 맞는 날은 불가 → 가능한 가장 가까운 날 제시 · 「다음 주 확정」을 눌러야 저장</div></div>';
+      + '<div><b>옮기기</b> 24시간 연속 가동 = 라인마다 한 줄 순서. 고른 날 맨 앞에 끼워 넣고 뒤 주문은 순서대로 밀림(능력 초과 없음) · 불가 = 강종(M/C)·소재 입고일·라인 정지·작업 규칙(그날 주문과 두께 차 0.3mm·두께비 1.3배·후처리 같은 층) → 모두 지키는 가장 가까운 날 제시 · 코일 단위 최종 확인은 작업지시 순서 · 「다음 주 확정」을 눌러야 저장</div></div>';
     body += c.items.length ? `<table class="it cmp"><colgroup><col style="width:9%"><col style="width:25%"><col style="width:17%"><col style="width:10%"><col style="width:6%"><col style="width:7%"><col style="width:18%"><col style="width:8%"></colgroup>`
       + `<thead><tr><th>구분 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">톤</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
       : `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
@@ -277,7 +321,7 @@
       }
       const P = preview(it, ln, d, tl, td, tOf(r, it));
       go.disabled = false;
-      pv.innerHTML = `<span class="ok">가능</span> · ${P.land ? `${mdw(P.land)} 생산` : '2주 안에 못 들어감'} · 뒤 주문 ${P.pushed}건 순서대로 밀림`
+      pv.innerHTML = `<span class="ok">가능</span> · ${P.land ? `${mdw(P.land)} 생산` : '2주 안에 못 들어감'}${P.pushed ? ` · 뒤 주문 ${P.pushed}건 밀림` : ''}${P.pulled ? ` · ${P.pulled}건 앞당겨짐` : ''}${!P.pushed && !P.pulled ? ' · 다른 주문 날짜 변화 없음' : ''}`
         + (P.newLate.length ? ` · <span class="no">새로 늦어지는 주문 ${P.newLate.length}건: ${P.newLate.slice(0, 4).map((p) => `${esc(p.con)}(필요 ${md(p.need)})`).join(', ')}${P.newLate.length > 4 ? ' …' : ''}</span>` : ' · 새로 늦어지는 주문 없음')
         + (P.outDiff >= 1 ? ` · <span class="no">2주 밖으로 ${n0(P.outDiff)}t 밀림</span>` : '');
     };
