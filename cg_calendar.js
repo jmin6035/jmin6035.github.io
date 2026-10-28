@@ -14,7 +14,58 @@
   const md = (s) => (s ? `${+String(s).slice(5, 7)}/${+String(s).slice(8, 10)}` : '');
   const mdw = (s) => `${md(s)}(${DOW[dt(s).getDay()]})`;
   const LINES = ['1CGL', '2CGL'];
-  let O = null, PW = '', rk = 'win';
+  let O = null, PW = '', rk = 'win', MOVES = [];
+  const MV_KEY = () => 'cgl-cal-moves|' + O.asOf;               // 옮기기 임시본(이 브라우저) — '다음 주 확정'을 눌러야 저장
+  const compat = (df, f) => !!f && (f === df || String(f).split('-')[0] === df || (f === 'AZ·MAC' && (df === 'AZ' || df === 'MAC')));
+  const cellOf = (ln, d) => O.lines[ln][O.days.indexOf(d)];
+  function recalc(c) {
+    const s = { 확정: 0, 편성: 0, 예상: 0 }, g = {};
+    c.items.forEach((i) => { s[i.kind] += i.t; g[i.grp || '?'] = (g[i.grp || '?'] || 0) + i.t; });
+    c.conf = s.확정; c.plan = s.편성; c.fcst = s.예상;
+    const fill = s.확정 + s.편성 + s.예상;
+    c.gap = c.cap - fill >= 0.5 ? Math.round((c.cap - fill) * 10) / 10 : 0;
+    c.grp = Object.fromEntries(Object.entries(g).sort((a, b) => b[1] - a[1]));
+    c.late = c.items.filter((i) => i.late).length;
+    c.mvIn = c.items.filter((i) => i.moved).length;
+    const bad = [...new Set(c.items.filter((i) => i.moved && !compat(c.fam, i.fam)).map((i) => i.fam))];
+    c.flag = c.flag0; c.flagS = c.flagS0;
+    if (!c.flag && bad.length) { c.flag = `옮긴 ${bad.join('·')} 주문 — 그날 계획 강종 ${c.fam}`; c.flagS = `${bad.join('·')} 주문 · 계획 ${c.fam}`; }
+    if (!c.flag && fill - c.cap >= 5) { c.flag = `배정 ${n0(fill)}t > 능력 ${n0(c.cap)}t`; c.flagS = `능력 초과 ${n0(fill - c.cap)}t`; }
+    if (c.mvOut && c.gap) c.why = '주문을 다른 날로 옮겨서 빔';
+  }
+  function applyMoves() {
+    O.lines = JSON.parse(JSON.stringify(O.base));
+    LINES.forEach((ln) => O.lines[ln].forEach((c) => { c.flag0 = c.flag; c.flagS0 = c.flagS; c.mvOut = 0; }));
+    MOVES.forEach((m) => {
+      const a = cellOf(m.fl, m.fd), b = cellOf(m.tl, m.td);
+      const k = a ? a.items.findIndex((i) => i.con === m.con && i.kind === m.kind && !i.moved) : -1;
+      if (!b || k < 0) { m.bad = true; return; }
+      let it = a.items[k];
+      if (m.t < it.t - 0.05) { it.t = Math.round((it.t - m.t) * 10) / 10; it = Object.assign({}, it, { t: m.t }); }   // 일부만 옮김
+      else a.items.splice(k, 1);
+      it.moved = { fd: m.fd, fl: m.fl };
+      it.late = !!(it.need && it.need >= O.asOf && it.need < m.td);
+      it.matLate = it.kind === '예상' && !!it.avail && it.avail > m.td;
+      a.mvOut = (a.mvOut || 0) + 1;
+      b.items.push(it);
+      if (m.swap) {                                            // 넘치는 만큼 그날 주문 중 필요일 늦은 것을 원래 날로(자리 바꾸기)
+        let over = b.items.reduce((s2, i) => s2 + i.t, 0) - b.cap;
+        const cand = b.items.filter((i) => i.kind !== '확정' && !i.moved && compat(a.fam, i.fam) && (i.pline === '공용' || i.pline === m.fl || !i.pline)).sort((x, y) => String(y.need || '9') < String(x.need || '9') ? -1 : 1);
+        for (const i of cand) {
+          if (over < 0.5) break;
+          const q = Math.min(i.t, Math.round(over * 10) / 10);
+          let mv = i;
+          if (q < i.t - 0.05) { i.t = Math.round((i.t - q) * 10) / 10; mv = Object.assign({}, i, { t: q }); } else b.items.splice(b.items.indexOf(i), 1);
+          mv.moved = { fd: m.td, fl: m.tl, swap: true };
+          mv.late = !!(mv.need && mv.need >= O.asOf && mv.need < m.fd);
+          a.items.push(mv); over -= q;
+        }
+      }
+      b.items.sort((x, y) => (x.kind === '확정' ? 0 : 1) - (y.kind === '확정' ? 0 : 1) || (x.kind === '확정' ? (x.seq || 0) - (y.seq || 0) : (y.wdt || 0) - (x.wdt || 0) || (x.thk || 9) - (y.thk || 9)));
+    });
+    LINES.forEach((ln) => O.lines[ln].forEach(recalc));
+  }
+  const saveMoves = () => { try { localStorage.setItem(MV_KEY(), JSON.stringify(MOVES)); } catch (e) { /* 무시 */ } };
   try { rk = localStorage.getItem(RK_KEY) || 'win'; } catch (e) { /* 무시 */ }
 
   function nextWeek() {                                     // 다음 주 월~일(수요일 확정 대상)
@@ -52,6 +103,7 @@
       + `<div class="gl">${gs}</div>`
       + (c.flag ? `<div class="fg">⚠ ${esc(c.flagS || c.flag)}</div>` : '')
       + (c.late ? `<div class="lt">늦어짐 ${c.late}건</div>` : '')
+      + (c.mvIn || c.mvOut ? `<div class="mvc">옮김${c.mvIn ? ` 들어옴 ${c.mvIn}` : ''}${c.mvOut ? ` 나감 ${c.mvOut}` : ''}</div>` : '')
       + '</button>';
   }
 
@@ -73,17 +125,39 @@
       + '<span><i style="background:var(--c-fcst)"></i>예상 = 입고 예정 소재(입고 + 5일)</span><span><i style="background:var(--c-gap)"></i>빈칸</span>'
       + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>노랑 = M/C(강종 교체)</span><span><i style="background:var(--bad)"></i>빨간 줄 = 계획≠현장</span>'
       + `<span>능력·강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순(수출 = 입항 − 4일${O.expNeed && O.expNeed.due ? `, 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 3일` : ''})</span></div>`
+      + moveBar()
       + `<div class="wk">${weekTable(O.days.slice(0, 7), nw)}</div><div class="wk">${weekTable(O.days.slice(7, 14), nw)}</div></section>`;
+  }
+  function moveBar() {
+    if (!MOVES.length) return '<p class="msg" style="margin:0 0 10px">날짜를 바꾸려면 칸을 눌러 주문 오른쪽 「옮기기」에서 고르세요(소재 있음·입고 예정 주문만, 현장 지시된 것은 MES에서).</p>';
+    return `<div class="mvbar"><b>옮긴 주문 ${MOVES.length}건</b><span class="msg">임시 — 아래 「다음 주 확정」을 눌러야 저장되고 다음 날 계산에도 그대로 반영</span><button type="button" class="lnk" id="mv-clear">모두 되돌리기</button><ul>`
+      + MOVES.map((m, k) => `<li${m.bad ? ' class="bad"' : ''}><b>${esc(m.con)}</b> ${n0(m.t)}t · ${m.fl === m.tl ? m.fl : ''} ${mdw(m.fd)}${m.fl !== m.tl ? ` ${m.fl}` : ''} → <b>${mdw(m.td)}${m.fl !== m.tl ? ` ${m.tl}` : ''}</b>${m.swap ? ' <span class="sub">(넘치면 자리 바꾸기)</span>' : ''}${m.bad ? ' · 원래 칸에 없음(자료 갱신)' : ''} <button type="button" class="lnk" data-undo="${k}">되돌리기</button></li>`).join('')
+      + '</ul></div>';
   }
 
   const who = (i) => [i.cus && esc(i.cus), i.dst && `<span class="nw">→ ${esc(i.dst)}</span>`, i.man && `<span class="nw">담당 ${esc(i.man)}</span>`].filter(Boolean).join(' · ');
-  function itemRows(L, showSeq) {
+  function moveSel(i, ln, d) {
+    if (i.kind === '확정') return '<span class="sub">MES 지시됨</span>';
+    const lines = i.pline === '공용' ? LINES : [i.pline || ln];
+    const opt = [];
+    lines.forEach((l) => O.days.forEach((dd) => {
+      if (l === ln && dd === d) return;
+      const c = cellOf(l, dd), left = c.cap - c.conf - c.plan - c.fcst;
+      const warn = [!compat(c.fam, i.fam) ? `강종 ${c.fam || '-'}` : '', left < i.t ? `넘침 ${n0(i.t - left)}t` : '', i.kind === '예상' && i.avail && i.avail > dd ? `소재 ${md(i.avail)}부터` : ''].filter(Boolean);
+      opt.push(`<option value="${l}|${dd}">${mdw(dd)}${l !== ln ? ' ' + l : ''} · 남은 ${n0(Math.max(0, left))}t${warn.length ? ' ⚠ ' + warn.join(' ') : ''}</option>`);
+    }));
+    return `<div class="mvw"><input type="number" class="mvt" value="${(+i.t).toFixed(1)}" min="0.1" max="${i.t}" step="0.1" aria-label="옮길 톤"><span class="sub">t</span>`
+      + `<select class="mv" data-con="${esc(i.con)}" data-kind="${i.kind}" data-t="${i.t}" aria-label="옮길 날짜"><option value="">옮길 날…</option>${opt.join('')}</select></div>`;
+  }
+  function itemRows(L, showSeq, ln, d) {
     return L.map((i, k) => {
       const due = i.od ? `<span class="bd od">밀림 · 필요 ${md(i.need)}</span>` : i.late ? `<span class="bd late">늦어짐 · 필요 ${md(i.need)}</span>` : i.need ? `<span class="sub">필요 ${md(i.need)}</span>` : '';
       return `<tr><td class="num">${showSeq ? (i.seq || k + 1) : k + 1}</td><td><div class="con">${esc(i.con)}</div><div class="sub">${who(i)}</div></td>`
         + `<td><div class="chs">${famCh(i.fam)}${i.exp ? '<span class="ch exp">수출</span>' : '<span class="ch">내수</span>'}${i.cot ? `<span class="ch">도금량 ${esc(i.cot)}</span>` : ''}${i.aft ? `<span class="ch">후처리 ${esc(i.aft)}</span>` : ''}</div></td>`
         + `<td class="sz">${i.thk != null ? `${(+i.thk).toFixed(2)} × ${n0(i.wdt)}` : '-'}</td><td><b>${esc(i.grp || '')}</b></td>`
-        + `<td class="num"><b>${(+i.t).toFixed(1)}</b>${i.n ? `<div class="sub">${i.n}코일</div>` : ''}</td><td class="nw">${i.arr ? `<div>입항 <b>${md(i.arr)}</b>${i.shp ? ` <span class="sub">${esc(i.shp)}</span>` : ''}</div>` : ''}${i.due ? `<div class="${i.arr ? 'sub' : ''}">납기 ${md(i.due)}</div>` : ''}<div>${due}</div></td></tr>`;
+        + `<td class="num"><b>${(+i.t).toFixed(1)}</b>${i.n ? `<div class="sub">${i.n}코일</div>` : ''}</td><td class="nw">${i.arr ? `<div>입항 <b>${md(i.arr)}</b>${i.shp ? ` <span class="sub">${esc(i.shp)}</span>` : ''}</div>` : ''}${i.due ? `<div class="${i.arr ? 'sub' : ''}">납기 ${md(i.due)}</div>` : ''}<div>${due}</div>`
+        + `${i.moved ? `<div><span class="bd mv">${i.moved.swap ? '자리 바꿈' : '옮김'} ← ${mdw(i.moved.fd)}${i.moved.fl !== ln ? ' ' + i.moved.fl : ''}</span></div>` : i.locked ? '<div><span class="bd mv">확정본</span></div>' : ''}${i.matLate ? `<div><span class="bd od">소재 ${md(i.avail)}부터 가능</span></div>` : ''}</td>`
+        + `<td>${ln ? moveSel(i, ln, d) : ''}</td></tr>`;
     }).join('');
   }
   function csv(rows, name) {
@@ -98,20 +172,32 @@
     const c = O.lines[ln][O.days.indexOf(d)], dlg = $('cc-dlg');
     const K = [['확정', '현장 작업지시 순서 그대로(MES 1010)'], ['편성', '소재 있음 — 현장 규칙 순서(넓은 폭 → 좁은 폭, 같은 폭은 얇은 것 먼저)'], ['예상', '입고 예정 소재 — 들어오면 편성으로']];
     const pg = Object.entries(c.planGrp || {}).filter(([, v]) => v >= 1).map(([g, v]) => `${g} ${n0(v)}`).join(' · ');
-    let body = c.flag ? `<div class="fgl">⚠ ${esc(c.flag)} — ${c.fieldFam && c.fieldFam.length && c.flag.startsWith('계획') ? '현장 순서가 우선. M/C·강종 날짜를 재계획에 반영할지 확인' : '능력보다 지시가 많음 — 다음 날로 넘어갈 물량 확인'}</div>` : '';
+    let body = c.flag ? `<div class="fgl">⚠ ${esc(c.flag)} — ${c.flag.startsWith('계획') ? '현장 순서가 우선. M/C·강종 날짜를 재계획에 반영할지 확인' : c.flag.startsWith('옮긴') || c.flag.startsWith('확정본에') ? 'M/C 없이는 이날 생산 불가 — 다른 날로 옮기기' : '능력보다 많음 — 일부를 다른 날로 옮기거나 다음 날로 넘어감'}</div>` : '';
     if (c.why) body += `<div class="fgl" style="background:var(--warn-bg);color:var(--warn)">빈칸 ${n0(c.gap)}t — ${esc(c.why)}</div>`;
+    let sw = true; try { sw = localStorage.getItem('cgl-cal-swap') !== '0'; } catch (e) { /* 무시 */ }
+    body += `<label class="swl"><input type="checkbox" id="mv-swap"${sw ? ' checked' : ''}> 옮겨 간 날이 넘치면 그날 주문 중 필요일 늦은 것을 이 날로 바꿔 넣기(자리 바꾸기)</label>`;
     K.forEach(([k, d2]) => {
       const L = c.items.filter((i) => i.kind === k);
       if (!L.length) return;
       body += `<h4><span class="kd k${k}">${k}</span> ${n0(L.reduce((s, i) => s + i.t, 0))}t <span>${L.length}건 · ${d2}</span></h4>`
-        + `<div style="overflow-x:auto"><table class="it" style="min-width:900px"><thead><tr><th class="num">순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 수출 · 도금량 · 후처리</th><th>두께 × 폭</th><th>그룹</th><th class="num">톤</th><th>입항 · 납기</th></tr></thead><tbody>${itemRows(L, k === '확정')}</tbody></table></div>`;
+        + `<div style="overflow-x:auto"><table class="it" style="min-width:900px"><thead><tr><th class="num">순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 수출 · 도금량 · 후처리</th><th>두께 × 폭</th><th>그룹</th><th class="num">톤</th><th>입항 · 납기</th><th>옮기기</th></tr></thead><tbody>${itemRows(L, k === '확정', ln, d)}</tbody></table></div>`;
     });
     if (!c.items.length) body += `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
     dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>${c.fam || ''}${c.event ? ' · ' + esc(c.event) : ''}</span><span>능력 ${n0(c.cap)}t · 확정 ${n0(c.conf)} · 편성 ${n0(c.plan)} · 예상 ${n0(c.fcst)}${c.gap ? ` · 빈칸 ${n0(c.gap)}` : ''}</span>`
       + `${pg ? `<span>재계획 배분: ${pg}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV 내려받기</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
     $('cc-x').onclick = () => dlg.close();
     $('cc-csv').onclick = () => csv(c.items, `도금_${ln}_${d}.csv`);
-    dlg.showModal();
+    dlg.querySelectorAll('select.mv').forEach((s) => s.onchange = () => {
+      if (!s.value) return;
+      const [tl, td] = s.value.split('|'), tin = +s.parentNode.querySelector('.mvt').value;
+      const t = Math.min(+s.dataset.t, tin > 0 ? Math.round(tin * 10) / 10 : +s.dataset.t);
+      MOVES.push({ con: s.dataset.con, kind: s.dataset.kind, t, fl: ln, fd: d, tl, td, swap: $('mv-swap').checked });
+      try { localStorage.setItem('cgl-cal-swap', $('mv-swap').checked ? '1' : '0'); } catch (e) { /* 무시 */ }
+      saveMoves(); applyMoves(); render();
+      if (window.UI && UI.toast) UI.toast(`${s.dataset.con} → ${mdw(td)} ${tl}`);
+      openDay(ln, d);
+    });
+    if (!dlg.open) dlg.showModal();
   }
 
   function byOrder(R) {                                     // 같은 주문서(계약번호)의 행은 한 줄로
@@ -150,10 +236,11 @@
     const adh = A.length ? '<table class="it" style="max-width:820px"><thead><tr><th>확정 주</th><th>저장</th><th class="num">확정 톤</th><th class="num">그 주 실제 생산</th><th class="num">준수율</th><th>라인별</th></tr></thead><tbody>'
       + A.map((a) => `<tr><td class="nw">${mdw(a.week)}~</td><td class="sub nw">${esc(a.who)} ${esc(String(a.at).slice(5, 16).replace('T', ' '))}</td><td class="num">${n0(a.confT)}</td><td class="num">${n0(a.doneT)}</td>`
         + `<td class="num"><b>${a.rate == null ? '-' : Math.round(a.rate * 100) + '%'}</b></td><td class="nw">${Object.entries(a.lines || {}).map(([l, v]) => `${l} ${v.confT ? Math.round(100 * v.doneT / v.confT) : '-'}%`).join(' · ')}</td></tr>`).join('') + '</tbody></table>'
-      : '<p class="msg">저장된 확정본이 아직 없음 — 저장하면 다음 날 아침 자동 실행부터 준수율(확정 톤 중 그 주에 실제로 생산된 톤)이 나옵니다.</p>';
-    return `<section class="card"><h2>수요일 확정 <small>다음 주 ${mdw(nw[0])} ~ ${mdw(nw[6])}</small></h2>`
-      + `<div class="cf"><span class="nw">1CGL <b>${n0(tot('1CGL'))}t</b> · 2CGL <b>${n0(tot('2CGL'))}t</b></span><input id="cc-who" placeholder="이름" value="${esc(who)}" maxlength="20" aria-label="확정하는 사람 이름">`
-      + `<button type="button" class="go" id="cc-save">이 계획으로 다음 주 확정 저장</button><span class="msg" id="cc-smsg">${last ? `이미 저장됨: ${esc(last.who)} ${esc(String(last.at).slice(5, 16).replace('T', ' '))} (다시 저장하면 최신본 기준)` : ''}</span></div>`
+      : '<p class="msg">아직 확정한 주 없음</p>';
+    return `<section class="card"><h2>다음 주 생산 확정 <small>매주 수요일 오전 · ${mdw(nw[0])} ~ ${mdw(nw[6])}</small></h2>`
+      + '<p class="msg" style="margin:0 0 10px">위 캘린더의 다음 주(파란 머리 칸) 라인·날짜별 생산 주문을 그대로 저장 → 공정출하·마케팅과 약속한 주간 편성. 다음 주가 지나면 실제 생산과 비교해 지킨 비율(준수율)을 아래에 표시</p>'
+      + `<div class="cf"><span class="nw">다음 주 생산 1CGL <b>${n0(tot('1CGL'))}t</b> · 2CGL <b>${n0(tot('2CGL'))}t</b></span><input id="cc-who" placeholder="이름" value="${esc(who)}" maxlength="20" aria-label="확정하는 사람 이름">`
+      + `<button type="button" class="go" id="cc-save">다음 주 확정</button><span class="msg" id="cc-smsg">${last ? `이미 저장됨: ${esc(last.who)} ${esc(String(last.at).slice(5, 16).replace('T', ' '))} (다시 저장하면 최신본 기준)` : ''}</span></div>`
       + `${adh}</section>`;
   }
 
@@ -162,13 +249,16 @@
     if (!w) { m.textContent = '이름을 넣어 주세요'; $('cc-who').focus(); return; }
     try { localStorage.setItem(WHO_KEY, w); } catch (e) { /* 무시 */ }
     const lines = {};
-    LINES.forEach((ln) => { lines[ln] = {}; nw.forEach((d) => { const c = O.lines[ln][O.days.indexOf(d)]; if (c) lines[ln][d] = c.items.map((i) => [i.con, +(+i.t).toFixed(1), i.kind]); }); });
+    const pack = (c) => c.items.map((i) => [i.con, +(+i.t).toFixed(1), i.kind]);
+    LINES.forEach((ln) => { lines[ln] = {}; nw.forEach((d) => { const c = cellOf(ln, d); if (c) lines[ln][d] = pack(c); }); });
+    const extra = {};                                         // 다음 주 밖이지만 옮긴 날(이번 주 등)도 같이 고정
+    MOVES.filter((m) => !m.bad).forEach((m) => [[m.fl, m.fd], [m.tl, m.td]].forEach(([l, d]) => { if (!nw.includes(d)) { extra[l] = extra[l] || {}; extra[l][d] = pack(cellOf(l, d)); } }));
     b.disabled = true; m.textContent = '저장 중…';
     try {
-      const env = await GP.encryptJSON({ week: nw[0], asOf: O.asOf, built: O.built, lines }, PW, `도금 주간 확정 ${nw[0]}`);
+      const env = await GP.encryptJSON({ week: nw[0], asOf: O.asOf, built: O.built, lines, extra, moves: MOVES.filter((m) => !m.bad) }, PW, `도금 주간 확정 ${nw[0]}`);
       const r = await fetch(SB, { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify({ who: w, week: nw[0], payload: JSON.stringify(env) }) });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      m.textContent = `✓ 저장됨 ${new Date().toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} — 내일 아침부터 준수율 계산`;
+      m.textContent = `✓ 저장됨 ${new Date().toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}${MOVES.length ? ` · 옮긴 ${MOVES.length}건 포함` : ''} — 다음 계산부터 이 배치 고정, 다시 확정하면 최신본으로 바뀜`;
     } catch (e) { m.textContent = '⚠ 저장 실패: ' + e.message; }
     b.disabled = false;
   }
@@ -181,6 +271,8 @@
     $('cc-main').querySelectorAll('button.cell').forEach((b) => b.onclick = () => openDay(b.dataset.ln, b.dataset.d));
     $('cc-main').querySelectorAll('#cc-rk button').forEach((b) => b.onclick = () => { rk = b.dataset.rk; try { localStorage.setItem(RK_KEY, rk); } catch (e) { /* 무시 */ } render(); });
     $('cc-save').onclick = save;
+    if ($('mv-clear')) $('mv-clear').onclick = () => { MOVES = []; saveMoves(); applyMoves(); render(); };
+    $('cc-main').querySelectorAll('[data-undo]').forEach((b) => b.onclick = () => { MOVES.splice(+b.dataset.undo, 1); saveMoves(); applyMoves(); render(); });
     if (window.UI) UI.reveal($('cc-main'));
   }
   $('cc-dlg').addEventListener('click', (e) => { if (e.target === $('cc-dlg')) $('cc-dlg').close(); });
@@ -190,6 +282,9 @@
     if (!env) { $('cc-msg').textContent = '아직 게시된 자료가 없습니다.'; return; }
     try { O = await GP.decryptJSON(env, pw); PW = pw; try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
     catch (e) { $('cc-form').hidden = false; $('cc-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
+    O.base = JSON.parse(JSON.stringify(O.lines));
+    try { MOVES = JSON.parse(localStorage.getItem(MV_KEY()) || '[]'); } catch (e) { MOVES = []; }
+    applyMoves();
     render();
   }
   $('cc-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('cc-pw').value); });
