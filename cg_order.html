@@ -6,7 +6,7 @@
 <title>도금 주문진도</title>
 <meta name="description" content="도금 계약-행번별 주문서 전체 흐름 — F/H 발주·포스코 진행·입고·생산예정·생산, 필요 입고일 대비 여유와 포스코 독촉 대상">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610282348">
+<link rel="stylesheet" href="ui/theme.css?v=2610282351">
 <style>
 main.wrap { max-width: none; }
 .od-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; margin: 0 0 14px; }
@@ -43,6 +43,11 @@ details.sg[open] > summary::before { content: '▾'; }
 details.sg > summary:hover { background: var(--sub); }
 .sn { font-weight: 800; font-size: 16px; min-width: 180px; }
 .ss { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+/* 10/29 사용자 '머리글 가운데 정렬 · 내려도 고정' — 머리글이 화면 위에 붙어 따라옴(가로 스크롤 상자는 넓은 화면에선 풀어 둠: 스크롤 상자 안에선 고정이 안 됨) */
+.od-wrap { overflow: visible !important; }
+#od-main section.og, #od-main section.card { overflow: clip; }   /* hidden 은 고정 머리글을 막음 → clip(모서리 둥글게 자르기는 그대로) */
+@media (max-width: 1500px) { .od-wrap { overflow-x: auto !important; } }
+table.t.od thead th { position: sticky; top: 0; z-index: 4; background: var(--surface); text-align: center !important; vertical-align: middle; box-shadow: inset 0 -1px 0 var(--line); }
 table.t.od { font-size: 14.5px; table-layout: fixed; width: 100%; min-width: 1180px; margin: 0 0 8px; }
 table.t.od th { padding: 9px 10px; font-size: 14px; text-align: left !important; white-space: nowrap; }
 table.t.od th.num { text-align: right !important; }
@@ -116,8 +121,8 @@ table.gt .neg { color: var(--bad); } table.gt .wrn { color: var(--warn); } table
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>원자료: MES 소재 발주·입고·주문진행(포스코 진행)·도금생산예정일·작업지시·코일 실적·주문 상세</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610282348"></script>
-<script src="engine/crypto.js?v=2610282348"></script>
-<script src="cg_order.js?v=2610282348"></script>
+<script src="ui/shell.js?v=2610282351"></script>
+<script src="engine/crypto.js?v=2610282351"></script>
+<script src="cg_order.js?v=2610282351"></script>
 </body>
 </html>
