@@ -343,7 +343,6 @@
       + `<div class="tv">${n0(fill)}<small>t</small>${c.gap ? ` <small style="color:var(--bad);font-weight:800">빈칸 ${n0(c.gap)}</small>` : ''}</div>`
       + `<div class="gl">${gs}</div>`
       + (c.flag ? `<div class="fg">⚠ ${esc(c.flagS || c.flag)}</div>` : '')
-      + (c.hAvail && Math.abs(c.hrs - c.hAvail) >= 0.5 ? `<div class="hr ${c.hrs > c.hAvail ? 'ov' : 'un'}" title="이 칸 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리면 ${n1(c.hrs)}시간 · 가동 가능 ${n1(c.hAvail)}시간(24h × 제원치 가동률) — 생산은 이어서 하므로 ${c.hrs > c.hAvail ? '못 돌린 몫은 다음 날로 넘어감' : '남는 시간은 다음 날 주문을 당겨서 돌림'}">⏱ ${c.hrs > c.hAvail ? '초과' : '남음'} ${n1(Math.abs(c.hrs - c.hAvail))}h</div>` : '')
       + (c.late ? `<div class="lt" title="이 날 생산하면 입항일(수출) · 납기(내수)에 못 맞추는 주문 — 필요 생산일 = 입항 − 1일 · 납기 − 1일">${[c.lateE ? `입항일 초과 ${c.lateE}건` : '', c.late - c.lateE ? `납기 초과 ${c.late - c.lateE}건` : ''].filter(Boolean).join(' · ')}</div>` : '')
       + (c.mvIn || c.mvOut ? `<div class="mvc">옮김${c.mvIn ? ` 들어옴 ${c.mvIn}` : ''}${c.mvOut ? ` 나감 ${c.mvOut}` : ''}</div>` : '')
       + '</button>';
@@ -352,7 +351,8 @@
   function weekTable(days, nw) {
     const head = days.map((d) => { const wd = dt(d).getDay(); return `<th class="${nw.includes(d) ? 'nx' : wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}${nw.includes(d) ? '<small>수요일 확정 대상</small>' : ''}</th>`; }).join('');
     const idx = (d) => O.days.indexOf(d);
-    const rows = LINES.map((ln) => `<tr><th>${ln}<small>${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small></th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}</tr>`).join('');
+    const hrsOf = (ln) => { const C = O.lines[ln].slice(0, idx(days[days.length - 1]) + 1), h = C.reduce((s, c) => s + (c.hrs || 0), 0), a = C.reduce((s, c) => s + (c.hAvail || 0), 0); return a ? { r: h / a, over: h - a, last: idx(days[days.length - 1]) === O.days.length - 1 } : null; };   // 첫날부터 이 주 끝까지 누계(24시간 이어서 생산 — 앞뒤 날·주끼리 맞춰짐)
+    const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small>${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small>${hr ? `<small class="hs" title="첫날부터 이 주 끝까지 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리는 시간 ÷ 가동 가능 시간(24h × 제원치 가동률). 24시간 이어서 생산하므로 하루·한 주가 넘치거나 남아도 앞뒤와 맞춰짐">시간 ${Math.round(hr.r * 100)}%</small>${hr.last && hr.over >= 1 ? `<small class="hs ov" title="2주 주문을 다 돌리는 데 가동 가능 시간보다 ${n1(hr.over)}시간 더 걸림 → 마지막 날 뒤로 넘어감">2주 밖 ${n0(hr.over)}h</small>` : ''}` : ''}</th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}</tr>`; }).join('');
     const jg = days.map((d) => {
       const j = O.jg[idx(d)], df = j.cumSched - j.cumPlan;
       return `<td class="jg" title="재계획 = 가동계획이 이 날까지 만들기로 한 자가재(컬러 투입분) 누계 · 캘린더 = 이 화면에 넣은 자가재 주문 누계(${md(O.days[0])}부터)"><div class="jr"><span>재계획</span><b>${n0(j.cumPlan)}</b></div><div class="jr"><span>캘린더</span><b>${n0(j.cumSched)}</b></div><div class="jr ${df < 0 ? 'bad' : 'good'}"><span>${df < 0 ? '부족' : '많음'}</span><b>${n0(Math.abs(df))}</b></div>${j.mark ? `<div class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 끝내야 할 자가재">컬러 마감 ${n0(j.mark)}t</div>` : (O.jg.some((x) => x.mark) ? '<div class="mk" style="visibility:hidden">-</div>' : '')}</td>`;
@@ -466,7 +466,7 @@
       + `<thead><tr><th>상태 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 재질 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">이 날 톤 · 계약 전체</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
       : `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
     dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>${famCh(c.fam)}${c.event ? ' · ' + esc(c.event) : ''}</span><span>능력 <b>${n0(c.cap)}t</b> = ${[['지시 대상', c.conf], ['소재 있음', c.plan], ['입고 예정', c.fcst], ['빈칸', c.gap]].filter(([, v]) => v >= 0.5).map(([k, v]) => `${k} ${n0(v)}`).join(' + ')}</span>`
-      + `${c.hAvail ? `<span title="이 날 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리는 시간 / 가동 가능 시간(24h × 제원치 가동률)">가동 ${n1(c.hrs)}h / 가능 ${n1(c.hAvail)}h</span>` : ''}${pg ? `<span>재계획: ${pg}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
+      + `${pg ? `<span>재계획: ${pg}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
     $('cc-x').onclick = () => dlg.close();
     $('cc-csv').onclick = () => csv(c.items, `도금_${ln}_${d}.csv`);
     dlg.querySelectorAll('button.mvb').forEach((b) => b.onclick = () => { const r = $('mvr-' + b.dataset.k); r.hidden = !r.hidden; });
