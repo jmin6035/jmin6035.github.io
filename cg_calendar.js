@@ -325,7 +325,7 @@
     const k = (l, v, b, tone) => `<div class="kpi${tone ? ' tone-' + tone : ''}"><div class="l">${l}</div><div class="v">${v}</div><div class="b">${b}</div></div>`;
     return '<div class="kpis" style="margin:0 0 14px">'
       + k('2주 라인 능력', `${n0(tot('cap'))}<small>t</small>`, `작업지시 ${n0(tot('conf'))} · 소재 있음 ${n0(tot('plan'))} · 입고 예정 ${n0(tot('fcst'))} · 빈칸 ${n0(tot('gap'))}`, tot('gap') > 0 ? 'warn' : 'brand')
-      + k('이미 늦은 주문', `${n0(O.odT)}<small>t · ${O.nOd}건</small>`, `필요 생산일이 이미 지났는데 아직 생산 전 — 2주 안에 먼저 넣음${(O.shipMiss || []).length ? ` · 그중 입항일 지난 수출 ${O.shipMiss.length}건(입항 지남, 배선 변경 확인)` : ''}`, O.odT > 0 ? 'bad' : 'good')
+      + k('이미 늦은 주문', `${n0(O.odT)}<small>t · ${O.nOd}건</small>`, `필요 생산일 지났는데 생산 전${(O.shipMiss || []).length ? ` · 그중 입항 지난 수출 ${O.shipMiss.length}건(배선 확인)` : ''}`, O.odT > 0 ? 'bad' : 'good')
       + k('2주 안에 못 넣는 주문', `${win.length}<small>건 · ${n0(win.reduce((s, r) => s + r.t, 0))}t</small>`, '이번 2주에 필요한데 칸이 없음(소재 없음·능력 부족)', win.length ? 'warn' : 'good')
       + k('강종 날짜 · 재계획과 현장 다름', `${fl}<small>일</small>`, fl ? misTxt : '재계획 강종과 MES 작업지시가 맞음', fl ? 'bad' : 'good')
       + k('자가재(컬러 투입) 진도', jgMin >= 0 ? '<span class="gv">충분</span>' : `<span class="bv">${n0(-jgMin)}t 부족</span>`, '컬러 계획(투입 일정) 대비 도금 생산 누계 — 가장 모자란 날', jgMin >= 0 ? 'good' : 'bad')
@@ -369,21 +369,15 @@
 
   function calCard() {
     const nw = nextWeek();
-    return '<section class="card"><h2>라인별 2주 <small>칸을 누르면 그날 작업 순서</small></h2>'
-      + '<div class="lg"><span><i style="background:var(--c-conf)"></i>작업지시 = MES에 지시 나간 코일(SSCHB1030, 생산 전)</span><span><i style="background:var(--c-plan)"></i>소재 있음 = 소재 들어온 주문</span>'
-      + '<span><i style="background:repeating-linear-gradient(135deg, var(--c-plan) 0 2px, var(--c-fcst) 2px 5px)"></i>입고 예정 = 소재 들어올 주문(입고 + 5일부터)</span><span><i style="background:var(--c-gap);box-shadow:inset 0 0 0 1px var(--line)"></i>빈칸</span>'
-      + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>노랑 = M/C(강종 교체)</span><span><i style="background:var(--bad)"></i>빨간 줄 = 확인 필요(현장 강종 ≠ 계획 · 능력 초과 · 재질 순서)</span>'
-      + `<span>능력 = 제원치 · 강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순(수출 = 입항 − 1일 · 내수 = 납기 − 1일${O.expNeed && O.expNeed.due ? ` · 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 1일` : ''})</span></div>`
-      + grpLine()
+    const ex = O.expNeed && O.expNeed.due ? ` · 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 1일` : '';
+    return `<section class="card"><h2>라인별 2주 <small title="하루 능력 = 제원치(주문진도 「2주 생산량」과 같음) · 강종 = 최신 재계획 · 채우는 순서 = 작업지시 → 1010 순서안 → 필요 생산일 빠른 순(수출 입항 − 1일 · 내수 납기 − 1일${ex})">칸을 누르면 그날 작업 순서 · 능력 = 제원치</small></h2>`
+      + '<div class="lg"><span title="MES에 지시가 나가고 아직 생산 전인 코일"><i style="background:var(--c-conf)"></i>작업지시</span><span title="소재가 들어온 주문"><i style="background:var(--c-plan)"></i>소재 있음</span>'
+      + '<span title="소재가 들어올 주문 — 입고 + 5일부터 생산"><i style="background:repeating-linear-gradient(135deg, var(--c-plan) 0 2px, var(--c-fcst) 2px 5px)"></i>입고 예정</span><span><i style="background:var(--c-gap);box-shadow:inset 0 0 0 1px var(--line)"></i>빈칸</span>'
+      + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>M/C(강종 교체)</span><span title="현장 강종 ≠ 재계획 · 능력 초과 · 재질 순서"><i style="background:var(--bad)"></i>확인 필요</span></div>'
       + moveBar()
       + `<div class="wk">${weekTable(O.days.slice(0, 7), nw)}</div><div class="wk">${weekTable(O.days.slice(7, 14), nw)}</div></section>`;
   }
-  function grpLine() {                                       // 하루 능력 = 제원치(주문진도 2주 생산량과 같음), 강종 = 가동 캘린더(최신 재계획), 그룹 구성은 실제 주문
-    const P = {}, C = {};
-    LINES.forEach((l) => O.lines[l].forEach((c) => { Object.entries(c.planGrp || {}).forEach(([g, v]) => { P[g] = (P[g] || 0) + v; }); c.items.forEach((i) => { const g = i.grp || '?'; C[g] = (C[g] || 0) + i.t; }); }));
-    const G = [...new Set([...Object.keys(P), ...Object.keys(C)])].sort((a, b) => (P[b] || 0) - (P[a] || 0));
-    return `<p class="msg" style="margin:0 0 10px">하루 능력 = 제원치(주문진도 「2주 생산량」과 같은 값) · 강종 = 가동 캘린더(최신 재계획) · 그룹 구성은 실제 주문·소재로 채움 — <b>2주 그룹별 재계획 → 실제 주문</b>: ${G.map((g) => { const d = (C[g] || 0) - (P[g] || 0); return `${esc(g)} ${n0(P[g] || 0)} → <b${Math.abs(d) > 500 ? ` style="color:${d < 0 ? 'var(--bad)' : 'var(--brand-2)'}"` : ''}>${n0(C[g] || 0)}</b>`; }).join(' · ')}</p>`;
-  }
+
   function opText(m) {
     const ln2 = (l) => (l ? ` ${l}` : '');
     if (m.op === 'add') return `<b>${esc(m.con)}</b> ${n0(m.t)}t 넣기 → <b>${mdw(m.td)}${ln2(m.tl)}</b>`;
@@ -393,7 +387,7 @@
   }
 
   function moveBar() {
-    if (!MOVES.length) return '<p class="msg" style="margin:0 0 10px">칸을 누르면 주문마다 「옮기기·톤」 · 「빼기」, 아래 「칸에 못 들어간 주문」은 「넣기」 — 넣고 빼면서 맞추면 됨.</p>';
+    if (!MOVES.length) return '<p class="msg" style="margin:0 0 10px">칸을 눌러 옮기기·톤·빼기 · 아래 「칸에 못 들어간 주문」에서 넣기</p>';
     const rmT = (O.removed || []).reduce((a, p) => a + p.t, 0);
     const outs = LINES.flatMap((l) => (O.out[l] || []).map((p) => [l, p])), oT = outs.reduce((a, [, p]) => a + p.t, 0);
     return `<div class="mvbar"><b>바꾼 것 ${MOVES.length}건</b>${rmT >= 0.5 ? `<span class="msg">뺀 주문 ${(O.removed || []).length}건 ${n0(rmT)}t → 아래 목록 「뺀 주문」</span>` : ''}<span class="msg">${dirty() ? '아직 저장 안 됨 — 아래 「다음 주 생산 확정」에서 저장' : '확정본에 저장됨'}</span><button type="button" class="lnk" id="mv-clear">모두 되돌리기</button><ul>`
@@ -614,7 +608,7 @@
         + `<td class="num"><b>${a.rate == null ? '-' : Math.round(a.rate * 100) + '%'}</b></td><td class="nw">${Object.entries(a.lines || {}).map(([l, v]) => `${l} ${v.confT ? Math.round(100 * v.doneT / v.confT) : '-'}%`).join(' · ')}</td></tr>`).join('') + '</tbody></table>'
       : '<p class="msg">아직 확정한 주 없음</p>';
     return `<section class="card"><h2>다음 주 생산 확정 <small>매주 수요일 오전 · ${mdw(nw[0])} ~ ${mdw(nw[6])}</small></h2>`
-      + '<p class="msg" style="margin:0 0 10px">위 캘린더의 다음 주(파란 머리 칸) 날짜별 생산 주문을 저장 = 공정출하·마케팅과 약속한 주간 편성. 저장한 뒤에도 칸에서 옮기기·톤 바꾸기·넣기로 고치고 「수정 저장」하면 최신본이 기준. 다음 주가 지나면 지킨 비율(준수율)을 아래에 표시</p>'
+      + '<p class="msg" style="margin:0 0 10px">다음 주(파란 머리 칸)를 저장 = 공정출하·마케팅과 약속한 주간 편성 · 저장 뒤에도 고쳐서 「수정 저장」 · 지난 주 준수율은 아래</p>'
       + `<div class="cf"><span class="nw">다음 주 생산 1CGL <b>${n0(tot('1CGL'))}t</b> · 2CGL <b>${n0(tot('2CGL'))}t</b></span>`
       + `<button type="button" class="go" id="cc-save">${btn}</button><span class="msg" id="cc-smsg">${stat}</span>`
       + `<input id="cc-who" placeholder="저장한 사람(선택)" value="${esc(who)}" maxlength="20" aria-label="저장한 사람 이름(선택, 기록용)" title="여러 사람이 저장할 때 누가 했는지 남기는 칸 — 비워도 됨"></div>`
