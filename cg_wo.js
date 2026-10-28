@@ -20,23 +20,35 @@
     $('wo-view').querySelectorAll('button').forEach((b) => b.onclick = () => { view = b.dataset.v; try { localStorage.setItem('cgwo-view', view); history.replaceState(null, '', view === 'rules' ? '#rules' : location.pathname); } catch (e) { /* 무시 */ } render(); });
   }
 
-  function row(x, day) {
-    const dn = x.exp >= 0.05;
-    const t = x.trt;
-    const spec = `<div class="sp1">${x.thick} × ${n0(x.width)} <span class="bk">· 표면사상 ${esc(x.sur)}${t && t.cot ? ` · 도금량 ${esc(t.cot)}` : ''}</span></div>`
-      + (t ? `<div class="sp2" title="${esc(t.src)}"><b>후처리</b> ${esc(t.aft || '-')} <span class="bk">${esc(t.aftNm || '')}</span></div><div class="sp2"><b>도유</b> ${esc(t.oil || '-')} <span class="bk">${esc(t.oilNm || '')}</span></div>`
-        : `<div class="sp2 bk">후처리·도유 — ${x.con ? '주문 사양 조회 대기' : '모름(계약 미연결)'}</div>`);
-    return `<tr${dn ? ' class="hasdn"' : ''}><td class="c"><b>${x.seq}</b></td>`
-      + `<td class="tm">${dn ? `<span class="bk">더미 ${tm(x.downStart, day)}</span><br>` : ''}<b>${tm(x.start, day)}</b> – ${tm(x.end, day)}</td>`
-      + `<td class="l">${x.con ? `<b>${esc(x.con)}</b>` : '<span class="bk">계약 미연결</span>'}${x.conf ? '' : '<span class="gt gt3">미확정</span>'}<br><span class="bk">소재 ${esc(x.raw)}</span></td>`
-      + `<td class="c">${md(x.req) || '-'}</td>`
-      + `<td class="l wr">${spec}</td>`
-      + `<td class="num" title="${x.wgt ? '톤 = 소재 입고 무게' : `톤은 추정: 같은 두께·폭 코일의 보통 무게 × 코일 ${esc(x.cnt)}개`} · 시간당 생산량 = ${esc(x.tphSrc)}"><b>${n1(x.t)}t</b> · ${n0(x.runMin)}분<br><span class="bk">${x.wgt ? `소재 무게 · 제품 ${esc(x.cnt)}코일` : `추정 ${esc(x.cnt)}코일`} · ${n1(x.tph)}t/h</span></td>`
-      + `<td class="l chg">${(x.chg || []).map((c) => `<div>${esc(c)}</div>`).join('')}</td>`
-      + `<td class="l wr">${(x.downs || []).length ? ((x.downs.length > 1 && dn) ? `<div class="wo-ds">합계 ${n1(x.exp)}분</div>` : '') + x.downs.map((d) => `<div class="wo-dl"><b>${esc(d.c)}</b> <span class="wo-dm">${n1(d.m)}분</span><div class="bk">${esc(d.b)}</div></div>`).join('') : '<span class="bk">없음</span>'}</td></tr>`;
+  // 표 열(10/28 사용자 '다시 재구성': 어떤 조건으로 골랐나 · 몇 톤 몇 분 · 더미 얼마) — 순서·시간 | 계약 | 사양 | 생산 예상 | 선정 조건 | 예상 더미
+  const IND = { A: '508', B: '610', C: '305' };
+  function gatesHtml(x) {
+    const G = x.gates || [];
+    const warn = (x.why || '').startsWith('⚠');
+    let h = `<div class="wo-why${warn ? ' bad' : ''}">${esc(x.why || '')}</div>`;
+    if (!G.length) return h;
+    const same = G.filter((g) => g.ok && g.t === '같음').map((g) => g.k);
+    const diff = G.filter((g) => g.ok !== null && g.t !== '같음');
+    const none = G.filter((g) => g.ok === null).map((g) => g.k);
+    h += diff.map((g) => `<div class="wo-g ${g.ok ? 'ok' : 'no'}">${g.ok ? '✓' : '✗'} <b>${esc(g.k)}</b> ${esc(g.t)}</div>`).join('');
+    if (same.length) h += `<div class="wo-g ok">✓ <b>같음</b> ${esc(same.join('·'))}</div>`;
+    if (none.length) h += `<div class="wo-g na">– 자료 없음 ${esc(none.join('·'))}</div>`;
+    return h;
   }
-  const HEAD = '<thead><tr><th>순서</th><th>시간 (추정)</th><th class="l">계약번호-행번 · 소재</th><th>생산요청일</th><th class="l">두께 × 폭 · 후처리 · 도유</th><th>톤 · 생산</th><th class="l">앞 코일과 바뀌는 것</th><th class="l">예상 더미 (분 · 근거)</th></tr></thead>';
-  const NC = 8;
+  function row(x, day) {
+    const dn = x.exp >= 1;                                         // 1분 미만은 '거의 없음'(사양이 안 바뀌어도 생기는 수준)
+    const t = x.trt || {};
+    const sp = [t.cot && `도금량 ${t.cot}`, x.trt && `후처리 ${t.aft || '없음'}`, t.oil && `도유 ${t.oil}`, x.ind && `내경 ${IND[x.ind] || x.ind}`].filter(Boolean);
+    return `<tr${dn ? ' class="hasdn"' : ''}>`
+      + `<td class="tm"><div class="wo-no">${x.seq}</div><b>${tm(x.start, day)}</b>–${tm(x.end, day)}${dn ? `<div class="bk">더미 ${tm(x.downStart, day)}부터</div>` : ''}</td>`
+      + `<td class="l">${x.con ? `<b class="wo-con">${esc(x.con)}</b>` : '<span class="bk">계약 미연결</span>'}${x.conf ? '' : '<span class="gt gt3">미확정</span>'}<div class="bk">소재 ${esc(x.raw)}${x.req ? ` · 요청 ${md(x.req)}` : ''}</div></td>`
+      + `<td class="l"><b class="wo-sz">${(+x.thick).toFixed(2)} × ${n0(x.width)}</b><div class="bk">${esc(x.sur)}${sp.length ? ' · ' + esc(sp.join(' · ')) : (x.con ? ' · 후처리 조회 대기' : '')}</div></td>`
+      + `<td class="num" title="${x.wgt ? '톤 = 소재 입고 무게' : '톤 = 추정(같은 두께·폭 보통 무게)'} · 시간당 생산량 = ${esc(x.tphSrc)}"><b>${n1(x.t)}t</b> · <b>${n0(x.runMin)}분</b><div class="bk">${n1(x.tph)}t/h · 제품 ${esc(x.cnt)}코일${x.wgt ? '' : ' · 톤 추정'}</div></td>`
+      + `<td class="l wr">${gatesHtml(x)}</td>`
+      + `<td class="l wr">${dn ? `<div class="wo-dum"><b>${n1(x.exp)}분</b>${x.dumT >= 0.05 ? ` · 약 ${n1(x.dumT)}t` : ''}</div>` + (x.downs || []).map((d) => `<div class="bk">${esc(d.c)} ${n1(d.m)}분 — ${esc(d.b)}</div>`).join('') : (x.exp >= 0.05 ? `<span class="bk">거의 없음(${n1(x.exp)}분)</span>` : '<span class="bk">없음</span>')}</td></tr>`;
+  }
+  const HEAD = '<thead><tr><th class="l">순서 · 시간</th><th class="l">계약번호-행번 · 소재</th><th class="l">사양</th><th>생산 예상<br><small class="bk">톤 · 분</small></th><th class="l">선정 조건 <small class="bk">앞 코일 대비</small></th><th class="l">예상 더미<br><small class="bk">분 · 톤 · 근거</small></th></tr></thead>';
+  const NC = 6;
   const mins = (s, d) => { if (!s) return 0; const y = +d.slice(0, 4), t = Date.UTC(y, +s.slice(0, 2) - 1, +s.slice(3, 5), +s.slice(6, 8), +s.slice(9, 11)), b = Date.UTC(y, +d.slice(5, 7) - 1, +d.slice(8, 10), 7, 0); return Math.max(0, Math.min(1440, (t - b) / 6e4)); };   // 하루 = 07시~다음날 07시(MES 일수 기준, 10/22 사용자)
   function strip(v, d, byS) {
     const seg = [];
@@ -51,11 +63,11 @@
       if (x.day !== cur) {
         cur = x.day;
         const s = (v.days || {})[cur] || {};
-        h += `<tr class="day"><td colspan="${NC}"><div class="dayh"><b>${dayNm(cur)}</b><span>${n0(s.n)}코일 · ${n0(s.t)}t · 생산 ${hm(s.run || 0)} · <em>예상 더미 ${n1(s.down)}분</em></span></div>${strip(v, cur, byS)}</td></tr>`;
+        h += `<tr class="day"><td colspan="${NC}"><div class="dayh"><b>${dayNm(cur)}</b><span>${n0(s.n)}코일 · ${n0(s.t)}t · 생산 ${hm(s.run || 0)} · <em>예상 더미 ${n1(s.down)}분${s.dumT >= 0.05 ? ` · 약 ${n1(s.dumT)}t` : ''}</em></span></div>${strip(v, cur, byS)}</td></tr>`;
       }
       h += row(x, cur);
     });
-    return `<div class="scroll"><table class="t wo cgwo"><colgroup><col style="width:4%"><col style="width:10%"><col style="width:13%"><col style="width:7%"><col style="width:17%"><col style="width:10%"><col style="width:18%"><col style="width:21%"></colgroup>${HEAD}<tbody>${h}</tbody></table></div>`
+    return `<div class="scroll"><table class="t wo cgwo"><colgroup><col style="width:8%"><col style="width:16%"><col style="width:15%"><col style="width:10%"><col style="width:31%"><col style="width:20%"></colgroup>${HEAD}<tbody>${h}</tbody></table></div>`
       + '<p class="hint lg"><i class="sr"></i>생산 <i class="sd"></i>예상 더미(앞 코일과 바뀜) — 띠에 마우스를 올리면 내용이 보입니다. 시각은 추정 · 톤은 소재 입고 무게(없는 코일만 추정)</p>';
   }
 
@@ -188,7 +200,7 @@
       + '<div class="kpis" style="margin-top:12px">'
       + `<div class="kpi"><div class="l">돌릴 대상</div><div class="v">${n0(v.n)}<small>코일 ${n0(v.tSum)}t</small></div><div class="b">대상 선정 화면 · 그중 확정 ${n0(v.nConf)}코일 · 가동계획상 ${esc(md(v.day))} 강종 ${esc(plan)}</div></div>`
       + `<div class="kpi"><div class="l">제안 순서대로면</div><div class="v">${v.until ? esc(tm(v.until)) : '-'}<small>까지</small></div><div class="b">${esc(tm(v.from))} 출발 · 생산 ${hm(v.runSum || 0)}</div></div>`
-      + `<div class="kpi"><div class="l">예상 더미 (제안 순서)</div><div class="v wv">${n1(v.ours)}<small>분</small></div><div class="b">사양 바뀜 ${n0(v.oursChg)}번</div></div>`
+      + `<div class="kpi"><div class="l">예상 더미 (제안 순서)</div><div class="v wv">${n1(v.ours)}<small>분</small></div><div class="b">더미 약 ${n1(v.oursDumT)}t · 사양 바뀜 ${n0(v.oursChg)}번</div></div>`
       + '</div>'
       + (v.n ? `<div class="wo-cmp${gain < 0 ? ' bad' : ''}"><b>화면에 올라온 순서와 비교</b> — 같은 ${n0(v.n)}코일을 대상 선정 화면에 올라온 순서대로 돌리면 예상 더미 ${n1(v.mes)}분 (사양 바뀜 ${n0(v.mesChg)}번) → 제안이 <b>${gain >= 0 ? `${n1(gain)}분 짧음` : `${n1(-gain)}분 김`}</b> <span class="bk">(같은 더미 기준표로 계산)</span></div>` : '')
       + (blk ? `<div class="cgbs"><span class="bk">표면사상 묶음</span> ${blk}</div>` : '')
