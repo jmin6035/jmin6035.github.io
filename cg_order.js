@@ -10,6 +10,7 @@
   const n1 = (v) => (v == null || isNaN(v) ? '-' : (+v).toFixed(1));
   const md = (s) => (s ? `${+String(s).slice(5, 7)}/${+String(s).slice(8, 10)}` : '');
   const ymd8 = (s) => (s && String(s).length >= 8 ? `${+String(s).slice(4, 6)}/${+String(s).slice(6, 8)}` : '');
+  let CAL = null;                                            // 계약번호-행번 → 2주 캘린더 생산일
   let O = null, flt = 'act', q = '', ln = '', ex = '', by = 'dst';
   try { by = localStorage.getItem(BY_KEY) || 'dst'; } catch (e) { /* 무시 */ }
   const F = {
@@ -50,6 +51,11 @@
     if (x.aft) c.push(`<span class="ch">후처리 ${esc(x.aft)}</span>`);
     return c.join('');
   }
+  function calTxt(x) {                                       // 2주 캘린더(cg_calendar)에 잡힌 생산일 — 지시(확정)·소재 있음·입고 예정 모두
+    const c = CAL && CAL[x.con];
+    if (!c || x.st === '생산 완료') return x.woN ? `<div class="sub">지시 ${x.woN}코일</div>` : '';
+    return `<div class="${c.late ? 'rem' : ''}">생산 <b>${md(c.from)}</b>${c.to !== c.from ? `~${md(c.to)}` : ''}</div><div class="sub">${esc(c.line || '')} ${n1(c.t)}t${x.woN ? ` · 지시 ${x.woN}코일` : ''}</div>`;
+  }
   function row(x) {
     const past = x.lateIn && x.needIn ? Math.round((Date.parse(O.asOf) - Date.parse(x.needIn)) / 864e5) : 0;   // 소재 지연이면 '여유' 대신 필요 입고일이 며칠 지났는지
     const est = x.etaSrc === '예상 입고';                        // 여유 = 필요 입고일 − 포스코 입고예정(없으면 인도기한 + 실적 중앙값 = 예상 입고)
@@ -64,7 +70,7 @@
       + `<td class="num">${x.purT ? `<b>${n1(x.purT)}t</b><div class="sub">발주 ${ymd8(x.purDt)}</div>${x.dle ? `<div class="sub">인도기한 ${md(x.dle)}</div>` : ''}` : '<span class="sub">미발주</span>'}</td>`
       + `<td>${stages(x)}${x.early && x.remIn > 0.5 ? `<div class="rem">열연 이전 ${n1(x.early)}t</div>` : ''}</td>`
       + `<td class="num">${x.entT ? `<b>${n1(x.entT)}t</b>${x.entFirst ? `<div class="sub">첫 입고 ${md(x.entFirst)}</div>` : ''}` : '<span class="sub">0</span>'}${x.remIn ? `<div class="rem">미입고 ${n1(x.remIn)}t</div>` : ''}</td>`
-      + `<td class="num">${x.sche ? `<div>예정 <b>${md(x.sche)}</b></div>` : ''}${x.prodT ? `<b>${n1(x.prodT)}t</b>${x.prodLast ? `<div class="${x.st === '생산 완료' ? 'done' : 'sub'}">${x.st === '생산 완료' ? '완료' : '마지막'} ${md(x.prodLast)}</div>` : ''}` : (x.sche ? '' : '<span class="sub">-</span>')}</td>`
+      + `<td class="num">${calTxt(x)}${x.sche && !(CAL && CAL[x.con]) ? `<div>예정 <b>${md(x.sche)}</b></div>` : ''}${x.prodT ? `<b>${n1(x.prodT)}t</b>${x.prodLast ? `<div class="${x.st === '생산 완료' ? 'done' : 'sub'}">${x.st === '생산 완료' ? '완료' : '마지막'} ${md(x.prodLast)}</div>` : ''}` : (x.sche || (CAL && CAL[x.con]) ? '' : '<span class="sub">-</span>')}${x.fwdT ? `<div class="sub">출하 ${n1(x.fwdT)}t${x.fwdLast ? ` ${md(x.fwdLast)}` : ''}</div>` : ''}</td>`
       + `<td class="num">${needOn && x.needIn ? `<b>${md(x.needIn)}</b>${sl}` : '<span class="sub">-</span>'}</td></tr>`;
   }
   const COLS = '<colgroup>' + [8.5, 14, 16.5, 10.5, 7.5, 9, 11.5, 8, 6.5, 8].map((w) => `<col style="width:${w}%">`).join('') + '</colgroup>';
@@ -146,12 +152,13 @@
     $('od-close').onclick = () => document.querySelectorAll('details.sg').forEach((d) => { d.open = false; });
     if (window.UI) UI.reveal($('od-main'));
   }
-  const envReady = GP.latest('cg_order_progress.enc.json');
+  const envReady = GP.latest('cg_order_progress.enc.json'), calReady = GP.latest('cg_calendar.enc.json');
   async function unlock(pw) {
     const env = await envReady;
     if (!env) { $('od-msg').textContent = '아직 게시된 자료가 없습니다.'; return; }
     try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
     catch (e) { $('od-form').hidden = false; $('od-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
+    try { const ce = await calReady; if (ce) CAL = (await GP.decryptJSON(ce, pw)).contracts || null; } catch (e) { CAL = null; }
     render();
   }
   $('od-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('od-pw').value); });

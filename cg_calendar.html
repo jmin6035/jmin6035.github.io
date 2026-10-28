@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>도금 2주 생산 캘린더</title>
+<meta name="description" content="라인별 2주 생산 캘린더 — 현장 작업지시(확정)·소재 있는 주문(편성)·입고 예정(예상)을 라인 능력에 채움, 수요일 확정·준수율">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
+<link rel="stylesheet" href="ui/theme.css?v=2610280753">
+<style>
+main.wrap { max-width: none; }
+:root { --c-conf: #2e7d32; --c-plan: #3774a1; --c-fcst: #9cc3e2; --c-gap: #e3e7ec; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-conf: #4caf50; --c-plan: #5b9bd0; --c-fcst: #2f4f6c; --c-gap: #2a3038; } }
+:root[data-theme="dark"] { --c-conf: #4caf50; --c-plan: #5b9bd0; --c-fcst: #2f4f6c; --c-gap: #2a3038; }
+.lg { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; color: var(--ink-2); margin: 0 0 12px; }
+.lg span { white-space: nowrap; } .lg i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
+.wk { overflow-x: auto; margin: 0 0 16px; }
+.wk h3 { font-size: 16px; margin: 0 0 8px; }
+table.cg { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 980px; table-layout: fixed; }
+table.cg th, table.cg td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 0; vertical-align: top; }
+table.cg tr > :first-child { border-left: 1px solid var(--line); width: 74px; }
+table.cg thead th { background: var(--brand); color: #fff; font-size: 14px; font-weight: 800; padding: 7px 4px; text-align: center; white-space: nowrap; }
+table.cg thead th.we { background: var(--ink-3); }
+table.cg thead th.nx { background: var(--brand-2); }
+table.cg thead th small { display: block; font-size: 11.5px; font-weight: 600; opacity: .9; }
+table.cg tbody th { background: var(--tint-2); font-size: 15px; font-weight: 800; padding: 10px 6px; text-align: center; white-space: nowrap; }
+table.cg tbody th small { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); }
+button.cell { display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch; width: 100%; min-height: 128px; border: 0; background: var(--surface); color: inherit; font: inherit; text-align: left; padding: 7px 8px; cursor: pointer; }
+button.cell:hover { background: var(--hover); }
+button.cell.fl { background: color-mix(in srgb, var(--bad-bg) 55%, var(--surface)); }
+.ct { display: flex; align-items: center; gap: 5px; margin: 0 0 5px; flex-wrap: wrap; }
+.fam { display: inline-block; border-radius: 5px; padding: 0 7px; font-size: 14px; font-weight: 800; }
+.fam-AL { background: #e6f0fb; color: #1d5a96; } .fam-AZ { background: #eef6e8; color: #3d6b1f; } .fam-MAC { background: #f3ecfb; color: #5b2f8f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fam-AL { background: #1d3550; color: #9cc6f0; } :root:not([data-theme="light"]) .fam-AZ { background: #23381a; color: #b5dc95; } :root:not([data-theme="light"]) .fam-MAC { background: #34244a; color: #d2b6f2; } }
+:root[data-theme="dark"] .fam-AL { background: #1d3550; color: #9cc6f0; } :root[data-theme="dark"] .fam-AZ { background: #23381a; color: #b5dc95; } :root[data-theme="dark"] .fam-MAC { background: #34244a; color: #d2b6f2; }
+.ev { font-size: 12.5px; font-weight: 800; color: var(--warn); white-space: nowrap; }
+.bar { display: flex; height: 10px; border-radius: 3px; overflow: hidden; background: var(--c-gap); margin: 0 0 6px; }
+.bar i { display: block; height: 100%; }
+.bar .c { background: var(--c-conf); } .bar .p { background: var(--c-plan); } .bar .f { background: var(--c-fcst); }
+.tv { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.tv small { font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin-left: 2px; }
+.gl { font-size: 13px; line-height: 1.5; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.gl span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fg { font-size: 12.5px; font-weight: 800; color: var(--bad); margin-top: 4px; line-height: 1.35; word-break: keep-all; }
+.lt { font-size: 12.5px; font-weight: 700; color: var(--warn); margin-top: 2px; white-space: nowrap; }
+td.jg { padding: 7px 8px; font-size: 13.5px; font-variant-numeric: tabular-nums; line-height: 1.5; background: var(--surface); }
+td.jg b { font-size: 15px; } td.jg .bad { color: var(--bad); font-weight: 800; } td.jg .good { color: var(--good); font-weight: 700; }
+td.jg .mk { display: inline-block; font-size: 12px; background: var(--tint-2); border-radius: 4px; padding: 0 5px; margin-top: 2px; white-space: nowrap; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 0 0 12px; flex-wrap: wrap; }
+.seg button { font: inherit; border: 0; background: var(--surface); color: inherit; padding: 6px 14px; cursor: pointer; white-space: nowrap; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--brand-2); color: #fff; font-weight: 700; }
+.rg { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 12px; overflow: hidden; }
+.rg > h3 { margin: 0; padding: 9px 14px; background: var(--tint-2); font-size: 16px; display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+.rg > h3 span { font-size: 14px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+table.it { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+table.it th { text-align: left !important; font-size: 13.5px; color: var(--ink-2); font-weight: 700; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.it td { text-align: left !important; padding: 8px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; line-height: 1.5; word-break: keep-all; }
+table.it td.num, table.it th.num { text-align: right !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.it tr:last-child td { border-bottom: 0; }
+.con { font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sub { font-size: 13.5px; color: var(--ink-2); }
+.nw { white-space: nowrap; }
+.chs { display: flex; flex-wrap: wrap; gap: 4px; }
+.ch { display: inline-block; border-radius: 6px; padding: 1px 8px; font-size: 14.5px; font-weight: 700; background: var(--sub); white-space: nowrap; }
+.ch.exp { background: var(--tint-2); color: var(--brand-2); }
+.sz { font-weight: 800; font-size: 15.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.kd { display: inline-block; border-radius: 10px; padding: 1px 10px; font-size: 14px; font-weight: 800; white-space: nowrap; color: #fff; opacity: 1; }
+.kd.k확정 { background: var(--c-conf); } .kd.k편성 { background: var(--c-plan); } .kd.k예상 { background: var(--c-fcst); color: var(--ink); }
+.bd { display: inline-block; border-radius: 10px; padding: 1px 8px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.bd.late { background: var(--warn-bg); color: var(--warn); } .bd.od { background: var(--bad-bg); color: var(--bad); }
+dialog.dd { border: 0; border-radius: 14px; padding: 0; width: min(1180px, 96vw); max-height: 90vh; background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgba(0, 0, 0, .3); }
+dialog.dd::backdrop { background: rgba(15, 23, 32, .45); }
+.dh { position: sticky; top: 0; z-index: 1; background: var(--brand); color: #fff; padding: 12px 18px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+.dh b { font-size: 19px; } .dh span { font-size: 14.5px; white-space: nowrap; }
+.dh .x { margin-left: auto; display: flex; gap: 8px; }
+.dh button { font: inherit; font-size: 14px; border: 1px solid rgba(255,255,255,.5); background: transparent; color: #fff; border-radius: 6px; padding: 3px 10px; cursor: pointer; white-space: nowrap; }
+.db { padding: 12px 18px 18px; }
+.db .fgl { background: var(--bad-bg); color: var(--bad); font-weight: 800; border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; }
+.db h4 { margin: 14px 0 6px; font-size: 16px; display: flex; gap: 10px; align-items: baseline; }
+.db h4 span { font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.db h4 span.kd { color: #fff; font-weight: 800; } .db h4 span.kd.k예상 { color: var(--ink); }
+.cf { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 10px; }
+.cf input { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: inherit; width: 140px; }
+.cf button.go { font: inherit; font-weight: 800; border: 0; background: var(--brand-2); color: #fff; border-radius: 8px; padding: 8px 16px; cursor: pointer; white-space: nowrap; }
+.cf button.go:disabled { opacity: .5; cursor: default; }
+.msg { font-size: 14px; color: var(--ink-2); }
+@media (max-width: 760px) { button.cell { min-height: 110px; padding: 5px; } .tv { font-size: 15px; } .gl { font-size: 12px; } }
+</style>
+</head>
+<body>
+<header id="shell" data-page="cgcal" data-crumb="도금" data-title="2주 생산 캘린더" data-sub="라인별 날짜마다 무엇을 만들지 — 누르면 순서"></header>
+<main class="wrap">
+  <div id="cc-main" style="margin-top:12px">
+    <section class="card lock" id="cc-lock">
+      <div><div class="ic" aria-hidden="true">🔒</div><h2>불러오는 중…</h2>
+        <form class="unlock" id="cc-form" hidden><input type="password" id="cc-pw" placeholder="분석 암호" autocomplete="current-password" aria-label="분석 암호"><button type="submit">열기</button></form>
+        <p class="hint" id="cc-msg"></p></div>
+    </section>
+  </div>
+  <dialog class="dd" id="cc-dlg"></dialog>
+</main>
+<footer class="foot"><div class="wrap"><span>원본: 작업지시 순서(MES 1010) · 주문진도(F/H·포스코·입고) · 최신 재계획(라인 능력·강종) — tools/cg_calendar.py</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2610280753"></script>
+<script src="engine/crypto.js?v=2610280753"></script>
+<script src="cg_calendar.js?v=2610280753"></script>
+</body>
+</html>
