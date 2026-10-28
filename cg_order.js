@@ -109,7 +109,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
       const r = x.need ? (x.have + x.soon) / x.need : null, r0 = x.need ? x.have / x.need : null, dd = x.need ? x.have / (x.need / C.days) : null;
       const hp = x.need ? Math.min(100, x.have / x.need * 100) : 0, sp = x.need ? Math.min(100 - hp, x.soon / x.need * 100) : 0;   // 막대 = 2주 생산량 100% 기준(넘으면 꽉 참)
       return `<tr class="${tot ? 'tot' : ''}"><td class="nm">${tot ? '' : `<i class="${tone(r)}"></i>`}${esc(x.line)}</td>`
-        + `<td class="gbar">${x.need ? `<div class="hb hb100" title="소재 있음 ${Math.round(r0 * 100)}% + 2주 안 입고 → ${Math.round(r * 100)}%"><i style="width:${hp}%;--i:${i++}"></i><u style="left:${hp}%;width:${sp}%"></u></div>` : ''}</td>`
+        + `<td class="gbar">${x.need ? `<div class="hb hb100" data-tip="소재 있음 ${Math.round(r0 * 100)}%" data-sub="2주 안 입고까지 ${Math.round(r * 100)}%"><i style="width:${hp}%;--i:${i++}"></i><u style="left:${hp}%;width:${sp}%"></u></div>` : ''}</td>`
         + `<td title="${x.need ? (x.spec ? `제원치 2주 ${n0(x.spec)}(판생점검 제원치: 라인 월 생산량 ÷ 가동일 × 14일${(x.specDown || []).length ? ` − 정기수리 ${x.specDown.length}일` : ''}) · 참고: 월차 기준 ${n0(x.tgt)} · 재계획 ${n0(x.cap)}` : `월차 기준 ${n0(x.tgt)} · 재계획 ${n0(x.cap)} 중 작은 값`) : ''}">${x.need ? `<b>${n0(x.need)}</b><div class="sub">하루 ${n0(x.need / C.days)}</div>` : '-'}</td>`
         + `<td><b>${n0(x.have)}</b></td><td>${n0(x.soon)}</td>`
         + `<td><b class="${tone(r) === 'bad' ? 'neg' : tone(r) === 'warn' ? 'wrn' : 'pos'}">${r == null ? '-' : Math.round(r * 100) + '%'}</b>${r0 == null ? '' : `<div class="sub">소재만 ${Math.round(r0 * 100)}%</div>`}</td>`
