@@ -26,7 +26,8 @@
      등급 차례는 바로 못 잇는 짝이 붙지 않게(녹취 10/27): AZ·AL = Gr.E → DDQ → EDDQ → DQ → CQ → 구조용, PosMAC = Gr.E → Gr.C → CQ → DQ → DDQ → EDDQ */
   const GRANK = { AZ: { GRE: 0, DDQ: 1, EDDQ: 2, DQ: 3, CQ: 4, GRB: 5, GRC: 6, GRD: 7 }, MAC: { GRE: 0, GRC: 1, CQ: 2, GRB: 2.5, GRD: 2.7, DQ: 3, DDQ: 4, EDDQ: 5, LFQ: 3.5 } };
   const gRank = (fam, g) => { const R = GRANK[String(fam || '').startsWith('MAC') ? 'MAC' : 'AZ']; return g && R[g] != null ? R[g] : 4.5; };
-  const sortDay = (a, fam) => a.sort((x, y) => (x.kind === '확정' ? 0 : 1) - (y.kind === '확정' ? 0 : 1) || (x.kind === '확정' ? (x.seq || 0) - (y.seq || 0) : gRank(fam, x.grade) - gRank(fam, y.grade) || (y.wdt || 0) - (x.wdt || 0) || (x.thk || 9) - (y.thk || 9)));
+  const rk3 = (x) => (x.kind === '확정' ? 0 : x.w10 ? 1 : 2);   // 1030 작업지시 → 1010 순서안(작업지시 순서 화면 제안 순서) → 나머지
+  const sortDay = (a, fam) => a.sort((x, y) => rk3(x) - rk3(y) || (x.kind === '확정' ? (x.seq || 0) - (y.seq || 0) : x.w10 ? x.w10 - y.w10 : gRank(fam, x.grade) - gRank(fam, y.grade) || (y.wdt || 0) - (x.wdt || 0) || (x.thk || 9) - (y.thk || 9)));
   /* 24시간 연속 가동 = 라인마다 한 줄로 이어진 생산 순서(10/28 사용자 '도금은 24시간이라 옮기면 캐파 초과·규칙 못 지키는 날도 있다').
      순서를 날짜별 능력으로 잘라 칸에 담음. 옮기기 = 고른 날 맨 앞에 끼워 넣기 → 뒤 주문이 순서대로 밀림(능력 초과 없음).
      못 들어가는 칸: 강종 다름(M/C 전후) · 입고 전 소재 · 라인 정지 → 그 조각은 다음 맞는 날로 */
@@ -439,7 +440,7 @@
       const ea = i.exp && i.arr, dl = ea ? `입항 ${md(i.arr)}` : `납기 ${md(i.due)}`;
       const need = i.od ? `<span class="bd od" title="필요 생산일(${ea ? '입항' : '납기'} − 1일)이 이미 지남">${dl} 지남</span>` : i.late ? `<span class="bd late" title="이 날 생산하면 ${ea ? '입항일' : '납기'}에 못 맞춤">${ea ? '입항일' : '납기'} 초과</span>` : i.need ? `필요 <b>${md(i.need)}</b>` : '';
       const tags = [i.moved ? `<span class="bd mv">옮김 ← ${md(i.moved.fd)}${i.moved.fl !== ln ? ' ' + i.moved.fl : ''}</span>` : i.shift ? `<span class="bd ${i.shift === '뒤로 밀림' ? 'late' : 'mv'}" title="다른 주문을 옮기거나 넣어서 날짜가 바뀜">${i.shift}</span>` : i.locked ? '<span class="bd mv">확정본</span>' : '',
-        i.matLate ? `<span class="bd od">소재 ${md(i.avail)}부터</span>` : '', i.shipMiss ? '<span class="bd od" title="배 입항일이 지났는데 아직 생산 전 — 배선 변경 확인">입항 지남</span>' : ''].filter(Boolean).join(' ');
+        i.w10 ? `<span class="bd mv" title="1010(소재 들어온 작업 목록)을 「작업지시 순서」 화면이 짠 순서 — 1030 지시 코일 바로 뒤">1010 순서 ${i.w10}번</span>` : '', i.matLate ? `<span class="bd od">소재 ${md(i.avail)}부터</span>` : '', i.shipMiss ? '<span class="bd od" title="배 입항일이 지났는데 아직 생산 전 — 배선 변경 확인">입항 지남</span>' : ''].filter(Boolean).join(' ');
       const seq = i.kind === '확정' ? (i.seq || k + 1) : ++n;
       return `<tr class="r${i.kind}"><td class="sq"><span class="kd k${i.kind}">${KD[i.kind]}</span> ${seq}</td>`
         + `<td><div class="con">${esc(i.con)}</div><div class="sub one">${who(i)}</div></td>`
