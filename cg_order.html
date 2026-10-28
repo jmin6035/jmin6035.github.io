@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>도금 주문진도</title>
+<meta name="description" content="도금 계약-행번별 주문서 전체 흐름 — F/H 발주·포스코 진행·입고·생산예정·생산, 필요 입고일 대비 여유와 앞당김 대상">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
+<link rel="stylesheet" href="ui/theme.css?v=2610280436">
+<style>
+main.wrap { max-width: none; }
+.od-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 0 0 12px; }
+.od-kpi button { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; cursor: pointer; font: inherit; color: inherit; }
+.od-kpi button[aria-pressed="true"] { border-color: var(--brand-2); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-2) 30%, transparent); }
+.od-kpi .l { font-size: 13px; color: var(--ink-2); } .od-kpi .v { font-size: 22px; font-weight: 800; } .od-kpi .bad .v, .od-kpi .v.bad { color: var(--bad); } .od-kpi .v.warn { color: var(--warn); }
+.od-flt { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; font-size: 14px; }
+.od-flt input, .od-flt select { font: inherit; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: inherit; }
+table.t.od { font-size: 14px; table-layout: fixed; width: 100%; min-width: 1180px; }
+table.t.od th { padding: 9px 8px; font-size: 13.5px; text-align: left !important; }
+table.t.od td { padding: 8px; vertical-align: top !important; line-height: 1.45; white-space: normal !important; text-align: left !important; }
+table.t.od td.num { text-align: right !important; font-variant-numeric: tabular-nums; }
+table.t.od .bk { font-size: 12px; color: var(--ink-3); }
+.st { display: inline-block; border-radius: 10px; padding: 1px 8px; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.st.hurry { background: var(--warn-bg); color: var(--warn); } .st.late { background: var(--bad-bg); color: var(--bad); } .st.ok { background: var(--good-bg); color: var(--good); } .st.mid { background: var(--tint-2); color: var(--brand-2); } .st.na { background: var(--sub); color: var(--ink-2); }
+.stg { display: inline-block; background: var(--tint-2); border-radius: 5px; padding: 0 6px; margin: 0 4px 3px 0; font-size: 12.5px; white-space: nowrap; }
+.stg.cur { background: var(--warn-bg); color: var(--warn); font-weight: 700; }
+.sl.neg { color: var(--bad); font-weight: 700; } .sl.pos { color: var(--good); }
+.od-note { font-size: 13px; color: var(--ink-2); margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<header id="shell" data-page="cgorder" data-crumb="도금" data-title="주문진도" data-sub="계약-행번별 주문서 전체 흐름 — F/H 발주 · 포스코 진행 · 입고 · 생산예정 · 생산 · 필요 입고일 대비 여유"></header>
+<main class="wrap">
+  <div class="docmeta" id="od-meta"></div>
+  <div id="od-main" style="margin-top:12px">
+    <section class="card lock" id="od-lock">
+      <div><div class="ic" aria-hidden="true">🔒</div><h2>불러오는 중…</h2>
+        <form class="unlock" id="od-form" hidden><input type="password" id="od-pw" placeholder="분석 암호" autocomplete="current-password" aria-label="분석 암호"><button type="submit">열기</button></form>
+        <p class="hint" id="od-msg"></p></div>
+    </section>
+  </div>
+</main>
+<footer class="foot"><div class="wrap"><span>원자료: MES 소재 발주·입고·주문진행(포스코 진행)·도금생산예정일·작업지시·코일 실적·주문 상세</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2610280436"></script>
+<script src="engine/crypto.js?v=2610280436"></script>
+<script src="cg_order.js?v=2610280436"></script>
+</body>
+</html>
