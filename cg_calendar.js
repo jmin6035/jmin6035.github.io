@@ -136,28 +136,43 @@
   }
 
   const who = (i) => [i.cus && esc(i.cus), i.dst && `<span class="nw">→ ${esc(i.dst)}</span>`, i.man && `<span class="nw">담당 ${esc(i.man)}</span>`].filter(Boolean).join(' · ');
-  function moveSel(i, ln, d) {
-    if (i.kind === '확정') return '<span class="sub">MES 지시됨</span>';
-    const lines = i.pline === '공용' ? LINES : [i.pline || ln];
-    const opt = [];
+  function moveOpts(i, ln, d) {                              // 옮길 날 목록: 남은 능력 · 경고(강종 다름 · 넘침 · 소재 입고 전)
+    const lines = i.pline === '공용' ? LINES : [i.pline || ln], opt = [];
     lines.forEach((l) => O.days.forEach((dd) => {
       if (l === ln && dd === d) return;
       const c = cellOf(l, dd), left = c.cap - c.conf - c.plan - c.fcst;
-      const warn = [!compat(c.fam, i.fam) ? `강종 ${c.fam || '-'}` : '', left < i.t ? `넘침 ${n0(i.t - left)}t` : '', i.kind === '예상' && i.avail && i.avail > dd ? `소재 ${md(i.avail)}부터` : ''].filter(Boolean);
+      const warn = [!compat(c.fam, i.fam) ? `강종 ${c.fam || '-'}` : '', left < i.t ? `넘침 ${n0(i.t - Math.max(0, left))}t` : '', i.kind === '예상' && i.avail && i.avail > dd ? `소재 ${md(i.avail)}부터` : ''].filter(Boolean);
       opt.push(`<option value="${l}|${dd}">${mdw(dd)}${l !== ln ? ' ' + l : ''} · 남은 ${n0(Math.max(0, left))}t${warn.length ? ' ⚠ ' + warn.join(' ') : ''}</option>`);
     }));
-    return `<div class="mvw"><input type="number" class="mvt" value="${(+i.t).toFixed(1)}" min="0.1" max="${i.t}" step="0.1" aria-label="옮길 톤"><span class="sub">t</span>`
-      + `<select class="mv" data-con="${esc(i.con)}" data-kind="${i.kind}" data-t="${i.t}" aria-label="옮길 날짜"><option value="">옮길 날…</option>${opt.join('')}</select></div>`;
+    return opt.join('');
   }
-  function itemRows(L, showSeq, ln, d) {
-    return L.map((i, k) => {
-      const due = i.od ? `<span class="bd od">밀림 · 필요 ${md(i.need)}</span>` : i.late ? `<span class="bd late">늦어짐 · 필요 ${md(i.need)}</span>` : i.need ? `<span class="sub">필요 ${md(i.need)}</span>` : '';
-      return `<tr><td class="num">${showSeq ? (i.seq || k + 1) : k + 1}</td><td><div class="con">${esc(i.con)}</div><div class="sub">${who(i)}</div></td>`
-        + `<td><div class="chs">${famCh(i.fam)}${i.exp ? '<span class="ch exp">수출</span>' : '<span class="ch">내수</span>'}${i.cot ? `<span class="ch">도금량 ${esc(i.cot)}</span>` : ''}${i.aft ? `<span class="ch">후처리 ${esc(i.aft)}</span>` : ''}</div></td>`
-        + `<td class="sz">${i.thk != null ? `${(+i.thk).toFixed(2)} × ${n0(i.wdt)}` : '-'}</td><td><b>${esc(i.grp || '')}</b></td>`
-        + `<td class="num"><b>${(+i.t).toFixed(1)}</b>${i.n ? `<div class="sub">${i.n}코일</div>` : ''}</td><td class="nw">${i.arr ? `<div>입항 <b>${md(i.arr)}</b>${i.shp ? ` <span class="sub">${esc(i.shp)}</span>` : ''}</div>` : ''}${i.due ? `<div class="${i.arr ? 'sub' : ''}">납기 ${md(i.due)}</div>` : ''}<div>${due}</div>`
-        + `${i.moved ? `<div><span class="bd mv">${i.moved.swap ? '자리 바꿈' : '옮김'} ← ${mdw(i.moved.fd)}${i.moved.fl !== ln ? ' ' + i.moved.fl : ''}</span></div>` : i.locked ? '<div><span class="bd mv">확정본</span></div>' : ''}${i.matLate ? `<div><span class="bd od">소재 ${md(i.avail)}부터 가능</span></div>` : ''}${i.shipMiss ? '<div><span class="bd od">배 놓침 · 배선 변경</span></div>' : ''}</td>`
-        + `<td>${ln ? moveSel(i, ln, d) : ''}</td></tr>`;
+  function itemRows(L0, ln, d) {
+    let n = 0;
+    const L = [], at = {};                                    // 같은 주문의 편성·예상 조각은 한 줄로(옮기기는 앞 조각 기준)
+    L0.forEach((i, k) => {
+      if (i.kind !== '확정' && at[i.con] != null) {
+        const a = L[at[i.con]];
+        if (a.kind === '예상' && i.kind === '편성') { const tt = a.tt + i.t; Object.assign(a, i, { k, tt, extra: tt - i.t, xk: '예상' }); return; }   // 편성 조각을 기준으로
+        a.tt += i.t; a.extra = (a.extra || 0) + i.t; a.xk = i.kind; return;
+      }
+      if (i.kind !== '확정') at[i.con] = L.length;
+      L.push(Object.assign({}, i, { k, tt: i.t }));
+    });
+    return L.map((i) => {
+      const k = i.k;
+      const need = i.od ? `<span class="bd od">밀림 ${md(i.need)}</span>` : i.late ? `<span class="bd late">늦음 ${md(i.need)}</span>` : i.need ? `필요 <b>${md(i.need)}</b>` : '';
+      const tags = [i.moved ? `<span class="bd mv">${i.moved.swap ? '자리 바꿈' : '옮김'} ← ${md(i.moved.fd)}${i.moved.fl !== ln ? ' ' + i.moved.fl : ''}</span>` : i.locked ? '<span class="bd mv">확정본</span>' : '',
+        i.matLate ? `<span class="bd od">소재 ${md(i.avail)}부터</span>` : '', i.shipMiss ? '<span class="bd od">배 놓침</span>' : ''].filter(Boolean).join(' ');
+      const seq = i.kind === '확정' ? (i.seq || k + 1) : ++n;
+      return `<tr class="r${i.kind}"><td class="sq"><span class="kd k${i.kind}">${i.kind}</span> ${seq}</td>`
+        + `<td><div class="con">${esc(i.con)}</div><div class="sub one">${who(i)}</div></td>`
+        + `<td><span class="chs1">${famCh(i.fam)}${i.exp ? '<span class="ch exp">수출</span>' : '<span class="ch">내수</span>'}${i.cot ? `<span class="ch">${esc(i.cot)}</span>` : ''}${i.aft ? `<span class="ch">${esc(i.aft)}</span>` : ''}</span></td>`
+        + `<td class="sz">${i.thk != null ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw"><b>${esc(i.grp || '')}</b></td>`
+        + `<td class="num"><b>${(+i.tt).toFixed(1)}</b>${i.extra ? `<div class="sub xs">${i.xk} ${(+i.extra).toFixed(1)}</div>` : ''}</td>`
+        + `<td class="nw dt2">${[i.arr ? `입항 <b>${md(i.arr)}</b>` : i.due ? `납기 ${md(i.due)}` : '', need].filter(Boolean).join(' · ')}${tags ? `<div>${tags}</div>` : ''}</td>`
+        + `<td class="nw">${i.kind === '확정' ? '<span class="sub">MES 지시됨</span>' : `<button type="button" class="lnk mvb" data-k="${k}">옮기기</button>`}</td></tr>`
+        + (i.kind === '확정' ? '' : `<tr class="mvr" id="mvr-${k}" hidden><td></td><td colspan="7"><div class="mvw"><b>${esc(i.con)}</b><input type="number" class="mvt" value="${(+i.t).toFixed(1)}" min="0.1" max="${i.t}" step="0.1" aria-label="옮길 톤">t 를`
+          + `<select class="mv" aria-label="옮길 날짜"><option value="">날짜 고르기…</option>${moveOpts(i, ln, d)}</select>(으)로 <button type="button" class="go2" data-k="${k}">옮기기</button></div></td></tr>`);
     }).join('');
   }
   function csv(rows, name) {
@@ -170,31 +185,30 @@
   }
   function openDay(ln, d) {
     const c = O.lines[ln][O.days.indexOf(d)], dlg = $('cc-dlg');
-    const K = [['확정', '현장 작업지시 순서 그대로(MES 1010)'], ['편성', '소재 있음 — 현장 규칙 순서(넓은 폭 → 좁은 폭, 같은 폭은 얇은 것 먼저)'], ['예상', '입고 예정 소재 — 들어오면 편성으로']];
     const pg = Object.entries(c.planGrp || {}).filter(([, v]) => v >= 1).map(([g, v]) => `${g} ${n0(v)}`).join(' · ');
-    let body = c.flag ? `<div class="fgl">⚠ ${esc(c.flag)} — ${c.flag.startsWith('계획') ? '현장 순서가 우선. M/C·강종 날짜를 재계획에 반영할지 확인' : c.flag.startsWith('옮긴') || c.flag.startsWith('확정본에') ? 'M/C 없이는 이날 생산 불가 — 다른 날로 옮기기' : '능력보다 많음 — 일부를 다른 날로 옮기거나 다음 날로 넘어감'}</div>` : '';
+    let body = c.flag ? `<div class="fgl">⚠ ${esc(c.flag)} — ${c.flag.startsWith('계획') ? '현장 순서가 우선. M/C·강종 날짜를 재계획에 반영할지 확인' : c.flag.startsWith('옮긴') || c.flag.startsWith('확정본에') ? 'M/C 없이는 이날 생산 불가 — 다른 날로 옮기기' : '능력보다 많음 — 일부를 다른 날로 옮기기'}</div>` : '';
     if (c.why) body += `<div class="fgl" style="background:var(--warn-bg);color:var(--warn)">빈칸 ${n0(c.gap)}t — ${esc(c.why)}</div>`;
     let sw = true; try { sw = localStorage.getItem('cgl-cal-swap') !== '0'; } catch (e) { /* 무시 */ }
-    body += `<label class="swl"><input type="checkbox" id="mv-swap"${sw ? ' checked' : ''}> 옮겨 간 날이 넘치면 그날 주문 중 필요일 늦은 것을 이 날로 바꿔 넣기(자리 바꾸기)</label>`;
-    K.forEach(([k, d2]) => {
-      const L = c.items.filter((i) => i.kind === k);
-      if (!L.length) return;
-      body += `<h4><span class="kd k${k}">${k}</span> ${n0(L.reduce((s, i) => s + i.t, 0))}t <span>${L.length}건 · ${d2}</span></h4>`
-        + `<div style="overflow-x:auto"><table class="it" style="min-width:900px"><thead><tr><th class="num">순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 수출 · 도금량 · 후처리</th><th>두께 × 폭</th><th>그룹</th><th class="num">톤</th><th>입항 · 납기</th><th>옮기기</th></tr></thead><tbody>${itemRows(L, k === '확정', ln, d)}</tbody></table></div>`;
-    });
-    if (!c.items.length) body += `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
-    dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>${c.fam || ''}${c.event ? ' · ' + esc(c.event) : ''}</span><span>능력 ${n0(c.cap)}t · 확정 ${n0(c.conf)} · 편성 ${n0(c.plan)} · 예상 ${n0(c.fcst)}${c.gap ? ` · 빈칸 ${n0(c.gap)}` : ''}</span>`
-      + `${pg ? `<span>재계획 배분: ${pg}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV 내려받기</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
+    body += '<div class="how"><div><b>이 날에 들어온 기준</b> 필요 생산일(수출 = 입항 − 4일, 내수 = 납기 − 3일) 빠른 주문부터, 그날 라인·강종이 맞는 것을 능력만큼 · 소재 있음(편성) 먼저, 입고 예정(예상)은 입고 + 5일부터</div>'
+      + '<div><b>순서</b> 확정 = MES 작업지시 순서 그대로 · 편성·예상 = 현장 규칙(넓은 폭 → 좁은 폭, 같은 폭이면 얇은 것 먼저)</div>'
+      + `<div><b>옮기기</b> 고른 날 칸에 넣고 그 날 순서는 위 규칙으로 다시 정렬 · <label><input type="checkbox" id="mv-swap"${sw ? ' checked' : ''}> 그 날이 넘치면 그 날 주문 중 필요일 가장 늦은 것을 이 날로 바꿔 넣기</label> · 「다음 주 확정」을 눌러야 저장</div></div>`;
+    body += c.items.length ? `<table class="it cmp"><colgroup><col style="width:9%"><col style="width:25%"><col style="width:17%"><col style="width:10%"><col style="width:6%"><col style="width:7%"><col style="width:18%"><col style="width:8%"></colgroup>`
+      + `<thead><tr><th>구분 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">톤</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
+      : `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
+    dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>${famCh(c.fam)}${c.event ? ' · ' + esc(c.event) : ''}</span><span>능력 <b>${n0(c.cap)}t</b> = ${[['확정', c.conf], ['편성', c.plan], ['예상', c.fcst], ['빈칸', c.gap]].filter(([, v]) => v >= 0.5).map(([k, v]) => `${k} ${n0(v)}`).join(' + ')}</span>`
+      + `${pg ? `<span>재계획: ${pg}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
     $('cc-x').onclick = () => dlg.close();
     $('cc-csv').onclick = () => csv(c.items, `도금_${ln}_${d}.csv`);
-    dlg.querySelectorAll('select.mv').forEach((s) => s.onchange = () => {
-      if (!s.value) return;
-      const [tl, td] = s.value.split('|'), tin = +s.parentNode.querySelector('.mvt').value;
-      const t = Math.min(+s.dataset.t, tin > 0 ? Math.round(tin * 10) / 10 : +s.dataset.t);
-      MOVES.push({ con: s.dataset.con, kind: s.dataset.kind, t, fl: ln, fd: d, tl, td, swap: $('mv-swap').checked });
+    dlg.querySelectorAll('button.mvb').forEach((b) => b.onclick = () => { const r = $('mvr-' + b.dataset.k); r.hidden = !r.hidden; });
+    dlg.querySelectorAll('button.go2').forEach((b) => b.onclick = () => {
+      const r = $('mvr-' + b.dataset.k), it = c.items[+b.dataset.k], v = r.querySelector('select.mv').value;
+      if (!v) { r.querySelector('select.mv').focus(); return; }
+      const [tl, td] = v.split('|'), tin = +r.querySelector('.mvt').value;
+      const t = Math.min(it.t, tin > 0 ? Math.round(tin * 10) / 10 : it.t);
+      MOVES.push({ con: it.con, kind: it.kind, t, fl: ln, fd: d, tl, td, swap: $('mv-swap').checked });
       try { localStorage.setItem('cgl-cal-swap', $('mv-swap').checked ? '1' : '0'); } catch (e) { /* 무시 */ }
       saveMoves(); applyMoves(); render();
-      if (window.UI && UI.toast) UI.toast(`${s.dataset.con} → ${mdw(td)} ${tl}`);
+      if (window.UI && UI.toast) UI.toast(`${it.con} ${n0(t)}t → ${mdw(td)} ${tl}`);
       openDay(ln, d);
     });
     if (!dlg.open) dlg.showModal();
