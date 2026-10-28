@@ -304,16 +304,14 @@
   function kpis() {
     const S = O.summary, tot = (k) => LINES.reduce((s, l) => s + (S[l][k] || 0), 0);
     const win = O.risk.filter((r) => !r.od);
-    // 재계획 강종 vs 현장: ① 작업지시 대상 코일(예상 시각)이 재계획 강종과 다른 날 ② MES 도금생산예정일에서 그날 가장 많은 강종이 재계획과 다른 날
+    // 재계획 강종 vs 작업지시 대상 코일(예상 시각)이 다른 날
     const dset = new Set(), parts = [];
     LINES.forEach((l) => {
-      const A = S[l].mis || [], B = S[l].mesMis || [];
-      [...A, ...B.map((x) => x.d)].forEach((d) => dset.add(l + d));
-      const t = [];
-      if (A.length) { const c0 = O.lines[l][O.days.indexOf(A[0])], ut = (c0.flag || '').match(/\(([^)]*까지)\)/); t.push(`재계획 ${A.map(md).join('·')} ${c0.event || c0.fam} · 작업지시 대상은 ${(c0.fieldFam || []).join('·')}${ut ? ' ' + ut[1] : ''}`); }
-      const B2 = B.filter((x) => !A.includes(x.d));
-      if (B2.length) { const m = {}; B2.forEach((x) => { const k = `${x.plan}→${x.mes}`; (m[k] = m[k] || []).push(x); }); Object.entries(m).forEach(([, X]) => t.push(`${md(X[0].d)}${X.length > 1 ? '~' + md(X[X.length - 1].d) : ''} 재계획 ${X[0].plan} · MES 생산예정 ${X[0].mes} ${n0(X.reduce((s, x) => s + x.t, 0))}t`)); }
-      if (t.length) parts.push(`<b>${l}</b> ${t.join(' · ')}`);
+      const A = S[l].mis || [];
+      if (!A.length) return;
+      A.forEach((d) => dset.add(l + d));
+      const c0 = O.lines[l][O.days.indexOf(A[0])], ut = (c0.flag || '').match(/\(([^)]*까지)\)/);
+      parts.push(`<b>${l}</b> 재계획 ${A.map(md).join('·')} ${c0.event || c0.fam} · 작업지시 대상은 ${(c0.fieldFam || []).join('·')}${ut ? ' ' + ut[1] : ''}`);
     });
     const fl = dset.size, misTxt = parts.join('<br>');
     const jgMin = Math.min(...O.jg.map((j) => j.cumSched - j.cumPlan));
@@ -322,7 +320,7 @@
       + k('2주 라인 능력', `${n0(tot('cap'))}<small>t</small>`, `지시 대상 ${n0(tot('conf'))} · 소재 있음 ${n0(tot('plan'))} · 입고 예정 ${n0(tot('fcst'))} · 빈칸 ${n0(tot('gap'))}`, tot('gap') > 0 ? 'warn' : 'brand')
       + k('이미 늦은 주문', `${n0(O.odT)}<small>t · ${O.nOd}건</small>`, `필요 생산일이 이미 지났는데 아직 생산 전 — 2주 안에 먼저 넣음${(O.shipMiss || []).length ? ` · 그중 입항일 지난 수출 ${O.shipMiss.length}건(입항 지남, 배선 변경 확인)` : ''}`, O.odT > 0 ? 'bad' : 'good')
       + k('2주 안에 못 넣는 주문', `${win.length}<small>건 · ${n0(win.reduce((s, r) => s + r.t, 0))}t</small>`, '이번 2주에 필요한데 칸이 없음(소재 없음·능력 부족)', win.length ? 'warn' : 'good')
-      + k('강종 날짜 · 재계획과 현장 다름', `${fl}<small>일</small>`, fl ? misTxt : '재계획 강종과 작업지시 대상·MES 생산예정이 맞음', fl ? 'bad' : 'good')
+      + k('강종 날짜 · 재계획과 현장 다름', `${fl}<small>일</small>`, fl ? misTxt : '재계획 강종과 작업지시 대상이 맞음', fl ? 'bad' : 'good')
       + k('자가재(컬러 투입) 진도', jgMin >= 0 ? '<span class="gv">계획 이상</span>' : `<span class="bv">${n0(-jgMin)}t 부족</span>`, '재계획 자가재 누계 대비 캘린더 누계(가장 모자란 날)', jgMin >= 0 ? 'good' : 'bad')
       + '</div>';
   }
@@ -463,7 +461,7 @@
       + `<thead><tr><th>상태 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 재질 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">이 날 톤 · 계약 전체</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
       : `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
     dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>${famCh(c.fam)}${c.event ? ' · ' + esc(c.event) : ''}</span><span>능력 <b>${n0(c.cap)}t</b> = ${[['지시 대상', c.conf], ['소재 있음', c.plan], ['입고 예정', c.fcst], ['빈칸', c.gap]].filter(([, v]) => v >= 0.5).map(([k, v]) => `${k} ${n0(v)}`).join(' + ')}</span>`
-      + `${pg ? `<span>재계획: ${pg}</span>` : ''}${Object.keys(c.mesFam || {}).length ? `<span title="MES 도금생산예정일(1010 대상 선정 원본)에 이 날로 잡힌 소재">MES 생산예정: ${Object.entries(c.mesFam).map(([f, t]) => `${f} ${n0(t)}`).join(' · ')}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
+      + `${pg ? `<span>재계획: ${pg}</span>` : ''}<span class="x"><button type="button" id="cc-csv">CSV</button><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
     $('cc-x').onclick = () => dlg.close();
     $('cc-csv').onclick = () => csv(c.items, `도금_${ln}_${d}.csv`);
     dlg.querySelectorAll('button.mvb').forEach((b) => b.onclick = () => { const r = $('mvr-' + b.dataset.k); r.hidden = !r.hidden; });
