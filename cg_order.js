@@ -40,7 +40,7 @@
   function stages(x) {
     const s = x.stg || {};
     const k = Object.keys(s);
-    if (!k.length) return !O.hasRun ? '<span class="sub">다음 자동 실행부터</span>' : x.remIn <= 0.5 ? '<span class="sub">-</span>' : x.runRow ? '<span class="rem nw">공정 물량 없음</span>' : '<span class="sub nw">진행 자료 없음</span>';
+    if (!k.length) return !O.hasRun ? '<span class="sub">다음 자동 실행부터</span>' : x.remIn <= 0.5 ? '<span class="sub">-</span>' : x.runSt === 'done' ? '<span class="sub nw" title="포스코 생산은 끝났고 우리 입고 전(운송·입고 처리 중)">포스코 생산 끝 · 입고 전</span>' : x.runRow ? '<span class="rem nw" title="포스코 주문은 접수됐지만 아직 어느 공정에도 물량 없음 = 생산 투입 전">포스코 착수 전</span>' : `<span class="sub nw" title="F/H 발주는 했는데 포스코 주문진행에 아직 안 올라옴(최근 발주는 며칠 걸림)">포스코 접수 전</span>${x.purDt && (Date.parse(O.asOf) - Date.parse(`${x.purDt.slice(0, 4)}-${x.purDt.slice(4, 6)}-${x.purDt.slice(6, 8)}`)) / 864e5 > 14 ? '<div class="rem nw">발주 2주 넘음 · 확인</div>' : ''}`;
     return k.map((nm) => `<span class="stg${nm === x.stage ? ' cur' : ''}">${esc(nm)} ${n1(s[nm])}t</span>`).join('');
   }
   function prodChips(x) {
@@ -109,7 +109,7 @@
       const hp = x.need ? Math.min(100, x.have / x.need * 100) : 0, sp = x.need ? Math.min(100 - hp, x.soon / x.need * 100) : 0;   // 막대 = 2주 생산량 100% 기준(넘으면 꽉 참)
       return `<tr class="${tot ? 'tot' : ''}"><td class="nm">${tot ? '' : `<i class="${tone(r)}"></i>`}${esc(x.line)}</td>`
         + `<td class="gbar">${x.need ? `<div class="hb hb100" title="소재 있음 ${Math.round(r0 * 100)}% + 2주 안 입고 → ${Math.round(r * 100)}%"><i style="width:${hp}%;--i:${i++}"></i><u style="left:${hp}%;width:${sp}%"></u></div>` : ''}</td>`
-        + `<td title="${x.need ? `이달 남은 월차 ${n0(x.left)}(월차 ${n0(x.wolcha)} − 실적 ${n0(x.actual)}) + 다음 달 ${C.inNext}일분 ${n0(x.nextPart)}(다음 달 재계획 ÷ 날수 × ${C.inNext}) = ${n0(x.tgt)} · 라인 캐파(재계획 2주 생산) ${n0(x.cap)} — 작은 값` : ''}">${x.need ? `<b>${n0(x.need)}</b><div class="sub">하루 ${n0(x.need / C.days)}</div>` : '-'}</td>`
+        + `<td title="${x.need ? (x.spec ? `제원치 2주 ${n0(x.spec)}(판생점검 제원치: 라인 월 생산량 ÷ 가동일 × 14일${(x.specDown || []).length ? ` − 정기수리 ${x.specDown.length}일` : ''}) · 참고: 월차 기준 ${n0(x.tgt)} · 재계획 ${n0(x.cap)}` : `월차 기준 ${n0(x.tgt)} · 재계획 ${n0(x.cap)} 중 작은 값`) : ''}">${x.need ? `<b>${n0(x.need)}</b><div class="sub">하루 ${n0(x.need / C.days)}</div>` : '-'}</td>`
         + `<td><b>${n0(x.have)}</b></td><td>${n0(x.soon)}</td>`
         + `<td><b class="${tone(r) === 'bad' ? 'neg' : tone(r) === 'warn' ? 'wrn' : 'pos'}">${r == null ? '-' : Math.round(r * 100) + '%'}</b>${r0 == null ? '' : `<div class="sub">소재만 ${Math.round(r0 * 100)}%</div>`}</td>`
         + `<td><b class="${dd != null && dd < 7 ? 'neg' : ''}">${dd == null ? '-' : Math.round(dd) + '일'}</b></td></tr>`;
@@ -119,7 +119,7 @@
     return `<section class="card cov"><h2>2주 주문 충당 <small>${md(C.from)}~${md(C.to)}</small><span class="unit">톤</span></h2>
       <div class="scroll"><table class="gt"><thead><tr><th class="l">라인</th><th class="l"></th><th>2주 생산량</th><th>소재 있음</th><th>2주 안 입고</th><th>충당률</th><th>작업 가능 일수</th></tr></thead>`
       + `<tbody>${L.map((x) => row(x)).join('')}${U && (U.have >= 1 || U.soon >= 500) ? `<tr><td class="nm">라인 미정</td><td></td><td></td><td><b>${n0(U.have)}</b></td><td>${n0(U.soon)}</td><td></td><td></td></tr>` : ''}${row(T, true)}</tbody></table></div>`
-      + `<p class="od-note" style="margin:8px 0 0">막대 = 2주 생산량을 100%로 · 진한 칸 = 소재 있음 · 빗금 = 2주 안 입고 · 꽉 차면 충분 — 2주 생산량(라인 하나) = 이달 남은 월차(월차 − 실적) + 다음 달 재계획의 해당 날수분, 라인 캐파(재계획 2주 생산)보다 크면 캐파 · 숫자에 마우스를 올리면 계산 · 충당률 = (소재 있음 + 2주 안 입고) ÷ 2주 생산량 · 작업 가능 일수 = 지금 소재로 라인을 돌릴 수 있는 날수</p></section>`;
+      + `<p class="od-note" style="margin:8px 0 0">막대 = 2주 생산량을 100%로 · 진한 칸 = 소재 있음 · 빗금 = 2주 안 입고 · 꽉 차면 충분 — 2주 생산량(라인 하나) = 제원치(판생점검 '제원치 검토' 라인 월 생산량 ÷ 가동일) × 2주 가동일 · 숫자에 마우스를 올리면 계산 · 충당률 = (소재 있음 + 2주 안 입고) ÷ 2주 생산량 · 작업 가능 일수 = 지금 소재로 라인을 돌릴 수 있는 날수</p></section>`;
   }
   function render() {
     const R = O.rows;
