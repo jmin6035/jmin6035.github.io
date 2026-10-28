@@ -6,13 +6,13 @@
 <title>도금 주문진도</title>
 <meta name="description" content="도금 계약-행번별 주문서 전체 흐름 — F/H 발주·포스코 진행·입고·생산예정·생산, 필요 입고일 대비 여유와 앞당김 대상">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610280553">
+<link rel="stylesheet" href="ui/theme.css?v=2610280612">
 <style>
 main.wrap { max-width: none; }
 .od-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; margin: 0 0 14px; }
 .od-kpi button { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 14px; cursor: pointer; font: inherit; color: inherit; }
 .od-kpi button[aria-pressed="true"] { border-color: var(--brand-2); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-2) 30%, transparent); }
-.od-kpi .l { font-size: 14px; color: var(--ink-2); } .od-kpi .v { font-size: 24px; font-weight: 800; } .od-kpi .v.bad { color: var(--bad); } .od-kpi .v.warn { color: var(--warn); }
+.od-kpi .l { font-size: 14px; color: var(--ink-2); white-space: nowrap; } .od-kpi .v { font-size: 24px; font-weight: 800; } .od-kpi .v.bad { color: var(--bad); } .od-kpi .v.warn { color: var(--warn); }
 .od-note { font-size: 14px; color: var(--ink-2); margin: 0 0 10px; line-height: 1.6; }
 .od-wait { font-size: 14px; background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; }
 .od-flt { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 14px; font-size: 15px; }
@@ -70,13 +70,13 @@ table.t.od td.nw { white-space: nowrap !important; }
 
 .cov { --gc: var(--brand-2); margin-bottom: 14px; }
 table.gt { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-table.gt th { font-weight: 700; color: var(--ink-2); text-align: right !important; padding: 6px 8px 8px; border-bottom: 1px solid var(--line); line-height: 1.3; white-space: normal; word-break: keep-all; vertical-align: bottom; }
+table.gt th { font-weight: 700; color: var(--ink-2); text-align: right !important; padding: 6px 10px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: bottom; }
 table.gt th.l, table.gt td.l, table.gt td.nm { text-align: left !important; }
 table.gt td { padding: 9px 8px; text-align: right !important; border-bottom: 1px solid var(--grid); white-space: nowrap; vertical-align: top; }
 table.gt td.nm { font-weight: 800; text-align: left; }
 table.gt td.nm i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; background: var(--good); vertical-align: 1px; }
 table.gt td.nm i.warn { background: var(--warn); } table.gt td.nm i.bad { background: var(--bad); }
-table.gt td.gbar { width: 20%; min-width: 120px; vertical-align: middle; }
+table.gt td.gbar { width: 38%; min-width: 160px; vertical-align: middle; }
 table.gt tr.tot td { font-weight: 800; border-top: 1px solid var(--line); background: var(--hover); }
 table.gt .mu { color: var(--ink-2); font-size: 13.5px; font-weight: 400; }
 table.gt .neg { color: var(--bad); } table.gt .wrn { color: var(--warn); } table.gt .pos { color: var(--good); }
@@ -90,7 +90,7 @@ table.gt .neg { color: var(--bad); } table.gt .wrn { color: var(--warn); } table
 </style>
 </head>
 <body>
-<header id="shell" data-page="cgorder" data-crumb="도금" data-title="주문진도" data-sub="판매그룹 → 목적지·고객사·담당자별 주문서 흐름 — F/H 발주 · 포스코 진행 · 입고 · 생산 · 필요 입고일 대비 여유"></header>
+<header id="shell" data-page="cgorder" data-crumb="도금" data-title="주문진도" data-sub="판매그룹 → 목적지·고객사·담당자별 주문 흐름"></header>
 <main class="wrap">
   <div class="docmeta" id="od-meta"></div>
   <div id="od-main" style="margin-top:12px">
@@ -102,8 +102,8 @@ table.gt .neg { color: var(--bad); } table.gt .wrn { color: var(--warn); } table
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>원자료: MES 소재 발주·입고·주문진행(포스코 진행)·도금생산예정일·작업지시·코일 실적·주문 상세</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610280553"></script>
-<script src="engine/crypto.js?v=2610280553"></script>
-<script src="cg_order.js?v=2610280553"></script>
+<script src="ui/shell.js?v=2610280612"></script>
+<script src="engine/crypto.js?v=2610280612"></script>
+<script src="cg_order.js?v=2610280612"></script>
 </body>
 </html>

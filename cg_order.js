@@ -18,7 +18,7 @@
     hurry: ['앞당김 필요', (x) => x.hurry],
     chk: ['입고 확인 필요', (x) => x.chk],
     posco: ['포스코 진행', (x) => x.st === '포스코 진행' || x.st.startsWith('발주')],
-    ready: ['입고 완료(생산 대기)', (x) => x.st === '입고 완료'],
+    ready: ['입고 완료', (x) => x.st === '입고 완료'],
     prod: ['생산 중', (x) => x.st === '생산 중'],
     done: ['생산 완료', (x) => x.st === '생산 완료'],
     all: ['전체', () => true],
@@ -89,36 +89,29 @@
     return `<section class="og" id="og-${gi}"><header class="og-h"><h2>${esc(g)}</h2><div class="og-s">${stat(S)}${S.est ? `<span class="gs est" title="주문서 판매부서가 없어 실적·계약번호·용도로 판매그룹을 정한 계약">그룹 추정 ${S.est}</span>` : ''}</div></header>`
       + `<div class="og-b">${subs.map(([k, v]) => sub(k, v)).join('')}</div></section>`;
   }
-  // 주문 충당(10/28 사용자: 2주치 주문이 깔려 있어야 — 라인별 캐파 적용, 목표는 월차), 홈 '마케팅 그룹별 이번 달' 양식
+  // 주문 충당(10/28 사용자: 2주치 주문이 깔려 있어야 — 라인별 캐파, 목표 = 월차). 핵심 숫자만(사용자 '부연설명 많다')
   function coverCard() {
     const C = O.cover;
     if (!C || !C.lines || !C.lines.length) return '';
-    const pcs = (a, b) => (b > 0 ? Math.round(a / b * 100) + '%' : '-');
     const tone = (r) => (r == null ? '' : r >= 1 ? '' : r >= 0.8 ? 'warn' : 'bad');
-    const L = C.lines.filter((x) => x.line !== '공용'), U = C.lines.find((x) => x.line === '공용') || { have: 0, soon: 0, n: 0, groups: [] };
+    const L = C.lines.filter((x) => x.line !== '공용'), U = C.lines.find((x) => x.line === '공용');
     let i = 0;
     const row = (x, tot) => {
       const r = x.need ? (x.have + x.soon) / x.need : null, dd = x.need ? x.have / (x.need / C.days) : null;
-      const w = Math.max(x.cap || 0, x.tgt || 0, x.have + x.soon, 1) * 1.02;
-      const gs = (x.groups || []).filter((g) => g.have + g.soon >= 1).map((g) => `<span class="nw">${esc(g.name.replace('(컬러 소재)', ''))} ${n0(g.have)}${g.soon ? `<span class="mu">+${n0(g.soon)}</span>` : ''}</span>`).join(' · ');
+      const w = Math.max(x.need || 0, x.have + x.soon, 1) * 1.02;
       return `<tr class="${tot ? 'tot' : ''}"><td class="nm">${tot ? '' : `<i class="${tone(r)}"></i>`}${esc(x.line)}</td>`
-        + `<td class="gbar">${x.cap != null ? `<div class="hb" title="소재 있음 ${n0(x.have)} · 2주 안 입고 ${n0(x.soon)} · 2주 필요 ${n0(x.need)} · 캐파 ${n0(x.cap)}"><i style="width:${x.have / w * 100}%;--i:${i++}"></i><u style="left:${x.have / w * 100}%;width:${x.soon / w * 100}%"></u><em style="left:${x.need / w * 100}%"></em>${x.cap ? `<b class="cp" style="left:${x.cap / w * 100}%"></b>` : ''}</div>` : ''}${gs ? `<div class="gs2">${gs}</div>` : ''}</td>`
-        + `<td>${x.wolcha != null ? `${n0(x.actual)}<span class="mu"> / ${n0(x.wolcha)}</span>` : '<span class="mu">-</span>'}</td>`
-        + `<td>${x.need != null ? `<b>${n0(x.need)}</b><div class="mu">월차 기준 ${n0(x.tgt)}</div><div class="mu">캐파 ${n0(x.cap)}</div>` : '-'}</td>`
-        + `<td><b>${n0(x.have)}</b><div class="mu">${n0(x.nHave)}건</div></td><td>${n0(x.soon)}</td>`
-        + `<td><b class="${tone(r) === 'bad' ? 'neg' : tone(r) === 'warn' ? 'wrn' : 'pos'}">${x.need ? pcs(x.have + x.soon, x.need) : '-'}</b></td>`
-        + `<td><b class="${dd != null && dd < 7 ? 'neg' : dd != null && dd < C.days ? 'wrn' : ''}">${dd == null ? '-' : n1(dd) + '일'}</b></td></tr>`;
+        + `<td class="gbar">${x.need ? `<div class="hb"><i style="width:${x.have / w * 100}%;--i:${i++}"></i><u style="left:${x.have / w * 100}%;width:${x.soon / w * 100}%"></u><em style="left:${x.need / w * 100}%"></em></div>` : ''}</td>`
+        + `<td title="${x.need ? `월차 기준 ${n0(x.tgt)} · 캐파 ${n0(x.cap)}` : ''}">${x.need ? `<b>${n0(x.need)}</b>` : '-'}</td>`
+        + `<td><b>${n0(x.have)}</b></td><td>${n0(x.soon)}</td>`
+        + `<td><b class="${tone(r) === 'bad' ? 'neg' : tone(r) === 'warn' ? 'wrn' : 'pos'}">${r == null ? '-' : Math.round(r * 100) + '%'}</b></td>`
+        + `<td><b class="${dd != null && dd < 7 ? 'neg' : ''}">${dd == null ? '-' : Math.round(dd) + '일'}</b></td></tr>`;
     };
     const sum = (k) => L.reduce((a, x) => a + (x[k] || 0), 0);
-    const T = { line: '도금 계(공용 AL 포함)', wolcha: sum('wolcha'), actual: sum('actual'), tgt: sum('tgt'), left: sum('left'), nextPart: sum('nextPart'), cap: sum('cap'), need: sum('need'),
-      have: sum('have') + U.have, soon: sum('soon') + U.soon, nHave: sum('nHave') + U.nHave, groups: [] };
-    return `<section class="card cov"><h2>앞으로 2주 주문 충당 — 라인별 <small>${md(C.from)} ~ ${md(C.to)} · 월차 ${esc(String(C.srAsOf || '').slice(5, 10).replace('-', '/'))} 속보 · 캐파 ${esc(C.planSrc || '')}</small><span class="unit">톤</span></h2>
-      <div class="scroll"><table class="gt"><thead><tr><th class="l">라인</th><th class="l">충당 <span style="font-weight:400">(진한 = 소재 있음 · 줄무늬 = 2주 안 입고 · 선 = 2주 필요 · 점선 = 캐파)</span><br><span style="font-weight:400">아래: 그룹별 소재 있음 +2주 안 입고</span></th>`
-      + `<th>이달 실적 / 월차</th><th>2주 생산 필요<br><span style="font-weight:400">= min(월차 기준, 캐파)</span></th><th>소재 있는 주문</th><th>2주 안 입고<br><span style="font-weight:400">(예상)</span></th><th>충당률</th><th>소재만으로<br>며칠</th></tr></thead>`
-      + `<tbody>${L.map((x) => row(x)).join('')}${U.n ? `<tr><td class="nm">AL 공용</td><td class="gbar"><div class="gs2">라인이 아직 안 정해진 AL 주문 — 두 라인 다 가능, 계에만 넣음</div></td><td></td><td></td><td><b>${n0(U.have)}</b></td><td>${n0(U.soon)}</td><td></td><td></td></tr>` : ''}${row(T, true)}</tbody></table></div>`
-      + `<p class="od-note" style="margin:8px 0 0"><b>월차 기준</b> = 이달 남은 월차(판매생산속보 라인 월차 − 실적) + ${+C.nextMonth.slice(5)}월 ${C.inNext}일 몫(${+C.nextMonth.slice(5)}월 월차가 아직 없어 재계획 그 라인 월 생산 × ${C.inNext}/30). <b>캐파</b> = 최신 재계획의 그 라인 ${md(C.from)}~${md(C.to)} 생산 합(가동률 100% — M/C·정기수리·더미·강종별 속도 반영). <b>2주 생산 필요</b> = 둘 중 작은 값. `
-      + `<b>소재 있는 주문</b> = 생산 안 끝난 주문 중 F/H가 들어온 만큼(입고 − 생산) = 지금 작업지시 가능 · <b>2주 안 입고</b> = 나머지 중 예상 입고(F/H 인도기한 ${O.dleOff}일, 실적 중앙값)가 ${md(C.to)} 안. 라인 = 1010 목록 → 주문 생산예정라인 → 강종(AZ 1CGL · MAC 2CGL). <b>충당률</b> = (소재 있음 + 2주 안 입고) ÷ 2주 생산 필요 · <b>소재만으로 며칠</b> = 소재 있음 ÷ 하루 필요(7일 미만 빨강).`
-      + `${O.prodExact ? '' : ' 8~9월 생산은 코일 수 × 소재 코일 평균 무게 추정(계약별 생산 합 조회가 들어오면 정확한 값).'} 주문 = 이 화면 계약(F/H 발주·생산예정이 있는 도금 계약)만.</p></section>`;
+    const T = { line: '도금 계', need: sum('need'), have: sum('have') + (U ? U.have : 0), soon: sum('soon') + (U ? U.soon : 0) };
+    return `<section class="card cov"><h2>2주 주문 충당 <small>${md(C.from)}~${md(C.to)}</small><span class="unit">톤</span></h2>
+      <div class="scroll"><table class="gt"><thead><tr><th class="l">라인</th><th class="l"></th><th>2주 필요</th><th>소재 있음</th><th>2주 입고</th><th>충당률</th><th>작업 가능 일수</th></tr></thead>`
+      + `<tbody>${L.map((x) => row(x)).join('')}${U && U.n ? `<tr><td class="nm">AL 라인 미정</td><td></td><td></td><td><b>${n0(U.have)}</b></td><td>${n0(U.soon)}</td><td></td><td></td></tr>` : ''}${row(T, true)}</tbody></table></div>`
+      + `<p class="od-note" style="margin:8px 0 0">2주 필요 = min(월차 기준, 라인 캐파) · 소재 있음 = 소재 들어온 미생산 주문 · 2주 입고 = 2주 안 들어올 F/H(예상) · 충당률 = (소재 있음 + 2주 입고) ÷ 2주 필요 · 작업 가능 일수 = 소재 있음으로 라인을 돌릴 수 있는 날수</p></section>`;
   }
   function render() {
     const R = O.rows;
@@ -132,11 +125,11 @@
     const groups = G0.concat([...new Set(L.map((x) => x.grp || '그룹 미상'))].filter((g) => !G0.includes(g)));
     const byG = groups.map((g) => [g, L.filter((x) => (x.grp || '그룹 미상') === g)]).filter((e) => e[1].length);
     const S = sumOf(L);
-    $('od-meta').textContent = `${O.asOf} 기준 · 계산 ${O.built || ''} · 납기 30일 전 ~ 90일 뒤 계약 + 작업지시·생산예정 있는 계약`;
-    const wait = [!O.hasRun && '포스코 진행 단계·입고예정·입항예정', !O.hasCus && '고객사·담당자 이름', !O.hasFull && '목적지·11월 미확정 주문 사양'].filter(Boolean);
+    $('od-meta').textContent = `${O.asOf} 기준 · 납기 −30일 ~ +90일 계약`;
+    const wait = [!O.hasRun && '포스코 진행', !O.hasCus && '고객사·담당자', !O.hasFull && '목적지'].filter(Boolean);
     $('od-main').innerHTML = coverCard() + `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 주문진도</h2><div class="od-kpi" id="od-kpi">${kpi}</div>`
-      + `<p class="od-note"><b>필요 입고일</b> = 생산 필요일 − ${O.basis.leadIn}일(입고 → 투입). 생산 필요일 = 수출은 입항 −1일 −${O.basis.prep}일, 내수는 납기 −${O.basis.prep}일. <b>여유·늦음</b> = 필요 입고일 − 예상 입고(F/H 인도기한 ${O.dleOff}일 = 실적 ${n0(O.dleOffN)}건 중앙값). MES 주문진행의 입고예정일은 아직 안 들어온 계약에서 미래 날짜가 0건(오늘·지난 날짜만 — 입고 처리·갱신일로 움직임)이라 쓰지 않음. <b>앞당김 필요</b> = 필요 입고일이 3주 안인데 아직 포스코 열연 이전 단계(요수배~열연정정)에 물량이 있음 · <b>입고 확인 필요</b> = 필요 입고일 2주 안인데 덜 들어옴 · <b>소재 지연</b> = 필요 입고일이 이미 지남. 소재가 다 들어온 계약(입고 완료·생산)은 필요 입고일을 표시하지 않음. 판매그룹 = 주문서의 판매부서(없으면 코일 실적 부서, 그래도 없으면 계약번호·용도로 추정 — '그룹 추정'으로 표시).</p>`
-      + (wait.length ? `<p class="od-wait">⏳ ${wait.join(' · ')} — 10/28 추가한 조회가 다음 자동 실행(07:35)에 들어오면 채워집니다.</p>` : '')
+      + `<p class="od-note">필요 입고일 = 납기 −${O.basis.leadIn + O.basis.prep}일 · 예상 입고 = F/H 인도기한 ${O.dleOff}일 · 앞당김 = 필요 입고 3주 안 + 아직 열연 이전 · 입고 확인 = 필요 입고 2주 안 미입고 · 소재 지연 = 필요 입고일 지남</p>`
+      + (wait.length ? `<p class="od-wait">⏳ ${wait.join(' · ')}: 다음 자동 실행(07:35) 뒤</p>` : '')
       + `<div class="od-flt"><span class="lb">묶음</span><span class="seg" id="od-by">${Object.keys(BY).map((b) => `<button type="button" data-b="${b}" aria-pressed="${b === by}">${BY[b][0]}별</button>`).join('')}</span>`
       + `<select id="od-ln" aria-label="라인"><option value="">라인 전체</option><option${ln === '1CGL' ? ' selected' : ''}>1CGL</option><option${ln === '2CGL' ? ' selected' : ''}>2CGL</option></select>`
       + `<select id="od-ex" aria-label="내수·수출"><option value="">내수·수출</option><option value="E"${ex === 'E' ? ' selected' : ''}>수출</option><option value="D"${ex === 'D' ? ' selected' : ''}>내수</option></select>`
