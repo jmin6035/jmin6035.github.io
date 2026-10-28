@@ -6,7 +6,7 @@
 <title>도금 주문진도</title>
 <meta name="description" content="도금 계약-행번별 주문서 전체 흐름 — F/H 발주·포스코 진행·입고·생산예정·생산, 필요 입고일 대비 여유와 앞당김 대상">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610280521">
+<link rel="stylesheet" href="ui/theme.css?v=2610280547">
 <style>
 main.wrap { max-width: none; }
 .od-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px; margin: 0 0 14px; }
@@ -67,6 +67,23 @@ table.t.od td.nw { white-space: nowrap !important; }
 .sl { white-space: nowrap; } .sl.neg { color: var(--bad); font-weight: 700; } .sl.pos { color: var(--good); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ch.fam-AL { background: #1d3550; color: #9cc6f0; } :root:not([data-theme="light"]) .ch.fam-AZ, :root:not([data-theme="light"]) .ch.fam-AZMAC { background: #23381a; color: #b5dc95; } :root:not([data-theme="light"]) .ch.fam-MAC { background: #34244a; color: #d2b6f2; } }
 :root[data-theme="dark"] .ch.fam-AL { background: #1d3550; color: #9cc6f0; } :root[data-theme="dark"] .ch.fam-AZ, :root[data-theme="dark"] .ch.fam-AZMAC { background: #23381a; color: #b5dc95; } :root[data-theme="dark"] .ch.fam-MAC { background: #34244a; color: #d2b6f2; }
+
+.cov { --gc: var(--brand-2); margin-bottom: 14px; }
+table.gt { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+table.gt th { font-weight: 700; color: var(--ink-2); text-align: right !important; padding: 6px 8px 8px; border-bottom: 1px solid var(--line); line-height: 1.3; white-space: normal; word-break: keep-all; vertical-align: bottom; }
+table.gt th.l, table.gt td.l, table.gt td.nm { text-align: left !important; }
+table.gt td { padding: 9px 8px; text-align: right !important; border-bottom: 1px solid var(--grid); white-space: nowrap; vertical-align: top; }
+table.gt td.nm { font-weight: 800; text-align: left; }
+table.gt td.nm i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; background: var(--good); vertical-align: 1px; }
+table.gt td.nm i.warn { background: var(--warn); } table.gt td.nm i.bad { background: var(--bad); }
+table.gt td.gbar { width: 20%; min-width: 120px; vertical-align: middle; }
+table.gt tr.tot td { font-weight: 800; border-top: 1px solid var(--line); background: var(--hover); }
+table.gt .mu { color: var(--ink-2); font-size: 13.5px; font-weight: 400; }
+table.gt .neg { color: var(--bad); } table.gt .wrn { color: var(--warn); } table.gt .pos { color: var(--good); }
+.hb { position: relative; height: 12px; border-radius: 3px; background: var(--grid); }
+.hb i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--gc); }
+.hb u { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--gc) 45%, transparent) 0 3px, transparent 3px 6px); }
+.hb em { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
 </style>
 </head>
 <body>
@@ -82,8 +99,8 @@ table.t.od td.nw { white-space: nowrap !important; }
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>원자료: MES 소재 발주·입고·주문진행(포스코 진행)·도금생산예정일·작업지시·코일 실적·주문 상세</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610280521"></script>
-<script src="engine/crypto.js?v=2610280521"></script>
-<script src="cg_order.js?v=2610280521"></script>
+<script src="ui/shell.js?v=2610280547"></script>
+<script src="engine/crypto.js?v=2610280547"></script>
+<script src="cg_order.js?v=2610280547"></script>
 </body>
 </html>
