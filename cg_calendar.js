@@ -15,7 +15,7 @@
   const md = (s) => (s ? `${+String(s).slice(5, 7)}/${+String(s).slice(8, 10)}` : '');
   const mdw = (s) => `${md(s)}(${DOW[dt(s).getDay()]})`;
   const LINES = ['1CGL', '2CGL'];
-  let O = null, PW = '', rk = 'win', MOVES = [], SWAP = true;
+  let O = null, PW = '', rk = 'win', MOVES = [], SWAP = true, NRM = null;
   try { SWAP = localStorage.getItem('cgl-cal-swap2') !== '0'; } catch (e) { /* 무시 */ }
   const MV_KEY = () => 'cgl-cal-moves|' + O.asOf;               // 옮기기 임시본(이 브라우저) — '다음 주 확정'을 눌러야 저장
   const compat = (df, f) => !!f && (f === df || String(f).split('-')[0] === df || (f === 'AZ·MAC' && (df === 'AZ' || df === 'MAC')));
@@ -185,6 +185,9 @@
       O.out[ln] = res[ln].out.filter((p) => p.t >= 0.5);
     });
     O.removed = res._removed || [];
+    const nrm = O.removed.length + LINES.reduce((s, l) => s + O.out[l].length, 0);   // 새로 빠진 주문이 생기면 아래 목록을 「뺀 주문」 탭으로
+    if (NRM != null && nrm > NRM) rk = 'rm';
+    NRM = nrm;
     O.byCon = {};                                            // 계약번호-행번 → 2주 안 날짜별 톤 + 2주 밖(한 계약의 코일 전체량을 날짜별로 나눠 봄)
     LINES.forEach((ln) => {
       O.lines[ln].forEach((c) => c.items.forEach((i) => { const m = (O.byCon[i.con] = O.byCon[i.con] || { days: [], out: 0 }); m.days.push([ln, c.d, i.t]); }));
@@ -335,9 +338,9 @@
     const rows = LINES.map((ln) => `<tr><th>${ln}<small>${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small></th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}</tr>`).join('');
     const jg = days.map((d) => {
       const j = O.jg[idx(d)], df = j.cumSched - j.cumPlan;
-      return `<td class="jg"><div>계획 <b>${n0(j.cumPlan)}</b></div><div>배정 <b>${n0(j.cumSched)}</b></div><div class="${df < 0 ? 'bad' : 'good'}">${df < 0 ? `${n0(-df)} 부족` : `+${n0(df)}`}</div>${j.mark ? `<span class="mk">순 마감 ${n0(j.mark)}t</span>` : ''}</td>`;
+      return `<td class="jg" title="재계획 = 가동계획이 이 날까지 만들기로 한 자가재(컬러 투입분) 누계 · 캘린더 = 이 화면에 넣은 자가재 주문 누계(${md(O.days[0])}부터)"><div>재계획 <b>${n0(j.cumPlan)}</b></div><div>캘린더 <b>${n0(j.cumSched)}</b></div><div class="${df < 0 ? 'bad' : 'good'}">${df < 0 ? `${n0(-df)} 부족` : `+${n0(df)} 앞섬`}</div>${j.mark ? `<span class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 끝내야 할 자가재">컬러 마감 ${n0(j.mark)}t</span>` : ''}</td>`;
     }).join('');
-    return `<table class="cg"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}<tr><th>자가재<small>누계</small></th>${jg}</tr></tbody></table>`;
+    return `<table class="cg"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}<tr><th>자가재 누계<small>재계획 대비</small></th>${jg}</tr></tbody></table>`;
   }
 
   function calCard() {
@@ -421,8 +424,8 @@
         + `<td><span class="chs1">${famCh(i.fam)}${i.grade ? `<span class="ch gr">${esc(GRN[i.grade] || i.grade)}</span>` : ''}${i.exp ? '<span class="ch exp">수출</span>' : '<span class="ch">내수</span>'}${i.cot ? `<span class="ch">${esc(i.cot)}</span>` : ''}${i.aft ? `<span class="ch">${esc(i.aft)}</span>` : ''}</span></td>`
         + `<td class="sz">${i.thk != null ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw"><b>${esc(i.grp || '')}</b></td>`
         + `<td class="num"><b>${n1(i.tt)}</b>${i.extra ? `<div class="sub xs">${KD[i.xk]} ${n1(i.extra)}</div>` : ''}${conTxt(i, ln, d)}</td>`
-        + `<td class="nw dt2">${[i.arr ? `입항 <b>${md(i.arr)}</b>` : i.due ? `납기 ${md(i.due)}` : '', need].filter(Boolean).join(' · ')}${tags ? `<div>${tags}</div>` : ''}</td>`
-        + `<td class="nw">${i.kind === '확정' ? '<span class="sub">MES 지시됨</span>' : `<button type="button" class="lnk mvb" data-k="${k}">옮기기·톤</button> <button type="button" class="lnk rmb" data-k="${k}" title="이 날에서 빼서 아래 「칸에 못 들어간 주문」 목록으로">빼기</button>`}</td></tr>`
+        + `<td class="dt2">${[i.arr ? `입항 <b>${md(i.arr)}</b>` : i.due ? `납기 ${md(i.due)}` : '', need].filter(Boolean).join(' · ')}${tags ? `<div>${tags}</div>` : ''}</td>`
+        + `<td class="act">${i.kind === '확정' ? '<span class="sub">MES 지시됨</span>' : `<button type="button" class="lnk mvb" data-k="${k}">옮기기·톤</button><button type="button" class="lnk rmb" data-k="${k}" title="이 날에서 빼서 아래 「칸에 못 들어간 주문」 목록(노란 줄)으로">빼기</button>`}</td></tr>`
         + (i.kind === '확정' ? '' : `<tr class="mvr" id="mvr-${k}" hidden><td></td><td colspan="7"><div class="mvw"><b>${esc(i.con)}</b><input type="number" class="mvt" value="${n1(i.t)}" min="0.1" max="${i.t}" step="0.1" aria-label="옮길 톤">t 를`
           + `<select class="mv" data-k="${k}" aria-label="옮길 날짜"><option value="">날짜 고르기…</option>${moveOpts(i, ln, d)}</select>(으)로 <button type="button" class="go2" data-k="${k}" disabled>옮기기</button></div><div class="pv" id="pv-${k}"></div>`
           + `<div class="mvw" style="margin-top:8px"><b>이 날 톤</b><input type="number" class="mvs" data-k="${k}" value="${+(+i.t).toFixed(1)}" min="0" max="${maxT(i, ln)}" step="0.1" aria-label="이 날 톤">t 로 <button type="button" class="go3" data-k="${k}" disabled>톤 바꾸기</button><span class="sub">최대 ${n0(maxT(i, ln))}t(이 계약 남은 양)</span></div><div class="pv" id="pv3-${k}"></div></td></tr>`);
@@ -444,7 +447,7 @@
     body += '<div class="how"><div><b>이 날에 들어온 기준</b> 필요 생산일(수출 = 입항 − 4일, 내수 = 납기 − 3일) 빠른 주문부터, 그날 라인·강종이 맞는 것을 능력만큼 · 소재 있는 주문 먼저, 입고 예정 주문은 입고 + 5일부터</div>'
       + '<div><b>순서</b> 작업지시 = MES 순서 그대로 · 나머지 = 현장 규칙(같은 재질끼리 묶고 → 넓은 폭 → 좁은 폭, 같은 폭이면 얇은 것 먼저, 재질 차례는 바로 못 잇는 짝이 붙지 않게)</div>'
       + '<div><b>옮기기</b> 24시간 연속 가동 = 라인마다 한 줄 순서. 고른 날 맨 앞에 끼워 넣고 뒤 주문은 순서대로 밀림(능력 초과 없음) · 불가 = 강종(M/C)·소재 입고일·라인 정지·작업 규칙(그날 주문과 두께 차 0.3mm·두께비 1.3배·후처리 같은 층·재질 온도 AZ CQ↔EDDQ·Gr.E, PosMAC Gr.C↔DQ계·CQ↔DDQ) → 모두 지키는 가장 가까운 날 제시 · 코일 단위 최종 확인은 작업지시 순서 · 「다음 주 확정」을 눌러야 저장</div></div>';
-    body += c.items.length ? `<table class="it cmp"><colgroup><col style="width:8%"><col style="width:23%"><col style="width:16%"><col style="width:9%"><col style="width:5%"><col style="width:12%"><col style="width:15%"><col style="width:7%"></colgroup>`
+    body += c.items.length ? `<table class="it cmp"><colgroup><col style="width:10%"><col style="width:19%"><col style="width:17%"><col style="width:9%"><col style="width:6%"><col style="width:11%"><col style="width:17%"><col style="width:11%"></colgroup>`
       + `<thead><tr><th>상태 · 순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 재질 · 수출 · 도금량 · 후처리</th><th>두께×폭</th><th>그룹</th><th class="num">이 날 톤 · 계약 전체</th><th>입항(납기) · 필요 생산일</th><th></th></tr></thead><tbody>${itemRows(c.items, ln, d)}</tbody></table>`
       : `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
     dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>${famCh(c.fam)}${c.event ? ' · ' + esc(c.event) : ''}</span><span>능력 <b>${n0(c.cap)}t</b> = ${[['작업지시', c.conf], ['소재 있음', c.plan], ['입고 예정', c.fcst], ['빈칸', c.gap]].filter(([, v]) => v >= 0.5).map(([k, v]) => `${k} ${n0(v)}`).join(' + ')}</span>`
@@ -542,11 +545,11 @@
               + `<input type="number" class="mvt" value="${+(+it.t).toFixed(1)}" min="0.1" max="${it.t}" step="0.1" aria-label="넣을 톤">t 를<select class="ad" aria-label="넣을 날짜"><option value="">날짜 고르기…</option>${opts}</select>에 <button type="button" class="go2 adg" disabled>넣기</button></div><div class="pv"></div>`;
           }).join('');
           RA[id] = pieces;
-          return `<tr><td><div class="con">${esc(o.no)}${o.rows.length > 6 ? ` <span class="sub">행 ${o.rows.length}개</span>` : o.rows.length > 1 ? ` <span class="sub">행 ${o.rows.map((r) => esc(r.con.split('-').pop())).join('·')}</span>` : `-${esc(o.rows[0].con.split('-').pop())}`}</div><div class="sub one" title="${esc([o.rows[0].cus, o.rows[0].dst, o.rows[0].man].filter(Boolean).join(' · '))}">${who(o.rows[0])}</div></td>`
+          return `<tr${o.rows[0].rm ? ' class="rmrow"' : ''}><td><div class="con">${esc(o.no)}${o.rows.length > 6 ? ` <span class="sub">행 ${o.rows.length}개</span>` : o.rows.length > 1 ? ` <span class="sub">행 ${o.rows.map((r) => esc(r.con.split('-').pop())).join('·')}</span>` : `-${esc(o.rows[0].con.split('-').pop())}`}</div><div class="sub one" title="${esc([o.rows[0].cus, o.rows[0].dst, o.rows[0].man].filter(Boolean).join(' · '))}">${who(o.rows[0])}</div></td>`
             + `<td class="nw">${esc(o.rows[0].line)} ${famCh(o.rows[0].fam)}</td><td>${[...new Set(o.rows.map((r) => r.st || ''))].map(esc).join(' · ')}</td>`
             + `<td class="num"><b>${n0(o.t)}</b></td><td class="nw">${md(o.need)}${o.rows[0].due ? `<div class="sub">납기 ${md(o.rows[0].due)}</div>` : ''}</td><td>${[...new Set(o.rows.map((r) => r.why))].map(esc).join('<br>')}</td>`
             + `<td class="nw">${pieces.length ? `<button type="button" class="lnk rab" data-id="${id}">${o.rows[0].rm ? '다시 넣기' : '넣기'}</button>` : ''}</td></tr>`
-            + (pieces.length ? `<tr class="mvr" id="${id}" hidden><td colspan="7">${edit}</td></tr>` : '');
+            + (pieces.length ? `<tr class="mvr${o.rows[0].rm ? ' rmrow' : ''}" id="${id}" hidden><td colspan="7">${edit}</td></tr>` : '');
         }).join('')
         + '</tbody></table></div></div>';
     }).join('');
