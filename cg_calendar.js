@@ -44,7 +44,8 @@
     const w = (v) => `${(100 * v / base).toFixed(1)}%`;
     const gs = Object.entries(c.grp || {}).filter(([, v]) => v >= 1).slice(0, 3).map(([g, v]) => `<span>${esc(g)} ${n0(v)}</span>`).join('');
     const tag = cap < 1 ? '<span class="ev">정지</span>' : c.event ? `<span class="ev">${esc(c.event)}</span>` : '';
-    return `<button type="button" class="cell${c.flag ? ' fl' : ''}" data-ln="${ln}" data-d="${c.d}">`
+    const mc = /M\/C/.test(c.event || '');
+    return `<button type="button" class="cell${mc ? ' mc' : ''}${c.flag ? ' fl' : ''}" data-ln="${ln}" data-d="${c.d}">`
       + `<div class="ct">${famCh(c.fam)}${tag}</div>`
       + `<div class="bar"><i class="c" style="width:${w(c.conf)}"></i><i class="p" style="width:${w(c.plan)}"></i><i class="f" style="width:${w(c.fcst)}"></i></div>`
       + `<div class="tv">${n0(fill)}<small>t</small>${c.gap ? ` <small style="color:var(--bad);font-weight:800">빈칸 ${n0(c.gap)}</small>` : ''}</div>`
@@ -70,7 +71,8 @@
     return '<section class="card"><h2>라인별 2주 <small>칸을 누르면 그날 작업 순서</small></h2>'
       + '<div class="lg"><span><i style="background:var(--c-conf)"></i>확정 = 현장 작업지시(1010)</span><span><i style="background:var(--c-plan)"></i>편성 = 소재 있는 주문</span>'
       + '<span><i style="background:var(--c-fcst)"></i>예상 = 입고 예정 소재(입고 + 5일)</span><span><i style="background:var(--c-gap)"></i>빈칸</span>'
-      + '<span>능력·강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순</span></div>'
+      + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>노랑 = M/C(강종 교체)</span><span><i style="background:var(--bad)"></i>빨간 줄 = 계획≠현장</span>'
+      + `<span>능력·강종 = 최신 재계획 · 배정 = 필요 생산일 빠른 순(수출 = 입항 − 4일${O.expNeed && O.expNeed.due ? `, 입항 자료 없는 수출 ${O.expNeed.due}건은 납기 − 3일` : ''})</span></div>`
       + `<div class="wk">${weekTable(O.days.slice(0, 7), nw)}</div><div class="wk">${weekTable(O.days.slice(7, 14), nw)}</div></section>`;
   }
 
@@ -81,7 +83,7 @@
       return `<tr><td class="num">${showSeq ? (i.seq || k + 1) : k + 1}</td><td><div class="con">${esc(i.con)}</div><div class="sub">${who(i)}</div></td>`
         + `<td><div class="chs">${famCh(i.fam)}${i.exp ? '<span class="ch exp">수출</span>' : '<span class="ch">내수</span>'}${i.cot ? `<span class="ch">도금량 ${esc(i.cot)}</span>` : ''}${i.aft ? `<span class="ch">후처리 ${esc(i.aft)}</span>` : ''}</div></td>`
         + `<td class="sz">${i.thk != null ? `${(+i.thk).toFixed(2)} × ${n0(i.wdt)}` : '-'}</td><td><b>${esc(i.grp || '')}</b></td>`
-        + `<td class="num"><b>${(+i.t).toFixed(1)}</b>${i.n ? `<div class="sub">${i.n}코일</div>` : ''}</td><td class="nw">${i.due ? `납기 ${md(i.due)}` : ''}<div>${due}</div></td></tr>`;
+        + `<td class="num"><b>${(+i.t).toFixed(1)}</b>${i.n ? `<div class="sub">${i.n}코일</div>` : ''}</td><td class="nw">${i.arr ? `<div>입항 <b>${md(i.arr)}</b>${i.shp ? ` <span class="sub">${esc(i.shp)}</span>` : ''}</div>` : ''}${i.due ? `<div class="${i.arr ? 'sub' : ''}">납기 ${md(i.due)}</div>` : ''}<div>${due}</div></td></tr>`;
     }).join('');
   }
   function csv(rows, name) {
@@ -102,7 +104,7 @@
       const L = c.items.filter((i) => i.kind === k);
       if (!L.length) return;
       body += `<h4><span class="kd k${k}">${k}</span> ${n0(L.reduce((s, i) => s + i.t, 0))}t <span>${L.length}건 · ${d2}</span></h4>`
-        + `<div style="overflow-x:auto"><table class="it" style="min-width:900px"><thead><tr><th class="num">순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 수출 · 도금량 · 후처리</th><th>두께 × 폭</th><th>그룹</th><th class="num">톤</th><th>납기</th></tr></thead><tbody>${itemRows(L, k === '확정')}</tbody></table></div>`;
+        + `<div style="overflow-x:auto"><table class="it" style="min-width:900px"><thead><tr><th class="num">순서</th><th>계약번호-행번 · 고객사 → 목적지</th><th>강종 · 수출 · 도금량 · 후처리</th><th>두께 × 폭</th><th>그룹</th><th class="num">톤</th><th>입항 · 납기</th></tr></thead><tbody>${itemRows(L, k === '확정')}</tbody></table></div>`;
     });
     if (!c.items.length) body += `<p class="msg">${c.cap < 1 ? '라인 정지(정기수리·휴지)' : '배정된 주문 없음'}</p>`;
     dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>${c.fam || ''}${c.event ? ' · ' + esc(c.event) : ''}</span><span>능력 ${n0(c.cap)}t · 확정 ${n0(c.conf)} · 편성 ${n0(c.plan)} · 예상 ${n0(c.fcst)}${c.gap ? ` · 빈칸 ${n0(c.gap)}` : ''}</span>`
