@@ -14,7 +14,8 @@
   const md = (s) => (s ? `${+String(s).slice(5, 7)}/${+String(s).slice(8, 10)}` : '');
   const mdw = (s) => `${md(s)}(${DOW[dt(s).getDay()]})`;
   const LINES = ['1CGL', '2CGL'];
-  let O = null, PW = '', rk = 'win', MOVES = [];
+  let O = null, PW = '', rk = 'win', MOVES = [], SWAP = true;
+  try { SWAP = localStorage.getItem('cgl-cal-swap2') !== '0'; } catch (e) { /* 무시 */ }
   const MV_KEY = () => 'cgl-cal-moves|' + O.asOf;               // 옮기기 임시본(이 브라우저) — '다음 주 확정'을 눌러야 저장
   const compat = (df, f) => !!f && (f === df || String(f).split('-')[0] === df || (f === 'AZ·MAC' && (df === 'AZ' || df === 'MAC')));
   const KD = { 확정: '작업지시', 편성: '소재 있음', 예상: '입고 예정' };   // 화면에 보이는 이름(10/28 사용자 '편성·예상이 뭐야')
@@ -58,13 +59,40 @@
     });
     const posOf = (q, f) => { const i = q.findIndex(f); return i < 0 ? q.length : i; };
     const nextDay = (d) => O.days[O.days.indexOf(d) + 1] || '9999';
+    const removed = [];                                      // 뺀 주문(달력에서 빠져 아래 목록으로) — 넣다 뺐다(10/28 사용자)
+    const displace = (ln, d, need, why, except) => {        // 그 날이 넘치는 만큼 필요일 늦은 주문부터 빼서 목록으로(작업지시·직접 놓은 주문은 안 뺌)
+      const c = res[ln] && res[ln].cells[O.days.indexOf(d)];
+      if (!c) return;
+      let rem = need - Math.max(0, c.cap - c.items.reduce((a, i) => a + i.t, 0));
+      c.items.filter((i) => i.kind !== '확정' && i.con !== except && !i.pin).sort((a, b) => String(b.need || '9').localeCompare(String(a.need || '9'))).forEach((it) => {
+        if (rem < 0.5) return;
+        const q = seqs[ln], k = q.findIndex((p) => p.con === it.con && p.kind === it.kind && p.day === d);
+        if (k < 0) return;
+        const p = q[k], t = Math.min(rem, p.t);
+        if (t < p.t - 0.05) p.t = r1(p.t - t); else q.splice(k, 1);
+        removed.push(Object.assign({}, p, { t: r1(t), day: null, pin: null, moved: null, why, fromD: d, fromL: ln }));
+        rem -= t;
+      });
+    };
+    const swapOn = (m) => m.swap !== false;                 // 기본 = 빼서 목록으로(옛 저장본은 swap 칸이 없음 → 빼기)
     (moves || []).forEach((m) => {
       if (m.op === 'add') {                                  // 칸에 못 들어간 주문을 고른 날 맨 앞에 넣기
         const tq = seqs[m.tl];
         if (!tq || !m.item) { m.bad = true; return; }
         m.bad = false;
+        if (swapOn(m)) displace(m.tl, m.td, m.t, `뺌 — ${m.con} ${n0(m.t)}t 넣느라`, m.con);
         tq.splice(posOf(tq, (x) => x.day === null || x.day >= m.td), 0, Object.assign({}, m.item, { t: m.t, added: true, pin: m.td }));
         res[m.tl] = slice(m.tl, fixed, tq); seqs[m.tl] = res[m.tl].seq;
+        return;
+      }
+      if (m.op === 'remove') {                               // 직접 빼기 → 목록으로
+        const q = seqs[m.fl] || [], k = q.findIndex((p) => p.con === m.con && p.kind === m.kind && p.day === m.fd);
+        if (k < 0) { m.bad = true; return; }
+        m.bad = false;
+        const p = q[k], t = Math.min(m.t, p.t);
+        if (t < p.t - 0.05) p.t = r1(p.t - t); else q.splice(k, 1);
+        removed.push(Object.assign({}, p, { t: r1(t), day: null, pin: null, moved: null, why: '직접 뺌', fromD: m.fd, fromL: m.fl }));
+        res[m.fl] = slice(m.fl, fixed, q); seqs[m.fl] = res[m.fl].seq;
         return;
       }
       if (m.op === 'set') {                                  // 이 날 이 주문 톤 바꾸기: 줄이면 나머지는 다음 날부터, 늘리면 같은 주문의 뒤쪽 물량을 당겨 옴
@@ -82,6 +110,7 @@
           });
           for (let i = q.length - 1; i >= 0; i--) if (q[i].t < 0.05) q.splice(i, 1);
           p.t = r1(m.t - need); m.short = need >= 0.05 ? r1(need) : 0;
+          if (swapOn(m)) displace(m.fl, m.fd, p.t - old, `뺌 — ${m.con} 톤 늘리느라`, m.con);
         }
         Object.assign(p, { edited: { from: old }, pin: m.fd });
         q.splice(posOf(q, (x) => x.day === null || x.day >= m.fd), 0, p);
@@ -96,12 +125,14 @@
       let mv;
       if (m.t < p.t - 0.05) { p.t = r1(p.t - m.t); mv = Object.assign({}, p, { t: m.t }); } else { mv = p; q.splice(k, 1); }
       Object.assign(mv, { moved: { fd: m.fd, fl: m.fl }, pin: m.td });
+      if (swapOn(m)) displace(m.tl, m.td, mv.t, `뺌 — ${m.con} ${n0(mv.t)}t 옮겨 오느라`, m.con);
       const tq = seqs[m.tl];
       let at = tq.findIndex((x) => x.day === null || x.day >= m.td);
       if (at < 0) at = tq.length;
       tq.splice(at, 0, mv);
       [...new Set([m.fl, m.tl])].forEach((ln) => { res[ln] = slice(ln, fixed, seqs[ln]); seqs[ln] = res[ln].seq; });
     });
+    res._removed = removed;
     return res;
   }
   function lastDay(res) {                                    // 계약번호-행번 → 마지막 생산일(2주 밖이면 '9')
@@ -139,6 +170,7 @@
       });
       O.out[ln] = res[ln].out.filter((p) => p.t >= 0.5);
     });
+    O.removed = res._removed || [];
     O.byCon = {};                                            // 계약번호-행번 → 2주 안 날짜별 톤 + 2주 밖(한 계약의 코일 전체량을 날짜별로 나눠 봄)
     LINES.forEach((ln) => {
       O.lines[ln].forEach((c) => c.items.forEach((i) => { const m = (O.byCon[i.con] = O.byCon[i.con] || { days: [], out: 0 }); m.days.push([ln, c.d, i.t]); }));
@@ -205,9 +237,19 @@
     const outT = (res) => LINES.reduce((s2, l) => s2 + res[l].out.reduce((x, p) => x + p.t, 0), 0);
     const td = op.op === 'set' ? op.fd : op.td;
     const land = LINES.flatMap((l) => nxt[l].seq.filter((p) => p.con === op.con && p.pin === td && (p.moved || p.added || p.edited)).map((p) => [p.day, p.t]));
-    return { pushed: pushed.length, pulled: pulled.length, newLate, outDiff: outT(nxt) - outT(cur), land: land[0] && land[0][0], landT: land[0] && land[0][1] };
+    const rk2 = (r) => r.con + '|' + r.why + '|' + r.fromD, had = new Set((cur._removed || []).map(rk2));
+    const disp = (nxt._removed || []).filter((r) => !had.has(rk2(r)));
+    disp.forEach((r) => { if (r.need && !newLate.some((x) => x.con === r.con)) newLate.push(r); });   // 빠지면 2주 안에 못 만듦 → 필요일 넘김
+    return { pushed: pushed.length, pulled: pulled.length, newLate, outDiff: outT(nxt) - outT(cur), land: land[0] && land[0][0], landT: land[0] && land[0][1], disp };
   }
-  const pvText = (P) => `${P.land ? `${mdw(P.land)} 생산${P.landT ? ` ${n0(P.landT)}t` : ''}` : '2주 안에 못 들어감'}${P.pushed ? ` · 뒤 주문 ${P.pushed}건 밀림` : ''}${P.pulled ? ` · ${P.pulled}건 앞당겨짐` : ''}${!P.pushed && !P.pulled ? ' · 다른 주문 날짜 변화 없음' : ''}`
+  function dispTxt(L) {                                      // 빠지는 주문을 주문서(계약번호)로 묶어 한 줄로
+    const m = new Map();
+    L.forEach((r) => { const no = r.con.split('-').slice(0, -1).join('-') || r.con, o = m.get(no) || { no, n: new Set(), t: 0, need: r.need }; o.n.add(r.con); o.t += r.t; if (r.need && (!o.need || r.need < o.need)) o.need = r.need; m.set(no, o); });
+    return [...m.values()].map((o) => `<b>${esc(o.no)}</b>${o.n.size > 1 ? ` 행 ${o.n.size}개` : `-${esc([...o.n][0].split('-').pop())}`} ${n0(o.t)}t <span class="sub">필요 ${md(o.need) || '-'}</span>`).join(' · ');
+  }
+  const pvText = (P) => `${P.land ? `${mdw(P.land)} 생산${P.landT ? ` ${n0(P.landT)}t` : ''}` : '2주 안에 못 들어감'}`
+    + (P.disp && P.disp.length ? `<div class="dsp">⚠ 이 날에서 빠지는 주문 ${n0(P.disp.reduce((a, r) => a + r.t, 0))}t(아래 목록으로): ${dispTxt(P.disp)}</div>` : '')
+    + `${''}${P.pushed ? ` · 뒤 주문 ${P.pushed}건 밀림` : ''}${P.pulled ? ` · ${P.pulled}건 앞당겨짐` : ''}${!P.pushed && !P.pulled ? ' · 다른 주문 날짜 변화 없음' : ''}`
     + (P.newLate.length ? ` · <span class="no">새로 늦어지는 주문 ${P.newLate.length}건: ${P.newLate.slice(0, 4).map((p) => `${esc(p.con)}(필요 ${md(p.need)})`).join(', ')}${P.newLate.length > 4 ? ' …' : ''}</span>` : ' · 새로 늦어지는 주문 없음')
     + (P.outDiff >= 1 ? ` · <span class="no">2주 밖으로 ${n0(P.outDiff)}t 밀림</span>` : '');
   let CONF = null, SAVED = null;                             // 이번 확정본(다음 주) · 저장된 수정 내역(바뀐 게 있는지 비교)
@@ -295,13 +337,18 @@
   function opText(m) {
     const ln2 = (l) => (l ? ` ${l}` : '');
     if (m.op === 'add') return `<b>${esc(m.con)}</b> ${n0(m.t)}t 넣기 → <b>${mdw(m.td)}${ln2(m.tl)}</b>`;
+    if (m.op === 'remove') return `<b>${esc(m.con)}</b> ${n0(m.t)}t 빼기 ← ${mdw(m.fd)}${ln2(m.fl)}`;
     if (m.op === 'set') return `<b>${esc(m.con)}</b> ${mdw(m.fd)}${ln2(m.fl)} 톤 ${n0(m.from)} → <b>${n0(m.t)}t</b>${m.short ? ` <span class="sub">(더 당겨 올 물량 없음 ${n0(m.short)}t)</span>` : ''}`;
     return `<b>${esc(m.con)}</b> ${n0(m.t)}t · ${m.fl} ${mdw(m.fd)} → <b>${mdw(m.td)}${m.fl !== m.tl ? ` ${m.tl}` : ''}</b>`;
   }
+  function swapBox() {
+    return `<div class="swb"><b>날이 넘칠 때</b><label><input type="radio" name="swp" value="1"${SWAP ? ' checked' : ''}> 필요일 늦은 주문을 빼서 아래 목록으로</label><label><input type="radio" name="swp" value="0"${SWAP ? '' : ' checked'}> 뒤 주문을 순서대로 밀기</label></div>`;
+  }
   function moveBar() {
-    if (!MOVES.length) return '<p class="msg" style="margin:0 0 10px">칸을 누르면 주문마다 「옮기기·톤」(날짜 옮기기 · 그날 톤 바꾸기), 아래 「칸에 못 들어간 주문」은 「넣기」. 24시간 연속 가동이라 바꾸면 뒤 주문이 순서대로 밀림.</p>';
+    if (!MOVES.length) return swapBox() + '<p class="msg" style="margin:0 0 10px">칸을 누르면 주문마다 「옮기기·톤」 · 「빼기」, 아래 「칸에 못 들어간 주문」은 「넣기」 — 넣고 빼면서 맞추면 됨.</p>';
+    const rmT = (O.removed || []).reduce((a, p) => a + p.t, 0);
     const outs = LINES.flatMap((l) => (O.out[l] || []).map((p) => [l, p])), oT = outs.reduce((a, [, p]) => a + p.t, 0);
-    return `<div class="mvbar"><b>바꾼 것 ${MOVES.length}건</b><span class="msg">${dirty() ? '아직 저장 안 됨 — 아래 「다음 주 생산 확정」에서 저장' : '확정본에 저장됨'}</span><button type="button" class="lnk" id="mv-clear">모두 되돌리기</button><ul>`
+    return swapBox() + `<div class="mvbar"><b>바꾼 것 ${MOVES.length}건</b>${rmT >= 0.5 ? `<span class="msg">뺀 주문 ${(O.removed || []).length}건 ${n0(rmT)}t → 아래 목록 「뺀 주문」</span>` : ''}<span class="msg">${dirty() ? '아직 저장 안 됨 — 아래 「다음 주 생산 확정」에서 저장' : '확정본에 저장됨'}</span><button type="button" class="lnk" id="mv-clear">모두 되돌리기</button><ul>`
       + MOVES.map((m, k) => `<li${m.bad ? ' class="bad"' : ''}>${opText(m)}${m.bad ? ' · 원래 칸에 없음(자료 갱신)' : ''} <button type="button" class="lnk" data-undo="${k}">되돌리기</button></li>`).join('')
       + `</ul>${oT >= 1 ? `<span class="msg" style="color:var(--bad)">밀려서 2주 밖으로 나간 주문 ${outs.length}조각 ${n0(oT)}t: ${outs.slice(0, 6).map(([l, p]) => `${esc(p.con)} ${n0(p.t)}t`).join(' · ')}${outs.length > 6 ? ' …' : ''}</span>` : ''}</div>`;
   }
@@ -352,7 +399,7 @@
         + `<td class="sz">${i.thk != null ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw"><b>${esc(i.grp || '')}</b></td>`
         + `<td class="num"><b>${(+i.tt).toFixed(1)}</b>${i.extra ? `<div class="sub xs">${KD[i.xk]} ${(+i.extra).toFixed(1)}</div>` : ''}${conTxt(i, ln, d)}</td>`
         + `<td class="nw dt2">${[i.arr ? `입항 <b>${md(i.arr)}</b>` : i.due ? `납기 ${md(i.due)}` : '', need].filter(Boolean).join(' · ')}${tags ? `<div>${tags}</div>` : ''}</td>`
-        + `<td class="nw">${i.kind === '확정' ? '<span class="sub">MES 지시됨</span>' : `<button type="button" class="lnk mvb" data-k="${k}">옮기기·톤</button>`}</td></tr>`
+        + `<td class="nw">${i.kind === '확정' ? '<span class="sub">MES 지시됨</span>' : `<button type="button" class="lnk mvb" data-k="${k}">옮기기·톤</button> <button type="button" class="lnk rmb" data-k="${k}" title="이 날에서 빼서 아래 「칸에 못 들어간 주문」 목록으로">빼기</button>`}</td></tr>`
         + (i.kind === '확정' ? '' : `<tr class="mvr" id="mvr-${k}" hidden><td></td><td colspan="7"><div class="mvw"><b>${esc(i.con)}</b><input type="number" class="mvt" value="${(+i.t).toFixed(1)}" min="0.1" max="${i.t}" step="0.1" aria-label="옮길 톤">t 를`
           + `<select class="mv" data-k="${k}" aria-label="옮길 날짜"><option value="">날짜 고르기…</option>${moveOpts(i, ln, d)}</select>(으)로 <button type="button" class="go2" data-k="${k}" disabled>옮기기</button></div><div class="pv" id="pv-${k}"></div>`
           + `<div class="mvw" style="margin-top:8px"><b>이 날 톤</b><input type="number" class="mvs" data-k="${k}" value="${(+i.t).toFixed(1)}" min="0" max="${maxT(i, ln)}" step="0.1" aria-label="이 날 톤">t 로 <button type="button" class="go3" data-k="${k}" disabled>톤 바꾸기</button><span class="sub">최대 ${n0(maxT(i, ln))}t(이 계약 남은 양)</span></div><div class="pv" id="pv3-${k}"></div></td></tr>`);
@@ -393,17 +440,24 @@
         pv.querySelectorAll('button.alt').forEach((x) => x.onclick = () => { sel.value = x.dataset.v; show(k); });
         return;
       }
-      const P = preview({ con: it.con, kind: it.kind, t: tOf(r, it), fl: ln, fd: d, tl, td });
+      const P = preview({ con: it.con, kind: it.kind, t: tOf(r, it), fl: ln, fd: d, tl, td, swap: SWAP });
       go.disabled = false;
       pv.innerHTML = `<span class="ok">가능</span> · ${pvText(P)}`;
     };
-    const setOp = (k) => { const it = c.items[+k], v = +$('mvr-' + k).querySelector('.mvs').value, mx = maxT(it, ln); return { op: 'set', con: it.con, kind: it.kind, fl: ln, fd: d, from: it.t, t: Math.min(mx, Math.max(0, r1(v))) }; };
+    const setOp = (k) => { const it = c.items[+k], v = +$('mvr-' + k).querySelector('.mvs').value, mx = maxT(it, ln); return { op: 'set', con: it.con, kind: it.kind, fl: ln, fd: d, from: it.t, t: Math.min(mx, Math.max(0, r1(v))), swap: SWAP }; };
     const show3 = (k) => {                                   // 톤을 바꾸면: 이 날 실제 들어가는 톤 · 밀림/당겨짐 · 새로 늦어짐
       const op = setOp(k), go = $('mvr-' + k).querySelector('button.go3'), pv = $('pv3-' + k);
       if (Math.abs(op.t - op.from) < 0.05) { pv.innerHTML = ''; go.disabled = true; return; }
       go.disabled = false;
       pv.innerHTML = `<span class="ok">${op.t < op.from ? `줄임 — 나머지 ${n0(op.from - op.t)}t는 다음 날부터` : `늘림 — 같은 주문의 뒤쪽 물량 ${n0(op.t - op.from)}t를 당겨 옴`}</span> · ${pvText(preview(op))}`;
     };
+    dlg.querySelectorAll('button.rmb').forEach((b) => b.onclick = () => {
+      const it = c.items[+b.dataset.k];
+      MOVES.push({ op: 'remove', con: it.con, kind: it.kind, t: it.t, fl: ln, fd: d });
+      saveMoves(); applyMoves(); render();
+      if (window.UI && UI.toast) UI.toast(`${it.con} ${n0(it.t)}t 뺌 → 아래 목록`);
+      openDay(ln, d);
+    });
     dlg.querySelectorAll('input.mvs').forEach((x) => x.oninput = () => show3(x.dataset.k));
     dlg.querySelectorAll('button.go3').forEach((b) => b.onclick = () => {
       const op = setOp(b.dataset.k); MOVES.push(op);
@@ -417,7 +471,7 @@
       const r = $('mvr-' + b.dataset.k), it = c.items[+b.dataset.k], v = r.querySelector('select.mv').value;
       if (!v) { r.querySelector('select.mv').focus(); return; }
       const [tl, td] = v.split('|'), t = tOf(r, it);
-      MOVES.push({ con: it.con, kind: it.kind, t, fl: ln, fd: d, tl, td });
+      MOVES.push({ con: it.con, kind: it.kind, t, fl: ln, fd: d, tl, td, swap: SWAP });
       saveMoves(); applyMoves(); render();
       if (window.UI && UI.toast) UI.toast(`${it.con} ${n0(t)}t → ${mdw(td)} ${tl}`);
       openDay(ln, d);
@@ -433,14 +487,21 @@
   const addedCons = () => new Set(MOVES.filter((m) => m.op === 'add' && !m.bad).map((m) => m.con));
   function riskCard() {
     const T = {
-      win: ['2주 안에 필요 · 못 넣음', (r) => !r.od],
-      od: ['이미 늦은 주문 · 못 넣음', (r) => r.od && !r.stale],
-      st: ['30일 넘게 늦음 · 취소/잔량 확인', (r) => r.stale],
+      rm: ['뺀 주문 · 다시 넣기', (r) => r.rm],
+      win: ['2주 안에 필요 · 못 넣음', (r) => !r.od && !r.rm],
+      od: ['이미 늦은 주문 · 못 넣음', (r) => r.od && !r.stale && !r.rm],
+      st: ['30일 넘게 늦음 · 취소/잔량 확인', (r) => r.stale && !r.rm],
     };
-    const AD = addedCons(), R0 = O.risk.filter((r) => !AD.has(r.con));
+    const AD = addedCons();
+    const asRow = (p, why) => ({ con: p.con, t: p.t, need: p.need, line: p.pline, fam: p.fam, grp: p.grp, cus: p.cus, man: p.man, dst: p.dst, due: p.due, st: why.startsWith('밀려서') ? '2주 밖' : `${md(p.fromD)} ${p.fromL}에서`, why, rm: true,
+      items: [Object.assign({}, p, { day: null, pin: null, moved: null, edited: null, added: null })] });
+    const RM = [...(O.removed || []).map((p) => asRow(p, p.why)), ...LINES.flatMap((l) => (O.out[l] || []).map((p) => asRow(p, '밀려서 2주 밖')))];
+    if (!RM.length && rk === 'rm') rk = 'win';
+    const R0 = [...RM, ...O.risk.filter((r) => !AD.has(r.con))];
     const L = R0.filter(T[rk][1]);
     const byG = {};
     L.forEach((r) => { (byG[r.grp || '그룹 없음'] = byG[r.grp || '그룹 없음'] || []).push(r); });
+    if (!RM.length) delete T.rm;
     const seg = Object.entries(T).map(([k, [nm, f]]) => `<button type="button" data-rk="${k}" aria-pressed="${k === rk}">${nm} ${R0.filter(f).length}</button>`).join('');
     let oi = 0;
     const grp = Object.entries(byG).sort((a, b) => b[1].reduce((s, r) => s + r.t, 0) - a[1].reduce((s, r) => s + r.t, 0)).map(([g, R]) => {
@@ -461,7 +522,7 @@
           return `<tr><td><div class="con">${esc(o.no)}${o.rows.length > 6 ? ` <span class="sub">행 ${o.rows.length}개</span>` : o.rows.length > 1 ? ` <span class="sub">행 ${o.rows.map((r) => esc(r.con.split('-').pop())).join('·')}</span>` : `-${esc(o.rows[0].con.split('-').pop())}`}</div><div class="sub one" title="${esc([o.rows[0].cus, o.rows[0].dst, o.rows[0].man].filter(Boolean).join(' · '))}">${who(o.rows[0])}</div></td>`
             + `<td class="nw">${esc(o.rows[0].line)} ${famCh(o.rows[0].fam)}</td><td>${[...new Set(o.rows.map((r) => r.st || ''))].map(esc).join(' · ')}</td>`
             + `<td class="num"><b>${n0(o.t)}</b></td><td class="nw">${md(o.need)}${o.rows[0].due ? `<div class="sub">납기 ${md(o.rows[0].due)}</div>` : ''}</td><td>${[...new Set(o.rows.map((r) => r.why))].map(esc).join('<br>')}</td>`
-            + `<td class="nw">${pieces.length ? `<button type="button" class="lnk rab" data-id="${id}">넣기</button>` : ''}</td></tr>`
+            + `<td class="nw">${pieces.length ? `<button type="button" class="lnk rab" data-id="${id}">${o.rows[0].rm ? '다시 넣기' : '넣기'}</button>` : ''}</td></tr>`
             + (pieces.length ? `<tr class="mvr" id="${id}" hidden><td colspan="7">${edit}</td></tr>` : '');
         }).join('')
         + '</tbody></table></div></div>';
@@ -475,7 +536,7 @@
       const P = RA[tr.id];
       tr.querySelectorAll('.mvw').forEach((w, j) => {
         const it = P[j], sel = w.querySelector('select.ad'), go = w.querySelector('button.adg'), pv = w.nextElementSibling, tIn = w.querySelector('.mvt');
-        const op = () => { const [tl, td] = sel.value.split('|'); return { op: 'add', con: it.con, kind: it.kind, t: Math.min(it.t, Math.max(0.1, r1(+tIn.value || it.t))), tl, td, item: it }; };
+        const op = () => { const [tl, td] = sel.value.split('|'); return { op: 'add', con: it.con, kind: it.kind, t: Math.min(it.t, Math.max(0.1, r1(+tIn.value || it.t))), tl, td, item: it, swap: SWAP }; };
         const show = () => {
           if (!sel.value) { pv.innerHTML = ''; go.disabled = true; return; }
           const o = op(), ck = check(it, null, o.tl, o.td);
@@ -544,6 +605,7 @@
     $('cc-main').querySelectorAll('#cc-rk button').forEach((b) => b.onclick = () => { rk = b.dataset.rk; try { localStorage.setItem(RK_KEY, rk); } catch (e) { /* 무시 */ } render(); });
     $('cc-save').onclick = save;
     bindRisk();
+    document.querySelectorAll('input[name="swp"]').forEach((x) => x.onchange = () => { SWAP = x.value === '1'; try { localStorage.setItem('cgl-cal-swap2', x.value); } catch (e) { /* 무시 */ } });
     if ($('mv-clear')) $('mv-clear').onclick = () => { MOVES = []; saveMoves(); applyMoves(); render(); };
     $('cc-main').querySelectorAll('[data-undo]').forEach((b) => b.onclick = () => { MOVES.splice(+b.dataset.undo, 1); saveMoves(); applyMoves(); render(); });
     if (window.UI) UI.reveal($('cc-main'));

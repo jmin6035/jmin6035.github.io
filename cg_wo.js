@@ -35,6 +35,7 @@
     if (none.length) h += `<div class="wo-g na" title="내경 = 제품 내경코드 조회가 다음 자동 실행에 들어옴 · 재질 = 소재 입고 표에 이 코일 규격이 없음">– 아직 모름 ${esc(none.join('·'))}</div>`;
     return h;
   }
+  const GR = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E', GRA: 'Gr.A', GRB: 'Gr.B' };   // 재질(열처리 등급) — 주문 제품 규격 우선, 없으면 소재 규격
   function row(x, day) {
     const dn = x.exp >= 1;                                         // 1분 미만은 '거의 없음'(사양이 안 바뀌어도 생기는 수준)
     const t = x.trt || {};
@@ -42,7 +43,7 @@
     return `<tr${dn ? ' class="hasdn"' : ''}>`
       + `<td class="tm"><div class="wo-no">${x.seq}</div><b>${tm(x.start, day)}</b>–${tm(x.end, day)}${dn ? `<div class="bk">더미 ${tm(x.downStart, day)}부터</div>` : ''}</td>`
       + `<td class="l">${x.con ? `<b class="wo-con">${esc(x.con)}</b>` : '<span class="bk">계약 미연결</span>'}${x.conf ? '' : '<span class="gt gt3">미확정</span>'}<div class="bk">소재 ${esc(x.raw)}${x.req ? ` · 예정 ${md(x.req)}` : ''}${x.dlv ? ` · 납기 ${md(x.dlv)}` : ''}</div></td>`
-      + `<td class="l"><b class="wo-sz">${(+x.thick).toFixed(2)} × ${n0(x.width)}</b><div class="bk">${esc(x.sur)}${sp.length ? ' · ' + esc(sp.join(' · ')) : (x.con ? ' · 후처리 조회 대기' : '')}</div></td>`
+      + `<td class="l"><b class="wo-sz">${(+x.thick).toFixed(2)} × ${n0(x.width)}</b>${x.grade ? ` <span class="wo-gr" title="열처리 등급 — ${esc(x.pspec || x.spec || '')}">${esc(GR[x.grade] || x.grade)}</span>` : ''}<div class="bk">${esc(x.sur)}${sp.length ? ' · ' + esc(sp.join(' · ')) : (x.con ? ' · 후처리 조회 대기' : '')}</div></td>`
       + `<td class="num" title="${x.wgt ? '톤 = 소재 입고 무게' : '톤 = 추정(같은 두께·폭 보통 무게)'} · 시간당 생산량 = ${esc(x.tphSrc)}"><b>${n1(x.t)}t</b> · <b>${n0(x.runMin)}분</b><div class="bk">${n1(x.tph)}t/h · 제품 ${esc(x.cnt)}코일${x.wgt ? '' : ' · 톤 추정'}</div></td>`
       + `<td class="l wr">${gatesHtml(x)}</td>`
       + `<td class="l wr">${dn ? `<div class="wo-dum"><b>${n1(x.exp)}분</b>${x.dumT >= 0.05 ? ` · 약 ${n1(x.dumT)}t` : ''}</div>` + (x.downs || []).map((d) => `<div class="bk">${esc(d.c)} ${n1(d.m)}분 — ${esc(d.b)}</div>`).join('') : (x.exp >= 0.05 ? `<span class="bk">거의 없음(${n1(x.exp)}분)</span>` : '<span class="bk">없음</span>')}</td></tr>`;
@@ -85,7 +86,7 @@
       ['① 강종', '가동계획 그대로(M/C 날짜 안 바꿈)', 'M/C는 가동계획에서 정함', pc('1', '같은 강종 연속')],
       ['② 두께', '차 <b>0.3mm</b>(2CGL 박물 0.2) · 비 <b>1.3배</b> 이내', '용접부 파단', '<b>99%</b><div class="bk">1.0t 미만 0.3mm 안</div>'],
       ['③ 폭', '넓은 폭 → 좁은 폭. 넓힘은 <b>알코스타 10mm · AZ·MAC 30mm</b>까지, 같은 두께면 안 넓힘', '롤 가장자리 자국', pc('2', '넓어지지 않은 이음')],
-      ['④ 재질', '같은 재질끼리. <b>AZ CQ↔EDDQ · CQ→저탄</b>, <b>MAC Gr.C↔LFQ·DQ·DDQ</b> 바로 불가', '노 온도 차 · 자료 들어오면 적용', '<span class="bk">자료 대기</span>'],
+      ['④ 재질', '같은 재질(CQ·DQ·DDQ·EDDQ·Gr.C·Gr.E)끼리. <b>AZ CQ↔EDDQ · CQ→Gr.E 저탄(사이 극저 1개)</b>, <b>MAC Gr.C↔LFQ·DQ·DDQ · CQ↔DDQ</b> 바로 불가 · AL은 온도가 비슷해 묶기만', '노 온도 차(녹취 10/27)', '<b>적용</b> <span class="bk">등급 = 주문 제품 규격(예: KS-SA1C = CQ, A463DQ = DQ), 없으면 소재 규격 코드표</span>'],
       ['⑤ 도금량', '같은 도금량끼리 되도록 묶음', '바뀌면 더미(아래 기준표)', '<span class="bk">—</span>'],
       ['⑥ 후처리', sts ? '같은 층 약액 바로 안 이음, 사이 <b>2코일</b> — 1층 TX·SX·RX·QX·MX·GX·DP·DA·BX·BP / 2층 KX·IX / LX·NX' : '연결 큰 상관 없음(AL·AZ)', sts ? '코터 청소 약 2시간' : '', sts ? pc('15', '같은 층 바로 이음 1년 1번') : na],
       ['⑦ 내경', '<b>508·610</b> 같은 것끼리. 0.6t 미만은 안 바꿈, 후물만 한두 번', '슬리브 교체 · 주문 내경 조회 추가', '<span class="bk">자료 대기</span>'],
@@ -186,14 +187,6 @@
     bindTabs();
     if (window.UI) UI.reveal($('wo-main'));
   }
-  function csv(v) {                                         // MES 작업지시 입력용: 제안 순서 그대로(코일 단위). 포털은 MES에 쓰지 않음 — 사람이 보고 입력
-    const H = ['순서', '시작', '소재번호', '계약번호-행번', '두께', '폭', '표면', '규격', '도금량', '후처리', '톤'];
-    const q = (x) => { const t = String(x == null ? '' : x); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
-    const R = (v.items || []).map((x) => [x.seq, x.start, x.raw, x.con, x.thick, x.width, x.sur, x.spec, (x.trt || {}).cot, (x.trt || {}).aft, x.t].map(q).join(','));
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob(['\ufeff' + [H.join(','), ...R].join('\r\n')], { type: 'text/csv;charset=utf-8' }));
-    a.download = `작업지시순서_${line}_${String(O.now || '').slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  }
   function render() {
     if (view === 'rules') { renderRules(); return; }
     const L = Object.keys(O.lines);
@@ -213,14 +206,13 @@
       + (v.n ? `<div class="wo-cmp${gain < 0 ? ' bad' : ''}"><b>화면에 올라온 순서와 비교</b> — 같은 ${n0(v.n)}코일을 대상 선정 화면에 올라온 순서대로 돌리면 예상 더미 ${n1(v.mes)}분 (사양 바뀜 ${n0(v.mesChg)}번) → 제안이 <b>${gain >= 0 ? `${n1(gain)}분 짧음` : `${n1(-gain)}분 김`}</b> <span class="bk">(같은 더미 기준표로 계산)</span></div>` : '')
       + (blk ? `<div class="cgbs"><span class="bk">표면사상 묶음</span> ${blk}</div>` : '')
       + '</section>'
-      + (v.n ? `<section class="card"><button type="button" class="lnk" id="wo-csv" style="float:right">MES 입력용 내려받기(CSV)</button><h2>${v.issued ? `이미 지시된 순서 점검 <small class="bk">대상 선정 화면이 비어 있어(작업지시가 다 나감) 지시됐고 아직 생산 안 된 코일을 MES 지시 순서대로 조건 점검</small>` : '제안 순서 <small class="bk">날짜별 · 같은 계약번호-행번은 붙여서</small>'}</h2>`
+      + (v.n ? `<section class="card"><h2>${v.issued ? `이미 지시된 순서 점검 <small class="bk">대상 선정 화면이 비어 있어(작업지시가 다 나감) 지시됐고 아직 생산 안 된 코일을 MES 지시 순서대로 조건 점검</small>` : '제안 순서 <small class="bk">날짜별 · 같은 계약번호-행번은 붙여서</small>'}</h2>`
         + ((v.runs || []).length ? `<div class="wo-runs"><b>짜는 방식</b> 조건(두께·폭·재질·후처리·내경)을 모두 지키는 코일 중 <b>지금 폭에 가장 가까운 코일</b>을 다음으로 → 넓은 폭에서 좁은 폭으로 길게 내려감. 더 내려갈 코일이 없으면 남은 코일 중 가장 넓은 폭으로 새 단위.<ol>`
           + v.runs.map((r) => `<li><b>${r.from}번부터 ${n0(r.n)}코일 · ${n0(r.t)}t</b> — 폭 ${n0(r.w0)} → ${n0(r.w1)} · 두께 ${r.th0 === r.th1 ? r.th0 : `${r.th0}~${r.th1}`}t${r.down >= 1 ? ` · 예상 더미 ${n1(r.down)}분` : ''}</li>`).join('') + '</ol></div>' : '')
         + `<div class="strip-lg"><span>날짜 줄 아래 막대 = 그날 07시~다음날 07시 라인 사용:</span><span><i class="sr"></i>생산(코일)</span><span><i class="sd"></i>예상 더미</span><span>빈 칸 = 제안 대상 아닌 시간(앞 지시 작업·대기)</span></div>${table(v)}</section>` : (O.schOld ? `<section class="card"><p><b>${esc(line)} 대상 선정 목록 — 다음 자동 실행부터 나옵니다.</b> 지금까지 받은 목록이 '담당자가 편성해 둔 소재'로 걸러져 있어 ${esc(line)}가 빠졌음(10/28 조회 고침: 작업지시 대상 선정 화면 목록 = 도금생산예정일 표 전부).</p></section>`
         : `<section class="card"><p>지금 대상 선정 목록에 ${esc(line)} 코일이 없습니다(생산예정일 내일까지 · 이미 지시된 소재 제외)${v.issuedWait ? ` — 지시됐고 아직 생산 안 된 <b>${n0(v.issuedWait)}코일</b>` : ''}.</p></section>`))
       + boardCard(line);
     $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; render(); });
-    if ($('wo-csv')) $('wo-csv').onclick = () => csv(v);
     bindTabs();
     if (window.UI) UI.reveal($('wo-main'));
   }
