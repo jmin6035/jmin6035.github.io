@@ -8,6 +8,7 @@
   const SB = 'https://gatcqxrzaonjsixajrwd.supabase.co/rest/v1/cgl_week_confirm';
   const KEY = 'sb_publishable_BlfAhxz_v3yg6iJw_nbRaA_YMFAOS7K';      // 공개용 키(이 표 권한 = 읽기·추가만). 비밀 키는 넣지 말 것
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const n1 = (v) => (v == null || isNaN(v) ? '-' : (+v).toLocaleString('ko-KR', { maximumFractionDigits: 1 }));   // 250.0 → 250
   const n0 = (v) => (v == null || isNaN(v) ? '-' : Math.round(v).toLocaleString('ko-KR'));
   const DOW = ['일', '월', '화', '수', '목', '금', '토'];
   const dt = (s) => new Date(s + 'T00:00:00');
@@ -419,12 +420,12 @@
         + `<td><div class="con">${esc(i.con)}</div><div class="sub one">${who(i)}</div></td>`
         + `<td><span class="chs1">${famCh(i.fam)}${i.grade ? `<span class="ch gr">${esc(GRN[i.grade] || i.grade)}</span>` : ''}${i.exp ? '<span class="ch exp">수출</span>' : '<span class="ch">내수</span>'}${i.cot ? `<span class="ch">${esc(i.cot)}</span>` : ''}${i.aft ? `<span class="ch">${esc(i.aft)}</span>` : ''}</span></td>`
         + `<td class="sz">${i.thk != null ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw"><b>${esc(i.grp || '')}</b></td>`
-        + `<td class="num"><b>${(+i.tt).toFixed(1)}</b>${i.extra ? `<div class="sub xs">${KD[i.xk]} ${(+i.extra).toFixed(1)}</div>` : ''}${conTxt(i, ln, d)}</td>`
+        + `<td class="num"><b>${n1(i.tt)}</b>${i.extra ? `<div class="sub xs">${KD[i.xk]} ${n1(i.extra)}</div>` : ''}${conTxt(i, ln, d)}</td>`
         + `<td class="nw dt2">${[i.arr ? `입항 <b>${md(i.arr)}</b>` : i.due ? `납기 ${md(i.due)}` : '', need].filter(Boolean).join(' · ')}${tags ? `<div>${tags}</div>` : ''}</td>`
         + `<td class="nw">${i.kind === '확정' ? '<span class="sub">MES 지시됨</span>' : `<button type="button" class="lnk mvb" data-k="${k}">옮기기·톤</button> <button type="button" class="lnk rmb" data-k="${k}" title="이 날에서 빼서 아래 「칸에 못 들어간 주문」 목록으로">빼기</button>`}</td></tr>`
-        + (i.kind === '확정' ? '' : `<tr class="mvr" id="mvr-${k}" hidden><td></td><td colspan="7"><div class="mvw"><b>${esc(i.con)}</b><input type="number" class="mvt" value="${(+i.t).toFixed(1)}" min="0.1" max="${i.t}" step="0.1" aria-label="옮길 톤">t 를`
+        + (i.kind === '확정' ? '' : `<tr class="mvr" id="mvr-${k}" hidden><td></td><td colspan="7"><div class="mvw"><b>${esc(i.con)}</b><input type="number" class="mvt" value="${n1(i.t)}" min="0.1" max="${i.t}" step="0.1" aria-label="옮길 톤">t 를`
           + `<select class="mv" data-k="${k}" aria-label="옮길 날짜"><option value="">날짜 고르기…</option>${moveOpts(i, ln, d)}</select>(으)로 <button type="button" class="go2" data-k="${k}" disabled>옮기기</button></div><div class="pv" id="pv-${k}"></div>`
-          + `<div class="mvw" style="margin-top:8px"><b>이 날 톤</b><input type="number" class="mvs" data-k="${k}" value="${(+i.t).toFixed(1)}" min="0" max="${maxT(i, ln)}" step="0.1" aria-label="이 날 톤">t 로 <button type="button" class="go3" data-k="${k}" disabled>톤 바꾸기</button><span class="sub">최대 ${n0(maxT(i, ln))}t(이 계약 남은 양)</span></div><div class="pv" id="pv3-${k}"></div></td></tr>`);
+          + `<div class="mvw" style="margin-top:8px"><b>이 날 톤</b><input type="number" class="mvs" data-k="${k}" value="${+(+i.t).toFixed(1)}" min="0" max="${maxT(i, ln)}" step="0.1" aria-label="이 날 톤">t 로 <button type="button" class="go3" data-k="${k}" disabled>톤 바꾸기</button><span class="sub">최대 ${n0(maxT(i, ln))}t(이 계약 남은 양)</span></div><div class="pv" id="pv3-${k}"></div></td></tr>`);
     }).join('');
   }
   function csv(rows, name) {
@@ -538,7 +539,7 @@
             const lines = it.pline === '공용' ? LINES : [it.pline || it._line];
             const opts = lines.flatMap((l) => O.days.map((dd) => { const ck = check(it, null, l, dd); return `<option value="${l}|${dd}">${mdw(dd)} ${l}${ck.ok ? '' : ' — 불가'}</option>`; })).join('');
             return `<div class="mvw" style="margin-top:${j ? 8 : 0}px"><b>${esc(it.con)}</b><span class="kd k${it.kind}">${KD[it.kind]}</span><span class="sz">${it.thk != null ? `${(+it.thk).toFixed(2)}×${n0(it.wdt)}` : ''}</span>`
-              + `<input type="number" class="mvt" value="${(+it.t).toFixed(1)}" min="0.1" max="${it.t}" step="0.1" aria-label="넣을 톤">t 를<select class="ad" aria-label="넣을 날짜"><option value="">날짜 고르기…</option>${opts}</select>에 <button type="button" class="go2 adg" disabled>넣기</button></div><div class="pv"></div>`;
+              + `<input type="number" class="mvt" value="${+(+it.t).toFixed(1)}" min="0.1" max="${it.t}" step="0.1" aria-label="넣을 톤">t 를<select class="ad" aria-label="넣을 날짜"><option value="">날짜 고르기…</option>${opts}</select>에 <button type="button" class="go2 adg" disabled>넣기</button></div><div class="pv"></div>`;
           }).join('');
           RA[id] = pieces;
           return `<tr><td><div class="con">${esc(o.no)}${o.rows.length > 6 ? ` <span class="sub">행 ${o.rows.length}개</span>` : o.rows.length > 1 ? ` <span class="sub">행 ${o.rows.map((r) => esc(r.con.split('-').pop())).join('·')}</span>` : `-${esc(o.rows[0].con.split('-').pop())}`}</div><div class="sub one" title="${esc([o.rows[0].cus, o.rows[0].dst, o.rows[0].man].filter(Boolean).join(' · '))}">${who(o.rows[0])}</div></td>`

@@ -7,7 +7,7 @@
   const PW_KEY = 'cgl-analysis-pw', BY_KEY = 'cgl-order-by';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const n0 = (v) => (v == null || isNaN(v) ? '-' : Math.round(v).toLocaleString('ko-KR'));
-  const n1 = (v) => (v == null || isNaN(v) ? '-' : (+v).toFixed(1));
+  const n1 = (v) => (v == null || isNaN(v) ? '-' : (+v).toLocaleString('ko-KR', { maximumFractionDigits: 1 }));   // 250.0 → 250, 24.4 → 24.4(10/28 사용자)
   const md = (s) => (s ? `${+String(s).slice(5, 7)}/${+String(s).slice(8, 10)}` : '');
   const ymd8 = (s) => (s && String(s).length >= 8 ? `${+String(s).slice(4, 6)}/${+String(s).slice(6, 8)}` : '');
   let CAL = null;                                            // 계약번호-행번 → 2주 캘린더 생산일
@@ -56,17 +56,18 @@
     if (!c || x.st === '생산 완료') return x.woN ? `<div class="sub">지시 ${x.woN}코일</div>` : '';
     return `<div class="${c.late ? 'rem' : ''}">생산 <b>${md(c.from)}</b>${c.to !== c.from ? `~${md(c.to)}` : ''}</div><div class="sub">${esc(c.line || '')} ${n1(c.t)}t${x.woN ? ` · 지시 ${x.woN}코일` : ''}</div>`;
   }
+const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E', GRA: 'Gr.A', GRB: 'Gr.B', GrC: 'Gr.C', GrD: 'Gr.D', GrE: 'Gr.E', GrA: 'Gr.A', GrB: 'Gr.B' };
   function row(x) {
     const past = x.lateIn && x.needIn ? Math.round((Date.parse(O.asOf) - Date.parse(x.needIn)) / 864e5) : 0;   // 소재 지연이면 '여유' 대신 필요 입고일이 며칠 지났는지
     const est = x.etaSrc === '예상 입고';                        // 여유 = 필요 입고일 − 포스코 입고예정(없으면 인도기한 + 실적 중앙값 = 예상 입고)
     const etaPast = x.eta && x.remIn > 0.5 && x.eta < O.asOf;   // 예상 입고일이 지났는데 아직 다 안 들어옴 → '여유' 대신 확인
-    const sl = past > 0 ? `<div class="sl neg">${past}일 지남</div>` : etaPast ? `<div class="sl neg">예상 ${md(x.eta)}</div><div class="sub">지남 · 포스코 확인</div>` : (x.slack == null ? '' : `<div class="sl ${x.slack < 0 ? 'neg' : est ? '' : 'pos'}">${x.slack < 0 ? `${-x.slack}일 늦음` : `${x.slack}일 여유`}</div>${x.eta ? `<div class="sub">${est ? '예상' : '입고예정'} ${md(x.eta)}</div>` : ''}`);
+    const sl = past > 0 ? `<div class="sl neg">${past}일 지남</div>` : etaPast ? `<div class="sl neg" title="F/H 예상 입고일(인도기한 기준)이 지났는데 아직 안 들어옴 — 포스코에 진행 확인">예상 ${md(x.eta)} 지남</div><div class="sub">미입고 → 포스코 확인</div>` : (x.slack == null ? '' : `<div class="sl ${x.slack < 0 ? 'neg' : est ? '' : 'pos'}">${x.slack < 0 ? `${-x.slack}일 늦음` : `${x.slack}일 여유`}</div>${x.eta ? `<div class="sub">${est ? '예상' : '입고예정'} ${md(x.eta)}</div>` : ''}`);
     const needOn = x.remIn > 0.5;                                 // 소재가 다 들어왔으면(입고 완료·생산) 필요 입고일은 의미 없음
     const nm = (t, pre) => `<span class="nmw" title="${esc(t)}">${pre || ''}${esc(t).replace(/-/g, '\u2011').replace(/\(/g, '\u200b(')}</span>`;   // 이름은 띄어쓰기·괄호 앞에서만 줄 바꿈(하이픈에서 안 끊음)
     const who = [by !== 'cus' && x.cus ? nm(x.cus) : '', x.lcus && x.lcus !== x.cus ? nm(x.lcus, '최종\u00a0') : '', by !== 'man' && x.man ? `<span class="nw">담당 ${esc(x.man)}</span>` : '', by !== 'dst' && x.dst ? `<span class="nw">→ ${esc(x.dst)}</span>` : ''].filter(Boolean);
     return `<tr><td>${stBadge(x)}${x.woWait ? '<div class="sub">작업지시됨</div>' : ''}</td>`
-      + `<td><div class="con">${esc(x.con)}</div><div class="sub">${[x.line, x.pln, x.usg && `용도 ${esc(x.usg)}`].filter(Boolean).join(' · ')}</div></td>`
-      + `<td><div class="chips">${prodChips(x)}</div><div class="sz">${x.thk != null ? `${(+x.thk).toFixed(2)} × ${n0(x.wdt)}` : ''}${x.ordT ? ` <span class="sub">· 주문 ${n1(x.ordT)}t</span>` : ''}</div>${x.spec ? `<div class="sub">${esc(x.spec)}</div>` : ''}</td>`
+      + `<td><div class="con">${esc(x.con)}</div><div class="sub">${[x.line, x.pln, x.usg && `<span class="nw" title="용도 코드">용도 ${esc(x.usg)}${x.usgNm ? ` ${esc(x.usgNm)}` : ''}</span>`].filter(Boolean).join(' · ')}</div></td>`
+      + `<td><div class="chips">${prodChips(x)}</div><div class="sz">${x.thk != null ? `${(+x.thk).toFixed(2)} × ${n0(x.wdt)}` : ''}${x.ordT ? ` <span class="sub">· 주문 ${n1(x.ordT)}t</span>` : ''}</div>${x.pspec || x.spec ? `<div class="sub">${x.pspec ? `<span class="nw" title="주문 제품 규격">제품 ${esc(x.pspec)}${x.grade ? ` <b>${esc(GRN[x.grade] || x.grade)}</b>` : ''}</span>` : ''}${x.pspec && x.spec ? ' · ' : ''}${x.spec ? `<span class="nw" title="소재(F/H) 규격 — 포스코 강종 약호">소재 ${esc(x.spec)}${x.specGr ? ` ${esc(GRN[x.specGr] || x.specGr)}` : ''}</span>` : ''}</div>` : ''}</td>`
       + `<td>${who.length ? who.map((w) => `<div>${w}</div>`).join('') : '<span class="sub">-</span>'}</td>`
       + `<td class="nw">납기 <b>${md(x.due) || '-'}</b>${x.arr ? `<div>입항 <b>${md(x.arr)}</b></div>` : ''}${x.shp && !/^TBN/i.test(x.shp) ? `<div class="sub">${esc(String(x.shp).split('_')[0])}</div>` : ''}${x.shipMiss ? '<div><span class="st late" title="배 입항일이 지났는데 아직 생산 전 — 배선 변경 확인">입항 지남</span></div>' : ''}</td>`
       + `<td class="num">${x.purT ? `<b>${n1(x.purT)}t</b><div class="sub">발주 ${ymd8(x.purDt)}</div>${x.dle ? `<div class="sub">인도기한 ${md(x.dle)}</div>` : ''}` : '<span class="sub">미발주</span>'}</td>`
@@ -112,14 +113,14 @@
         + `<td title="${x.need ? (x.spec ? `제원치 2주 ${n0(x.spec)}(판생점검 제원치: 라인 월 생산량 ÷ 가동일 × 14일${(x.specDown || []).length ? ` − 정기수리 ${x.specDown.length}일` : ''}) · 참고: 월차 기준 ${n0(x.tgt)} · 재계획 ${n0(x.cap)}` : `월차 기준 ${n0(x.tgt)} · 재계획 ${n0(x.cap)} 중 작은 값`) : ''}">${x.need ? `<b>${n0(x.need)}</b><div class="sub">하루 ${n0(x.need / C.days)}</div>` : '-'}</td>`
         + `<td><b>${n0(x.have)}</b></td><td>${n0(x.soon)}</td>`
         + `<td><b class="${tone(r) === 'bad' ? 'neg' : tone(r) === 'warn' ? 'wrn' : 'pos'}">${r == null ? '-' : Math.round(r * 100) + '%'}</b>${r0 == null ? '' : `<div class="sub">소재만 ${Math.round(r0 * 100)}%</div>`}</td>`
-        + `<td><b class="${dd != null && dd < 7 ? 'neg' : ''}">${dd == null ? '-' : Math.round(dd) + '일'}</b></td></tr>`;
+        + `<td title="${x.runStop ? `지금 소재로 오늘부터 하루씩 채움(주문별 같은 두께·폭 T/Hr, 재계획 강종 순서·정기수리 반영) → ${md(x.runStop.date)} ${x.runStop.fam} 소재가 모자라 멈춤${Object.keys(x.runStop.left || {}).length ? ` · 남은 소재 ${Object.entries(x.runStop.left).map(([k, v]) => `${k} ${v}시간`).join(', ')}(그 강종 가동 때 사용)` : ''}` : ''}"><b class="${(x.runDays ?? dd) != null && (x.runDays ?? dd) < 7 ? 'neg' : ''}">${x.runDays != null ? `${n1(x.runDays)}일` : dd == null ? '-' : Math.round(dd) + '일'}</b>${x.runStop ? `<div class="sub">${md(x.runStop.date)} ${esc(x.runStop.fam)} 소재 끝</div>` : ''}</td></tr>`;
     };
     const sum = (k) => L.reduce((a, x) => a + (x[k] || 0), 0);
-    const T = { line: '도금 계', need: sum('need'), have: sum('have') + (U ? U.have : 0), soon: sum('soon') + (U ? U.soon : 0) };
+    const T = { line: '도금 계', need: sum('need'), have: sum('have') + (U ? U.have : 0), soon: sum('soon') + (U ? U.soon : 0), runDays: L.every((x) => x.runDays != null) ? Math.min(...L.map((x) => x.runDays)) : null };   // 계 = 먼저 멈추는 라인
     return `<section class="card cov"><h2>2주 주문 충당 <small>${md(C.from)}~${md(C.to)}</small><span class="unit">톤</span></h2>
       <div class="scroll"><table class="gt"><thead><tr><th class="l">라인</th><th class="l"></th><th>2주 생산량</th><th>소재 있음</th><th>2주 안 입고</th><th>충당률</th><th>작업 가능 일수</th></tr></thead>`
       + `<tbody>${L.map((x) => row(x)).join('')}${U && (U.have >= 1 || U.soon >= 500) ? `<tr><td class="nm">라인 미정</td><td></td><td></td><td><b>${n0(U.have)}</b></td><td>${n0(U.soon)}</td><td></td><td></td></tr>` : ''}${row(T, true)}</tbody></table></div>`
-      + `<p class="od-note" style="margin:8px 0 0">막대 = 2주 생산량을 100%로 · 진한 칸 = 소재 있음 · 빗금 = 2주 안 입고 · 꽉 차면 충분 — 2주 생산량(라인 하나) = 제원치(판생점검 '제원치 검토' 라인 월 생산량 ÷ 가동일) × 2주 가동일 · 숫자에 마우스를 올리면 계산 · 충당률 = (소재 있음 + 2주 안 입고) ÷ 2주 생산량 · 작업 가능 일수 = 지금 소재로 라인을 돌릴 수 있는 날수</p></section>`;
+      + `<p class="od-note" style="margin:8px 0 0">막대 = 2주 생산량을 100%로 · 진한 칸 = 소재 있음 · 빗금 = 2주 안 입고 · 꽉 차면 충분 — 2주 생산량(라인 하나) = 제원치(판생점검 '제원치 검토' 라인 월 생산량 ÷ 가동일) × 2주 가동일 · 숫자에 마우스를 올리면 계산 · 충당률 = (소재 있음 + 2주 안 입고) ÷ 2주 생산량 · 작업 가능 일수 = 지금 소재로 오늘부터 라인을 채울 수 있는 날수(주문별 T/Hr · 재계획 강종 순서 · 제원치 가동률, 그 강종 소재가 떨어지는 날에서 멈춤)</p></section>`;
   }
   function render() {
     const R = O.rows;
