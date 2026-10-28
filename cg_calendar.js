@@ -83,7 +83,7 @@
     const k = (l, v, b, tone) => `<div class="kpi${tone ? ' tone-' + tone : ''}"><div class="l">${l}</div><div class="v">${v}</div><div class="b">${b}</div></div>`;
     return '<div class="kpis" style="margin:0 0 14px">'
       + k('2주 라인 능력', `${n0(tot('cap'))}<small>t</small>`, `확정 ${n0(tot('conf'))} · 편성 ${n0(tot('plan'))} · 예상 ${n0(tot('fcst'))} · 빈칸 ${n0(tot('gap'))}`, tot('gap') > 0 ? 'warn' : 'brand')
-      + k('밀린 주문', `${n0(O.odT)}<small>t · ${O.nOd}건</small>`, '필요 생산일이 이미 지난 미생산 — 2주 안에 먼저 넣음', O.odT > 0 ? 'bad' : 'good')
+      + k('밀린 주문', `${n0(O.odT)}<small>t · ${O.nOd}건</small>`, `필요 생산일이 이미 지난 미생산 — 2주 안에 먼저 넣음${(O.shipMiss || []).length ? ` · 그중 배 놓친 수출 ${O.shipMiss.length}건(입항 지남, 배선 변경 확인)` : ''}`, O.odT > 0 ? 'bad' : 'good')
       + k('2주 안에 못 넣는 주문', `${win.length}<small>건 · ${n0(win.reduce((s, r) => s + r.t, 0))}t</small>`, '이번 2주에 필요한데 칸이 없음(소재 없음·능력 부족)', win.length ? 'warn' : 'good')
       + k('계획 ≠ 현장 지시', `${fl}<small>일</small>`, fl ? LINES.flatMap((l) => O.lines[l].filter((c) => c.flag).map((c) => `${l} ${md(c.d)}`)).join(' · ') : '재계획 강종과 현장 작업지시가 맞음', fl ? 'bad' : 'good')
       + k('자가재(컬러 투입) 진도', jgMin >= 0 ? '<span class="gv">계획 이상</span>' : `<span class="bv">${n0(-jgMin)}t 부족</span>`, '재계획 자가재 누계 대비 캘린더 누계(가장 모자란 날)', jgMin >= 0 ? 'good' : 'bad')
@@ -156,7 +156,7 @@
         + `<td><div class="chs">${famCh(i.fam)}${i.exp ? '<span class="ch exp">수출</span>' : '<span class="ch">내수</span>'}${i.cot ? `<span class="ch">도금량 ${esc(i.cot)}</span>` : ''}${i.aft ? `<span class="ch">후처리 ${esc(i.aft)}</span>` : ''}</div></td>`
         + `<td class="sz">${i.thk != null ? `${(+i.thk).toFixed(2)} × ${n0(i.wdt)}` : '-'}</td><td><b>${esc(i.grp || '')}</b></td>`
         + `<td class="num"><b>${(+i.t).toFixed(1)}</b>${i.n ? `<div class="sub">${i.n}코일</div>` : ''}</td><td class="nw">${i.arr ? `<div>입항 <b>${md(i.arr)}</b>${i.shp ? ` <span class="sub">${esc(i.shp)}</span>` : ''}</div>` : ''}${i.due ? `<div class="${i.arr ? 'sub' : ''}">납기 ${md(i.due)}</div>` : ''}<div>${due}</div>`
-        + `${i.moved ? `<div><span class="bd mv">${i.moved.swap ? '자리 바꿈' : '옮김'} ← ${mdw(i.moved.fd)}${i.moved.fl !== ln ? ' ' + i.moved.fl : ''}</span></div>` : i.locked ? '<div><span class="bd mv">확정본</span></div>' : ''}${i.matLate ? `<div><span class="bd od">소재 ${md(i.avail)}부터 가능</span></div>` : ''}</td>`
+        + `${i.moved ? `<div><span class="bd mv">${i.moved.swap ? '자리 바꿈' : '옮김'} ← ${mdw(i.moved.fd)}${i.moved.fl !== ln ? ' ' + i.moved.fl : ''}</span></div>` : i.locked ? '<div><span class="bd mv">확정본</span></div>' : ''}${i.matLate ? `<div><span class="bd od">소재 ${md(i.avail)}부터 가능</span></div>` : ''}${i.shipMiss ? '<div><span class="bd od">배 놓침 · 배선 변경</span></div>' : ''}</td>`
         + `<td>${ln ? moveSel(i, ln, d) : ''}</td></tr>`;
     }).join('');
   }
