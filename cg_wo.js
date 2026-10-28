@@ -41,7 +41,7 @@
     const sp = [t.cot && `도금량 ${t.cot}`, x.trt && `후처리 ${t.aft || '없음'}`, t.oil && `도유 ${t.oil}`, x.ind && `내경 ${IND[x.ind] || x.ind}`].filter(Boolean);
     return `<tr${dn ? ' class="hasdn"' : ''}>`
       + `<td class="tm"><div class="wo-no">${x.seq}</div><b>${tm(x.start, day)}</b>–${tm(x.end, day)}${dn ? `<div class="bk">더미 ${tm(x.downStart, day)}부터</div>` : ''}</td>`
-      + `<td class="l">${x.con ? `<b class="wo-con">${esc(x.con)}</b>` : '<span class="bk">계약 미연결</span>'}${x.conf ? '' : '<span class="gt gt3">미확정</span>'}<div class="bk">소재 ${esc(x.raw)}${x.req ? ` · 요청 ${md(x.req)}` : ''}</div></td>`
+      + `<td class="l">${x.con ? `<b class="wo-con">${esc(x.con)}</b>` : '<span class="bk">계약 미연결</span>'}${x.conf ? '' : '<span class="gt gt3">미확정</span>'}<div class="bk">소재 ${esc(x.raw)}${x.req ? ` · 예정 ${md(x.req)}` : ''}${x.dlv ? ` · 납기 ${md(x.dlv)}` : ''}</div></td>`
       + `<td class="l"><b class="wo-sz">${(+x.thick).toFixed(2)} × ${n0(x.width)}</b><div class="bk">${esc(x.sur)}${sp.length ? ' · ' + esc(sp.join(' · ')) : (x.con ? ' · 후처리 조회 대기' : '')}</div></td>`
       + `<td class="num" title="${x.wgt ? '톤 = 소재 입고 무게' : '톤 = 추정(같은 두께·폭 보통 무게)'} · 시간당 생산량 = ${esc(x.tphSrc)}"><b>${n1(x.t)}t</b> · <b>${n0(x.runMin)}분</b><div class="bk">${n1(x.tph)}t/h · 제품 ${esc(x.cnt)}코일${x.wgt ? '' : ' · 톤 추정'}</div></td>`
       + `<td class="l wr">${gatesHtml(x)}</td>`
@@ -208,7 +208,8 @@
       + (v.n ? `<section class="card"><h2>${v.issued ? `이미 지시된 순서 점검 <small class="bk">대상 선정 화면이 비어 있어(작업지시가 다 나감) 지시됐고 아직 생산 안 된 코일을 MES 지시 순서대로 조건 점검</small>` : '제안 순서 <small class="bk">날짜별 · 같은 계약번호-행번은 붙여서</small>'}</h2>`
         + ((v.runs || []).length ? `<div class="wo-runs"><b>짜는 방식</b> 조건(두께·폭·재질·후처리·내경)을 모두 지키는 코일 중 <b>지금 폭에 가장 가까운 코일</b>을 다음으로 → 넓은 폭에서 좁은 폭으로 길게 내려감. 더 내려갈 코일이 없으면 남은 코일 중 가장 넓은 폭으로 새 단위.<ol>`
           + v.runs.map((r) => `<li><b>${r.from}번부터 ${n0(r.n)}코일 · ${n0(r.t)}t</b> — 폭 ${n0(r.w0)} → ${n0(r.w1)} · 두께 ${r.th0 === r.th1 ? r.th0 : `${r.th0}~${r.th1}`}t${r.down >= 1 ? ` · 예상 더미 ${n1(r.down)}분` : ''}</li>`).join('') + '</ol></div>' : '')
-        + `<div class="strip-lg"><span>날짜 줄 아래 막대 = 그날 07시~다음날 07시 라인 사용:</span><span><i class="sr"></i>생산(코일)</span><span><i class="sd"></i>예상 더미</span><span>빈 칸 = 제안 대상 아닌 시간(앞 지시 작업·대기)</span></div>${table(v)}</section>` : `<section class="card"><p>지금 대상 선정 화면에 ${esc(line)} 코일이 없습니다${v.lastDay ? ` <span class="bk">(마지막 ${md(v.lastDay)})</span>` : ''} — 대상 코일이 이미 작업지시로 넘어감${v.issuedWait ? `(지시됐고 아직 생산 안 된 <b>${n0(v.issuedWait)}코일</b>)` : ''}. 지시된 코일의 두께·폭 조회가 들어오면 MES 지시 순서를 조건별로 점검해 여기 보여 줍니다(다음 자동 실행부터).</p></section>`)
+        + `<div class="strip-lg"><span>날짜 줄 아래 막대 = 그날 07시~다음날 07시 라인 사용:</span><span><i class="sr"></i>생산(코일)</span><span><i class="sd"></i>예상 더미</span><span>빈 칸 = 제안 대상 아닌 시간(앞 지시 작업·대기)</span></div>${table(v)}</section>` : (O.schOld ? `<section class="card"><p><b>${esc(line)} 대상 선정 목록 — 다음 자동 실행부터 나옵니다.</b> 지금까지 받은 목록이 '담당자가 편성해 둔 소재'로 걸러져 있어 ${esc(line)}가 빠졌음(10/28 조회 고침: 작업지시 대상 선정 화면 목록 = 도금생산예정일 표 전부).</p></section>`
+        : `<section class="card"><p>지금 대상 선정 목록에 ${esc(line)} 코일이 없습니다(생산예정일 내일까지 · 이미 지시된 소재 제외)${v.issuedWait ? ` — 지시됐고 아직 생산 안 된 <b>${n0(v.issuedWait)}코일</b>` : ''}.</p></section>`))
       + boardCard(line);
     $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; render(); });
     bindTabs();
