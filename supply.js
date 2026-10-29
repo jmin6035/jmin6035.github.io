@@ -219,6 +219,7 @@
   }
   // 소재 유형 칸 상세: 어떤 소재(코드)를 어느 업체에 얼마 — 언제 들어와 언제 쓰고, 무엇을 만드는지(역으로 생산·용도)
   // 발주 → 어느 판매그룹·목적지를 위한 것인지(10/29 사용자): 판매그룹 → 목적지별 톤, 펼치면 계약별
+  const pdtNm = (p) => (p ? String(p).split(' ').slice(1).join(' ') || String(p) : '');   // 'CGT PGS (폴리에스테르)' → 'PGS (폴리에스테르)'
   function forWhom(pos) {
     const L = (pos || []).map((p) => FHP && FHP.po[p]).filter(Boolean);
     if (!L.length) return '';
@@ -226,8 +227,8 @@
     const dk = (dst, exp) => dst || (exp ? '수출(목적지 미확인)' : '국내(목적지 미확인)');
     L.forEach(([con, t, g, dst, , exp]) => { const x = (G[g] = G[g] || { t: 0, d: {} }); x.t += t; const k = dk(dst, exp); x.d[k] = (x.d[k] || 0) + t; });
     const sum = Object.entries(G).sort((a, b) => b[1].t - a[1].t).map(([g, x]) => `<div class="fw"><b>${esc(g)}</b> ${n0(x.t)}t <span class="muted">— ${Object.entries(x.d).sort((a, b) => b[1] - a[1]).map(([dd, t]) => `${esc(dd)} ${n0(t)}`).join(' · ')}</span></div>`).join('');
-    const det = L.length > 1 ? `<details class="fwd"><summary>계약 ${L.length}건 보기</summary><table class="t fwt"><tbody>${L.sort((a, b) => (G[b[2]].t - G[a[2]].t) || dk(a[3], a[5]).localeCompare(dk(b[3], b[5])) || b[1] - a[1]).map(([con, t, g, dst, cus, exp, need, usg, ns]) => `<tr><td class="l nw">${esc(con || '-')}</td><td class="l">${esc(g)}${usg ? ` <small class="muted">${esc(usg)}</small>` : ''}</td><td class="l">${esc(cus || '')}${cus ? ' → ' : ''}${esc(dk(dst, exp))}</td><td>${n0(t)}t</td><td class="nw">${need ? `${ns || (exp ? '입항' : '납기')} ${md(need)}` : ''}</td></tr>`).join('')}</tbody></table></details>`
-      : (() => { const [con, , , , cus, exp, need, usg, ns] = L[0]; return `<div class="muted">${esc(con || '')}${usg ? ` · ${esc(usg)}` : ''}${cus ? ` · ${esc(cus)}` : ''}${need ? ` · ${ns || (exp ? '입항' : '납기')} ${md(need)}` : ''}</div>`; })();
+    const det = L.length > 1 ? `<details class="fwd"><summary>계약 ${L.length}건 보기</summary><table class="t fwt"><tbody>${L.sort((a, b) => (G[b[2]].t - G[a[2]].t) || dk(a[3], a[5]).localeCompare(dk(b[3], b[5])) || b[1] - a[1]).map(([con, t, g, dst, cus, exp, need, usg, ns, pdt]) => `<tr><td class="l nw">${esc(con || '-')}</td><td class="l">${esc(g)}${pdt || usg ? ` <small class="muted">${[pdtNm(pdt), usg].filter(Boolean).map(esc).join(' · ')}</small>` : ''}</td><td class="l">${esc(cus || '')}${cus ? ' → ' : ''}${esc(dk(dst, exp))}</td><td>${n0(t)}t</td><td class="nw">${need ? `${ns || (exp ? '입항' : '납기')} ${md(need)}` : ''}</td></tr>`).join('')}</tbody></table></details>`
+      : (() => { const [con, , , , cus, exp, need, usg, ns, pdt] = L[0]; return `<div class="muted">${esc(con || '')}${pdt ? ` · ${esc(pdtNm(pdt))}` : ''}${usg ? ` · ${esc(usg)}` : ''}${cus ? ` · ${esc(cus)}` : ''}${need ? ` · ${ns || (exp ? '입항' : '납기')} ${md(need)}` : ''}</div>`; })();
     return sum + det;
   }
   function typeDetail(c, d, k) {
