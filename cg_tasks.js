@@ -99,6 +99,7 @@
     dlg.innerHTML = `<div class="th ch k-${esc(t.cat)}" style="border-radius:14px 14px 0 0;margin:0;cursor:default"><b>${esc(t.name)}</b><span>${whenText(t)}</span><button type="button" id="tk-x" aria-label="닫기">×</button></div>`
       + `<dl><dt>언제 · 얼마나</dt><dd><b>${esc(whenText(t))}</b>${t.time ? ` · ${esc(t.time)}` : ''}</dd><dt>왜 하나</dt><dd>${esc(t.why)}</dd><dt>이렇게 한다</dt><dd><ol>${t.steps.map((s) => `<li>${linkify(s)}</li>`).join('')}</ol></dd>`
       + `<dt>필요한 자료</dt><dd>${linkify(t.input || '-')}</dd><dt>보는 곳</dt><dd>${linkify(t.where)}</dd><dt>판단 기준</dt><dd>${esc(t.rule)}</dd><dt>결과물 → 받는 곳</dt><dd>${esc(t.out)} → <b>${esc(t.to)}</b></dd>`
+      + (t.role ? `<dt>담당 역할</dt><dd><b>${esc(t.role)}</b> <span class="rk">1회 약 ${t.h1 < 1 ? Math.round(t.h1 * 60) + '분' : t.h1 + '시간'} · 한 주 약 ${t.hWeek}시간(예상)</span></dd>` : '')
       + `<dt>같이 하는 부서</dt><dd>${esc(t.raci || '-')} <span class="rk">R 실행 · A 책임 · C 협의 · I 공유</span></dd><dt>안 하면</dt><dd class="rs">${esc(t.risk || '-')}</dd>`
       + (t.note ? `<dt>주의</dt><dd>${esc(t.note)}</dd>` : '') + '</dl>';
     $('tk-x').onclick = () => dlg.close();
