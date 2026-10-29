@@ -90,7 +90,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
       + `<td><div class="con">${esc(x.con)}</div><div class="sub">${[x.line, x.pln, x.usg && `<span class="nw" title="용도 코드">용도 ${esc(x.usg)}${x.usgNm ? ` ${esc(x.usgNm)}` : ''}</span>`].filter(Boolean).join(' · ')}</div></td>`
       + `<td><div class="chips">${prodChips(x)}</div><div class="sz">${x.thk != null ? `<span class="nw">${(+x.thk).toFixed(2)} × ${n0(x.wdt)}</span>` : ''}${x.ordT ? ` <span class="sub">· 주문 ${n1(x.ordT)}t</span>` : ''}</div>${x.pspec || x.spec ? `<div class="sub spc">${x.pspec ? `<span class="nw" title="주문 제품 규격">제품 ${esc(x.pspec)}${x.grade ? ` <b>${esc(GRN[x.grade] || x.grade)}</b>` : ''}</span>` : ''}${x.pspec && x.spec ? ' · ' : ''}${x.spec ? `<span class="nw" title="소재(F/H) 규격 — 포스코 강종 약호">소재 ${esc(x.spec)}${x.specGr ? ` ${esc(GRN[x.specGr] || x.specGr)}` : ''}</span>` : ''}</div>` : ''}</td>`
       + `<td>${who.length ? who.map((w) => `<div>${w}</div>`).join('') : '<span class="sub">-</span>'}</td>`
-      + `<td class="nw">납기 <b>${md(x.due) || '-'}</b>${x.arr ? `<div>입항 <b>${md(x.arr)}</b></div>` : ''}${x.shp && !/^TBN/i.test(x.shp) ? `<div class="sub" style="white-space:normal;overflow-wrap:anywhere">${esc(String(x.shp).split('_')[0])}</div>` : ''}${x.shipMiss ? '<div><span class="st late" title="배 입항일이 지났는데 아직 생산 전 — 배선 변경 확인">입항 지남</span></div>' : ''}</td>`
+      + `<td class="nw">납기 <b>${md(x.due) || '-'}</b>${x.dept ? `<div>출항 <b>${md(x.dept)}</b></div>` : x.arr ? `<div>입항 <b>${md(x.arr)}</b></div>` : ''}${x.shp && !/^TBN/i.test(x.shp) ? `<div class="sub" style="white-space:normal;overflow-wrap:anywhere">${esc(String(x.shp).split('_')[0])}</div>` : ''}${x.shipMiss ? '<div><span class="st late" title="배 입항일이 지났는데 아직 생산 전 — 배선 변경 확인">입항 지남</span></div>' : ''}</td>`
       + `<td class="num">${x.purT ? `<b>${n1(x.purT)}t</b><div class="sub">발주 ${ymd8(x.purDt)}</div>${x.dle ? `<div class="sub">인도기한 ${md(x.dle)}</div>` : ''}` : '<span class="sub">미발주</span>'}</td>`
       + `<td>${stages(x)}${x.early && x.remIn > 0.5 ? `<div class="rem">열연 이전 ${n1(x.early)}t</div>` : ''}</td>`
       + `<td class="num">${x.entT ? `<b>${n1(x.entT)}t</b>${x.entFirst ? `<div class="sub">첫 입고 ${md(x.entFirst)}</div>` : ''}` : '<span class="sub">0</span>'}${x.remIn ? `<div class="rem">미입고 ${n1(x.remIn)}t</div>` : ''}</td>`
@@ -105,14 +105,12 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     + (S.need ? `<span class="gs">가장 급한 필요 입고 <b>${md(S.need)}</b></span>` : '');
   /* 판매그룹별 수치 + 합계 막대(10/29 사용자 '그룹별로 수치 · 합계로 그래프'): 주문 톤 = 생산 완료 + 소재 있음(생산 전) + 미입고 — 지금 고른 묶음·필터 그대로 */
   // 최근 2주 실제 생산이 필요 생산일 안에 끝난 비율(그룹별, 필터와 무관) — 수출은 실제 실린 배의 출항일 기준도 같이
-  function perfLine(gs) {
+  function perfLine(gs) {                                  // 최근 2주 실제 생산 중 필요 생산일(수출 출항 −1 · 내수 납기 −1) 안에 끝난 톤 비율
     const P = O.perf;
     if (!P || !P.groups) return '';
-    const pc = (a, b) => (b >= 1 ? Math.round(100 * a / b) + '%' : '-');
-    const E = Object.entries(P.groups).filter(([, g]) => g.t >= 1).sort((a, b) => b[1].t - a[1].t);
-    return `<div class="perf"><b>최근 2주 생산(${md(P.from)}~) · 필요 생산일 안에 끝난 톤</b> <span class="bk">필요일 = 수출 입항 −1일 · 내수 납기 −1일</span><div class="perf-r">`
-      + E.map(([g, x]) => `<span class="pchip"><b>${esc(gs(g))}</b> ${pc(x.ok, x.known)}${x.shipT >= 1 ? ` <small>· 출항 전 ${pc(x.shipOk, x.shipT)}</small>` : ''} <small class="bk">${n0(x.t)}t</small></span>`).join('')
-      + '</div><p class="bk" style="margin:4px 0 0">수출은 입항 −1일보다 늦게 만든 게 절반이지만 출항 전에는 거의 다 끝남 — 현장은 출항 전까지로 돌림(기준을 출항으로 바꿀지 검토)</p></div>';
+    const E = Object.entries(P.groups).filter(([, g]) => g.known >= 1).sort((a, b) => b[1].t - a[1].t);
+    return `<div class="perf"><b>최근 2주 생산 · 필요일 안 완료</b><div class="perf-r">`
+      + E.map(([g, x]) => `<span class="pchip"><b>${esc(gs(g))}</b> ${Math.round(100 * x.ok / x.known)}% <small class="bk">${n0(x.t)}t</small></span>`).join('') + '</div></div>';
   }
   function grpChart(byG) {
     if (!byG.length) return '';
@@ -123,12 +121,12 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     const gs = (g) => ({ 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차강판', 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발' }[g] || g);
     const bar = ([g, s], i) => `<div class="gb${i === 0 ? ' gbt' : ''}" title="${esc(g)} · 주문 ${n0(s.o)}t = 생산 완료 ${n0(s.p)} + 소재 있음 ${n0(s.h)} + 미입고 ${n0(s.r)} · ${s.n}건">`
       + `<span class="gbn">${esc(gs(g))}</span><span class="gbr"><i class="a" style="width:${P(s.p)}"></i><i class="m" style="width:${P(s.h)}"></i><i class="b" style="width:${P(s.r)}"></i></span>`
-      + `<span class="gbv"><b>${n0(s.o)}</b>t · ${n0(s.n)}건${s.late ? ` · <span class="bad">지연 ${s.late}</span>` : ''}${s.hurry ? ` · <span class="warn">독촉 ${s.hurry}</span>` : ''}</span></div>`;
-    const tr = ([g, s], i) => `<tr${i === 0 ? ' class="tot"' : ''}><td><b>${esc(gs(g))}</b></td><td class="num">${n0(s.n)}</td><td class="num"><b>${n0(s.o)}</b></td><td class="num">${n0(s.p)} <small class="sub">${s.o ? Math.round(100 * s.p / s.o) : 0}%</small></td>`
+      + `<span class="gbv"><b>${n0(s.o)}</b>t</span></div>`;
+    const tr = ([g, s], i) => `<tr${i === 0 ? ' class="tot"' : ''}><td><b>${esc(gs(g))}</b></td><td class="num">${n0(s.n)}</td><td class="num">${n0(s.p)} <small class="sub">${s.o ? Math.round(100 * s.p / s.o) : 0}%</small></td>`
       + `<td class="num">${n0(s.h)}</td><td class="num">${n0(s.r)}</td><td class="num ${s.late ? 'bad' : ''}">${s.late || '-'}</td><td class="num ${s.hurry ? 'warn' : ''}">${s.hurry || '-'}</td><td class="num">${s.chk || '-'}</td></tr>`;
-    return '<div class="gcard"><div class="gbl"><span><i class="a"></i>생산 완료</span><span><i class="m"></i>소재 있음(생산 전)</span><span><i class="b"></i>미입고(포스코 진행·미발주)</span><span class="sub">숫자 = 주문 톤 · 건수 · 위 묶음·필터 기준</span></div>'
+    return '<div class="gcard"><div class="gbl"><span><i class="a"></i>생산 완료</span><span><i class="m"></i>소재 있음(생산 전)</span><span><i class="b"></i>미입고(포스코 진행·미발주)</span><span class="sub">주문 톤</span></div>'
       + `<div class="gbs">${R.map(bar).join('')}</div>`
-      + '<div class="scroll"><table class="t gtab"><thead><tr><th>그룹</th><th>건</th><th>주문 t</th><th>생산 완료</th><th>소재 있음</th><th>미입고</th><th title="필요 입고일보다 소재가 늦음">소재 지연</th><th title="필요 입고 3주 안인데 아직 열연 이전">포스코 독촉</th><th title="인도기한 지났는데 입고 기록 없음">입고 확인</th></tr></thead>'
+      + '<div class="scroll"><table class="t gtab"><thead><tr><th>그룹</th><th>건</th><th>생산 완료</th><th>소재 있음</th><th>미입고</th><th title="필요 입고일보다 소재가 늦음">소재 지연</th><th title="필요 입고 3주 안인데 아직 열연 이전">포스코 독촉</th><th title="인도기한 지났는데 입고 기록 없음">입고 확인</th></tr></thead>'
       + `<tbody>${[...R.slice(1), R[0]].map((x, i, a) => tr(x, i === a.length - 1 ? 0 : 1)).join('')}</tbody></table></div>${perfLine(gs)}</div>`;
   }
   function sub(name, L) {
@@ -187,7 +185,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     $('od-meta').textContent = `${O.asOf} 기준 · 납기 −30일 ~ +90일 계약`;
     const wait = [!O.hasRun && '포스코 진행', !O.hasCus && '고객사·담당자', !O.hasFull && '목적지'].filter(Boolean);
     $('od-main').innerHTML = coverCard() + `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 주문진도</h2><div class="od-kpi" id="od-kpi">${kpi}</div>`
-      + `<p class="od-note">필요 입고일 = 내수 납기 −${O.basis.leadIn + O.basis.prep}일 · 수출 입항 −${O.basis.leadIn + O.basis.prep}일 · 예상 입고 = F/H 인도기한 ${O.dleOff}일 · 포스코 독촉 = 필요 입고 3주 안인데 아직 열연 이전 · 입고 확인 = 필요 입고 2주 안 미입고 · 소재 지연 = 필요 입고일 지남</p>`
+      + `<p class="od-note">필요 입고일 = 내수 납기 −${O.basis.leadIn + O.basis.prep}일 · 수출 출항 −${O.basis.leadIn + O.basis.prep}일 · 예상 입고 = F/H 인도기한 ${O.dleOff}일 · 포스코 독촉 = 필요 입고 3주 안인데 아직 열연 이전 · 입고 확인 = 필요 입고 2주 안 미입고 · 소재 지연 = 필요 입고일 지남</p>`
       + (wait.length ? `<p class="od-wait">⏳ ${wait.join(' · ')}: 다음 자동 실행(07:35) 뒤</p>` : '')
       + `<div class="od-flt"><span class="lb">묶음</span><span class="seg" id="od-by">${Object.keys(BY).map((b) => `<button type="button" data-b="${b}" aria-pressed="${b === by}">${BY[b][0]}별</button>`).join('')}</span>`
       + `<select id="od-ln" aria-label="라인"><option value="">라인 전체</option><option${ln === '1CGL' ? ' selected' : ''}>1CGL</option><option${ln === '2CGL' ? ' selected' : ''}>2CGL</option></select>`

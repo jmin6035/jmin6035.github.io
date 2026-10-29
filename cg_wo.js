@@ -196,7 +196,7 @@
     its.forEach((x) => { const g = (G[x.grp || '미상'] = G[x.grp || '미상'] || { a: 0, b: 0, n: 0 }); g[x.day === d0 ? 'a' : 'b'] += x.t || 0; g.n += 1; });
     const R = [['합계', Object.values(G).reduce((s, g) => ({ a: s.a + g.a, b: s.b + g.b, n: s.n + g.n }), { a: 0, b: 0, n: 0 })], ...Object.entries(G).sort((x, y) => (y[1].a + y[1].b) - (x[1].a + x[1].b))];
     const mx = Math.max(1, ...R.map(([, g]) => g.a + g.b)), P = (x) => (100 * x / mx).toFixed(2) + '%';
-    return `<div class="gbl"><span><i class="a"></i>${esc(md(d0))}</span><span><i class="b"></i>그 뒤</span><span class="bk">판매그룹별 · 돌릴 대상 코일 톤</span></div><div class="gbs">`
+    return `<div class="gbl"><span><i class="a"></i>${esc(md(d0))}</span><span><i class="b"></i>그 뒤</span><span class="bk">판매그룹별 톤</span></div><div class="gbs">`
       + R.map(([g, x], i) => `<div class="gb${i === 0 ? ' gbt' : ''}" title="${esc(g)} · ${x.n}코일 · ${n0(x.a + x.b)}t (${esc(md(d0))} ${n0(x.a)} · 그 뒤 ${n0(x.b)})"><span class="gbn">${esc(g)}</span>`
         + `<span class="gbr"><i class="a" style="width:${P(x.a)}"></i><i class="b" style="width:${P(x.b)}"></i></span><span class="gbv"><b>${n0(x.a + x.b)}</b>t · ${x.n}코일 <small class="bk">${x.a + x.b ? Math.round(100 * (x.a + x.b) / (R[0][1].a + R[0][1].b)) : 0}%</small></span></div>`).join('') + '</div>';
   }
