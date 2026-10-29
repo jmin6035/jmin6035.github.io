@@ -6,7 +6,7 @@
 <title>도금 2주 생산 캘린더</title>
 <meta name="description" content="라인별 2주 생산 캘린더 — 현장 작업지시(확정)·소재 있는 주문(편성)·입고 예정(예상)을 라인 능력에 채움, 수요일 확정·준수율">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610291247">
+<link rel="stylesheet" href="ui/theme.css?v=2610291255">
 <style>
 main.wrap { max-width: none; }
 :root { --c-conf: #2e7d32; --c-plan: #3774a1; --c-fcst: #8fb8dc; --c-gap: #f4f6f8; }
@@ -125,6 +125,23 @@ select.mv { font: inherit; font-size: 13.5px; padding: 4px 6px; border: 1px soli
 .mvbar ul { flex-basis: 100%; margin: 4px 0 0; padding-left: 18px; font-size: 14px; line-height: 1.8; } .mvbar li.bad { color: var(--bad); }
 button.lnk { font: inherit; font-size: 13.5px; border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 6px; padding: 2px 9px; cursor: pointer; }
 @media (max-width: 760px) { button.cell { min-height: 110px; padding: 5px; } .tv { font-size: 15px; } .gl { font-size: 12px; } }
+  /* 판매그룹별 막대(10/29) — 한 색조 두 단계 · 2px 칸 사이 · 끝 4px 둥글게 · 목표 = 세로 선 */
+  .gbl{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--ink-2,#4a5563);margin:2px 0 8px}
+  .gbl span{display:inline-flex;align-items:center;gap:6px}
+  .gbl i{display:inline-block;width:14px;height:10px;border-radius:2px}
+  .gbl i.a,.gbr i.a{background:var(--vz-1)} .gbl i.b,.gbr i.b{background:var(--vz-2)}
+  .gbl em{display:inline-block;width:2px;height:14px;background:var(--ink,#111827)}
+  .gbs{display:grid;gap:6px;max-width:1100px;margin:0 0 14px}
+  .gb{display:grid;grid-template-columns:72px minmax(0,1fr) 170px;align-items:center;gap:10px}
+  .gbn{font-weight:600;font-size:13px}
+  .gbr{position:relative;display:flex;gap:2px;height:16px;background:var(--vz-track);border-radius:4px}
+  .gbr i{display:block;height:100%} .gbr i:first-child{border-radius:4px 0 0 4px} .gbr i.b{border-radius:0 4px 4px 0}
+  .gbr em{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:var(--ink,#111827)}
+  .gbv{font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .gbt .gbn{font-size:14px} .gbt .gbr{height:22px} .gbt .gbv b{font-size:14px}
+  .gbt{padding-bottom:6px;border-bottom:1px solid var(--line,#e5e7eb)}
+  @media (max-width:640px){.gb{grid-template-columns:56px minmax(0,1fr);}.gbv{grid-column:2}}
+  .gbv .neg,table.it td.neg{color:var(--bad,#c62828)} table.it tr.tot td{border-top:2px solid var(--line,#e5e7eb);font-weight:600}
 </style>
 </head>
 <body>
@@ -140,8 +157,8 @@ button.lnk { font: inherit; font-size: 13.5px; border: 1px solid var(--line); ba
   <dialog class="dd" id="cc-dlg"></dialog>
 </main>
 <footer class="foot"><div class="wrap"><span>원본: MES 작업지시 · 주문진도(F/H·포스코·입고) · 최신 재계획(라인 능력·강종)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610291247"></script>
-<script src="engine/crypto.js?v=2610291247"></script>
-<script src="cg_calendar.js?v=2610291247"></script>
+<script src="ui/shell.js?v=2610291255"></script>
+<script src="engine/crypto.js?v=2610291255"></script>
+<script src="cg_calendar.js?v=2610291255"></script>
 </body>
 </html>

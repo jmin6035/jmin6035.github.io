@@ -601,6 +601,34 @@
     });
   }
 
+  /* 판매그룹별 수치(10/29 사용자 '그룹별로 수치 넣자'): 2주 계획 톤 vs 재계획 목표 · 입항일·납기 초과 · 2주 안에 못 넣음 · 이미 늦음 · 계획 적중률 */
+  function grpCard() {
+    const G = (O.grpSum || []).filter((g) => g.grp !== '더미' && (g.conf + g.plan + g.fcst + g.target + g.riskT + g.odT) >= 1);
+    if (!G.length) return '';
+    const acc = {};
+    ((O.accuracy || {}).versions || []).forEach((v) => v.rows.forEach((r) => Object.entries(r.grp || {}).forEach(([g, [p, h]]) => { const a = (acc[g] = acc[g] || [0, 0]); a[0] += p; a[1] += h; })));
+    const hasAcc = Object.keys(acc).length;
+    const row = (g) => { const p = g.conf + g.plan + g.fcst, d = p - g.target, a = acc[g.grp];
+      return `<tr><td><b>${esc(g.grp)}</b></td><td class="num"><b>${n0(p)}</b></td><td class="num sub">${n0(g.conf + g.plan)} · ${n0(g.fcst)}</td><td class="num">${n0(g.target)}</td>`
+        + `<td class="num ${d < -0.5 ? 'neg' : ''}">${d >= 0 ? '+' : ''}${n0(d)}</td><td class="num">${g.lateN ? `${g.lateN}건 · ${n0(g.lateT)}t` : '-'}</td>`
+        + `<td class="num">${g.riskN ? `${g.riskN}건 · ${n0(g.riskT)}t` : '-'}</td><td class="num ${g.odN ? 'neg' : ''}">${g.odN ? `${g.odN}건 · ${n0(g.odT)}t` : '-'}</td>`
+        + (hasAcc ? `<td class="num">${a && a[0] >= 1 ? Math.round(100 * a[1] / a[0]) + '%' : '-'}</td>` : '') + '</tr>'; };
+    const T = G.reduce((s, g) => ({ conf: s.conf + g.conf, plan: s.plan + g.plan, fcst: s.fcst + g.fcst, target: s.target + g.target, lateN: s.lateN + g.lateN, lateT: s.lateT + g.lateT, riskN: s.riskN + g.riskN, riskT: s.riskT + g.riskT, odN: s.odN + g.odN, odT: s.odT + g.odT }), { conf: 0, plan: 0, fcst: 0, target: 0, lateN: 0, lateT: 0, riskN: 0, riskT: 0, odN: 0, odT: 0 });
+    // 막대(10/29 사용자 '합계로 그래프 표시'): 그룹마다 2주 생산 계획(소재 있음 진한 칸 + 입고 예정 옅은 칸) vs 재계획 목표(세로 선), 맨 위 합계
+    const bars = [{ grp: '합계', ...T }, ...G], mx = Math.max(1, ...bars.map((g) => Math.max(g.conf + g.plan + g.fcst, g.target)));
+    const P = (v) => (100 * v / mx).toFixed(2) + '%';
+    const bar = (g, i) => { const a = g.conf + g.plan, b = g.fcst, p = a + b, d = p - g.target;
+      return `<div class="gb${i === 0 ? ' gbt' : ''}" title="${esc(g.grp)} · 2주 생산 계획 ${n0(p)}t(소재 있음 ${n0(a)} · 입고 예정 ${n0(b)}) · 재계획 목표 ${n0(g.target)}t · 차이 ${d >= 0 ? '+' : ''}${n0(d)}t">`
+        + `<span class="gbn">${esc(g.grp)}</span><span class="gbr"><i class="a" style="width:${P(a)}"></i><i class="b" style="width:${P(b)}"></i>${g.target >= 1 ? `<em style="left:${P(g.target)}"></em>` : ''}</span>`
+        + `<span class="gbv"><b>${n0(p)}</b> / ${n0(g.target)} <small class="${d < -0.5 ? 'neg' : 'sub'}">${d >= 0 ? '+' : ''}${n0(d)}</small></span></div>`; };
+    const chart = `<div class="gbl"><span><i class="a"></i>소재 있음(작업지시 포함)</span><span><i class="b"></i>입고 예정</span><span><em></em>재계획 목표</span><span class="sub">숫자 = 계획 / 목표 · 차이(t)</span></div>`
+      + `<div class="gbs">${bars.map(bar).join('')}</div>`;
+    return '<section class="card"><h2>판매그룹별 <small>2주(오늘~13일 뒤) · 톤</small></h2>' + chart + '<div class="scroll"><table class="it" style="max-width:1100px"><thead><tr><th>그룹</th>'
+      + '<th class="num" title="작업지시 + 소재 있음 + 입고 예정">2주 생산 계획</th><th class="num" title="작업지시·소재 있음 · 입고 예정">소재 있음 · 입고 예정</th><th class="num" title="재계획(가동계획)의 그룹별 2주 생산량">재계획 목표</th><th class="num">차이</th>'
+      + '<th class="num" title="그 날 생산하면 입항일(수출)·납기(내수)를 넘기는 주문">입항일·납기 초과</th><th class="num" title="이번 2주에 필요한데 칸에 못 넣은 주문(소재 없음·능력 부족)">2주 안에 못 넣음</th><th class="num" title="필요 생산일이 이미 지났는데 생산 전">이미 늦음</th>'
+      + (hasAcc ? '<th class="num" title="지난 계획 중 그날 실제로 만든 톤 비율">계획 적중률</th>' : '') + '</tr></thead><tbody>'
+      + G.map(row).join('') + row({ grp: '합계', ...T }).replace('<tr>', '<tr class="tot">') + '</tbody></table></div></section>';
+  }
   /* 계획 적중률(10/29 사용자 '실제와 정합성이 얼마나 맞나'): 매일 게시한 캘린더의 오늘·내일·모레 계획 ↔ MES 생산 실적(계약번호-행번, 생산일 07~07) */
   function accCard() {
     const V = ((O.accuracy || {}).versions || []).slice(-10).reverse();
@@ -657,7 +685,7 @@
   function render() {
     const stale = Math.round((Date.now() - dt(O.asOf).getTime()) / 864e5);
     $('cc-main').innerHTML = (stale >= 2 ? `<div class="card" style="background:var(--warn-bg);color:var(--warn);font-weight:700">자료 기준 ${md(O.asOf)} — ${stale}일 전 자료</div>` : '')
-      + kpis() + calCard() + confirmCard() + accCard() + riskCard()
+      + kpis() + grpCard() + calCard() + confirmCard() + accCard() + riskCard()
       + `<p class="msg" style="margin:4px 4px 0">자료 ${esc(O.asOf)} · ${esc(O.planSrc || '')} · 계산 ${esc(O.built || '')}</p>`;
     $('cc-main').querySelectorAll('button.cell').forEach((b) => b.onclick = () => openDay(b.dataset.ln, b.dataset.d));
     $('cc-main').querySelectorAll('#cc-rk button').forEach((b) => b.onclick = () => { rk = b.dataset.rk; try { localStorage.setItem(RK_KEY, rk); } catch (e) { /* 무시 */ } render(); });

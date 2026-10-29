@@ -103,6 +103,34 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
   const stat = (S) => `<span class="gs"><b>${n0(S.n)}</b>건</span><span class="gs">미입고 <b>${n0(S.rem)}</b>t</span>`
     + (S.late ? `<span class="gs bad">소재 지연 <b>${S.late}</b></span>` : '') + (S.hurry ? `<span class="gs warn">독촉 <b>${S.hurry}</b></span>` : '') + (S.chk ? `<span class="gs warn">입고 확인 <b>${S.chk}</b></span>` : '')
     + (S.need ? `<span class="gs">가장 급한 필요 입고 <b>${md(S.need)}</b></span>` : '');
+  /* 판매그룹별 수치 + 합계 막대(10/29 사용자 '그룹별로 수치 · 합계로 그래프'): 주문 톤 = 생산 완료 + 소재 있음(생산 전) + 미입고 — 지금 고른 묶음·필터 그대로 */
+  // 최근 2주 실제 생산이 필요 생산일 안에 끝난 비율(그룹별, 필터와 무관) — 수출은 실제 실린 배의 출항일 기준도 같이
+  function perfLine(gs) {
+    const P = O.perf;
+    if (!P || !P.groups) return '';
+    const pc = (a, b) => (b >= 1 ? Math.round(100 * a / b) + '%' : '-');
+    const E = Object.entries(P.groups).filter(([, g]) => g.t >= 1).sort((a, b) => b[1].t - a[1].t);
+    return `<div class="perf"><b>최근 2주 생산(${md(P.from)}~) · 필요 생산일 안에 끝난 톤</b> <span class="bk">필요일 = 수출 입항 −1일 · 내수 납기 −1일</span><div class="perf-r">`
+      + E.map(([g, x]) => `<span class="pchip"><b>${esc(gs(g))}</b> ${pc(x.ok, x.known)}${x.shipT >= 1 ? ` <small>· 출항 전 ${pc(x.shipOk, x.shipT)}</small>` : ''} <small class="bk">${n0(x.t)}t</small></span>`).join('')
+      + '</div><p class="bk" style="margin:4px 0 0">수출은 입항 −1일보다 늦게 만든 게 절반이지만 출항 전에는 거의 다 끝남 — 현장은 출항 전까지로 돌림(기준을 출항으로 바꿀지 검토)</p></div>';
+  }
+  function grpChart(byG) {
+    if (!byG.length) return '';
+    const sm = (L) => { const o = L.reduce((s, x) => s + (x.ordT || x.purT || 0), 0), p = L.reduce((s, x) => s + Math.min(x.prodT || 0, x.ordT || x.purT || 0), 0), r = L.reduce((s, x) => s + (x.remIn || 0), 0);
+      return { o, p, r, h: Math.max(0, o - p - r), ...sumOf(L) }; };
+    const R = [['합계', sm(byG.flatMap(([, v]) => v))], ...byG.map(([g, v]) => [g, sm(v)])], mx = Math.max(1, ...R.map(([, s]) => s.o));
+    const P = (v) => (100 * v / mx).toFixed(2) + '%';
+    const gs = (g) => ({ 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차강판', 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발' }[g] || g);
+    const bar = ([g, s], i) => `<div class="gb${i === 0 ? ' gbt' : ''}" title="${esc(g)} · 주문 ${n0(s.o)}t = 생산 완료 ${n0(s.p)} + 소재 있음 ${n0(s.h)} + 미입고 ${n0(s.r)} · ${s.n}건">`
+      + `<span class="gbn">${esc(gs(g))}</span><span class="gbr"><i class="a" style="width:${P(s.p)}"></i><i class="m" style="width:${P(s.h)}"></i><i class="b" style="width:${P(s.r)}"></i></span>`
+      + `<span class="gbv"><b>${n0(s.o)}</b>t · ${n0(s.n)}건${s.late ? ` · <span class="bad">지연 ${s.late}</span>` : ''}${s.hurry ? ` · <span class="warn">독촉 ${s.hurry}</span>` : ''}</span></div>`;
+    const tr = ([g, s], i) => `<tr${i === 0 ? ' class="tot"' : ''}><td><b>${esc(gs(g))}</b></td><td class="num">${n0(s.n)}</td><td class="num"><b>${n0(s.o)}</b></td><td class="num">${n0(s.p)} <small class="sub">${s.o ? Math.round(100 * s.p / s.o) : 0}%</small></td>`
+      + `<td class="num">${n0(s.h)}</td><td class="num">${n0(s.r)}</td><td class="num ${s.late ? 'bad' : ''}">${s.late || '-'}</td><td class="num ${s.hurry ? 'warn' : ''}">${s.hurry || '-'}</td><td class="num">${s.chk || '-'}</td></tr>`;
+    return '<div class="gcard"><div class="gbl"><span><i class="a"></i>생산 완료</span><span><i class="m"></i>소재 있음(생산 전)</span><span><i class="b"></i>미입고(포스코 진행·미발주)</span><span class="sub">숫자 = 주문 톤 · 건수 · 위 묶음·필터 기준</span></div>'
+      + `<div class="gbs">${R.map(bar).join('')}</div>`
+      + '<div class="scroll"><table class="t gtab"><thead><tr><th>그룹</th><th>건</th><th>주문 t</th><th>생산 완료</th><th>소재 있음</th><th>미입고</th><th title="필요 입고일보다 소재가 늦음">소재 지연</th><th title="필요 입고 3주 안인데 아직 열연 이전">포스코 독촉</th><th title="인도기한 지났는데 입고 기록 없음">입고 확인</th></tr></thead>'
+      + `<tbody>${[...R.slice(1), R[0]].map((x, i, a) => tr(x, i === a.length - 1 ? 0 : 1)).join('')}</tbody></table></div>${perfLine(gs)}</div>`;
+  }
   function sub(name, L) {
     const S = sumOf(L);
     L.sort((a, b) => (b.lateIn - a.lateIn) || (b.hurry - a.hurry) || (b.chk - a.chk) || String(a.needIn || a.due || '9').localeCompare(String(b.needIn || b.due || '9')) || a.con.localeCompare(b.con));
@@ -167,7 +195,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
       + `<input id="od-q" placeholder="계약번호·고객사·담당자·목적지 찾기" value="${esc(q)}"><span class="cnt">${n0(S.n)}건 · 미입고 ${n0(S.rem)}t</span>`
       + '<button type="button" class="lnk" id="od-open">모두 펼치기</button><button type="button" class="lnk" id="od-close">모두 접기</button></div>'
       + (byG.length ? `<nav class="og-sum">${byG.map(([g, v], gi) => { const s = sumOf(v); return `<a href="#og-${gi}" class="og-chip"><b>${esc(g)}</b> ${n0(s.n)}건${s.late ? ` · <span class="bad">지연 ${s.late}</span>` : ''}${s.hurry ? ` · <span class="warn">독촉 ${s.hurry}</span>` : ''}${s.chk ? ` · <span class="warn">입고 확인 ${s.chk}</span>` : ''}</a>`; }).join('')}</nav>` : '<p class="od-note">해당 계약이 없습니다.</p>')
-      + byG.map(([g, v], gi) => group(g, v, gi)).join('') + '</section>';
+      + grpChart(byG) + byG.map(([g, v], gi) => group(g, v, gi)).join('') + '</section>';
     $('od-kpi').querySelectorAll('button').forEach((b) => b.onclick = () => { flt = b.dataset.f; render(); });
     $('od-by').querySelectorAll('button').forEach((b) => b.onclick = () => { by = b.dataset.b; try { localStorage.setItem(BY_KEY, by); } catch (e) { /* 무시 */ } render(); });
     $('od-q').oninput = (e) => { q = e.target.value; clearTimeout(render.t); render.t = setTimeout(() => { render(); const i = $('od-q'); i.focus(); i.setSelectionRange(q.length, q.length); }, 250); };

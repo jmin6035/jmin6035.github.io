@@ -187,6 +187,19 @@
     bindTabs();
     if (window.UI) UI.reveal($('wo-main'));
   }
+  /* 판매그룹별(10/29 사용자 '그룹별로 수치 · 합계로 그래프'): 돌릴 대상 코일을 그룹마다 날짜별 톤(진한 칸 = 첫날, 옅은 칸 = 그 뒤) */
+  function grpBars(v) {
+    const its = v.items || [];
+    if (!its.length) return '';
+    const d0 = its.map((x) => x.day).filter(Boolean).sort()[0];
+    const G = {};
+    its.forEach((x) => { const g = (G[x.grp || '미상'] = G[x.grp || '미상'] || { a: 0, b: 0, n: 0 }); g[x.day === d0 ? 'a' : 'b'] += x.t || 0; g.n += 1; });
+    const R = [['합계', Object.values(G).reduce((s, g) => ({ a: s.a + g.a, b: s.b + g.b, n: s.n + g.n }), { a: 0, b: 0, n: 0 })], ...Object.entries(G).sort((x, y) => (y[1].a + y[1].b) - (x[1].a + x[1].b))];
+    const mx = Math.max(1, ...R.map(([, g]) => g.a + g.b)), P = (x) => (100 * x / mx).toFixed(2) + '%';
+    return `<div class="gbl"><span><i class="a"></i>${esc(md(d0))}</span><span><i class="b"></i>그 뒤</span><span class="bk">판매그룹별 · 돌릴 대상 코일 톤</span></div><div class="gbs">`
+      + R.map(([g, x], i) => `<div class="gb${i === 0 ? ' gbt' : ''}" title="${esc(g)} · ${x.n}코일 · ${n0(x.a + x.b)}t (${esc(md(d0))} ${n0(x.a)} · 그 뒤 ${n0(x.b)})"><span class="gbn">${esc(g)}</span>`
+        + `<span class="gbr"><i class="a" style="width:${P(x.a)}"></i><i class="b" style="width:${P(x.b)}"></i></span><span class="gbv"><b>${n0(x.a + x.b)}</b>t · ${x.n}코일 <small class="bk">${x.a + x.b ? Math.round(100 * (x.a + x.b) / (R[0][1].a + R[0][1].b)) : 0}%</small></span></div>`).join('') + '</div>';
+  }
   function render() {
     if (view === 'rules') { renderRules(); return; }
     const L = Object.keys(O.lines);
@@ -202,7 +215,7 @@
       + `<div class="kpi"><div class="l">돌릴 대상</div><div class="v">${n0(v.n)}<small>코일 ${n0(v.tSum)}t</small></div><div class="b">대상 선정 화면 · 그중 확정 ${n0(v.nConf)}코일 · 가동계획상 ${esc(md(v.day))} 강종 ${esc(plan)}</div></div>`
       + `<div class="kpi"><div class="l">제안 순서대로면</div><div class="v">${v.until ? esc(tm(v.until)) : '-'}<small>까지</small></div><div class="b">${esc(tm(v.from))} 출발${v.after1030 ? `(1030 지시 코일 ${n1(v.after1030)}시간 뒤)` : ''} · 생산 ${hm(v.runSum || 0)}</div></div>`
       + `<div class="kpi"><div class="l">예상 더미 (제안 순서)</div><div class="v wv">${n1(v.ours)}<small>분</small></div><div class="b">더미 약 ${n1(v.oursDumT)}t · 사양 바뀜 ${n0(v.oursChg)}번</div></div>`
-      + '</div>'
+      + '</div>' + grpBars(v)
       + (v.n ? `<div class="wo-cmp${gain < 0 ? ' bad' : ''}"><b>화면에 올라온 순서와 비교</b> — 같은 ${n0(v.n)}코일을 대상 선정 화면에 올라온 순서대로 돌리면 예상 더미 ${n1(v.mes)}분 (사양 바뀜 ${n0(v.mesChg)}번) → 제안이 <b>${gain >= 0 ? `${n1(gain)}분 짧음` : `${n1(-gain)}분 김`}</b> <span class="bk">(같은 더미 기준표로 계산)</span></div>` : '')
       + (blk ? `<div class="cgbs"><span class="bk">표면사상 묶음</span> ${blk}</div>` : '')
       + '</section>'
