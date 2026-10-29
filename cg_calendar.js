@@ -601,6 +601,18 @@
     });
   }
 
+  /* 계획 적중률(10/29 사용자 '실제와 정합성이 얼마나 맞나'): 매일 게시한 캘린더의 오늘·내일·모레 계획 ↔ MES 생산 실적(계약번호-행번, 생산일 07~07) */
+  function accCard() {
+    const V = ((O.accuracy || {}).versions || []).slice(-10).reverse();
+    const pc = (a, b) => (b >= 1 ? Math.round(100 * a / b) + '%' : '-');
+    const sum = (k) => { const R = V.flatMap((v) => v.rows.filter((r) => r.k === k)); const p = R.reduce((s, r) => s + r.planT, 0); return R.length ? `${['오늘', '내일', '모레'][k]} 계획 ${pc(R.reduce((s, r) => s + r.hit, 0), p)} (±1일 ${pc(R.reduce((s, r) => s + r.hit1, 0), p)})` : ''; };
+    const body = V.length ? `<p class="msg" style="margin:0 0 8px"><b>${[0, 1, 2].map(sum).filter(Boolean).join(' · ')}</b> — 계획 톤 중 그날 실제로 만든 톤(계약별 작은 값 합)</p>`
+      + '<table class="it" style="max-width:900px"><thead><tr><th>계획 만든 날</th><th>라인</th><th>생산일</th><th class="num">계획 t</th><th class="num">실제 t</th><th class="num">같은 날 맞음</th><th class="num">±1일</th><th class="num">계약 맞음</th></tr></thead><tbody>'
+      + V.flatMap((v) => v.rows.map((r) => `<tr><td class="nw">${md(v.asOf)}</td><td>${r.line}</td><td class="nw">${md(r.d)} <small class="sub">${['당일', '다음날', '모레'][r.k]}</small></td><td class="num">${n0(r.planT)}</td><td class="num">${n0(r.actT)}</td>`
+        + `<td class="num"><b>${pc(r.hit, r.planT)}</b></td><td class="num">${pc(r.hit1, r.planT)}</td><td class="num">${r.nHit}/${r.nPlan}</td></tr>`)).join('') + '</tbody></table>'
+      : '<p class="msg">첫 비교는 10/30 아침(10/29 계획 ↔ 10/29 실제 생산)부터 — 매일 아침 자동으로 한 줄씩 쌓입니다. 10/28 판은 옛 기준(생산예정일 표)이라 뺐습니다(확정 계약 5건 중 그날 생산 0건).</p>';
+    return `<section class="card"><h2>계획 적중률 <small>캘린더 계획 ↔ MES 생산 실적 · 계약번호-행번</small></h2>${body}</section>`;
+  }
   function confirmCard() {
     const nw = nextWeek(), A = O.adherence || [], C = O.confirms || [];
     let who = ''; try { who = localStorage.getItem(WHO_KEY) || ''; } catch (e) { /* 무시 */ }
@@ -645,7 +657,7 @@
   function render() {
     const stale = Math.round((Date.now() - dt(O.asOf).getTime()) / 864e5);
     $('cc-main').innerHTML = (stale >= 2 ? `<div class="card" style="background:var(--warn-bg);color:var(--warn);font-weight:700">자료 기준 ${md(O.asOf)} — ${stale}일 전 자료</div>` : '')
-      + kpis() + calCard() + confirmCard() + riskCard()
+      + kpis() + calCard() + confirmCard() + accCard() + riskCard()
       + `<p class="msg" style="margin:4px 4px 0">자료 ${esc(O.asOf)} · ${esc(O.planSrc || '')} · 계산 ${esc(O.built || '')}</p>`;
     $('cc-main').querySelectorAll('button.cell').forEach((b) => b.onclick = () => openDay(b.dataset.ln, b.dataset.d));
     $('cc-main').querySelectorAll('#cc-rk button').forEach((b) => b.onclick = () => { rk = b.dataset.rk; try { localStorage.setItem(RK_KEY, rk); } catch (e) { /* 무시 */ } render(); });
