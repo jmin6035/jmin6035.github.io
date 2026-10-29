@@ -202,7 +202,7 @@
     });
   }
   /* 작업 규칙(docs/13, cg_wo_sequence 관문과 같은 값): 앞뒤 두께 차 0.3mm(2CGL 0.4t 미만 0.2) · 두께비 1.3배 · 2CGL 후처리 같은 층 다른 약액 바로 이음 금지.
-     폭은 넓은 폭 → 좁은 폭, 넓힘 한도(AL 10mm·그 밖 30mm) 넘으면 새 단위(허용). 계약 단위 근사 — 코일 단위 최종 확인은 작업지시 순서 화면 */
+     폭은 넓은 폭 → 좁은 폭, 넓힘 한도(모든 강종 300mm) 넘으면 새 단위(허용). 계약 단위 근사 — 코일 단위 최종 확인은 작업지시 순서 화면 */
   const TRT_NO = { '2CGL': [['KX', 'IX'], ['TX', 'SX', 'RX', 'QX', 'MX', 'GX', 'DP', 'DA', 'BX', 'BP'], ['LX', 'NX']] };
   const tg = (l, c) => (TRT_NO[l] || []).findIndex((g) => g.includes(c));
   const MAT_NO = { AZ: [['CQ', 'EDDQ'], ['CQ', 'GRE']], MAC: [['GRC', 'LFQ'], ['GRC', 'DQ'], ['GRC', 'DDQ'], ['GRC', 'EDDQ'], ['CQ', 'DDQ'], ['CQ', 'EDDQ']] };
