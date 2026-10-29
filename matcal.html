@@ -6,7 +6,7 @@
 <title>소재 캘린더</title>
 <meta name="description" content="일별 가동 · 자가재 · 구매 소재(발주·입고·재고) · 제품 재고를 한 달력에서">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610290013">
+<link rel="stylesheet" href="ui/theme.css?v=2610290032">
 <style>
 .sbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 10px; font-size: 13px; color: var(--ink-2); }
 .sbar b { color: var(--ink); }
@@ -180,6 +180,11 @@ table.sc td.dl { outline: 2px solid var(--bad); outline-offset: -2px; }
 #s-cal3 thead .lb { z-index: 5; background: var(--th); }
 #s-cal3 .lb .tn { min-width: 98px; }
 #s-cal3 .tot { position: sticky; right: 0; z-index: 3; box-shadow: -2px 0 0 var(--line); }
+/* 발주 → 판매그룹·목적지(10/29) */
+table.t.mt td.wfor { text-align: left !important; white-space: normal !important; min-width: 420px; word-break: keep-all; }
+.fw { font-size: 13.5px; line-height: 1.5; white-space: normal; word-break: keep-all; } .fw b { font-size: 14px; }
+.fwd { margin-top: 2px; } .fwd summary { cursor: pointer; font-size: 13px; color: var(--brand-2); font-weight: 700; }
+table.t.fwt { margin: 4px 0 0; font-size: 13px; width: auto; } table.t.fwt td { padding: 3px 8px; white-space: nowrap; } table.t.fwt td.l { text-align: left !important; }
 </style>
 </head>
 <body>
@@ -217,10 +222,10 @@ table.sc td.dl { outline: 2px solid var(--bad); outline-offset: -2px; }
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2610290013"></script>
-<script src="engine/crypto.js?v=2610290013"></script>
-<script src="ui/cal.js?v=2610290013"></script>
-<script src="ui/proccalc.js?v=2610290013"></script>
-<script src="supply.js?v=2610290013"></script>
+<script src="ui/shell.js?v=2610290032"></script>
+<script src="engine/crypto.js?v=2610290032"></script>
+<script src="ui/cal.js?v=2610290032"></script>
+<script src="ui/proccalc.js?v=2610290032"></script>
+<script src="supply.js?v=2610290032"></script>
 </body>
 </html>
