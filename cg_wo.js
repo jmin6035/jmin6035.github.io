@@ -35,7 +35,7 @@
     if (none.length) h += `<div class="wo-g na" title="내경 = 제품 내경코드 조회가 다음 자동 실행에 들어옴 · 재질 = 소재 입고 표에 이 코일 규격이 없음">– 아직 모름 ${esc(none.join('·'))}</div>`;
     return h;
   }
-  const GR = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E', GRA: 'Gr.A', GRB: 'Gr.B' };   // 재질(열처리 등급) — 주문 제품 규격 우선, 없으면 소재 규격
+  const GR = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E 극저', GREL: 'Gr.E 저탄', GRA: 'Gr.A', GRB: 'Gr.B' };   // 재질(열처리 등급) — 주문 제품 규격 우선, 없으면 소재 규격
   function row(x, day) {
     const dn = x.exp >= 1;                                         // 1분 미만은 '거의 없음'(사양이 안 바뀌어도 생기는 수준)
     const t = x.trt || {};
@@ -86,7 +86,7 @@
       ['① 강종', '가동계획 그대로(M/C 날짜 안 바꿈)', 'M/C는 가동계획에서 정함', pc('1', '같은 강종 연속')],
       ['② 두께', '차 <b>0.3mm</b>(2CGL 박물 0.2) · 비 <b>1.3배</b> 이내', '용접부 파단', '<b>99%</b><div class="bk">1.0t 미만 0.3mm 안</div>'],
       ['③ 폭', '넓은 폭 → 좁은 폭. 넓힘은 <b>모든 강종 300mm</b>까지, 같은 두께면 안 넓힘', '롤 가장자리 자국', pc('2', '넓어지지 않은 이음')],
-      ['④ 재질', '같은 재질(CQ·DQ·DDQ·EDDQ·Gr.C·Gr.E)끼리 묶음 — 폭보다 재질 먼저 · 0.6t 이하 DQ·DDQ(극저 = ULC, 극저탄소강)는 꼭 묶음. 바로 못 잇는 짝(올리든 내리든 같음): <b>AZ CQ↔EDDQ</b>(사이 DQ·DDQ) · <b>AZ CQ↔Gr.E 저탄(LC, 저탄소강)</b>(사이 극저(ULC) 1개) · <b>PosMAC Gr.C↔LFQ·DQ·DDQ·EDDQ</b>(Gr.C는 CQ와 묶음) · <b>PosMAC CQ↔DDQ·EDDQ</b> · AL(알코스타)은 온도가 비슷해 묶기만', '노 온도 차(녹취 10/27: 저탄 550℃·Gr.C 650℃ vs DQ계 780~850℃)', '<b>적용</b> <span class="bk">등급 = 주문 제품 규격(KS-SA1C·SGLCC = CQ, A463DQ = DQ, DX53D·A463DDS = DDQ, DX54D·SA1E = EDDQ, A792Gr.550·SGLC570 = Gr.E, S350GD·SGMC400 = Gr.C), 없으면 소재 규격 코드표</span>'],
+      ['④ 재질', '같은 재질(CQ·DQ·DDQ·EDDQ·Gr.C·Gr.E 극저·Gr.E 저탄)끼리 묶음 — 폭보다 재질 먼저 · 0.6t 이하 DQ·DDQ(극저 = ULC, 극저탄소강)는 꼭 묶음. 바로 못 잇는 짝(올리든 내리든 같음): <b>AZ</b> CQ↔EDDQ(사이 DQ·DDQ) · <b>CQ↔Gr.E 저탄</b>(사이 Gr.E 극저 1개) · LFQ·DQ·DDQ·EDDQ↔Gr.E · Gr.C/D↔EDDQ / <b>PosMAC</b> Gr.C↔LFQ·DQ·DDQ·EDDQ · CQ↔DDQ·EDDQ · Gr.E↔DQ·DDQ·EDDQ · CQ↔Gr.E 저탄 / 바로 이어도 됨: CQ↔Gr.E 극저 · Gr.B→Gr.E 저탄 · AL(알코스타)은 온도가 비슷해 묶기만. Gr.E 저탄/극저 = 소재강종(CSP1-FL = 저탄 · CSP570-HG = 극저, 공정출하 10/29)', '노 온도 차(녹취 10/27: 저탄 550℃·Gr.C 650℃ vs DQ계 780~850℃)', '<b>적용</b> <span class="bk">등급 = 주문 제품 규격(KS-SA1C·SGLCC = CQ, A463DQ = DQ, DX53D·A463DDS = DDQ, DX54D·SA1E = EDDQ, A792Gr.550·SGLC570 = Gr.E → 소재강종으로 저탄/극저, S350GD·SGMC400 = Gr.C), 없으면 소재 규격 코드표</span>'],
       ['⑤ 도금량', '같은 도금량끼리 되도록 묶음', '바뀌면 더미(아래 기준표)', '<span class="bk">—</span>'],
       ['⑥ 후처리', sts ? '같은 층 약액 바로 안 이음, 사이 <b>2코일</b> — 1층 TX·SX·RX·QX·MX·GX·DP·DA·BX·BP / 2층 KX·IX / LX·NX' : '연결 큰 상관 없음(AL·AZ)', sts ? '코터 청소 약 2시간' : '', sts ? pc('15', '같은 층 바로 이음 1년 1번') : na],
       ['⑦ 내경', '<b>508·610</b> 같은 것끼리. 0.6t 미만은 안 바꿈, 후물만 한두 번', '슬리브 교체 · 주문 내경 조회 추가', '<span class="bk">자료 대기</span>'],
