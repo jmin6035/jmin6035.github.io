@@ -4,7 +4,7 @@
   'use strict';
   const NAV = [
     ['home', 'index.html', '홈'], ['supply', 'supply.html', '가동 캘린더'], ['matcal', 'matcal.html', '소재 캘린더'], ['integrated', 'integrated.html', '재고 추이'], ['report', 'report.html', '주간 보고'],
-    '|도금', ['status', 'status.html', '가동 현황'], ['analysis', 'analysis.html', '조건 분석'], ['platact', 'plating_actual.html', '실적'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['cgorder', 'cg_order.html', '주문진도'], ['cgcal', 'cg_calendar.html', '2주 캘린더'], ['cgwo', 'cg_wo.html', '작업지시 순서'],
+    '|도금', ['status', 'status.html', '가동 현황'], ['analysis', 'analysis.html', '조건 분석'], ['platact', 'plating_actual.html', '실적'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['cgorder', 'cg_order.html', '주문진도'], ['cgcal', 'cg_calendar.html', '생산 캘린더'], ['cgwo', 'cg_wo.html', '작업지시 순서'],
     '|컬러', ['colorstat', 'color_status.html', '가동 현황'], ['coloranal', 'color_analysis.html', '조건 분석'], ['coloract', 'color_actual.html', '실적'], ['planstock', 'planstock.html', '계획재'], ['wo', 'wo.html', '작업지시 순서'],
     '|소재', ['procure', 'procure.html', '소재 발주'],
     '|계획 계산', ['rolling', 'rolling.html', '도금 계획 계산'], ['colorcalc', 'color_calc.html', '컬러 계획 계산'], '|',
@@ -159,7 +159,7 @@
     colorcalc: '(계획 담당자용) 판매계획·계획재 운영안·휴지계획 엑셀을 올려 컬러 4분기 일별 계획을 다시 계산하고, 현재 게시 계획과 비교한 뒤 게시. 서버와 같은 계산식(브라우저 안에서 실행), 도금은 확정 계획 유지',
     coloranal: '(계획 담당자용) MES 컬러 실적으로 라인·품명 t/hr 를 재산출해 계획 조건과 비교 — 라인 속도 차이가 ±5%를 넘으면 계획 조건 조정 검토',
     planstock: '계획재 운영안(TF) 187개 사양의 재고·생산·판매 진도와 월말 재고 예측. \'조치 필요\'부터 보고 담당자별로 확인',
-    cgcal: '라인별 2주 생산 캘린더 — 현장 작업지시(확정)·소재 있는 주문(편성)·입고 예정(예상), 수요일 확정·준수율',
+    cgcal: '라인별 월말까지 생산 캘린더 — 현장 작업지시(확정)·소재 있는 주문(편성)·입고 예정(예상), 수요일 확정·준수율',
     cgtasks: '도금 수주 업무 달력 — 날짜·오전/오후별 할 일, 누르면 왜·순서·보는 곳·기준·결과물',
     report: '주 1회 임원 보고 양식. 인쇄/PDF 로 그대로 씀',
     procure: '발주 캘린더로 날짜별 발주 마감·입고 필요를 보고, 판단 목록에서 업체·수량을 정해 구매 요청서를 만듦. 기발주는 입고예정 탭에 넣어야 정확',
