@@ -122,11 +122,13 @@
     const ACT = {}; ((PT && PT.stockTrend) || []).forEach(([d, k, t]) => { if (k.startsWith('g:')) (ACT[k.slice(2)] = ACT[k.slice(2)] || []).push([d, t]); });   // 실제 재고(속보 원천 표) 일별
     const dd = (a, b) => (new Date(a + 'T00:00:00') - new Date(b + 'T00:00:00')) / 864e5;
     const rows = P.stockWeek.filter((r) => inS(plOf(r.k)) && !/^(FH|컬러 구매)/.test(r.k));   // 구매 소재는 소재 발주 화면
+    const selfR = rows.filter((r) => /^자가재 /.test(r.k));             // 자가재 강종 나눔(품명 → 강종)이 실적과 달라 강종별 값이 음수로 나옴(10/30 재검토: AL −4,902t) → 합계 한 장으로
+    if (selfR.length > 1) rows.splice(rows.indexOf(selfR[0]), selfR.length, { k: '자가재', v: selfR[0].v.map((_, i) => selfR.reduce((a, r) => a + (r.v[i] || 0), 0)), roll: false, title: selfR.map((r) => `${r.k} ${n0(r.v[wi])}t`).join(' · ') });
     // ① 상태 타일
     const tile = (r) => {
       const ss = r.v.map((_, i) => st(r, i)), now = ss[wi], ahead = ['bad', 'warn'].find((k) => ss.slice(wi + 1).includes(k));   // 배지 = 이번 주 상태, 아래 줄 = 앞으로 부족 위험
       const wk = ahead ? ss.slice(wi + 1).indexOf(ahead) + wi + 1 : -1, worst = now, pct = (i) => (r.tgt ? ` <small>목표의 ${Math.round(r.v[i] / r.tgt[i] * 100)}%</small>` : '');
-      return `<div class="st-tile st-${worst}"><div class="st-h"><b>${esc(GN[r.k] || r.k)}</b><span class="st-b">${worst === 'ok' ? '정상' : SN[worst]}</span></div>
+      return `<div class="st-tile st-${worst}"${r.title ? ` title="${esc(r.title)}"` : ''}><div class="st-h"><b>${esc(GN[r.k] || r.k)}</b><span class="st-b">${worst === 'ok' ? '정상' : SN[worst]}</span></div>
         <div class="st-v">${n0(r.v[wi])}<small>t</small></div><div class="st-s">${md(W[wi])} 주말${pct(wi)}${r.tgt ? ` · 목표 ${n0(r.tgt[wi])}t` : ' · 목표 없음(0 이상 유지)'}</div>
         <div class="st-s">12월 말 ${n0(r.v[last])}t${pct(last)}</div>
         ${(ACT[r.k] || []).length ? (() => { const a = ACT[r.k][ACT[r.k].length - 1]; return `<div class="st-s st-act">실제 ${md(a[0])} 말 <b>${n0(a[1])}t</b>${r.tgt ? ` <small>목표의 ${Math.round(a[1] / r.tgt[Math.max(0, W.findIndex((d) => d >= a[0]))] * 100)}%</small>` : ''}</div>`; })() : ''}

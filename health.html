@@ -6,7 +6,7 @@
 <title>자료 상태</title>
 <meta name="description" content="원천 자료별 마지막 수집일과 화면별 게시 시각 — 자동 실행이 멈췄는지 확인">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610301529">
+<link rel="stylesheet" href="ui/theme.css?v=2610301609">
 <style>
 .ageb { display: inline-block; min-width: 74px; text-align: center; font-weight: 800; border-radius: 999px; padding: 3px 10px; font-size: 14.5px; }
 .ageb.ok { background: var(--good-bg); color: var(--good); } .ageb.warn { background: var(--warn-bg); color: var(--warn); } .ageb.bad { background: var(--bad-bg); color: var(--bad); }
@@ -19,8 +19,8 @@ ol.fix li { margin: 8px 0; font-size: 16px; } ol.fix code { background: var(--ti
   <div id="h-main" style="margin-top:16px"><section class="card"><div class="skel"><i style="width:40%"></i><i></i><i style="width:70%"></i></div></section></div>
 </main>
 <footer class="foot"><div class="wrap"><span>자료 상태는 날짜·건수만 담고 있어 암호 없이 열립니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610301529"></script>
-<script src="engine/crypto.js?v=2610301529"></script>
+<script src="ui/shell.js?v=2610301609"></script>
+<script src="engine/crypto.js?v=2610301609"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -43,7 +43,7 @@ ol.fix li { margin: 8px 0; font-size: 16px; } ol.fix code { background: var(--ti
       const worst = Math.max(...fs.filter((f) => f.last && !/월말/.test(f.name)).map((f) => age(f.last)));
       h += `<section class="card"><h2>원천 자료 <small>마지막 게시 ${kst(st.runAt)}</small></h2>
         <div class="kpis" style="margin-bottom:16px"><div class="kpi tone-${worst <= 1 ? 'good' : worst <= 2 ? 'warn' : 'bad'}"><div class="l">가장 오래된 일일 자료</div><div class="v">${worst}<small>일 전</small></div><div class="b">${worst <= 1 ? '정상 — 매일 갱신 중' : '자동 실행이 멈췄을 수 있음 — 아래 점검 순서'}</div></div>
-        <div class="kpi tone-brand"><div class="l">마지막 재계획</div><div class="v" style="font-size:26px">${st.auto && st.auto.actualTo ? esc(st.auto.actualTo) : '-'}</div><div class="b">${st.auto && st.auto.replanned ? '재계획함' + (st.auto.optimal === false ? ' (시간 제한)' : '') : esc((st.auto && st.auto.notes && st.auto.notes.join(' · ')) || '클라우드에서 계산한 자료')}</div></div></div>
+        <div class="kpi tone-brand"><div class="l">마지막 재계획</div><div class="v" style="font-size:26px">${st.auto && st.auto.actualTo ? esc(st.auto.actualTo) : (envs[3] ? kst(envs[3].at) : '-')}</div><div class="b">${st.auto && st.auto.replanned ? '재계획함' + (st.auto.optimal === false ? ' (시간 제한)' : '') : envs[3] ? `게시 계획 · ${esc(envs[3].src)}` : esc((st.auto && st.auto.notes && st.auto.notes.join(' · ')) || '-')}</div></div></div>
         <div class="scroll"><table class="t"><thead><tr><th class="l">자료</th><th>마지막 날짜</th><th>경과</th><th>건수</th></tr></thead><tbody>${fs.map((f) => `<tr><td class="l"><b>${esc(f.name)}</b></td><td>${esc(f.last || '-')}</td><td class="c">${/월말/.test(f.name) ? '<span class="muted">월 1회</span>' : badge(age(f.last))}</td><td>${f.n != null ? f.n.toLocaleString('ko-KR') : '-'}</td></tr>`).join('')}</tbody></table></div></section>`;
     } else h += '<section class="card"><h2>원천 자료</h2><p class="lead">자료 상태 파일이 아직 없습니다(새 자동 실행기 설치 후 생김).</p></section>';
     h += `<section class="card"><h2>화면별 게시 시각 <small>매일 자동 갱신본과 수동 게시본 중 최신</small></h2><div class="scroll"><table class="t"><thead><tr><th class="l">화면</th><th>게시</th><th>경과</th><th class="l">출처</th><th class="l">갱신 방식</th></tr></thead><tbody>${PAGES.map(([n, nm, how], i) => { const e = envs[i]; return `<tr><td class="l"><b>${nm}</b></td><td>${e ? kst(e.at) : '-'}</td><td class="c">${badge(e ? age(new Date(e.at).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })) : null)}</td><td class="l">${e ? e.src : '-'}</td><td class="l muted">${how}</td></tr>`; }).join('')}</tbody></table></div></section>`;

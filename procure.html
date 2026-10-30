@@ -6,7 +6,7 @@
 <title>소재 발주</title>
 <meta name="description" content="필요 시점에 따라 가능한 업체를 판단하고 구매 요청서를 만드는 소재 조달 보드">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610301529">
+<link rel="stylesheet" href="ui/theme.css?v=2610301609">
 <style>
 table.bd { font-size: 14px; }
 table.bd td { vertical-align: top; padding: 10px 9px; }
@@ -20,7 +20,7 @@ table.bd td.dec { min-width: 220px; white-space: normal; }
 .dg { display: grid; grid-template-columns: minmax(130px, 1fr) 78px 92px; gap: 6px 8px; }
 .dg select, .dg input { width: 100%; max-width: none !important; }
 @media (max-width: 640px) { .dg { grid-template-columns: 1fr 1fr; } }
-.dg label { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; color: var(--ink-3); font-weight: 700; }
+.dg label { display: flex; flex-direction: column; gap: 2px; font-size: 13.5px; color: var(--ink-3); font-weight: 700; }
 table.bd input.memo { width: 100% !important; max-width: none; margin-top: 6px; }
 table.bd td b { font-size: 15px; }
 table.bd select { max-width: 200px; }
@@ -30,10 +30,10 @@ table.bd tr.ux > td { background: var(--tint) !important; white-space: normal; t
 table.t input[type=text], table.ed input:not([type]) { width: 120px; }
 table.ed td { text-align: center; }
 table.ed input[size] { width: 48px; }
-.tg { border: 0; background: var(--tint-2); color: var(--brand); cursor: pointer; font-size: 12px; width: 24px; height: 24px; border-radius: 5px; margin-right: 4px; transition: background .2s; }
+.tg { border: 0; background: var(--tint-2); color: var(--brand); cursor: pointer; font-size: 13.5px; width: 24px; height: 24px; border-radius: 5px; margin-right: 4px; transition: background .2s; }
 .tg:hover { background: var(--steel-2); }
 .use { display: flex; flex-wrap: wrap; gap: 6px 10px; font-size: 14px; margin: 4px 0 10px; }
-.use b:first-child { width: 100%; color: var(--brand); font-size: 13px; }
+.use b:first-child { width: 100%; color: var(--brand); font-size: 13.5px; }
 .use span { background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 4px 10px; }
 .use span.no { color: var(--ink-3); text-decoration: line-through; }
 .use i { font-style: normal; color: var(--ink-3); }
@@ -46,8 +46,8 @@ table.bd tr.grp-h.g0 td { border-left: 4px solid var(--bad); } table.bd tr.grp-h
 table.bd tr.grp-h .muted { font-weight: 600; margin-left: 8px; }
 button.dsum { all: unset; cursor: pointer; display: inline-flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; font-size: 13.5px; }
 button.dsum .ds { font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); } button.dsum .ds.set { background: var(--good-bg); color: var(--good); }
-button.dsum .go { color: var(--brand-2); font-size: 12.5px; } button.dsum:hover .go { text-decoration: underline; }
-.dg.dg-open { grid-template-columns: minmax(200px, 1.4fr) 110px 130px minmax(220px, 2fr); margin-bottom: 10px; } .dg.dg-open label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--ink-3); font-weight: 700; }
+button.dsum .go { color: var(--brand-2); font-size: 13.5px; } button.dsum:hover .go { text-decoration: underline; }
+.dg.dg-open { grid-template-columns: minmax(200px, 1.4fr) 110px 130px minmax(220px, 2fr); margin-bottom: 10px; } .dg.dg-open label { display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; color: var(--ink-3); font-weight: 700; }
 @media (max-width: 900px) { .dg.dg-open { grid-template-columns: 1fr 1fr; } }
 table.arrsum th.late, table.arrsum td.late, .arrg .late, table td.late { color: var(--bad); font-weight: 800; }
 table.arrsum tr.sum td { border-top: 2px solid var(--line); font-weight: 800; background: var(--surface-2); }
@@ -64,45 +64,45 @@ table.t.sp input { width: 96px; text-align: right; }
 .du-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
 .du-tile { border: 1px solid var(--line); border-top: 4px solid var(--du-0); border-radius: 10px; padding: 12px 16px; background: var(--surface); }
 .du-tile.e { border-top-color: var(--du-e); } .du-tile.l { border-top-color: var(--du-l); }
-.du-tl { font-size: 13px; font-weight: 700; color: var(--ink-2); } .du-big { font-size: 18px; font-weight: 700; margin: 4px 0 6px; color: var(--ink); } .du-big b { font-size: 34px; letter-spacing: -1px; margin-right: 2px; }
+.du-tl { font-size: 13.5px; font-weight: 700; color: var(--ink-2); } .du-big { font-size: 18px; font-weight: 700; margin: 4px 0 6px; color: var(--ink); } .du-big b { font-size: 34px; letter-spacing: -1px; margin-right: 2px; }
 .du-tile.e .du-big b { color: var(--du-e); } .du-tile.l .du-big b { color: var(--du-l); } .du-tile.z .du-big b { font-size: 24px; }
-.du-sub { font-size: 13px; color: var(--ink-2); } .du-sub b { color: var(--ink); }
-.du-lg { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); margin: 0 0 10px; flex-wrap: wrap; }
+.du-sub { font-size: 13.5px; color: var(--ink-2); } .du-sub b { color: var(--ink); }
+.du-lg { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink-2); margin: 0 0 10px; flex-wrap: wrap; }
 .du-lg .bar { display: inline-block; width: 160px; height: 10px; border-radius: 5px; background: linear-gradient(90deg, var(--du-e), var(--du-0) 50%, var(--du-l)); } .du-lg small { color: var(--ink-3); margin-left: 8px; }
 .du-hms { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; } .du-hms.one { grid-template-columns: 1fr; margin-top: 18px; }
 .du-hm h3 { font-size: 14.5px; margin: 0 0 8px; }
 table.du-g { width: 100%; border-collapse: separate; border-spacing: 3px; table-layout: fixed; }
-table.du-g th { font-size: 12px; font-weight: 600; color: var(--ink-2); padding: 4px; background: none; } table.du-g th.c { width: 84px; text-align: right !important; }
+table.du-g th { font-size: 13.5px; font-weight: 600; color: var(--ink-2); padding: 4px; background: none; } table.du-g th.c { width: 84px; text-align: right !important; }
 table.du-g td { height: 54px; border-radius: 6px; text-align: center; color: var(--ink); cursor: default; }
-table.du-g td b { display: block; font-size: 19px; font-weight: 800; line-height: 1.1; } table.du-g td small { display: block; font-size: 11px; opacity: .85; margin-top: 2px; }
+table.du-g td b { display: block; font-size: 19px; font-weight: 800; line-height: 1.1; } table.du-g td small { display: block; font-size: 13.5px; opacity: .85; margin-top: 2px; }
 table.du-g td.na { background: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--ink-3) 12%, transparent) 5px 6px); color: var(--ink-3); }
 .du-hms.one table.du-g { max-width: 640px; }
 .du-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; margin-top: 18px; }
 .du-list { border: 1px solid var(--line); border-left: 4px solid var(--du-e); border-radius: 8px; padding: 10px 14px; } .du-list.l { border-left-color: var(--du-l); }
-.du-list h3 { font-size: 14px; margin: 0 0 6px; } .du-list ul { margin: 0; padding-left: 16px; font-size: 13.5px; line-height: 1.8; } .du-list li span { font-weight: 800; margin-left: 6px; } .du-list.e li span { color: var(--du-e); } .du-list.l li span { color: var(--du-l); } .du-list em { font-style: normal; color: var(--bad); font-size: 12px; margin-left: 4px; }
+.du-list h3 { font-size: 14px; margin: 0 0 6px; } .du-list ul { margin: 0; padding-left: 16px; font-size: 13.5px; line-height: 1.8; } .du-list li span { font-weight: 800; margin-left: 6px; } .du-list.e li span { color: var(--du-e); } .du-list.l li span { color: var(--du-l); } .du-list em { font-style: normal; color: var(--bad); font-size: 13.5px; margin-left: 4px; }
 .du-det { margin-top: 16px; } .du-det summary { cursor: pointer; font-weight: 700; color: var(--ink-2); }
-.du-empty { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: 8px; background: var(--surface-2); } .du-empty span { font-size: 13px; color: var(--ink-2); }
-.du-chip { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--du-0); } .du-chip.e { background: color-mix(in srgb, var(--du-e) 16%, var(--surface)); color: var(--du-e); } .du-chip.l { background: color-mix(in srgb, var(--du-l) 16%, var(--surface)); color: var(--du-l); }
+.du-empty { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border: 1px dashed var(--line); border-radius: 8px; background: var(--surface-2); } .du-empty span { font-size: 13.5px; color: var(--ink-2); }
+.du-chip { display: inline-block; font-size: 13.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--du-0); } .du-chip.e { background: color-mix(in srgb, var(--du-e) 16%, var(--surface)); color: var(--du-e); } .du-chip.l { background: color-mix(in srgb, var(--du-l) 16%, var(--surface)); color: var(--du-l); }
 @media (max-width: 900px) { .du-tiles, .du-hms, .du-two { grid-template-columns: 1fr; } }
 table.t.due td, table.t.due th { padding: 6px 10px; } table.t.due tr.sum td { background: var(--surface-2); border-top: 2px solid var(--line); font-weight: 700; } table.t.due b.early, table.t b.early { color: var(--good); } table.t.due td.l, table.t.due th.l { text-align: left !important; }
-.dg2 { display: grid; grid-template-columns: 180px minmax(240px, 520px); gap: 8px 12px; margin: 6px 0 12px; } .dg2 label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--ink-3); font-weight: 700; } .dg2 select, .dg2 input { width: 100%; max-width: none !important; }
+.dg2 { display: grid; grid-template-columns: 180px minmax(240px, 520px); gap: 8px 12px; margin: 6px 0 12px; } .dg2 label { display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; color: var(--ink-3); font-weight: 700; } .dg2 select, .dg2 input { width: 100%; max-width: none !important; }
 @media (max-width: 640px) { .dg2 { grid-template-columns: 1fr; } table.t.sp { min-width: 0; } }
 
 /* F/H 납기 비교(10/21 재작성) */
 .fd-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin: 12px 0 18px; }
 .fd-tile { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); }
-.fd-k { font-size: 16px; font-weight: 800; margin-bottom: 8px; } .fd-k small { font-size: 13px; font-weight: 500; color: var(--ink-3); margin-left: 6px; }
+.fd-k { font-size: 16px; font-weight: 800; margin-bottom: 8px; } .fd-k small { font-size: 13.5px; font-weight: 500; color: var(--ink-3); margin-left: 6px; }
 table.fd-kv { width: 100%; border-collapse: collapse; } table.fd-kv th { text-align: left; font-size: 14px; font-weight: 600; color: var(--ink-2); padding: 6px 0; border-bottom: 1px solid var(--grid); }
 table.fd-kv td { text-align: right; padding: 6px 0; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; } table.fd-kv td b { font-size: 18px; }
-table.fd-kv td small { display: block; font-size: 12.5px; color: var(--ink-3); } table.fd-kv td.l b { color: var(--bad); } table.fd-kv td.e b { color: var(--brand-2); }
+table.fd-kv td small { display: block; font-size: 13.5px; color: var(--ink-3); } table.fd-kv td.l b { color: var(--bad); } table.fd-kv td.e b { color: var(--brand-2); }
 .fd-b { font-size: 14px; color: var(--ink-2); margin-top: 8px; }
-.fd-h { font-size: 15px; margin: 18px 0 8px; } .fd-h small { font-weight: 500; color: var(--ink-3); font-size: 13px; margin-left: 6px; }
+.fd-h { font-size: 15px; margin: 18px 0 8px; } .fd-h small { font-weight: 500; color: var(--ink-3); font-size: 13.5px; margin-left: 6px; }
 .fd-ldu, .fd-lar, .fd-ax b { display: inline-block; width: 11px; height: 11px; }
 .fd-ldu, .fd-ax b.du { background: var(--bad); transform: rotate(45deg); border-radius: 1px; }
 .fd-lar, .fd-ax b.ar { background: var(--brand-2); border-radius: 50%; }
 .fd-chart { border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px 10px; }
 .fd-row { display: grid; grid-template-columns: 210px 1fr 74px 74px 70px; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--grid); font-size: 14px; font-variant-numeric: tabular-nums; }
-.fd-axr { border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--ink-3); font-weight: 700; padding-bottom: 18px; }
+.fd-axr { border-bottom: 1px solid var(--line); font-size: 13.5px; color: var(--ink-3); font-weight: 700; padding-bottom: 18px; }
 .fd-sp { color: var(--ink-2); white-space: nowrap; } .fd-n, .fd-t { text-align: right; white-space: nowrap; } .fd-n { color: var(--bad); font-weight: 700; } .fd-n.a { color: var(--brand-2); } .fd-t { color: var(--ink-3); }
 .fd-axr .fd-n { color: var(--ink-3); font-weight: 700; }
 .fd-ax { position: relative; height: 20px; }
@@ -119,16 +119,16 @@ table.fd-kv td small { display: block; font-size: 12.5px; color: var(--ink-3); }
 .ft-t tr.ft-few td { opacity: .55; }
 .ft-ks { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; margin-bottom: 8px; }
 .ft-k { border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px 12px; }
-.ft-kh { font-size: 16px; font-weight: 800; margin-bottom: 34px; } .ft-kh small { font-size: 13px; color: var(--ink-3); font-weight: 500; margin-left: 6px; }
+.ft-kh { font-size: 16px; font-weight: 800; margin-bottom: 34px; } .ft-kh small { font-size: 13.5px; color: var(--ink-3); font-weight: 500; margin-left: 6px; }
 .ft-line { position: relative; height: 12px; background: var(--grid); border-radius: 6px; }
 .ft-line.big { height: 14px; }
 .ft-span { position: absolute; top: 3px; height: 8px; background: color-mix(in srgb, var(--ink) 18%, transparent); border-radius: 4px; }
 .ft-m { position: absolute; top: 50%; transform: translate(-50%, -50%); z-index: 2; }
 .ft-m i { width: 14px; height: 14px; margin: 0; box-shadow: 0 0 0 2px var(--surface); }
 .ft-line:not(.big) .ft-m i { width: 11px; height: 11px; }
-.ft-m em { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-style: normal; font-size: 13px; color: var(--ink-2); }
+.ft-m em { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-style: normal; font-size: 13.5px; color: var(--ink-2); }
 .ft-m.du em { bottom: -30px; } .ft-m em b { color: var(--ink); font-size: 15px; }
-.ft-ax { position: relative; height: 18px; margin-top: 22px; } .ft-ax span { position: absolute; transform: translateX(-50%); font-size: 12px; color: var(--ink-3); } .ft-ax span:first-child { transform: none; }
+.ft-ax { position: relative; height: 18px; margin-top: 22px; } .ft-ax span { position: absolute; transform: translateX(-50%); font-size: 13.5px; color: var(--ink-3); } .ft-ax span:first-child { transform: none; }
 .ft-say { font-size: 14px; margin: 6px 0 0; color: var(--ink-2); }
 table.ft-t td.ar b, table.ft-t td.ar { color: var(--good); } table.ft-t td.du { color: var(--bad); } table.ft-t td.gap { color: var(--bad); font-weight: 700; }
 table.ft-t th.ft-s { cursor: pointer; user-select: none; } table.ft-t th.ft-s.on { color: var(--brand-2); }
@@ -160,12 +160,12 @@ table.ft-t td.ft-cell, table.ft-t th.ft-cell { min-width: 220px; width: 30%; }
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>주문재는 마케팅 목록 수령 전 추정치 · 기발주는 입고예정 탭 입력 시 반영 · 업체 = 소재 발주 마스터(27년) · 리드타임 = 팀 리드타임 표 · 업체 선택은 담당자</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610301529"></script>
-<script src="ui/share.js?v=2610301529"></script>
-<script src="engine/crypto.js?v=2610301529"></script>
-<script src="vendor/exceljs.min.js?v=2610301529"></script>
-<script src="ui/cal.js?v=2610301529"></script>
-<script src="ui/proccalc.js?v=2610301529"></script>
-<script src="procure.js?v=2610301529"></script>
+<script src="ui/shell.js?v=2610301609"></script>
+<script src="ui/share.js?v=2610301609"></script>
+<script src="engine/crypto.js?v=2610301609"></script>
+<script src="vendor/exceljs.min.js?v=2610301609"></script>
+<script src="ui/cal.js?v=2610301609"></script>
+<script src="ui/proccalc.js?v=2610301609"></script>
+<script src="procure.js?v=2610301609"></script>
 </body>
 </html>

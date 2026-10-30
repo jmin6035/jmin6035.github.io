@@ -9,13 +9,13 @@
 .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 .chart { position: relative; }
 .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
-.chart .ttl { font-size: 13px; color: var(--ink-2); margin: 0 0 4px; }
-.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--ink-2); margin: 2px 0 6px; }
+.chart .ttl { font-size: 13.5px; color: var(--ink-2); margin: 0 0 4px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13.5px; color: var(--ink-2); margin: 2px 0 6px; }
 .legend span { display: inline-flex; align-items: center; }
 .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; }
 .legend i.dash { background: none !important; border-top: 2px dashed var(--plan); height: 0; }
 .legend i.box { height: 10px; width: 10px; border-radius: 3px; }
-.tip { position: absolute; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font-size: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.12); white-space: nowrap; z-index: 5; display: none; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font-size: 13.5px; box-shadow: 0 4px 14px rgba(0,0,0,.12); white-space: nowrap; z-index: 5; display: none; }
 .tip b { font-variant-numeric: tabular-nums; }
 .actions { margin: 0; padding-left: 20px; }
 .actions li { margin: 5px 0; }
@@ -39,7 +39,7 @@ table.sum td.wrap { white-space: normal; min-width: 200px; line-height: 1.5; }
 .decide ol { margin: 0; padding-left: 20px; }
 .decide li { margin: 4px 0; }
 .bul { display: flex; flex-direction: column; gap: 9px; margin: 4px 0 6px; }
-.bul-row { display: grid; grid-template-columns: 112px 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
+.bul-row { display: grid; grid-template-columns: 112px 1fr auto; gap: 10px; align-items: center; font-size: 13.5px; }
 .bul-row.total .bul-l { font-weight: 700; }
 .bul-l { color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bul-track { position: relative; height: 16px; background: var(--grid); border-radius: 4px; }
@@ -59,13 +59,13 @@ table.sum td.wrap { white-space: normal; min-width: 200px; line-height: 1.5; }
 .minis > * { min-width: 0; }
 @media (max-width: 860px) { .minis { grid-template-columns: 1fr; } }
 details.more { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
-details.more summary { cursor: pointer; color: var(--brand); font-size: 13px; font-weight: 600; }
+details.more summary { cursor: pointer; color: var(--brand); font-size: 13.5px; font-weight: 600; }
 details.more .more-b { margin-top: 10px; }
 .empty { text-align: center; padding: 40px 20px; }
 .empty h2 { justify-content: center; padding-left: 0 !important; } .empty h2::before { display: none; }
 .stale { background: var(--warn-bg); color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent); border-radius: 10px; padding: 9px 13px; margin-bottom: 12px; }
 .card.ops { padding: 14px 22px; } .card.ops .notes { color: var(--ink-2); font-size: 14px; }
 .card > h2 .n { color: var(--brand-2); font-variant-numeric: tabular-nums; margin-right: 2px; }
-.legend { font-size: 13px; gap: 6px 16px; }
+.legend { font-size: 13.5px; gap: 6px 16px; }
 .chart .ttl { font-size: 14px; font-weight: 600; color: var(--ink); }
 .issue { border-left-color: var(--brand-3) !important; background: var(--tint) !important; padding: 9px 13px !important; }

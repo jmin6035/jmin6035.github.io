@@ -50,7 +50,7 @@
       const m = M[x.line] || {}; const r = m.sched ? m.actual / m.sched : null;
       return `<tr><td class="l nm"><i class="dot" style="background:${COL[i]}"></i>${x.line}</td><td>${n0(m.month)}</td><td>${n0(m.sched)}</td><td><b>${n0(m.actual)}</b></td>
         <td class="pbar"><div><i class="${r >= 0.98 ? 'ok' : r >= 0.9 ? 'wn' : 'bd'}" style="width:${Math.min(100, (r || 0) * 100)}%"></i></div><b>${r ? (r * 100).toFixed(1) + '%' : '-'}</b></td>
-        <td>${n0(x.w0.tpd)}</td><td><b>${n0(x.w1.tpd)}</b></td><td>${dl(pct(x.w1.tpd, x.w0.tpd))}</td><td>${n1(x.w0.tph)} → <b>${n1(x.w1.tph)}</b></td><td>${x.w0.thick ? x.w0.thick.toFixed(2) : '-'} → ${x.w1.thick ? x.w1.thick.toFixed(2) : '-'}</td><td>${n1(x.w0.stopH)} → <b>${n1(x.w1.stopH)}</b></td><td>${n1(x.w1.days)}</td></tr>`;
+        <td>${n0(x.w0.tpd)}</td><td><b>${n0(x.w1.tpd)}</b></td><td>${!x.w1.days ? '<span class="muted" title="지난주 가동일 0일 — 계획휴지·수리">휴지</span>' : dl(pct(x.w1.tpd, x.w0.tpd))}</td><td>${n1(x.w0.tph)} → <b>${n1(x.w1.tph)}</b></td><td>${x.w0.thick ? x.w0.thick.toFixed(2) : '-'} → ${x.w1.thick ? x.w1.thick.toFixed(2) : '-'}</td><td>${n1(x.w0.stopH)} → <b>${n1(x.w1.stopH)}</b></td><td>${n1(x.w1.days)}</td></tr>`;
     }).join('');
     const t = O.month.rows.find((x) => /계$/.test(x.line));
     return card('ca-line', '라인별 진도 · 주간 비교', `이번 달 = MES 판매생산속보 ${O.month.asOf || ''} · 주간 = 지난주 vs ${BW()} 평균`, '단위: 톤', `<div class="scroll"><table class="t big"><thead><tr><th class="l" rowspan="2">라인</th><th colspan="4">10월 진도 (MES 월차계획)</th><th colspan="3">생산 t/일</th><th rowspan="2">속도 t/hr <small>정지 포함</small></th><th rowspan="2">평균 두께 mm</th><th rowspan="2">휴지 h/가동일</th><th rowspan="2">가동일 <small>지난주</small></th></tr>

@@ -6,7 +6,7 @@
 <title>계획재</title>
 <meta name="description" content="컬러건재 계획재(운영안 187개 사양) — 재고·생산·판매 진도와 월말 재고 예측, 위험 사양">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610301529">
+<link rel="stylesheet" href="ui/theme.css?v=2610301609">
 <style>
 .chart { margin-top: 4px; }
 .cv { display: block; width: 100%; height: auto; overflow: visible; }
@@ -30,7 +30,7 @@ td.pbar i { display: block; height: 100%; border-radius: 6px; transform-origin: 
 /* 반반 칸(.grid2)은 ui/theme.css 공통 규칙 */
 details.tv { margin-top: 12px; } details.tv summary { cursor: pointer; color: var(--brand-2); font-weight: 600; font-size: 15px; }
 .tipbox { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 14.5px; line-height: 1.55; box-shadow: var(--shadow-up); z-index: 40; display: none; }
-.tag { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 13px; font-weight: 600; white-space: nowrap; margin: 1px 0; }
+.tag { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 13.5px; font-weight: 600; white-space: nowrap; margin: 1px 0; }
 .tag.bad { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); } .tag.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); } .tag.info { background: color-mix(in srgb, var(--brand-2) 14%, transparent); color: var(--brand-2); }
 table.t td.bad { color: var(--bad); font-weight: 700; } table.t td.warn { color: var(--warn); font-weight: 700; }
 #ps-f button small { opacity: .7; margin-left: 3px; }
@@ -51,9 +51,9 @@ table.t td.bad { color: var(--bad); font-weight: 700; } table.t td.warn { color:
 </main>
 <footer class="foot"><div class="wrap"><span>원자료: 계획재 운영안(TF, 목표·예측·생산계획), MES 컬러 생산·출하·월말 재고</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="ca-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2610301529"></script>
-<script src="engine/crypto.js?v=2610301529"></script>
-<script src="ui/cal.js?v=2610301529"></script>
-<script src="planstock.js?v=2610301529"></script>
+<script src="ui/shell.js?v=2610301609"></script>
+<script src="engine/crypto.js?v=2610301609"></script>
+<script src="ui/cal.js?v=2610301609"></script>
+<script src="planstock.js?v=2610301609"></script>
 </body>
 </html>

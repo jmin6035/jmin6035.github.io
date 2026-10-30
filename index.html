@@ -7,23 +7,23 @@
 <meta name="description" content="포스코스틸리온 도금·컬러 가동계획 — 오늘 핵심 지표와 메뉴">
 <script>if (/[?&]src=/.test(location.search)) location.replace('status.html' + location.search);</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610301529">
+<link rel="stylesheet" href="ui/theme.css?v=2610301609">
 <style>
 /* ===== 홈 대시보드: 촘촘한 격자 · 숫자와 막대 중심 · 설명은 접기 ===== */
 .dash { display: grid; gap: 12px; margin-top: 10px; }
 .dash .card { margin: 0; padding: 14px 16px; }
 .dash .card > h2 { font-size: 16px; margin: 0 0 10px; }
-.dash .card > h2 small { font-size: 12.5px; }
-.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 13px; color: var(--ink-2); margin-top: 12px; }
+.dash .card > h2 small { font-size: 13.5px; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 13.5px; color: var(--ink-2); margin-top: 12px; }
 .meta b { color: var(--ink); font-weight: 700; }
-.meta .tabs button { font-size: 13px; padding: 4px 10px; }
+.meta .tabs button { font-size: 13.5px; padding: 4px 10px; }
 /* ===== 오너 한눈에: 상태 4칸(주간보고와 같은 기준) ===== */
 .own { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .ot { position: relative; display: block; background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--tc, var(--good)); border-radius: 10px; padding: 14px 16px 12px; color: var(--ink); text-decoration: none; }
 .ot:hover { border-color: var(--tc); }
 .ot.good { --tc: var(--good); } .ot.warn { --tc: var(--warn); } .ot.bad { --tc: var(--bad); }
 .ot .hd { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; }
-.ot .st { margin-left: auto; font-size: 13px; font-weight: 800; color: var(--tc); border: 1px solid var(--tc); border-radius: 999px; padding: 1px 9px; }
+.ot .st { margin-left: auto; font-size: 13.5px; font-weight: 800; color: var(--tc); border: 1px solid var(--tc); border-radius: 999px; padding: 1px 9px; }
 .ot .big { font-size: 40px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin-top: 6px; color: var(--tc); font-variant-numeric: tabular-nums; }
 .ot .big small { font-size: 17px; letter-spacing: 0; margin-left: 2px; }
 .ot .lb { font-size: 14px; color: var(--ink-2); font-weight: 600; }
@@ -37,7 +37,7 @@ table.fc { width: 100%; border-collapse: collapse; font-variant-numeric: tabular
 table.fc th { font-size: 14px; color: var(--ink-3); font-weight: 700; text-align: right; padding: 4px 8px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 table.fc td { padding: 9px 8px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; font-size: 15px; }
 table.fc th.l, table.fc td.l { text-align: left; } table.fc td.l { font-weight: 700; }
-table.fc td small { display: block; font-size: 13px; color: var(--ink-3); font-weight: 500; }
+table.fc td small { display: block; font-size: 13.5px; color: var(--ink-3); font-weight: 500; }
 table.fc td.bad b { color: var(--bad); } table.fc td.warn b { color: var(--warn); } table.fc td.good b { color: var(--good); }
 details.more-d { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0 16px; }
 details.more-d > summary { cursor: pointer; padding: 13px 0; font-size: 16px; font-weight: 800; }
@@ -49,7 +49,7 @@ table.gt tr.tot td { font-weight: 800; border-top: 1px solid var(--line); backgr
 /* 월말·4분기 전망(10/21 재작성) */
 .fp-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; }
 @media (max-width: 900px) { .fp-wrap { grid-template-columns: 1fr; } }
-.fp-g { margin-bottom: 14px; } .fp-gh { font-size: 15px; font-weight: 800; margin-bottom: 8px; } .fp-gh small { font-weight: 500; color: var(--ink-3); font-size: 13px; margin-left: 6px; }
+.fp-g { margin-bottom: 14px; } .fp-gh { font-size: 15px; font-weight: 800; margin-bottom: 8px; } .fp-gh small { font-weight: 500; color: var(--ink-3); font-size: 13.5px; margin-left: 6px; }
 .fp-r { display: grid; grid-template-columns: 44px 1fr 150px; align-items: center; gap: 10px; margin: 7px 0; font-variant-numeric: tabular-nums; }
 .fp-m { font-size: 14px; color: var(--ink-2); font-weight: 700; }
 .fp-b { position: relative; height: 18px; background: var(--grid); border-radius: 4px; }
@@ -60,21 +60,21 @@ table.gt tr.tot td { font-weight: 800; border-top: 1px solid var(--line); backgr
 .fs-g { margin-bottom: 16px; }
 .fs-c { position: relative; height: 150px; display: flex; gap: 14px; align-items: flex-end; padding: 0 84px 22px 4px; border-bottom: 1px solid var(--line); }
 .fs-col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; }
-.fs-col > span { position: absolute; bottom: -20px; font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+.fs-col > span { position: absolute; bottom: -20px; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
 .fs-bar { width: min(56px, 70%); background: var(--tc, var(--good)); border-radius: 4px 4px 0 0; position: relative; animation: grow .9s var(--ease) both; transform-origin: bottom; }
-.fs-bar b { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 13px; color: var(--ink); white-space: nowrap; }
+.fs-bar b { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 13.5px; color: var(--ink); white-space: nowrap; }
 .fs-col.good { --tc: color-mix(in srgb, var(--good) 75%, var(--surface)); } .fs-col.warn { --tc: color-mix(in srgb, var(--warn) 80%, var(--surface)); } .fs-col.bad { --tc: color-mix(in srgb, var(--bad) 80%, var(--surface)); }
 .fs-max { position: absolute; left: 0; right: 0; height: 0; border-top: 2px dashed var(--ink); z-index: 2; pointer-events: none; }
-.fs-max span { position: absolute; right: 0; top: -9px; font-size: 12px; font-style: normal; color: var(--ink); background: var(--surface); padding: 0 4px; }
+.fs-max span { position: absolute; right: 0; top: -9px; font-size: 13.5px; font-style: normal; color: var(--ink); background: var(--surface); padding: 0 4px; }
 .fp-due { margin: 6px 0 0; font-size: 14px; color: var(--ink-2); } .fp-due.bad b { color: var(--bad); } .fp-due.warn b { color: var(--warn); }
 /* KPI 띠 */
 .kstrip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
 .k { position: relative; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--gc, var(--brand-2)); border-radius: 8px; padding: 10px 12px 9px; text-decoration: none; color: var(--ink); overflow: hidden; }
 .k:hover { border-color: var(--gc); }
-.k .l { font-size: 12.5px; font-weight: 700; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.k .l { font-size: 13.5px; font-weight: 700; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .k .v { font-size: 28px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; margin-top: 2px; font-variant-numeric: tabular-nums; }
-.k .v small { font-size: 13px; font-weight: 600; color: var(--ink-2); margin-left: 2px; letter-spacing: 0; }
-.k .s { font-size: 12.5px; color: var(--ink-2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.k .v small { font-size: 13.5px; font-weight: 600; color: var(--ink-2); margin-left: 2px; letter-spacing: 0; }
+.k .s { font-size: 13.5px; color: var(--ink-2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .k .s .up { color: var(--good); font-weight: 700; } .k .s .dn { color: var(--bad); font-weight: 700; }
 .k .ring { position: absolute; top: 28px; right: 14px; width: 46px; height: 46px; }
 .k .ring .arc { stroke: var(--gc); }
@@ -88,11 +88,11 @@ table.gt tr.tot td { font-weight: 800; border-top: 1px solid var(--line); backgr
 .ln { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; position: relative; }
 .ln .hd { display: flex; align-items: center; gap: 6px; }
 .ln .hd b { font-size: 15px; font-weight: 800; }
-.ln .fam { font-size: 12.5px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--gt); color: var(--gc); }
+.ln .fam { font-size: 13.5px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--gt); color: var(--gc); }
 .ln .pc { margin-left: auto; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .ln .pc.good { color: var(--good); } .ln .pc.warn { color: var(--warn); } .ln .pc.bad { color: var(--bad); }
-.ln .nums { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; font-variant-numeric: tabular-nums; }
-.ln .nums b { color: var(--ink); font-size: 13px; }
+.ln .nums { font-size: 13.5px; color: var(--ink-2); margin-top: 3px; font-variant-numeric: tabular-nums; }
+.ln .nums b { color: var(--ink); font-size: 13.5px; }
 .ln .pb { position: relative; height: 7px; border-radius: 4px; background: var(--grid); margin: 6px 0 4px; }
 .ln .pb i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--gc); transform-origin: left; animation: grow .9s var(--ease) both .25s; }
 .ln .pb em { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
@@ -101,23 +101,23 @@ table.gt tr.tot td { font-weight: 800; border-top: 1px solid var(--line); backgr
 .ln svg.sp path.li { fill: none; stroke: var(--gc); stroke-width: 2; stroke-linejoin: round; animation: draw 1.2s var(--ease) backwards .3s; }
 .ln svg.sp circle.pt { fill: transparent; cursor: default; }
 .ln svg.sp circle.pt:hover { fill: var(--gc); }
-.ln .sp-cap { font-size: 11.5px; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ln .sp-ax { display: flex; justify-content: space-between; font-size: 11px; }
-.ln .nx { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ln .sp-cap { font-size: 13.5px; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ln .sp-ax { display: flex; justify-content: space-between; font-size: 13.5px; }
+.ln .nx { font-size: 13.5px; color: var(--ink-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* 2단 */
 /* 줄 규칙(.row2 전체 폭 · .row3 반반)은 ui/theme.css 공통 규칙 */
 .wo-g { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
-.wo-l { display: grid; gap: 3px; border: 1px solid var(--line); border-left: 4px solid var(--good); border-radius: 0 8px 8px 0; padding: 8px 12px; font-size: 13px; }
+.wo-l { display: grid; gap: 3px; border: 1px solid var(--line); border-left: 4px solid var(--good); border-radius: 0 8px 8px 0; padding: 8px 12px; font-size: 13.5px; }
 .wo-l.bad { border-left-color: var(--warn); background: var(--warn-bg); }
-.wo-l em { font-style: normal; font-weight: 800; font-size: 12.5px; } .wo-l em.ok { color: var(--good); } .wo-l em.no { color: var(--warn); }
+.wo-l em { font-style: normal; font-weight: 800; font-size: 13.5px; } .wo-l em.ok { color: var(--good); } .wo-l em.no { color: var(--warn); }
 table.wo-c th small { display: block; font-weight: 500; }
 @media (max-width: 980px) { .wo-g { grid-template-columns: 1fr; } }
 /* 그룹 표 */
-table.gt { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
-table.gt th { font-size: 12.5px; font-weight: 700; color: var(--ink-3); text-align: right; padding: 4px 6px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.gt { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.gt th { font-size: 13.5px; font-weight: 700; color: var(--ink-3); text-align: right; padding: 4px 6px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 table.gt th.l, table.gt td.l { text-align: left; }
 table.gt td { padding: 6px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
-table.gt tr.sec td { font-size: 12.5px; font-weight: 800; color: var(--gc); border-bottom: 0; padding-top: 9px; letter-spacing: .04em; }
+table.gt tr.sec td { font-size: 13.5px; font-weight: 800; color: var(--gc); border-bottom: 0; padding-top: 9px; letter-spacing: .04em; }
 table.gt td.nm { font-weight: 700; text-align: left; }
 table.gt td.nm i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--good); vertical-align: 1px; }
 table.gt td.nm i.warn { background: var(--warn); } table.gt td.nm i.bad { background: var(--bad); }
@@ -127,35 +127,35 @@ table.gt td.gbar { width: 26%; min-width: 120px; }
 .hb u { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--gc) 45%, transparent) 0 3px, transparent 3px 6px); }
 .hb em { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
 table.gt .neg { color: var(--bad); font-weight: 700; } table.gt .pos { color: var(--good); font-weight: 700; } table.gt .mu { color: var(--ink-3); }
-.more { font-size: 12.5px; margin-top: 6px; display: inline-block; }
+.more { font-size: 13.5px; margin-top: 6px; display: inline-block; }
 /* 작은 차트 */
-.lrow { display: grid; grid-template-columns: 34px 1fr 58px; gap: 8px; align-items: center; font-size: 13px; margin: 6px 0; }
+.lrow { display: grid; grid-template-columns: 34px 1fr 58px; gap: 8px; align-items: center; font-size: 13.5px; margin: 6px 0; }
 .track { position: relative; height: 22px; background: var(--grid); border-radius: 4px; }
 .seg { position: absolute; top: 0; bottom: 0; transform-origin: left; animation: grow .9s var(--ease) both; animation-delay: calc(.15s + var(--i, 0) * 90ms); }
 .seg.s1 { background: var(--c1); left: 0; border-radius: 4px 0 0 4px; } .seg.s2 { background: var(--c2); box-shadow: -2px 0 0 var(--surface); border-radius: 0 4px 4px 0; }
 .lrow .pct { text-align: right; font-weight: 800; }
-.legend { display: flex; gap: 12px; font-size: 12.5px; color: var(--ink-2); margin: 0 0 4px; }
+.legend { display: flex; gap: 12px; font-size: 13.5px; color: var(--ink-2); margin: 0 0 4px; }
 .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
-.crow { display: grid; grid-template-columns: 34px repeat(4, 1fr); gap: 6px; align-items: center; font-size: 12.5px; margin: 5px 0; }
+.crow { display: grid; grid-template-columns: 34px repeat(4, 1fr); gap: 6px; align-items: center; font-size: 13.5px; margin: 5px 0; }
 .crow.hd { color: var(--ink-3); font-weight: 700; } .crow.hd span { text-align: center; }
 .cl { position: relative; height: 22px; border-radius: 4px; background: var(--grid); overflow: hidden; }
 .cl i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--gc-c); transform-origin: left; animation: grow .9s var(--ease) both; animation-delay: calc(.1s + var(--i,0) * 40ms); }
 .cl i.short { background: var(--warn); }
-.cl span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12.5px; font-weight: 700; text-shadow: 0 0 3px var(--surface); }
-table.mini { width: 100%; border-collapse: collapse; font-size: 13px; }
+.cl span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13.5px; font-weight: 700; text-shadow: 0 0 3px var(--surface); }
+table.mini { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 table.mini td { padding: 5px 4px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
 table.mini td.r { text-align: right; font-variant-numeric: tabular-nums; }
-.basis { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+.basis { font-size: 13.5px; color: var(--ink-3); margin-top: 2px; }
 .basis summary { cursor: pointer; font-weight: 700; color: var(--ink-2); }
 .basis ul { margin: 6px 0 0; padding-left: 18px; line-height: 1.7; }
 /* 메뉴: 촘촘한 칩 */
 .menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
-.menu h3 { font-size: 12.5px; letter-spacing: .06em; color: var(--ink-3); margin: 0 0 6px; }
+.menu h3 { font-size: 13.5px; letter-spacing: .06em; color: var(--ink-3); margin: 0 0 6px; }
 .menu a { display: flex; align-items: center; gap: 8px; padding: 7px 9px; border-radius: 6px; text-decoration: none; color: var(--ink); font-size: 14px; font-weight: 600; }
 .menu a:hover { background: var(--hover); }
 .menu a svg { width: 17px; height: 17px; color: var(--brand-2); flex: none; }
-.menu a em { font-style: normal; font-size: 10.5px; color: var(--ink-3); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-left: auto; }
-.tipbox { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font-size: 12.5px; box-shadow: var(--shadow-up); z-index: 40; display: none; white-space: nowrap; }
+.menu a em { font-style: normal; font-size: 13.5px; color: var(--ink-3); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; margin-left: auto; }
+.tipbox { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font-size: 13.5px; box-shadow: var(--shadow-up); z-index: 40; display: none; white-space: nowrap; }
 #h-lock .unlock { margin-top: 6px; }
 @media (max-width: 1280px) { .kstrip, .lines { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 980px) { .menu { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -190,9 +190,9 @@ table.mini td.r { text-align: right; font-variant-numeric: tabular-nums; }
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="h-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2610301529"></script>
-<script src="engine/crypto.js?v=2610301529"></script>
-<script src="ui/cal.js?v=2610301529"></script>
-<script src="portal.js?v=2610301529"></script>
+<script src="ui/shell.js?v=2610301609"></script>
+<script src="engine/crypto.js?v=2610301609"></script>
+<script src="ui/cal.js?v=2610301609"></script>
+<script src="portal.js?v=2610301609"></script>
 </body>
 </html>

@@ -119,11 +119,11 @@
     const T = O.tot, ms = O.months, i0 = ms.indexOf(O.month);
     const rows = ms.slice(i0).map((m, k) => {
       const e = T.end[k], r = e / T.target;
-      return `<tr><td class="l nm">${mon(m)}${k === 0 ? ' <small class="muted">(남은 분)</small>' : ''}</td><td>${n0(T.fc[i0 + k])}</td><td>${n0(T.prod[i0 + k])}</td><td><b>${n0(e)}</b></td><td class="${r > 1.5 ? 'bad' : r > 1.1 ? 'warn' : ''}">${Math.round(r * 100)}%</td></tr>`;
+      return `<tr><td class="l nm">${mon(m)}${k === 0 ? ' <small class="muted">(남은 분)</small>' : ''}</td><td title="TF 예측 ${n0((T.fcTF || T.fc)[i0 + k])}t">${n0(T.fc[i0 + k])}</td><td title="운영안 ${n0((T.prodTF || T.prod)[i0 + k])}t">${n0(T.prod[i0 + k])}</td><td><b>${n0(e)}</b></td><td class="${r > 1.5 ? 'bad' : r > 1.1 ? 'warn' : ''}">${Math.round(r * 100)}%</td></tr>`;
     }).join('');
-    return card('ps-mon', '월별 예측', '계획재 운영안(TF)의 판매 예측·생산 계획 그대로 · 월말 재고는 현재 재고에서 이어 계산', '단위: 톤',
-      `<div class="scroll"><table class="t big"><thead><tr><th class="l">월</th><th>판매 예측</th><th>생산 계획</th><th>월말 예상 재고</th><th>목표 대비</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="small">${mon(O.month)} 행: 생산 계획·판매 예측은 그 달 전체 값이고, 월말 재고는 사양별로 (계획 − 실적)·(예측 − 출하)의 남은 분만 더하고 뺀 값. 목표 = 운영안 사양별 목표재고(운영+안전) 합 ${n0(T.target)}t.</p>`);
+    return card('ps-mon', '월별 예측', '다음 달부터 출하 = 실제 출하 속도 반영 · 생산 = 목표 재고 유지 양(컬러 계획과 같은 기준)', '단위: 톤',
+      `<div class="scroll"><table class="t big"><thead><tr><th class="l">월</th><th title="TF 판매 예측과 최근 3개월 실제 출하 평균 중 작은 값(이번 달은 TF 예측)">출하 예상</th><th title="운영안 이하, 목표 재고를 지키는 양까지(이번 달은 운영안)">생산</th><th>월말 예상 재고</th><th>목표 대비</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="small">목표 = 사양별 목표재고 합 ${n0(T.target)}t</p>`);
   }
 
   function byMat() {

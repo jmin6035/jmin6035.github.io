@@ -28,8 +28,8 @@ button.primary { background: linear-gradient(180deg, var(--brand-2), var(--brand
 .line-card { background: linear-gradient(160deg, var(--tint-2), var(--surface) 70%); }
 .pagebar .pt { font-size: 15px; color: var(--brand); }
 .pagebar label.btnlike { display: inline-flex; }
-.privacy { font-size: 13px; color: var(--ink-2); }
-footer.foot, .foot { font-size: 12px; }
+.privacy { font-size: 13.5px; color: var(--ink-2); }
+footer.foot, .foot { font-size: 13.5px; }
 #d-unlock { display: block; text-align: center; }
 #d-unlock .row { justify-content: center; }
 #d-unlock label.check { flex-direction: row; justify-content: center; margin-top: 10px; color: var(--ink-2); }

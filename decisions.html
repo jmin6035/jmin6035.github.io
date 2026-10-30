@@ -6,7 +6,7 @@
 <title>결정 기록</title>
 <meta name="description" content="가동계획·소재·재고 관련 결정과 할 일을 남기고 진행을 추적">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610301529">
+<link rel="stylesheet" href="ui/theme.css?v=2610301609">
 <style>
 .form { display: grid; grid-template-columns: 110px minmax(0, 1.4fr) minmax(0, 1fr) 130px 160px 120px auto; gap: 10px; align-items: end; }
 .form label { display: flex; flex-direction: column; gap: 5px; font-size: 14px; font-weight: 700; color: var(--ink-2); }
@@ -17,7 +17,7 @@
 .mode { border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 15px; }
 .mode.off { background: var(--warn-bg); color: var(--warn); } .mode.on { background: var(--good-bg); color: var(--good); }
 td select { font: inherit; font-size: 14.5px; }
-html body main td.dt { white-space: normal !important; min-width: 280px; }
+html body main td.dt { white-space: normal !important; min-width: 280px; text-align: left !important; }
 .overdue { color: var(--bad); font-weight: 800; }
 </style>
 </head>
@@ -26,7 +26,8 @@ html body main td.dt { white-space: normal !important; min-width: 280px; }
 <main class="wrap">
   <div id="d-main" style="margin-top:16px">
     <div class="mode off" id="d-mode"></div>
-    <section class="card"><h2>신규 등록</h2>
+    <form class="unlock" id="d-unlock" hidden style="margin-bottom:14px"><input type="password" id="d-pw" placeholder="분석 암호" autocomplete="current-password" aria-label="분석 암호"> <button type="submit" class="btn primary">열기</button> <span class="small" id="d-msg"></span></form>
+    <section class="card"><h2>신규 등록 <input class="field" id="d-me" placeholder="내 이름(남긴 사람)" aria-label="내 이름" style="max-width:200px;margin-left:12px;font-size:15px"></h2>
       <form class="form" id="d-form">
         <label>분야<select id="f-area"><option>도금</option><option>컬러</option><option>소재</option><option>재고</option><option>판매</option><option>기타</option></select></label>
         <label>결정·할 일<input id="f-title" required placeholder="예: 12월 1CGL 공백 9천t → 1월분 선생산"></label>
@@ -41,15 +42,12 @@ html body main td.dt { white-space: normal !important; min-width: 280px; }
       <div class="pagebar"><div class="tabs" id="d-filter"></div></div>
       <div class="scroll"><table class="t"><thead><tr><th>날짜</th><th>분야</th><th class="l">결정·할 일</th><th>담당</th><th>기한</th><th>상태</th><th>작성자</th></tr></thead><tbody id="d-body"></tbody></table></div>
     </section>
-    <section class="card"><h2>공유 설정</h2>
-      <p class="small">여러 사람이 같은 기록을 보려면 공유 저장소에 표를 만들고 공개용 키를 넣습니다(설치 문서: docs/공유저장소_설정.sql). 공개용(publishable/anon) 키만 넣으세요 — 비밀 키는 절대 넣지 마세요.</p>
-      <div class="bar"><input class="field" id="d-key" placeholder="sb_publishable_... (공개용 키)" style="min-width:360px"><button type="button" class="btn" id="d-keysave">이 브라우저에 저장</button><input class="field" id="d-me" placeholder="내 이름(남긴 사람)" style="max-width:200px"></div>
-    </section>
   </div>
 </main>
-<footer class="foot"><div class="wrap"><span>저장: 공유 설정 전에는 이 브라우저, 설정 후에는 공유 저장소</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610301529"></script>
-<script src="ui/share.js?v=2610301529"></script>
+<footer class="foot"><div class="wrap"><span>저장: 공유 저장소(분석 암호로 암호화, 추가만 가능 — 지우거나 고칠 수 없음)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2610301609"></script>
+<script src="engine/util.js?v=2610301609"></script>
+<script src="engine/crypto.js?v=2610301609"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -64,17 +62,51 @@ html body main td.dt { white-space: normal !important; min-width: 280px; }
     { area: '소재', title: '소재 기발주·입고예정 조회 화면 개발 요청', detail: '발주 검토의 충당 계산에 필요', owner: '전산팀', due: '2026-10-14', status: '할 일', at: '2026-10-07T09:02:00' },
     { area: '도금', title: '도금 속도·M/C 손실 실적 보정값 계획 반영 검토', detail: '계획 정확도: 2CGL 계획 대비 −20% 안팎으로 치우침', owner: '생산', due: '2026-10-21', status: '할 일', at: '2026-10-09T09:00:00' },
   ];
-  let filt = '미완료', rows = [];
+  let filt = '미완료', rows = [], PW = null;
+  // 공유 저장(10/30): Supabase cgl_decisions = 암호화한 이벤트(등록·상태 변경)를 추가만 — 표엔 암호문만, 읽고 쓰려면 분석 암호. 예전 이 기기 기록(localStorage)은 처음 열 때 한 번 옮김
+  const API = 'https://gatcqxrzaonjsixajrwd.supabase.co/rest/v1/cgl_decisions', KEY = 'sb_publishable_BlfAhxz_v3yg6iJw_nbRaA_YMFAOS7K';   // 공개용 키(표 권한 = 읽기·추가만)
+  const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
   const me = () => { try { return localStorage.getItem('cgl-me') || ''; } catch (e) { return ''; } };
-  function mode() {
-    $('d-mode').className = 'mode ' + (SHARE.on() ? 'on' : 'off');
-    $('d-mode').textContent = SHARE.on() ? '공유 저장 켜짐 — 모든 사람이 같은 기록을 봅니다' : '현재는 이 기기(브라우저)에만 저장됩니다 — 아래 공유 설정을 하면 모두가 같은 기록을 봅니다';
-    $('d-me').value = me();
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  async function push(ev) {
+    const env = await GP.encryptJSON(Object.assign({ at: new Date().toISOString(), by: me() || '이름 없음' }, ev), PW, 'decision');
+    const r = await fetch(API, { method: 'POST', headers: H, body: JSON.stringify({ payload: JSON.stringify(env) }) });
+    if (!r.ok) throw new Error('저장 실패 ' + r.status);
   }
-  async function load() {
-    try { rows = await SHARE.list('decisions'); } catch (e) { rows = []; UI.toast(e.message); }
-    if (!rows.length && !SHARE.on()) { for (const s of SEED) await SHARE.add('decisions', Object.assign({ by: '초기값' }, s)); rows = await SHARE.list('decisions'); }
-    draw();
+  async function events() {
+    const r = await fetch(API + '?select=id,payload&order=id.asc&limit=5000', { headers: H });
+    if (!r.ok) throw new Error('공유 저장소 읽기 실패 ' + r.status);
+    const out = [];
+    for (const x of await r.json()) { try { out.push(await GP.decryptJSON(JSON.parse(x.payload), PW)); } catch (e) { /* 다른 암호로 잠긴 줄은 건너뜀 */ } }
+    return out;
+  }
+  function fold(evs) {
+    const M = new Map();
+    for (const e of evs) {
+      if (e.t === 'add' && e.uid && !M.has(e.uid)) M.set(e.uid, Object.assign({}, e, { id: e.uid }));
+      else if (e.t === 'set' && M.has(e.uid)) Object.assign(M.get(e.uid), { status: e.status, setBy: e.by, setAt: e.at });
+    }
+    return [...M.values()].sort((a, b) => (a.at < b.at ? 1 : -1));
+  }
+  function mode(n) {
+    $('d-mode').className = 'mode ' + (PW ? 'on' : 'off');
+    $('d-mode').textContent = PW ? `공유 저장 — 모든 사람이 같은 기록을 봅니다(암호화 저장)${n ? ` · 이 기기 기록 ${n}건 옮김` : ''}` : '분석 암호를 넣으면 공유 기록이 열립니다';
+  }
+  async function load(moved) {
+    let evs = await events();
+    if (!evs.length) {                                         // 처음: 예전 이 기기 기록 → 없으면 초기값
+      let old = []; try { old = JSON.parse(localStorage.getItem('cgl-share-decisions') || '[]'); } catch (e) { /* 무시 */ }
+      for (const s of (old.length ? old : SEED.map((x) => Object.assign({ by: '초기값' }, x)))) await push({ t: 'add', uid: uid(), at: s.at || new Date().toISOString(), by: s.by, area: s.area, title: s.title, detail: s.detail, owner: s.owner, due: s.due, status: s.status });
+      moved = old.length; evs = await events();
+    }
+    rows = fold(evs); mode(moved); draw();
+  }
+  async function open(pw) {
+    try {
+      PW = pw; await load();
+      try { localStorage.setItem('cgl-analysis-pw', pw); } catch (e) { /* 무시 */ }
+      $('d-unlock').hidden = true;
+    } catch (e) { PW = null; mode(); $('d-unlock').hidden = false; $('d-msg').textContent = '⚠ ' + e.message; }
   }
   function draw() {
     const F = [['미완료', (r) => r.status !== '완료' && r.status !== '보류'], ['전체', () => true], ...ST.map((s) => [s, (r) => r.status === s])];
@@ -84,16 +116,18 @@ html body main td.dt { white-space: normal !important; min-width: 280px; }
     $('d-body').innerHTML = L.map((r) => `<tr data-id="${esc(r.id)}"><td>${esc(String(r.at || '').slice(5, 10).replace('-', '/'))}</td><td class="c"><b>${esc(r.area)}</b></td><td class="l dt"><b>${esc(r.title)}</b>${r.detail ? `<br><span class="small">${esc(r.detail)}</span>` : ''}</td><td>${esc(r.owner || '')}</td>
       <td class="${r.due && r.due < today && !['완료', '보류', '결정'].includes(r.status) ? 'overdue' : ''}">${esc(String(r.due || '').slice(5).replace('-', '/'))}</td><td><select data-st>${ST.map((s) => `<option ${s === r.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td><td class="muted">${esc(r.by || '')}</td></tr>`).join('') || '<tr><td colspan="7" class="c muted">없음</td></tr>';
     $('d-filter').querySelectorAll('button').forEach((b) => b.onclick = () => { filt = b.dataset.f; draw(); });
-    $('d-body').querySelectorAll('select[data-st]').forEach((s) => s.onchange = async () => { const id = s.closest('tr').dataset.id; await SHARE.update('decisions', id, { status: s.value }); UI.toast('상태 바꿈'); load(); });
+    $('d-body').querySelectorAll('select[data-st]').forEach((s) => s.onchange = async () => { await push({ t: 'set', uid: s.closest('tr').dataset.id, status: s.value }); UI.toast('상태 바꿈'); load(); });
   }
   $('d-form').onsubmit = async (e) => {
     e.preventDefault();
-    await SHARE.add('decisions', { area: $('f-area').value, title: $('f-title').value.trim(), detail: $('f-detail').value.trim(), owner: $('f-owner').value.trim(), due: $('f-due').value || null, status: $('f-status').value, by: me() || '이름 없음' });
+    if (!PW) { UI.toast('먼저 분석 암호로 여세요'); return; }
+    await push({ t: 'add', uid: uid(), area: $('f-area').value, title: $('f-title').value.trim(), detail: $('f-detail').value.trim(), owner: $('f-owner').value.trim(), due: $('f-due').value || null, status: $('f-status').value });
     e.target.reset(); UI.toast('남김'); load();
   };
-  $('d-keysave').onclick = () => { SHARE.setKey($('d-key').value); mode(); load(); };
+  $('d-me').value = me();
   $('d-me').onchange = () => { try { localStorage.setItem('cgl-me', $('d-me').value.trim()); } catch (e) { /* 무시 */ } };
-  mode(); load();
+  $('d-unlock').onsubmit = (e) => { e.preventDefault(); open($('d-pw').value); };
+  { let pw0 = null; try { pw0 = localStorage.getItem('cgl-analysis-pw'); } catch (e) { /* 무시 */ } mode(); if (pw0) open(pw0); else $('d-unlock').hidden = false; }
 })();
 </script>
 </body>

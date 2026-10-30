@@ -6,7 +6,7 @@
 <title>도금 업무 캘린더</title>
 <meta name="description" content="도금 수주 업무 달력 — 날짜·오전/오후별 할 일, 누르면 왜·순서·보는 곳·기준·결과물">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610301529">
+<link rel="stylesheet" href="ui/theme.css?v=2610301609">
 <style>
 main.wrap { max-width: none; }
 /* 분류 색: 진한 색 = 왼쪽 띠·글자, 연한 바탕 = 같은 색 10% (10/29 사용자 '더 잘 보이게 · 구분 잘 되게') */
@@ -19,7 +19,7 @@ main.wrap { max-width: none; }
 .ch:hover, .tc:hover { box-shadow: 0 0 0 2px color-mix(in srgb, var(--kc) 45%, transparent); }
 .ch.b { font-weight: 800; }
 .ch.k-확정, .tc.k-확정 { background: var(--k-확정); color: #fff; border-left-color: #0d4d1f; font-weight: 800; }
-.ch .pm { margin-left: auto; font-style: normal; font-size: 11.5px; font-weight: 800; background: var(--kc); color: #fff; border-radius: 4px; padding: 0 5px; }
+.ch .pm { margin-left: auto; font-style: normal; font-size: 13.5px; font-weight: 800; background: var(--kc); color: #fff; border-radius: 4px; padding: 0 5px; }
 .dim { opacity: .18; }
 /* 오늘 할 일 · 이번 주: 업무 카드(시각 · 이름 · 결과물 → 받는 곳) */
 .tc { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; border-left: 5px solid var(--kc); border-radius: 7px; padding: 8px 10px; margin: 0 0 6px; font: inherit; cursor: pointer;
@@ -28,8 +28,8 @@ main.wrap { max-width: none; }
 .tc.k-확정 .tt, .tc.k-확정 .ts { color: #e8f5e9; }
 .tc .tb { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .tc .tb b { font-size: 15px; line-height: 1.35; word-break: keep-all; }
-.tc .ts { font-size: 13px; color: var(--ink-2); line-height: 1.35; word-break: keep-all; }
-.pp { font-style: normal; font-size: 12px; font-weight: 800; border-radius: 10px; padding: 1px 8px; white-space: nowrap; border: 1px solid var(--line); color: var(--ink-2); background: var(--surface); }
+.tc .ts { font-size: 13.5px; color: var(--ink-2); line-height: 1.35; word-break: keep-all; }
+.pp { font-style: normal; font-size: 13.5px; font-weight: 800; border-radius: 10px; padding: 1px 8px; white-space: nowrap; border: 1px solid var(--line); color: var(--ink-2); background: var(--surface); }
 .pp.p-M { background: var(--ink); color: var(--surface); border-color: var(--ink); } .pp.p-W { color: var(--ink); } .pp.p-D { color: var(--ink-2); } .pp.p-C { border-style: dashed; }
 .today { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .today h3 { margin: 0 0 8px; font-size: 16px; } .today h3 small { color: var(--ink-2); font-weight: 600; font-size: 13.5px; }
@@ -45,11 +45,11 @@ main.wrap { max-width: none; }
 .lgt { font-size: 13.5px; font-weight: 800; color: var(--ink-2); margin-right: 2px; }
 .lgb { font: inherit; font-size: 13.5px; font-weight: 700; border: 0; border-left: 4px solid var(--kc); border-radius: 5px; padding: 3px 10px; cursor: pointer; white-space: nowrap; background: color-mix(in srgb, var(--kc) 11%, var(--surface)); color: var(--ink); }
 .lgb small { color: var(--ink-2); font-weight: 600; } .lgb[aria-pressed="true"] { background: var(--kc); color: #fff; } .lgb[aria-pressed="true"] small { color: #fff; }
-.lgx { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
+.lgx { font: inherit; font-size: 13.5px; border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
 .band { display: flex; gap: 12px; align-items: flex-start; background: var(--tint-2); border-radius: 8px; padding: 8px 10px; margin: 0 0 10px; }
 .band > div { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; flex: 1; }
 .band .ch { width: auto; margin: 0; }
-.bl { font-weight: 800; font-size: 14px; min-width: 36px; padding-top: 3px; } .bh { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.bl { font-weight: 800; font-size: 14px; min-width: 36px; padding-top: 3px; } .bh { font-size: 13.5px; font-weight: 700; color: var(--ink-2); }
 /* 이번 주 */
 .wk { display: grid; grid-template-columns: 56px repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); margin: 0 0 10px; }
 .wk > div { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 8px; background: var(--surface); }
@@ -57,7 +57,7 @@ main.wrap { max-width: none; }
 .wk > .wl:first-child { background: var(--brand); }
 .wk .wl { font-weight: 800; color: var(--ink-2); text-align: center; background: var(--tint-2); writing-mode: horizontal-tb; display: flex; align-items: center; justify-content: center; }
 .wk .wc.on { box-shadow: inset 0 0 0 2px var(--brand-2); }
-.wk .tc { padding: 6px 8px; gap: 8px; } .wk .tc .tb b { font-size: 14px; } .wk .tc .ts { font-size: 12.5px; }
+.wk .tc { padding: 6px 8px; gap: 8px; } .wk .tc .tb b { font-size: 14px; } .wk .tc .ts { font-size: 13.5px; }
 .none { color: var(--ink-2); }
 /* 한 달 */
 .cal { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) 64px 64px; border-top: 1px solid var(--line); border-left: 1px solid var(--line); margin: 0 0 10px; }
@@ -69,7 +69,7 @@ main.wrap { max-width: none; }
 .cal > .on { box-shadow: inset 0 0 0 2px var(--brand-2); }
 .dn { font-weight: 800; font-size: 15px; margin: 0 0 4px; }
 .dn.sun { color: var(--bad); }
-.hf { font-size: 12.5px; font-weight: 800; color: var(--ink-2); margin: 6px 0 3px; padding-top: 4px; border-top: 1px dashed var(--line); }
+.hf { font-size: 13.5px; font-weight: 800; color: var(--ink-2); margin: 6px 0 3px; padding-top: 4px; border-top: 1px dashed var(--line); }
 .hf.h-am { border-top: 0; padding-top: 0; }
 .note { font-size: 13.5px; color: var(--ink-2); margin: 6px 0 0; }
 dialog.tk { border: 0; border-radius: 14px; padding: 0; width: min(760px, 94vw); max-height: 88vh; background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgba(0, 0, 0, .3); }
@@ -82,7 +82,7 @@ dialog.tk::backdrop { background: rgba(15, 23, 32, .45); }
 .tk dd { margin: 0; padding: 10px 0; border-top: 1px solid var(--grid); font-size: 15px; line-height: 1.6; word-break: keep-all; }
 .tk ol { margin: 0; padding-left: 20px; } .tk li { margin: 2px 0; }
 .tk a { color: var(--brand-2); font-weight: 700; }
-.tk .rk { font-size: 12.5px; color: var(--ink-2); margin-left: 6px; white-space: nowrap; } .tk dd.rs { color: var(--bad); font-weight: 700; }
+.tk .rk { font-size: 13.5px; color: var(--ink-2); margin-left: 6px; white-space: nowrap; } .tk dd.rs { color: var(--bad); font-weight: 700; }
 .tk .th.ch { display: flex; font-size: 15px; }
 @media (max-width: 760px) {
   .today { grid-template-columns: 1fr; } .wk { grid-template-columns: 1fr; } .wk > .wl, .wk .wh { display: none; }
@@ -104,8 +104,8 @@ dialog.tk::backdrop { background: rgba(15, 23, 32, .45); }
   <dialog class="tk" id="tk-dlg"></dialog>
 </main>
 <footer class="foot"><div class="wrap"><span>원본: 도금 수주 업무 카드(엑셀 「도금 수주 업무 정리」와 같음)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610301529"></script>
-<script src="engine/crypto.js?v=2610301529"></script>
-<script src="cg_tasks.js?v=2610301529"></script>
+<script src="ui/shell.js?v=2610301609"></script>
+<script src="engine/crypto.js?v=2610301609"></script>
+<script src="cg_tasks.js?v=2610301609"></script>
 </body>
 </html>

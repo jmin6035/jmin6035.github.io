@@ -266,4 +266,32 @@
   function tagRows(root) { (root || document).querySelectorAll('table tbody').forEach((tb) => { if (tb.dataset.ri) return; tb.dataset.ri = '1'; [...tb.rows].forEach((r, i) => r.style.setProperty('--ri', i)); }); }
   const mo = new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1) tagRows(n.tagName === 'TBODY' ? n.parentNode : n); });
   document.addEventListener('DOMContentLoaded', () => { tagRows(); mo.observe(document.body, { childList: true, subtree: true }); });
+
+  /* 긴 설명 문단(90자 넘는 '읽는 법') → 한 줄 + 누르면 펼침(docs/16 설명 문단 금지, 10/30 재검토). data-keep 이면 그대로 */
+  const FOLD = 'main p.hint, main p.small, main div.hint, main p.lead-note, main p.tr-note, main p.od-note, main p.cal-note';
+  function foldHints(root) {
+    if (document.body.dataset.nofold != null) return;
+    const els = [...(root.matches && root.matches(FOLD) ? [root] : []), ...(root.querySelectorAll ? root.querySelectorAll(FOLD) : [])];
+    for (const el of els) {
+      if (el.dataset.keep != null || el.querySelector('.fold-b, input, select, button, table')) continue;
+      const t = el.innerText.replace(/\s+/g, ' ').trim();
+      if (t.length <= 90) continue;
+      const head = t.split(/(?<=[.。])\s|\s[·—]\s/)[0];
+      const lab = head.length <= 48 ? head.replace(/[.。]$/, '') : head.slice(0, 44) + '…';
+      el.innerHTML = `<button type="button" class="fold-b" title="${t.replace(/"/g, '&quot;')}">ⓘ ${lab.replace(/</g, '&lt;')} <u>자세히</u></button><span class="fold-x">${el.innerHTML}</span>`;
+      el.classList.add('hint-fold');
+    }
+  }
+  document.addEventListener('click', (ev) => { const b = ev.target.closest && ev.target.closest('.fold-b'); if (b) b.parentElement.classList.toggle('open'); });
+  const fo = new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1 && !n.closest('.fold-x')) foldHints(n.closest('p, .hint') || n); });
+  const foldGo = () => { foldHints(document); fo.observe(document.body, { childList: true, subtree: true }); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldGo); else foldGo();
+
+  /* 칸이 좁아 잘린 글자(… 처리) — 마우스를 올리면 전체 글자를 말풍선으로(docs/16 잘림 금지, 10/30 재검토) */
+  document.addEventListener('mouseover', (ev) => {
+    for (let e = ev.target, k = 0; e && e.nodeType === 1 && k < 3; e = e.parentElement, k++) {
+      if (e.title || e.dataset.clipT) continue;
+      if (e.scrollWidth > e.clientWidth + 1 && /hidden|clip/.test(getComputedStyle(e).overflowX)) { e.title = e.innerText.trim(); e.dataset.clipT = '1'; break; }
+    }
+  }, { passive: true });
 })();

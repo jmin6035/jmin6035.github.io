@@ -234,7 +234,8 @@
     return `<section class="card"><h2>발주 캘린더 <small>기준일 ${S.today} · 리드타임 역산 발주 마감 · 날짜 누르면 상세</small><span class="unit">단위: 톤</span></h2>
       <div class="kpis">${k(past.length ? 'bad' : 'good', '발주 마감 지남(미발주)', Math.round(past.reduce((a, j) => a + j.short, 0)), 't', `${past.length}건 · 기발주 반영 후 부족`)}
       ${k(soon.length ? 'warn' : 'good', '2주 내 발주 마감', Math.round(soon.reduce((a, j) => a + j.short, 0)), 't', `${soon.length}건 · 최우선 ${soon[0] ? `${esc(codeNm(soon[0].code))}${soon[0].p ? ' ' + esc(supName(soon[0].p.s)) : ''} ${md(soon[0].deadline)}` : '-'}`)}
-      ${k('brand', '부족(발주 필요) 합계', Math.round(short.reduce((a, j) => a + j.short, 0)), 't', `${short.length}건 · 재고·입고예정 차감 후`)}
+      ${(() => { const e = new Date(S.today + 'T00:00:00'); e.setMonth(e.getMonth() + 2, 0); const end = `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, '0')}-${String(e.getDate()).padStart(2, '0')}`, near = P_.filter((j) => j.deadline <= end);   // 10/30 재검토: 27년 3월까지 합친 179천t 이 당장 부족처럼 읽힘 → 다음 달 말까지 마감만
+        return k('brand', `${+end.slice(5, 7)}월 말까지 발주 마감`, Math.round(near.reduce((a, j) => a + j.short, 0)), 't', `${near.length}건 · 3월까지 전체 ${n0(short.reduce((a, j) => a + j.short, 0))}t`); })()}
       ${k(S.arr.length + autoArr().length ? 'good' : 'warn', '입고 예정(기발주)', S.arr.length + autoArr().length, '건', `MES 자동 ${n0(autoArr().reduce((s, a) => s + a.t, 0))}t${S.arr.length ? ` + 직접 ${S.arr.length}건` : ''} · 충당에 반영`)}</div>
       <div id="p-cal" style="margin-top:14px"></div></section>`;
   }

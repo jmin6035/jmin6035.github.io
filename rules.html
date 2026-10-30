@@ -6,7 +6,7 @@
 <title>계획 규칙</title>
 <meta name="description" content="계획 엔진이 따르는 규칙 목록 — 수치는 고치고 '적용'을 누르면 1시간 안에 다시 계산·게시, 바꾼 이력이 남음">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2610301529">
+<link rel="stylesheet" href="ui/theme.css?v=2610301609">
 <style>
 .tr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 18px; }
 table.t.tr td, table.t.tr th { padding: 8px 12px; }
@@ -16,7 +16,7 @@ table.t.tr td.ds { white-space: normal !important; text-align: left !important; 
 table.t.tr td.l b { white-space: nowrap; }
 table.t.tr input { width: 92px; text-align: right; font: inherit; font-variant-numeric: tabular-nums; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
 table.t.tr input.chg { border-color: var(--warn); background: var(--warn-bg); font-weight: 700; }
-.tr-off { color: var(--ink-3); font-size: 12.5px; }
+.tr-off { color: var(--ink-3); font-size: 13.5px; }
 .tr-save { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
 .tr-save input { font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); }
 .tr-save #t-memo { flex: 1; min-width: 240px; }
@@ -30,7 +30,7 @@ table.t.rl td.g { white-space: nowrap; font-weight: 700; color: var(--brand); }
 table.t.rl td.v { white-space: normal !important; font-variant-numeric: tabular-nums; min-width: 220px; max-width: 360px; }
 table.t.rl td.l { white-space: normal !important; }
 .chgl b { color: var(--warn); }
-.pill { display: inline-block; font-size: 12px; font-weight: 700; border-radius: 10px; padding: 1px 8px; background: var(--warn-bg); color: var(--warn); }
+.pill { display: inline-block; font-size: 13.5px; font-weight: 700; border-radius: 10px; padding: 1px 8px; background: var(--warn-bg); color: var(--warn); }
 .pill.ro { background: var(--grid); color: var(--ink-2); }
 </style>
 </head>
@@ -74,8 +74,8 @@ table.t.rl td.l { white-space: normal !important; }
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>저장 = 공유 저장소(모든 사람이 같은 값) · 적용 = 매시 정각(08~20시) 확인 → 40~70분 계산 → 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610301529"></script>
-<script src="engine/crypto.js?v=2610301529"></script>
+<script src="ui/shell.js?v=2610301609"></script>
+<script src="engine/crypto.js?v=2610301609"></script>
 <script>
 (function () {
   'use strict';
@@ -102,7 +102,7 @@ table.t.rl td.l { white-space: normal !important; }
     stockMax: { '도금 소재(F/H)': 12600, '도금 제품(판매재)': 22300, '컬러 소재': 20940, '컬러 제품': 19320 },
     plating: { switchDummy: { '1CGL': 546.4, '2CGL': 635 }, nonfamDummy: { '1CGL': 21, '2CGL': 25.82 }, equipDown: { '1CGL': 18.46, '2CGL': 25.72 }, restartFamchg: { '1CGL': 462, '2CGL': 719 }, restartSame: { '1CGL': 106, '2CGL': 295 }, releaseDays: 25 },
     replan: { tradeoff: 100, freezeDays: 2 } };
-  let PW = '', IG = null, APPLIED = null, LATEST = null, HIST = [], ST = {};
+  let PW = '', IG = null, APPLIED = null, LATEST = null, HIST = [], ST = {}, CUR = null;
 
   const full = (o) => ({ days: Object.assign({}, DEF.days, o && o.days), stockMax: Object.assign({}, DEF.stockMax, o && o.stockMax),
     plating: Object.assign({}, DEF.plating, o && o.plating), replan: Object.assign({}, DEF.replan, o && o.replan), src: o && o.src, modeG: o && o.modeG, modeC: o && o.modeC });
@@ -122,6 +122,8 @@ table.t.rl td.l { white-space: normal !important; }
   }
   async function loadStatus() {
     try { const e = await GP.latest('rules_status.enc.json'); ST = e ? await GP.decryptJSON(e, PW) : {}; } catch (e) { ST = {}; }
+    try { const e = await GP.latest('latest.plan.enc.json'); const L = e ? await GP.decryptJSON(e, PW) : null; const rp = ((L && (L.result || L)) || {}).replan || {};   // 지금 게시된 계획(10/30 재검토: '적용 상태'가 10/22 시험 결과만 보여 지금 계획처럼 읽힘)
+      CUR = { at: L && L.savedAt, t0: rp.t0, late: rp.late, short: (rp.shortBy || []).reduce((a, x) => a + (+String(x).replace(/.* ([\d,]+)t$/, '$1').replace(/,/g, '') || 0), 0), mc: ((L && (L.result || L)).cal || []).filter((c) => c.date > rp.t0 && /M\/C/.test(c.event || '')).length }; } catch (e) { CUR = null; }
   }
   const cur = () => LATEST || APPLIED;
   const inp = (s, k, v, lo, hi, step, l) => `<input type="number" min="${lo}" max="${hi}" step="${step}" data-s="${s}" data-k="${esc(k)}"${l ? ` data-l="${l}"` : ''} value="${v}">`;
@@ -144,7 +146,8 @@ table.t.rl td.l { white-space: normal !important; }
   function drawStatus() {
     const req = LATEST && LATEST.apply && (!ST.lastRequestId || LATEST.id > ST.lastRequestId) ? LATEST : null;
     const r = ST.result, p = ST.prev, cls = { '게시': 'ok', '계산 중': 'run', '검토 대기': 'hold', '실패': 'fail' }[ST.state] || '';
-    let h = '';
+    let h = CUR && CUR.t0 ? `<div><b class="big">지금 계획</b> · 실적 ~${esc(String(CUR.t0).slice(5))} · 남은 M/C <b>${CUR.mc}회</b> · 납기 지연 <b>${n0(CUR.late)}톤·일</b> · 결품 <b>${n0(CUR.short)}t</b></div>` : '';
+    if (ST.state) h += '<div class="muted" style="margin-top:6px">마지막 규칙 적용</div>';
     if (req) h += `<div><b class="big">적용 요청됨</b> — #${req.id} ${kst(req.at)} ${esc(req.who)}: 다음 정시 확인 뒤 계산을 시작합니다(최대 1시간 + 계산 40~70분)</div>`;
     if (ST.state) h += `<div><b class="big">${esc(ST.state)}</b> · #${ST.lastRequestId} ${esc((ST.request || {}).who || '')} · ${kst(ST.at)} — ${esc(ST.msg || '')}</div>`
       + (r && p ? `<div>남은 M/C ${p.mc} → <b>${r.mc}회</b> · 납기 지연 ${n0(p.late)} → <b>${n0(r.late)}톤·일</b> · 결품 <b>${n0(r.short)}t</b>${r.mcDays && r.mcDays.length ? `<br><small class="muted">M/C: ${esc(r.mcDays.join(' · '))}</small>` : ''}</div>` : '')

@@ -73,8 +73,8 @@
   let baseInfo = null;
   const b64buf = (b) => { const s_ = atob(b), u = new Uint8Array(s_.length); for (let i = 0; i < s_.length; i++) u[i] = s_.charCodeAt(i); return u.buffer; };
   function srcTiles() {
-    const t = (k) => { const u = upl[k], b = base[k]; return `<div class="cc-src"><b>${SRC[k][0]}</b><small>${u ? `올린 파일: ${esc(u.name)}` : b ? `기준: ${esc(BASE[k].split('/').pop())} (확정 계획 v30 입력)` : '기준 자료 없음 — 파일을 올려 주세요'} · ${SRC[k][1]}</small><span class="st ${u || b ? 'ok' : 'warn'}">${u ? '올린 파일 사용' : b ? '사용' : '없음'}</span></div>`; };
-    $('g-src').innerHTML = t('sales') + t('sail') + `<div class="cc-src"><b>계획 조건</b><small>속도·시간손실·첫날 강종·정기수리 — ③에서 확인·변경${baseInfo ? '' : ''}</small><span class="st ok">${JSON.stringify(P) === JSON.stringify(GP.DEFAULT_PARAMS) ? '기본값(v30)' : '바꾼 값'}</span></div>`;
+    const t = (k) => { const u = upl[k], b = base[k]; return `<div class="cc-src"><b>${SRC[k][0]}</b><small>${u ? `올린 파일: ${esc(u.name)}` : b ? `기준: ${esc(BASE[k].split('/').pop())} (세부판매계획 — 11월 판생 결과 '26.10.25 반영)` : '기준 자료 없음 — 파일을 올려 주세요'} · ${SRC[k][1]}</small><span class="st ${u || b ? 'ok' : 'warn'}">${u ? '올린 파일 사용' : b ? '사용' : '없음'}</span></div>`; };
+    $('g-src').innerHTML = t('sales') + t('sail') + `<div class="cc-src"><b>계획 조건</b><small>속도·시간손실·첫날 강종·정기수리 — ③에서 확인·변경${baseInfo ? '' : ''}</small><span class="st ok">${JSON.stringify(P) === JSON.stringify(GP.DEFAULT_PARAMS) ? '기본값 = 게시 계획과 같음' : '바꾼 값'}</span></div>`;
     ['sales', 'sail'].forEach((k) => { const L = $('u-' + k); if (L) { L.classList.toggle('on', !!upl[k]); L.querySelector('em').textContent = upl[k] ? `✓ ${upl[k].name}` : ''; } });
   }
   function useFiles() { files = ['sales', 'sail'].map((k) => upl[k] || base[k]).filter(Boolean); srcTiles(); if (files.length) parse(); }
@@ -255,6 +255,19 @@
       if (o.app !== 'cgl-plan') throw new Error('이 앱에서 저장한 결과 파일이 아닙니다');
       result = o.result; meta = o.meta || {}; renderResult();
     } catch (e) { alert('결과 파일을 열지 못했습니다: ' + e.message); }
+  };
+
+  $('g-pub').onclick = async () => {                          // 게시 계획(사내 PC·클라우드 매일 재계획 중 새것)을 결과로 열기(10/30 재검토: 이 화면 기준이 v30 처음 계획에 머물러 있었음)
+    const msg = $('g-pub-msg'); msg.textContent = '불러오는 중…';
+    try {
+      const env = await GP.latest('latest.plan.enc.json'); if (!env) throw new Error('게시 계획 없음');
+      let o = null;
+      for (const k of ['cgl-plan-pw', 'cgl-analysis-pw']) { let pw = null; try { pw = localStorage.getItem(k); } catch (e) { /* 무시 */ } if (!pw) continue; try { o = await GP.decryptJSON(env, pw); break; } catch (e) { /* 다음 암호 */ } }
+      if (!o) { const pw = prompt('게시 계획 암호'); if (!pw) { msg.textContent = ''; return; } o = await GP.decryptJSON(env, pw); }
+      result = o.result; meta = o.meta || {}; renderResult();
+      const t0 = (result.replan || {}).t0;
+      msg.textContent = `게시 계획 열림 · ${t0 ? '실적 ~' + t0.slice(5) : ''} · 저장 ${String(o.savedAt || env.created || '').slice(0, 16).replace('T', ' ')}`;
+    } catch (e) { msg.textContent = '⚠ ' + (/암호|decrypt|OperationError/i.test(String(e.message || e.name)) ? '암호가 맞지 않습니다' : e.message); }
   };
 
   // ---------------- 게시(암호화) ----------------

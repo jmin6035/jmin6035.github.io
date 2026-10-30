@@ -6,32 +6,32 @@
 <title>컬러 가동 현황</title>
 <meta name="description" content="컬러 1~4CCL 가동계획 조회 — 도금 가동 현황과 같은 양식">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="style.css?v=2610301529">
-<link rel="stylesheet" href="dashboard.css?v=2610301529">
-<link rel="stylesheet" href="ui/theme.css?v=2610301529">
-<link rel="stylesheet" href="ui/bridge.css?v=2610301529">
+<link rel="stylesheet" href="style.css?v=2610301609">
+<link rel="stylesheet" href="dashboard.css?v=2610301609">
+<link rel="stylesheet" href="ui/theme.css?v=2610301609">
+<link rel="stylesheet" href="ui/bridge.css?v=2610301609">
 <style>.gtable td.idle { background: color-mix(in srgb, var(--sd) 55%, transparent); } .gtable td[data-d] { cursor: pointer; } .gtable tr.r-fam td { font-weight: 800; }/* 기준일 라인 현황 카드 */
 .ln-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
 .ln-card.off { background: var(--zebra); }
 .ln-h { display: flex; justify-content: space-between; align-items: center; } .ln-h b { font-size: 19px; }
 .ln-big { font-size: 34px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; font-variant-numeric: tabular-nums; } .ln-big small { font-size: 15px; font-weight: 600; color: var(--ink-3); margin-left: 2px; }
-.ln-big span { display: block; font-size: 13px; font-weight: 600; color: var(--ink-3); letter-spacing: 0; margin-top: 2px; }
+.ln-big span { display: block; font-size: 13.5px; font-weight: 600; color: var(--ink-3); letter-spacing: 0; margin-top: 2px; }
 .ln-gauge, .ln-prog { position: relative; height: 8px; border-radius: 4px; background: var(--grid); overflow: visible; }
 .ln-gauge i, .ln-prog i { display: block; height: 100%; border-radius: 4px; background: var(--brand-2); transform-origin: left; animation: growL .9s var(--ease) both; }
 .ln-prog i { background: var(--good); } .ln-prog u { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); border-radius: 1px; }
-.ln-l { margin: 8px 0 0; font-size: 12.5px; font-weight: 700; color: var(--ink-3); display: flex; justify-content: space-between; gap: 6px; } .ln-l span { color: var(--ink); font-weight: 700; }
+.ln-l { margin: 8px 0 0; font-size: 13.5px; font-weight: 700; color: var(--ink-3); display: flex; justify-content: space-between; gap: 6px; } .ln-l span { color: var(--ink); font-weight: 700; }
 .ln-mix { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; } .ln-mix i { display: block; min-width: 3px; }
-.ln-mixl { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 13px; color: var(--ink-2); } .ln-mixl i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
+.ln-mixl { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 13.5px; color: var(--ink-2); } .ln-mixl i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
 .ln-items { list-style: none; margin: 0; padding: 0; font-size: 13.5px; } .ln-items li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; border-bottom: 1px dashed var(--grid); } .ln-items li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ln-sub { margin: 0; font-size: 12px; color: var(--ink-3); }
+.ln-sub { margin: 0; font-size: 13.5px; color: var(--ink-3); }
 .ln-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 /* 그룹별 월 생산량 막대 */
-.gm-leg { display: flex; gap: 14px; font-size: 13px; color: var(--ink-2); margin-bottom: 10px; } .gm-leg i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.gm-leg { display: flex; gap: 14px; font-size: 13.5px; color: var(--ink-2); margin-bottom: 10px; } .gm-leg i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
 .gm-row { display: grid; grid-template-columns: 130px 1fr 190px; align-items: center; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--grid); }
 .gm-n { font-weight: 700; display: flex; align-items: center; gap: 8px; } .gm-n i { width: 12px; height: 12px; border-radius: 3px; }
-.gm-bar { display: flex; height: 30px; gap: 2px; } .gm-bar i { display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 12.5px; font-weight: 700; color: #fff; border-radius: 4px; white-space: nowrap; overflow: hidden; transform-origin: left; animation: growL .9s var(--ease) both; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+.gm-bar { display: flex; height: 30px; gap: 2px; } .gm-bar i { display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 13.5px; font-weight: 700; color: #fff; border-radius: 4px; white-space: nowrap; overflow: hidden; transform-origin: left; animation: growL .9s var(--ease) both; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
 i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--bad) 55%, transparent) 0 4px, transparent 4px 8px) !important; border: 1px solid color-mix(in srgb, var(--bad) 60%, transparent); color: var(--bad) !important; text-shadow: none !important; }
-.gm-t { display: flex; flex-direction: column; text-align: right; } .gm-t b { font-size: 17px; font-variant-numeric: tabular-nums; } .gm-t span { font-size: 12.5px; }
+.gm-t { display: flex; flex-direction: column; text-align: right; } .gm-t b { font-size: 17px; font-variant-numeric: tabular-nums; } .gm-t span { font-size: 13.5px; }
 .gm-tot { border-bottom: 0; } .gm-sum { display: flex; gap: 18px; font-size: 14px; color: var(--ink-2); }
 @media (max-width: 760px) { .gm-row { grid-template-columns: 1fr; gap: 6px; } .gm-t { text-align: left; flex-direction: row; gap: 10px; } }
 #d-load { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 28px; } #d-load > .hint { grid-column: 1 / -1; }   /* 월별 부하: 라인 4개 나란히 */
@@ -103,8 +103,8 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <footer class="wrap foot">조회 전용 · 원자료: 통합 가동계획(컬러 판매계획·계획재 운영안·MES 월차·실적)</footer>
 
-<script src="ui/shell.js?v=2610301529"></script>
-<script src="engine/crypto.js?v=2610301529"></script>
-<script src="color_status.js?v=2610301529"></script>
+<script src="ui/shell.js?v=2610301609"></script>
+<script src="engine/crypto.js?v=2610301609"></script>
+<script src="color_status.js?v=2610301609"></script>
 </body>
 </html>

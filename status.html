@@ -6,25 +6,25 @@
 <title>도금 가동 현황</title>
 <meta name="description" content="도금 1·2CGL 가동계획 조회 전용 대시보드">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="style.css?v=2610301529">
-<link rel="stylesheet" href="dashboard.css?v=2610301529">
-<link rel="stylesheet" href="ui/theme.css?v=2610301529">
-<link rel="stylesheet" href="ui/bridge.css?v=2610301529">
+<link rel="stylesheet" href="style.css?v=2610301609">
+<link rel="stylesheet" href="dashboard.css?v=2610301609">
+<link rel="stylesheet" href="ui/theme.css?v=2610301609">
+<link rel="stylesheet" href="ui/bridge.css?v=2610301609">
 <style>
 /* 기준일 라인 현황 카드 */
 .ln-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
 .ln-card.off { background: var(--zebra); }
 .ln-h { display: flex; justify-content: space-between; align-items: center; } .ln-h b { font-size: 19px; }
 .ln-big { font-size: 34px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; font-variant-numeric: tabular-nums; } .ln-big small { font-size: 15px; font-weight: 600; color: var(--ink-3); margin-left: 2px; }
-.ln-big span { display: block; font-size: 13px; font-weight: 600; color: var(--ink-3); letter-spacing: 0; margin-top: 2px; }
+.ln-big span { display: block; font-size: 13.5px; font-weight: 600; color: var(--ink-3); letter-spacing: 0; margin-top: 2px; }
 .ln-gauge, .ln-prog { position: relative; height: 8px; border-radius: 4px; background: var(--grid); overflow: visible; }
 .ln-gauge i, .ln-prog i { display: block; height: 100%; border-radius: 4px; background: var(--brand-2); transform-origin: left; animation: growL .9s var(--ease) both; }
 .ln-prog i { background: var(--good); } .ln-prog u { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); border-radius: 1px; }
-.ln-l { margin: 8px 0 0; font-size: 12.5px; font-weight: 700; color: var(--ink-3); display: flex; justify-content: space-between; gap: 6px; } .ln-l span { color: var(--ink); font-weight: 700; }
+.ln-l { margin: 8px 0 0; font-size: 13.5px; font-weight: 700; color: var(--ink-3); display: flex; justify-content: space-between; gap: 6px; } .ln-l span { color: var(--ink); font-weight: 700; }
 .ln-mix { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; } .ln-mix i { display: block; min-width: 3px; }
-.ln-mixl { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 13px; color: var(--ink-2); } .ln-mixl i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
+.ln-mixl { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 13.5px; color: var(--ink-2); } .ln-mixl i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
 .ln-items { list-style: none; margin: 0; padding: 0; font-size: 13.5px; } .ln-items li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; border-bottom: 1px dashed var(--grid); } .ln-items li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ln-sub { margin: 0; font-size: 12px; color: var(--ink-3); }
+.ln-sub { margin: 0; font-size: 13.5px; color: var(--ink-3); }
 .ln-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .gtable td[data-d] { cursor: pointer; } .gtable td.sk { background: color-mix(in srgb, var(--skc) 28%, transparent); font-weight: 700; }
 .gtable tr.r-stop th.c1 { color: var(--warn); }
@@ -104,13 +104,13 @@
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <footer class="wrap foot">조회 전용.</footer>
 
-<script src="ui/shell.js?v=2610301529"></script>
-<script src="engine/params.js?v=2610301529"></script>
-<script src="engine/util.js?v=2610301529"></script>
-<script src="engine/replan.js?v=2610301529"></script>
-<script src="engine/report.js?v=2610301529"></script>
-<script src="engine/gantt.js?v=2610301529"></script>
-<script src="engine/crypto.js?v=2610301529"></script>
-<script src="dashboard.js?v=2610301529"></script>
+<script src="ui/shell.js?v=2610301609"></script>
+<script src="engine/params.js?v=2610301609"></script>
+<script src="engine/util.js?v=2610301609"></script>
+<script src="engine/replan.js?v=2610301609"></script>
+<script src="engine/report.js?v=2610301609"></script>
+<script src="engine/gantt.js?v=2610301609"></script>
+<script src="engine/crypto.js?v=2610301609"></script>
+<script src="dashboard.js?v=2610301609"></script>
 </body>
 </html>

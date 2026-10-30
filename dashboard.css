@@ -12,7 +12,7 @@
 .empty code { background: var(--soft); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
 .head-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .head-row h2 { margin: 0; }
-h2 small { font-weight: normal; font-size: 13px; }
+h2 small { font-weight: normal; font-size: 13.5px; }
 .lines-now { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
 .line-card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
 .line-card h3 { margin: 0 0 6px; display: flex; align-items: center; gap: 8px; font-size: 16px; }
@@ -20,11 +20,11 @@ h2 small { font-weight: normal; font-size: 13px; }
 .line-card dt { color: var(--muted); }
 .line-card dd { margin: 0; font-variant-numeric: tabular-nums; }
 .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; }
-.pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 10px; background: var(--soft); color: var(--ink); font-weight: normal; }
+.pill { display: inline-block; font-size: 13.5px; padding: 1px 8px; border-radius: 10px; background: var(--soft); color: var(--ink); font-weight: normal; }
 .pill.warn { background: var(--mc); color: #1c1c1c; }
 .kpis { margin: 16px 0; }
 .kpi .hero { font-size: 22px; }
-.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13.5px; color: var(--muted); margin-bottom: 6px; }
 .legend span { display: inline-flex; align-items: center; gap: 5px; }
 .chart-line { margin-bottom: 10px; }
 .chart-line h3 { margin: 6px 0 2px; font-size: 14px; }
@@ -34,7 +34,7 @@ svg text { fill: var(--muted); font: 11px "Malgun Gothic", "Apple SD Gothic Neo"
 svg .grid { stroke: var(--grid); stroke-width: 1; }
 svg .bar:hover, svg .bar.on { opacity: .8; }
 svg .hit { fill: transparent; cursor: pointer; }
-.load-row { display: grid; grid-template-columns: 48px 1fr 56px; align-items: center; gap: 8px; margin: 6px 0; font-size: 13px; }
+.load-row { display: grid; grid-template-columns: 48px 1fr 56px; align-items: center; gap: 8px; margin: 6px 0; font-size: 13.5px; }
 .load-track { height: 14px; background: var(--soft); border-radius: 0 4px 4px 0; position: relative; }
 .load-fill { height: 100%; background: var(--bar-neutral); border-radius: 0 4px 4px 0; }
 .load-fill.full { background: var(--bar-full); }
@@ -45,13 +45,13 @@ svg .hit { fill: transparent; cursor: pointer; }
 .events li { padding: 8px 0; border-bottom: 1px solid var(--line); }
 .events li:last-child { border-bottom: 0; }
 .events .when { font-weight: bold; }
-.events .why { color: var(--muted); font-size: 13px; margin-top: 3px; }
+.events .why { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
 .bar-cell { position: relative; min-width: 90px; }
 .bar-cell i { position: absolute; left: 0; top: 50%; height: 8px; transform: translateY(-50%); background: var(--bar-neutral); border-radius: 0 3px 3px 0; opacity: .35; }
 .bar-cell span { position: relative; }
-.tip { position: fixed; z-index: 10; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,.15); pointer-events: none; max-width: 280px; }
+.tip { position: fixed; z-index: 10; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 13.5px; box-shadow: 0 4px 16px rgba(0,0,0,.15); pointer-events: none; max-width: 280px; }
 .tip b { display: block; margin-bottom: 3px; }
-.tip table { font-size: 12px; margin-top: 4px; }
+.tip table { font-size: 13.5px; margin-top: 4px; }
 .tip td { border: 0; padding: 1px 6px 1px 0; text-align: left; }
 .tip td.n { text-align: right; }
 body.dash.drag main { outline: 3px dashed var(--brand); outline-offset: 6px; }
@@ -76,14 +76,14 @@ body.dash .top h1 { font-size: 24px; font-weight: 800; }
 .exec .ok { margin: 4px 0 0; font-weight: 700; color: var(--ok); }
 .kpis.big { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 .kpis.big .kpi { padding: 12px 14px; }
-.kpis.big .kpi .kl { display: block; font-size: 13px; font-weight: 700; color: var(--muted); }
+.kpis.big .kpi .kl { display: block; font-size: 13.5px; font-weight: 700; color: var(--muted); }
 .kpis.big .kpi b { font-size: 30px; font-weight: 800; line-height: 1.2; margin: 2px 0; }
-.kpis.big .kpi .ks { display: block; font-size: 12px; color: var(--muted); }
+.kpis.big .kpi .ks { display: block; font-size: 13.5px; color: var(--muted); }
 .kpis.big .kpi.bad b { color: var(--err); }
-.glegend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin: 0 0 8px; }
+.glegend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13.5px; color: var(--muted); margin: 0 0 8px; }
 .glegend span { display: inline-flex; align-items: center; gap: 5px; }
 .gtable-wrap { overflow: auto; max-height: calc(100vh - 110px); -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: 6px; }   /* 표 안에서 세로로도 스크롤 → 날짜 머리줄이 위에 고정 */
-table.gtable { border-collapse: separate; border-spacing: 0; font-size: 12px; font-variant-numeric: tabular-nums; width: 100%; }
+table.gtable { border-collapse: separate; border-spacing: 0; font-size: 13.5px; font-variant-numeric: tabular-nums; width: 100%; }
 .gtable th, .gtable td { border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 4px 3px; text-align: center; white-space: nowrap; min-width: 40px; }
 .gtable thead th { background: var(--soft); font-weight: 700; position: sticky; top: 0; z-index: 2; }
 .gtable thead tr:nth-child(2) th { top: var(--h1, 39px); }                         /* 둘째 머리줄(요일)은 첫 줄 높이만큼 아래에 고정 */
@@ -94,11 +94,11 @@ table.gtable { border-collapse: separate; border-spacing: 0; font-size: 12px; fo
 .gtable thead .c0, .gtable thead .c1 { background: var(--soft); z-index: 4; }
 .gtable th.line { font-size: 15px; font-weight: 800; border-right: 2px solid var(--line); }
 .gtable tr.first > * { border-top: 2px solid var(--ink); }
-.gtable tr.r-fam td { font-weight: 800; font-size: 13px; color: var(--ink); }
-.gtable tr.r-fam .c1 { font-weight: 800; font-size: 13px; }
+.gtable tr.r-fam td { font-weight: 800; font-size: 13.5px; color: var(--ink); }
+.gtable tr.r-fam .c1 { font-weight: 800; font-size: 13.5px; }
 .gtable tr.r-dep td { color: var(--ink); font-weight: 500; }
 .gtable tr.r-dep .c1 { font-weight: 500; color: var(--muted); padding-left: 16px; }
-.gtable tr.r-hrs td, .gtable tr.r-hrs .c1 { color: var(--muted); font-size: 12.5px; background: var(--soft); }
+.gtable tr.r-hrs td, .gtable tr.r-hrs .c1 { color: var(--muted); font-size: 13.5px; background: var(--soft); }
 .gtable td.mc { background: var(--mc); color: #1c1c1c; }
 .gtable tr.r-hrs td.mc { background: var(--mc); }
 .gtable td.down { box-shadow: inset 0 -3px 0 var(--down); }
@@ -110,7 +110,7 @@ table.evt tr.evrow { cursor: pointer; }
 table.evt tr.evrow td:first-child { font-weight: 700; }
 table.evt tr.evrow:hover td, table.evt tr.evrow.open td { background: var(--soft); }
 table.evt tr.sdrow td { background: var(--sd); color: var(--ink); cursor: default; }
-table.evt tr.why-row td { text-align: left; white-space: normal; font-size: 13px; color: var(--muted); background: var(--soft); }
+table.evt tr.why-row td { text-align: left; white-space: normal; font-size: 13.5px; color: var(--muted); background: var(--soft); }
 details.more > summary { list-style: none; cursor: pointer; }
 details.more > summary h2 { display: inline; font-size: 16px; color: var(--brand); }
 details.more > summary::-webkit-details-marker { display: none; }
@@ -122,10 +122,10 @@ details.more[open] > summary::before { content: '▾ '; }
 }
 body.dash .wrap { max-width: 1560px; }
 .gtable th, .gtable td { min-width: 36px; padding: 4px 2px; }
-@media (min-width: 1400px) { table.gtable { font-size: 12.5px; } }
+@media (min-width: 1400px) { table.gtable { font-size: 13.5px; } }
 table.gtable { table-layout: fixed; min-width: 1320px; }
 .gtable col.cc0 { width: 52px; } .gtable col.cc1 { width: 92px; } .gtable col.ctot { width: 64px; }
-.gtable tr.r-fam td { font-size: 12.5px; letter-spacing: -0.4px; }
+.gtable tr.r-fam td { font-size: 13.5px; letter-spacing: -0.4px; }
 .gtable tr.r-dep td { letter-spacing: -0.3px; }
 @media (min-width: 1500px) { table.gtable { min-width: 1400px; } }
 
@@ -142,7 +142,7 @@ table.vs td small { color: var(--muted); font-weight: normal; }
 .report code { background: var(--soft); padding: 0 4px; border-radius: 3px; }
 
 /* 종일 정지 칸: 글자가 칸 밖으로 넘치지 않게 줄바꿈, 하루짜리는 세로쓰기 */
-.gtable td.sdblock { white-space: normal; word-break: keep-all; line-height: 1.35; font-size: 13px; padding: 4px 2px; overflow: hidden; }
-.gtable td.sdblock small { display: block; font-size: 11.5px; font-weight: 600; }
-.gtable td.sdblock.one { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 1px; font-size: 12px; }
+.gtable td.sdblock { white-space: normal; word-break: keep-all; line-height: 1.35; font-size: 13.5px; padding: 4px 2px; overflow: hidden; }
+.gtable td.sdblock small { display: block; font-size: 13.5px; font-weight: 600; }
+.gtable td.sdblock.one { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 1px; font-size: 13.5px; }
 .gtable td.sdblock.one small { display: none; }

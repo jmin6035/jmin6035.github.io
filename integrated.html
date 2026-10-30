@@ -6,8 +6,8 @@
 <title>재고 추이</title>
 <meta name="description" content="컬러·도금·소재 2026년 4분기 통합 일별 가동계획 — 확정 계획과 배정 근거">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/legacy.css?v=2610301529">
-<link rel="stylesheet" href="ui/theme.css?v=2610301529">
+<link rel="stylesheet" href="ui/legacy.css?v=2610301609">
+<link rel="stylesheet" href="ui/theme.css?v=2610301609">
 <style>
 .vcol { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface-2); }
 .vcol.on { border: 2px solid var(--brand); }
@@ -15,7 +15,7 @@
 .vcol ul { margin: 0; padding-left: 18px; } .vcol li { margin: 3px 0; }
 .gantt { overflow-x: auto; padding-bottom: 4px; }
 .grow { display: grid; grid-template-columns: 54px repeat(var(--n), minmax(14px, 1fr)); align-items: end; gap: 0 2px; min-width: calc(54px + var(--n) * 16px); }
-.grow .ln { font-size: 12px; font-weight: 700; color: var(--ink-2); align-self: stretch; display: flex; align-items: center; position: sticky; left: 0; background: var(--surface); z-index: 2; }
+.grow .ln { font-size: 13.5px; font-weight: 700; color: var(--ink-2); align-self: stretch; display: flex; align-items: center; position: sticky; left: 0; background: var(--surface); z-index: 2; }
 .day { height: 64px; display: flex; flex-direction: column-reverse; cursor: pointer; border-radius: 3px; position: relative; background: var(--surface-2); }
 .day:hover, .day.sel { outline: 2px solid var(--ink); outline-offset: 1px; }
 .day i { display: block; width: 100%; }
@@ -44,7 +44,7 @@ table.heat td.nm, table.calt td.nm { font-weight: 700; white-space: nowrap; }
 .h-over { background: color-mix(in srgb, var(--ink-3) 22%, transparent); }
 .legend i.box.h-ok, .legend i.box.h-warn, .legend i.box.h-bad, .legend i.box.h-over { border: 1px solid var(--line); }
 tr.sep td { border-top: 2px solid var(--line); }
-table.calt { font-size: 12px; }
+table.calt { font-size: 13.5px; }
 table.calt th, table.calt td { padding: 4px 2px; min-width: 34px; text-align: center; }
 table.calt th.we { color: var(--down); }
 table.calt .stick { position: sticky; left: 0; background: var(--surface); z-index: 2; min-width: 64px; text-align: left; padding-left: 6px; }
@@ -53,25 +53,25 @@ table.calt td.cell.act { background: var(--surface-2); color: var(--ink-3); }
 table.calt td.mc { box-shadow: inset 0 0 0 2px var(--ink); }
 table.calt td.off { color: var(--ink-3); cursor: pointer; }
 table.calt td.sd { background: repeating-linear-gradient(45deg, var(--surface-2) 0 3px, var(--line) 3px 6px); color: var(--ink-2); }
-table.calt td.camp { background: color-mix(in srgb, var(--c) 55%, var(--surface)); color: var(--ink); font-weight: 700; font-size: 11px; border-left: 2px solid var(--surface); }
+table.calt td.camp { background: color-mix(in srgb, var(--c) 55%, var(--surface)); color: var(--ink); font-weight: 700; font-size: 13.5px; border-left: 2px solid var(--surface); }
 table.calt td.sum { font-weight: 700; }
 table.calt td.selc { outline: 2px solid var(--ink); outline-offset: -2px; }
 table.rules td.wrap, table.sum td.wrap { white-space: normal; }
-.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; font-size: 13px; }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; font-size: 13.5px; }
 .flow span { border: 1px solid var(--line); background: var(--surface-2); border-radius: 6px; padding: 5px 9px; }
 .flow i { color: var(--ink-3); font-style: normal; }
 /* 재고 추이: 상태 타일 · 작은 그래프 */
-.st-sec { margin: 18px 0 10px; font-size: 16px; color: var(--ink); } .st-sec small { font-size: 13px; color: var(--ink-3); font-weight: 500; margin-left: 6px; }
+.st-sec { margin: 18px 0 10px; font-size: 16px; color: var(--ink); } .st-sec small { font-size: 13.5px; color: var(--ink-3); font-weight: 500; margin-left: 6px; }
 .st-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
 .st-tile { border: 1px solid var(--line); border-top: 4px solid var(--good); border-radius: 10px; padding: 12px 14px; background: var(--surface); }
 .st-tile.st-warn { border-top-color: var(--warn); } .st-tile.st-bad { border-top-color: var(--bad); background: var(--bad-bg); } .st-tile.st-over { border-top-color: var(--ink-3); }
 .st-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 15px; }
-.st-b { font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--good-bg); color: var(--good); white-space: nowrap; }
+.st-b { font-size: 13.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--good-bg); color: var(--good); white-space: nowrap; }
 .st-warn .st-b { background: var(--warn-bg); color: var(--warn); } .st-bad .st-b { background: var(--bad); color: #fff; } .st-over .st-b { background: var(--surface-2); color: var(--ink-2); }
 .st-v { font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin: 6px 0 2px; font-variant-numeric: tabular-nums; } .st-v small { font-size: 14px; color: var(--ink-3); margin-left: 2px; }
-.st-s { font-size: 13px; color: var(--ink-2); } .st-s small { color: var(--ink-3); }
-.st-w { margin-top: 6px; font-size: 12.5px; font-weight: 700; color: var(--warn); } .st-w.st-bad { color: var(--bad); } .st-w.ok { color: var(--good); font-weight: 600; }
-#st-tip { position: fixed; z-index: 50; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.14); padding: 6px 10px; font-size: 12.5px; line-height: 1.55; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.st-s { font-size: 13.5px; color: var(--ink-2); } .st-s small { color: var(--ink-3); }
+.st-w { margin-top: 6px; font-size: 13.5px; font-weight: 700; color: var(--warn); } .st-w.st-bad { color: var(--bad); } .st-w.ok { color: var(--good); font-weight: 600; }
+#st-tip { position: fixed; z-index: 50; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.14); padding: 6px 10px; font-size: 13.5px; line-height: 1.55; white-space: nowrap; font-variant-numeric: tabular-nums; }
 #st-tip i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
 .st-chart svg { cursor: crosshair; }
 .st-chart { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 4px; } .st-chart h3 { margin: 0 0 4px; font-size: 15px; }
@@ -93,8 +93,8 @@ table.rules td.wrap, table.sum td.wrap { white-space: normal; }
   </section>
 </main>
 <footer class="foot"><div class="wrap"><span>계산 순서: 월 물량(그룹별) → 컬러 일별 → 도금 일별(최적화) → 자가재·소재. 기초재고 = 9월말 재고현황, 과거 일자는 실적.</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2610301529"></script>
-<script src="engine/crypto.js?v=2610301529"></script>
-<script src="integrated.js?v=2610301529"></script>
+<script src="ui/shell.js?v=2610301609"></script>
+<script src="engine/crypto.js?v=2610301609"></script>
+<script src="integrated.js?v=2610301609"></script>
 </body>
 </html>

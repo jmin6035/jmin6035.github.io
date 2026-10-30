@@ -189,7 +189,9 @@
         + pts.map(([lb, v]) => { const r = v / mx, t = toneK(r); return `<div class="fs-col ${t}" title="${nm} ${lb} ${n0(v)}t · 월말 최대의 ${Math.round(r * 100)}%"><div class="fs-bar" style="height:${Math.max(0, v) / top * 100}%"><b>${(v / 1000).toFixed(1)}천</b></div><span>${lb}</span></div>`; }).join('') + '</div></div>');
     }
     const now = pl.now || {};
-    const due = UI.inScope('G') ? `<p class="fp-due ${now.short ? 'bad' : now.late ? 'warn' : 'good'}">도금 납기 — 결품 <b>${n0(now.short || 0)}t</b> · 지연 <b>${n0(now.late || 0)}톤·일</b>${(now.shortBy || []).length ? ` · 결품: ${now.shortBy.map(esc).join(', ')}` : ''}</p>` : '';
+    const due = !UI.inScope('G') ? '' : now.fillShort != null
+      ? `<p class="fp-due ${now.orderShort ? 'bad' : now.orderLateT ? 'warn' : 'good'}" title="${esc((now.shortBy || []).join(', '))}">도금 납기 — 주문 결품 <b>${n0(now.orderShort)}t</b> · 늦는 주문 <b>${n0(now.orderLateT)}t</b> · 판매계획 보충 미편성 ${n0(now.fillShort)}t</p>`
+      : `<p class="fp-due ${now.short ? 'bad' : now.late ? 'warn' : 'good'}" title="${esc((now.shortBy || []).join(', '))}">도금 납기 — 결품 <b>${n0(now.short || 0)}t</b> · 지연 <b>${n0(now.late || 0)}톤·일</b></p>`;
     if (!prod.length && !stk.length) return '';
     return `<h2>월말·4분기 전망 <small>생산 = 이번 달 실적 + 남은 계획(막대 = 예상, 세로선 = 계획) · 재고 = 어제 실제에서 계획대로 굴린 월말 값</small></h2>
       <div class="fp-wrap"><div class="fp-l">${prod.map(pbar).join('')}</div><div class="fp-rgt">${stk.join('')}</div></div>${due}`;
