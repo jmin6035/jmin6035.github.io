@@ -73,7 +73,8 @@
   GP.planDays = (P, H, O) => (O && O.t0 ? GP.dateRange(O.t0, H.D1) : H.days);
   function xAllowed(P, b, l, d, O) {
     if (GP.isBlackout(P, l, d)) return false;
-    if (d > b.due) return !!(O && O.allowLate) && GP.diffDays(d, b.due) <= (O.maxLate || 14);
+    if (b.rel && d < b.rel) return false;                    // 주문 소재 입고 + 투입 전에는 못 만듦(tools/order_demand, 10/30)
+    if (d > b.due) return !!(O && O.allowLate) && GP.diffDays(d, b.due) <= (b.maxLate || O.maxLate || 14);
     return P.releaseExempt.includes(b.cls) || GP.diffDays(b.due, d) <= P.releaseDays;
   }
   GP.runMILP = function (highs, buckets, P, log, O = {}) {
@@ -172,8 +173,9 @@
 
     const MC = Object.values(s).map((v) => [1, v]);
     const INV = x.map((e) => [Math.max(0, GP.diffDays(e.b.due, e.d)), e.v]);
-    const LATE = x.filter((e) => e.d > e.b.due).map((e) => [GP.diffDays(e.d, e.b.due), e.v]);
-    const SHORT = Object.values(short).map((v) => [1, v]);
+    const LATE = x.filter((e) => e.d > e.b.due).map((e) => [GP.diffDays(e.d, e.b.due) * (e.b.lateK || 1), e.v]);
+    const BK = new Map(buckets.map((b) => [b.id, b]));
+    const SHORT = Object.entries(short).map(([id, v]) => [BK.get(+id).shortK || 1, v]);   // shortK: 주문 없는 판매계획 보충(tools/order_demand)은 주문보다 먼저 결품
     const SR = Object.entries(sr).map(([k, v]) => { const l = RST[k].line; return [Math.round(1000 * (RSF[l] - RSS[l]) / FS[l]) / 1000, v]; });
     log && log(`MILP 모델: 변수 ${lp.n} (이진 ${lp.bins.length}), 제약 ${lp.cons.length}${O.t0 ? ` — 재계획 ${GP.md(prodDays[0])}~` : ''}`);
 
@@ -185,7 +187,7 @@
     const r1 = solve(highs, lp.text(obj1), { time_limit: P.timeLimit1, mip_rel_gap: 0 }, log, O.t0 ? '1단계(지연→M/C 최소)' : '1단계(M/C 최소)');
     const K = Math.round(GP.sum(MC, ([, v]) => r1.val(v)));
     const srFix = Object.fromEntries(Object.entries(sr).map(([k, v]) => [k, Math.round(r1.val(v))]));
-    const late1 = GP.sum(LATE, ([c, v]) => c * r1.val(v)), short1 = GP.sum(SHORT, ([, v]) => r1.val(v));
+    const late1 = GP.sum(LATE, ([c, v]) => c * r1.val(v)), short1 = GP.sum(SHORT, ([c, v]) => c * r1.val(v));
     // 2단계: M/C ≤ K, 재가동 판단·지연·결품 고정, 선생산(톤·일) 최소. gapRel 0 — 허용오차를 두면 PC마다 다른 해가 나옴
     const extra = [[MC, '<=', K + 1e-6]].concat(Object.entries(sr).map(([k, v]) => [[[1, v]], '<=', srFix[k] + 1e-6]));
     // 1단계 지연·결품 수준 유지(수치 오차 0.5톤·일/0.5t 허용 — 창 고정 시 1단계 해가 반드시 들어오도록)
@@ -193,7 +195,7 @@
     if (SHORT.length) extra.push([SHORT, '<=', short1 * (1 + 1e-6) + 0.5]);
     // 허용오차(0.5)를 선생산 절감에 쓰지 못하도록 지연·결품에 큰 벌점(톤·일당 1,000 / 톤당 100만)
     const obj2 = INV.concat(Object.values(sr).map((v) => [P.restartPenalty, v])).concat(STAB.map((v) => [-(O.stabW2 || 0), v]))
-      .concat(LATE.map(([c, v]) => [1000 * c, v])).concat(SHORT.map(([, v]) => [1e6, v]));
+      .concat(LATE.map(([c, v]) => [1000 * c, v])).concat(SHORT.map(([c, v]) => [1e6 * c, v]));
     let r2;
     const stateOf = (r) => { const st = {}; for (const l of L) for (const d of days) st[`${l}|${d}`] = LF[l].find((f) => r.val(z[`${l}|${f}|${d}`]) > 0.5); return st; };
     if ((P.phase2Mode || 'fast') === 'fast') {
@@ -282,9 +284,10 @@
       lp.con(u.concat([[1, U[l]]]), '>=', c);
     }
     const INV = x.map((e) => [Math.max(0, GP.diffDays(e.b.due, e.d)), e.v]);
-    const LATE = x.filter((e) => e.d > e.b.due).map((e) => [GP.diffDays(e.d, e.b.due), e.v]);
-    const SHORT = Object.values(short).map((v) => [1, v]);
-    const pen = LATE.map(([c, v]) => [1e4 * c, v]).concat(SHORT.map(([, v]) => [1e7, v]));
+    const LATE = x.filter((e) => e.d > e.b.due).map((e) => [GP.diffDays(e.d, e.b.due) * (e.b.lateK || 1), e.v]);
+    const BK = new Map(buckets.map((b) => [b.id, b]));
+    const SHORT = Object.entries(short).map(([id, v]) => [BK.get(+id).shortK || 1, v]);   // shortK: 주문 없는 판매계획 보충(tools/order_demand)은 주문보다 먼저 결품
+    const pen = LATE.map(([c, v]) => [1e4 * c, v]).concat(SHORT.map(([c, v]) => [1e7 * c, v]));
     const a = solve(highs, lp.text(L.map((l) => [1, U[l]]).concat(pen)), {}, log, '평준화 1(최대 여유 최소)');
     const extra = L.map((l) => [[[1, U[l]]], '<=', a.val(U[l]) + 1.0]);
     const b2 = solve(highs, lp.text(INV.concat(pen), extra), {}, log, '평준화 2(선생산 최소)');
