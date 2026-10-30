@@ -269,7 +269,7 @@
     try {
       const env = await makeEnvelope();
       download(new Blob([JSON.stringify(env)], { type: 'application/json' }), 'latest.plan.enc.json');
-      $('pub-msg').textContent = '받은 파일을 GitHub 저장소 gadong-plan-web의 published 폴더에 올리면(Add file → Upload files) 1~2분 뒤 모두에게 보입니다.';
+      $('pub-msg').textContent = '받은 파일을 GitHub 저장소 jmin6035.github.io의 published 폴더에 올리면(Add file → Upload files) 1~2분 뒤 모두에게 보입니다.';
     } catch (e) { $('pub-msg').textContent = '⚠ ' + e.message; }
   };
   const PUB_KEY = 'cgl-plan-publish-v1';

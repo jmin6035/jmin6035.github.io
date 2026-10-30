@@ -128,7 +128,7 @@
     for (const [env, name] of [[a, 'integrated.enc.json'], [b, 'color_prev.enc.json']]) {
       const el = document.createElement('a'); el.href = URL.createObjectURL(new Blob([JSON.stringify(env)], { type: 'application/json' })); el.download = name; el.click();
     }
-    $('p-msg').textContent = '받은 두 파일을 GitHub 저장소 gadong-plan-web 의 published 폴더에 올리면(Add file → Upload files) 1~2분 뒤 반영됩니다.';
+    $('p-msg').textContent = '받은 두 파일을 GitHub 저장소 jmin6035.github.io 의 published 폴더에 올리면(Add file → Upload files) 1~2분 뒤 반영됩니다.';
   };
   $('p-go').onclick = async () => {
     if (!result) return;
