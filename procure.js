@@ -5,6 +5,21 @@
   'use strict';
   const $ = (id) => document.getElementById(id);
   const PW_KEY = 'cgl-analysis-pw', ST_KEY = 'cgl-procure-v0';
+  // 공유(10/31): Supabase cgl_procure_state = 분석 암호로 잠근 상태 스냅샷을 추가만, 최신 행이 현재 공유 상태(결정 기록과 같은 방식, 옛 ui/share.js 대체)
+  const SHR = GP.SUPABASE_URL + '/rest/v1/cgl_procure_state', SHK = 'sb_publishable_BlfAhxz_v3yg6iJw_nbRaA_YMFAOS7K';   // 공개용 키(표 권한 = 읽기·추가만)
+  const SHH = { apikey: SHK, Authorization: 'Bearer ' + SHK, 'Content-Type': 'application/json' };
+  const sharePw = () => { try { return localStorage.getItem(PW_KEY) || ''; } catch (e) { return ''; } };
+  async function sharePush(o) {
+    const env = await GP.encryptJSON(o, sharePw(), 'procure_state');
+    const r = await fetch(SHR, { method: 'POST', headers: SHH, body: JSON.stringify({ payload: JSON.stringify(env) }) });
+    if (!r.ok) throw new Error('올리기 실패 ' + r.status);
+  }
+  async function sharePull() {
+    const r = await fetch(SHR + '?select=payload&order=id.desc&limit=1', { headers: SHH });
+    if (!r.ok) throw new Error('받기 실패 ' + r.status);
+    const x = (await r.json())[0];
+    return x ? GP.decryptJSON(JSON.parse(x.payload), sharePw()) : null;
+  }
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const n0 = (v) => (v == null || isNaN(v) ? '-' : Math.round(v).toLocaleString('ko-KR'));
   const md = (s) => { const p = String(s).slice(5, 10).split('-'); return `${+p[0]}/${+p[1]}`; };
@@ -148,8 +163,8 @@
       <li><b>확인 필요</b> 리드타임 기준(주문일시) · 업체별 마감·최소량 · AL-STS 소재 코드 · 이름 없는 업체 코드(V3·YB·YF)</li></ul>
       <div class="bar"><label class="small">기준일 <input type="date" id="p-today" value="${S.today}"></label><label class="small">입고 → 컬러 투입 <input type="number" id="p-safetyC" value="${S.safetyC}" min="0" max="30" style="width:56px">일</label><label class="small">입고 → 도금 투입 <input type="number" id="p-safetyG" value="${S.safetyG}" min="0" max="30" style="width:56px">일</label>
       <button type="button" class="btn" id="p-dl">설정·판단 내보내기(.json)</button><label class="btn">설정 가져오기<input type="file" accept=".json" id="p-ul" hidden></label><button type="button" class="btn" id="p-resetall">모두 초기화</button></div>
-      <h3>공유(서버)</h3><div class="bar"><button type="button" class="btn primary" id="p-push" ${window.SHARE && SHARE.on() ? '' : 'disabled'}>서버에 올리기</button><button type="button" class="btn" id="p-pull" ${window.SHARE && SHARE.on() ? '' : 'disabled'}>서버에서 받기</button><span class="small">${window.SHARE && SHARE.on() ? '업체·입고예정·주문재·판단 공유 · 올린 사람·시각 기록' : '공유 저장소 꺼짐 — .json 내보내기/가져오기 사용'}</span></div>
-      <p class="small">저장 = 이 브라우저 · 공유 = 내보낸 파일 전달 · 계산 ${String(D.built).replace('T', ' ')}</p>`);
+      <h3>공유</h3><div class="bar"><button type="button" class="btn primary" id="p-push">모두에게 올리기</button><button type="button" class="btn" id="p-pull">올라간 상태 받기</button><span class="small">업체·입고예정·주문재·판단 · 분석 암호로 잠가 저장 · 올린 사람·시각 기록</span></div>
+      <p class="small">저장 = 이 브라우저 · 계산 ${String(D.built).replace('T', ' ')}</p>`);
   }
 
   // F/H 납기 비교 3차(2026-10-21 사용자: 더 직관적으로) — "발주하고 며칠 뒤에 들어오나" 한 줄: 실제 입고 · TF 기준 · 인도납기 세 날을 같은 축에
@@ -352,8 +367,8 @@
     if (t.id === 'p-export') { exportReq(); return; }
     if (t.id === 'p-supreset' && confirm('업체 기준정보를 처음 값으로 되돌릴까요?')) { S.sup = defaults().sup; save(); render(); return; }
     if (t.id === 'p-resetall' && confirm('모든 설정·입고예정·주문재·판단을 지울까요?')) { S = defaults(); save(); render(); return; }
-    if (t.id === 'p-push') { const by = (() => { try { return localStorage.getItem('cgl-me') || ''; } catch (x) { return ''; } })(); SHARE.put('procure_state', { id: 'main', state: S, by }).then(() => UI.toast('서버에 올림')).catch((x) => alert(x.message)); return; }
-    if (t.id === 'p-pull') { SHARE.get('procure_state', 'main').then((r) => { if (!r) { alert('서버에 올라간 상태가 없습니다'); return; } if (!confirm(`${String(r.at).slice(0, 16).replace('T', ' ')} ${r.by || ''} 이 올린 상태로 바꿀까요? (이 브라우저 입력은 덮어씀)`)) return; S = { ...defaults(), ...r.state, today: D.today }; save(); render(); UI.toast('서버 상태로 바꿈'); }).catch((x) => alert(x.message)); return; }
+    if (t.id === 'p-push') { const by = (() => { try { return localStorage.getItem('cgl-me') || ''; } catch (x) { return ''; } })(); sharePush({ state: S, by, at: new Date().toISOString() }).then(() => UI.toast('모두에게 올림')).catch((x) => alert(x.message)); return; }
+    if (t.id === 'p-pull') { sharePull().then((r) => { if (!r) { alert('올라간 상태가 없습니다'); return; } if (!confirm(`${String(r.at).slice(0, 16).replace('T', ' ')} ${r.by || ''} 이 올린 상태로 바꿀까요? (이 브라우저 입력은 덮어씀)`)) return; S = { ...defaults(), ...r.state, today: D.today }; save(); render(); UI.toast('올라간 상태로 바꿈'); }).catch((x) => alert(x.message)); return; }
     if (t.id === 'p-dl') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' })); a.download = `소재조달_설정_${S.today}.json`; a.click(); }
   });
   document.addEventListener('change', (e) => {

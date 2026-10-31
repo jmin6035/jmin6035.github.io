@@ -539,7 +539,7 @@ table.gtable tbody tr { animation-duration: .3s; }
 :root {
   --side-w: 256px;
   --bg: #f3f5f8; --surface: #ffffff; --line: #e1e6ed; --grid: #edf0f4; --zebra: #fafbfc; --hover: #f2f6fc;
-  --ink: #101828; --ink-2: #475467; --ink-3: #667085;
+  --ink: #101828; --ink-2: #475467; --ink-3: #5d6676;
   --th: #f5f7fa; --th-ink: #344054;
   --brand: #0a2d5c; --brand-2: #1d5fd1; --brand-3: #22b8e8;
   --side-bg: #0b1d38; --side-ink: #c4cfdd; --side-ink-2: #8a9ab0; --side-hi: rgba(255,255,255,.08); --side-line: rgba(255,255,255,.08);
@@ -977,7 +977,7 @@ table.vs3 td.s { background: var(--surface-2); border-left: 1px solid var(--grid
 table.vs3.dep th.ln { border-right: 0; }
 .vs3-h { font-size: 14px; margin: 0 0 6px; color: var(--ink-2); }
 /* 오늘 머리칸: 진한 파랑 채움 대신 옅은 파랑 + 파란 글자(10/21 사용자: 당일 칸 진한 파랑) — 모든 캘린더 공통 */
-html body main :is(table.gtable, table.sc, #s-cal, #s-ship) thead th.today { background: color-mix(in srgb, var(--brand-2) 16%, var(--surface)) !important; color: var(--brand-2) !important; font-weight: 900; box-shadow: inset 0 -2px 0 var(--brand-2) !important; }
+html body main :is(table.gtable, table.sc, #s-cal, #s-ship) thead th.today { background: color-mix(in srgb, var(--brand-2) 16%, var(--surface)) !important; color: var(--brand) !important; font-weight: 900; box-shadow: inset 0 -2px 0 var(--brand-2) !important; }
 /* 계획 대비 실적(도금 가동 현황): 표를 카드 폭에 꽉 채움 — 날짜 칸 같은 폭(10/21 사용자: 칸이 애매) */
 html body main table.vs3 { width: 100%; table-layout: fixed; }
 html body main table.vs3 th, html body main table.vs3 td { font-size: 15px; padding: 9px 10px; }
