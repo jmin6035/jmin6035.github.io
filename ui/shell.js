@@ -10,6 +10,22 @@
     '|계획 계산', ['rolling', 'rolling.html', '도금 계획 계산'], ['colorcalc', 'color_calc.html', '컬러 계획 계산'], '|',
     ['decisions', 'decisions.html', '결정 기록'], ['rules', 'rules.html', '계획 규칙'], ['health', 'health.html', '자료 상태'], ['docs', 'docs.html', '문서'],
   ];
+  /* 공개 화면 제한(11/2 사용자 'IT 보안 검토 동안 가동 캘린더·소재 캘린더·재고 추이만 남기고 나머지 숨김').
+     되돌리려면 SHOW = null. 목록에 없는 화면을 직접 열면 가동 캘린더로 보내고, 남긴 화면 안의 다른 화면 링크는 글자만 남김 */
+  const SHOW = ['supply', 'matcal', 'integrated'];
+  const SHOWF = SHOW && NAV.filter((x) => typeof x !== 'string' && SHOW.includes(x[0])).map((x) => x[1]);
+  const HOME = SHOWF ? SHOWF[0] : 'index.html';
+  if (SHOWF) {
+    const file = (location.pathname.split('/').pop() || 'index.html');
+    if (!SHOWF.includes(file)) { document.documentElement.style.visibility = 'hidden'; location.replace(HOME); return; }
+    NAV.splice(0, NAV.length, ...NAV.filter((x) => typeof x !== 'string' && SHOW.includes(x[0])));
+    const strip = (root) => (root.querySelectorAll ? root.querySelectorAll('a[href]') : []).forEach((a) => {
+      const f = (a.getAttribute('href') || '').split(/[?#]/)[0].split('/').pop();
+      if (/\.html$/.test(f) && !SHOWF.includes(f)) { a.removeAttribute('href'); a.classList.add('nolink'); }
+    });
+    const stripGo = () => { strip(document); new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) { strip(n.parentNode || n); } }))).observe(document.body, { childList: true, subtree: true }); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', stripGo); else stripGo();
+  }
   const TKEY = 'cgl-theme', SKEY = 'cgl-scope', NKEY = 'cgl-nav-open';
   const ONLY = { status: 'G', analysis: 'G', rolling: 'G', platact: 'G', coloract: 'C', planstock: 'C', wo: 'C', colorstat: 'C', coloranal: 'C', colorcalc: 'C' };     // 도금 자료만 있는 화면
   const SCN = { all: '전체', G: '도금', C: '컬러' };
@@ -78,7 +94,7 @@
     const d = h.dataset, esc = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     // 메뉴: '경영 보고'(오너용 5개)는 늘 펼침, 나머지 실무 묶음은 접어 두고 머리글을 누르면 펼침(지금 화면이 든 묶음은 자동으로 펼침, 펼친 상태 기억)
     let open0 = []; try { open0 = JSON.parse(localStorage.getItem(NKEY) || '[]'); } catch (e) { /* 무시 */ }
-    const secs = []; let cur = { g: '경영 보고', items: [] }; secs.push(cur);
+    const secs = []; let cur = { g: SHOWF ? '가동계획' : '경영 보고', items: [] }; secs.push(cur);
     NAV.forEach((x) => { if (typeof x === 'string') { cur = { g: x.slice(1) || '관리', items: [] }; secs.push(cur); } else cur.items.push(x); });
     const link = (x) => { const on = x[0] === d.page || (x[0] === 'docs' && DOCS.includes(d.page));
       return `<a href="${x[1]}"${on ? ' aria-current="page"' : ''}${ONLY[x[0]] ? ` data-only="${ONLY[x[0]]}"` : ''}>${icon(x[0])}<span>${x[2]}</span></a>`; };
@@ -89,9 +105,9 @@
     }).join('');
     const TH = { auto: '자동', light: '밝게', dark: '어둡게' };
     h.className = 'shell-top';
-    h.innerHTML = `<div class="topbar noprint"><button type="button" class="hamb" aria-label="메뉴 열기" aria-expanded="false"><i></i><i></i><i></i></button><a class="brand" href="index.html">${MARK}<span class="bt"><b>POSCO STEELEON</b><small>도금·컬러 가동계획</small></span></a><a class="fresh" id="ui-fresh-m" href="health.html" hidden></a></div>
+    h.innerHTML = `<div class="topbar noprint"><button type="button" class="hamb" aria-label="메뉴 열기" aria-expanded="false"><i></i><i></i><i></i></button><a class="brand" href="${HOME}">${MARK}<span class="bt"><b>POSCO STEELEON</b><small>도금·컬러 가동계획</small></span></a><a class="fresh" id="ui-fresh-m" href="health.html" hidden></a></div>
       <aside class="side" aria-label="메뉴">
-        <a class="brand" href="index.html">${MARK}<span class="bt"><b>POSCO STEELEON</b><small>도금·컬러 가동계획</small></span></a>
+        <a class="brand" href="${HOME}">${MARK}<span class="bt"><b>POSCO STEELEON</b><small>도금·컬러 가동계획</small></span></a>
         <nav class="shell-nav">${nav}</nav>
         <div class="side-foot noprint">
           <div class="scope"><span>보기</span><div class="scope-seg" role="group" aria-label="공정 보기">${Object.entries(SCN).map(([k, n]) => `<button type="button" data-sc="${k}" aria-pressed="${k === scope}">${n}</button>`).join('')}</div></div>

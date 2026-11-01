@@ -1001,3 +1001,6 @@ html body main table.gt.nd .sk { border-left: 2px solid var(--line); }
 .hint-fold .fold-x { display: none; }
 .hint-fold.open .fold-x { display: block; margin-top: 4px; }
 .hint-fold.open .fold-b u { display: none; }
+
+/* 공개 화면 제한(11/2): 숨긴 화면으로 가는 링크는 글자만 */
+a.nolink{color:inherit;text-decoration:none;cursor:default;pointer-events:none}
