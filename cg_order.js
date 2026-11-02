@@ -119,15 +119,12 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     const R = [['합계', sm(byG.flatMap(([, v]) => v))], ...byG.map(([g, v]) => [g, sm(v)])], mx = Math.max(1, ...R.map(([, s]) => s.o));
     const P = (v) => (100 * v / mx).toFixed(2) + '%';
     const gs = (g) => ({ 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차강판', 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발' }[g] || g);
-    const bar = ([g, s], i) => `<div class="gb${i === 0 ? ' gbt' : ''}" title="${esc(g)} · 주문 ${n0(s.o)}t = 생산 완료 ${n0(s.p)} + 소재 있음 ${n0(s.h)} + 미입고 ${n0(s.r)} · ${s.n}건">`
-      + `<span class="gbn">${esc(gs(g))}</span><span class="gbr"><i class="a" style="width:${P(s.p)}"></i><i class="m" style="width:${P(s.h)}"></i><i class="b" style="width:${P(s.r)}"></i></span>`
-      + `<span class="gbv"><b>${n0(s.o)}</b>t</span></div>`;
-    const tr = ([g, s], i) => `<tr${i === 0 ? ' class="tot"' : ''}><td><b>${esc(gs(g))}</b></td><td class="num">${n0(s.n)}</td><td class="num">${n0(s.p)} <small class="sub">${s.o ? Math.round(100 * s.p / s.o) : 0}%</small></td>`
-      + `<td class="num">${n0(s.h)}</td><td class="num">${n0(s.r)}</td><td class="num ${s.late ? 'bad' : ''}">${s.late || '-'}</td><td class="num ${s.hurry ? 'warn' : ''}">${s.hurry || '-'}</td><td class="num">${s.chk || '-'}</td></tr>`;
+    const tr = ([g, s], i) => `<tr${i === 0 ? ' class="tot"' : ''}><td>${i ? `<a href="#og-${i - 1}"><b>${esc(gs(g))}</b></a>` : `<b>${esc(gs(g))}</b>`}</td><td class="num">${n0(s.n)}</td>`
+      + `<td class="gbcell"><div class="gb" title="${esc(g)} · 주문 ${n0(s.o)}t = 생산 완료 ${n0(s.p)} + 소재 있음 ${n0(s.h)} + 미입고 ${n0(s.r)}"><span class="gbr"><i class="a" style="width:${P(s.p)}"></i><i class="m" style="width:${P(s.h)}"></i><i class="b" style="width:${P(s.r)}"></i></span><span class="gbv"><b>${n0(s.o)}</b>t</span></div></td>`
+      + `<td class="num">${n0(s.p)} <small class="sub">${s.o ? Math.round(100 * s.p / s.o) : 0}%</small></td><td class="num">${n0(s.h)}</td><td class="num">${n0(s.r)}</td><td class="num ${s.late ? 'bad' : ''}">${s.late || '-'}</td><td class="num ${s.hurry ? 'warn' : ''}">${s.hurry || '-'}</td><td class="num">${s.chk || '-'}</td></tr>`;
     return '<div class="gcard"><div class="gbl"><span><i class="a"></i>생산 완료</span><span><i class="m"></i>소재 있음(생산 전)</span><span><i class="b"></i>미입고(포스코 진행·미발주)</span><span class="sub">주문 톤</span></div>'
-      + `<div class="gbs">${R.map(bar).join('')}</div>`
-      + '<div class="scroll"><table class="t gtab"><thead><tr><th>그룹</th><th>건</th><th>생산 완료</th><th>소재 있음</th><th>미입고</th><th title="필요 입고일보다 소재가 늦음">소재 지연</th><th title="필요 입고 3주 안인데 아직 열연 이전">포스코 독촉</th><th title="인도기한 지났는데 입고 기록 없음">입고 확인</th></tr></thead>'
-      + `<tbody>${[...R.slice(1), R[0]].map((x, i, a) => tr(x, i === a.length - 1 ? 0 : 1)).join('')}</tbody></table></div>${perfLine(gs)}</div>`;
+      + '<div class="scroll"><table class="t gtab"><thead><tr><th>그룹</th><th>건</th><th>주문 톤</th><th>생산 완료</th><th>소재 있음</th><th>미입고</th><th title="필요 입고일보다 소재가 늦음">소재 지연</th><th title="필요 입고 3주 안인데 아직 열연 이전">포스코 독촉</th><th title="인도기한 지났는데 입고 기록 없음">입고 확인</th></tr></thead>'
+      + `<tbody>${R.map((x, i) => tr(x, i)).join('')}</tbody></table></div>${perfLine(gs)}</div>`;
   }
   function sub(name, L) {
     const S = sumOf(L);
@@ -192,7 +189,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
       + `<select id="od-ex" aria-label="내수·수출"><option value="">내수·수출</option><option value="E"${ex === 'E' ? ' selected' : ''}>수출</option><option value="D"${ex === 'D' ? ' selected' : ''}>내수</option></select>`
       + `<input id="od-q" placeholder="계약번호·고객사·담당자·목적지 찾기" value="${esc(q)}"><span class="cnt">${n0(S.n)}건 · 미입고 ${n0(S.rem)}t</span>`
       + '<button type="button" class="lnk" id="od-open">모두 펼치기</button><button type="button" class="lnk" id="od-close">모두 접기</button></div>'
-      + (byG.length ? `<nav class="og-sum">${byG.map(([g, v], gi) => { const s = sumOf(v); return `<a href="#og-${gi}" class="og-chip"><b>${esc(g)}</b> ${n0(s.n)}건${s.late ? ` · <span class="bad">지연 ${s.late}</span>` : ''}${s.hurry ? ` · <span class="warn">독촉 ${s.hurry}</span>` : ''}${s.chk ? ` · <span class="warn">입고 확인 ${s.chk}</span>` : ''}</a>`; }).join('')}</nav>` : '<p class="od-note">해당 계약이 없습니다.</p>')
+      + (byG.length ? '' : '<p class="od-note">해당 계약이 없습니다.</p>')   // 그룹 칩(건·지연·독촉·입고 확인) = 아래 그룹 표와 같은 숫자 → 표의 그룹 이름을 눌러 이동
       + grpChart(byG) + byG.map(([g, v], gi) => group(g, v, gi)).join('') + '</section>';
     $('od-kpi').querySelectorAll('button').forEach((b) => b.onclick = () => { flt = b.dataset.f; render(); });
     $('od-by').querySelectorAll('button').forEach((b) => b.onclick = () => { by = b.dataset.b; try { localStorage.setItem(BY_KEY, by); } catch (e) { /* 무시 */ } render(); });

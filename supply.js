@@ -726,25 +726,26 @@
     const mesShip = (g) => (SDp && SDp.g && SDp.g[g] ? Object.entries(SDp.g[g]).filter(([d]) => d.slice(0, 7) === m0).reduce((a, [, v]) => a + v, 0) : null);
     const gl = (pl, kind) => G.filter((g) => g.pl === pl && g[kind] && g.key !== 'G자가재').map((g) => { const x = g[kind], ac = kind === 'ship' && mesShip(g.key) != null ? mesShip(g.key) : x.actual; return `<span>${esc(g.name)} <b>${n0(ac)}</b>/${n0(x.month)}</span>`; }).join('');
     const shipAct = (keys, fb) => { const v = keys.map(mesShip); return v.every((x) => x == null) ? fb : v.reduce((a, x) => a + (x || 0), 0); };
-    const out = [];
+    const out = [], PC = {};
     if (UI.inScope('G')) {
       const l = L.filter((x) => x.pl === 'G'), s_ = shp(['도금판매', '도금수출', '자동차강판']);
-      out.push(card('G', 'prod', '도금 생산 (1·2CGL)', sum(l, 'month'), sum(l, 'sched'), sum(l, 'actual'), l[0] && md(l[0].asOf), gl('G', 'prod')));
+      PC.G = card('G', 'prod', '도금 생산 (1·2CGL)', sum(l, 'month'), sum(l, 'sched'), sum(l, 'actual'), l[0] && md(l[0].asOf), '');   // 그룹별 숫자는 아래 그래프 표에 → 카드엔 합계만
       out.push(card('G', 'ship', '도금 출하', sum(s_, 'month'), sum(s_, 'sched'), shipAct(['G수출', 'G국내', 'G자동차'], sum(s_, 'actual')), SDp && SDp.asOf ? md(SDp.asOf) : (PO.sr || {}).asOf && md((PO.sr.asOf).slice(0, 10)), gl('G', 'ship')));
     }
     if (UI.inScope('C')) {
       const l = L.filter((x) => x.pl === 'C'), s_ = shp(['컬러수출', '컬러건재']);
-      out.push(card('C', 'prod', '컬러 생산 (1~4CCL)', sum(l, 'month'), sum(l, 'sched'), sum(l, 'actual'), l[0] && md(l[0].asOf), gl('C', 'prod')));
+      PC.C = card('C', 'prod', '컬러 생산 (1~4CCL)', sum(l, 'month'), sum(l, 'sched'), sum(l, 'actual'), l[0] && md(l[0].asOf), '');
       out.push(card('C', 'ship', '컬러 출하', sum(s_, 'month'), sum(s_, 'sched'), shipAct(['C수출', 'C건재'], sum(s_, 'actual')), SDp && SDp.asOf ? md(SDp.asOf) : (PO.sr || {}).asOf && md((PO.sr.asOf).slice(0, 10)), gl('C', 'ship')));
     }
     // 판매그룹별 생산 진행(사용자 10/21: 월 계획 얼마에 그룹별로 얼마 생산, 얼마 잔여 — 세로 막대): 진한 = 생산 실적, 옅은 = 남은 기간 계획 생산(재계획·편성), 회색 = 월 계획까지 모자라는 몫
     const grpPanel = (pl, title) => { const gs = G.filter((g) => g.pl === pl && g.prod && g.prod.month > 0); if (!gs.length || !UI.inScope(pl)) return '';
-      return `<div class="pgv" data-dom="${pl}"><h3>${title}</h3>` + colChart(gs.map((g) => { const x = g.prod, rem = Math.max(0, x.month - x.actual), fin = x.actual + (x.after || 0);
+      return `<div class="pgv" data-dom="${pl}">${PC[pl] || ''}<h3>${title}</h3>` + colChart(gs.map((g) => { const x = g.prod, rem = Math.max(0, x.month - x.actual), fin = x.actual + (x.after || 0);
         return { name: g.name.replace(/\(.*\)/, '').replace('도금 자가재', '자가재'), a: x.actual, b: x.after || 0, plan: x.month, vals: [x.actual, x.month, rem, fin], neg: fin < x.month - 0.5,
           tip: `${g.name}: 월 계획 ${n0(x.month)}t · 생산 ${n0(x.actual)}t · 잔여 ${n0(rem)}t · 남은 기간 계획 생산 ${n0(x.after || 0)}t → 월말 예상 ${n0(fin)}t (${fin >= x.month ? '+' : '−'}${n0(Math.abs(fin - x.month))}t)` }; }), 170, ['생산', '월 계획', '잔여', '월말 예상']) + '</div>'; };
     const gv = grpPanel('G', '도금 판매그룹별 생산') + grpPanel('C', '컬러 판매그룹별 생산');
-    $('s-prog').innerHTML = `<h2>이번 달 진행 <small>계획 대비 실적 — 막대 = 실적 / 월 계획, 세로선 = 오늘까지 계획</small><span class="unit">톤</span></h2><div class="pgs">${out.join('')}</div>`
-      + (gv ? `<div class="pgvs">${gv}</div>${vzLegend([['a', '생산 실적'], ['b', '남은 기간 계획 생산'], ['p', '월 계획']])}<p class="small muted" style="margin:2px 0 0 46px">막대 위 % = 월말 예상 ÷ 월 계획 · 빨강 = 남은 기간 계획을 다 만들어도 월 계획 미달</p>` : '') + `
+    $('s-prog').innerHTML = `<h2>이번 달 진행 <small>계획 대비 실적 — 막대 = 실적 / 월 계획, 세로선 = 오늘까지 계획</small><span class="unit">톤</span></h2>`
+      + (gv ? `<div class="pgvs">${gv}</div>` : `<div class="pgs">${Object.values(PC).join('')}</div>`)
+      + (gv ? `${vzLegend([['a', '생산 실적'], ['b', '남은 기간 계획 생산'], ['p', '월 계획']])}<p class="small muted" style="margin:2px 0 0 46px">막대 위 % = 월말 예상 ÷ 월 계획 · 빨강 = 남은 기간 계획을 다 만들어도 월 계획 미달</p>` : '') + `<h3 class="pgs-t">출하</h3><div class="pgs pgs-ship">${out.join('')}</div>` + `
       <p class="small muted" style="margin:8px 2px 0">생산 = MES 실적 · 출하 실적 = MES 출하(판매 출고, 부서 → 판매그룹) · 월 계획·오늘까지 계획 = 판매생산속보. 라인별 상세는 <a href="status.html">도금 가동 현황</a> · <a href="color_status.html">컬러 가동 현황</a></p>`;
   }
 

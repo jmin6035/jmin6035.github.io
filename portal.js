@@ -146,19 +146,20 @@
       if (!UI.inScope(pl)) continue;
       const a = sum(pl, 'actual'), sc = sum(pl, 'sched'), m = sum(pl, 'month'); if (!sc) continue;
       const fc = a + after(pl), r = a / sc;
-      FC[pl] = { fc, m };                                       // 전망 표 이번 달 칸도 같은 값(타일과 표 숫자가 다르지 않게)
-      out.push(tile(href, nm, toneP(r), Math.round(r * 100), '%', '이번 달 일정 대비', m ? a / Math.max(m, fc) * 100 : 0, m ? sc / Math.max(m, fc) * 100 : null,
+      FC[pl] = { fc, m, a, sc };                                // 11/2 사용자 '숫자 따로 그래프 따로 말고 하나로' → 타일 없이 아래 전망 그래프 머리에 이번 달 실적
+      if (0) out.push(tile(href, nm, toneP(r), Math.round(r * 100), '%', '이번 달 일정 대비', m ? a / Math.max(m, fc) * 100 : 0, m ? sc / Math.max(m, fc) * 100 : null,
         `<b>${n0(a)}</b>t / 일정 ${n0(sc)}t (${sg(a - sc)})`, `월말 예상 <b>${n0(fc)}</b>t · 속보 월차 ${n0(m)}t (${pc(fc, m)}%)`));
     }
     const ship = (sr.ship || []), sh = ship.find((x) => x.name === '합계');
     if (sh && sh.sched) {
       const low = ship.filter((x) => x.name !== '합계' && x.sched).map((x) => [x.name, x.actual / x.sched]).sort((p, q) => p[1] - q[1]).slice(0, 2);
-      out.push(tile('report.html', '출하', toneS(sh.actual / sh.sched), Math.round(sh.actual / sh.sched * 100), '%', '이번 달 출하 일정 대비', sh.actual / sh.month * 100, sh.sched / sh.month * 100,
+      FC.ship = `<p class="fp-due ${toneS(sh.actual / sh.sched)}">출하 — 이번 달 <b>${n0(sh.actual)}t</b> / 오늘까지 일정 ${n0(sh.sched)}t (${Math.round(sh.actual / sh.sched * 100)}%) · 가장 뒤처짐: ${low.map(([n, r]) => `${esc(n)} <b>${Math.round(r * 100)}%</b>`).join(' · ')}</p>`;
+      if (0) out.push(tile('report.html', '출하', toneS(sh.actual / sh.sched), Math.round(sh.actual / sh.sched * 100), '%', '이번 달 출하 일정 대비', sh.actual / sh.month * 100, sh.sched / sh.month * 100,
         `<b>${n0(sh.actual)}</b>t / 일정 ${n0(sh.sched)}t (${sg(sh.actual - sh.sched)})`, `가장 뒤처짐: ${low.map(([n, r]) => `${esc(n)} <b>${Math.round(r * 100)}%</b>`).join(' · ')}`));
     }
     const st = {}; (sr.stock || []).forEach((x) => { st[x.name] = x; });
     const c = st[MAXN.c], g = st[MAXN.g];
-    if (c && c.target) {
+    if (0 && c && c.target) {                                    // 제품 재고 타일 = 오른쪽 재고 기둥 '지금'과 같은 숫자 → 뺌
       const rc = c.current / c.target, rg = g && g.target ? g.current / g.target : 0, worst = Math.max(rc, rg);
       const e12c = rollAt(O, CK, '2026-12-31');
       out.push(tile('integrated.html', '제품 재고', toneK(worst), Math.round(rc * 100), '%', `컬러 제품 · 월말 최대 ${n0(c.target)}t 대비`, rc / Math.max(rc, 1.5) * 100, 1 / Math.max(rc, 1.5) * 100,
@@ -170,11 +171,11 @@
   function fcCard(O) {
     const M = O.months || [], pm = O.planMonth, pl = O.plating || {}, cl = (O.color || {}).lines || {};
     const ends = M.map((m) => `${m}-${String(dim(m)).padStart(2, '0')}`);
-    const prod = [];
-    if (pm && UI.inScope('G')) prod.push(['도금', 'G', M.map((m, i) => (i === 0 && FC.G ? [FC.G.fc, FC.G.m, '속보 월차'] : [pm.g1[i] + pm.g2[i], (pl.g1 || [])[i] + (pl.g2 || [])[i], '확정 계획']))]);
+    const prod = [], CM = M.indexOf(String(O.asOf).slice(0, 7));   // 이번 달 칸(예전엔 첫 달 고정 → 11월에도 '10월' 줄에 이번 달 전망이 들어가던 것 고침)
+    if (pm && UI.inScope('G')) prod.push(['도금', 'G', M.map((m, i) => (i === CM && FC.G ? [FC.G.fc, FC.G.m, '속보 월차'] : [pm.g1[i] + pm.g2[i], (pl.g1 || [])[i] + (pl.g2 || [])[i], '확정 계획']))]);
     if (UI.inScope('C') && Object.keys(cl).length) { const tot = (m, k) => Object.values(cl[m] || {}).reduce((a, x) => a + (x[k] || 0), 0);
-      prod.push(['컬러', 'C', M.map((m, i) => (i === 0 && FC.C ? [FC.C.fc, FC.C.m, '속보 월차'] : [tot(m, 'placed'), tot(m, 'plan'), '월차']))]); }
-    const pbar = ([nm, pl_, R]) => `<div class="fp-g"><div class="fp-gh">${nm} 생산 <small>4분기 ${n0(R.reduce((a, r) => a + r[0], 0))}t / 계획 ${n0(R.reduce((a, r) => a + (r[1] || 0), 0))}t</small></div>`
+      prod.push(['컬러', 'C', M.map((m, i) => (i === CM && FC.C ? [FC.C.fc, FC.C.m, '속보 월차'] : [tot(m, 'placed'), tot(m, 'plan'), '월차']))]); }
+    const pbar = ([nm, pl_, R]) => `<div class="fp-g"><div class="fp-gh">${nm} 생산 <small>${FC[pl_] && CM >= 0 ? `${+M[CM].slice(5)}월 실적 <b>${n0(FC[pl_].a)}t</b> · 오늘까지 일정 대비 <b class="${toneP(FC[pl_].a / FC[pl_].sc)}">${Math.round(FC[pl_].a / FC[pl_].sc * 100)}%</b> · ` : ''}4분기 ${n0(R.reduce((a, r) => a + r[0], 0))}t / 계획 ${n0(R.reduce((a, r) => a + (r[1] || 0), 0))}t</small></div>`
       + R.map(([v, ref, lb], i) => { const r = ref ? v / ref : 0, t = toneP(r), mx = Math.max(v, ref, 1) * 1.04;
         return `<div class="fp-r ${t}" title="${+M[i].slice(5)}월 ${nm} 예상 ${n0(v)}t / ${lb} ${n0(ref)}t"><span class="fp-m">${+M[i].slice(5)}월</span><span class="fp-b"><i style="width:${v / mx * 100}%"></i><u style="left:${ref / mx * 100}%"></u></span><span class="fp-v"><b>${Math.round(r * 100)}%</b> ${n0(v)}t</span></div>`; }).join('') + '</div>';
     const st = {}; ((O.sr || {}).stock || []).forEach((x) => { st[x.name] = x; });
@@ -194,7 +195,7 @@
       : `<p class="fp-due ${now.short ? 'bad' : now.late ? 'warn' : 'good'}" title="${esc((now.shortBy || []).join(', '))}">도금 납기 — 결품 <b>${n0(now.short || 0)}t</b> · 지연 <b>${n0(now.late || 0)}톤·일</b></p>`;
     if (!prod.length && !stk.length) return '';
     return `<h2>월말·4분기 전망 <small>생산 = 이번 달 실적 + 남은 계획(막대 = 예상, 세로선 = 계획) · 재고 = 어제 실제에서 계획대로 굴린 월말 값</small></h2>
-      <div class="fp-wrap"><div class="fp-l">${prod.map(pbar).join('')}</div><div class="fp-rgt">${stk.join('')}</div></div>${due}`;
+      <div class="fp-wrap"><div class="fp-l">${prod.map(pbar).join('')}</div><div class="fp-rgt">${stk.join('')}</div></div>${due}${FC.ship || ''}`;
   }
   function loadCard(O) {
     const p = O.planMonth || O.plating, mx = Math.max(...O.months.map((m, i) => p.g1[i] + p.g2[i])) * 1.04;
@@ -256,7 +257,7 @@
   function render(O) {
     lastO = O;
     $('h-meta').innerHTML = `실적 <b>~${md(O.asOf)}</b> · 계획 <b>확정 계획 · 도금은 매일 실적 반영 재계산</b> · 계산 ${esc(String(O.built).replace('T', ' ').slice(5, 16))}`;
-    $('h-own').innerHTML = owner(O);
+    const ow = owner(O); $('h-own').innerHTML = ow; $('h-own').hidden = !ow;
     const fc = fcCard(O); $('h-fc').innerHTML = fc; $('h-fc').hidden = !fc;
     const gh = grp(O); $('h-grp').innerHTML = gh; $('h-grp').hidden = !gh;
     const nd = needCard(O); $('h-need').innerHTML = nd; $('h-need').hidden = !nd;

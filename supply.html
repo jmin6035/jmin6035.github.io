@@ -6,7 +6,7 @@
 <title>가동 캘린더</title>
 <meta name="description" content="일별 가동 · 자가재 · 구매 소재(발주·입고·재고) · 제품 재고를 한 달력에서">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611020459">
+<link rel="stylesheet" href="ui/theme.css?v=2611020758">
 <style>
 .sbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 10px; font-size: 13.5px; color: var(--ink-2); }
 .sbar b { color: var(--ink); }
@@ -125,6 +125,7 @@ html .gtable td.hi { background: color-mix(in srgb, var(--warn) 16%, var(--surfa
 html .gtable .c1 small { color: var(--ink-3); font-weight: 500; }
 .pgvs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; margin-top: 16px; } @media (max-width: 900px) { .pgvs { grid-template-columns: 1fr; } }
 .pgv h3 { font-size: 15px; margin: 0 0 26px 70px; color: var(--ink); }
+.pgv > .pg { margin-bottom: 14px; } .pgs-t { font-size: 15px; margin: 18px 0 8px; } .pgs-ship { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
 /* 가동 캘린더 · 출하·재고 표(2026-10-21 사용자: 가동 현황 캘린더처럼 색, 기울임 없이, 고급스럽게) */
 :root { --pt-act: #f3f6fa; --pt-al: #dcebfb; --pt-az: #fde3d6; --pt-mac: #d6f2e6; --pt-cc: #e3f3ee; --pt-mc: #ffe48a; --pt-mcb: #e0a800; --pt-g: #2a78d6; --pt-c: #0f9d7a; --pt-sat: #fdebd0; --pt-sun: #fbdada; --pt-ok: #e2f3e6; --pt-hi: #ffe7b8; --pt-hi2: #ffcf87; --pt-ship: #e4f0fc; --pt-shipA: #cfe3f8; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pt-act: #18202a; --pt-al: #1d3553; --pt-az: #4a2a1d; --pt-mac: #173f31; --pt-cc: #173a31; --pt-mc: #6b5600; --pt-mcb: #c99a00; --pt-sat: #3d3220; --pt-sun: #402629; --pt-ok: #1c3a24; --pt-hi: #4a3a14; --pt-hi2: #6a4a10; --pt-ship: #1b2c40; --pt-shipA: #23405e; } }
@@ -258,10 +259,10 @@ html body main #s-cal td.sdblock small { font-size: 13.5px !important; letter-sp
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2611020459"></script>
-<script src="engine/crypto.js?v=2611020459"></script>
-<script src="ui/cal.js?v=2611020459"></script>
-<script src="ui/proccalc.js?v=2611020459"></script>
-<script src="supply.js?v=2611020459"></script>
+<script src="ui/shell.js?v=2611020758"></script>
+<script src="engine/crypto.js?v=2611020758"></script>
+<script src="ui/cal.js?v=2611020758"></script>
+<script src="ui/proccalc.js?v=2611020758"></script>
+<script src="supply.js?v=2611020758"></script>
 </body>
 </html>

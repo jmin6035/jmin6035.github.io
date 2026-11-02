@@ -76,19 +76,6 @@
       `<div class="scroll"><table class="t big"><thead><tr><th>월적</th><th>발주 기간</th><th>입고</th><th>필요</th><th>기발주</th><th>남은 발주</th><th>판정</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="small">기발주 = 기초재고 파일의 수입 FH 발주량(10월적 4,600t · 11월적 1,925t). 10월적 남는 1,837t 은 11월 이후 생산에 먼저 쓸 수 있음.</p>`);
   }
-  function kpis() {
-    const T = O.tot, M = mon(O.month);
-    const k = (tone, l, v, unit, b, ck) => `<div class="kpi tone-${tone}" data-rk="k-${ck}"><div class="l">${l}</div><div class="v"><b data-count="${Math.round(v)}" data-ck="${ck}">0</b><small>${unit}</small></div><div class="b">${b}</div></div>`;
-    const sr = T.stock / T.target, er = T.end[0] / T.target;
-    const shipExp = T.fcM * O.pace;
-    const risk = (O.flags.short || 0) + (O.flags.low || 0);
-    return `<div class="kpis">
-      ${k(sr > 1.5 ? 'bad' : sr > 1.1 ? 'warn' : 'good', `계획재 재고 (${md(O.asOf)} 추정)`, T.stock, 't', `목표 ${n0(T.target)}t의 <b>${Math.round(sr * 100)}%</b> · 9월말(MES) ${n0(T.stock0Mes)}t`, 'st')}
-      ${k(T.prodM >= T.planDue ? 'good' : 'warn', `${M} 생산 누계`, T.prodM, 't', `월 계획 ${n0(T.planM)}t · 오늘까지 일정 ${n0(T.planDue)}t`, 'pr')}
-      ${k(T.shipM >= shipExp * 0.9 ? 'good' : 'warn', `${M} 출하 누계`, T.shipM, 't', `월 예측 ${n0(T.fcM)}t · 보통 이맘때 ${n0(shipExp)}t(${Math.round(O.pace * 100)}%)`, 'sh')}
-      ${k(er > 1.5 ? 'bad' : er > 1.1 ? 'warn' : 'good', `${M}말 예상 재고`, T.end[0], 't', `목표 대비 <b>${Math.round(er * 100)}%</b> · 결품·안전재고 미만 ${risk}개 사양`, 'en')}</div>`;
-  }
-
   function trend() {
     const D = O.daily, W = 1200, H = 340, pl0 = 64, pr = 150, pt = 16, pb = 34;
     const xs = D.days.concat(D.future.map((x) => x[0]));
@@ -104,6 +91,7 @@
     const n = D.days.length;
     g += `<polyline class="ln" fill="none" stroke="var(--s1)" stroke-width="3" points="${D.stock.map((v, i) => `${x(i)},${y(v)}`).join(' ')}"/>`;
     if (D.future.length) g += `<polyline fill="none" stroke="var(--s1)" stroke-width="3" stroke-dasharray="4 6" opacity=".75" points="${[[n - 1, D.stock[n - 1]]].concat(D.future.map((f, j) => [n + j, f[1]])).map(([i, v]) => `${x(i)},${y(v)}`).join(' ')}"/>`;
+    xs.forEach((d, i) => { if (i % every === 0 && i < xs.length - 1) { const v = i >= n ? D.future[i - n][1] : D.stock[i]; g += `<text x="${x(i)}" y="${y(v) - 9}" text-anchor="middle" style="font-size:12.5px;font-weight:700;fill:var(--ink-2);paint-order:stroke;stroke:var(--surface);stroke-width:3.5px">${n0(v)}</text>`; } });   // 날짜 눈금마다 값(11/2 사용자 '숫자 보이게')
     const lv = D.future.length ? D.future[D.future.length - 1][1] : D.stock[n - 1];
     g += `<text x="${x(xs.length - 1) + 8}" y="${y(lv) - 10}" class="lab">${D.future.length ? '월말 예상 ' : ''}${n0(lv)}</text>`;
     xs.forEach((d, i) => {
@@ -111,8 +99,10 @@
       const tp = f ? `<b>${md(d)} 예상</b><br>재고 ${n0(v)}t` : `<b>${md(d)}</b><br>재고 ${n0(v)}t<br>생산 ${n0(D.prod[i])}t · 출하 ${n0(D.ship[i])}t`;
       g += `<rect class="hit" x="${x(i) - (W - pl0 - pr) / xs.length / 2}" y="${pt}" width="${(W - pl0 - pr) / xs.length}" height="${H - pt - pb}" data-tip="${tp}"/>`;
     });
+    const T = O.tot, sr = T.stock / T.target, er = T.end[0] / T.target, tn = (r) => (r > 1.5 ? 'bad' : r > 1.1 ? 'warn' : 'good');
+    const head = `<div class="ps-head"><span><b class="ps-n">${n0(T.stock)}t</b> ${md(O.asOf)} 추정 · 목표 ${n0(T.target)}t의 <b class="tone-${tn(sr)}">${Math.round(sr * 100)}%</b></span><span>${mon(O.month)} 생산 <b>${n0(T.prodM)}t</b> / 계획 ${n0(T.planM)}t · 출하 <b>${n0(T.shipM)}t</b> / 예측 ${n0(T.fcM)}t</span><span>${mon(O.month)}말 예상 <b>${n0(T.end[0])}t</b> (목표의 <b class="tone-${tn(er)}">${Math.round(er * 100)}%</b>) · 결품·안전재고 미만 ${(O.flags.short || 0) + (O.flags.low || 0)}개 사양</span></div>`;   // 예전 '주요 지표' 4칸을 그래프 머리로(11/2 사용자 '숫자 따로 그래프 따로 말고 하나로')
     return card('ps-trend', '계획재 재고 추이', `9월말 MES 재고 + 매일 생산 − 출하 · 점선 = ${mon(O.month)}말까지 예상(남은 계획 생산 − 남은 예측 판매)`, '단위: 톤',
-      `<div class="legend"><span><i class="box" style="background:var(--s1)"></i>계획재 187 사양 재고</span><span><i class="box" style="background:var(--good)"></i>목표재고 합</span><span><i class="box" style="background:var(--warn)"></i>안전재고 합</span></div><div class="chart"><svg viewBox="0 0 ${W} ${H}" class="cv" role="img" aria-label="계획재 재고 추이">${g}</svg></div>`);
+      head + `<div class="legend"><span><i class="box" style="background:var(--s1)"></i>계획재 187 사양 재고</span><span><i class="box" style="background:var(--good)"></i>목표재고 합</span><span><i class="box" style="background:var(--warn)"></i>안전재고 합</span></div><div class="chart"><svg viewBox="0 0 ${W} ${H}" class="cv" role="img" aria-label="계획재 재고 추이">${g}</svg></div>`);
   }
 
   function months() {
@@ -171,10 +161,10 @@
 
   const specDiv = () => specs().replace(/^<section class="card" id="ps-spec">/, '<div id="ps-spec">').replace(/<\/section>$/, '</div>');
   function render() {
-    $('ca-main').innerHTML = `<section class="card" id="ca-kpi"><h2>주요 지표 <small>~${md(O.asOf)} · 계획재 운영안(TF)</small><span class="unit">단위: 톤</span></h2>${kpis()}</section>`
+    $('ca-main').innerHTML = trend()
       + `<section class="card" id="ps-cal"><h2>계획재 캘린더 <small>사양별 생산 일정과 소재 발주(업체·수량·기한) · 날짜 선택 시 상세</small><span class="unit">단위: 톤</span></h2><div id="ps-calbox"></div></section>`
       + `<div class="grid2 rowc">${orderSum()}${fhCard()}</div>`
-      + trend() + `<div class="grid2 rowc">${months()}${byMat()}</div>`
+      + `<div class="grid2 rowc">${months()}${byMat()}</div>`
       + `<details class="card more" id="ps-more"><summary><h2>사양별 상세 <small>${O.n}개 사양 — 진도·월말 예상·판정</small></h2></summary>${specDiv()}</details>`
       + `<details class="card more"><summary><h2>계산 기준</h2></summary>${basis().replace(/^<section[^>]*>/, '').replace(/<\/section>$/, '')}</details>`;
     $('ca-meta').innerHTML = `<span><b>실적</b>~${O.asOf}</span><span><b>시작 재고</b>MES ${O.stockMonth.slice(0, 4)}.${O.stockMonth.slice(4)}월말</span><span><b>기준</b>계획재 운영안 ${O.n}개 사양</span><span><b>계산</b>${String(O.built || '').replace('T', ' ')}</span>`;

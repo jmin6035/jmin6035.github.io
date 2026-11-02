@@ -334,7 +334,6 @@
     return '<div class="kpis" style="margin:0 0 14px">'
       + k(`${END()}까지 라인 능력`, `${n0(tot('cap'))}<small>t</small>`, `작업지시 ${n0(tot('conf'))} · 소재 있음 ${n0(tot('plan'))} · 입고 예정 ${n0(tot('fcst'))} · 빈칸 ${n0(tot('gap'))}`, tot('gap') > 0 ? 'warn' : 'brand')
       + k('이미 늦은 주문', `${n0(O.odT)}<small>t · ${O.nOd}건</small>`, `필요 생산일 지났는데 생산 전${(O.shipMiss || []).length ? ` · 그중 출항 지난 수출 ${O.shipMiss.length}건(배선 확인)` : ''}`, O.odT > 0 ? 'bad' : 'good')
-      + k(`${END()}까지 못 넣는 주문`, `${win.length}<small>건 · ${n0(win.reduce((s, r) => s + r.t, 0))}t</small>`, `${END()}까지 필요한데 칸이 없음(소재 없음·능력 부족)`, win.length ? 'warn' : 'good')
       + k('강종 날짜 · 재계획과 현장 다름', `${fl}<small>일</small>`, fl ? misTxt : '재계획 강종과 MES 작업지시가 맞음', fl ? 'bad' : 'good')
       + k('자가재(컬러 투입) 진도', jgMin >= 0 ? '<span class="gv">충분</span>' : `<span class="bv">${n0(-jgMin)}t 부족</span>`, '컬러 계획(투입 일정) 대비 도금 생산 누계 — 가장 모자란 날', jgMin >= 0 ? 'good' : 'bad')
       + '</div>';
@@ -612,24 +611,27 @@
     ((O.accuracy || {}).versions || []).forEach((v) => v.rows.forEach((r) => Object.entries(r.grp || {}).forEach(([g, [p, h]]) => { const a = (acc[g] = acc[g] || [0, 0]); a[0] += p; a[1] += h; })));
     const hasAcc = Object.keys(acc).length;
     const row = (g) => { const a = acc[g.grp];
-      return `<tr><td><b>${esc(g.grp)}</b></td><td class="num">${n0(g.conf + g.plan)}</td><td class="num">${n0(g.fcst)}</td><td class="num">${g.lateN ? `${g.lateN}건 · ${n0(g.lateT)}t` : '-'}</td>`
+      return `<tr><td><b>${esc(g.grp)}</b></td><td class="gbcell">${barIn(g)}</td><td class="num">${g.lateN ? `${g.lateN}건 · ${n0(g.lateT)}t` : '-'}</td>`
         + `<td class="num">${g.riskN ? `${g.riskN}건 · ${n0(g.riskT)}t` : '-'}</td><td class="num ${g.odN ? 'neg' : ''}">${g.odN ? `${g.odN}건 · ${n0(g.odT)}t` : '-'}</td>`
         + (hasAcc ? `<td class="num">${a && a[0] >= 1 ? Math.round(100 * a[1] / a[0]) + '%' : '-'}</td>` : '') + '</tr>'; };
     const T = G.reduce((s, g) => ({ conf: s.conf + g.conf, plan: s.plan + g.plan, fcst: s.fcst + g.fcst, target: s.target + g.target, lateN: s.lateN + g.lateN, lateT: s.lateT + g.lateT, riskN: s.riskN + g.riskN, riskT: s.riskT + g.riskT, odN: s.odN + g.odN, odT: s.odT + g.odT }), { conf: 0, plan: 0, fcst: 0, target: 0, lateN: 0, lateT: 0, riskN: 0, riskT: 0, odN: 0, odT: 0 });
     // 막대(10/29 사용자 '합계로 그래프 표시'): 그룹마다 2주 생산 계획(소재 있음 진한 칸 + 입고 예정 옅은 칸) vs 재계획 목표(세로 선), 맨 위 합계
     const bars = [{ grp: '합계', ...T }, ...G], mx = Math.max(1, ...bars.map((g) => Math.max(g.conf + g.plan + g.fcst, g.target)));
     const P = (v) => (100 * v / mx).toFixed(2) + '%';
-    const bar = (g, i) => { const a = g.conf + g.plan, b = g.fcst, p = a + b, d = p - g.target;
+    const bar0 = (g, i) => { const a = g.conf + g.plan, b = g.fcst, p = a + b, d = p - g.target;
       return `<div class="gb${i === 0 ? ' gbt' : ''}" title="${esc(g.grp)} · ${END()}까지 생산 계획 ${n0(p)}t(소재 있음 ${n0(a)} · 입고 예정 ${n0(b)}) · 재계획 목표 ${n0(g.target)}t · 차이 ${d >= 0 ? '+' : ''}${n0(d)}t">`
         + `<span class="gbn">${esc(g.grp)}</span><span class="gbr"><i class="a" style="width:${P(a)}"></i><i class="b" style="width:${P(b)}"></i>${g.target >= 1 ? `<em style="left:${P(g.target)}"></em>` : ''}</span>`
         + `<span class="gbv"><b>${n0(p)}</b> / ${n0(g.target)} <small class="${d < -0.5 ? 'neg' : 'sub'}">${d >= 0 ? '+' : ''}${n0(d)}</small></span></div>`; };
+    const barIn = (g) => { const a = g.conf + g.plan, b = g.fcst, p = a + b, d = p - g.target;
+      return `<div class="gb" title="${esc(g.grp)} · 소재 있음 ${n0(a)} · 입고 예정 ${n0(b)} · 재계획 목표 ${n0(g.target)}t"><span class="gbr"><i class="a" style="width:${P(a)}"></i><i class="b" style="width:${P(b)}"></i>${g.target >= 1 ? `<em style="left:${P(g.target)}"></em>` : ''}</span>`
+        + `<span class="gbv"><b>${n0(p)}</b> / ${n0(g.target)} <small class="${d < -0.5 ? 'neg' : 'sub'}">${d >= 0 ? '+' : ''}${n0(d)}</small> <small class="sub">(소재 ${n0(a)} · 입고 ${n0(b)})</small></span></div>`; };
     const chart = `<div class="gbl"><span><i class="a"></i>소재 있음(작업지시 포함)</span><span><i class="b"></i>입고 예정</span><span><em></em>재계획 목표</span><span class="sub">계획 / 목표 · 차이</span></div>`
-      + `<div class="gbs">${bars.map(bar).join('')}</div>`;
-    return `<section class="card"><h2>판매그룹별 <small>~${END()} · 톤</small></h2>` + chart + '<div class="scroll"><table class="it" style="max-width:1100px"><thead><tr><th>그룹</th>'
-      + '<th class="num" title="작업지시 포함">소재 있음</th><th class="num">입고 예정</th>'
+      ;   // 막대는 아래 표 둘째 칸으로(11/2 사용자 '그래프 하나 표 하나 말고 하나로')
+    return `<section class="card"><h2>판매그룹별 <small>~${END()} · 톤</small></h2>` + chart + '<div class="scroll"><table class="it gbt-tbl" style="max-width:1200px"><thead><tr><th>그룹</th>'
+      + '<th>생산 계획 / 재계획 목표 · 차이</th>'
       + '<th class="num" title="그 날 생산하면 출항일(수출)·납기(내수)를 넘기는 주문">출항일·납기 초과</th><th class="num" title="' + END() + '까지 필요한데 칸에 못 넣은 주문(소재 없음·능력 부족)">' + END() + '까지 못 넣음</th><th class="num" title="필요 생산일이 이미 지났는데 생산 전">이미 늦음</th>'
       + (hasAcc ? '<th class="num" title="지난 계획 중 그날 실제로 만든 톤 비율">계획 적중률</th>' : '') + '</tr></thead><tbody>'
-      + G.map(row).join('') + row({ grp: '합계', ...T }).replace('<tr>', '<tr class="tot">') + '</tbody></table></div></section>';
+      + row({ grp: '합계', ...T }).replace('<tr>', '<tr class="tot">') + G.map(row).join('') + '</tbody></table></div></section>';
   }
   /* 계획 적중률(10/29 사용자 '실제와 정합성이 얼마나 맞나'): 매일 게시한 캘린더의 오늘·내일·모레 계획 ↔ MES 생산 실적(계약번호-행번, 생산일 07~07) */
   function accCard() {
