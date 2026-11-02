@@ -726,7 +726,8 @@
     const mesShip = (g) => (SDp && SDp.g && SDp.g[g] ? Object.entries(SDp.g[g]).filter(([d]) => d.slice(0, 7) === m0).reduce((a, [, v]) => a + v, 0) : null);
     const gl = (pl, kind) => G.filter((g) => g.pl === pl && g[kind] && g.key !== 'G자가재').map((g) => { const x = g[kind], ac = kind === 'ship' && mesShip(g.key) != null ? mesShip(g.key) : x.actual; return `<span>${esc(g.name)} <b>${n0(ac)}</b>/${n0(x.month)}</span>`; }).join('');
     const shipAct = (keys, fb) => { const v = keys.map(mesShip); return v.every((x) => x == null) ? fb : v.reduce((a, x) => a + (x || 0), 0); };
-    const out = [], PC = {};
+    const out = [], PC = {}, SL = {};
+    for (const pl of ['G', 'C']) { const l0 = L.find((x) => x.pl === pl); if (l0 && l0.asOf && String(l0.asOf).slice(0, 7) !== today.slice(0, 7)) SL[pl] = String(l0.asOf).slice(0, 10); }   // 실적 자료가 지난달에서 멈춤(11/2: 컬러 10/29) → 이번 달 실적으로 보이지 않게
     if (UI.inScope('G')) {
       const l = L.filter((x) => x.pl === 'G'), s_ = shp(['도금판매', '도금수출', '자동차강판']);
       PC.G = card('G', 'prod', '도금 생산 (1·2CGL)', sum(l, 'month'), sum(l, 'sched'), sum(l, 'actual'), l[0] && md(l[0].asOf), '');   // 그룹별 숫자는 아래 그래프 표에 → 카드엔 합계만
@@ -734,11 +735,12 @@
     }
     if (UI.inScope('C')) {
       const l = L.filter((x) => x.pl === 'C'), s_ = shp(['컬러수출', '컬러건재']);
-      PC.C = card('C', 'prod', '컬러 생산 (1~4CCL)', sum(l, 'month'), sum(l, 'sched'), sum(l, 'actual'), l[0] && md(l[0].asOf), '');
+      PC.C = SL.C ? `<div class="pg" data-dom="C"><div class="pg-h"><b>컬러 생산 (1~4CCL)</b></div><div class="pg-s warn"><b>실적 자료가 ${md(SL.C)}에서 멈춤</b> — 이번 달 실적 없음(사내 PC 자동 실행 확인)</div></div>` : card('C', 'prod', '컬러 생산 (1~4CCL)', sum(l, 'month'), sum(l, 'sched'), sum(l, 'actual'), l[0] && md(l[0].asOf), '');
       out.push(card('C', 'ship', '컬러 출하', sum(s_, 'month'), sum(s_, 'sched'), shipAct(['C수출', 'C건재'], sum(s_, 'actual')), SDp && SDp.asOf ? md(SDp.asOf) : (PO.sr || {}).asOf && md((PO.sr.asOf).slice(0, 10)), gl('C', 'ship')));
     }
     // 판매그룹별 생산 진행(사용자 10/21: 월 계획 얼마에 그룹별로 얼마 생산, 얼마 잔여 — 세로 막대): 진한 = 생산 실적, 옅은 = 남은 기간 계획 생산(재계획·편성), 회색 = 월 계획까지 모자라는 몫
     const grpPanel = (pl, title) => { const gs = G.filter((g) => g.pl === pl && g.prod && g.prod.month > 0); if (!gs.length || !UI.inScope(pl)) return '';
+      if (SL[pl]) return `<div class="pgv" data-dom="${pl}">${PC[pl] || ''}</div>`;
       return `<div class="pgv" data-dom="${pl}">${PC[pl] || ''}<h3>${title}</h3>` + colChart(gs.map((g) => { const x = g.prod, rem = Math.max(0, x.month - x.actual), fin = x.actual + (x.after || 0);
         return { name: g.name.replace(/\(.*\)/, '').replace('도금 자가재', '자가재'), a: x.actual, b: x.after || 0, plan: x.month, vals: [x.actual, x.month, rem, fin], neg: fin < x.month - 0.5,
           tip: `${g.name}: 월 계획 ${n0(x.month)}t · 생산 ${n0(x.actual)}t · 잔여 ${n0(rem)}t · 남은 기간 계획 생산 ${n0(x.after || 0)}t → 월말 예상 ${n0(fin)}t (${fin >= x.month ? '+' : '−'}${n0(Math.abs(fin - x.month))}t)` }; }), 170, ['생산', '월 계획', '잔여', '월말 예상']) + '</div>'; };

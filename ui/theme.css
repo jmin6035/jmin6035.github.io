@@ -1004,3 +1004,8 @@ html body main table.gt.nd .sk { border-left: 2px solid var(--line); }
 
 /* 공개 화면 제한(11/2): 숨긴 화면으로 가는 링크는 글자만 */
 a.nolink{color:inherit;text-decoration:none;cursor:default;pointer-events:none}
+
+/* 표 칸 구분(11/2 사용자 '칸 구분 진하게 · 월 구분 잘 되게') — 세로 칸선 조금 진하게 + 묶음(월·분기) 경계는 굵게(ui/shell.js tableSeps) */
+html body table.t td + td, html body table.gt td + td, html body table.it td + td { border-left: 1px solid var(--line); }
+html body table td.gsep, html body table th.gsep { border-left: 2px solid var(--ink-3) !important; }
+html body table.t th.gsep { border-left: 2px solid rgba(255,255,255,.7) !important; }

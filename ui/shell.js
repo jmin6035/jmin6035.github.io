@@ -313,6 +313,24 @@
   const foldGo = () => { foldHints(document); fo.observe(document.body, { childList: true, subtree: true }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', foldGo); else foldGo();
 
+  /* 표 묶음 구분선(11/2 사용자 '칸 구분 진하게 · 월 구분 잘 되게, 다른 표도'): 머리 2줄 이상 = 위 머리 묶음(10월·11월·4분기 등)이 바뀌는 칸,
+     머리 1줄 = 월·분기·합계 칸 앞에 진한 세로선(.gsep). 행·열 합치기(rowspan·colspan)를 칸 번호로 풀어서 몸통 칸까지 같은 줄에 */
+  function tableSeps(root) {
+    (root.querySelectorAll ? root.querySelectorAll('table') : []).forEach((t) => {
+      const rows = [...t.rows]; if (!rows.length || !t.tHead) return;
+      const key = rows.length + ':' + rows[0].cells.length; if (t.dataset.sep === key) return; t.dataset.sep = key;
+      const occ = [], pos = new Map();
+      rows.forEach((tr, ri) => { occ[ri] = occ[ri] || []; let c = 0; for (const cell of tr.cells) { while (occ[ri][c]) c++; pos.set(cell, c); const cs = cell.colSpan || 1, rs = Math.min(cell.rowSpan || 1, rows.length - ri); for (let r = 0; r < rs; r++) { occ[ri + r] = occ[ri + r] || []; for (let k = 0; k < cs; k++) occ[ri + r][c + k] = 1; } c += cs; } });
+      const head = [...t.tHead.rows], B = new Set();
+      if (head.length >= 2) { for (const th of head[0].cells) if ((th.colSpan || 1) > 1) { B.add(pos.get(th)); B.add(pos.get(th) + th.colSpan); } }
+      else for (const th of head[0].cells) if (/^\s*('?\d{2}[.년]\s*)?\d{1,2}월|분기|상반기|하반기|^\s*(합계|계|4분기 계)\s*$/.test(th.textContent)) B.add(pos.get(th));
+      B.delete(0); if (!B.size) return;
+      pos.forEach((c, cell) => { if (B.has(c)) cell.classList.add('gsep'); });
+    });
+  }
+  let tsT = null; const tsGo = () => { tableSeps(document); new MutationObserver(() => { clearTimeout(tsT); tsT = setTimeout(() => tableSeps(document), 150); }).observe(document.body, { childList: true, subtree: true }); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tsGo); else tsGo();
+
   /* 칸이 좁아 잘린 글자(… 처리) — 마우스를 올리면 전체 글자를 말풍선으로(docs/16 잘림 금지, 10/30 재검토) */
   document.addEventListener('mouseover', (ev) => {
     for (let e = ev.target, k = 0; e && e.nodeType === 1 && k < 3; e = e.parentElement, k++) {
