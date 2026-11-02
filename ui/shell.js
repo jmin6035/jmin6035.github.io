@@ -4,7 +4,7 @@
   'use strict';
   /* 암호 매번 입력(11/2 사용자 '매번 암호 치고 들어가게'): 브라우저에 암호를 남기지 않음 — 화면을 열 때마다 암호 칸이 뜸.
      shell.js 가 화면 스크립트보다 먼저 실행되므로 여기서 암호 키(…-pw) 저장·읽기를 막고, 예전에 저장된 암호도 지움. 되돌리기 = NO_PW_SAVE = false */
-  const NO_PW_SAVE = true;
+  const NO_PW_SAVE = false;   // 11/2 회의 뒤 사용자 '비밀번호 매번 치는거 해제' — 다시 켜려면 true
   if (NO_PW_SAVE) {
     const isPw = (k) => /-pw$/.test(String(k)) || String(k) === 'cgl-plan-publish-v1';
     try { Object.keys(localStorage).filter(isPw).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* 무시 */ }
@@ -22,7 +22,7 @@
   ];
   /* 공개 화면 제한(11/2 사용자 'IT 보안 검토 동안 가동 캘린더·소재 캘린더·재고 추이만 남기고 나머지 숨김').
      되돌리려면 SHOW = null. 목록에 없는 화면을 직접 열면 가동 캘린더로 보내고, 남긴 화면 안의 다른 화면 링크는 글자만 남김 */
-  const SHOW = ['supply', 'matcal', 'integrated'];
+  const SHOW = null;   // 11/2 회의 뒤 사용자 '다시 전부 다 보여줘' — 3화면만 남기려면 ['supply', 'matcal', 'integrated']
   const SHOWF = SHOW && NAV.filter((x) => typeof x !== 'string' && SHOW.includes(x[0])).map((x) => x[1]);
   const HOME = SHOWF ? SHOWF[0] : 'index.html';
   if (SHOWF) {
