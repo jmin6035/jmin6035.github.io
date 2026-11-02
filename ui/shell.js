@@ -2,6 +2,16 @@
    페이지: <header id="shell" data-page="procure" data-crumb="소재" data-title="소재 발주 검토" data-sub="..."></header> */
 (function () {
   'use strict';
+  /* 암호 매번 입력(11/2 사용자 '매번 암호 치고 들어가게'): 브라우저에 암호를 남기지 않음 — 화면을 열 때마다 암호 칸이 뜸.
+     shell.js 가 화면 스크립트보다 먼저 실행되므로 여기서 암호 키(…-pw) 저장·읽기를 막고, 예전에 저장된 암호도 지움. 되돌리기 = NO_PW_SAVE = false */
+  const NO_PW_SAVE = true;
+  if (NO_PW_SAVE) {
+    const isPw = (k) => /-pw$/.test(String(k)) || String(k) === 'cgl-plan-publish-v1';
+    try { Object.keys(localStorage).filter(isPw).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* 무시 */ }
+    const g = Storage.prototype.getItem, s = Storage.prototype.setItem;
+    Storage.prototype.getItem = function (k) { return isPw(k) ? null : g.call(this, k); };
+    Storage.prototype.setItem = function (k, v) { if (!isPw(k)) s.call(this, k, v); };
+  }
   const NAV = [
     ['home', 'index.html', '홈'], ['supply', 'supply.html', '가동 캘린더'], ['matcal', 'matcal.html', '소재 캘린더'], ['integrated', 'integrated.html', '재고 추이'], ['report', 'report.html', '주간 보고'],
     '|도금', ['status', 'status.html', '가동 현황'], ['analysis', 'analysis.html', '조건 분석'], ['platact', 'plating_actual.html', '실적'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['cgorder', 'cg_order.html', '주문진도'], ['cgcal', 'cg_calendar.html', '생산 캘린더'], ['cgwo', 'cg_wo.html', '작업지시 순서'],
