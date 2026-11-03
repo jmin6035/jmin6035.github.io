@@ -297,9 +297,40 @@ def main():
             print('Edge 드라이버 자동 설치 실패 — 기본 드라이버로 시도:', str(e)[:150])
             service = Service()
     service.creation_flags = 0x08000000
-    try:
-        driver = webdriver.Edge(service=service, options=opts)
-    except Exception as e:
+    def try_edge():
+        return webdriver.Edge(service=service, options=opts)
+
+    def try_chrome():                                # Edge 드라이버를 못 구하면 Chrome(드라이버는 Selenium Manager 가 구글 저장소에서 받음)
+        from selenium.webdriver.chrome.options import Options as COpt
+        from selenium.webdriver.chrome.service import Service as CSvc
+        co = COpt()
+        co.add_experimental_option('prefs', {'download.default_directory': dl, 'download.prompt_for_download': False, 'download.directory_upgrade': True})
+        co.add_experimental_option('excludeSwitches', ['enable-logging'])
+        co.add_argument('--log-level=3')
+        cs = CSvc(); cs.creation_flags = 0x08000000
+        return webdriver.Chrome(service=cs, options=co)
+    driver, errs = None, []
+    for name, fn in (('Edge', try_edge), ('Chrome', try_chrome)):
+        try:
+            driver = fn()
+            print('브라우저:', name)
+            break
+        except Exception as e:
+            errs.append(f'{name}: {str(e).splitlines()[0][:150]}')
+            print('  ⚠', errs[-1])
+    if driver is None and not os.environ.get('CGL_REEXEC'):
+        # 11/3: 낡은 selenium·webdriver-manager 가 새 Edge 버전·바뀐 드라이버 주소를 몰라 실패 → 최신으로 올리고 이 실행을 한 번 다시 시작
+        print('selenium·webdriver-manager 최신으로 갱신 후 다시 시작…')
+        try:
+            subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', '-U', 'selenium', 'webdriver-manager'], timeout=600)
+            shutil.rmtree(os.path.join(os.path.expanduser('~'), '.wdm'), ignore_errors=True)   # 차단 페이지로 만들어진 잘못된 드라이버 캐시
+        except Exception as e_:
+            print('  pip 갱신 실패:', str(e_)[:150])
+        os.environ['CGL_REEXEC'] = '1'
+        sys.stdout.flush()
+        sys.exit(subprocess.run([sys.executable] + sys.argv).returncode)   # 새 selenium 으로 다시(Windows 는 execv 가 배치 파일 대기를 끊어 subprocess 로)
+    if driver is None:
+        e = RuntimeError(' / '.join(errs))
         msg = (f"\n[Edge 드라이버 버전 안 맞음] 설치된 Edge = {ev or '모름(edge://settings/help 에서 확인)'}\n"
                f"  1) 브라우저로 https://developer.microsoft.com/ko-kr/microsoft-edge/tools/webdriver/ 에서 같은 버전(x64) 받기\n"
                f"  2) 압축 안의 msedgedriver.exe 를 이 폴더에 넣기: {HERE}\n  3) run_auto.bat 다시 실행\n")
@@ -308,7 +339,7 @@ def main():
             open(os.path.join(a.out, 'run_log.txt'), 'a', encoding='utf-8').write(msg)
         except Exception:
             pass
-        raise
+        raise e
     driver.maximize_window()
     ok_files, extra_files = [], []
     xdir = os.path.join(a.out, 'extra')                     # 분석용 추가 자료(도금 계획은 읽지 않음)
