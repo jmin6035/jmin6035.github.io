@@ -24,7 +24,7 @@ import ssl
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-QUERIES_URL = 'https://jmin6035.github.io/gadong-plan-web/published/queries.enc.json'   # 원격 조회 목록(클라우드에서 추가, SELECT 만, 분석 암호로 암호화)
+QUERIES_URLS = ('https://jmin6035.github.io/published/queries.enc.json',)   # 10/30 주소 전환(예전 gadong-plan-web 폐기) —   # 원격 조회 목록(클라우드에서 추가, SELECT 만, 분석 암호로 암호화)
 BAD_SQL = re.compile(r'\b(insert|update|delete|merge|drop|alter|create|grant|revoke|truncate|exec|execute|call|begin|declare|commit|rollback|lock|into)\b', re.I)
 MES_URL = 'https://intra-mes.poscosteeleon.com:8443/SCOM/main.do'
 SALES_RPT_URL = 'https://intra-mes.poscosteeleon.com:8443/SMKT/pages/NewYnc/jRdProdSalesDetail_2016_SSO.jsp'   # 판매생산속보
@@ -69,7 +69,8 @@ def q_color(d0, d1):
 
 def q_color_brk(d0, d1):
     """컬러 휴지 상세(열 구성을 몰라 전체 열) — 그 기간 생산 코일에 걸린 휴지"""
-    return (f"select b.* from sops.pf_cc_brk b where b.pdt_mom_no in (select a.pdt_no from sops.pf_cc_ccl_rslt a where a.prd_dt between '{d0}' and '{d1}')")
+    nm = "(select max(cd_nm) from scom.scom_code_detail where master_cd like '%PAU%' and cd_val = b.pau_rsn_cd_1)"   # 사유 코드 이름(도금 휴지와 같은 코드표)
+    return (f"select b.*, {nm} as pau_rsn_nm_1 from sops.pf_cc_brk b where b.pdt_mom_no in (select a.pdt_no from sops.pf_cc_ccl_rslt a where a.prd_dt between '{d0}' and '{d1}')")
 
 
 def q_ship(d0, d1):
@@ -132,7 +133,11 @@ class _Tee:
         self.f.flush()
 
 
-def register_task(at='07:25'):
+class RemoteOnlyDone(Exception):
+    """--remote-only: 원격 조회만 끝내고 나머지 내려받기는 건너뜀(main 밖에서 받아 추가 자료만 게시)"""
+
+
+def register_task(at='07:35', every='09:35-19:40'):
     """작업 스케줄러 등록: 이 파이썬으로 이 폴더의 mes_download.py 를 매일 at 에 실행. 옛 작업 이름은 지움"""
     exe = sys.executable
     cmd = f'"{exe}" "{os.path.join(HERE, "mes_download.py")}"'
@@ -146,14 +151,39 @@ def register_task(at='07:25'):
     q = subprocess.run(['schtasks', '/Query', '/TN', 'CGL auto', '/V', '/FO', 'LIST'], capture_output=True, text=True, errors='replace')
     print('\n'.join(l for l in (q.stdout or '').splitlines() if any(k in l for k in ('작업 이름', 'TaskName', '다음 실행', 'Next Run', '실행할 작업', 'Task To Run')))[:1500])
     print(f'등록됨: 매일 {at} — {cmd}')
+    # 원격 조회만 2시간마다(전체 재계획 없이 약 10분 — 시간초과 조회가 끼면 300초씩 늘어남) — 클라우드에서 새 조회문을 올리면 당일 받아 옴
+    st, et = every.split('-')
+    cmd2 = f'"{exe}" "{os.path.join(HERE, "mes_download.py")}" --remote-only'
+    subprocess.run(['schtasks', '/Delete', '/TN', 'CGL remote', '/F'], capture_output=True)
+    r2 = subprocess.run(['schtasks', '/Create', '/TN', 'CGL remote', '/TR', cmd2, '/SC', 'HOURLY', '/MO', '2', '/ST', st, '/ET', et, '/F'], capture_output=True, text=True, errors='replace')
+    print((r2.stdout or '') + (r2.stderr or ''))
+    print(f'등록됨: 원격 조회만 {st}~{et} 2시간마다 — {cmd2}' if not r2.returncode else '원격 조회 2시간 등록 실패(매일 실행은 등록됨)')
+    task_settings()
     return 0
+
+
+def task_settings():
+    """schtasks 기본값 보완: PC가 꺼져·절전이던 시각을 놓치면 켜지는 즉시 실행, 절전이면 깨움, 걸린 실행은 제한 시간 뒤 끝냄(다음 날 실행이 막히지 않게)"""
+    ps = ("$a = New-ScheduledTaskSettingsSet -StartWhenAvailable -WakeToRun -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries "
+          "-MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 2); Set-ScheduledTask -TaskName 'CGL auto' -Settings $a | Out-Null; "
+          "$r = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries "
+          "-MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Minutes 50); Set-ScheduledTask -TaskName 'CGL remote' -Settings $r | Out-Null; 'ok'")
+    r = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps], capture_output=True, text=True, errors='replace')
+    if 'ok' in (r.stdout or ''):
+        print('설정됨: 놓친 실행은 PC가 켜지면 바로 실행 · 절전이면 깨움 · 걸린 실행은 2시간(원격 50분) 뒤 끝냄')
+    else:
+        print('추가 설정 실패(시각 등록은 됨) — 작업 스케줄러에서 CGL auto > 설정 > "예약된 시작 시간을 놓친 경우 가능한 대로 빨리 작업 시작" 체크\n' + (r.stderr or '')[:300])
 
 
 def main():
     try:
         os.makedirs(os.path.join(HERE, 'out'), exist_ok=True)
         sys.stdout = sys.stderr = _Tee(sys.__stdout__, os.path.join(HERE, 'out', 'run_log.txt'))
-        print(f'실행 시작 {datetime.datetime.now():%Y-%m-%d %H:%M:%S}')
+        try:                                                 # 설치 묶음 판 표시(2026-10-21: --remote-only 에선 판이 안 보여 새 묶음인지 확인할 수 없었음)
+            ver = re.search(r"AUTO_VERSION = '([^']+)'", open(os.path.join(HERE, 'cglplan', 'auto.py'), encoding='utf-8').read()).group(1)
+        except Exception:
+            ver = '?'
+        print(f'실행 시작 {datetime.datetime.now():%Y-%m-%d %H:%M:%S} · 설치 묶음 {ver}')
     except Exception:
         pass
     ap = argparse.ArgumentParser()
@@ -167,14 +197,15 @@ def main():
     ap.add_argument('--probe', help='메뉴 검색어를 넣고 검색 결과 화면 구조를 기록(진단용, 예: 4025)')
     ap.add_argument('--stock-manual', action='store_true', help='제품재고: 화면 이동·조회는 사람이 하고, 표 읽기만 자동')
     ap.add_argument('--stock-months', type=int, default=6, help='재고현황 기준월 몇 달치(이번 달 포함, 기본 6)')
-    ap.add_argument('--register', action='store_true', help='매일 07:25 자동 실행을 Windows 작업 스케줄러에 등록(.bat 없이 파이썬 직접 실행)')
+    ap.add_argument('--remote-only', action='store_true', help='원격 조회 목록만 실행하고 추가 자료만 게시(재계획 없음, 약 10분)')
+    ap.add_argument('--register', action='store_true', help='매일 07:35 자동 실행을 Windows 작업 스케줄러에 등록(.bat 없이 파이썬 직접 실행)')
     a = ap.parse_args()
     if a.register:
         sys.exit(register_task())
     today = datetime.date.today()
     months = []                                          # 재고현황 조회 달(⑤에서 채움)
     d1 = a.d1 or (today - datetime.timedelta(days=1)).strftime('%Y%m%d')
-    d0 = a.d0 or (today - datetime.timedelta(days=a.days)).strftime('%Y%m%d')
+    d0 = a.d0 or min(today - datetime.timedelta(days=a.days), today.replace(day=1)).strftime('%Y%m%d')   # 최소 이번 달 1일부터(화면이 월 단위 — 누적 기록이 지워져도 이번 달은 다시 채워짐)
     fmt = lambda s: f'{s[:4]}-{s[4:6]}-{s[6:]}'
     os.makedirs(a.out, exist_ok=True)
     dl = os.path.join(HERE, '_mes_dl')
@@ -205,14 +236,49 @@ def main():
     opts.add_experimental_option('prefs', {'download.default_directory': dl, 'download.prompt_for_download': False, 'download.directory_upgrade': True})
     opts.add_experimental_option('excludeSwitches', ['enable-logging'])
     opts.add_argument('--log-level=3')
-    try:
-        from webdriver_manager.microsoft import EdgeChromiumDriverManager
-        service = Service(EdgeChromiumDriverManager().install())
-    except Exception as e:                       # 드라이버 자동 설치가 막히면 PC에 설치된 msedgedriver 사용
-        print('Edge 드라이버 자동 설치 실패 — 기본 드라이버로 시도:', e)
-        service = Service()
+    def edge_ver():                              # 설치된 Edge 버전(레지스트리)
+        try:
+            import winreg
+            for root in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+                try:
+                    with winreg.OpenKey(root, r'Software\Microsoft\Edge\BLBeacon') as k:
+                        return winreg.QueryValueEx(k, 'version')[0]
+                except OSError:
+                    pass
+        except ImportError:
+            pass
+        return None
+    ev = edge_ver()
+    # 2026-11-03: 밤사이 Edge 자동 업데이트 → 드라이버 버전 불일치, 사내망이 드라이버 다운로드를 막아(차단 HTML 을 받음) 실행 실패.
+    # 순서: ① 설치 폴더의 msedgedriver.exe(사용자가 Edge 와 같은 버전으로 넣어 둔 것) ② 자동 설치(받은 파일이 진짜 exe 일 때만) ③ PC 기본
+    cands = [os.path.join(HERE, 'msedgedriver.exe')] + sorted(glob.glob(os.path.join(HERE, 'edgedriver*', 'msedgedriver.exe')), reverse=True)
+    local = next((p for p in cands if os.path.isfile(p)), None)
+    if local:
+        print('Edge 드라이버: 설치 폴더', local, '· Edge', ev)
+        service = Service(local)
+    else:
+        try:
+            from webdriver_manager.microsoft import EdgeChromiumDriverManager
+            pth = EdgeChromiumDriverManager().install()
+            if not (os.path.isfile(pth) and pth.lower().endswith('.exe')):
+                raise RuntimeError('받은 드라이버가 exe 가 아님(사내망 차단 페이지)')
+            service = Service(pth)
+        except Exception as e:                       # 드라이버 자동 설치가 막히면 PC에 설치된 msedgedriver 사용
+            print('Edge 드라이버 자동 설치 실패 — 기본 드라이버로 시도:', str(e)[:150])
+            service = Service()
     service.creation_flags = 0x08000000
-    driver = webdriver.Edge(service=service, options=opts)
+    try:
+        driver = webdriver.Edge(service=service, options=opts)
+    except Exception as e:
+        msg = (f"\n[Edge 드라이버 버전 안 맞음] 설치된 Edge = {ev or '모름(edge://settings/help 에서 확인)'}\n"
+               f"  1) 브라우저로 https://developer.microsoft.com/ko-kr/microsoft-edge/tools/webdriver/ 에서 같은 버전(x64) 받기\n"
+               f"  2) 압축 안의 msedgedriver.exe 를 이 폴더에 넣기: {HERE}\n  3) run_auto.bat 다시 실행\n")
+        print(msg)
+        try:
+            open(os.path.join(a.out, 'run_log.txt'), 'a', encoding='utf-8').write(msg)
+        except Exception:
+            pass
+        raise
     driver.maximize_window()
     ok_files, extra_files = [], []
     xdir = os.path.join(a.out, 'extra')                     # 분석용 추가 자료(도금 계획은 읽지 않음)
@@ -276,6 +342,37 @@ def main():
       for (var r = 0; r < rows.length; r++) { var a = []; for (var k = 0; k < keep.length; k++) { var v = rows[r][keep[k]]; a.push(v === undefined ? null : (v instanceof Date ? v.toISOString() : v)); } out.push(a); }
       return JSON.stringify({columns: head, rows: out});'''
 
+    # 2026-10-28: 쿼리 화면 오류 창('쿼리를 실행 할 수 없습니다')은 브라우저 알림이 아니라 화면 안 창이라 못 닫고 시간초과까지 기다렸음 →
+    # 결과가 0건일 때만 찾아서 '자세히' 내용(ORA 오류)을 읽고 Ok 를 눌러 바로 다음 조회로. 내용은 원격 조회 기록(snap_remote_status)에 남김
+    MODAL_JS = r'''
+      var vis = function (e) { return !!(e && (e.offsetParent || e.getClientRects().length)); };
+      var els = document.querySelectorAll('div, span, p, td, label'), hit = null;
+      for (var i = 0; i < els.length && !hit; i++) { var e = els[i]; if (e.children.length) continue; var t = (e.textContent || '').trim();
+        if (t && t.length < 300 && /실행\s*할\s*수\s*없|ORA-\d{3,5}/.test(t) && vis(e)) hit = e; }
+      if (!hit) return null;
+      var box = hit, ok = null, det = null;
+      for (var k = 0; k < 8 && box.parentElement; k++) { box = box.parentElement;
+        var bs = box.querySelectorAll('button, a, span, div, input');
+        for (var j = 0; j < bs.length; j++) { var b = bs[j], bt = (b.textContent || b.value || '').trim();
+          if (!ok && /^(ok|확인)$/i.test(bt) && vis(b)) ok = b; if (!det && bt === '자세히' && vis(b)) det = b; }
+        if (ok) break; }
+      if (arguments[0] && det) { det.click(); return 'DETAIL'; }
+      var txt = (box.innerText || box.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 400);
+      if (ok) ok.click();
+      return txt || hit.textContent;'''
+    qerr = {}
+
+    def close_modal():
+        """쿼리 오류 창이 떠 있으면 내용을 읽고 닫음. 없으면 None"""
+        try:
+            r = driver.execute_script(MODAL_JS, True)
+            if r == 'DETAIL':
+                time.sleep(1.5)
+                r = driver.execute_script(MODAL_JS, False)
+            return r
+        except Exception:
+            return None
+
     def close_alert():
         """브라우저 알림창(예: '조회된 데이터가 없습니다')이 떠 있으면 닫고 그 글자를 돌려줌"""
         try:
@@ -300,6 +397,12 @@ def main():
                 n = None
             if n and n == last:
                 return n
+            if not n:
+                m = close_modal()
+                if m:
+                    qerr['msg'] = m
+                    print(f'    ⚠ 쿼리 오류 창: {m[:200]}')
+                    return 0
             last = n
         return last or 0
 
@@ -374,11 +477,20 @@ def main():
         """사이트의 published/queries.enc.json 에 적힌 조회문(SELECT/WITH 만)을 MES 쿼리 화면에서 실행해 mes/extra/<이름>.json 으로 저장.
         mode: once(조회문이 바뀌었을 때만) · daily(매번) · range(기간 나눠서, 조회문 안 {d0}·{d1} 을 YYYYMMDD 로 바꿈, step 일씩)
         이름이 snap_ 로 시작하면 최신으로 교체, 아니면 자동 실행기가 누적. 결과 행은 10,000행까지(쿼리 화면 제한)"""
-        try:
-            raw = urllib.request.urlopen(QUERIES_URL + f'?v={int(time.time())}', timeout=30).read()
-        except Exception:
-            ctx = ssl.create_default_context(); ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE   # 회사 인증서 가로채기 대비(공개 읽기 전용 파일)
-            raw = urllib.request.urlopen(QUERIES_URL + f'?v={int(time.time())}', timeout=30, context=ctx).read()
+        raw, err = None, None
+        for url in QUERIES_URLS:
+            try:
+                raw = urllib.request.urlopen(url + f'?v={int(time.time())}', timeout=30).read()
+            except Exception:
+                try:
+                    ctx = ssl.create_default_context(); ctx.check_hostname = False; ctx.verify_mode = ssl.CERT_NONE   # 회사 인증서 가로채기 대비(공개 읽기 전용 파일)
+                    raw = urllib.request.urlopen(url + f'?v={int(time.time())}', timeout=30, context=ctx).read()
+                except Exception as e:
+                    err = e
+            if raw:
+                break
+        if raw is None:
+            raise err
         env = json.loads(raw.decode('utf-8'))
         p = os.path.join(HERE, 'auto_config.json')
         cfg = json.loads(open(p, encoding='utf-8-sig').read(), strict=False) if os.path.exists(p) else {}
@@ -402,7 +514,26 @@ def main():
         elif os.path.exists(legacy):
             os.remove(legacy)
         done = json.load(open(dp, encoding='utf-8')) if os.path.exists(dp) else {}
-        for q in Q.get('queries', []):
+        os.makedirs(os.path.dirname(dp), exist_ok=True)
+        # 2026-10-20: 1년치 once 조회 80여 개가 한 번에 몰려 3시간 넘게 돌고, 끝나기 전엔 아무것도 게시되지 않았음 →
+        # 매일·기간 조회를 먼저, once 는 한 번 실행에 최대 ONCE_MAX 개(남은 것은 다음 2시간 실행), 끝난 조회는 바로 기록
+        once_max = int(cfg.get('remote_once_max', 20))
+        qs = sorted(Q.get('queries', []), key=lambda q: q.get('mode', 'once') == 'once')
+        n_once, left = 0, 0
+        sp = os.path.join(xdir, 'snap_remote_status.json')                  # 조회마다 결과(행 수·초·실패 이유)를 남겨 클라우드에서 볼 수 있게(2026-10-20 v49)
+        try:
+            stat = {r[0]: r for r in json.load(open(sp, encoding='utf-8'))['rows']}
+        except Exception:
+            stat = {}
+
+        def note(name, mode, rows, t0, result):
+            stat[name] = [name, mode, rows, round(time.time() - t0), result, datetime.datetime.now().strftime('%Y-%m-%d %H:%M')]
+            try:
+                os.makedirs(xdir, exist_ok=True)
+                json.dump({'columns': ['name', 'mode', 'rows', 'sec', 'result', 'at'], 'rows': list(stat.values())}, open(sp, 'w', encoding='utf-8'), ensure_ascii=False)
+            except Exception:
+                pass
+        for q in qs:
             name, sql, mode = re.sub(r'[^0-9a-z_]', '', str(q.get('name', '')).lower()), str(q.get('sql', '')).strip(), q.get('mode', 'once')
             h = hashlib.sha1(sql.encode('utf-8')).hexdigest()[:12]
             if not name or not sql:
@@ -413,7 +544,21 @@ def main():
                 continue
             if mode == 'once' and done.get(name) == h:
                 continue
+            if mode == 'once' and name not in done and os.path.exists(os.path.join(xdir, name + '.json')):
+                done[name] = h                                     # 끊긴 실행이 이미 받아 저장한 것(기록만 못 함) — 다시 돌지 않음(2026-10-20)
+                continue
+            fl = done.setdefault('_fail', {}).get(name)              # 2026-10-21: 같은 조회문이 연속 2번 시간초과·0행이면 건너뜀(매 실행 10분씩 멈추던 문제) — 조회문을 고치면 다시 돎
+            if fl and fl[0] == h and fl[1] >= 2:
+                print(f'  · {name}: 같은 조회문이 {fl[1]}번 연속 실패해 건너뜀(조회문을 고치면 다시 실행)')
+                note(name, mode, 0, time.time(), f'건너뜀(연속 {fl[1]}번 실패)')
+                continue
+            if mode == 'once':
+                if n_once >= once_max:
+                    left += 1
+                    continue
+                n_once += 1
             print(f'▶ {name} (원격 조회 · {mode})')
+            t0, nrows = time.time(), None
             try:
                 if mode == 'range':
                     ok = run_chunks(name, 'gridQueryRslt', lambda c0, c1: run_sql(sql.replace('{d0}', c0).replace('{d1}', c1)), int(q.get('step', 7)), xdir)
@@ -422,23 +567,41 @@ def main():
                         driver.execute_script(CLEAR_JS, 'gridQueryRslt')
                     except Exception:
                         pass
+                    qerr.pop('msg', None)
                     run_sql(sql)
                     n = wait_rows('gridQueryRslt', int(q.get('timeout', 180)))
                     o = read('gridQueryRslt') if n else None
                     if o and len(o['rows']) >= 10000:
                         print('  ⚠ 10,000행 — 잘렸을 수 있음(조회문을 나눠야 함)')
+                    nrows = len(o['rows']) if o else 0
                     ok = save(o, name, xdir) if o else False
+                    if not o:
+                        print(f"  ⚠ {name}: 결과 0행(조회 결과가 없거나 {int(q.get('timeout', 180))}초 안에 안 끝남)")
+                note(name, mode, nrows, t0, (f'1만 행(잘렸을 수 있음 — 조회 나눠야 함)' if (nrows or 0) >= 10000 else 'ok') if ok else (f"실패: 쿼리 오류 — {qerr['msg'][:250]}" if qerr.get('msg') else f"0행 또는 시간초과({int(q.get('timeout', 180))}초)"))   # 2026-10-21: 1만 행 = MES 쿼리 화면 한도
                 if ok:
                     done[name] = h
+                    done['_fail'].pop(name, None)
+                else:
+                    f0 = done['_fail'].get(name)
+                    done['_fail'][name] = [h, (f0[1] + 1) if f0 and f0[0] == h else 1]
+                json.dump(done, open(dp, 'w', encoding='utf-8'))          # 바로 기록(중간에 끊겨도 다음 실행이 다시 돌지 않게)
             except Exception as e:
-                print(f'  ⚠ {name}: 실패 — 건너뜀 ({str(e).splitlines()[0][:150] if str(e) else type(e).__name__})')
-        os.makedirs(os.path.dirname(dp), exist_ok=True)
+                msg = str(e).splitlines()[0][:150] if str(e) else type(e).__name__
+                note(name, mode, nrows, t0, '실패: ' + msg)
+                print(f'  ⚠ {name}: 실패 — 건너뜀 ({msg})')
         json.dump(done, open(dp, 'w', encoding='utf-8'))
+        if left:
+            print(f'  한 번만 받는 조회 {left}개는 다음 실행에서(한 번에 {once_max}개까지 — auto_config.json remote_once_max)')
 
-    def menu_panel(diag=None):
+    def menu_panel(diag=None, again=True):
         """좌측 메뉴 패널을 연 상태로 만들고 검색창을 돌려줌. collapseButton 은 열기/닫기 토글이라
-        검색창이 이미 보이면 누르지 않고, 안 보일 때만 눌러 열림을 확인(최대 2번)"""
+        검색창이 이미 보이면 누르지 않고, 안 보일 때만 눌러 열림을 확인(최대 2번)
+        2026-10-21: 로그인 직후 화면이 늦게 뜨면 '검색창이 열리지 않음'으로 끝났음 → 메뉴 영역이 뜰 때까지 최대 30초 기다리고, 그래도 안 되면 첫 화면을 다시 열어 한 번 더"""
         driver.switch_to.default_content()
+        for _ in range(30):
+            if driver.find_elements(By.ID, 'SEARCH_VAL') or driver.find_elements(By.ID, 'collapseButton'):
+                break
+            time.sleep(1)
         for k in range(3):
             els = driver.find_elements(By.ID, 'SEARCH_VAL')
             if els and els[0].is_displayed():
@@ -457,6 +620,11 @@ def main():
                 els = driver.find_elements(By.ID, 'SEARCH_VAL')
                 if els and els[0].is_displayed():
                     break
+        if again:
+            print('  메뉴 검색창이 안 열려 첫 화면을 다시 엶')
+            driver.get(mes_url)
+            time.sleep(8)
+            return menu_panel(diag, again=False)
         raise RuntimeError('좌측 메뉴 검색창이 열리지 않음')
 
     def menu(name, exact=False):
@@ -849,6 +1017,19 @@ def main():
         driver.find_element(By.XPATH, '//*[@id="password_input"]').send_keys(pw)
         driver.find_element(By.XPATH, '//*[@id="loginsubmit"]').click()
         time.sleep(8)
+        if a.remote_only:                                   # 원격 조회만: 쿼리 화면 → 조회 목록 실행 → 끝
+            menu('쿼리')
+            box = frame_with('//*[@id="QUERY_CONTTextArea"]')
+            if box is None:
+                raise RuntimeError('쿼리 입력창을 찾지 못함')
+
+            def run_sql(sql):
+                box.send_keys(Keys.CONTROL + 'a', Keys.BACKSPACE)
+                time.sleep(0.5)
+                box.send_keys(sql)
+                driver.execute_script('arguments[0].click();', driver.find_element(By.XPATH, '//*[@id="mnuCust1Btn"]/span'))
+            remote_queries(run_sql)
+            raise RemoteOnlyDone()
         if a.stock_manual:                                  # 사람이 화면을 열고 조회 → 엔터 → 표를 읽어 저장
             for plant, name in (('도금', 'snap_stock_g'), ('컬러', 'snap_stock_c')):
                 input(f"\n[{plant}] 열린 Edge 창에서 '제품재고 현황'을 열고, 공장구분={plant}, 입고일자 2000-01-01 ~ 오늘로 조회한 뒤 여기서 Enter ")
@@ -985,6 +1166,18 @@ def main():
                     yy, mm = yy - 1, mm + 12
                 months.append(f'{yy}{mm:02d}')
             months.reverse()                                            # 최신 달부터(이번 달·지난달이 가장 중요)
+            # 2026-10-28 사용자 "이미 받은 달을 매번 받아야 돼?": 마감된 달은 안 바뀜 → 누적본(out/extra_acc/snap_stock.json)에
+            # 앞선 달이 다 있으면 이번 달·지난달만 받음(자동 실행기가 달별로 합침). 누적본이 없거나 빠진 달이 있으면 예전처럼 전부
+            try:
+                c_ = json.loads(open(os.path.join(HERE, 'auto_config.json'), encoding='utf-8-sig').read(), strict=False)
+                od_ = c_.get('out_dir') or 'out'
+                acc_ = os.path.join(od_ if os.path.isabs(od_) else os.path.join(HERE, od_), 'extra_acc', 'snap_stock.json')
+                have_ = {r[0] for r in json.load(open(acc_, encoding='utf-8')).get('rows') or []} if os.path.exists(acc_) else set()
+                if len(months) > 2 and set(months[2:]) <= have_:
+                    print(f'  재고현황 {months[-1]}~{months[2]} 는 누적본에 있음 → {months[1]}·{months[0]} 만 받음')
+                    months = months[:2]
+            except Exception as e:
+                print(f'  (재고현황 누적본 확인 실패 — 전부 받음: {e})')
             print(f'▶ snap_stock (재고현황 SMKTF1030, 기준월 {months[-1]}~{months[0]}, 최신부터, 분석용)')
             stock_diag = []
             try:
@@ -1134,4 +1327,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except RemoteOnlyDone:
+        print('원격 조회 끝 → 추가 자료만 게시')
+        env = dict(os.environ, PYTHONUTF8='1', PYTHONUNBUFFERED='1')
+        sys.exit(subprocess.call([sys.executable, '-m', 'cglplan', 'pushextra', '--config', os.path.join(HERE, 'auto_config.json')], cwd=HERE, env=env))
