@@ -273,7 +273,7 @@
   // ---------- 캘린더 ----------
   function tabs() {
     $('s-mon').innerHTML = D.months.map((m) => `<button type="button" data-m="${m}" aria-pressed="${m === mon}">${+m.slice(5)}월</button>`).join('');
-    $('s-mon').querySelectorAll('button').forEach((b) => b.onclick = () => { mon = b.dataset.m; tabs(); cal(); if (PAGE === 'matcal') monthSum(); });
+    $('s-mon').querySelectorAll('button').forEach((b) => b.onclick = () => { mon = b.dataset.m; tabs(); progress(); cal(); if (PAGE === 'matcal') monthSum(); });
   }
   const kt = (v) => { const a = Math.abs(v) / 1000; return (v < -0.5 ? '−' : '') + (a >= 1 ? a.toFixed(1) : a.toFixed(2)); };   // 재고 표 천t(사용자 10/21: 5자리 넘침 → 한 달 한 화면 유지)
   function cal() {
@@ -708,7 +708,27 @@
   }
 
   // ---------- 이번 달 진행(2026-10-20 회의: 도금 생산·출하, 컬러 생산·출하 4개 그래프) ----------
+  /* 11/3 사용자 '10월 고르면 10월 말 기준, 12월은 실적 0·월 계획만': 이번 달이 아닌 달 = 그 달 일별 자료(지난 날 실적 + 남은 날 계획)와 월 물량 계획(LP)으로 */
+  const GMAP = { 도금수출: 'G수출', 도금국내: 'G국내', 자동차내수: 'G자동차', 자동차수출: 'G자동차', 자가재: 'G자가재', 건재수출: 'C수출', 가전수출: 'C수출', 가전내수: 'C수출', 주문재: 'C건재', 계획재: 'C건재', 수요개발: 'C수요' };
+  const GNM = { G수출: '도금수출', G국내: '도금국내', G자동차: '자동차강판', G자가재: '자가재', C수출: '컬러수출', C건재: '컬러건재', C수요: '수요개발' };
+  function progressMonth() {
+    const m = mon, cur = today.slice(0, 7), past = m < cur, end = D.days.filter((d) => d.slice(0, 7) === m).pop() || '';
+    const act = {}, pln = {};
+    for (const [k, x] of Object.entries(D.pl)) { const d = k.split('|')[1]; if (d.slice(0, 7) !== m) continue; for (const [c, t] of Object.entries(x.cls || {})) { const g = GMAP[c]; if (!g) continue; if (past || x.act) act[g] = (act[g] || 0) + t; else pln[g] = (pln[g] || 0) + t; } }
+    for (const [k, x] of Object.entries(D.co)) { const d = k.split('|')[1]; if (d.slice(0, 7) !== m) continue; for (const [c, t] of Object.entries(x.g || {})) { const g = GMAP[c]; if (!g) continue; if (past || x.act) act[g] = (act[g] || 0) + t; else pln[g] = (pln[g] || 0) + t; } }
+    const P = (D.V.plan || {}), mi = D.months.indexOf(m), mp = (g, k) => { const r = (P[g] || [])[mi]; return r ? r[k] || 0 : 0; };   // 월 물량 계획(LP) — 달 순서 = D.months
+    const SD = (D.PO || {}).shipDay, shipAct = (g) => (SD && SD.g && SD.g[g] ? Object.entries(SD.g[g]).filter(([d]) => d.slice(0, 7) === m).reduce((a, [, v]) => a + v, 0) : 0);
+    const groups = ['G수출', 'G국내', 'G자동차', 'G자가재', 'C수출', 'C건재', 'C수요'].filter((g) => UI.inScope(g[0]));
+    const cell = (a, p) => past ? `<b>${n0(a)}</b><small class="muted"> / ${n0(p)}</small> <span class="${a >= p ? 'pos' : 'neg'}">${p > 0 ? Math.round(a / p * 100) + '%' : ''}</span>` : `<b>${n0(p)}</b>`;
+    const rows = groups.map((g) => `<tr><td class="lb nw"><b>${GNM[g]}</b></td><td class="r nw">${cell(act[g] || 0, mp(g, 'prod'))}</td><td class="r nw">${g === 'G자가재' ? '–' : cell(shipAct(g), mp(g, 'sales'))}</td>${past ? '' : `<td class="r nw">${n0(pln[g] || 0)}</td>`}</tr>`).join('');
+    const tot = (f) => groups.reduce((a, g) => a + f(g), 0);
+    $('s-prog').innerHTML = `<h2>${+m.slice(5)}월 ${past ? `실적 <small>${md(end)} 월말 기준 · 실적/월 계획</small>` : '계획 <small>실적 없음 — 월 계획만</small>'}<span class="unit">톤</span></h2>
+      <div class="tblw"><table class="dt pm-t"><thead><tr><th>판매그룹</th><th class="r">생산</th><th class="r">출하</th>${past ? '' : '<th class="r">일별 계획 합</th>'}</tr></thead><tbody>${rows}</tbody>
+      <tfoot><tr><td class="lb"><b>계</b></td><td class="r nw">${cell(tot((g) => act[g] || 0), tot((g) => mp(g, 'prod')))}</td><td class="r nw">${cell(tot((g) => g === 'G자가재' ? 0 : shipAct(g)), tot((g) => g === 'G자가재' ? 0 : mp(g, 'sales')))}</td>${past ? '' : `<td class="r nw">${n0(tot((g) => pln[g] || 0))}</td>`}</tr></tfoot></table></div>`;
+  }
+
   function progress() {
+    if (mon !== today.slice(0, 7)) return progressMonth();
     const PO = D.PO; if (!PO || !$('s-prog').id) return;
     const L = PO.lines || [], SH = ((PO.sr || {}).ship) || [], G = PO.groups || [];
     const sum = (xs, k) => xs.reduce((a, x) => a + (+x[k] || 0), 0);
