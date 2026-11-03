@@ -13,7 +13,7 @@
     Storage.prototype.setItem = function (k, v) { if (!isPw(k)) s.call(this, k, v); };
   }
   const NAV = [
-    ['home', 'index.html', '관제판'], ['supply', 'supply.html', '가동'], ['matcal', 'matcal.html', '소재 관제'], ['integrated', 'integrated.html', '재고'], ['cgorder', 'cg_order.html', '주문·납기'], ['report', 'report.html', '주간 보고'],
+    ['home', 'index.html', '관제판'], ['supply', 'supply.html', '가동'], ['matcal', 'matcal.html', '소재 관제'], ['integrated', 'integrated.html', '재고'], ['cgorder', 'cg_order.html', '주문·납기 도금'], ['ccorder', 'cc_order.html', '주문·납기 컬러'], ['report', 'report.html', '주간 보고'],
     '|도금', ['status', 'status.html', '가동 현황'], ['analysis', 'analysis.html', '조건 분석'], ['platact', 'plating_actual.html', '실적'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['cgcal', 'cg_calendar.html', '생산 캘린더'], ['cgwo', 'cg_wo.html', '작업지시 순서'],
     '|컬러', ['colorstat', 'color_status.html', '가동 현황'], ['coloranal', 'color_analysis.html', '조건 분석'], ['coloract', 'color_actual.html', '실적'], ['planstock', 'planstock.html', '계획재'], ['cccal', 'cc_calendar.html', '생산 캘린더'], ['wo', 'wo.html', '작업지시 순서'],
     '|소재', ['procure', 'procure.html', '소재 발주'],
