@@ -719,12 +719,16 @@
     const P = (D.V.plan || {}), mi = D.months.indexOf(m), mp = (g, k) => { const r = (P[g] || [])[mi]; return r ? r[k] || 0 : 0; };   // 월 물량 계획(LP) — 달 순서 = D.months
     const SD = (D.PO || {}).shipDay, shipAct = (g) => (SD && SD.g && SD.g[g] ? Object.entries(SD.g[g]).filter(([d]) => d.slice(0, 7) === m).reduce((a, [, v]) => a + v, 0) : 0);
     const groups = ['G수출', 'G국내', 'G자동차', 'G자가재', 'C수출', 'C건재', 'C수요'].filter((g) => UI.inScope(g[0]));
-    const cell = (a, p) => past ? `<b>${n0(a)}</b><small class="muted"> / ${n0(p)}</small> <span class="${a >= p ? 'pos' : 'neg'}">${p > 0 ? Math.round(a / p * 100) + '%' : ''}</span>` : `<b>${n0(p)}</b>`;
-    const rows = groups.map((g) => `<tr><td class="lb nw"><b>${GNM[g]}</b></td><td class="r nw">${cell(act[g] || 0, mp(g, 'prod'))}</td><td class="r nw">${g === 'G자가재' ? '–' : cell(shipAct(g), mp(g, 'sales'))}</td>${past ? '' : `<td class="r nw">${n0(pln[g] || 0)}</td>`}</tr>`).join('');
-    const tot = (f) => groups.reduce((a, g) => a + f(g), 0);
-    $('s-prog').innerHTML = `<h2>${+m.slice(5)}월 ${past ? `실적 <small>${md(end)} 월말 기준 · 실적/월 계획</small>` : '계획 <small>실적 없음 — 월 계획만</small>'}<span class="unit">톤</span></h2>
-      <div class="tblw"><table class="dt pm-t"><thead><tr><th>판매그룹</th><th class="r">생산</th><th class="r">출하</th>${past ? '' : '<th class="r">일별 계획 합</th>'}</tr></thead><tbody>${rows}</tbody>
-      <tfoot><tr><td class="lb"><b>계</b></td><td class="r nw">${cell(tot((g) => act[g] || 0), tot((g) => mp(g, 'prod')))}</td><td class="r nw">${cell(tot((g) => g === 'G자가재' ? 0 : shipAct(g)), tot((g) => g === 'G자가재' ? 0 : mp(g, 'sales')))}</td>${past ? '' : `<td class="r nw">${n0(tot((g) => pln[g] || 0))}</td>`}</tr></tfoot></table></div>`;
+    // 11/3 사용자: 이번 달과 같은 막대 그래프 — 지난 달 = 실적(진한)·월 계획선, 다음 달 = 계획 생산(옅은)·월 계획선
+    const cats = (keys, kind) => keys.map((g) => { const a = kind === 'ship' ? shipAct(g) : (act[g] || 0), b = kind === 'ship' ? 0 : (pln[g] || 0), p = mp(g, kind === 'ship' ? 'sales' : 'prod') || 0, fin = past ? a : (kind === 'ship' ? p : a + b);
+      return { name: GNM[g], a: past ? a : 0, b: past ? 0 : (kind === 'ship' ? p : a + b), plan: p, vals: past ? [a, p, Math.max(0, p - a), a] : (kind === 'ship' ? [p] : [fin, p]), neg: past && a < p - 0.5,
+        tip: `${GNM[g]}: ${past ? `${kind === 'ship' ? '출하' : '생산'} 실적 ${n0(a)}t / 월 계획 ${n0(p)}t (${p ? Math.round(a / p * 100) : 0}%)` : `월 계획 ${n0(p)}t${kind === 'ship' ? '' : ` · 일별 계획 합 ${n0(a + b)}t`}`}` }; });
+    const panel = (pl, title, kind) => { const ks = groups.filter((g) => g[0] === pl && (kind !== 'ship' || !['G자가재', 'C수요'].includes(g))); if (!ks.length) return '';
+      return `<div class="pgv" data-dom="${pl}"><h3>${title}</h3>` + colChart(cats(ks, kind), 170, past ? ['실적', '월 계획', '잔여', '월말'] : (kind === 'ship' ? ['출하 계획'] : ['계획 생산', '월 계획'])) + '</div>'; };
+    const L = past ? [['a', '실적'], ['p', '월 계획']] : [['b', '계획 생산'], ['p', '월 계획']];
+    $('s-prog').innerHTML = `<h2>${+m.slice(5)}월 ${past ? `실적 <small>${md(end)} 월말 기준 — 막대 = 실적, 선 = 월 계획</small>` : '계획 <small>실적 없음 — 막대 = 계획 생산, 선 = 월 계획</small>'}<span class="unit">톤</span></h2>
+      <div class="pgvs">${panel('G', '도금 판매그룹별 생산', 'prod')}${panel('C', '컬러 판매그룹별 생산', 'prod')}</div>${vzLegend(L)}
+      <h3 class="pgs-t">출하</h3><div class="pgvs">${panel('G', '도금 출하', 'ship')}${panel('C', '컬러 출하', 'ship')}</div>`;
   }
 
   function progress() {

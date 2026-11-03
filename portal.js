@@ -25,7 +25,15 @@
   let lastO = null;
 
   let MO = null;
-  const ctl = (O) => UI.ctl(O, MO);
+  let CM = null, X = {};
+  const ctl = (O) => {
+    const cur = (O.today || O.asOf).slice(0, 7), ms = (IG && IG.months) || O.months || [cur];
+    CM = CM && ms.includes(CM) ? CM : cur;
+    const tabs = `<div class="tabs ctl-tabs" role="group" aria-label="달">${ms.map((m) => `<button type="button" data-m="${m}" aria-pressed="${m === CM}">${+m.slice(5)}월${m < cur ? ' 결산' : m > cur ? ' 계획' : ' 현재'}</button>`).join('')}</div>`;
+    const html = CM === cur ? UI.ctl(O, MO) : `<h2>관제판 <small>${+CM.slice(5)}월 ${CM < cur ? '월말 결산' : '계획'}</small></h2>` + UI.ctlMonth(O, MO, Object.assign({ IG }, X), CM);
+    setTimeout(() => document.querySelectorAll('.ctl-tabs button').forEach((b) => b.onclick = () => { CM = b.dataset.m; render(lastO); }), 0);
+    return html.replace('</h2>', '</h2>' + tabs);
+  };
 
   // 라인 타일: 월차·누계·일정 대비 + 이번 달 일별 추이(선이 그려지는 애니메이션) + 다음 전환
   function spark(days) {
@@ -293,6 +301,7 @@
   async function unlock(pw) {
     if (!env) env = await envReady;
     try { const O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } $('h-lock').hidden = true; render(O); UI.onScope(() => render(lastO));
+      Promise.all(['latest.plan.enc.json', 'color_actual.enc.json'].map((n) => GP.latest(n).then((e) => (e ? GP.decryptJSON(e, pw) : null)).catch(() => null))).then(([lp, ca]) => { X = { LP: lp, CA: ca }; render(lastO); });
       GP.latest('mat_order.enc.json').then((e) => (e ? GP.decryptJSON(e, pw) : null)).then((x) => { if (x) { MO = x; render(lastO); } }).catch(() => { /* 소재 관제 없으면 '–' */ });
       GP.latest('integrated.enc.json').then((e) => (e ? GP.decryptJSON(e, pw) : null)).then((x) => { if (x) { IG = x; render(lastO); } }).catch(() => { /* 통합 계획 없으면 표 생략 */ }); }
     catch (e) { $('h-own').innerHTML = ''; $('h-lock').hidden = false; $('h-msg').textContent = pw ? '암호가 맞지 않습니다' : ''; }
