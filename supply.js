@@ -751,10 +751,33 @@
       <p class="small muted" style="margin:8px 2px 0">생산 = MES 실적 · 출하 실적 = MES 출하(판매 출고, 부서 → 판매그룹) · 월 계획·오늘까지 계획 = 판매생산속보. 라인별 상세는 <a href="status.html">도금 가동 현황</a> · <a href="color_status.html">컬러 가동 현황</a></p>`;
   }
 
+  /* 소재 발주 판단(11/3 개편): published/mat_order.enc.json(tools/mat_order_spec.py, 매일) — 소재 사양(두께×폭)마다 판정 → 묶음: 판정 → 구매구분 */
+  function orderJudge(MO) {
+    const el = document.getElementById('s-ojudge'); if (!el) return;
+    if (!MO || !MO.rows) { el.innerHTML = '<h2>소재 발주 판단</h2><p class="small">판단 자료가 없습니다.</p>'; return; }
+    const G = [['발주', '지금 발주', 'oj-go'], ['확인(마감 지남)', '마감 지남 — 앞당김·대체 필요', 'oj-late'], ['발주 안 함', '발주 안 함 — 재고·기발주로 충당', 'oj-ok']];
+    const mons = MO.months || [];
+    const row = (r) => `<tr><td class="nw"><b class="oj-spec">${r.thk} × ${r.wdt}</b></td><td class="nw"><span class="chip">${esc(r.mat)}</span></td>
+      <td class="r nw">${mons.map((m) => `<span class="oj-m" title="${esc(m)} 필요">${+m.slice(5)}월 ${n0((r.mon || {})[m])}</span>`).join(' ')}</td>
+      <td class="r nw"><b>${n0(r.need)}</b></td><td class="r nw">${n0(r.stock)}${r.wait ? `<small class="muted"> (지시대기 ${n0(r.wait)})</small>` : ''}</td><td class="r nw">${n0(r.po)}</td>
+      <td class="r nw">${r.gap ? `<b class="neg">${n0(r.gap)}</b>` : '–'}</td>
+      <td>${r.order ? `<b class="nw">${md(r.order[0])}~${md(r.order[1])} 발주</b> <span class="nw">→ ${md(r.arrive)} 입고</span><br><small class="muted nw">${md(r.first)} 생산분부터 부족</small>` : `<small class="muted">${esc(r.why)}</small>`}</td>
+      <td class="small muted" title="${esc((r.specList || []).join(', '))}">${r.specs}사양</td></tr>`;
+    const cnt = (k) => MO.rows.filter((r) => r.judge === k);
+    el.innerHTML = `<h2>소재 발주 판단 <small>${esc(MO.plan || '')} · ${mons.map((m) => +m.slice(5) + '월').join('·')} 계획재 생산 ÷ 실수율 vs 소재 재고(사용가능·지시대기) + 기발주 · 기준 ${esc(MO.today || '')}</small></h2>
+      <div class="oj-sum">${G.map(([k, lab, c]) => { const R = cnt(k); return `<div class="oj-b ${c}"><div class="oj-n">${R.length}<small>사양</small></div><div>${lab}</div><div class="small">${n0(R.reduce((a, r) => a + (r.gap || r.need), 0))}t</div></div>`; }).join('')}</div>
+      ${G.map(([k, lab, c]) => { const R = cnt(k); if (!R.length) return ''; const by = {}; R.forEach((r) => (by[r.mat] = by[r.mat] || []).push(r));
+        return `<h3 class="oj-h ${c}">${lab} <small>${R.length}사양</small></h3>` + Object.entries(by).map(([mat, rs]) => `<div class="tblw"><table class="oj-t"><caption class="small">${esc(mat)} · ${rs.length}사양 · 필요 ${n0(rs.reduce((a, r) => a + r.need, 0))}t${k !== '발주 안 함' ? ` · 부족 ${n0(rs.reduce((a, r) => a + r.gap, 0))}t` : ''}</caption>
+          <colgroup><col style="width:10%"><col style="width:7%"><col style="width:21%"><col style="width:7%"><col style="width:13%"><col style="width:7%"><col style="width:7%"><col style="width:23%"><col style="width:5%"></colgroup>
+          <thead><tr><th>소재(두께×폭)</th><th>구매</th><th class="r">월별 필요</th><th class="r">필요 계</th><th class="r">재고</th><th class="r">기발주</th><th class="r">부족</th><th>발주·입고</th><th>제품</th></tr></thead><tbody>${rs.map(row).join('')}</tbody></table></div>`).join(''); }).join('')}
+      <p class="small muted">계획재 = 수입 F/H·서림 GI 사양(TF 구매 Guide 26년 1차). 수입 F/H 기발주 = 도금 자가재 주문, 서림 GI 기발주 = 서림·포스코 GI. 주문재·도금 F/H 발주는 아래 소재 캘린더.</p>`;
+  }
+
   async function render(W, pw) {
     D = prep(W);
     D.live = await live(pw);
     if ($('s-det2')) { try { const fe = await GP.latest('fh_po.enc.json'); FHP = fe ? await GP.decryptJSON(fe, pw) : null; } catch (e) { FHP = null; } }   // 소재 발주 → 계약·판매그룹·목적지(tools/fh_po_detail.py)
+    if (document.getElementById('s-ojudge')) { try { const me = await GP.latest('mat_order.enc.json'); orderJudge(me ? await GP.decryptJSON(me, pw) : null); } catch (e) { orderJudge(null); } }
     try { const pe = await GP.latest('procure.enc.json'); const P = pe ? await GP.decryptJSON(pe, pw) : null; PM = P ? prepMat(P) : null; MP = P ? matPlan(P) : null; } catch (e) { PM = null; MP = null; }
     mon = D.months.includes(today.slice(0, 7)) ? today.slice(0, 7) : D.months[0];
     const LV = D.live || {};
