@@ -771,26 +771,40 @@
       <p class="small muted" style="margin:8px 2px 0">생산 = MES 실적 · 출하 실적 = MES 출하(판매 출고, 부서 → 판매그룹) · 월 계획·오늘까지 계획 = 판매생산속보. 라인별 상세는 <a href="status.html">도금 가동 현황</a> · <a href="color_status.html">컬러 가동 현황</a></p>`;
   }
 
-  /* 소재 발주 판단(11/3 개편): published/mat_order.enc.json(tools/mat_order_spec.py, 매일) — 소재 사양(두께×폭)마다 판정 → 묶음: 판정 → 구매구분 */
+  /* 소재 관제(11/3 사용자 '관제 — 그룹별로 한눈에'): published/mat_order.enc.json — groups(판매그룹 × 소재 상태) + rows(계획재 소재 사양별 판정) */
+  const OJS = { late: ['마감 지남', 'oj-late'], soon: ['2주 안 발주', 'oj-go'], plan: ['발주 예정', 'oj-plan'], ok: ['충당', 'oj-ok'] };
   function orderJudge(MO) {
     const el = document.getElementById('s-ojudge'); if (!el) return;
-    if (!MO || !MO.rows) { el.innerHTML = '<h2>소재 발주 판단</h2><p class="small">판단 자료가 없습니다.</p>'; return; }
-    const G = [['발주', '지금 발주', 'oj-go'], ['확인(마감 지남)', '마감 지남 — 앞당김·대체 필요', 'oj-late'], ['발주 안 함', '발주 안 함 — 재고·기발주로 충당', 'oj-ok']];
-    const mons = MO.months || [];
-    const row = (r) => `<tr><td class="nw"><b class="oj-spec">${r.thk} × ${r.wdt}</b></td><td class="nw"><span class="chip">${esc(r.mat)}</span></td>
-      <td class="r nw">${mons.map((m) => `<span class="oj-m" title="${esc(m)} 필요">${+m.slice(5)}월 ${n0((r.mon || {})[m])}</span>`).join(' ')}</td>
-      <td class="r nw"><b>${n0(r.need)}</b></td><td class="r nw">${n0(r.stock)}${r.wait ? `<small class="muted"> (지시대기 ${n0(r.wait)})</small>` : ''}</td><td class="r nw">${n0(r.po)}</td>
-      <td class="r nw">${r.gap ? `<b class="neg">${n0(r.gap)}</b>` : '–'}</td>
-      <td>${r.order ? `<b class="nw">${md(r.order[0])}~${md(r.order[1])} 발주</b> <span class="nw">→ ${md(r.arrive)} 입고</span><br><small class="muted nw">${md(r.first)} 생산분부터 부족</small>` : `<small class="muted">${esc(r.why)}</small>`}</td>
-      <td class="small muted" title="${esc((r.specList || []).join(', '))}">${r.specs}사양</td></tr>`;
-    const cnt = (k) => MO.rows.filter((r) => r.judge === k);
-    el.innerHTML = `<h2>소재 발주 판단 <small>${esc(MO.plan || '')} · ${mons.map((m) => +m.slice(5) + '월').join('·')} 계획재 생산 ÷ 실수율 vs 소재 재고(사용가능·지시대기) + 기발주 · 기준 ${esc(MO.today || '')}</small></h2>
-      <div class="oj-sum">${G.map(([k, lab, c]) => { const R = cnt(k); return `<div class="oj-b ${c}"><div class="oj-n">${R.length}<small>사양</small></div><div>${lab}</div><div class="small">${n0(R.reduce((a, r) => a + (r.gap || r.need), 0))}t</div></div>`; }).join('')}</div>
-      ${G.map(([k, lab, c]) => { const R = cnt(k); if (!R.length) return ''; const by = {}; R.forEach((r) => (by[r.mat] = by[r.mat] || []).push(r));
-        return `<h3 class="oj-h ${c}">${lab} <small>${R.length}사양</small></h3>` + Object.entries(by).map(([mat, rs]) => `<div class="tblw"><table class="oj-t"><caption class="small">${esc(mat)} · ${rs.length}사양 · 필요 ${n0(rs.reduce((a, r) => a + r.need, 0))}t${k !== '발주 안 함' ? ` · 부족 ${n0(rs.reduce((a, r) => a + r.gap, 0))}t` : ''}</caption>
-          <colgroup><col style="width:10%"><col style="width:7%"><col style="width:21%"><col style="width:7%"><col style="width:13%"><col style="width:7%"><col style="width:7%"><col style="width:23%"><col style="width:5%"></colgroup>
-          <thead><tr><th>소재(두께×폭)</th><th>구매</th><th class="r">월별 필요</th><th class="r">필요 계</th><th class="r">재고</th><th class="r">기발주</th><th class="r">부족</th><th>발주·입고</th><th>제품</th></tr></thead><tbody>${rs.map(row).join('')}</tbody></table></div>`).join(''); }).join('')}
-      <p class="small muted">계획재 = 수입 F/H·서림 GI 사양(TF 구매 Guide 26년 1차). 수입 F/H 기발주 = 도금 자가재 주문, 서림 GI 기발주 = 서림·포스코 GI. 주문재·도금 F/H 발주는 아래 소재 캘린더.</p>`;
+    const GV = MO && MO.groups;
+    if (!GV) { el.innerHTML = '<h2>소재 관제</h2><p class="small">자료가 없습니다 — 매일 아침 자동 점검 뒤 채워집니다.</p>'; return; }
+    const dot = (st) => `<span class="oj-dot ${OJS[st][1]}">${OJS[st][0]}</span>`;
+    const act = (m) => !m ? '<span class="muted">3달 충당</span>' : `<span class="chip">${esc(m.name)}</span> <b class="nw">${md(m.deadline)}까지 발주</b> <span class="nw">부족 <b class="neg">${n0(m.short)}t</b></span> <span class="muted nw">${md(m.first)}부터</span>`;
+    const mchip = (m) => `<span class="oj-mc ${OJS[m.st][1]}" title="${esc(m.name)} · 이 그룹 3달 사용 ${n0(m.use)}t · 소재 전체: 필요 ${n0(m.need)} / 재고 ${n0(m.stock)} / 입고 예정 ${n0(m.arr)}${m.first ? ` · ${md(m.first)}부터 ${n0(m.short)}t 부족 · 리드타임 ${m.lt}일` : ''}">${esc(m.name)} <b>${n0(m.use)}</b></span>`;
+    const cnt = (st) => GV.groups.filter((g) => g.st === st).length;
+    const sec = (pl, lab) => { const gs = GV.groups.filter((g) => g.plant === pl && UI.inScope(pl)); if (!gs.length) return '';
+      return `<tr class="oj-sec"><td colspan="4">${lab}</td></tr>` + gs.map((g) => `<tr class="oj-g" data-g="${esc(g.group)}"><td class="nw"><b class="oj-gn">${esc(g.group)}</b></td><td class="nw">${dot(g.st)}</td><td class="r nw"><b>${n0(g.need)}</b></td><td>${act(g.act)}</td></tr>
+        <tr class="oj-d" data-g="${esc(g.group)}" hidden><td></td><td colspan="3"><div class="oj-mcs">${g.mats.map(mchip).join('')}</div>${g.group === '컬러건재 계획재' ? specTbl(MO) : ''}</td></tr>`).join(''); };
+    const mrow = (m) => `<tr><td class="nw"><span class="chip">${m.plant === 'G' ? '도금' : '컬러'}</span> <b>${esc(m.name)}</b></td><td class="nw">${dot(m.st)}</td><td class="r nw">${n0(m.need)}</td><td class="r nw">${n0(m.stock)}</td><td class="r nw">${n0(m.arr)}</td><td class="r nw">${m.short ? `<b class="neg">${n0(m.short)}</b>` : '–'}</td><td class="nw">${m.deadline ? `<b>${md(m.deadline)}</b> <span class="muted">(${md(m.first)}부터 · ${m.lt}일)</span>` : '–'}</td><td class="small wrap">${esc((m.sup || []).filter(Boolean).join(' · '))}</td></tr>`;
+    el.innerHTML = `<h2>소재 관제 <small>${md(GV.from)}~${md(GV.to)} 3달 · 기준 ${md(MO.today || GV.from)}</small></h2>
+      <div class="oj-sum">${['late', 'soon', 'plan', 'ok'].map((st) => `<div class="oj-b ${OJS[st][1]}"><div class="oj-n">${cnt(st)}<small>그룹</small></div><div>${OJS[st][0]}</div></div>`).join('')}</div>
+      <table class="oj-t oj-gt"><colgroup><col style="width:17%"><col style="width:13%"><col style="width:12%"><col></colgroup>
+        <thead><tr><th>판매그룹</th><th>상태</th><th class="r">3달 소재 필요(t)</th><th>가장 급한 조치</th></tr></thead>
+        <tbody>${sec('G', '도금 — F/H·도금용 SUS')}${sec('C', '컬러 — 구매 소재')}</tbody></table>
+      <p class="small muted" style="margin:6px 2px 14px">줄을 누르면 그 그룹이 쓰는 소재(색 = 상태, 숫자 = 3달 사용 t)</p>
+      <h3 class="oj-h">소재별 발주 <small>마감 순</small></h3>
+      <table class="oj-t"><colgroup><col style="width:19%"><col style="width:12%"><col style="width:8%"><col style="width:8%"><col style="width:9%"><col style="width:8%"><col style="width:17%"><col></colgroup>
+        <thead><tr><th>소재</th><th>상태</th><th class="r">3달 필요</th><th class="r">재고</th><th class="r">입고 예정</th><th class="r">부족</th><th>발주 마감</th><th>업체</th></tr></thead>
+        <tbody>${GV.mats.filter((m) => UI.inScope(m.plant)).map(mrow).join('')}</tbody></table>`;
+    el.querySelectorAll('tr.oj-g').forEach((tr) => tr.onclick = () => { const d = el.querySelector(`tr.oj-d[data-g="${CSS.escape(tr.dataset.g)}"]`); d.hidden = !d.hidden; tr.classList.toggle('open', !d.hidden); });
+    const first = el.querySelector('tr.oj-g'); const bad = [...el.querySelectorAll('tr.oj-g')].find((tr) => tr.querySelector('.oj-late'));
+    if (bad) bad.click();
+  }
+  function specTbl(MO) {
+    const rows = (MO.rows || []).filter((r) => r.judge !== '발주 안 함');
+    if (!rows.length) return '';
+    const J = { '발주': 'oj-go', '확인(마감 지남)': 'oj-late' };
+    return `<div class="oj-spec-h">계획재 소재 사양 — 발주 필요·마감 지남 ${rows.length}건</div><table class="oj-t oj-st"><thead><tr><th>소재(두께×폭)</th><th>구매</th><th>판정</th><th class="r">3달 필요</th><th class="r">재고</th><th class="r">기발주</th><th class="r">부족</th><th>발주 → 입고</th></tr></thead><tbody>`
+      + rows.map((r) => `<tr><td class="nw"><b>${r.thk} × ${r.wdt}</b></td><td class="nw">${esc(r.mat)}</td><td class="nw"><span class="oj-dot ${J[r.judge] || 'oj-plan'}">${r.judge === '발주' ? '지금 발주' : '마감 지남'}</span></td><td class="r nw">${n0(r.need)}</td><td class="r nw">${n0(r.stock)}</td><td class="r nw">${n0(r.po)}</td><td class="r nw"><b class="neg">${n0(r.gap)}</b></td><td class="nw">${r.order ? `${md(r.order[0])}~${md(r.order[1])} → ${md(r.arrive)}` : ''}</td></tr>`).join('') + '</tbody></table>';
   }
 
   async function render(W, pw) {
