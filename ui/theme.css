@@ -1009,3 +1009,11 @@ a.nolink{color:inherit;text-decoration:none;cursor:default;pointer-events:none}
 html body table.t td + td, html body table.gt td + td, html body table.it td + td { border-left: 1px solid var(--line); }
 html body table td.gsep, html body table th.gsep { border-left: 2px solid var(--ink-3) !important; }
 html body table.t th.gsep { border-left: 2px solid rgba(255,255,255,.7) !important; }
+
+/* 관제 띠(11/3) */
+.ctl-strip{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;margin-bottom:4px}
+.ctl-strip a{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:999px;background:var(--surface,#fff);border:1px solid var(--line,#dde1e6);color:inherit;text-decoration:none;font-size:13.5px;white-space:nowrap}
+.ctl-strip a.cs-home{font-weight:800;background:var(--surface-2,#f1f3f5)}
+.ctl-strip .cs-c{display:inline-flex;gap:2px;margin-left:4px}.ctl-strip .cs-c i{width:7px;height:14px;border-radius:2px;background:#ced4da}
+.ctl-strip .cs-c i.bad{background:#e03131}.ctl-strip .cs-c i.warn{background:#f08c00}.ctl-strip .cs-c i.ok{background:#2f9e44}
+.cdot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:4px;vertical-align:middle;background:#adb5bd}.cdot.bad{background:#e03131}.cdot.warn{background:#f08c00}.cdot.ok{background:#2f9e44}

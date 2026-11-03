@@ -13,8 +13,8 @@
     Storage.prototype.setItem = function (k, v) { if (!isPw(k)) s.call(this, k, v); };
   }
   const NAV = [
-    ['home', 'index.html', '홈'], ['supply', 'supply.html', '가동 캘린더'], ['matcal', 'matcal.html', '소재 캘린더'], ['integrated', 'integrated.html', '재고 추이'], ['report', 'report.html', '주간 보고'],
-    '|도금', ['status', 'status.html', '가동 현황'], ['analysis', 'analysis.html', '조건 분석'], ['platact', 'plating_actual.html', '실적'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['cgorder', 'cg_order.html', '주문진도'], ['cgcal', 'cg_calendar.html', '생산 캘린더'], ['cgwo', 'cg_wo.html', '작업지시 순서'],
+    ['home', 'index.html', '관제판'], ['supply', 'supply.html', '가동'], ['matcal', 'matcal.html', '소재 관제'], ['integrated', 'integrated.html', '재고'], ['cgorder', 'cg_order.html', '주문·납기'], ['report', 'report.html', '주간 보고'],
+    '|도금', ['status', 'status.html', '가동 현황'], ['analysis', 'analysis.html', '조건 분석'], ['platact', 'plating_actual.html', '실적'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['cgcal', 'cg_calendar.html', '생산 캘린더'], ['cgwo', 'cg_wo.html', '작업지시 순서'],
     '|컬러', ['colorstat', 'color_status.html', '가동 현황'], ['coloranal', 'color_analysis.html', '조건 분석'], ['coloract', 'color_actual.html', '실적'], ['planstock', 'planstock.html', '계획재'], ['cccal', 'cc_calendar.html', '생산 캘린더'], ['wo', 'wo.html', '작업지시 순서'],
     '|소재', ['procure', 'procure.html', '소재 발주'],
     '|계획 계산', ['rolling', 'rolling.html', '도금 계획 계산'], ['colorcalc', 'color_calc.html', '컬러 계획 계산'], '|',
@@ -104,7 +104,7 @@
     const d = h.dataset, esc = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     // 메뉴: '경영 보고'(오너용 5개)는 늘 펼침, 나머지 실무 묶음은 접어 두고 머리글을 누르면 펼침(지금 화면이 든 묶음은 자동으로 펼침, 펼친 상태 기억)
     let open0 = []; try { open0 = JSON.parse(localStorage.getItem(NKEY) || '[]'); } catch (e) { /* 무시 */ }
-    const secs = []; let cur = { g: SHOWF ? '가동계획' : '경영 보고', items: [] }; secs.push(cur);
+    const secs = []; let cur = { g: SHOWF ? '가동계획' : '관제', items: [] }; secs.push(cur);
     NAV.forEach((x) => { if (typeof x === 'string') { cur = { g: x.slice(1) || '관리', items: [] }; secs.push(cur); } else cur.items.push(x); });
     const link = (x) => { const on = x[0] === d.page || (x[0] === 'docs' && DOCS.includes(d.page));
       return `<a href="${x[1]}"${on ? ' aria-current="page"' : ''}${ONLY[x[0]] ? ` data-only="${ONLY[x[0]]}"` : ''}>${icon(x[0])}<span>${x[2]}</span></a>`; };
@@ -285,7 +285,26 @@
     el.textContent = msg; el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 1600);
   };
 
-  const boot = () => { build(); fresh(); watchExport(); };
+  /* 관제 띠(11/3 사용자 '관제 — 어느 화면에서든 전체가 한눈에'): 홈 관제판과 같은 판매그룹 신호를 모든 화면 머리 아래 한 줄로 */
+  async function ctlStrip() {
+    const h = document.getElementById('shell'); if (!h || h.dataset.page === 'home' || document.getElementById('ui-ctl')) return;
+    let pw = null; for (const k of ['cgl-analysis-pw', 'cgl-supply-pw']) { try { pw = pw || localStorage.getItem(k); } catch (e) { /* 무시 */ } }
+    if (!pw) return;
+    const wait = (t) => new Promise((r) => setTimeout(r, t));
+    for (let i = 0; i < 40 && !(window.GP && GP.latest); i++) await wait(100);
+    if (!window.GP || !GP.latest) return;
+    if (!UI.ctlRows) await new Promise((res) => { const sc = document.createElement('script'); sc.src = 'ui/ctl.js'; sc.onload = res; sc.onerror = res; document.head.appendChild(sc); });
+    if (!UI.ctlRows) return;
+    try {
+      const [pe, me] = await Promise.all([GP.latest('portal.enc.json'), GP.latest('mat_order.enc.json').catch(() => null)]);
+      const O = pe ? await GP.decryptJSON(pe, pw) : null; if (!O) return;
+      const MO = me ? await GP.decryptJSON(me, pw).catch(() => null) : null;
+      const html = UI.ctlStrip(O, MO); if (!html) return;
+      const b = document.createElement('div'); b.id = 'ui-ctl'; b.className = 'wrap ctl-strip'; b.innerHTML = html;
+      (document.getElementById('ui-stale') || h).after(b);
+    } catch (e) { /* 암호가 다르면 띠 생략 */ }
+  }
+  const boot = () => { build(); fresh(); watchExport(); ctlStrip(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 
   /* 표 줄 번호(--ri) — 줄 나타나기 애니메이션 순서. 새로 그려지는 표도 자동 */
