@@ -50,7 +50,8 @@
   const CMAP = { 건재수출: 'C수출', 가전수출: 'C수출', 가전내수: 'C수출', 주문재: 'C건재', 계획재: 'C건재', 수요개발: 'C수요' };
   UI.ctlMonth = (O, mo, X, m) => {
     const cur = (O.today || O.asOf).slice(0, 7), past = m < cur, IG = X.IG, V = IG && (IG.variants[IG.rec] || IG.variants.V1), mi = (IG && IG.months || O.months || []).indexOf(m);
-    const plan = (g, k) => { const r = V && V.plan && (V.plan[g] || [])[mi]; return r ? r[k] || 0 : null; };
+    const MPn = (O.monthPlan || {})[m] || {};
+    const plan = (g, k) => { const x = MPn[g] || {}; if (k === 'prod' && x.prod != null) return x.prod; if (k === 'sales' && x.ship != null) return x.ship; const r = V && V.plan && (V.plan[g] || [])[mi]; return r ? r[k] || 0 : null; };   // 생산 = 확정 계획, 출하 = 그 달 판생속보(없으면 TF 판매계획)
     const act = {};
     const R = X.LP && (X.LP.result || X.LP); const t0 = R && R.replan ? R.replan.t0 : '';
     if (R) for (const [d, , , c, t] of R.rows || []) if (d.slice(0, 7) === m && d <= t0 && PMAP[c]) act[PMAP[c]] = (act[PMAP[c]] || 0) + t;

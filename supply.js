@@ -716,7 +716,8 @@
     const act = {}, pln = {};
     for (const [k, x] of Object.entries(D.pl)) { const d = k.split('|')[1]; if (d.slice(0, 7) !== m) continue; for (const [c, t] of Object.entries(x.cls || {})) { const g = GMAP[c]; if (!g) continue; if (past || x.act) act[g] = (act[g] || 0) + t; else pln[g] = (pln[g] || 0) + t; } }
     for (const [k, x] of Object.entries(D.co)) { const d = k.split('|')[1]; if (d.slice(0, 7) !== m) continue; for (const [c, t] of Object.entries(x.g || {})) { const g = GMAP[c]; if (!g) continue; if (past || x.act) act[g] = (act[g] || 0) + t; else pln[g] = (pln[g] || 0) + t; } }
-    const P = (D.V.plan || {}), mi = D.months.indexOf(m), mp = (g, k) => { const r = (P[g] || [])[mi]; return r ? r[k] || 0 : 0; };   // 월 물량 계획(LP) — 달 순서 = D.months
+    const P = (D.V.plan || {}), mi = D.months.indexOf(m), MPn = ((D.PO || {}).monthPlan || {})[m] || {};
+    const mp = (g, k) => { const x = MPn[g] || {}; if (k === 'prod' && x.prod != null) return x.prod; if (k === 'sales' && x.ship != null) return x.ship; const r = (P[g] || [])[mi]; return r ? r[k] || 0 : 0; };   // 11/3: 이번 달과 같은 기준 — 생산 = 확정 계획 일별 합, 출하 = 그 달 판생속보(없는 달은 TF 판매계획)
     const SD = (D.PO || {}).shipDay, shipAct = (g) => (SD && SD.g && SD.g[g] ? Object.entries(SD.g[g]).filter(([d]) => d.slice(0, 7) === m).reduce((a, [, v]) => a + v, 0) : 0);
     const groups = ['G수출', 'G국내', 'G자동차', 'G자가재', 'C수출', 'C건재', 'C수요'].filter((g) => UI.inScope(g[0]));
     // 11/3 사용자: 이번 달과 같은 막대 그래프 — 지난 달 = 실적(진한)·월 계획선, 다음 달 = 계획 생산(옅은)·월 계획선
@@ -728,7 +729,7 @@
     const L = past ? [['a', '실적'], ['p', '월 계획']] : [['b', '계획 생산'], ['p', '월 계획']];
     $('s-prog').innerHTML = `<h2>${+m.slice(5)}월 ${past ? `실적 <small>${md(end)} 월말 기준 — 막대 = 실적, 선 = 월 계획</small>` : '계획 <small>실적 없음 — 막대 = 계획 생산, 선 = 월 계획</small>'}<span class="unit">톤</span></h2>
       <div class="pgvs">${panel('G', '도금 판매그룹별 생산', 'prod')}${panel('C', '컬러 판매그룹별 생산', 'prod')}</div>${vzLegend(L)}
-      <h3 class="pgs-t">출하</h3><div class="pgvs">${panel('G', '도금 출하', 'ship')}${panel('C', '컬러 출하', 'ship')}</div>`;
+      <h3 class="pgs-t">출하 <small>월 계획 = ${esc((Object.values(MPn).find((x) => x.shipSrc) || {}).shipSrc || 'TF 판매계획(판생속보 전)')}</small></h3><div class="pgvs">${panel('G', '도금 출하', 'ship')}${panel('C', '컬러 출하', 'ship')}</div>`;
   }
 
   function progress() {
