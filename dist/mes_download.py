@@ -251,6 +251,36 @@ def main():
     ev = edge_ver()
     # 2026-11-03: 밤사이 Edge 자동 업데이트 → 드라이버 버전 불일치, 사내망이 드라이버 다운로드를 막아(차단 HTML 을 받음) 실행 실패.
     # 순서: ① 설치 폴더의 msedgedriver.exe(사용자가 Edge 와 같은 버전으로 넣어 둔 것) ② 자동 설치(받은 파일이 진짜 exe 일 때만) ③ PC 기본
+    def drv_ver(p):
+        try:
+            out = subprocess.run([p, '--version'], capture_output=True, text=True, timeout=20, creationflags=0x08000000).stdout
+            return re.search(r'(\d+\.\d+\.\d+\.\d+)', out).group(1)
+        except Exception:
+            return None
+    mine = os.path.join(HERE, 'msedgedriver.exe')
+    if ev and (not os.path.isfile(mine) or (drv_ver(mine) or '').split('.')[0] != ev.split('.')[0]):
+        # 11/3: Edge 와 주 버전이 다르면 Windows 로그인 자격(사내 프록시 인증)으로 같은 버전 드라이버를 받아 설치 폴더에 풂 — Python 직접 다운로드는 사내망이 막음
+        zp = os.path.join(HERE, 'edgedriver_win64.zip')
+        ps = (f"$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol='Tls12'; "
+              f"$p=[System.Net.WebRequest]::GetSystemWebProxy(); $p.Credentials=[System.Net.CredentialCache]::DefaultCredentials; "
+              f"foreach($u in @('https://msedgedriver.microsoft.com/{ev}/edgedriver_win64.zip','https://msedgedriver.azureedge.net/{ev}/edgedriver_win64.zip')){{ "
+              f"try {{ $w=New-Object System.Net.WebClient; $w.Proxy=$p; $w.DownloadFile($u,'{zp}'); break }} catch {{ Write-Host $_ }} }}")
+        try:
+            subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps], timeout=180, creationflags=0x08000000)
+            if os.path.isfile(zp) and open(zp, 'rb').read(2) == b'PK':
+                import zipfile
+                with zipfile.ZipFile(zp) as z:
+                    z.extract('msedgedriver.exe', HERE)
+                print('Edge 드라이버 자동 갱신:', ev, '→', drv_ver(mine))
+            else:
+                print('Edge 드라이버 자동 갱신 실패(받은 파일이 zip 아님 — 사내망 차단)')
+        except Exception as e:
+            print('Edge 드라이버 자동 갱신 실패:', str(e)[:150])
+        finally:
+            try:
+                os.remove(zp)
+            except OSError:
+                pass
     cands = [os.path.join(HERE, 'msedgedriver.exe')] + sorted(glob.glob(os.path.join(HERE, 'edgedriver*', 'msedgedriver.exe')), reverse=True)
     local = next((p for p in cands if os.path.isfile(p)), None)
     if local:
