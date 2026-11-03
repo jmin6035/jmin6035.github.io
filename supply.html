@@ -6,7 +6,7 @@
 <title>가동 캘린더</title>
 <meta name="description" content="일별 가동 · 자가재 · 구매 소재(발주·입고·재고) · 제품 재고를 한 달력에서">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611030634">
+<link rel="stylesheet" href="ui/theme.css?v=2611030643">
 <style>
 .sbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 10px; font-size: 13.5px; color: var(--ink-2); }
 .sbar b { color: var(--ink); }
@@ -123,7 +123,8 @@ table.sc tr.gr1 .gk { background: color-mix(in srgb, var(--gc) 14%, var(--surfac
 table.sc td.gs { color: #8a4b00; } table.sc tr.grs td { font-size: 13.5px; color: var(--ink-3); padding-top: 2px; padding-bottom: 2px; } table.sc .lb .gs2 { font-size: 13.5px; color: var(--ink-3); font-weight: 600; } table.sc td.gk2 { color: var(--ink-2); }
 html .gtable td.hi { background: color-mix(in srgb, var(--warn) 16%, var(--surface)); }
 html .gtable .c1 small { color: var(--ink-3); font-weight: 500; }
-.pgvs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; margin-top: 16px; } @media (max-width: 900px) { .pgvs { grid-template-columns: 1fr; } }
+.pks{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0 12px}.pk{border:1px solid var(--line,#dde1e6);border-radius:10px;padding:8px 12px}.pk-h{font-size:13.5px;color:var(--muted,#667);font-weight:600}.pk-v{font-size:22px;font-weight:700;white-space:nowrap}.pk-v small{font-size:13.5px;font-weight:500;margin-left:2px}.pk-v em{font-style:normal;font-size:15px;margin-left:8px;color:var(--accent,#1f5fbf)}.pk-s{font-size:13.5px;color:var(--muted,#667);white-space:nowrap}.pk-s .neg{color:var(--bad,#c62828)}.pk-s .pos{color:var(--ok,#2e7d32)}.pgv4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 22px}.pgv4 .pgv h3{margin:0 0 18px 46px;font-size:14.5px}@media (max-width:1200px){.pgv4,.pks{grid-template-columns:1fr 1fr}}.pgl{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:6px}
+    .pgvs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; margin-top: 16px; } @media (max-width: 900px) { .pgvs { grid-template-columns: 1fr; } }
 .pgv h3 { font-size: 15px; margin: 0 0 26px 70px; color: var(--ink); }
 .pgv > .pg { margin-bottom: 14px; } .pgs-t { font-size: 15px; margin: 18px 0 8px; } .pgs-ship { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
 /* 가동 캘린더 · 출하·재고 표(2026-10-21 사용자: 가동 현황 캘린더처럼 색, 기울임 없이, 고급스럽게) */
@@ -259,10 +260,10 @@ html body main #s-cal td.sdblock small { font-size: 13.5px !important; letter-sp
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2611030634"></script>
-<script src="engine/crypto.js?v=2611030634"></script>
-<script src="ui/cal.js?v=2611030634"></script>
-<script src="ui/proccalc.js?v=2611030634"></script>
-<script src="supply.js?v=2611030634"></script>
+<script src="ui/shell.js?v=2611030643"></script>
+<script src="engine/crypto.js?v=2611030643"></script>
+<script src="ui/cal.js?v=2611030643"></script>
+<script src="ui/proccalc.js?v=2611030643"></script>
+<script src="supply.js?v=2611030643"></script>
 </body>
 </html>

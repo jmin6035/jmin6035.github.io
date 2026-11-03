@@ -261,7 +261,7 @@
     const y = sc.ticks.map((t) => `<span style="bottom:${P(t)}%">${kf(t)}</span>`).join(''), gl = sc.ticks.filter((t) => t > 0).map((t) => `<i class="gl" style="bottom:${P(t)}%"></i>`).join('');
     const col = (c) => { const a = c.a || 0, b = c.b || 0, top = a + b, pl = c.plan || 0;
       const seg = [[a, 'a'], [b, 'b']].filter(([v]) => v > Math.max(top, pl) * 0.004).map(([v, k]) => `<i class="${k}" style="flex:${v} 0 0"></i>`).join('');
-      const pc = pl ? Math.round(top / pl * 100) : null;
+      const pc = c.pc !== undefined ? c.pc : (pl ? Math.round(top / pl * 100) : null);
       return `<div class="vz-c" title="${esc(c.tip || '')}"><div class="vz-st" style="height:${P(top)}%">${seg}</div>${pl ? `<em class="vz-pl" style="bottom:${P(pl)}%"></em>` : ''}`
         + `<div class="vz-cap${c.neg ? ' neg' : ''}" style="bottom:${P(Math.max(top, pl))}%">${pc == null ? '' : pc + '%'}</div></div>`; };
     const tbl = labels.map((lb, i) => `<div class="vz-r"><span class="vz-rl">${lb}</span><div class="vz-rv">${cats.map((c) => { const v = (c.vals || [])[i]; return `<span class="${i === labels.length - 1 && c.neg ? 'neg' : ''}${i === 0 ? ' b' : ''}">${v == null ? '-' : n0(v)}</span>`; }).join('')}</div></div>`).join('');
@@ -711,69 +711,47 @@
   /* 11/3 사용자 '10월 고르면 10월 말 기준, 12월은 실적 0·월 계획만': 이번 달이 아닌 달 = 그 달 일별 자료(지난 날 실적 + 남은 날 계획)와 월 물량 계획(LP)으로 */
   const GMAP = { 도금수출: 'G수출', 도금국내: 'G국내', 자동차내수: 'G자동차', 자동차수출: 'G자동차', 자가재: 'G자가재', 건재수출: 'C수출', 가전수출: 'C수출', 가전내수: 'C수출', 주문재: 'C건재', 계획재: 'C건재', 수요개발: 'C수요' };
   const GNM = { G수출: '도금수출', G국내: '도금국내', G자동차: '자동차강판', G자가재: '자가재', C수출: '컬러수출', C건재: '컬러건재', C수요: '수요개발' };
-  function progressMonth() {
-    const m = mon, cur = today.slice(0, 7), past = m < cur, end = D.days.filter((d) => d.slice(0, 7) === m).pop() || '';
-    const act = {}, pln = {};
-    for (const [k, x] of Object.entries(D.pl)) { const d = k.split('|')[1]; if (d.slice(0, 7) !== m) continue; for (const [c, t] of Object.entries(x.cls || {})) { const g = GMAP[c]; if (!g) continue; if (past || x.act) act[g] = (act[g] || 0) + t; else pln[g] = (pln[g] || 0) + t; } }
-    for (const [k, x] of Object.entries(D.co)) { const d = k.split('|')[1]; if (d.slice(0, 7) !== m) continue; for (const [c, t] of Object.entries(x.g || {})) { const g = GMAP[c]; if (!g) continue; if (past || x.act) act[g] = (act[g] || 0) + t; else pln[g] = (pln[g] || 0) + t; } }
-    const P = (D.V.plan || {}), mi = D.months.indexOf(m), MPn = ((D.PO || {}).monthPlan || {})[m] || {};
-    const mp = (g, k) => { const x = MPn[g] || {}; if (k === 'prod' && x.prod != null) return x.prod; if (k === 'sales' && x.ship != null) return x.ship; const r = (P[g] || [])[mi]; return r ? r[k] || 0 : 0; };   // 11/3: 이번 달과 같은 기준 — 생산 = 확정 계획 일별 합, 출하 = 그 달 판생속보(없는 달은 TF 판매계획)
-    const SD = (D.PO || {}).shipDay, shipAct = (g) => (SD && SD.g && SD.g[g] ? Object.entries(SD.g[g]).filter(([d]) => d.slice(0, 7) === m).reduce((a, [, v]) => a + v, 0) : 0);
-    const groups = ['G수출', 'G국내', 'G자동차', 'G자가재', 'C수출', 'C건재', 'C수요'].filter((g) => UI.inScope(g[0]));
-    // 11/3 사용자: 이번 달과 같은 막대 그래프 — 지난 달 = 실적(진한)·월 계획선, 다음 달 = 계획 생산(옅은)·월 계획선
-    const cats = (keys, kind) => keys.map((g) => { const a = kind === 'ship' ? shipAct(g) : (act[g] || 0), b = kind === 'ship' ? 0 : (pln[g] || 0), p = mp(g, kind === 'ship' ? 'sales' : 'prod') || 0, fin = past ? a : (kind === 'ship' ? p : a + b);
-      return { name: GNM[g], a: past ? a : 0, b: past ? 0 : (kind === 'ship' ? p : a + b), plan: p, vals: past ? [a, p, Math.max(0, p - a), a] : (kind === 'ship' ? [p] : [fin, p]), neg: past && a < p - 0.5,
-        tip: `${GNM[g]}: ${past ? `${kind === 'ship' ? '출하' : '생산'} 실적 ${n0(a)}t / 월 계획 ${n0(p)}t (${p ? Math.round(a / p * 100) : 0}%)` : `월 계획 ${n0(p)}t${kind === 'ship' ? '' : ` · 일별 계획 합 ${n0(a + b)}t`}`}` }; });
-    const panel = (pl, title, kind) => { const ks = groups.filter((g) => g[0] === pl && (kind !== 'ship' || !['G자가재', 'C수요'].includes(g))); if (!ks.length) return '';
-      return `<div class="pgv" data-dom="${pl}"><h3>${title}</h3>` + colChart(cats(ks, kind), 170, past ? ['실적', '월 계획', '잔여', '월말'] : (kind === 'ship' ? ['출하 계획'] : ['계획 생산', '월 계획'])) + '</div>'; };
-    const L = past ? [['a', '실적'], ['p', '월 계획']] : [['b', '계획 생산'], ['p', '월 계획']];
-    $('s-prog').innerHTML = `<h2>${+m.slice(5)}월 ${past ? `실적 <small>${md(end)} 월말 기준 — 막대 = 실적, 선 = 월 계획</small>` : '계획 <small>실적 없음 — 막대 = 계획 생산, 선 = 월 계획</small>'}<span class="unit">톤</span></h2>
-      <div class="pgvs">${panel('G', '도금 판매그룹별 생산', 'prod')}${panel('C', '컬러 판매그룹별 생산', 'prod')}</div>${vzLegend(L)}
-      <h3 class="pgs-t">출하 <small>월 계획 = ${esc((Object.values(MPn).find((x) => x.shipSrc) || {}).shipSrc || 'TF 판매계획(판생속보 전)')}</small></h3><div class="pgvs">${panel('G', '도금 출하', 'ship')}${panel('C', '컬러 출하', 'ship')}</div>`;
-  }
-
+  function progressMonth() { progress(); }
+  // 11/3 사용자 '모든 달 같은 틀·그래프 적당한 크기·숫자 맞게': 달마다 KPI 4칸 + 작은 막대 4개(도금·컬러 × 생산·출하). 지난 달 = 월말 실적, 이번 달 = 실적 + 남은 계획, 다음 달 = 계획만
   function progress() {
-    if (mon !== today.slice(0, 7)) return progressMonth();
-    const PO = D.PO; if (!PO || !$('s-prog').id) return;
-    const L = PO.lines || [], SH = ((PO.sr || {}).ship) || [], G = PO.groups || [];
-    const sum = (xs, k) => xs.reduce((a, x) => a + (+x[k] || 0), 0);
-    const shp = (names) => SH.filter((x) => names.includes(x.name));
-    const card = (pl, kind, nm, m, sc, ac, asOf, sub) => {
-      const pct = m > 0 ? ac / m * 100 : 0, sp = m > 0 ? Math.min(100, sc / m * 100) : 0, gap = ac - sc;
-      return `<div class="pg" data-dom="${pl}"><div class="pg-h"><b>${nm}</b><small>${esc(asOf || '')} 기준</small></div>
-        <div class="pg-v">${n0(ac)}<small>t</small> <span class="pg-p">${pct.toFixed(0)}%</span></div>
-        <div class="vz-meter" title="실적 ${n0(ac)}t / 월 계획 ${n0(m)}t · 세로선 = 오늘까지 계획 ${n0(sc)}t"><i style="width:${Math.min(100, pct).toFixed(1)}%"></i><em style="left:${sp.toFixed(1)}%"></em></div>
-        <div class="pg-s">월 계획 ${n0(m)}t · 오늘까지 계획 ${n0(sc)}t → <b class="${gap >= 0 ? 'pos' : 'neg'}">${gap >= 0 ? '+' : '−'}${n0(Math.abs(gap))}t</b> · 남은 ${n0(Math.max(0, m - ac))}t</div>
-        ${sub ? `<div class="pg-g">${sub}</div>` : ''}</div>`;
+    if (!$('s-prog').id) return;
+    const m = mon, cur = today.slice(0, 7), kind = m < cur ? 'past' : m === cur ? 'cur' : 'fut', end = D.days.filter((d) => d.slice(0, 7) === m).pop() || '';
+    const PO = D.PO || {}, GR = Object.fromEntries((PO.groups || []).map((g) => [g.key, g]));
+    const act = {}, pln = {};
+    for (const [k, x] of Object.entries(D.pl)) { const d = k.split('|')[1]; if (d.slice(0, 7) !== m) continue; for (const [c, t] of Object.entries(x.cls || {})) { const g = GMAP[c]; if (!g) continue; if (kind === 'past' || x.act) act[g] = (act[g] || 0) + t; else pln[g] = (pln[g] || 0) + t; } }
+    for (const [k, x] of Object.entries(D.co)) { const d = k.split('|')[1]; if (d.slice(0, 7) !== m) continue; for (const [c, t] of Object.entries(x.g || {})) { const g = GMAP[c]; if (!g) continue; if (kind === 'past' || x.act) act[g] = (act[g] || 0) + t; else pln[g] = (pln[g] || 0) + t; } }
+    const P = D.V.plan || {}, mi = D.months.indexOf(m), MPn = (PO.monthPlan || {})[m] || {};
+    const mp = (g, k) => { const x = MPn[g] || {}; if (k === 'prod' && x.prod != null) return x.prod; if (k === 'sales' && x.ship != null) return x.ship; const r = (P[g] || [])[mi]; return r ? r[k] || 0 : 0; };
+    const SD = PO.shipDay, shipA = (g) => (SD && SD.g && SD.g[g] ? Object.entries(SD.g[g]).filter(([d]) => d.slice(0, 7) === m).reduce((a, [, v]) => a + v, 0) : 0);
+    const val = (g, k) => {   // [진한(실적), 옅은(남은 계획), 월 계획]
+      if (k === 'prod') {
+        if (kind === 'cur' && GR[g] && GR[g].prod) { const x = GR[g].prod; return [x.actual, x.after || 0, x.month]; }
+        return kind === 'past' ? [act[g] || 0, 0, mp(g, 'prod')] : [0, (act[g] || 0) + (pln[g] || 0), mp(g, 'prod')];
+      }
+      const p = kind === 'cur' && GR[g] && GR[g].ship ? GR[g].ship.month : mp(g, 'sales');
+      if (kind === 'fut') return [0, p, p];
+      const a = shipA(g); return [a, kind === 'cur' ? Math.max(0, p - a) : 0, p];
     };
-    // 출하 실적 = MES 출하(판매 출고) 기준(사용자 10/20) — 월 계획·오늘까지 계획은 판매생산속보
-    const SDp = PO.shipDay, m0 = today.slice(0, 7);
-    const mesShip = (g) => (SDp && SDp.g && SDp.g[g] ? Object.entries(SDp.g[g]).filter(([d]) => d.slice(0, 7) === m0).reduce((a, [, v]) => a + v, 0) : null);
-    const gl = (pl, kind) => G.filter((g) => g.pl === pl && g[kind] && g.key !== 'G자가재').map((g) => { const x = g[kind], ac = kind === 'ship' && mesShip(g.key) != null ? mesShip(g.key) : x.actual; return `<span>${esc(g.name)} <b>${n0(ac)}</b>/${n0(x.month)}</span>`; }).join('');
-    const shipAct = (keys, fb) => { const v = keys.map(mesShip); return v.every((x) => x == null) ? fb : v.reduce((a, x) => a + (x || 0), 0); };
-    const out = [], PC = {}, SL = {};
-    for (const pl of ['G', 'C']) { const l0 = L.find((x) => x.pl === pl); if (l0 && l0.asOf && String(l0.asOf).slice(0, 7) !== today.slice(0, 7)) SL[pl] = String(l0.asOf).slice(0, 10); }   // 실적 자료가 지난달에서 멈춤(11/2: 컬러 10/29) → 이번 달 실적으로 보이지 않게
-    if (UI.inScope('G')) {
-      const l = L.filter((x) => x.pl === 'G'), s_ = shp(['도금판매', '도금수출', '자동차강판']);
-      PC.G = card('G', 'prod', '도금 생산 (1·2CGL)', sum(l, 'month'), sum(l, 'sched'), sum(l, 'actual'), l[0] && md(l[0].asOf), '');   // 그룹별 숫자는 아래 그래프 표에 → 카드엔 합계만
-      out.push(card('G', 'ship', '도금 출하', sum(s_, 'month'), sum(s_, 'sched'), shipAct(['G수출', 'G국내', 'G자동차'], sum(s_, 'actual')), SDp && SDp.asOf ? md(SDp.asOf) : (PO.sr || {}).asOf && md((PO.sr.asOf).slice(0, 10)), gl('G', 'ship')));
-    }
-    if (UI.inScope('C')) {
-      const l = L.filter((x) => x.pl === 'C'), s_ = shp(['컬러수출', '컬러건재']);
-      PC.C = SL.C ? `<div class="pg" data-dom="C"><div class="pg-h"><b>컬러 생산 (1~4CCL)</b></div><div class="pg-s warn"><b>실적 자료가 ${md(SL.C)}에서 멈춤</b> — 이번 달 실적 없음(사내 PC 자동 실행 확인)</div></div>` : card('C', 'prod', '컬러 생산 (1~4CCL)', sum(l, 'month'), sum(l, 'sched'), sum(l, 'actual'), l[0] && md(l[0].asOf), '');
-      out.push(card('C', 'ship', '컬러 출하', sum(s_, 'month'), sum(s_, 'sched'), shipAct(['C수출', 'C건재'], sum(s_, 'actual')), SDp && SDp.asOf ? md(SDp.asOf) : (PO.sr || {}).asOf && md((PO.sr.asOf).slice(0, 10)), gl('C', 'ship')));
-    }
-    // 판매그룹별 생산 진행(사용자 10/21: 월 계획 얼마에 그룹별로 얼마 생산, 얼마 잔여 — 세로 막대): 진한 = 생산 실적, 옅은 = 남은 기간 계획 생산(재계획·편성), 회색 = 월 계획까지 모자라는 몫
-    const grpPanel = (pl, title) => { const gs = G.filter((g) => g.pl === pl && g.prod && g.prod.month > 0); if (!gs.length || !UI.inScope(pl)) return '';
-      if (SL[pl]) return `<div class="pgv" data-dom="${pl}">${PC[pl] || ''}</div>`;
-      return `<div class="pgv" data-dom="${pl}">${PC[pl] || ''}<h3>${title}</h3>` + colChart(gs.map((g) => { const x = g.prod, rem = Math.max(0, x.month - x.actual), fin = x.actual + (x.after || 0);
-        return { name: g.name.replace(/\(.*\)/, '').replace('도금 자가재', '자가재'), a: x.actual, b: x.after || 0, plan: x.month, vals: [x.actual, x.month, rem, fin], neg: fin < x.month - 0.5,
-          tip: `${g.name}: 월 계획 ${n0(x.month)}t · 생산 ${n0(x.actual)}t · 잔여 ${n0(rem)}t · 남은 기간 계획 생산 ${n0(x.after || 0)}t → 월말 예상 ${n0(fin)}t (${fin >= x.month ? '+' : '−'}${n0(Math.abs(fin - x.month))}t)` }; }), 170, ['생산', '월 계획', '잔여', '월말 예상']) + '</div>'; };
-    const gv = grpPanel('G', '도금 판매그룹별 생산') + grpPanel('C', '컬러 판매그룹별 생산');
-    $('s-prog').innerHTML = `<h2>이번 달 진행 <small>계획 대비 실적 — 막대 = 실적 / 월 계획, 세로선 = 오늘까지 계획</small><span class="unit">톤</span></h2>`
-      + (gv ? `<div class="pgvs">${gv}</div>` : `<div class="pgs">${Object.values(PC).join('')}</div>`)
-      + (gv ? `${vzLegend([['a', '생산 실적'], ['b', '남은 기간 계획 생산'], ['p', '월 계획']])}<p class="small muted" style="margin:2px 0 0 46px">막대 위 % = 월말 예상 ÷ 월 계획 · 빨강 = 남은 기간 계획을 다 만들어도 월 계획 미달</p>` : '') + `<h3 class="pgs-t">출하</h3><div class="pgs pgs-ship">${out.join('')}</div>` + `
-      <p class="small muted" style="margin:8px 2px 0">생산 = MES 실적 · 출하 실적 = MES 출하(판매 출고, 부서 → 판매그룹) · 월 계획·오늘까지 계획 = 판매생산속보. 라인별 상세는 <a href="status.html">도금 가동 현황</a> · <a href="color_status.html">컬러 가동 현황</a></p>`;
+    const groups = ['G수출', 'G국내', 'G자동차', 'G자가재', 'C수출', 'C건재', 'C수요'].filter((g) => UI.inScope(g[0]));
+    const keys = (pl, k) => groups.filter((g) => g[0] === pl && (k === 'prod' || !['G자가재', 'C수요'].includes(g)));
+    const tot = (pl, k) => keys(pl, k).reduce((a, g) => { const v = val(g, k); return [a[0] + v[0], a[1] + v[1], a[2] + v[2]]; }, [0, 0, 0]);
+    const W = k => (k === 'prod' ? '생산' : '출하');
+    const kpi = (pl, k) => { const [a, b, p] = tot(pl, k), big = kind === 'fut' ? b : a, pc = p ? Math.round((kind === 'fut' ? b : a) / p * 100) : null;
+      return `<div class="pk" data-dom="${pl}"><div class="pk-h">${pl === 'G' ? '도금' : '컬러'} ${W(k)}</div><div class="pk-v">${n0(big)}<small>t</small>${kind !== 'fut' && pc != null ? `<em>${pc}%</em>` : ''}</div>`
+        + `<div class="pk-s">월 계획 ${n0(p)}t${kind === 'cur' ? ` · ${k === 'prod' ? '월말 예상' : '남은'} ${n0(k === 'prod' ? a + b : b)}t` : kind === 'past' ? ` · 차이 <b class="${a >= p - 0.5 ? 'pos' : 'neg'}">${a >= p ? '+' : '−'}${n0(Math.abs(a - p))}</b>t` : ''}</div></div>`; };
+    const LB = kind === 'past' ? ['실적', '월 계획', '차이'] : kind === 'cur' ? ['실적', '월 계획', '남은'] : ['계획', '월 계획'];
+    const chart = (pl, k) => { const ks = keys(pl, k); if (!ks.length) return '';
+      return `<div class="pgv" data-dom="${pl}"><h3>${pl === 'G' ? '도금' : '컬러'} ${W(k)}</h3>` + colChart(ks.map((g) => { const [a, b, p] = val(g, k);
+        return { name: GNM[g], a, b, plan: p, pc: kind === 'fut' ? null : (p ? Math.round(a / p * 100) : null), neg: kind === 'past' && a < p - 0.5,
+          vals: kind === 'past' ? [a, p, a - p] : kind === 'cur' ? [a, p, b] : [b, p],
+          tip: `${GNM[g]} ${+m.slice(5)}월 ${W(k)}: 실적 ${n0(a)}t · ${kind === 'cur' ? `남은 계획 ${n0(b)}t · ` : ''}월 계획 ${n0(p)}t` }; }), 110, LB) + '</div>'; };
+    const sub = kind === 'past' ? `${md(end)} 월말 기준` : kind === 'cur' ? `${md(today)} 현재 · 막대 위 % = 실적 ÷ 월 계획` : '실적 없음 · 계획만';
+    const L = kind === 'past' ? [['a', '실적'], ['p', '월 계획']] : kind === 'cur' ? [['a', '실적'], ['b', '남은 계획'], ['p', '월 계획']] : [['b', '계획'], ['p', '월 계획']];
+    const shipSrc = (Object.values(MPn).find((x) => x.shipSrc) || {}).shipSrc || (kind === 'cur' ? '판생속보' : 'TF 판매계획');
+    $('s-prog').innerHTML = `<h2>${+m.slice(5)}월 ${kind === 'past' ? '결산' : kind === 'cur' ? '진행' : '계획'} <small>${sub}</small><span class="unit">톤</span></h2>`
+      + `<div class="pks">${['G', 'C'].filter((pl) => UI.inScope(pl)).flatMap((pl) => [kpi(pl, 'prod')]).join('')}${['G', 'C'].filter((pl) => UI.inScope(pl)).map((pl) => kpi(pl, 'ship')).join('')}</div>`
+      + `<div class="pgv4">${['G', 'C'].map((pl) => UI.inScope(pl) ? chart(pl, 'prod') : '').join('')}${['G', 'C'].map((pl) => UI.inScope(pl) ? chart(pl, 'ship') : '').join('')}</div>`
+      + `<div class="pgl">${vzLegend(L)}<span class="small muted">생산 월 계획 = 최신 가동계획 · 출하 월 계획 = ${esc(shipSrc)} · 실적 = MES</span></div>`;
   }
 
   /* 소재 관제(11/3 사용자 '관제 — 그룹별로 한눈에'): published/mat_order.enc.json — groups(판매그룹 × 소재 상태) + rows(계획재 소재 사양별 판정) */
