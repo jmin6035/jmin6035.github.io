@@ -3,6 +3,7 @@
 (function () {
   'use strict';
   const { esc, n0, n1, md } = CT;
+  const FULL = '종일 정지(계획 휴지)';
   const CCAT = { color: '색상교체·청소', test: '테스트·도막조정', roll: '폭·롤·두께 전환', gap: '정지(사유 기록 없음)', etc: '기타' };
   const SHIPK = { 도금판매: 'G국내', 도금수출: 'G수출', 자동차강판: 'G자동차', 컬러수출: 'C수출', 컬러건재: 'C건재' };
   const VIEWS = ['perf', 'run', 'ship', 'stock'];
@@ -39,7 +40,9 @@
         return S;
       }
       const R = (((CA.downAct || {}).days || {})[d] || {})[l.line]; if (!R) return null;
-      return R.map((s) => [CCAT[s[0]] || s[0], s[1], CCAT[s[0]] || s[0]]);
+      const out = R.map((s) => [CCAT[s[0]] || s[0], s[1], CCAT[s[0]] || s[0]]);
+      // 생산 0 · 종일 정지 = 계획 휴지(가동편성 정비·휴지)로 보고 손실 톤 환산에서 뺌(11/4: 2CCL 휴지 168h 가 손실 2,426t 로 과대 표시되던 것)
+      return !prodOn(l, d) && out.reduce((a, s) => a + s[1], 0) >= 1380 ? [[FULL, out.reduce((a, s) => a + s[1], 0), FULL]] : out;
     };
     const M = CT.orders(D);
     return { D, P, GA, CA, asOfG, asOfC, mon, lines, daily, prodOn, stopsOn, M };
@@ -117,7 +120,7 @@
       + `<td class="r"><b>${x.p1 == null ? '-' : n0(x.p1)}</b></td><td class="r">${n1(x.s1)}</td><td class="r"><b>${n0(x.p7)}</b></td><td class="r">${n1(x.s7)}</td><td class="r">${pc(168 - x.s7, 168)}%</td>`
       + `<td>${x.nx ? `<b>${md(x.nx[0])}</b> ${esc(x.nx[1])}` : '<span class="sub">-</span>'}</td></tr>`;
     const tbl = t([th('라인'), th('상태'), th('하루 생산', 1), th('하루 비가동 h', 1), th('7일 생산', 1), th('7일 비가동 h', 1), th('가동률', 1, '1 − 비가동/168h'), th('다음 일정')], R.map(row));
-    const loss = R.flatMap((x) => Object.entries(x.cat).filter(([, h]) => h >= 0.1).map(([c, h]) => ({ l: x.l, c, h, t: h * x.l.rate }))).sort((a, b) => b.t - a.t);
+    const loss = R.flatMap((x) => Object.entries(x.cat).filter(([, h]) => h >= 0.1).map(([c, h]) => ({ l: x.l, c, h, t: c === FULL ? 0 : h * x.l.rate }))).sort((a, b) => b.t - a.t);
     const lr = loss.map((z) => `<tr class="ck" data-l="${esc(z.l.line)}"><td class="w">${esc(z.c)}</td><td class="id">${esc(z.l.line)}</td><td class="r"><b>${n1(z.h)}</b></td><td class="r">${n1(z.l.rate)}</td><td class="r"><b>${n0(z.t)}</b></td></tr>`);
     const tot = loss.reduce((a, z) => [a[0] + z.h, a[1] + z.t], [0, 0]);
     return CT.basis([{ name: '도금 MES', at: X.asOfG, kind: '실적' }, lines.some((l) => l.pl === 'C') && { name: '컬러 MES', at: X.asOfC, kind: '실적' }])
@@ -147,13 +150,14 @@
     const { P, M, mon } = X, S = shipRows(X), asOf = M.asOf;
     const mP = S.reduce((a, s) => a + s.month, 0), mA = S.reduce((a, s) => a + s.a, 0), short = S.reduce((a, s) => a + Math.max(0, s.sched - s.a), 0);
     const G = CT.inScope('G') ? M.G : [];
-    const late = G.filter((o) => o.due && o.due <= asOf && !o.closed && o.ful !== '출하 확인 불가' && o.unshipT > 0.5);
+    const late = G.filter((o) => o.due && o.due <= asOf && !o.closed && o.ful !== '출하 확인 불가' && o.risk !== '판정 불가' && o.unshipT > 0.5);
+    const stale = G.filter((o) => o.due && o.due <= asOf && !o.closed && o.ful !== '출하 확인 불가' && o.risk === '판정 불가');   // 납기 60일 넘게 지난 미종결(MES 종결 누락 추정)
     const unk = G.filter((o) => o.due && o.due <= asOf && o.ful === '출하 확인 불가');
     const k = [
       { label: `${+mon.slice(5)}월 출하계획`, v: n0(mP), unit: 't', tone: 'info', sub: `판생속보 ${md(P.sr && P.sr.asOf)}` },
       { label: '출하 실적(누계)', v: n0(mA), unit: 't', tone: 'info', sub: `월 진도 ${pc(mA, mP)}%` },
       { label: '일정 미달량', v: n0(short), unit: 't', tone: short >= 1 ? 'warn' : 'ok', sub: '그룹별 일정 누계 − 실적(미달만)' },
-      { label: '미출하 주문', v: n0(late.length), unit: '건', tone: late.length ? 'bad' : 'ok', sub: `도금 · 납기 경과 ${n0(late.reduce((a, o) => a + o.unshipT, 0))}t · 출하 확인 불가 ${n0(unk.length)}건` },
+      { label: '미출하 주문', v: n0(late.length), unit: '건', tone: late.length ? 'bad' : 'ok', sub: `도금 · 납기 경과 ${n0(late.reduce((a, o) => a + o.unshipT, 0))}t · 출하 확인 불가 ${n0(unk.length)}건${stale.length ? ` · 장기 미종결 ${n0(stale.length)}건 제외` : ''}` },
     ];
     const row = (s) => { const d = s.a - s.sched;
       return `<tr><td class="id">${esc(s.name)}</td><td class="r">${n0(s.month)}</td><td class="r">${n0(s.sched)}</td><td class="r"><b>${n0(s.a)}</b></td><td class="r ${d >= 0 ? 'pos' : 'neg'}">${sgn(d)}</td>`

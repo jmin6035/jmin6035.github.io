@@ -43,7 +43,7 @@
     for (const e of (D.portal && D.portal.exceptions) || []) {
       const pl = /컬러/.test(e.area + e.text) ? 'C' : /도금|CGL|F\/H/.test(e.area + e.text) ? 'G' : '';
       if (pl && !CT.inScope(pl)) continue;
-      out.push({ key: 'exc|' + e.text, type: AREA[e.area] || '생산', pl, title: e.text.split(' — ')[0], text: e.text.split(' — ')[1] || '', t: null, n: 0, dept: ({ 구매: CT.DEPT.mat })[e.who] || e.who || '생산기획', due: null, orders: [], link: e.link, why: e.text.split(' — ')[0], src: '화면 예외' });
+      out.push({ key: 'exc|' + e.text, type: AREA[e.area] || '생산', pl, title: e.text.split(' — ')[0], text: e.text.split(' — ')[1] || '', t: null, n: 0, dept: ({ 구매: CT.DEPT.mat })[e.who] || e.who || '생산기획', due: null, orders: [], link: e.link, why: e.text.split(' — ')[1] || '', src: '화면 예외' });
     }
     // 저장소 이벤트 접기(번호별 시간순, 마지막 값)
     const E = {};
