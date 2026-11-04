@@ -72,7 +72,7 @@
     const ordT = x.ordT || x.purT || 0, prodT = Math.min(x.prodT || 0, ordT || x.prodT || 0), remT = Math.max(0, ordT - prodT);
     const needProd = x.dept ? addD(x.dept, -1) : x.due ? addD(x.due, -1) : null;
     const cal = CAL && CAL[x.con], sche = (cal && cal.to) || x.sche || null;
-    const o = { id: x.con, pl: 'G', line: x.line || x.pline, grp: CT.grpName(x.grp), grpEst: x.grpSrc && x.grpSrc !== '주문', item: [x.fam, x.pdt].filter(Boolean).join(' '), size: x.thk != null ? `${(+x.thk).toFixed(2)}×${CT.n0(x.wdt)}` : '',
+    const o = { id: x.con, pl: 'G', line: x.line || x.pline, grp: /^컬러|^수요/.test(CT.grpName(x.grp)) ? `자가재(${CT.grpName(x.grp)})` : CT.grpName(x.grp), grpEst: x.grpSrc && x.grpSrc !== '주문', item: [x.fam, x.pdt].filter(Boolean).join(' '), size: x.thk != null ? `${(+x.thk).toFixed(2)}×${CT.n0(x.wdt)}` : '',
       exp: !!x.exp, cus: x.cus, man: x.man, dst: x.dst, ordT, prodT, remT, due: x.due, ship: x.dept || x.arr || null, needProd, needIn: x.needIn, sche, eta: x.eta, entT: x.entT || 0, remIn: x.remIn || 0,
       fwdT: x.fwdT || 0, purT: x.purT || 0, purDt: ymd8(x.purDt), dle: x.dle, stage: x.stage, src: x };
     // 단계(주문 추적)
@@ -169,7 +169,7 @@
   CT.badgeT = (r, txt) => `<span class="ct-b ${RC[r] || 'na'}">${esc(txt)}</span>`;   // 등급 색 + 무엇이 문제인지 글자
   CT.leftTxt = (o) => (o.left == null ? '' : o.left < 0 ? `<b class="ct-neg">${-o.left}일 지남</b>` : o.left === 0 ? '<b class="ct-neg">오늘</b>' : `D-${o.left}`);
   /* 기준일 띠: [{name, at, kind: 실적|확정계획|재계획|추정, ok}] */
-  CT.basis = (items) => `<div class="ct-basis">${items.filter(Boolean).map((x) => `<span class="ct-bs ${x.ok === false ? 'bad' : ''}" title="${esc(x.tip || '')}"><b>${esc(x.name)}</b> ${esc(x.at ? CT.md(x.at) + (String(x.at).length > 10 ? ' ' + String(x.at).slice(11, 16) : '') : '없음')}${x.kind ? ` <i>${esc(x.kind)}</i>` : ''}</span>`).join('')}</div>`;
+  CT.basis = (items) => `<div class="ct-basis">${items.filter(Boolean).filter((x) => CT.inScope(x.pl || (/^도금|CGL/.test(x.name) ? 'G' : /^컬러|CCL/.test(x.name) ? 'C' : 'all'))).map((x) => `<span class="ct-bs ${x.ok === false ? 'bad' : ''}" title="${esc(x.tip || '')}"><b>${esc(x.name)}</b> ${esc(x.at ? CT.md(x.at) + (String(x.at).length > 10 ? ' ' + String(x.at).slice(11, 16) : '') : '없음')}${x.kind ? ` <i>${esc(x.kind)}</i>` : ''}</span>`).join('')}</div>`;
   /* 핵심 지표: [{k, label, v, unit, sub, tone: bad|warn|ok, href}] */
   CT.kpis = (L) => `<div class="ct-kpis">${L.map((x) => `<${x.href ? `a href="${x.href}"` : 'div'} class="ct-kpi ${x.tone || ''}"><div class="l">${esc(x.label)}</div><div class="v">${x.v}<small>${esc(x.unit || '')}</small></div>${x.sub ? `<div class="s">${x.sub}</div>` : ''}</${x.href ? 'a' : 'div'}>`).join('')}</div>`;
   CT.tabs = (id, L, cur) => `<div class="seg ct-seg" id="${id}">${L.map(([k, n]) => `<button type="button" data-k="${k}" aria-pressed="${k === cur}">${esc(n)}</button>`).join('')}</div>`;

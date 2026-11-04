@@ -51,13 +51,14 @@
   let theme = 'auto'; try { theme = localStorage.getItem(TKEY) || 'auto'; } catch (e) { /* 무시 */ }
   applyTheme(theme);
   let scope = 'all'; try { scope = localStorage.getItem(SKEY) || 'all'; } catch (e) { /* 무시 */ }
+  try { const q = new URLSearchParams(location.search).get('pl'); if (q && { G: 1, C: 1, all: 1 }[q]) { scope = q; localStorage.setItem(SKEY, q); } } catch (e) { /* 무시 */ }   // 담당별 주소(?pl=G 도금 · ?pl=C 컬러, 11/5 사용자 '도금/컬러 담당이 따로')
   if (!SCN[scope]) scope = 'all';
   const subs = [];
   UI.scope = () => scope;
   UI.inScope = (p) => scope === 'all' || !p || String(p).includes(scope);
   UI.onScope = (fn) => { subs.push(fn); };
   function setScope(v) {
-    scope = v; try { localStorage.setItem(SKEY, v); } catch (e) { /* 무시 */ }
+    scope = v; try { localStorage.setItem(SKEY, v); const u = new URL(location.href); if (v === 'all') u.searchParams.delete('pl'); else u.searchParams.set('pl', v); history.replaceState(null, '', u); } catch (e) { /* 무시 */ }
     document.documentElement.dataset.scope = v;
     document.querySelectorAll('.scope-seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.sc === v)));
     document.querySelectorAll('.shell-nav a[data-only], .ct-tabs a[data-only]').forEach((a) => a.classList.toggle('dim', v !== 'all' && !a.dataset.only.includes(v)));
@@ -136,7 +137,7 @@
         </div>
       </aside>
       <div class="scrim noprint" aria-hidden="true"></div>
-      <div class="wrap shell-head"><div class="sh-l">${curM || d.crumb ? `<div class="crumb">${esc(curM ? `${String(MENU.indexOf(curM) + 1).padStart(2, '0')} ${curM[1]}` : d.crumb)}</div>` : ''}<div class="h1row"><h1>${esc(d.title || document.title)}</h1>${HELP[d.page] ? '<button type="button" class="hbtn noprint" aria-expanded="false" aria-controls="ui-help" title="이 화면 사용법">?</button>' : ''}</div>${d.sub != null ? `<p class="sub" id="ui-sub">${esc(d.sub)}</p>` : ''}${HELP[d.page] ? `<p class="help" id="ui-help" hidden><b>이 화면에서</b>${esc(HELP[d.page])}</p>` : ''}${tabs}</div></div>`;
+      <div class="wrap shell-head"><div class="sh-l">${curM || d.crumb ? `<div class="crumb">${esc(curM ? `${String(MENU.indexOf(curM) + 1).padStart(2, '0')} ${curM[1]}` : d.crumb)}</div>` : ''}<div class="h1row"><h1>${esc(d.title || document.title)}</h1><div class="scope-seg hd-scope noprint" role="group" aria-label="공정 보기">${Object.entries(SCN).map(([k, n]) => `<button type="button" data-sc="${k}" aria-pressed="${k === scope}">${n}</button>`).join('')}</div>${HELP[d.page] ? '<button type="button" class="hbtn noprint" aria-expanded="false" aria-controls="ui-help" title="이 화면 사용법">?</button>' : ''}</div>${d.sub != null ? `<p class="sub" id="ui-sub">${esc(d.sub)}</p>` : ''}${HELP[d.page] ? `<p class="help" id="ui-help" hidden><b>이 화면에서</b>${esc(HELP[d.page])}</p>` : ''}${tabs}</div></div>`;
     document.body.classList.add('has-side');
     const hb = h.querySelector('.hbtn'); if (hb) hb.addEventListener('click', () => { const p = h.querySelector('#ui-help'), v = p.hidden; p.hidden = !v; hb.setAttribute('aria-expanded', String(v)); });
     const open = (v) => { document.body.classList.toggle('nav-open', v); h.querySelector('.hamb').setAttribute('aria-expanded', String(v)); };
@@ -315,9 +316,10 @@
       const [pe, me] = await Promise.all([GP.latest('portal.enc.json'), GP.latest('mat_order.enc.json').catch(() => null)]);
       const O = pe ? await GP.decryptJSON(pe, pw) : null; if (!O) return;
       const MO = me ? await GP.decryptJSON(me, pw).catch(() => null) : null;
-      const html = UI.ctlStrip(O, MO); if (!html) return;
-      const b = document.createElement('div'); b.id = 'ui-ctl'; b.className = 'wrap ctl-strip'; b.innerHTML = html;
-      (document.getElementById('ui-stale') || h).after(b);
+      const b = document.createElement('div'); b.id = 'ui-ctl'; b.className = 'wrap ctl-strip';
+      const draw = () => { const html = UI.ctlStrip(O, MO); b.innerHTML = html || ''; b.hidden = !html; };   // 전체·도금·컬러 바꾸면 그 공정 판매그룹만 다시(11/5 사용자 '도금 선택해도 컬러가 나온다')
+      draw(); (document.getElementById('ui-stale') || h).after(b);
+      UI.onScope(draw);
     } catch (e) { /* 암호가 다르면 띠 생략 */ }
   }
   const boot = () => { build(); fresh(); watchExport(); ctlStrip(); };

@@ -1088,3 +1088,10 @@ html .shell-nav .nv-sub a { font-size: 13.5px; padding: 5px 10px; margin: 0; gap
 html .shell-nav .nv-sub a:hover { color: #fff; }
 html .shell-nav .nv-sub a[aria-current="page"] { background: transparent; color: #fff; font-weight: 700; }
 html .shell-nav .nv-sub a[aria-current="page"]::before { left: -11px; top: 6px; bottom: 6px; width: 2px; }
+
+/* 머리글 공정 보기(11/5): 제목 옆 전체·도금·컬러 — 담당별로 바로 나눠 봄 */
+.h1row .hd-scope { margin-left: 14px; background: var(--surface); border: 1px solid var(--line); }
+.h1row .hd-scope button { color: var(--ink-2); font-size: 14px; padding: 5px 16px; }
+.h1row .hd-scope button:hover { color: var(--ink); }
+.h1row .hd-scope button[aria-pressed="true"] { background: var(--brand-2, #1f5fae); color: #fff; box-shadow: none; }
+@media (max-width: 520px) { .h1row { flex-wrap: wrap; } .h1row .hd-scope { margin-left: 0; } }

@@ -6,7 +6,7 @@
 <title>통합 관제</title>
 <meta name="description" content="납기 지연 예상 주문과 우선 조치">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611042247">
+<link rel="stylesheet" href="ui/theme.css?v=2611042308">
 <style>
 main.wrap { max-width: none; }
 .ct-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 12px; } .ct-bar .ct-seg { margin: 0; } .ct-bar .ct-note { margin: 0; }
@@ -50,15 +50,46 @@ main.wrap { max-width: none; }
 .ln-ft { font-size: 13.5px; color: var(--ink-2); border-top: 1px dashed var(--line); padding-top: 6px; margin-top: auto; }
 @media (max-width: 1280px) { .ln-grid.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .ln-grid.n2, .ln-grid.n4, .ln-grid.n1, .ln-grid.n3 { grid-template-columns: 1fr; } }
+/* 일별 생산 그래프(11/5) */
+.ch-leg { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 12px 0 6px; font-size: 13px; color: var(--ink-2); }
+.ch-leg span { display: inline-flex; align-items: center; gap: 5px; } .ch-leg .u { margin-left: auto; color: var(--ink-3); }
+.ch-leg .k { display: inline-block; width: 12px; height: 12px; border-radius: 2px; } .ch-leg .k.a { background: var(--brand-2, #1f5fae); } .ch-leg .k.lo { background: var(--bad); }
+.ch-leg .k.p { height: 0; border-top: 2.5px solid var(--ink); width: 14px; border-radius: 0; } .ch-leg .k.f { background: repeating-linear-gradient(135deg, rgba(31,95,174,.28) 0 3px, rgba(31,95,174,.12) 3px 6px); border: 1px dashed rgba(31,95,174,.6); }
+.ch { position: relative; padding-left: 46px; }
+.ch-in { position: relative; }
+.ch-g { position: absolute; left: -46px; right: 0; height: 0; border-top: 1px solid var(--line); pointer-events: none; }
+.ch-g span { position: absolute; left: 0; width: 40px; text-align: right; transform: translateY(-50%); font-size: 12.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; background: var(--surface); }
+.ch-in { height: 172px; } .ch-cols { position: absolute; inset: 0 0 0 0; display: grid; gap: 4px; align-items: stretch; }
+.ch-in .ch-g { top: auto; } .ch-in { margin-bottom: 40px; margin-top: 22px; }
+.ch-c { position: relative; display: flex; flex-direction: column; height: 100%; border-radius: 4px; }
+.ch-c.today { background: rgba(232, 160, 32, .10); outline: 1px dashed var(--warn); outline-offset: 1px; }
+.ch-v { position: absolute; top: -20px; left: 0; right: 0; text-align: center; font-size: 12.5px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ch-c.fut .ch-v { color: var(--ink-3); font-weight: 600; } .ch-v.lo { color: var(--bad); }
+.ch-b { position: relative; flex: 1; display: flex; align-items: flex-end; justify-content: center; }
+.ch-a, .ch-f { display: block; width: 72%; max-width: 34px; border-radius: 3px 3px 0 0; }
+.ch-a { background: var(--brand-2, #1f5fae); } .ch-a.lo { background: var(--bad); }
+.ch-f { background: repeating-linear-gradient(135deg, rgba(31,95,174,.28) 0 3px, rgba(31,95,174,.12) 3px 6px); border: 1px dashed rgba(31,95,174,.6); border-bottom: 0; }
+.ch-p { position: absolute; left: 8%; right: 8%; height: 0; border-top: 2.5px solid var(--ink); }
+.ch-na { font-style: normal; font-size: 12px; line-height: 1.25; color: var(--ink-3); text-align: center; padding-bottom: 4px; }
+.ch-x { position: absolute; bottom: -38px; left: -6px; right: -6px; text-align: center; font-size: 12.5px; color: var(--ink-2); line-height: 1.25; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ch-x small { display: block; font-size: 12px; color: var(--ink-3); } .ch-c.today .ch-x { color: var(--warn); font-weight: 700; } .ch-c.today .ch-x small { color: var(--warn); }
+.ch.many .ch-cols { gap: 2px; } .ch.many .ch-v { font-size: 11.5px; letter-spacing: -.3px; } .ch-c.sel { background: rgba(31,95,174,.08); } .ch-c.off { background: repeating-linear-gradient(135deg, rgba(120,130,145,.16) 0 4px, transparent 4px 8px); } .ch-leg .k.o { background: repeating-linear-gradient(135deg, rgba(120,130,145,.45) 0 3px, transparent 3px 6px); border: 1px solid var(--line); } .ch.many .ch-na { font-size: 0; }
+@media (max-width: 640px) { .ch-v { display: none; } .ch-c.today .ch-v { display: block; } .ch-x small { display: none; } }
+.cd-seg { margin: 0 0 10px; }
+.cd-t tr.cd-h td { background: var(--tint, #f3f6fa); font-size: 14px; padding-top: 9px; padding-bottom: 9px; border-top: 2px solid var(--line); }
+.cd-t .cd-s { color: var(--ink-2); font-weight: 500; margin-left: 8px; } .cd-t .cd-f { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 999px; background: var(--brand-2, #1f5fae); color: #fff; font-size: 12.5px; font-weight: 700; }
+.cd-t .cd-e { color: var(--warn); font-weight: 700; margin-left: 6px; } .cd-t .cd-none { color: var(--ink-3); }
+.cd-k { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 700; border: 1px solid var(--line); }
+.cd-k.k0 { background: #1f5fae; color: #fff; border-color: #1f5fae; } .cd-k.k1 { background: rgba(31,95,174,.12); color: #1f5fae; border-color: rgba(31,95,174,.35); } .cd-k.k2 { color: var(--ink-2); border-style: dashed; } .cd-k.k3 { color: var(--ink-3); }
 </style>
 </head>
 <body>
 <header id="shell" data-page="home" data-title="통합 관제" data-sub="납기 지연 예상 주문과 먼저 조치할 일"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611042247"></script>
-<script src="engine/crypto.js?v=2611042247"></script>
-<script src="ui/ct.js?v=2611042247"></script>
-<script src="ct_home.js?v=2611042247"></script>
+<script src="ui/shell.js?v=2611042308"></script>
+<script src="engine/crypto.js?v=2611042308"></script>
+<script src="ui/ct.js?v=2611042308"></script>
+<script src="ct_home.js?v=2611042308"></script>
 </body>
 </html>
