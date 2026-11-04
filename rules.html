@@ -6,7 +6,7 @@
 <title>계획 규칙</title>
 <meta name="description" content="계획 엔진이 따르는 규칙 목록 — 수치는 고치고 '적용'을 누르면 1시간 안에 다시 계산·게시, 바꾼 이력이 남음">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611042345">
+<link rel="stylesheet" href="ui/theme.css?v=2611042352">
 <style>
 .tr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 18px; }
 table.t.tr td, table.t.tr th { padding: 8px 12px; }
@@ -37,7 +37,7 @@ table.t.rl td.l { white-space: normal !important; }
 .rl-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; }
 .rl-tabs button { border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font: inherit; font-size: 14px; font-weight: 700; padding: 7px 14px; border-radius: 8px; cursor: pointer; }
 .rl-tabs button small { font-weight: 500; color: var(--ink-3); margin-left: 3px; }
-.rl-tabs button[aria-pressed="true"] { background: var(--brand-2, #1f5fae); border-color: var(--brand-2, #1f5fae); color: #fff; } .rl-tabs button[aria-pressed="true"] small { color: rgba(255,255,255,.8); }
+html body .rl-tabs button[aria-pressed="true"] { background: var(--brand-2, #1f5fae); border-color: var(--brand-2, #1f5fae); color: #fff; } .rl-tabs button[aria-pressed="true"] small { color: rgba(255,255,255,.8); }
 .rl-flow { list-style: none; margin: 0; padding: 0; counter-reset: none; }
 .rl-st { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 14px; }
 .rl-st:not(:last-child)::before { content: ''; position: absolute; left: 17px; top: 36px; bottom: 0; width: 2px; background: var(--line); }
@@ -54,8 +54,9 @@ table.t.rl td.l { white-space: normal !important; }
 .rl-pick select, .rl-pick input { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); }
 .rl-why { margin: 0; padding-left: 20px; line-height: 1.75; font-size: 14px; } .rl-why li { margin-bottom: 8px; }
 table.t.rl-t { width: auto; margin-top: 6px; font-size: 13.5px; } table.t.rl-t td, table.t.rl-t th { padding: 6px 10px; } table.t.rl-t td.l, table.t.rl-t th.l { text-align: left; }
-table.t.rl-t td.rl-why-t { white-space: normal; min-width: 260px; max-width: 520px; color: var(--ink-2); line-height: 1.5; }
+html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align: left !important; min-width: 260px; max-width: 520px; color: var(--ink-2); line-height: 1.5; }
 @media (max-width: 640px) { .rl-g { grid-template-columns: 1fr; } .rl-g > span { margin-top: 4px; } .rl-st { grid-template-columns: 28px minmax(0, 1fr); gap: 8px; } .rl-n { width: 28px; height: 28px; font-size: 13.5px; } .rl-st:not(:last-child)::before { left: 13px; top: 30px; } }
+.rl-wt { white-space: normal; min-width: 280px; max-width: 520px; line-height: 1.5; color: var(--ink-2); }
 </style>
 </head>
 <body>
@@ -89,7 +90,7 @@ table.t.rl-t td.rl-why-t { white-space: normal; min-width: 260px; max-width: 520
       <p class="small" id="t-res"></p>
     </section>
     <section class="card" id="r-sec"><h2>계산 규칙 <small id="r-cnt"></small><small>계산 순서대로 · <span class="rl-edit">수정 가능</span> = 위 표에서 바꿈 · <span class="rl-auto">자동</span> = 엔진 고정(바꾸려면 결정 기록으로 요청)</small></h2>
-      <div class="seg rl-tabs" id="r-tabs" role="tablist"></div>
+      <div class="rl-tabs" id="r-tabs" role="tablist"></div>
       <div id="r-body"></div>
     </section>
     <section class="card" id="x-sec"><h2>왜 그날, 그 라인에서, 그 시간에? <small>지금 게시된 계획·생산 캘린더로 단계별 이유</small></h2>
@@ -106,9 +107,9 @@ table.t.rl-t td.rl-why-t { white-space: normal; min-width: 260px; max-width: 520
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>저장 = 공유 저장소(모든 사람이 같은 값) · 적용 = 매시 정각(08~20시) 확인 → 40~70분 계산 → 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611042345"></script>
-<script src="rules_logic.js?v=2611050000"></script>
-<script src="engine/crypto.js?v=2611042345"></script>
+<script src="ui/shell.js?v=2611042352"></script>
+<script src="rules_logic.js?v=2611042352"></script>
+<script src="engine/crypto.js?v=2611042352"></script>
 <script>
 (function () {
   'use strict';

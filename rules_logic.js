@@ -154,7 +154,7 @@
     if (rows.length) h += `<li><b>무엇을</b> — 최적화가 이 날에 넣은 (부서, 마감) 묶음: ${rows.sort((a, b) => b[4] - a[4]).slice(0, 8).map((r) => `${esc(r[3])} ${n0(r[4])}t(마감 ${md(r[5])}${r[5] < d ? ' · 지연' : r[5] > addD(d, 20) ? ' · 선생산' : ''})`).join(' · ')}. 마감이 가까운 묶음부터, 같은 강종 날에 몰아 M/C 를 줄이는 쪽으로 정해짐</li>`;
     const cg = ((CTX.D.CG || {}).lines || {})[line], cell = cg && cg.find((x) => x.d === d);
     if (cell) {
-      const it = (cell.items || []).slice().sort((a, b) => String(a.start || '~').localeCompare(String(b.start || '~')) || (a.need || '').localeCompare(b.need || ''));
+      const KO = { 확정: 0, 편성: 1, 예상: 2 }; const it = (cell.items || []).slice().sort((a, b) => (KO[a.kind] ?? 9) - (KO[b.kind] ?? 9) || String(a.start || '~').localeCompare(String(b.start || '~')) || String(a.need || '9').localeCompare(String(b.need || '9')));
       h += `<li><b>어떤 주문이 몇 시에</b> — 생산 캘린더(${md((CTX.D.CG || {}).asOf)} 기준): 확정(작업지시) ${n0(cell.conf)}t → 편성(소재 있음) ${n0(cell.plan)}t → 예상(2주 안 입고) ${n0(cell.fcst)}t 순, 같은 단계는 필요 생산일 빠른 주문부터. 칸 안 순서 = 넓은 폭 → 좁은 폭, 같은 폭 얇은 것 먼저`
         + `<div class="scroll"><table class="t rl-t"><thead><tr><th>시작</th><th>구분</th><th class="l">주문</th><th class="l">판매그룹</th><th class="l">목적지</th><th>두께×폭</th><th>톤</th><th>필요일</th></tr></thead><tbody>`
         + it.slice(0, 14).map((x) => `<tr><td>${esc(x.start || '-')}</td><td>${esc(x.kind)}</td><td class="l">${esc(x.con)}</td><td class="l">${esc(x.grp || '')}</td><td class="l">${esc(x.dst || '')}</td><td>${x.thk != null ? `${(+x.thk).toFixed(2)}×${n0(x.wdt)}` : ''}</td><td>${n1(x.t)}</td><td>${md(x.need)}</td></tr>`).join('')
@@ -169,8 +169,8 @@
     const rows = (cell.rows || []).slice();
     const used = rows.reduce((a, r) => a + (+r[6] || 0), 0), tot = rows.reduce((a, r) => a + (+r[5] || 0), 0);
     let h = `<ol class="rl-why"><li><b>하루 능력</b> = 1,440분${down ? ` − 계획정지 ${n0(down)}분` : ''} = ${n0(1440 - down)}분 · 계획 ${n0(used)}분 사용 · ${n0(tot)}t${cell.act ? ' <b>(지난 날 — MES 실적)</b>' : ''}</li>`;
-    h += `<li><b>들어간 순서와 이유</b><div class="scroll"><table class="t rl-t"><thead><tr><th class="l">그룹</th><th class="l">품명</th><th class="l">목적지·사양</th><th>톤</th><th>분</th><th>t/h</th><th class="l">이유(엔진 기록)</th></tr></thead><tbody>`
-      + rows.map((r) => `<tr><td class="l">${esc(r[0])}</td><td class="l">${esc(r[1])}</td><td class="l">${esc([r[2], r[3]].filter(Boolean).join(' · '))}</td><td>${n1(r[5])}</td><td>${n0(r[6])}</td><td>${n1(r[7])}</td><td class="l rl-why-t">${esc(r[8] || '')}</td></tr>`).join('')
+    h += `<li><b>들어간 물량과 이유</b><div class="scroll"><table class="t rl-t"><thead><tr><th class="l">그룹</th><th class="l">품명</th><th class="l">목적지·사양</th><th>톤</th><th>분</th><th>t/h</th><th class="l">이유(엔진 기록)</th></tr></thead><tbody>`
+      + rows.map((r) => `<tr><td class="l">${esc(r[0])}</td><td class="l">${esc(r[1])}</td><td class="l">${esc([r[2], r[3]].filter(Boolean).join(' · '))}</td><td>${n1(r[5])}</td><td>${n0(r[6])}</td><td>${n1(r[7])}</td><td class="l rl-why-t"><div class="rl-wt">${esc(r[8] || '')}</div></td></tr>`).join('')
       + '</tbody></table></div><p class="small muted">이유 칸의 \'우선순위 n(…)\' 표기는 화면용 옛 번호입니다 — 실제 배정 순서는 컬러 탭 \'배정 우선순위\'(수출 벌크 → 컨테이너 → 가전내수·수요개발·주문재 → 계획재). \'원래 M/D\' = 휴지 집약 전 날짜</p></li>';
     const cc = ((CTX.D.CC || {}).lines || {})[line], c2 = cc && cc.find((x) => x.d === d);
     if (c2) {
@@ -179,13 +179,19 @@
     }
     return h + '</ol>';
   }
-  function selfWhy(line, d) {
-    const V = ((CTX.IG || {}).variants || {}).V1 || {}, F = V.selfFlow || [];
-    const hit = F.filter((x) => (x.use || []).some((u) => u[0] === d && (!line || u[1] === line)));
-    if (!hit.length) return `<p class="muted">${md(d)} ${line} 컬러 생산에 쓰이는 자가재 기록이 없습니다(자가재를 안 쓰는 품명이거나 지난 날).</p>`;
-    return `<ol class="rl-why"><li>${line} ${md(d)} 컬러 생산의 자가재 필요일 = ${md(d)} − 8일 = <b>${md(addD(d, -8))}</b> → 그 날이 든 반순 끝이 마감</li>`
-      + hit.slice(0, 6).map((x) => { const u = x.use.filter((q) => q[0] === d && (!line || q[1] === line)).reduce((a, q) => a + q[2], 0);
-        return `<li><b>${esc(x.a)} 자가재 · 마감 ${md(x.due)}</b>(${esc(x.sec)}) — 이 날 쓰는 양 ${n0(u)}t / 반순 전체 ${n0(x.t)}t · 도금이 만드는 날: ${(x.made || []).slice(0, 6).map((m) => `${esc(m[1])} ${md(m[0])} ${n0(m[2])}t`).join(' · ') || '아직 배정 없음'}</li>`; }).join('') + '</ol>';
+  function selfWhy(line, d) {   // 컬러 행 소재 비중(r[12] = [[그룹, 강종, 비중]]) × 톤 = 자가재 필요 → 도금 재계획 자가재 행(마감 = 필요일이 든 반순 끝)
+    const cell = ((CTX.IG || {}).color || []).find((c) => c.l === line && c.d === d);
+    if (!cell) return '<p class="muted">그날 컬러 계획 칸이 없습니다.</p>';
+    const need = {};
+    for (const r of cell.rows || []) for (const x of (r[12] || [])) need[x[1]] = (need[x[1]] || 0) + (+r[5] || 0) * (+x[2] || 0);
+    const ks = Object.keys(need).filter((k) => need[k] >= 0.5);
+    if (!ks.length) return `<p class="muted">${md(d)} ${line} 생산 품명은 자가재(도금 소재)를 쓰지 않습니다 — 구매 소재(수입 FH·서림 GI 등)만.</p>`;
+    const nd = addD(d, -8), y = +nd.slice(0, 4), m = +nd.slice(5, 7), dd = +nd.slice(8, 10), last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const end = `${nd.slice(0, 8)}${String(dd <= 10 ? 10 : dd <= 20 ? 20 : last).padStart(2, '0')}`;
+    const R = CTX.D.LP || {}, made = (R.rows || []).filter((r) => r[3] === '자가재' && r[5] === end);
+    return `<ol class="rl-why"><li>${line} ${md(d)} 생산 중 자가재(도금 소재) 필요: ${ks.map((k) => `<b>${esc(k)} ${n0(need[k])}t</b>`).join(' · ')} (품명별 소재 비중 × 생산 톤)</li>`
+      + `<li>필요일 = ${md(d)} − 8일 = <b>${md(nd)}</b> → 반순 끝 <b>${md(end)}</b> 이 도금 쪽 마감</li>`
+      + `<li>도금 재계획에서 마감 ${md(end)} 자가재를 만드는 날: ${made.length ? ks.map((k) => { const mk = made.filter((r) => r[2] === k || (k === 'AL' && /^AL/.test(r[2]))); return `${esc(k)} — ${mk.length ? mk.slice(0, 6).map((r) => `${esc(r[1])} ${md(r[0])} ${n0(r[4])}t`).join(' · ') : '그 반순 배정 없음(재고·앞 반순 생산분으로 충당)'}`; }).join(' / ') : '그 반순 자가재 배정 없음 — 재고·앞 반순 생산분으로 충당'}</li></ol>`;
   }
   function matWhy(key) {
     const M = (((CTX.D.MO || {}).groups || {}).mats || []).find((m) => m.key === key);
@@ -194,7 +200,7 @@
     const need = addD(M.first, -(M.safe || 0));
     return `<ol class="rl-why"><li><b>부족 시작</b> ${md(M.first)} — 재고 + 기발주 입고 − 날마다 필요량이 처음 음수가 되는 날(가장 깊게 ${n0(M.short)}t 모자람)</li>`
       + `<li><b>입고 필요일</b> = ${md(M.first)} − 투입 여유 ${M.safe}일 = <b>${md(need)}</b></li>`
-      + `<li><b>발주 마감</b> = ${md(need)} − 리드타임 ${M.lt}일 = <b>${md(M.deadline)}</b>${M.sup && M.sup.length ? ` (${esc(M.sup.join('·'))})` : ''}</li>`
+      + `<li><b>발주 마감</b> = ${md(need)} − 리드타임 ${M.lt}일 = <b>${md(M.deadline)}</b>${(M.sup || []).filter(Boolean).length ? ` (${esc(M.sup.filter(Boolean).join('·'))})` : ''}</li>`
       + `<li><b>판정</b>: ${({ late: '마감 지남', soon: '2주 안 발주', plan: '발주 예정', ok: '충당' })[M.st] || M.st}${M.first < addD(CTX.today, (M.lt || 0) + (M.safe || 0)) ? ' · 부족 확정(지금 발주해도 리드타임 안에 못 막음)' : ''}</li></ol>`;
   }
   function drawWhy() {
@@ -212,9 +218,8 @@
     if (cd) X.ccEx = { title: `1CCL ${md(cd)} — 지금 게시 계획`, html: colorWhy('1CCL', cd) };
     const R = CTX.D.LP || {}, t0 = (R.replan || {}).t0 || CTX.today, gd = addD(t0, 2);
     X.cgEx = { title: `1CGL ${md(gd)} — 지금 게시 계획`, html: plateWhy('1CGL', gd) };
-    const F = ((IG.variants || {}).V1 || {}).selfFlow || [];
-    const su = F.flatMap((x) => (x.use || []).map((u) => u)).find((u) => u[0] > CTX.today);
-    if (su) X.selfEx = { title: `${su[1]} ${md(su[0])} 컬러 생산에 쓰는 자가재`, html: selfWhy(su[1], su[0]) };
+    const sc = (IG.color || []).find((c) => !c.act && c.d > addD(CTX.today, 5) && (c.rows || []).some((r) => (r[12] || []).length));
+    if (sc) X.selfEx = { title: `${sc.l} ${md(sc.d)} 컬러 생산에 쓰는 자가재`, html: selfWhy(sc.l, sc.d) };
     const ms = (((CTX.D.MO || {}).groups || {}).mats || []).filter((m) => m.first).sort((a, b) => String(a.deadline).localeCompare(String(b.deadline)))[0];
     if (ms) X.matEx = { title: `${ms.name} 발주 마감`, html: matWhy(ms.key) };
     CTX.X = X;
