@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>성과 분석</title>
+<meta name="description" content="수주 이행·계획 대비 실적·능력·소재·재고·출하 성과와 편차 이유">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
+<link rel="stylesheet" href="ui/theme.css?v=2611041426">
+<style>
+main.wrap { max-width: none; }
+.pf-g { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; } .pf-g .card { margin: 0; }
+@media (max-width: 1100px) { .pf-g { grid-template-columns: 1fr; } }
+.pf-big { font-size: 34px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; margin: 0 0 10px; white-space: nowrap; }
+.pf-big small { font-size: 14.5px; font-weight: 600; color: var(--ink-2); letter-spacing: 0; margin-left: 4px; }
+.pf-why { margin: 10px 0 0; font-size: 14.5px; padding: 8px 12px; background: var(--tint-2); border-radius: 8px; } .pf-why b { margin-right: 8px; color: var(--brand-2, #1f5fae); }
+.pos { color: var(--good); } .neg { color: var(--bad); } .wrn { color: var(--warn); }
+.pf-top { margin: 0 0 12px; text-align: right; } .pf-btn { font-size: 14px; font-weight: 700; border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; text-decoration: none; color: var(--brand-2, #1f5fae); }
+</style>
+</head>
+<body>
+<header id="shell" data-page="perf" data-title="성과 분석" data-sub="무엇이 달라졌고 왜 달라졌는가"></header>
+<main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
+<footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2611041426"></script>
+<script src="engine/crypto.js?v=2611041426"></script>
+<script src="ui/ct.js?v=2611041426"></script>
+<script src="ct_perf.js?v=2611041426"></script>
+</body>
+</html>

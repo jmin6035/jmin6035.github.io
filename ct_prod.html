@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>생산·출하</title>
+<meta name="description" content="도금·컬러 라인별 계획 대비 실적, 가동, 판매그룹별 출하·제품 재고">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
+<link rel="stylesheet" href="ui/theme.css?v=2611041426">
+<style>
+main.wrap { max-width: none; }
+.pp-t td.w { min-width: 220px; }
+.pp-c { display: inline-block; margin: 0 10px 0 0; white-space: nowrap; font-size: 14px; }
+.pp-d { display: inline-block; margin-left: 12px; white-space: nowrap; }
+.pos { color: var(--good); } .neg { color: var(--bad); } .wrn { color: var(--warn); }
+.pp-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; } .pp-2 .card { margin: 0; }
+@media (max-width: 1100px) { .pp-2 { grid-template-columns: 1fr; } }
+td.pp-bar { width: 140px; } td.pp-bar i { display: block; height: 10px; border-radius: 3px; background: var(--brand-2, #1f5fae); }
+.pp-dr { display: grid; grid-template-columns: 46px 1fr 110px; gap: 8px; align-items: center; font-size: 14px; padding: 3px 0; font-variant-numeric: tabular-nums; }
+.pp-dr .b { position: relative; height: 12px; background: var(--grid); border-radius: 3px; } .pp-dr .b i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--brand-2, #1f5fae); border-radius: 3px; }
+.pp-dr .b u { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); } .pp-dr .v { text-align: right; white-space: nowrap; } .pp-dr .v small { color: var(--ink-2); font-size: 13.5px; }
+</style>
+</head>
+<body>
+<header id="shell" data-page="prodsum" data-title="생산·출하" data-sub="계획 대비 실적 · 가동 · 출하·제품 재고"></header>
+<main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
+<footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2611041426"></script>
+<script src="engine/crypto.js?v=2611041426"></script>
+<script src="ui/ct.js?v=2611041426"></script>
+<script src="ct_prod.js?v=2611041426"></script>
+</body>
+</html>

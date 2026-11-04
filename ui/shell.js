@@ -14,13 +14,13 @@
   }
   /* 11/4 사용자 '전면 개편'(control_tower_redesign PRD): 공장별 25개 메뉴 → 의사결정 목적 7개. 지금 화면은 각 메뉴의 탭으로 묶고, 단계마다 새 화면으로 바꿈(gadong-plan/docs/22) */
   const MENU = [
-    ['ct1', '통합 관제', 'home', [['home', 'index.html', '전체 현황']]],
-    ['ct2', '수주·납기', 'cgorder', [['cgorder', 'cg_order.html', '도금 주문'], ['ccorder', 'cc_order.html', '컬러 주문']]],
-    ['ct3', '생산계획', 'supply', [['supply', 'supply.html', '가동 일정'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더'], ['cgwo', 'cg_wo.html', '도금 작업지시 순서'], ['wo', 'wo.html', '컬러 작업지시 순서']]],
-    ['ct4', '소재·재고', 'matcal', [['matcal', 'matcal.html', '소재 관제'], ['integrated', 'integrated.html', '재고 전망'], ['planstock', 'planstock.html', '계획재'], ['procure', 'procure.html', '소재 발주']]],
-    ['ct5', '생산·출하', 'platact', [['platact', 'plating_actual.html', '도금 실적'], ['coloract', 'color_actual.html', '컬러 실적'], ['status', 'status.html', '도금 가동 현황'], ['colorstat', 'color_status.html', '컬러 가동 현황']]],
-    ['ct6', '이슈·조정', 'decisions', [['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더']]],
-    ['ct7', '분석·보고', 'report', [['report', 'report.html', '주간 보고'], ['analysis', 'analysis.html', '도금 조건 분석'], ['coloranal', 'color_analysis.html', '컬러 조건 분석']]],
+    ['ct1', '통합 관제', 'home', [['home', 'index.html', '전체 현황'], ['board', 'board.html', '판매그룹 관제판']]],
+    ['ct2', '수주·납기', 'cgorder', [['orders', 'ct_orders.html', '통합 수주·납기'], ['cgorder', 'cg_order.html', '도금 주문'], ['ccorder', 'cc_order.html', '컬러 주문']]],
+    ['ct3', '생산계획', 'supply', [['plan7', 'ct_plan.html', '주간 일정·부하'], ['supply', 'supply.html', '가동 캘린더'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더'], ['cgwo', 'cg_wo.html', '도금 작업지시 순서'], ['wo', 'wo.html', '컬러 작업지시 순서']]],
+    ['ct4', '소재·재고', 'matcal', [['matshort', 'ct_mat.html', '소재 부족·조치'], ['matcal', 'matcal.html', '소재 관제'], ['integrated', 'integrated.html', '재고 전망'], ['planstock', 'planstock.html', '계획재'], ['procure', 'procure.html', '소재 발주']]],
+    ['ct5', '생산·출하', 'platact', [['prodsum', 'ct_prod.html', '실적·출하 요약'], ['platact', 'plating_actual.html', '도금 실적'], ['coloract', 'color_actual.html', '컬러 실적'], ['status', 'status.html', '도금 가동 현황'], ['colorstat', 'color_status.html', '컬러 가동 현황']]],
+    ['ct6', '이슈·조정', 'decisions', [['issues', 'ct_issue.html', '이슈 후보'], ['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더']]],
+    ['ct7', '분석·보고', 'report', [['perf', 'ct_perf.html', '성과 분석'], ['report', 'report.html', '주간 보고'], ['analysis', 'analysis.html', '도금 조건 분석'], ['coloranal', 'color_analysis.html', '컬러 조건 분석']]],
   ];
   const ADMIN = [['rolling', 'rolling.html', '도금 계획 계산'], ['colorcalc', 'color_calc.html', '컬러 계획 계산'], ['rules', 'rules.html', '계획 규칙'], ['health', 'health.html', '자료 상태'], ['docs', 'docs.html', '문서']];
   const NAV = [...MENU.flatMap((m) => m[3]), '|관리·도움말', ...ADMIN];
@@ -75,7 +75,7 @@
   }
   /* 메뉴 아이콘(선 아이콘, 24 격자) */
   const IC = {
-    home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
+    home: '핵심 지표 6개 → 우선 조치(누르면 영향 주문) → 수주 이행 흐름 → 7일 전망. 기간(금일·7일·30일)과 보기(도금·컬러)로 범위를 좁힘',
     supply: 'M4 5h16v15H4zM4 9h16M8 3v4M16 3v4M8 13h3M13 13h3M8 16.5h3',
     matcal: 'M4 5h16v15H4zM4 9h16M8 3v4M16 3v4M7 13h10M7 16.5h6',
     integrated: 'M4 19V5M4 19h16M7 15l4-4 3 3 5-6',

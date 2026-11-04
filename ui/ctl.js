@@ -96,6 +96,6 @@
   const COL = ['생산', '출하', '재고', '소재', '납기'];
   UI.ctlStrip = (O, mo) => {
     const R = UI.ctlRows(O, mo); if (!R || !R.length) return '';
-    return `<a class="cs-home" href="index.html" title="관제판">관제</a>` + R.map((r) => `<a class="cs-g" href="index.html" title="${esc(r.name)}: ${r.cells.map((c, i) => COL[i] + ' ' + ({ bad: '조치', warn: '주의', ok: '정상', na: '–' }[c])).join(' · ')}"><span class="cdot ${r.w}"></span>${esc(r.name)}<span class="cs-c">${r.cells.map((c) => `<i class="${c}"></i>`).join('')}</span></a>`).join('');
+    return `<a class="cs-home" href="board.html" title="판매그룹 관제판">관제</a>` + R.map((r) => `<a class="cs-g" href="board.html" title="${esc(r.name)}: ${r.cells.map((c, i) => COL[i] + ' ' + ({ bad: '조치', warn: '주의', ok: '정상', na: '–' }[c])).join(' · ')}"><span class="cdot ${r.w}"></span>${esc(r.name)}<span class="cs-c">${r.cells.map((c) => `<i class="${c}"></i>`).join('')}</span></a>`).join('');
   };
 })();

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>수주·납기</title>
+<meta name="description" content="도금·컬러 주문을 한 목록으로 — 수주 잔량·납기 위험·주문 추적">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
+<link rel="stylesheet" href="ui/theme.css?v=2611041426">
+<style>
+main.wrap { max-width: none; }
+.co-card { padding: 46px 16px 14px; }
+table.ct-t th, table.ct-t td { text-align: left !important; } table.ct-t th.r, table.ct-t td.r { text-align: right !important; }
+.ct-flt { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 12px; font-size: 14.5px; }
+.ct-flt input[type=text], .ct-flt input:not([type]) { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: inherit; min-width: 260px; flex: 1 1 260px; max-width: 420px; }
+.ct-flt .cnt { color: var(--ink-2); white-space: nowrap; } .ct-flt .nw { white-space: nowrap; }
+button.lnk { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+details.og2 { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 12px; overflow: clip; }
+details.og2 > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; padding: 10px 14px; cursor: pointer; list-style: none; background: var(--tint-2); font-size: 15px; }
+details.og2 > summary::-webkit-details-marker { display: none; }
+details.og2 > summary::before { content: '▸'; color: var(--ink-2); width: 12px; } details.og2[open] > summary::before { content: '▾'; }
+details.og2 .gn { font-weight: 800; font-size: 17px; min-width: 120px; } details.og2 .gs { white-space: nowrap; }
+details.og2 .gs.bad { color: var(--bad); } details.og2 .gs.warn { color: var(--warn); }
+details.og2 table.ct-t th { top: 0; }
+table.ct-t .lf { font-size: 13.5px; } table.ct-t .mu { color: var(--ink-2); }
+.co-picks { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 14px; }
+.co-picks .lb { font-weight: 700; font-size: 14px; margin-right: 4px; }
+.co-chip { font: inherit; font-size: 13.5px; font-weight: 700; border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 8px; padding: 4px 8px; cursor: pointer; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.co-chip.on { border-color: var(--brand-2, #1f5fae); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-2, #1f5fae) 30%, transparent); }
+.co-trk { max-width: 720px; } .co-trk h3 { margin: 4px 0 10px; font-size: 18px; } .co-trk h3 small { font-size: 14px; color: var(--ink-2); font-weight: 600; }
+</style>
+</head>
+<body>
+<header id="shell" data-page="orders" data-title="수주·납기" data-sub="도금·컬러 주문 한 목록 · 납기 위험 · 주문 추적"></header>
+<main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
+<footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2611041426"></script>
+<script src="engine/crypto.js?v=2611041426"></script>
+<script src="ui/ct.js?v=2611041426"></script>
+<script src="ct_orders.js?v=2611041426"></script>
+</body>
+</html>
