@@ -5,13 +5,14 @@
   const { esc, n0, n1, md } = CT;
   let per = 'month';
   try { per = localStorage.getItem('ct-prod-per') || 'month'; } catch (e) { /* 무시 */ }
-  const CCAT = { color: '색상교체·청소', test: '테스트·도막조정', roll: '폭·롤·두께 전환', gap: '기록 없는 정지', etc: '기타' };
+  const CCAT = { color: '색상교체·청소', test: '테스트·도막조정', roll: '폭·롤·두께 전환', gap: '정지(사유 기록 없음)', etc: '기타' };
   const SHIPK = { 도금판매: 'G국내', 도금수출: 'G수출', 자동차강판: 'G자동차', 컬러수출: 'C수출', 컬러건재: 'C건재' };
   CT.boot(['portal.enc.json', 'plating_actual.enc.json', 'color_actual.enc.json'], render);
 
   function render(D) {
     const P = D.portal, GA = D.plating_actual || {}, CA = D.color_actual || {};
-    const asOfG = P.asOf, asOfC = CA.asOf || asOfG, mon = String(asOfG).slice(0, 7);
+    const asOfG = P.asOf, asOfC0 = CA.asOf || asOfG, mon = String(asOfG).slice(0, 7);
+    const asOfC = asOfC0 >= CT.today() ? CT.addD(asOfC0, -1) : asOfC0;   // 오늘(진행 중인 생산일)은 하루가 안 끝나 실적·정지가 덜 들어옴 → 어제까지
     const lines = (P.lines || []).filter((l) => CT.inScope(l.pl));
     const inPer = (d, asOf) => (per === 'month' ? String(d).slice(0, 7) === String(asOf).slice(0, 7) && d <= asOf : d > CT.addD(asOf, -7) && d <= asOf);
     const daily = (pl) => (pl === 'G' ? GA.daily : CA.daily) || [];
@@ -37,8 +38,8 @@
     const pAct = L.reduce((a, x) => a + x.act, 0);
     const noC = CT.inScope('C') && L.some((x) => x.pl === 'C');
     const k = [
-      { label: per === 'month' ? `${+mon.slice(5)}월 생산계획` : '이번 주 생산계획', v: per === 'month' ? n0(mPlan) : (Lp.length ? n0(dPlan) : '-'), unit: 't', tone: 'info', sub: per === 'month' ? '최신 가동계획 · 판매그룹 합' : (noC ? '도금만(컬러 일별 계획 없음)' : '그날 아침 계획 합') },
-      { label: per === 'month' ? '생산실적(누계)' : '이번 주 생산실적', v: n0(per === 'month' ? mAct : pAct), unit: 't', tone: 'info', sub: `MES 실적 ~${md(asOfG)}${noC && asOfC !== asOfG ? ` · 컬러 ~${md(asOfC)}` : ''}` },
+      { label: per === 'month' ? `${+mon.slice(5)}월 생산계획` : '최근 7일 생산계획', v: per === 'month' ? n0(mPlan) : (Lp.length ? n0(dPlan) : '-'), unit: 't', tone: 'info', sub: per === 'month' ? '최신 가동계획 · 판매그룹 합' : (noC ? '도금만(컬러 일별 계획 없음)' : '그날 아침 계획 합') },
+      { label: per === 'month' ? '생산실적(누계)' : '최근 7일 생산실적', v: n0(per === 'month' ? mAct : pAct), unit: 't', tone: 'info', sub: `MES 실적 ~${md(asOfG)}${noC && asOfC !== asOfG ? ` · 컬러 ~${md(asOfC)}` : ''}` },
       { label: '계획 대비 차이', v: Lp.length ? `${dAct - dPlan >= 0 ? '+' : '−'}${n0(Math.abs(dAct - dPlan))}` : '-', unit: 't', tone: !Lp.length ? '' : dAct >= dPlan ? 'ok' : dAct >= dPlan * 0.95 ? 'warn' : 'bad',
         sub: Lp.length ? `${Lp.map((x) => x.line).join('·')} · ${per === 'month' ? '일정 누계 대비' : '아침 계획 대비'} ${dPlan ? Math.round(dAct / dPlan * 100) : 0}%` : '같은 기간 라인 계획 없음' },
       { label: '이월 예상', v: n0(carry), unit: 't', tone: carry >= 1 ? 'warn' : 'ok', sub: '월 계획 − 실적 − 남은 계획' },
@@ -54,9 +55,9 @@
     const tbl = `<div class="ct-wrap"><table class="ct-t pp-t"><thead><tr><th>라인</th><th class="r" title="${per === 'month' ? '도금 = 판생속보 일정 누계, 컬러 = 라인 계획 없음' : '도금 = 그날 아침 계획 합'}">계획</th><th class="r">실적</th><th class="r">차이</th><th class="r">달성률</th><th>휴지 상위(시간)</th></tr></thead><tbody>${L.map(tr).join('')}</tbody></table></div>`;
     // 가동(실시간 아님 — 최근 자료 기준)
     const ev = (P.week && P.week.events) || [];
-    const runRow = (x) => { const last = (x.days || []).slice(-3), nxt = x.pl === 'G' ? x.next : (() => { const e = ev.find((e_) => e_.pl === 'C' && e_.text.startsWith(x.line)); return e ? [e.d, e.text.replace(x.line + ' ', '')] : null; })();
-      const st = lastStops(x, GA, CA);
-      return `<tr><td class="id">${esc(x.line)}</td><td>${md(x.asOfL)} 기준</td><td class="r">${last.length ? last.map((dd) => `<span class="pp-d">${md(dd[0])} <b>${n0(dd[1])}</b></span>`).join('') : (() => { const dd = daily(x.pl).slice(-3); return dd.map((r) => `<span class="pp-d">${md(r.d)} <b>${n0(r[x.line])}</b></span>`).join(''); })()}</td>`
+    const runRow = (x) => { const last = (x.days || []).filter((dd) => dd[0] <= x.asOfL).slice(-3), nxt = x.pl === 'G' ? x.next : (() => { const e = ev.find((e_) => e_.pl === 'C' && e_.text.startsWith(x.line)); return e ? [e.d, e.text.replace(x.line + ' ', '')] : null; })();
+      const st = lastStops(x, GA, CA, x.asOfL);
+      return `<tr><td class="id">${esc(x.line)}</td><td>${md(x.asOfL)} 기준</td><td class="r">${last.length ? last.map((dd) => `<span class="pp-d">${md(dd[0])} <b>${n0(dd[1])}</b></span>`).join('') : (() => { const dd = daily(x.pl).filter((r) => r.d <= x.asOfL).slice(-3); return dd.map((r) => `<span class="pp-d">${md(r.d)} <b>${n0(r[x.line])}</b></span>`).join(''); })()}</td>`
         + `<td class="w">${st || '<span class="sub">기록 없음</span>'}</td><td>${nxt ? `<b>${md(nxt[0])}</b> ${esc(nxt[1])}` : '<span class="sub">-</span>'}</td></tr>`; };
     const run = `<div class="ct-wrap"><table class="ct-t"><thead><tr><th>라인</th><th>최근 자료</th><th class="r">최근 3일 생산(t)</th><th>최근 휴지</th><th>다음 일정</th></tr></thead><tbody>${L.map(runRow).join('')}</tbody></table></div>`;
     // 출하·제품 재고
@@ -89,12 +90,12 @@
     }
     return Object.entries(c).filter(([, h]) => h >= 0.05).sort((a, b) => b[1] - a[1]);
   }
-  function lastStops(l, GA, CA) {
+  function lastStops(l, GA, CA, upto) {
     if (l.pl === 'G') {
-      const E = Object.entries(GA.dayStops || {}).filter(([, v]) => (v[l.line] || []).length).sort((a, b) => (a[0] < b[0] ? 1 : -1))[0];
+      const E = Object.entries(GA.dayStops || {}).filter(([d, v]) => d <= upto && (v[l.line] || []).length).sort((a, b) => (a[0] < b[0] ? 1 : -1))[0];
       return E ? `${md(E[0])} ${E[1][l.line].slice(0, 2).map((s) => `${esc(s[2] || s[0])} ${n0(s[1])}분`).join(' · ')}` : '';
     }
-    const E = Object.entries((CA.downAct || {}).days || {}).filter(([, v]) => (v[l.line] || []).length).sort((a, b) => (a[0] < b[0] ? 1 : -1))[0];
+    const E = Object.entries((CA.downAct || {}).days || {}).filter(([d, v]) => d <= upto && (v[l.line] || []).length).sort((a, b) => (a[0] < b[0] ? 1 : -1))[0];
     return E ? `${md(E[0])} ${E[1][l.line].slice(0, 3).map((s) => `${esc(CCAT[s[0]] || s[0])} ${n0(s[1])}분`).join(' · ')}` : '';
   }
   function lineDetail(x, D, inPer) {

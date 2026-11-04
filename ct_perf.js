@@ -22,7 +22,7 @@
       const top = Object.entries(cc).sort((a, b) => b[1] - a[1])[0];
       const tot = pr.reduce((a, [, x]) => [a[0] + x.ok, a[1] + x.known], [0, 0]);
       out.push(card('수주 이행', `최근 2주 생산 · 생산 필요일 안 완료 · ${md(cg.perf.from)}~`,
-        `<div class="pf-big ${tone(pc(tot[0], tot[1]))}">${pc(tot[0], tot[1])}<small>% · ${n0(tot[0])} / ${n0(tot[1])}t</small></div>`
+        `<div class="pf-big ${tone(pc(tot[0], tot[1]))}">${pc(tot[0], tot[1])}<span class="u">%</span><span class="pf-s">${n0(tot[0])} / ${n0(tot[1])}t</span></div>`
         + tbl(['판매그룹', '생산(t)', '기한 안(t)', '준수율'], pr.map(([g, x]) => { const p = pc(x.ok, x.known); return `<tr><td class="id">${esc(CT.grpName(g))}</td><td class="r">${n0(x.t)}</td><td class="r">${n0(x.ok)}</td><td class="r"><b class="${tone(p)}">${p}%</b></td></tr>`; })),
         worst ? `${esc(CT.grpName(worst[0]))} ${pc(worst[1].ok, worst[1].known)}%가 가장 낮음${top ? ` — 지금 위험 주문의 주원인 <b>${esc(CT.CAUSE[top[0]])}</b> ${n0(top[1])}t` : ''}` : ''));
     }
@@ -34,7 +34,7 @@
       const st = (GA.stops && GA.stops.w1 && GA.stops.w1[big[0]]) || {}, stTop = Object.entries(st).sort((a, b) => b[1] - a[1])[0];
       const roll = P.roll;
       out.push(card('생산계획', `그날 아침 계획 대비 실적 · 최근 ${big[1].days}일`,
-        (roll ? `<div class="pf-big ${tone(pc(roll.actual, roll.plan), 98, 90)}">${pc(roll.actual, roll.plan)}<small>% · 도금 10/1~${md(roll.asOf)} 실적 ${n0(roll.actual)} / 계획 ${n0(roll.plan)}t</small></div>` : '')
+        (roll ? `<div class="pf-big ${tone(pc(roll.actual, roll.plan), 98, 90)}">${pc(roll.actual, roll.plan)}<span class="u">%</span><span class="pf-s">도금 10/1~${md(roll.asOf)} 실적 ${n0(roll.actual)} / 계획 ${n0(roll.plan)}t</span></div>` : '')
         + tbl(['라인', '계획(t)', '실적(t)', '편차', '하루 오차', '미달 일수'], acc.map(([l, x]) => `<tr><td class="id">${esc(l)}</td><td class="r">${n0(x.plan)}</td><td class="r">${n0(x.actual)}</td><td class="r"><b class="${Math.abs(x.bias) <= 5 ? 'pos' : Math.abs(x.bias) <= 15 ? 'wrn' : 'neg'}">${x.bias >= 0 ? '+' : ''}${n1(x.bias)}%</b></td><td class="r">${n1(x.mae)}%</td><td class="r">${x.under}일</td></tr>`)),
         `${esc(big[0])} 편차 ${big[1].bias >= 0 ? '+' : ''}${n1(big[1].bias)}% 가장 큼${dayW ? ` — ${md(dayW[0])} 하루 ${dayW[1] >= 0 ? '+' : '−'}${n0(Math.abs(dayW[1]))}t` : ''}${stTop && stTop[1] >= 0.1 ? ` · 지난주 휴지 상위 ${esc(stTop[0])} 하루 ${n1(stTop[1])}h` : ''}`));
     }
@@ -60,7 +60,7 @@
       const MO = (D.mat_order && D.mat_order.groups && D.mat_order.groups.mats) || [];
       const late = MO.filter((m) => m.st === 'late').length, soon = MO.filter((m) => m.st === 'soon').length;
       out.push(card('소재 적기 입고', '도금 미완료 주문 중 필요 입고일보다 소재가 늦은 비중',
-        `<div class="pf-big ${tone(100 - pc(lt.length, G.length))}">${100 - pc(lt.length, G.length)}<small>% 적기 · 지연 ${n0(lt.length)} / ${n0(G.length)}건</small></div>`
+        `<div class="pf-big ${tone(100 - pc(lt.length, G.length))}">${100 - pc(lt.length, G.length)}<span class="u">%</span><span class="pf-s">적기 · 지연 ${n0(lt.length)} / ${n0(G.length)}건</span></div>`
         + tbl(['판매그룹', '주문', '소재 지연', '지연 잔량(t)', '적기율'], R.map(([g, x]) => { const p = 100 - pc(x.ln, x.n); return `<tr><td class="id">${esc(g)}</td><td class="r">${n0(x.n)}</td><td class="r">${n0(x.ln)}</td><td class="r">${n0(x.lt)}</td><td class="r"><b class="${tone(p)}">${p}%</b></td></tr>`; })),
         `${wz && wz[1].lt ? `${esc(wz[0])} 지연 잔량 ${n0(wz[1].lt)}t 가장 큼` : ''}${MO.length ? ` · 소재 발주 마감 지남 ${late} · 2주 안 ${soon}개 소재` : ''}`));
     }
