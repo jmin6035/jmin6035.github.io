@@ -37,7 +37,7 @@ table.t.rl td.l { white-space: normal !important; }
 .rl-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; }
 .rl-tabs button { border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font: inherit; font-size: 14px; font-weight: 700; padding: 7px 14px; border-radius: 8px; cursor: pointer; }
 .rl-tabs button small { font-weight: 500; color: var(--ink-3); margin-left: 3px; }
-html body .rl-tabs button[aria-pressed="true"] { background: var(--brand-2, #1f5fae) !important; border-color: var(--brand-2, #1f5fae) !important; color: #fff !important; } .rl-tabs button[aria-pressed="true"] small { color: rgba(255,255,255,.8); }
+html body .rl-tabs button[aria-pressed="true"], html body .rl-tabs button[aria-pressed="true"]:focus, html body .rl-tabs button[aria-pressed="true"]:hover { background: var(--brand-2, #1f5fae) !important; border-color: var(--brand-2, #1f5fae) !important; color: #fff !important; } .rl-tabs button[aria-pressed="true"] small { color: rgba(255,255,255,.8); }
 .rl-flow { list-style: none; margin: 0; padding: 0; counter-reset: none; }
 .rl-st { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 14px; }
 .rl-st:not(:last-child)::before { content: ''; position: absolute; left: 17px; top: 36px; bottom: 0; width: 2px; background: var(--line); }
