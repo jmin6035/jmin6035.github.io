@@ -11,18 +11,22 @@
 main.wrap { max-width: none; }
 .pp-t td.w { min-width: 220px; }
 .pp-c { display: inline-block; margin: 0 10px 0 0; white-space: nowrap; font-size: 14px; }
-.pp-d { display: inline-block; margin-left: 12px; white-space: nowrap; }
 .pos { color: var(--good); } .neg { color: var(--bad); } .wrn { color: var(--warn); }
-.pp-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; } .pp-2 .card { margin: 0; }
-@media (max-width: 1100px) { .pp-2 { grid-template-columns: 1fr; } }
-td.pp-bar { width: 140px; } td.pp-bar i { display: block; height: 10px; border-radius: 3px; background: var(--brand-2, #1f5fae); }
-.pp-dr { display: grid; grid-template-columns: 46px 1fr 110px; gap: 8px; align-items: center; font-size: 14px; padding: 3px 0; font-variant-numeric: tabular-nums; }
-.pp-dr .b { position: relative; height: 12px; background: var(--grid); border-radius: 3px; } .pp-dr .b i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--brand-2, #1f5fae); border-radius: 3px; }
-.pp-dr .b u { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); } .pp-dr .v { text-align: right; white-space: nowrap; } .pp-dr .v small { color: var(--ink-2); font-size: 13.5px; }
+.pp-2 { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; } .pp-2 .card { margin: 0; }
+@media (max-width: 1100px) { .pp-2 { grid-template-columns: minmax(0, 1fr); } }
+td.pp-bar { width: 120px; min-width: 80px; } td.pp-bar i { display: block; height: 10px; border-radius: 3px; background: var(--brand-2, #1f5fae); } td.pp-bar i.c { background: var(--ink-2); }
+.pp-scope { margin: 4px 2px 12px; font-size: 14px; color: var(--ink-2); } .pp-scope b { color: var(--ink); margin-right: 8px; }
+.pp-tag { display: inline-block; border: 1px solid var(--warn); color: var(--warn); border-radius: 6px; padding: 0 7px; margin-right: 10px; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.card h2 small a { color: var(--brand-2, #1f5fae); font-weight: 700; }
+td.id small { display: block; }
+details.pp-g { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 10px; overflow: clip; }
+details.pp-g > summary { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; padding: 10px 14px; background: var(--tint-2); cursor: pointer; font-size: 14.5px; list-style: none; }
+details.pp-g > summary b { font-size: 16px; min-width: 120px; } details.pp-g > summary::-webkit-details-marker { display: none; }
+details.pp-g > summary span { white-space: nowrap; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
-<header id="shell" data-page="prodsum" data-title="생산·출하" data-sub="계획 대비 실적 · 가동 · 출하·제품 재고"></header>
+<header id="shell" data-page="prodsum" data-title="생산·출하" data-sub="생산 실적 · 가동·차질 · 출하 실적 · 제품 재고"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611041444"></script>

@@ -9,25 +9,74 @@
 <link rel="stylesheet" href="ui/theme.css?v=2611041444">
 <style>
 main.wrap { max-width: none; }
-.co-card { padding: 46px 16px 14px; }
-table.ct-t th, table.ct-t td { text-align: left !important; } table.ct-t th.r, table.ct-t td.r { text-align: right !important; }
-.ct-flt { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 12px; font-size: 14.5px; }
-.ct-flt input[type=text], .ct-flt input:not([type]) { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: inherit; min-width: 260px; flex: 1 1 260px; max-width: 420px; }
-.ct-flt .cnt { color: var(--ink-2); white-space: nowrap; } .ct-flt .nw { white-space: nowrap; }
-button.lnk { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
-details.og2 { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 12px; overflow: clip; }
-details.og2 > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; padding: 10px 14px; cursor: pointer; list-style: none; background: var(--tint-2); font-size: 15px; }
-details.og2 > summary::-webkit-details-marker { display: none; }
-details.og2 > summary::before { content: '▸'; color: var(--ink-2); width: 12px; } details.og2[open] > summary::before { content: '▾'; }
-details.og2 .gn { font-weight: 800; font-size: 17px; min-width: 120px; } details.og2 .gs { white-space: nowrap; }
-details.og2 .gs.bad { color: var(--bad); } details.og2 .gs.warn { color: var(--warn); }
-details.og2 table.ct-t th { top: 0; }
-table.ct-t .lf { font-size: 13.5px; } table.ct-t .mu { color: var(--ink-2); }
-.co-picks { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 14px; }
-.co-picks .lb { font-weight: 700; font-size: 14px; margin-right: 4px; }
-.co-chip { font: inherit; font-size: 13.5px; font-weight: 700; border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 8px; padding: 4px 8px; cursor: pointer; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.co-chip.on { border-color: var(--brand-2, #1f5fae); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-2, #1f5fae) 30%, transparent); }
-.co-trk { max-width: 720px; } .co-trk h3 { margin: 4px 0 10px; font-size: 18px; } .co-trk h3 small { font-size: 14px; color: var(--ink-2); font-weight: 600; }
+section.card.co-card { padding: 54px 16px 14px !important; }
+.co-card h2 { margin: 0 0 12px; }
+.mu { color: var(--ink-2); }
+button.lnk { font: inherit; font-size: 14px; border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 6px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
+.co-sn { margin: -6px 2px 12px; }
+.co-f1, .co-f2, .co-chips { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 0 0 10px; font-size: 14.5px; }
+.co-sel { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; } .co-sel span { font-weight: 700; color: var(--ink-2); font-size: 14px; }
+.co-sel select, .co-f2 input[type=search], .co-trk input[type=search] { font: inherit; font-size: 14.5px; height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.co-sel select { min-width: 120px; } .co-sel select:disabled { opacity: .6; }
+.co-f2 input[type=search] { width: 320px; max-width: 100%; }
+.co-f2 .nw, .co-chips .nw { white-space: nowrap; display: inline-flex; gap: 5px; align-items: center; }
+.cnt { color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; margin-left: auto; font-size: 14px; }
+.co-tw { max-height: calc(100vh - 190px); min-height: 240px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+table.co-t { --c1: 90px; }
+table.co-t th { z-index: 3; }
+table.co-t th button { all: unset; cursor: pointer; display: inline-flex; gap: 3px; align-items: center; } table.co-t th button:focus-visible { outline: 2px solid var(--brand-2, #1f5fae); outline-offset: 2px; }
+table.co-t th i { font-style: normal; font-size: 11px; color: var(--brand-2, #1f5fae); min-width: 9px; }
+table.co-t th.on { color: var(--ink); }
+table.co-t .sk { position: sticky; background: var(--surface); }
+table.co-t td.sk { z-index: 1; } table.co-t th.sk { z-index: 4; }
+table.co-t .s1 { left: 0; } table.co-t .s2 { left: var(--c1); box-shadow: inset -1px 0 0 var(--line); }
+table.co-t tbody tr.ck:hover td.sk { background: var(--hover); }
+table.co-t td.w { min-width: 180px; }
+table.co-t .lf { font-size: 13.5px; }
+.co-b { color: var(--bad); font-weight: 700; } .co-w { color: var(--warn); font-weight: 700; }
+.co-gh td { background: var(--tint-2) !important; font-size: 14.5px; position: sticky; left: 0; }
+.co-act { font-size: 13.5px; color: var(--ink-2); border: 1px dashed var(--line); border-radius: 6px; padding: 1px 8px; white-space: nowrap; }
+.co-more { text-align: center; padding: 10px; }
+.co-chip { font: inherit; font-size: 14px; font-weight: 700; border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 999px; padding: 6px 13px; cursor: pointer; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.co-chip b { margin-left: 3px; } .co-chip[aria-pressed="true"] { background: var(--brand-2, #1f5fae); border-color: var(--brand-2, #1f5fae); color: #fff; } .co-chip:disabled { opacity: .45; cursor: default; }
+/* 주문 추적: 왼쪽 목록 · 오른쪽 상세 */
+.co-trk { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
+.co-tlw { display: flex; flex-direction: column; gap: 8px; position: sticky; top: 8px; }
+.co-tlw input[type=search] { width: 100%; box-sizing: border-box; }
+.co-tn { font-size: 13.5px; color: var(--ink-2); }
+.co-tl { list-style: none; margin: 0; padding: 0; max-height: calc(100vh - 200px); overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; }
+.co-tl li { padding: 8px 10px; border-bottom: 1px solid var(--grid); cursor: pointer; font-size: 14px; }
+.co-tl li.on { background: var(--tint-2); box-shadow: inset 3px 0 0 var(--brand-2, #1f5fae); } .co-tl li:hover { background: var(--hover); }
+.co-tl .a { display: flex; gap: 6px; align-items: center; white-space: nowrap; } .co-tl .a b { font-size: 13.5px; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
+.co-tl .b { display: flex; justify-content: space-between; gap: 6px; font-size: 13.5px; color: var(--ink-2); margin-top: 3px; white-space: nowrap; } .co-tl .b span { font-variant-numeric: tabular-nums; }
+.co-td { min-width: 0; max-width: 760px; }
+.co-th { position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--line); padding: 4px 0 10px; margin-bottom: 10px; }
+.co-th .h1 { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .co-th .h1 b { font-size: 19px; font-variant-numeric: tabular-nums; }
+.co-th .h2 { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 6px; font-size: 14.5px; color: var(--ink-2); } .co-th .h2 span { white-space: nowrap; } .co-th .h2 b { color: var(--ink); font-variant-numeric: tabular-nums; } .co-th small { font-size: 13.5px; }
+.co-tdb { font-size: 14.5px; } .co-tdb .ct-pd-h { display: none; }
+/* 납기 캘린더 */
+.co-calh { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 0 0 10px; } .co-calh > b { font-size: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.co-lg { margin-left: auto; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; } .co-lg i { font-style: normal; font-weight: 800; }
+.co-lg i.p, .co-cd .mk.p i { color: var(--brand-2, #1f5fae); } .co-lg i.s, .co-cd .mk.s i { color: var(--good); } .co-lg i.r { color: var(--bad); }
+.co-wh, .co-cg { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.co-wh { margin-bottom: 6px; } .co-wh div { font-size: 13.5px; font-weight: 700; color: var(--ink-2); text-align: center; }
+.co-cd { min-height: 104px; border: 1px solid var(--line); border-radius: 8px; padding: 7px 8px; background: var(--surface); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.co-cd.ck { cursor: pointer; } .co-cd.ck:hover { border-color: var(--brand-2, #1f5fae); }
+.co-cd.ps { background: var(--surface-2); } .co-cd.we .dt { color: var(--ink-3); }
+.co-cd.td { border: 2px solid var(--brand-2, #1f5fae); }
+.co-cd .dt { display: flex; gap: 5px; align-items: baseline; margin-bottom: 5px; } .co-cd .dt b { font-size: 15px; } .co-cd .dt span { color: var(--ink-2); } .co-cd .dt em { font-style: normal; font-weight: 800; color: var(--brand-2, #1f5fae); margin-left: auto; }
+.co-cd .mk { white-space: nowrap; line-height: 1.55; } .co-cd .mk i { font-style: normal; margin-right: 3px; } .co-cd .mk span { color: var(--ink-2); }
+.co-cd .mk.r { color: var(--bad); font-weight: 700; }
+@media (max-width: 1200px) { .co-cd .mk { white-space: normal; } }
+@media (max-width: 900px) {
+  .co-trk { grid-template-columns: 1fr; } .co-tlw { position: static; } .co-tl { max-height: 260px; }
+  .co-wh { display: none; } .co-cg { grid-template-columns: 1fr; gap: 4px; }
+  .co-cd { min-height: 0; display: grid; grid-template-columns: 86px 1fr; gap: 1px 8px; align-items: baseline; } .co-cd .dt { margin: 0; grid-row: 1 / span 3; } .co-cd .mk { grid-column: 2; white-space: nowrap; } .co-cd .dt { white-space: nowrap; } .co-cd .dt em { margin-left: 4px; } .co-cd:not(.ck):not(.td) { display: none; }
+  .co-lg { margin-left: 0; } .cnt { margin-left: 0; }
+  .co-f2 input[type=search] { width: 100%; }
+  .co-tw { max-height: calc(100vh - 120px); }
+}
+@media (max-width: 600px) { .co-f1 { display: grid; grid-template-columns: 1fr 1fr; } .co-sel { flex-direction: column; align-items: stretch; gap: 3px; } .co-sel select { min-width: 0; width: 100%; } .co-card .ct-kpis { grid-template-columns: 1fr 1fr; gap: 8px; } .co-card .ct-kpi { padding: 10px 10px; } .co-card .ct-kpi .v { font-size: 22px; } .co-card .ct-kpi .l { white-space: normal; } .co-cd .dt { grid-row: auto; } }
 </style>
 </head>
 <body>
@@ -37,6 +86,6 @@ table.ct-t .lf { font-size: 13.5px; } table.ct-t .mu { color: var(--ink-2); }
 <script src="ui/shell.js?v=2611041444"></script>
 <script src="engine/crypto.js?v=2611041444"></script>
 <script src="ui/ct.js?v=2611041444"></script>
-<script src="ct_orders.js?v=2611041444"></script>
+<script src="ct_orders.js?v=2611041720"></script>
 </body>
 </html>

@@ -14,6 +14,20 @@ main.wrap { max-width: none; }
 .ct-new { font-size: 13.5px; color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
 .ct-dd, .ct-wd { font-size: 13.5px; color: var(--ink-2); font-weight: 500; display: inline !important; }
 .card > h2 small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 6px; }
+.ct-bar { justify-content: space-between; }
+.ct-ds { margin: 0 0 12px; font-size: 13.5px; color: var(--ink-2); } .ct-ds > summary { cursor: pointer; list-style: none; padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.ct-ds > summary::-webkit-details-marker { display: none; } .ct-ds .ct-more { color: var(--brand-2, #1f5fae); margin-left: 6px; } .ct-ds[open] .ct-more { display: none; } .ct-ds .ct-basis { margin: 8px 0 0; }
+.ct-2c { display: grid; grid-template-columns: minmax(0, 65fr) minmax(0, 35fr); gap: 14px; align-items: start; } .ct-2c > .card { margin: 0 0 14px; }
+.ct-proc { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ct-pc { display: block; border: 1px solid var(--line); border-left: 4px solid var(--ct-c, var(--line)); border-radius: 8px; padding: 10px 12px; color: inherit; text-decoration: none; font-size: 13.5px; }
+.ct-pc:hover { border-color: var(--ct-c, var(--brand-2)); } .ct-pc.bad { --ct-c: var(--bad); } .ct-pc.warn { --ct-c: var(--warn); } .ct-pc.ok { --ct-c: var(--good); }
+.ct-pc .h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; } .ct-pc .h b { font-size: 15px; }
+.ct-pc .v { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; } .ct-pc .v small { font-size: 13.5px; font-weight: 600; color: var(--ink-2); margin-left: 2px; }
+.ct-pc .s { color: var(--ink-2); line-height: 1.5; }
+.ct-fold > summary { cursor: pointer; list-style: none; } .ct-fold > summary::-webkit-details-marker { display: none; } .ct-fold > summary h2 { display: inline; margin: 0; font-size: 19px; } .ct-fold > summary h2 small { font-size: 13.5px; color: var(--ink-3); font-weight: 400; margin-left: 8px; } .ct-fold > summary::after { content: ' 펼치기 ▾'; font-size: 13.5px; color: var(--brand-2, #1f5fae); } .ct-fold[open] > summary::after { content: ' 접기 ▴'; } .ct-fold[open] > summary { margin-bottom: 10px; }
+.ct-ul { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.7; }
+@media (max-width: 1100px) { .ct-2c { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .ct-proc { grid-template-columns: 1fr; } .ct-fc th:last-child, .ct-fc td:last-child { display: none; } .ct-fold > summary h2 { font-size: 17px; } }
 </style>
 </head>
 <body>

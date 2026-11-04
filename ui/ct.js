@@ -43,7 +43,9 @@
   CT.grpName = (g) => GN[g] || g || '판매그룹 모름';
   CT.CAUSE = { mat: '소재 미확보', plate: '도금 지연 → 컬러', cap: '생산 능력·순서', ship: '출하 지연', data: '판정 불가(자료)' };
   CT.DEPT = { mat: '구매(소재)', plate: '도금 생산', cap: '생산기획', ship: '물류·출하', data: '수주(자료 확인)' };
-  CT.RISK = ['위험', '주의', '판정 불가', '정상', '완료'];
+  CT.RISK = ['위험', '주의', '판정 불가', '정상'];
+  CT.FUL = ['생산 전', '생산 중', '출하 확인 불가', '부분 출하', '출하 완료'];
+  const STALE = 60;   // 납기가 이만큼 지났는데 미종결이면 실제 위험보다 MES 종결 누락일 가능성이 커 '판정 불가'로 분리(11/4)
   CT.STAGE = ['수주 확정', '소재 확보', '작업 편성', '생산', '출하'];
   /* 도금: 소재(F/H 발주·포스코 진행·입고) → 생산 → 출하. 생산 필요일 = 수출 출항 − 1 · 내수 납기 − 1, 필요 입고일 = 생산 필요일 − 5 (cg_order_progress 와 같음) */
   function gRow(x, asOf, CAL) {
@@ -59,21 +61,29 @@
       { k: '소재 확보', st: x.remIn <= 0.5 && (x.entT || 0) >= 0.5 ? 'done' : x.purT ? 'cur' : 'todo', d: x.entFirst || x.eta || null, plan: x.needIn, note: x.purT ? `F/H 발주 ${CT.n1(x.purT)}t · 입고 ${CT.n1(x.entT || 0)}t` : '미발주' },
       { k: '작업 편성', st: x.woN || cal ? 'done' : prodT ? 'done' : 'todo', d: cal ? cal.from : null, note: x.woN ? `작업지시 ${x.woN}코일` : cal ? `${cal.line || ''} ${CT.n1(cal.t)}t` : '' },
       { k: '도금 생산', st: x.st === '생산 완료' ? 'done' : prodT ? 'cur' : 'todo', d: x.prodLast || sche, plan: needProd, note: `${CT.n1(prodT)} / ${CT.n1(ordT)}t` },
-      { k: '출하', st: o.fwdT >= ordT - 0.5 && ordT ? 'done' : o.fwdT ? 'cur' : 'todo', d: x.fwdLast, plan: x.due, note: o.fwdT ? `${CT.n1(o.fwdT)}t` : '' },
+      { k: '출하', st: o.fwdT >= ordT - 0.5 && ordT ? 'done' : o.fwdT ? 'cur' : 'todo', d: x.fwdLast, plan: x.due, note: o.fwdT ? `출하 ${CT.n1(o.fwdT)}t` : '출하 실적 연결 없음' },
     ];
     o.matSt = o.steps[1].st === 'done' ? '확보' : x.lateIn ? '지연' : x.purT ? '진행' : '미발주';
     o.prodSt = x.st;
     // 위험 판정(PRD 13): 완료 → 출하 지연 → 소재 → 능력·순서 → 자료
-    // 출하: 완료 주문 581건 중 출하가 이어진 것 15건뿐(11/4) — 출하 연결이 없는 완료 주문은 '완료'로 보고, 일부만 출하된 채 납기 지난 것만 출하 지연
-    if (x.st === '생산 완료' && !(o.fwdT > 0.5 && o.fwdT < ordT - 0.5 && x.due && x.due < asOf)) { o.risk = '완료'; }
-    else if (x.st === '생산 완료') { o.risk = '위험'; o.cause = 'ship'; o.last = asOf; }
-    else if (!x.due) { o.risk = '판정 불가'; o.cause = 'data'; }
+    // 이행 단계(위험 등급과 별개, 11/4 2차 진단 2.1): 생산 완료 ≠ 납기 이행. 출하 실적이 이어지지 않은 완료 주문은 '출하 확인 불가'(출하 완료로 추정하지 않음)
+    const pDone = x.st === '생산 완료' || (ordT && prodT >= ordT - 0.5);
+    o.ful = pDone ? (o.fwdT >= ordT - 0.5 && ordT ? '출하 완료' : o.fwdT > 0.5 ? '부분 출하' : '출하 확인 불가') : prodT > 0.5 ? '생산 중' : '생산 전';
+    o.unshipT = pDone ? Math.max(0, ordT - o.fwdT) : ordT - o.fwdT;       // 미출하량(출하 실적 기준) — 출하 확인 불가면 과대일 수 있음
+    o.closed = o.ful === '출하 완료';
+    if (o.closed) o.risk = '정상';
+    else if (pDone && x.due && x.due < asOf) { o.risk = o.fwdT > 0.5 ? '위험' : '판정 불가'; o.cause = o.fwdT > 0.5 ? 'ship' : 'data'; o.dataWhy = o.fwdT > 0.5 ? '' : '생산 완료 · 출하 실적 연결 없음'; o.last = asOf; }
+    else if (pDone) o.risk = '정상';
+    else if (!x.due) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = '납기 없음'; }
+    else if (!ordT) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = '주문량 없음'; }
+    else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = `납기 ${STALE}일 넘게 지남 · MES 미종결(종결 처리 확인)`; }
     else if (x.lateIn) { o.risk = '위험'; o.cause = 'mat'; o.last = x.needIn; }
     else if (sche && needProd && sche > needProd && remT > 0.5) { o.risk = '위험'; o.cause = 'cap'; o.last = needProd; }
     else if (x.hurry || x.chk) { o.risk = '주의'; o.cause = 'mat'; o.last = x.needIn; }
     else if (x.st === '미발주') { o.risk = x.needIn && CT.diff(x.needIn, asOf) <= 35 ? '위험' : '주의'; o.cause = 'mat'; o.last = x.needIn; }
     else o.risk = '정상';
-    o.etaDone = o.risk === '완료' ? x.prodLast : sche || null;
+    o.etaDone = pDone ? x.prodLast : sche || null;
+    o.etaSrc = pDone ? '실적' : cal ? '생산 캘린더(편성)' : x.sche ? '도금 생산예정(재계획)' : null;
     return o;
   }
   let O_hasShip = true;
@@ -85,15 +95,20 @@
     o.steps = [
       { k: '수주 확정', st: 'done' },
       { k: '소재 확보', st: x.st === '매치 완료' ? 'done' : x.st === '소재 없음' ? 'todo' : 'cur', note: x.st === '매치 완료' ? `매치 ${CT.n1(x.mchT)}t` : x.st === '소재 있음' ? `규격 재고 ${CT.n1(x.matT)}t(매치 전)` : x.st === '입고 대기' ? (x.self ? `자가재 ${x.self}` : `소재 발주 ${(x.po && x.po.no) || ''}`) : '소재 없음' },
-      { k: '자가재(도금)', st: !x.self ? 'na' : selfG ? (selfG.risk === '완료' ? 'done' : 'cur') : 'todo', note: x.self ? (selfG ? `${selfG.prodSt} · ${CT.n1(selfG.prodT)}/${CT.n1(selfG.ordT)}t` : '도금 주문 정보 없음') : '해당 없음' },
+      { k: '자가재(도금)', st: !x.self ? 'na' : selfG ? (selfG.ful !== '생산 전' && selfG.ful !== '생산 중' ? 'done' : 'cur') : 'todo', note: x.self ? (selfG ? `${selfG.ful} · ${CT.n1(selfG.prodT)}/${CT.n1(selfG.ordT)}t` : '도금 주문 정보 없음') : '해당 없음' },
       { k: '작업 편성', st: x.woT ? 'done' : x.sche ? 'cur' : 'todo', d: x.sche, plan: x.due, note: x.woT ? `지시 ${CT.n1(x.woT)}t` : x.can ? `가동가능 ${CT.md(x.can)}` : '' },
       { k: '컬러 생산', st: x.prodT >= x.ordT - 0.5 ? 'done' : x.prodT ? 'cur' : 'todo', d: x.sche, plan: x.due, note: `${CT.n1(x.prodT)} / ${CT.n1(x.ordT)}t` },
-      { k: '출하', st: 'todo', note: '출하 자료 없음' },
+      { k: '출하', st: 'na', note: '출하 확인 불가 — 컬러 주문별 출하 자료 없음' },
     ];
     o.matSt = x.st === '매치 완료' ? '확보' : x.st === '소재 있음' ? '재고 있음' : x.st === '입고 대기' ? '입고 대기' : '미확보';
     o.prodSt = x.prodT ? '생산 중' : x.woT ? '지시됨' : '생산 전';
     const soon = x.due && CT.diff(x.due, asOf) <= 14;
-    if (!x.due) { o.risk = '판정 불가'; o.cause = 'data'; }
+    const pDone = x.ordT && x.prodT >= x.ordT - 0.5;
+    o.ful = pDone ? '출하 확인 불가' : x.prodT > 0.5 ? '생산 중' : '생산 전';   // 컬러 주문별 출하 자료 없음
+    o.unshipT = null; o.closed = false;
+    if (pDone) { o.risk = x.due && x.due < asOf ? '판정 불가' : '정상'; if (o.risk === '판정 불가') { o.cause = 'data'; o.dataWhy = '생산 완료 · 출하 실적 연결 없음'; } }
+    else if (!x.due) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = '납기 없음'; }
+    else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = `납기 ${STALE}일 넘게 지남 · MES 미종결(종결 처리 확인)`; }
     else if (selfG && selfG.risk === '위험' && x.st !== '매치 완료') { o.risk = '위험'; o.cause = 'plate'; o.last = selfG.last || addD(x.due, -8); }
     else if (x.lateCan) { o.risk = '위험'; o.cause = 'mat'; o.last = x.can; }
     else if (x.st === '소재 없음') { o.risk = x.lateDue || soon ? '위험' : '주의'; o.cause = 'mat'; o.last = addD(x.due, -7); }
@@ -102,6 +117,7 @@
     else if (x.st === '입고 대기') { o.risk = '주의'; o.cause = x.self ? 'plate' : 'mat'; o.last = addD(x.due, -7); }
     else o.risk = '정상';
     o.etaDone = x.sche || null;
+    o.etaSrc = x.sche ? 'MES 작업예정일' : null;
     return o;
   }
   CT.orders = function (D) {
@@ -126,24 +142,61 @@
   /* 핵심 지표: [{k, label, v, unit, sub, tone: bad|warn|ok, href}] */
   CT.kpis = (L) => `<div class="ct-kpis">${L.map((x) => `<${x.href ? `a href="${x.href}"` : 'div'} class="ct-kpi ${x.tone || ''}"><div class="l">${esc(x.label)}</div><div class="v">${x.v}<small>${esc(x.unit || '')}</small></div>${x.sub ? `<div class="s">${x.sub}</div>` : ''}</${x.href ? 'a' : 'div'}>`).join('')}</div>`;
   CT.tabs = (id, L, cur) => `<div class="seg ct-seg" id="${id}">${L.map(([k, n]) => `<button type="button" data-k="${k}" aria-pressed="${k === cur}">${esc(n)}</button>`).join('')}</div>`;
-  /* 오른쪽 상세 패널 */
-  CT.panel = function (html, title) {
+  /* 오른쪽 상세 패널(2차 진단 11.1): 뒤로(이전 상세) · 닫으면 연 줄로 포커스 복원 · Esc 닫기. CT.panel(html, title, bind) — bind(p) 로 패널 안 클릭 연결 */
+  let stack = [], opener = null;
+  CT.panel = function (html, title, bind, keep) {
     let p = document.getElementById('ct-panel');
-    if (!p) { p = document.createElement('aside'); p.id = 'ct-panel'; p.className = 'ct-panel'; p.setAttribute('aria-label', '상세'); document.body.appendChild(p);
-      addEventListener('keydown', (e) => { if (e.key === 'Escape') CT.panel(null); }); }
-    if (html == null) { p.classList.remove('open'); return; }
-    p.innerHTML = `<div class="ct-ph"><b>${esc(title || '')}</b><button type="button" class="ct-x" aria-label="닫기">✕</button></div><div class="ct-pb">${html}</div>`;
-    p.querySelector('.ct-x').onclick = () => CT.panel(null);
-    p.classList.add('open'); p.querySelector('.ct-x').focus();
+    if (!p) { p = document.createElement('aside'); p.id = 'ct-panel'; p.className = 'ct-panel'; p.setAttribute('aria-label', '상세'); p.setAttribute('role', 'dialog'); document.body.appendChild(p);
+      addEventListener('keydown', (e) => { if (e.key === 'Escape' && p.classList.contains('open')) CT.panel(null); }); }
+    if (html == null) { p.classList.remove('open'); stack = []; if (opener && opener.focus) opener.focus(); opener = null; return; }
+    if (!p.classList.contains('open')) { stack = []; opener = document.activeElement; }
+    if (!keep) stack.push([html, title, bind]);
+    p.innerHTML = `<div class="ct-ph">${stack.length > 1 ? '<button type="button" class="ct-x ct-back" aria-label="뒤로">←</button>' : ''}<b>${esc(title || '')}</b><button type="button" class="ct-x ct-close" aria-label="닫기">✕</button></div><div class="ct-pb">${html}</div>`;
+    p.querySelector('.ct-close').onclick = () => CT.panel(null);
+    const bk = p.querySelector('.ct-back'); if (bk) bk.onclick = () => { stack.pop(); const t = stack[stack.length - 1]; CT.panel(t[0], t[1], t[2], true); };
+    if (bind) bind(p);
+    CT.keyRows(p);
+    p.classList.add('open'); p.querySelector('.ct-close').focus();
+  };
+  /* 줄 키보드 조작: tr.ck · .ck 에 Enter/Space = 클릭 */
+  CT.keyRows = (root) => (root || document).querySelectorAll('.ck').forEach((el) => {
+    if (el.dataset.kb) return; el.dataset.kb = '1'; if (!el.hasAttribute('tabindex')) el.tabIndex = 0;
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); } });
+  });
+  /* 하위 화면 = 주소 #뒤 이름(메뉴 탭과 같은 것 — 화면 안에 탭을 또 두지 않음, 2차 진단 3장) */
+  CT.view = (def, L) => { const h = (location.hash || '').slice(1); return L && !L.includes(h) ? def : h || def; };
+  CT.onView = (fn) => addEventListener('hashchange', fn);
+  /* 이슈 id·상태(06 이슈·조정과 공유): 키 'ord|cause|pl|grp' · 'mat|소재키' · 'exc|문구', 상태 이벤트 {t:'issue', id, st} */
+  CT.issueId = (s) => { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return 'I-' + (h >>> 0).toString(36).toUpperCase().slice(0, 6); };
+  CT.issueState = (evs) => { const m = {}; for (const e of evs || []) if (e && e.t === 'issue' && e.id && e.st) m[e.id] = e.st; return m; };
+  CT.fulBadge = (f) => `<span class="ct-f ${{ '출하 완료': 'ok', '부분 출하': 'warn', '출하 확인 불가': 'na', '생산 중': 'mid', '생산 전': 'pre' }[f] || 'na'}">${esc(f)}</span>`;
+  /* 공유 저장(결정 기록과 같은 저장소 — 암호화한 이벤트 추가만): 이슈 상태·조치 이력 */
+  const API = 'https://gatcqxrzaonjsixajrwd.supabase.co/rest/v1/cgl_decisions', KEY = 'sb_publishable_BlfAhxz_v3yg6iJw_nbRaA_YMFAOS7K';
+  const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+  const PW = () => { try { return localStorage.getItem(PW_KEY); } catch (e) { return null; } };
+  CT.me = () => { try { return localStorage.getItem('cgl-me') || ''; } catch (e) { return ''; } };
+  CT.store = {
+    async events() {
+      const r = await fetch(API + '?select=id,payload&order=id.asc&limit=5000', { headers: H });
+      if (!r.ok) throw new Error('공유 저장소 읽기 실패 ' + r.status);
+      const out = [], pw = PW();
+      for (const x of await r.json()) { try { out.push(await GP.decryptJSON(JSON.parse(x.payload), pw)); } catch (e) { /* 다른 암호 */ } }
+      return out;
+    },
+    async push(ev) {
+      const env = await GP.encryptJSON(Object.assign({ at: new Date().toISOString(), by: CT.me() || '이름 없음' }, ev), PW(), 'decision');
+      const r = await fetch(API, { method: 'POST', headers: H, body: JSON.stringify({ payload: JSON.stringify(env) }) });
+      if (!r.ok) throw new Error('저장 실패 ' + r.status);
+    },
   };
   /* 주문 상세(패널 안) — 모든 화면이 같은 모양 */
   CT.orderDetail = (o) => {
     const kv = (k, v) => (v == null || v === '' ? '' : `<div class="ct-kv"><span>${esc(k)}</span><b>${v}</b></div>`);
     const st = { done: '완료', cur: '진행', todo: '대기', na: '해당 없음' };
-    return `<div class="ct-pd-h">${CT.badge(o.risk)} ${o.cause ? `<span class="ct-cause">${esc(CT.CAUSE[o.cause])}</span>` : ''}</div>`
+    return `<div class="ct-pd-h">${CT.badge(o.risk)} ${CT.fulBadge(o.ful)} ${o.cause ? `<span class="ct-cause">${esc(o.dataWhy || CT.CAUSE[o.cause])}</span>` : ''}</div>`
       + kv('판매그룹', esc(o.grp) + (o.grpEst ? ' <small>(추정)</small>' : '')) + kv('공정·라인', `${o.pl === 'G' ? '도금' : '컬러'} ${esc(o.line || '')}`) + kv('품목', esc(o.item)) + kv('두께×폭', esc(o.size))
       + kv('고객사', esc(o.cus || '')) + kv('담당', esc(o.man || '')) + kv('수주량', CT.n1(o.ordT) + 't') + kv('생산', CT.n1(o.prodT) + 't') + kv('잔량', CT.n1(o.remT) + 't')
-      + kv('납기', CT.md(o.due)) + kv(o.pl === 'G' ? '출항·입항' : '', o.ship ? CT.md(o.ship) : '') + kv('생산 필요일', CT.md(o.needProd)) + kv('마지막 조정일', o.last ? `${CT.md(o.last)} ${CT.leftTxt(o)}` : '') + kv('담당 부서', esc(o.dept || ''))
-      + `<h4>주문 추적</h4><ol class="ct-tl">${o.steps.map((s) => `<li class="${s.st}"><div class="t"><b>${esc(s.k)}</b><span>${st[s.st]}</span></div><div class="d">${s.d ? `실제·예정 ${CT.md(s.d)}` : ''}${s.plan ? ` · 필요 ${CT.md(s.plan)}` : ''}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</li>`).join('')}</ol>`;
+      + kv('미출하', o.unshipT == null ? '확인 불가' : CT.n1(o.unshipT) + 't') + kv('예상 완료', o.etaDone ? `${CT.md(o.etaDone)} <small>${esc(o.etaSrc || '')}</small>` : '') + kv('납기', CT.md(o.due)) + kv(o.pl === 'G' ? '출항·입항' : '', o.ship ? CT.md(o.ship) : '') + kv('생산 필요일', CT.md(o.needProd)) + kv('마지막 조정일', o.last ? `${CT.md(o.last)} ${CT.leftTxt(o)}` : '') + kv('담당 부서', esc(o.dept || ''))
+      + `<h4>주문 추적</h4><ol class="ct-tl">${o.steps.map((s) => `<li class="${s.st}"><div class="t"><b>${esc(s.k)}</b><span>${s.st === 'na' && /출하/.test(s.k) ? '확인 불가' : st[s.st]}</span></div><div class="d">${s.d ? `실제·예정 ${CT.md(s.d)}` : ''}${s.plan ? ` · 필요 ${CT.md(s.plan)}` : ''}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</li>`).join('')}</ol>`;
   };
 })();
