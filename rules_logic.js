@@ -188,10 +188,10 @@
     if (!ks.length) return `<p class="muted">${md(d)} ${line} 생산 품명은 자가재(도금 소재)를 쓰지 않습니다 — 구매 소재(수입 FH·서림 GI 등)만.</p>`;
     const nd = addD(d, -8), y = +nd.slice(0, 4), m = +nd.slice(5, 7), dd = +nd.slice(8, 10), last = new Date(Date.UTC(y, m, 0)).getUTCDate();
     const end = `${nd.slice(0, 8)}${String(dd <= 10 ? 10 : dd <= 20 ? 20 : last).padStart(2, '0')}`;
-    const R = CTX.D.LP || {}, made = (R.rows || []).filter((r) => r[3] === '자가재' && r[5] === end);
+    const R = CTX.D.LP || {}, made = (R.rows || []).filter((r) => r[3] === '자가재' && r[5] >= addD(nd, -5) && r[5] <= end);   // 주문 기준 재계획(10/30~): 자가재 마감 = 컬러 주문 필요일 — 필요일 앞뒤(반순 끝까지)
     return `<ol class="rl-why"><li>${line} ${md(d)} 생산 중 자가재(도금 소재) 필요: ${ks.map((k) => `<b>${esc(k)} ${n0(need[k])}t</b>`).join(' · ')} (품명별 소재 비중 × 생산 톤)</li>`
       + `<li>필요일 = ${md(d)} − 8일 = <b>${md(nd)}</b> → 반순 끝 <b>${md(end)}</b> 이 도금 쪽 마감</li>`
-      + `<li>도금 재계획에서 마감 ${md(end)} 자가재를 만드는 날: ${made.length ? ks.map((k) => { const mk = made.filter((r) => r[2] === k || (k === 'AL' && /^AL/.test(r[2]))); return `${esc(k)} — ${mk.length ? mk.slice(0, 6).map((r) => `${esc(r[1])} ${md(r[0])} ${n0(r[4])}t`).join(' · ') : '그 반순 배정 없음(재고·앞 반순 생산분으로 충당)'}`; }).join(' / ') : '그 반순 자가재 배정 없음 — 재고·앞 반순 생산분으로 충당'}</li></ol>`;
+      + `<li>도금 재계획에서 마감 ${md(addD(nd, -5))}~${md(end)} 자가재를 만드는 날: ${made.length ? ks.map((k) => { const mk = made.filter((r) => r[2] === k || (k === 'AL' && /^AL/.test(r[2]))); return `${esc(k)} — ${mk.length ? mk.slice(0, 6).map((r) => `${esc(r[1])} ${md(r[0])} ${n0(r[4])}t`).join(' · ') : '그 반순 배정 없음(재고·앞 반순 생산분으로 충당)'}`; }).join(' / ') : '그 반순 자가재 배정 없음 — 재고·앞 반순 생산분으로 충당'}</li></ol>`;
   }
   function matWhy(key) {
     const M = (((CTX.D.MO || {}).groups || {}).mats || []).find((m) => m.key === key);
