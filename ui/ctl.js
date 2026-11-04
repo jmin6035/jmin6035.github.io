@@ -16,7 +16,7 @@
     const SR = O.stockRoll || {}, wi = (SR.weeks || []).findIndex((w) => w >= (SR.asOf || '')) , cur = (k) => { const a = (SR.v || {})[k] || []; for (let i = Math.max(0, wi); i >= 0; i--) if (a[i] != null) return a[i]; return null; };
     const SB = ((O.plating || {}).now || {}).shortBy || [];
     const sig = (tone, big, sub, href) => `<td class="ct ${tone}"><a href="${href}"><b>${big}</b>${sub ? `<small>${sub}</small>` : ''}</a></td>`;
-    const rank = { bad: 0, warn: 1, ok: 2, na: 3 }, worst = [];
+    const rank = { bad: 0, warn: 1, ok: 2, na: 3 }, worst = [], vals = [];
     const row = (g) => {
       const P = g.prod || {}, fin = (P.actual || 0) + (P.after || 0), pp = P.month > 0 ? fin / P.month : null;
       const prod = pp == null ? ['na', '–', ''] : [pp < 0.95 ? 'bad' : pp < 1 ? 'warn' : 'ok', `${Math.round(pp * 100)}%`, `월말 ${n0(fin)} / ${n0(P.month)}`];
@@ -29,14 +29,14 @@
       const mat = !mw ? ['na', '–', ''] : [{ late: 'bad', soon: 'warn', plan: 'ok', ok: 'ok' }[mw.st], { late: '마감 지남', soon: '2주 안 발주', plan: '발주 예정', ok: '충당' }[mw.st], mw.act ? `${esc(mw.act.name)} ${md(mw.act.deadline)}까지` : ''];
       const sh = SB.filter((x) => (SBN[g.key] || []).some((n) => x.startsWith(n + ' '))).map((x) => +(x.match(/([\d,]+)t$/) || [0, '0'])[1].replace(/,/g, ''));
       const due = g.pl !== 'G' ? ['na', '–', ''] : sh.length ? ['bad', `결품 ${n0(sh.reduce((a, b) => a + b, 0))}t`, `${sh.length}건`] : ['ok', '결품 0', ''];
-      const all = [prod, ship, stock, mat, due]; worst.push(...all.map((x) => x[0]));
+      const all = [prod, ship, stock, mat, due]; worst.push(...all.map((x) => x[0])); vals.push(...all.map((x) => [x[1], x[2]]));
       const w = all.reduce((a, x) => (rank[x[0]] < rank[a] ? x[0] : a), 'na');
       return `<tr><td class="cg"><span class="cdot ${w}"></span><b>${esc(g.name.replace(/\(.*\)/, ''))}</b></td>`
         + sig(prod[0], prod[1], prod[2], 'supply.html') + sig(ship[0], ship[1], ship[2], 'supply.html') + sig(stock[0], stock[1], stock[2], 'integrated.html')
         + sig(mat[0], mat[1], mat[2], 'matcal.html') + sig(due[0], due[1], due[2], 'cg_order.html') + '</tr>';
     };
     const sec = (pl, lab) => { const gs = G.filter((g) => g.pl === pl); return gs.length ? `<tr class="csec"><td colspan="6">${lab}</td></tr>` + gs.map(row).join('') : ''; };
-    if (O.__rowsOnly) return G.map((g) => { worst.length = 0; row(g); return { key: g.key, pl: g.pl, name: g.name.replace(/\(.*\)/, ''), w: worst.reduce((a, x) => (rank[x] < rank[a] ? x : a), 'na'), cells: worst.slice() }; });
+    if (O.__rowsOnly) return G.map((g) => { worst.length = 0; vals.length = 0; row(g); return { key: g.key, pl: g.pl, name: g.name.replace(/\(.*\)/, ''), w: worst.reduce((a, x) => (rank[x] < rank[a] ? x : a), 'na'), cells: worst.slice(), vals: vals.slice() }; });
     const body = sec('G', '도금') + sec('C', '컬러');
     const c = (t) => worst.filter((x) => x === t).length;
     return `<h2>관제판 <small>실적 ~${md(O.asOf)} · 판매그룹 × 상태 · 칸을 누르면 해당 화면</small></h2>
@@ -94,8 +94,10 @@
   UI.ctl = (O, mo) => { MO = mo || null; return rowsOf(O); };
   UI.ctlRows = (O, mo) => { MO = mo || null; return rowsOf(Object.assign({}, O, { __rowsOnly: true })); };
   const COL = ['생산', '출하', '재고', '소재', '납기'];
-  UI.ctlStrip = (O, mo) => {
+  UI.ctlStrip = (O, mo) => {   // 11/5 사용자 '진행 단계별로 값이 안 나온다' → 색 막대 대신 단계마다 값(생산·출하·재고·소재·납기)
     const R = UI.ctlRows(O, mo); if (!R || !R.length) return '';
-    return `<a class="cs-home" href="board.html" title="판매그룹 관제판">관제</a>` + R.map((r) => `<a class="cs-g" href="board.html" title="${esc(r.name)}: ${r.cells.map((c, i) => COL[i] + ' ' + ({ bad: '조치', warn: '주의', ok: '정상', na: '–' }[c])).join(' · ')}"><span class="cdot ${r.w}"></span>${esc(r.name)}<span class="cs-c">${r.cells.map((c) => `<i class="${c}"></i>`).join('')}</span></a>`).join('');
+    const seg = (r, i) => (r.cells[i] === 'na' && (r.vals[i] || [])[0] === '–') ? '' : `<span class="cs-v ${r.cells[i]}" title="${esc(COL[i] + ' ' + ((r.vals[i] || [])[1] || ''))}"><em>${COL[i]}</em>${esc((r.vals[i] || [])[0] || '–')}</span>`;
+    return `<a class="cs-home" href="board.html" title="판매그룹 관제판">관제</a>` + R.map((r) => `<a class="cs-g" href="board.html"><span class="cdot ${r.w}"></span><b>${esc(r.name)}</b>${r.cells.map((c, i) => seg(r, i)).join('')}</a>`).join('');
   };
+
 })();

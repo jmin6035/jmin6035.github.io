@@ -1095,3 +1095,15 @@ html .shell-nav .nv-sub a[aria-current="page"]::before { left: -11px; top: 6px; 
 .h1row .hd-scope button:hover { color: var(--ink); }
 .h1row .hd-scope button[aria-pressed="true"] { background: var(--brand-2, #1f5fae); color: #fff; box-shadow: none; }
 @media (max-width: 520px) { .h1row { flex-wrap: wrap; } .h1row .hd-scope { margin-left: 0; } }
+
+/* 11/5 사용자 '열 맞춰라 · 과도하게 칸이 늘려져 있다': 긴 글 칸(td.w)이 없는 숫자 표는 내용 폭만큼만(카드 폭까지 늘이지 않음) */
+html body table.ct-t:not(:has(td.w)) { width: auto; max-width: 100%; }
+html body table.ct-t:not(:has(td.w)) th, html body table.ct-t:not(:has(td.w)) td { padding-left: 14px; padding-right: 14px; }
+html body table.ct-t:not(:has(td.w)) th:first-child, html body table.ct-t:not(:has(td.w)) td:first-child { padding-left: 10px; }
+
+/* 관제 띠 단계별 값(11/5) */
+.ctl-strip a.cs-g { gap: 6px; padding: 4px 10px 4px 8px; }
+.ctl-strip .cs-v { display: inline-flex; align-items: baseline; gap: 3px; padding: 1px 7px; border-radius: 6px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; background: rgba(0,0,0,.035); }
+.ctl-strip .cs-v em { font-style: normal; font-weight: 500; color: var(--ink-3); font-size: 12.5px; }
+.ctl-strip .cs-v.bad { color: #c92a2a; background: rgba(224,49,49,.09); } .ctl-strip .cs-v.warn { color: #b35c00; background: rgba(240,140,0,.10); } .ctl-strip .cs-v.ok { color: #2b8a3e; background: rgba(47,158,68,.08); }
+@media (max-width: 640px) { .ctl-strip a.cs-g { flex-wrap: wrap; white-space: normal; max-width: 100%; } }

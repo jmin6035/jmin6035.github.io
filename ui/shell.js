@@ -319,10 +319,28 @@
       const b = document.createElement('div'); b.id = 'ui-ctl'; b.className = 'wrap ctl-strip';
       const draw = () => { const html = UI.ctlStrip(O, MO); b.innerHTML = html || ''; b.hidden = !html; };   // 전체·도금·컬러 바꾸면 그 공정 판매그룹만 다시(11/5 사용자 '도금 선택해도 컬러가 나온다')
       draw(); (document.getElementById('ui-stale') || h).after(b);
+      const mn = document.querySelector('main'); if (mn) { const cs = getComputedStyle(mn); b.style.maxWidth = cs.maxWidth; b.style.paddingLeft = cs.paddingLeft; b.style.paddingRight = cs.paddingRight; }   // 아래 기준일 줄과 왼쪽 맞춤
       UI.onScope(draw);
     } catch (e) { /* 암호가 다르면 띠 생략 */ }
   }
-  const boot = () => { build(); fresh(); watchExport(); ctlStrip(); };
+  /* 표 정돈(11/5 사용자 '열 맞춰라 · 과도하게 칸이 늘려져 있다') — 모든 화면 공통:
+     ① 머리글 칸 정렬 = 그 열 본문 칸 대부분의 정렬 ② 내용 폭이 자리의 62%도 안 되는 표는 내용 폭만큼만(카드 끝까지 늘이지 않음) */
+  function tidyTables() {
+    document.querySelectorAll('main table').forEach((t) => {
+      if (!t.offsetParent || !t.tBodies[0] || !t.tBodies[0].rows.length || t.dataset.tidy === String(t.tBodies[0].rows.length)) return;
+      t.dataset.tidy = String(t.tBodies[0].rows.length);
+      const cnt = [];
+      [...t.tBodies[0].rows].slice(0, 40).forEach((r) => { let ci = 0; [...r.cells].forEach((c) => { if (c.colSpan === 1) { const a = getComputedStyle(c).textAlign.replace('start', 'left'); (cnt[ci] = cnt[ci] || {})[a] = ((cnt[ci] || {})[a] || 0) + 1; } ci += c.colSpan; }); });
+      if (t.tHead) [...t.tHead.rows].forEach((r) => { if (r !== t.tHead.rows[t.tHead.rows.length - 1]) return; let ci = 0; [...r.cells].forEach((c) => { if (c.colSpan === 1 && cnt[ci]) { const m = Object.entries(cnt[ci]).sort((a, b) => b[1] - a[1])[0][0]; if (getComputedStyle(c).textAlign.replace('start', 'left') !== m) c.style.setProperty('text-align', m, 'important'); } ci += c.colSpan; }); });
+      const box = t.parentElement; if (!box || t.closest('.ch, .ln-c')) return;
+      const full = box.clientWidth; if (full < 500) return;
+      const old = t.style.width; t.style.setProperty('width', 'auto', 'important');
+      const nat = t.getBoundingClientRect().width;
+      if (nat > full * 0.62) { if (old) t.style.width = old; else t.style.removeProperty('width'); }
+    });
+  }
+  let tidyT = 0; const tidySoon = () => { clearTimeout(tidyT); tidyT = setTimeout(tidyTables, 120); };
+  const boot = () => { build(); fresh(); watchExport(); ctlStrip(); tidySoon(); try { new MutationObserver(tidySoon).observe(document.querySelector('main') || document.body, { childList: true, subtree: true }); } catch (e) { /* 무시 */ } addEventListener('resize', () => { document.querySelectorAll('main table[data-tidy]').forEach((t) => delete t.dataset.tidy); tidySoon(); }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 
   /* 표 줄 번호(--ri) — 줄 나타나기 애니메이션 순서. 새로 그려지는 표도 자동 */
