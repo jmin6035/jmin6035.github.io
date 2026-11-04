@@ -75,15 +75,20 @@
     const mb = $('co-more'); if (mb) mb.onclick = () => { F.lim += 200; drawStatus(); };
   }
   function viewStatus() {
-    const asOf = M.asOf, wk = CT.addD(asOf, 7), act = L.filter((o) => !o.closed);
+    const asOf = M.asOf, w0 = CT.wed(asOf), w1 = CT.addD(w0, 6), act = L.filter((o) => !o.closed);   // 금주 = 수요일 시작 7일(11/5 사용자)
     const risk = act.filter((o) => o.risk === '위험');
-    const wP = act.filter((o) => leq(o.needProd, wk) && (o.ful === '생산 전' || o.ful === '생산 중'));
-    const wS = act.filter((o) => o.pl === 'G' && leq(o.due, wk));
-    const wC = act.filter((o) => o.pl === 'C' && leq(o.due, wk));
+    const inW = (d) => d && d >= w0 && d <= w1;
+    const wP = act.filter((o) => inW(o.needProd) && (o.ful === '생산 전' || o.ful === '생산 중') && o.risk !== '판정 불가');
+    const shipD = (o) => o.ship || o.due;                                        // 출하 일정 = 출항(수출) · 납기(내수)
+    const wAll = act.filter((o) => o.pl === 'G' && inW(shipD(o)));
+    const wS = wAll.filter((o) => o.ful !== '출하 확인 불가' && o.risk !== '판정 불가');
+    const wNo = wAll.filter((o) => o.ful === '출하 확인 불가');
+    const wC = act.filter((o) => o.pl === 'C' && inW(o.due));
+    const wl = `${md(w0)}(수)~${md(w1)}(화)`;
     const k = CT.kpis([
       { label: '수주잔량', v: n0(sum(act, (o) => o.remT)), unit: 't', sub: `${n0(act.length)}건 · 출하 완료 제외`, tone: 'info' },
-      { label: '금주 생산완료 필요', v: n0(sum(wP, (o) => o.remT)), unit: 't', sub: `${n0(wP.length)}건 · ~${md(wk)} · 지난 것 포함`, tone: wP.length ? 'warn' : 'ok' },
-      { label: '금주 출하 필요(도금)', v: n0(sum(wS, (o) => o.unshipT)), unit: 't', sub: `${n0(wS.length)}건 · 출하 실적 없음 ${n0(wS.filter((o) => o.ful === '출하 확인 불가').length)}건 포함${wC.length ? `<br>컬러 ${n0(wC.length)}건 출하 확인 불가` : ''}`, tone: 'info' },
+      { label: '금주 생산완료 필요', v: n0(sum(wP, (o) => o.remT)), unit: 't', sub: `${n0(wP.length)}건 · ${wl} 생산 필요일`, tone: wP.length ? 'warn' : 'ok' },
+      { label: '금주 출하 필요(도금)', v: n0(sum(wS, (o) => o.unshipT)), unit: 't', sub: `${n0(wS.length)}건 · ${wl} 출항·납기${wNo.length ? `<br>출하 실적 없음 ${n0(wNo.length)}건 별도(생산 완료)` : ''}${wC.length ? `<br>컬러 ${n0(wC.length)}건 출하 실적 없음` : ''}`, tone: 'info' },
       { label: '납기 지연 예상', v: n0(risk.length), unit: '건', sub: `${n0(sum(risk, imp))}t`, tone: risk.length ? 'bad' : 'ok', href: '#risk' },
     ]);
     const grps = [...new Set(L.map((o) => o.grp))].sort();

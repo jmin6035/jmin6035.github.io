@@ -32,10 +32,14 @@
     const cA = new Map(), eA = new Map(); sh.forEach((m) => { m.conf.forEach((o) => cA.set(o.id, o)); m.est.forEach((o) => eA.set(o.id, o)); });
     cA.forEach((o, k) => eA.delete(k));
     const tT = (L) => n0(L.reduce((a, m) => a + m.short, 0));
+    // 개수 대신 어떤 소재가 어느 판매그룹에 걸리는지(11/5 사용자 '3개 소재 말고 어떤 그룹인지') — 판매그룹은 사용량 큰 순 1개(+n)
+    const gn = (m) => { const g = m.gs.slice().sort((a, b) => b.use - a.use).map((x) => x.group); return g.length ? `${g[0]}${g.length > 1 ? ` 외 ${g.length - 1}` : ''}` : (m.plant === 'G' ? '도금' : '컬러'); };
+    const names = (L) => (L.length ? L.map((m) => `${esc(m.name)}<small>(${esc(gn(m))})</small>`).join(' · ') : '없음');
+    const late = sh.filter((m) => m.deadline && m.deadline < today);
     const kp = CT.kpis([
-      { label: '부족 확정 소재', v: sure.length, unit: '개', tone: sure.length ? 'bad' : 'ok', sub: `${tT(sure)}t · 리드타임 안 부족` },
-      { label: '부족 예상 소재', v: exp.length, unit: '개', tone: exp.length ? 'warn' : 'ok', sub: `${tT(exp)}t · ${md(GV.from)}~${md(GV.to)}` },
-      { label: '발주 마감 지남', v: sh.filter((m) => m.deadline && m.deadline < today).length, unit: '개', tone: sh.some((m) => m.deadline && m.deadline < today) ? 'bad' : 'ok' },
+      { label: '부족 확정', v: tT(sure), unit: 't', tone: sure.length ? 'bad' : 'ok', sub: `${names(sure)} · 리드타임 안 부족` },
+      { label: '부족 예상', v: tT(exp), unit: 't', tone: exp.length ? 'warn' : 'ok', sub: `${names(exp)} · ${md(GV.from)}~${md(GV.to)}` },
+      { label: '발주 마감 지남', v: tT(late), unit: 't', tone: late.length ? 'bad' : 'ok', sub: names(late) },
       { label: '해당 주문 확인 · 추정', v: `${n0(cA.size)} · ${n0(eA.size)}`, unit: '건', tone: cA.size ? 'bad' : eA.size ? 'warn' : 'ok', sub: `추정은 판매그룹·시점 기준` },
     ]);
     const L = (showAll ? mats : sh).slice().sort((a, b) => (b.sure - a.sure) || ((a.deadline || '9') < (b.deadline || '9') ? -1 : 1));

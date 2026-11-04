@@ -12,6 +12,8 @@
   CT.md = (s) => (s ? `${+String(s).slice(5, 7)}/${+String(s).slice(8, 10)}` : '');
   const ymd8 = (s) => (s && /^\d{8}$/.test(String(s)) ? `${String(s).slice(0, 4)}-${String(s).slice(4, 6)}-${String(s).slice(6, 8)}` : s || null);
   const addD = CT.addD = (s, n) => { if (!s) return null; const d = new Date(String(s).slice(0, 10) + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+  /* 주 = 수요일 시작(11/5 사용자 '7일의 기준은 매주 수요일'). CT.wed(d) = d 가 속한 주의 수요일 */
+  CT.wed = (s) => { const d = new Date(String(s).slice(0, 10) + 'T00:00:00Z'); return CT.addD(s, -((d.getUTCDay() + 4) % 7)); };
   CT.diff = (a, b) => (a && b ? Math.round((Date.parse(String(a).slice(0, 10)) - Date.parse(String(b).slice(0, 10))) / 864e5) : null);
   CT.today = () => new Date(Date.now() + 9 * 3600e3 - 7 * 3600e3).toISOString().slice(0, 10);   // 생산일(07시 기준, 한국 시각)
 
@@ -41,7 +43,7 @@
   /* ---------- 주문 모델 ---------- */
   const GN = { 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차강판', 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발' };
   CT.grpName = (g) => GN[g] || g || '판매그룹 모름';
-  CT.CAUSE = { mat: '소재 입고 늦음', plate: '자가재(도금) 늦음', cap: '생산 편성 늦음', ship: '출하 늦음', data: '자료 확인' };
+  CT.CAUSE = { mat: '소재 입고 지연', plate: '자가재(도금) 지연', cap: '생산 지연', ship: '출하 지연', data: '자료 확인' };
   /* 화면 표시 말(11/4 사용자 '원래 우리가 쓰는 말투로 · 위험이 뭐가 위험하다는 거냐') — 내부 값(o.risk·o.ful)은 그대로, 보이는 글자만 바꿈 */
   CT.RL = { 위험: '납기 지연 예상', 주의: '점검 필요', '판정 불가': '자료 확인 필요', 정상: '정상', 완료: '완료' };
   CT.FL = { '출하 확인 불가': '출하 실적 없음' };
@@ -160,7 +162,7 @@
     if (o.cause === 'data') return o.dataWhy || '자료 확인';
     if (o.cause === 'mat') return o.pl === 'G' ? `입고 필요 ${d(o.needIn || o.last) || '-'} · ${o.matSt}` : `소재 ${o.matSt} · 납기 ${d(o.due)}`;
     if (o.cause === 'cap') return `편성 ${d(o.sche) || '-'} > 생산 필요 ${d(o.needProd) || '-'}`;
-    if (o.cause === 'plate') return `자가재 ${o.self || ''} 진행 늦음`;
+    if (o.cause === 'plate') return `자가재 ${o.self || ''} 진행 지연`;
     if (o.cause === 'ship') return `납기 ${d(o.due)} 지남 · 미출하 ${CT.n1(o.unshipT || 0)}t`;
     return '';
   };

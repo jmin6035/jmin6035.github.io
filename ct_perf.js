@@ -5,12 +5,16 @@
   const { esc, n0, n1, md } = CT;
   const VIEWS = ['ops', 'cause'];
   let bound = false;
-  CT.boot(['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'portal.enc.json', 'plating_actual.enc.json', 'color_actual.enc.json', 'mat_order.enc.json', 'latest.plan.enc.json'], draw);
+  CT.boot(['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'portal.enc.json', 'plating_actual.enc.json', 'color_actual.enc.json', 'mat_order.enc.json', 'latest.plan.enc.json', 'integrated.enc.json'], draw);
   const pc = (a, b) => (b ? Math.round(a / b * 100) : null);
   const tone = (p, g = 95, w = 85) => (p == null ? '' : p >= g ? 'pos' : p >= w ? 'wrn' : 'neg');
   const card = (title, sub, body) => `<section class="card pf-c"><h2>${esc(title)} <small>${esc(sub)}</small></h2>${body}</section>`;
   const tbl = (head, rows) => `<div class="ct-wrap"><table class="ct-t"><thead><tr>${head.map((h, i) => `<th${i ? ' class="r"' : ''}>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
   const big = (p, cls, s) => `<div class="pf-big ${cls}">${p == null ? '-' : p}<span class="u">%</span><span class="pf-s">${s}</span></div>`;
+  const MN = (m) => `${+m.slice(5)}월`;
+  const lastDay = (m) => { const d = new Date(Date.UTC(+m.slice(0, 4), +m.slice(5), 0)); return d.toISOString().slice(0, 10); };
+  // 월 안을 수요일 시작 2주 단위로(11/5 사용자 '월 단위로 끊고 그 안에서 수요일 기준 2주') — 기준 수요일 = 그 달 1일이 속한 주의 수요일
+  const buckets = (m) => { const a = m + '-01', z = lastDay(m), out = []; let s0 = CT.wed(a); while (s0 <= z) { const e0 = CT.addD(s0, 13); out.push([s0 < a ? a : s0, e0 > z ? z : e0]); s0 = CT.addD(s0, 14); } return out; };
   const LV = { ok: ['확인된 원인', 'c1'], rel: ['연관 가능 요인', 'c2'], chk: ['추가 확인 필요', 'c3'] };
 
   function draw(D) {
@@ -24,28 +28,73 @@
     const P = D.portal || {}, cg = D.cg_order_progress || {}, GA = D.plating_actual || {}, CA = D.color_actual || {}, LP = D['latest.plan'];
     const M = CT.orders(D), cards = [], why = [];   // why: [지표, 등급, 문장]
     const mon = String(P.asOf || '').slice(0, 7);
-    // ① 수주 이행
-    const pf = (cg.perf && cg.perf.groups) || {};
-    const pr = Object.entries(pf).filter(([g]) => CT.inScope(/^컬러|^수요/.test(g) ? 'C' : 'G')).sort((a, b) => b[1].t - a[1].t);
-    if (pr.length) {
-      const tot = pr.reduce((a, [, x]) => [a[0] + x.ok, a[1] + x.known], [0, 0]), p = pc(tot[0], tot[1]);
-      cards.push(card('납기 내 생산', `최근 2주 생산 · 생산 필요일 안 완료 · ${md(cg.perf.from)}~`, big(p, tone(p), `${n0(tot[0])} / ${n0(tot[1])}t`)
-        + tbl(['판매그룹', '생산(t)', '기한 안(t)', '준수율'], pr.map(([g, x]) => { const q = pc(x.ok, x.known); return `<tr><td class="id">${esc(CT.grpName(g))}</td><td class="r">${n0(x.t)}</td><td class="r">${n0(x.ok)}</td><td class="r"><b class="${tone(q)}">${q}%</b></td></tr>`; }))));
-      const worst = pr.filter(([, x]) => x.known >= 50).sort((a, b) => a[1].ok / a[1].known - b[1].ok / b[1].known)[0];
-      if (worst) {
-        const cz = M.all.filter((o) => o.grp === CT.grpName(worst[0]) && o.risk === '위험'), cc = {};
+    // ① 납기 내 생산: 월별 · 그 안 수요일 시작 2주 — 주문 생산 완료일(마지막 생산일) 기준, 생산 필요일 안이면 기한 안
+    const months = [...new Set([String(P.asOf || M.asOf).slice(0, 7), CT.addD(String(P.asOf || M.asOf).slice(0, 7) + '-01', -1).slice(0, 7)])].sort();
+    const done = M.G.filter((o) => CT.inScope('G') && o.src.prodLast && o.prodT > 0.5 && o.ful !== '생산 전' && o.ful !== '생산 중' && o.needProd);
+    if (done.length) {
+      const sumB = (L) => L.reduce((a, o) => [a[0] + o.prodT, a[1] + (o.src.prodLast <= o.needProd ? o.prodT : 0)], [0, 0]);
+      const rowsB = [], gAll = {};
+      for (const m of months) {
+        const Lm = done.filter((o) => String(o.src.prodLast).slice(0, 7) === m);
+        if (!Lm.length) continue;
+        const [t, ok] = sumB(Lm), q = pc(ok, t);
+        rowsB.push(`<tr class="pf-m"><td class="id"><b>${MN(m)}</b></td><td class="r"><b>${n0(t)}</b></td><td class="r"><b>${n0(ok)}</b></td><td class="r"><b class="${tone(q)}">${q}%</b></td></tr>`);
+        for (const [a, z] of buckets(m)) {
+          const Lb = Lm.filter((o) => o.src.prodLast >= a && o.src.prodLast <= z);
+          if (!Lb.length) continue;
+          const [tb, ob] = sumB(Lb), qb = pc(ob, tb);
+          rowsB.push(`<tr><td class="id pf-sub">${md(a)}~${md(z)}</td><td class="r">${n0(tb)}</td><td class="r">${n0(ob)}</td><td class="r"><b class="${tone(qb)}">${qb}%</b></td></tr>`);
+        }
+        Lm.forEach((o) => { const g = gAll[`${m}|${o.grp}`] = gAll[`${m}|${o.grp}`] || [0, 0]; g[0] += o.prodT; if (o.src.prodLast <= o.needProd) g[1] += o.prodT; });
+      }
+      const cm = months[months.length - 1], cur = sumB(done.filter((o) => String(o.src.prodLast).slice(0, 7) === cm)), pcur = pc(cur[1], cur[0]);
+      cards.push(card('납기 내 생산', `도금 주문 · 생산 완료일이 생산 필요일 안 · 월별, 수요일 시작 2주`, big(pcur, tone(pcur), `${MN(cm)} ${n0(cur[1])} / ${n0(cur[0])}t`)
+        + tbl(['기간', '생산 완료(t)', '기한 안(t)', '준수율'], rowsB)
+        + `<p class="pf-n">컬러 주문은 주문별 생산 완료일 자료가 없어 제외(컬러 주문 진도에 완료일 칸 없음). 도금 주문 진도에 든 주문(납기 −30~+90일)만</p>`));
+      const g1 = Object.entries(gAll).filter(([k]) => k.startsWith(cm) && gAll[k][0] >= 50).sort((a, b) => a[1][1] / a[1][0] - b[1][1] / b[1][0])[0];
+      if (g1) {
+        const gn = g1[0].split('|')[1], cz = M.all.filter((o) => o.grp === gn && o.risk === '위험'), cc = {};
         cz.forEach((o) => { cc[o.cause] = (cc[o.cause] || 0) + (o.remT || 0); });
         const top = Object.entries(cc).sort((a, b) => b[1] - a[1])[0];
-        why.push(['납기 내 생산', `${CT.grpName(worst[0])} ${pc(worst[1].ok, worst[1].known)}% 가장 낮음`, top ? 'rel' : 'chk',
-          top ? `지금 같은 그룹 지연 예상 주문의 주원인 ${CT.CAUSE[top[0]]} ${n0(top[1])}t — 지금 상태 기준이라 지난 2주 미준수의 직접 원인은 아님` : '같은 그룹 지연 예상 주문 없음 — 미준수 주문별 지연 사유 자료 없음']);
+        why.push(['납기 내 생산', `${MN(cm)} ${gn} ${pc(g1[1][1], g1[1][0])}% 가장 낮음`, top ? 'rel' : 'chk',
+          top ? `지금 같은 그룹 지연 예상 주문의 주원인 ${CT.CAUSE[top[0]]} ${n0(top[1])}t — 지금 상태 기준이라 지난 미준수의 직접 원인은 아님` : '같은 그룹 지연 예상 주문 없음 — 미준수 주문별 지연 사유 자료 없음']);
       }
     }
-    // ② 생산계획(도금: 그날 아침 계획 대비)
+    // ② 생산계획 정확도: 월별(11/5 사용자 '누계 말고 10월·11월') — 지난 달 = 확정 계획 월 생산 vs 실적, 이번 달 = 오늘까지 일정 vs 실적
     const acc = Object.entries(P.acc || {}).filter(([l]) => CT.inScope(/CGL/.test(l) ? 'G' : 'C'));
+    const MP = P.monthPlan || {}, cm2 = String(P.asOf || '').slice(0, 7);
+    const mSum = (m, pl) => Object.entries(MP[m] || {}).filter(([g]) => g[0] === pl).reduce((a, [, x]) => a + (x.prod || 0), 0);
+    const actM = (src, m) => { const r = ((src && src.monthly) || []).find((x) => x.m === m) || {}; return Object.entries(r).filter(([k]) => k !== 'm').reduce((a, [, v]) => a + (+v || 0), 0); };
+    const gl = (P.lines || []).filter((l) => l.pl === 'G'), cgp = (P.groups || []).filter((g) => g.pl === 'C' && g.prod);
+    const accRows = [];
+    for (const m of months) {
+      for (const pl of ['G', 'C']) {
+        if (!CT.inScope(pl)) continue;
+        let plan, act, how;
+        if (m < cm2) { plan = mSum(m, pl); act = actM(pl === 'G' ? GA : CA, m); how = '확정 계획 월 생산'; }
+        else if (pl === 'G') { plan = gl.reduce((a, l) => a + (l.sched || 0), 0); act = gl.reduce((a, l) => a + (l.actual || 0), 0); how = `판생속보 일정(~${md(P.asOf)})`; }
+        else { plan = cgp.reduce((a, g) => a + Math.max(0, (g.prod.month || 0) - (g.prod.after || 0)), 0); act = cgp.reduce((a, g) => a + (g.prod.actual || 0), 0); how = `그룹 계획(~${md(cgp[0] && cgp[0].prod.asOf || P.asOf)})`; }
+        if (!plan && !act) continue;
+        const q = pc(act, plan);
+        accRows.push(`<tr><td class="id"><b>${MN(m)}</b> ${pl === 'G' ? '도금' : '컬러'}<small>${esc(how)}</small></td><td class="r">${n0(plan)}</td><td class="r"><b>${n0(act)}</b></td><td class="r"><b class="${q == null ? '' : Math.abs(q - 100) <= 5 ? 'pos' : Math.abs(q - 100) <= 15 ? 'wrn' : 'neg'}">${q == null ? '-' : q + '%'}</b></td></tr>`);
+      }
+    }
+    // 그날 아침 계획 대비(도금, 월별) — GA.accHist [날짜, 라인, 계획, 실적]
+    const AH = (GA.accHist || []).filter((a) => CT.inScope('G'));
+    const dayRows = [];
+    for (const m of months) for (const l of ['1CGL', '2CGL']) {
+      const H = AH.filter((a) => a[1] === l && String(a[0]).slice(0, 7) === m);
+      if (!H.length) continue;
+      const pl_ = H.reduce((a, x) => a + x[2], 0), ac = H.reduce((a, x) => a + x[3], 0), bias = pl_ ? (ac - pl_) / pl_ * 100 : 0;
+      const mae = pl_ ? H.reduce((a, x) => a + Math.abs(x[3] - x[2]), 0) / pl_ * 100 : 0, un = H.filter((x) => x[3] < x[2] * 0.95).length;
+      dayRows.push(`<tr><td class="id"><b>${MN(m)}</b> ${l}<small>${md(H[0][0])}~${md(H[H.length - 1][0])} · ${H.length}일</small></td><td class="r">${n0(pl_)}</td><td class="r">${n0(ac)}</td><td class="r"><b class="${Math.abs(bias) <= 5 ? 'pos' : Math.abs(bias) <= 15 ? 'wrn' : 'neg'}">${bias >= 0 ? '+' : ''}${n1(bias)}%</b></td><td class="r">${n1(mae)}%</td><td class="r">${un}일</td></tr>`);
+    }
+    if (accRows.length || dayRows.length) {
+      cards.push(card('생산계획 정확도', '월별 · 계획 대비 실적', tbl(['월 · 공정', '계획(t)', '실적(t)', '달성'], accRows)
+        + (dayRows.length ? `<h3 class="pf-h">그날 아침 계획 대비(도금)</h3>` + tbl(['월 · 라인', '계획(t)', '실적(t)', '차이', '하루 오차', '미달 일수'], dayRows) : '')
+        + (CT.inScope('C') ? '<p class="pf-n">컬러 그날 아침 계획 대비는 자료 없음 — 컬러 계획은 매일 지난 날을 실적으로 덮어 게시해, 그날 아침 계획을 따로 보관한 기록이 없음(도금은 사내 PC가 매일 보관)</p>' : '')));
+    }
     if (acc.length) {
-      const roll = P.roll, p = roll ? pc(roll.actual, roll.plan) : null;
-      cards.push(card('생산계획 정확도', `그날 아침 계획 대비 실적 · 최근 ${acc[0][1].days}일`, (roll ? big(p, tone(p, 98, 90), `도금 10/1~${md(roll.asOf)} 실적 ${n0(roll.actual)} / 계획 ${n0(roll.plan)}t`) : '')
-        + tbl(['라인', '계획(t)', '실적(t)', '차이', '하루 오차', '미달 일수'], acc.map(([l, x]) => `<tr><td class="id">${esc(l)}</td><td class="r">${n0(x.plan)}</td><td class="r">${n0(x.actual)}</td><td class="r"><b class="${Math.abs(x.bias) <= 5 ? 'pos' : Math.abs(x.bias) <= 15 ? 'wrn' : 'neg'}">${x.bias >= 0 ? '+' : ''}${n1(x.bias)}%</b></td><td class="r">${n1(x.mae)}%</td><td class="r">${x.under}일</td></tr>`))));
       // 라인별: 미달이 큰 날에 MES 휴지 기록이 있으면 확인된 원인, 없으면 추가 확인 필요(편차 큰 라인의 휴지를 원인으로 단정하지 않음)
       for (const [l, x] of acc) {
         const H = (GA.accHist || []).filter((a) => a[1] === l && a[3] < a[2] * 0.9);   // 계획의 90% 미만인 날
@@ -58,20 +107,34 @@
     }
     // ③ 생산능력: 가용 능력(캘린더 가동시간 × t/h) vs 계획 부하(최신 계획) vs 실제 생산
     const cal = (LP && LP.result && LP.result.cal) || [], rows = (LP && LP.result && LP.result.rows) || [];
+    const IW = D.integrated || {}, CDN = {};
+    for (const [d, l, , mn] of IW.colorDown || []) CDN[`${d}|${l}`] = (CDN[`${d}|${l}`] || 0) + (+mn || 0);
     const capL = (P.lines || []).filter((l) => CT.inScope(l.pl)).map((l) => {
-      if (l.pl !== 'G') return { l, na: true };
+      if (l.pl !== 'G') {   // 컬러: 능력 = (1,440분 − 계획 휴지) × 계획 평균 t/h, 부하 = 지난 날 실적 + 남은 날 계획 편성
+        const days = []; for (let d = mon + '-01'; d <= lastDay(mon); d = CT.addD(d, 1)) days.push(d);
+        const C = (IW.color || []).filter((c) => c.l === l.line && String(c.d).slice(0, 7) === mon);
+        if (!C.length) return { l, na: true };
+        const h = days.reduce((a, d) => a + Math.max(0, 1440 - Math.min(1440, CDN[`${d}|${l.line}`] || 0)), 0) / 60;
+        const F = C.filter((c) => !c.act), ft = F.reduce((a, c) => a + c.rows.reduce((b, r) => b + (+r[5] || 0), 0), 0), fm = F.reduce((a, c) => a + c.rows.reduce((b, r) => b + (+r[6] || 0), 0), 0);
+        const tph = fm ? ft / fm * 60 : (l.tph || 0);
+        const load = C.reduce((a, c) => a + c.rows.reduce((b, r) => b + (+r[5] || 0), 0), 0);
+        const act = ((CA.monthly || []).find((r) => r.m === mon) || {})[l.line];
+        return { l, h, cap: h * tph, load, act, tph };
+      }
       const h = cal.filter((c) => c.line === l.line && String(c.date).slice(0, 7) === mon).reduce((a, c) => a + c.cap, 0) / 60;
       const load = rows.filter((r) => r[1] === l.line && String(r[0]).slice(0, 7) === mon).reduce((a, r) => a + r[4], 0);
       const act = ((GA.monthly || []).find((r) => r.m === mon) || {})[l.line];
       return { l, h, cap: h * (l.tph || 0), load, act };
     });
     if (capL.length) {
-      const G = capL.filter((x) => !x.na), cap = G.reduce((a, x) => a + x.cap, 0), load = G.reduce((a, x) => a + x.load, 0), p = pc(load, cap);
-      cards.push(card('생산능력', `${+mon.slice(5)}월 · 능력 = 계획 캘린더 가동시간 × 판생 t/h`, (G.length ? big(p, p > 100 ? 'neg' : p >= 90 ? 'wrn' : 'pos', `도금 부하율 · 계획 ${n0(load)} / 능력 ${n0(cap)}t`) : '')
-        + tbl(['라인', '가동시간(h)', '가용 능력(t)', '계획 부하(t)', '부하율', '실제 생산 누계(t)'], capL.filter((x) => !x.na).map((x) => (`<tr><td class="id">${esc(x.l.line)}</td><td class="r">${n0(x.h)}</td><td class="r">${n0(x.cap)}</td><td class="r">${n0(x.load)}</td><td class="r"><b class="${pc(x.load, x.cap) > 100 ? 'neg' : pc(x.load, x.cap) >= 90 ? 'wrn' : 'pos'}">${pc(x.load, x.cap)}%</b></td><td class="r">${x.act == null ? '-' : n0(x.act)}</td></tr>`)).concat(capL.some((x) => x.na) ? [`<tr><td class="id">컬러 ${capL.filter((x) => x.na).length}라인</td><td class="r" colspan="5"><span class="sub">자료 없음 — 컬러 가동 캘린더 없음</span></td></tr>`] : []))));
-      G.filter((x) => x.load > x.cap).forEach((x) => why.push(['생산능력', `${x.l.line} 계획 부하가 능력의 ${pc(x.load, x.cap)}%`, 'chk', `계획 엔진 속도(제품별)와 판생 t/h ${n1(x.l.tph)} 차이 가능 — 같은 속도 기준 확인 필요`]));
+      const G = capL.filter((x) => !x.na), sub = (pl) => G.filter((x) => x.l.pl === pl), ps = (pl) => { const L = sub(pl); return [L.reduce((a, x) => a + x.load, 0), L.reduce((a, x) => a + x.cap, 0)]; };
+      const [lg, cgc] = ps('G'), [lc, ccc] = ps('C'), pg = pc(lg, cgc), pcc = pc(lc, ccc), tn = (p) => (p > 100 ? 'neg' : p >= 90 ? 'wrn' : 'pos');
+      cards.push(card('생산능력', `${+mon.slice(5)}월 · 도금 능력 = 계획 캘린더 가동시간 × 판생 t/h · 컬러 = (1,440분 − 계획 휴지) × 계획 평균 t/h`,
+        `<div class="pf-two">${sub('G').length ? big(pg, tn(pg), `도금 부하율 · ${n0(lg)} / ${n0(cgc)}t`) : ''}${sub('C').length ? big(pcc, tn(pcc), `컬러 부하율 · ${n0(lc)} / ${n0(ccc)}t`) : ''}</div>`
+        + tbl(['라인', '가동시간(h)', '가용 능력(t)', '계획 부하(t)', '부하율', '실적(t)'], capL.filter((x) => !x.na).map((x) => (`<tr><td class="id">${esc(x.l.line)}</td><td class="r">${n0(x.h)}</td><td class="r">${n0(x.cap)}</td><td class="r">${n0(x.load)}</td><td class="r"><b class="${pc(x.load, x.cap) > 100 ? 'neg' : pc(x.load, x.cap) >= 90 ? 'wrn' : 'pos'}">${pc(x.load, x.cap)}%</b></td><td class="r">${x.act == null ? '-' : n0(x.act)}</td></tr>`)).concat(capL.some((x) => x.na) ? [`<tr><td class="id">${capL.filter((x) => x.na).map((x) => x.l.line).join('·')}</td><td class="r" colspan="5"><span class="sub">이번 달 계획 편성 없음</span></td></tr>`] : []))));
+      G.filter((x) => x.l.pl === 'G' && x.load > x.cap).forEach((x) => why.push(['생산능력', `${x.l.line} 계획 부하가 능력의 ${pc(x.load, x.cap)}%`, 'chk', `계획 엔진 속도(제품별)와 판생 t/h ${n1(x.l.tph)} 차이 가능 — 같은 속도 기준 확인 필요`]));
       const cst = CA.stops && CA.stops.w1 && CT.inScope('C') ? Object.entries(CA.stops.w1).map(([l, v]) => [l, Object.entries(v).sort((a, b) => b[1] - a[1])[0]]).sort((a, b) => b[1][1] - a[1][1])[0] : null;
-      if (cst) why.push(['생산능력', `컬러 ${cst[0]} 지난주 휴지 하루 ${n1(cst[1][1])}h`, 'ok', `MES 휴지 기록 상위 ${cst[1][0]} — 능력 비교는 컬러 캘린더가 없어 불가`]);
+      if (cst) why.push(['생산능력', `컬러 ${cst[0]} 지난주 휴지 하루 ${n1(cst[1][1])}h`, 'ok', `MES 휴지 기록 상위 ${cst[1][0]}`]);
     }
     // ④ 주문 소재 지연 비중(도금): 필요 입고일보다 소재 입고(예정)가 늦은 미완료 주문 비중 — 입고 정시율 아님
     const G = CT.inScope('G') ? M.G.filter((o) => !o.closed && o.remT > 0.5) : [];
@@ -81,7 +144,7 @@
       cards.push(card('주문 소재 지연 비중', '도금 미완료 주문 중 소재가 필요 입고일보다 늦은 비중 · 입고 정시율 아님', big(p, p <= 5 ? 'pos' : p <= 15 ? 'wrn' : 'neg', `지연 ${n0(lt.length)} / ${n0(G.length)}건 · ${n0(lt.reduce((a, o) => a + o.remT, 0))}t`)
         + tbl(['판매그룹', '주문', '소재 지연', '지연 잔량(t)', '지연 비중'], R.map(([g, x]) => { const q = pc(x.ln, x.n); return `<tr><td class="id">${esc(g)}</td><td class="r">${n0(x.n)}</td><td class="r">${n0(x.ln)}</td><td class="r">${n0(x.lt)}</td><td class="r"><b class="${q <= 5 ? 'pos' : q <= 15 ? 'wrn' : 'neg'}">${q}%</b></td></tr>`; }))));
       const wz = R.slice().sort((a, b) => b[1].lt - a[1].lt)[0];
-      if (wz && wz[1].lt) why.push(['소재 지연', `${wz[0]} 지연 잔량 ${n0(wz[1].lt)}t 가장 큼`, 'ok', `F/H 입고 이력·예정일이 필요 입고일보다 늦음(${wz[1].ln}건)`]);
+      if (wz && wz[1].lt) why.push(['소재 지연', `${wz[0]} 지연 잔량 ${n0(wz[1].lt)}t 가장 큼`, 'ok', `F/H 입고 이력·예정일이 필요 입고일 지남(${wz[1].ln}건)`]);
       const MO = (D.mat_order && D.mat_order.groups && D.mat_order.groups.mats) || [];
       const late = MO.filter((x) => x.st === 'late');
       if (late.length) why.push(['소재 지연', `소재 발주 마감 지남 ${late.length}개`, 'rel', `${late.slice(0, 3).map((x) => x.name).join('·')} — 발주 지연이 입고 지연으로 이어질 수 있음`]);

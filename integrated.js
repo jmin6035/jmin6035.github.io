@@ -126,9 +126,9 @@
     if (selfR.length > 1) rows.splice(rows.indexOf(selfR[0]), selfR.length, { k: '자가재', v: selfR[0].v.map((_, i) => selfR.reduce((a, r) => a + (r.v[i] || 0), 0)), roll: false, title: selfR.map((r) => `${r.k} ${n0(r.v[wi])}t`).join(' · ') });
     // ② 추이 그래프(그룹별 작은 그래프, 같은 모양): 선 = 주말 재고, 점선 = 목표, 옅은 띠 = 목표의 90~130%(정상 범위), 붉은 선 = 안전재고
     const mini = (r) => {
-      const Wd = 420, H = 190, L = 56, R = 12, T = 14, B = 26;
-      const hiV = Math.max(...r.v, ...(ACT[r.k] || []).map((a) => a[1]), ...(r.tgt ? r.tgt.map((t) => t * 1.3) : [])), loV = Math.min(0, ...r.v);
-      const sc = UI.scale(hiV, loV, 4), X = (i) => L + (i * (Wd - L - R)) / last, Y = (v) => T + (H - T - B) * (1 - (v - sc.lo) / (sc.hi - sc.lo || 1));
+      const Wd = 420, H = 190, L = 56, R = 22, T = 20, B = 26, PX = 14;   // 11/5 사용자 '그래프 튀어나오는데': 위 여유 + 양끝 안쪽 여백 → 값 글자가 칸 밖·축 글자 위로 안 나감
+      const hiV = 1.12 * Math.max(...r.v, ...(ACT[r.k] || []).map((a) => a[1]), ...(r.tgt ? r.tgt.map((t) => t * 1.3) : [])), loV = Math.min(0, ...r.v);
+      const sc = UI.scale(hiV, loV, 4), X = (i) => L + PX + (i * (Wd - L - R - PX)) / last, Y = (v) => T + (H - T - B) * (1 - (v - sc.lo) / (sc.hi - sc.lo || 1));
       let g = sc.ticks.map((v) => `<line x1="${L}" x2="${Wd - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="12" fill="var(--ink-3)">${UI.tick(v, sc.step)}</text>`).join('');
       if (r.tgt) {
         g += `<path d="M${r.tgt.map((t, i) => `${X(i)},${Y(t * 1.3)}`).join('L')}L${r.tgt.map((t, i) => `${X(i)},${Y(t * 0.9)}`).reverse().join('L')}Z" fill="var(--good)" opacity=".1"/>`;
@@ -143,7 +143,7 @@
       g += r.v.map((v, i) => { const k = st(r, i); return `<circle data-s="p" cx="${X(i)}" cy="${Y(v)}" r="${k === 'ok' ? 2.6 : 3.6}" fill="${k === 'bad' ? 'var(--bad)' : k === 'warn' ? 'var(--warn)' : k === 'over' ? 'var(--ink-3)' : 'var(--brand)'}"><title>${md(W[i])} 주말 ${n0(v)}t${r.tgt ? ` / 목표 ${n0(r.tgt[i])}t` : ''} · ${SN[k]}</title></circle>`; }).join('');
       g += W.map((d, i) => (i % 2 === 0 && i <= last - 1 ? `<text x="${X(i)}" y="${H - 7}" text-anchor="middle" font-size="11.5" fill="var(--ink-3)">${md(d)}</text>` : '')).join('');
       const LB = (x, y, t, c = 'var(--ink)') => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="12.5" font-weight="700" fill="${c}" stroke="var(--surface)" stroke-width="3.5" paint-order="stroke">${t}</text>`;
-      g += r.v.map((v, i) => (i % 2 === 0 || i === last || i === wi ? LB(X(i), Y(v) - 8, k1(v)) : '')).join('');   // 2주마다 + 이번 주 + 12월 말 값(천t)
+      g += r.v.map((v, i) => (i % 2 === 0 || i === last || i === wi ? LB(X(i), Math.max(T + 9, Y(v) - 8), k1(v)) : '')).join('');   // 2주마다 + 이번 주 + 12월 말 값(천t)
       const ss = r.v.map((_, i) => st(r, i)), now = ss[wi], ahead = ['bad', 'warn'].find((k) => ss.slice(wi + 1).includes(k));
       const wk = ahead ? ss.slice(wi + 1).indexOf(ahead) + wi + 1 : -1, pct = (i) => (r.tgt ? ` <small>목표의 ${Math.round(r.v[i] / r.tgt[i] * 100)}%</small>` : '');
       const a = (ACT[r.k] || []).length ? ACT[r.k][ACT[r.k].length - 1] : null;
@@ -163,19 +163,19 @@
       const d0 = ad[0][0], dEnd = W[last], span = dd(dEnd, d0) || 1;
       const pv = W.map((d, i) => [d, K.plan.reduce((a, k) => a + ((SW[k] || [])[i] || 0), 0)]).filter(([d]) => d > d0);   // 실제 출발일(전월 말) 앞 주는 그리지 않음 — 11/2 사용자 '오늘 왼쪽 선 이거 뭐고'
       const plan = [[d0, ad[0][1]], ...pv];                                 // 계획 선은 출발점(전월 말 실제)에서 시작
-      const Wd = 620, H = 220, L = 56, R = 14, T = 16, B = 28;
-      const all = [...plan.map((x) => x[1]), ...ad.map((x) => x[1])], sc = UI.scale(Math.max(...all), Math.min(0, ...all), 4);
-      const X = (d) => L + (dd(d, d0) / span) * (Wd - L - R), Y = (v) => T + (H - T - B) * (1 - (v - sc.lo) / (sc.hi - sc.lo || 1));
+      const Wd = 620, H = 220, L = 56, R = 26, T = 22, B = 28, PX = 14;
+      const all = [...plan.map((x) => x[1]), ...ad.map((x) => x[1])], sc = UI.scale(1.12 * Math.max(...all), Math.min(0, ...all), 4);
+      const X = (d) => L + PX + (dd(d, d0) / span) * (Wd - L - R - PX), Y = (v) => T + (H - T - B) * (1 - (v - sc.lo) / (sc.hi - sc.lo || 1));
       let g = sc.ticks.map((v) => `<line x1="${L}" x2="${Wd - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="12" fill="var(--ink-3)">${UI.tick(v, sc.step)}</text>`).join('');
       for (const m of ['10', '11', '12']) { const d = `${d0.slice(0, 4)}-${m}-01`; if (d > d0 && d <= dEnd && dd(d, d0) > 4) g += `<line x1="${X(d)}" x2="${X(d)}" y1="${T}" y2="${H - B}" stroke="var(--line)" stroke-dasharray="3 3"/><text x="${X(d) + 3}" y="${H - 9}" font-size="11.5" fill="var(--ink-3)">${+m}월</text>`; }
       g += `<text x="${L}" y="${H - 9}" font-size="11.5" fill="var(--ink-3)">${md(d0)}</text>`;
       if (today > d0 && today < dEnd) g += `<line x1="${X(today)}" x2="${X(today)}" y1="${T}" y2="${H - B}" stroke="var(--brand-2)" opacity=".6"/><text x="${X(today) + 4}" y="${T + 10}" font-size="11" fill="var(--brand-2)">오늘</text>`;
       const MX = pl === 'C' ? (O.stockMax || {})['컬러 제품'] : null;   // 공장 월말 최대('27 판생그룹 목표) — 도금은 판매재만 기준이라 선 대신 글로
-      if (MX && MX <= sc.hi) g += `<line x1="${L}" x2="${Wd - R}" y1="${Y(MX)}" y2="${Y(MX)}" stroke="var(--bad)" stroke-width="1.4" stroke-dasharray="6 4"/><text x="${Wd - R - 4}" y="${Y(MX) - 4}" text-anchor="end" font-size="11.5" fill="var(--bad)">월말 최대 ${n0(MX)}t('27 목표)</text>`;
+      if (MX && MX <= sc.hi) g += `<line x1="${L}" x2="${Wd - R}" y1="${Y(MX)}" y2="${Y(MX)}" stroke="var(--bad)" stroke-width="1.4" stroke-dasharray="6 4"/><text x="${L + PX + 4}" y="${Y(MX) + 15}" font-size="11.5" fill="var(--bad)" stroke="var(--surface)" stroke-width="3" paint-order="stroke">월말 최대 ${n0(MX)}t('27 목표)</text>`;
       g += `<path class="li" d="M${plan.map(([d, v]) => `${X(d).toFixed(1)},${Y(v).toFixed(1)}`).join('L')}" fill="none" stroke="var(--brand)" stroke-width="2.4" stroke-linejoin="round"/>`;
       g += plan.slice(1).map(([d, v]) => `<circle data-s="p" cx="${X(d).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.6" fill="var(--brand)"><title>${md(d)} 주말 계획 ${n0(v)}t</title></circle>`).join('');
       const LB = (x, y, t, c) => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="12.5" font-weight="700" fill="${c}" stroke="var(--surface)" stroke-width="3.5" paint-order="stroke">${t}</text>`;
-      g += plan.slice(1).map(([d, v]) => LB(X(d), Y(v) - 8, k1(v), 'var(--brand)')).join('');   // 주말 계획 값(천t)
+      g += plan.slice(1).map(([d, v]) => LB(X(d), Math.max(T + 9, Y(v) - 8), k1(v), 'var(--brand)')).join('');   // 주말 계획 값(천t)
       g += `<polyline points="${ad.map(([d, v]) => `${X(d).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--s3)" stroke-width="2.4" stroke-linejoin="round"/>`;
       g += ad.map(([d, v, parts]) => `<circle data-s="a" cx="${X(d).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.4" fill="var(--s3)"><title>실제 ${md(d)} 말 ${n0(v)}t (${K.act.map((k, i) => `${k === '도금 제품(자가재)' ? '자가재' : GN[k.replace('g:', '')] || k.replace('g:', '')} ${n0(parts[i])}`).join(' · ')})</title></circle>`).join('');
       const a = ad[ad.length - 1], pw = pv.find(([d]) => d >= a[0]);

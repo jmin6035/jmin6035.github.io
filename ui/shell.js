@@ -15,7 +15,7 @@
   /* 11/4 사용자 '전면 개편'(control_tower_redesign PRD): 공장별 25개 메뉴 → 의사결정 목적 7개. 지금 화면은 각 메뉴의 탭으로 묶고, 단계마다 새 화면으로 바꿈(gadong-plan/docs/22) */
   /* 11/4 2차 진단 3장: 메뉴 탭 = 업무 질문(화면 안에 탭을 또 두지 않음 — '#이름'으로 같은 화면의 하위 화면). 4번째 칸 'h' = 탭 막대에는 안 보이는 전문 화면(메뉴에는 속함) */
   const MENU = [
-    ['ct1', '통합 관제', 'home', [['home', 'index.html#day', '당일 상황'], ['home', 'index.html#week', '7일 전망'], ['home', 'index.html#month', '월간 전망'], ['board', 'board.html', '판매그룹 관제판', 'h']]],
+    ['ct1', '통합 관제', 'home', [['home', 'index.html#day', '금일 현황'], ['home', 'index.html#week', '7일 전망'], ['home', 'index.html#month', '월간 전망'], ['board', 'board.html', '판매그룹 관제판', 'h']]],
     ['ct2', '수주·납기', 'cgorder', [['orders', 'ct_orders.html#status', '수주 현황'], ['orders', 'ct_orders.html#risk', '납기 지연 예상'], ['orders', 'ct_orders.html#track', '주문 추적'], ['orders', 'ct_orders.html#cal', '납기 캘린더'], ['cgorder', 'cg_order.html', '도금 주문진도', 'h'], ['ccorder', 'cc_order.html', '컬러 주문·납기', 'h']]],
     ['ct3', '생산계획', 'supply', [['plan7', 'ct_plan.html#week', '주간 생산 일정'], ['plan7', 'ct_plan.html#load', '라인 부하'], ['plan7', 'ct_plan.html#cmp', '계획 변경 비교'], ['supply', 'supply.html', '월간 가동'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더', 'h'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더', 'h'], ['cgwo', 'cg_wo.html', '도금 작업지시 순서', 'h'], ['wo', 'wo.html', '컬러 작업지시 순서', 'h']]],
     ['ct4', '소재·재고', 'matcal', [['matcal', 'matcal.html', '소재 수급'], ['matshort', 'ct_mat.html', '부족·조치'], ['integrated', 'integrated.html', '재고 전망'], ['procure', 'procure.html', '발주 일정'], ['planstock', 'planstock.html', '계획재', 'h']]],
@@ -191,7 +191,7 @@
 
   /* 화면 한 줄 도움말 */
   const HELP = {
-    home: '주요 숫자 6개 → 우선 조치(누르면 해당 주문) → 라인별 진도 → 기간 생산 계획. 기간(당일·7일·월간)과 보기(도금·컬러)로 범위를 좁힘',
+    home: '주요 숫자 6개 → 우선 조치(누르면 해당 주문) → 라인별 진도 → 기간 생산 계획. 기간(금일·이번 주(수~화)·이번 달)과 보기(도금·컬러)로 범위를 좁힘',
     integrated: '확정 계획 기준 주별 제품·자가재 재고 추이와 일별 배치 기준. 날짜별 가동은 가동 캘린더, 라인별 일정은 가동 현황에서',
     status: '도금 1·2CGL 게시 계획(매일 재계획)의 월별 간트·강종 전환·부서별 물량',
     rolling: '판매계획·자가재계획 엑셀로 도금 계획을 새로 계산하거나 실적으로 재계획하고 게시(담당자용). 정기수리를 추가하면 정지 시나리오도 볼 수 있음',
