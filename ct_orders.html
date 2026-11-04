@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>수주·납기</title>
-<meta name="description" content="도금·컬러 주문을 한 목록으로 — 수주 잔량·납기 지연 예상·주문 추적">
+<meta name="description" content="도금·컬러 주문을 한 목록으로 — 수주 잔량·납기 지연 예상·주문진도">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611042345">
+<link rel="stylesheet" href="ui/theme.css?v=2611042353">
 <style>
 main.wrap { max-width: none; }
 section.card.co-card { padding: 54px 16px 14px !important; }
@@ -39,7 +39,7 @@ table.co-t .lf { font-size: 13.5px; }
 .co-more { text-align: center; padding: 10px; }
 .co-chip { font: inherit; font-size: 14px; font-weight: 700; border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 999px; padding: 6px 13px; cursor: pointer; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .co-chip b { margin-left: 3px; } .co-chip[aria-pressed="true"] { background: var(--brand-2, #1f5fae); border-color: var(--brand-2, #1f5fae); color: #fff; } .co-chip:disabled { opacity: .45; cursor: default; }
-/* 주문 추적: 왼쪽 목록 · 오른쪽 상세 */
+/* 주문진도: 왼쪽 목록 · 오른쪽 상세 */
 .co-trk { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
 .co-tlw { display: flex; flex-direction: column; gap: 8px; position: sticky; top: 8px; }
 .co-tlw input[type=search] { width: 100%; box-sizing: border-box; }
@@ -102,15 +102,23 @@ table.co-t .lf { font-size: 13.5px; }
   .co-tw { max-height: calc(100vh - 120px); }
 }
 @media (max-width: 600px) { .co-f1 { display: grid; grid-template-columns: 1fr 1fr; } .co-sel { flex-direction: column; align-items: stretch; gap: 3px; } .co-sel select { min-width: 0; width: 100%; } .co-card .ct-kpis { grid-template-columns: 1fr 1fr; gap: 8px; } .co-card .ct-kpi { padding: 10px 10px; } .co-card .ct-kpi .v { font-size: 22px; } .co-card .ct-kpi .l { white-space: normal; } .co-cd .dt { grid-row: auto; } }
+.ps { margin: 0 0 14px; } .ps-seg { margin: 0 0 10px; } .ps-g { display: grid; gap: 14px; }
+.ps-h { font-size: 13.5px; color: var(--ink-2); margin: 0 0 4px; } .ps-h b { font-size: 15px; color: var(--ink); margin-right: 6px; }
+table.ps-t td.nm { min-width: 220px; } table.ps-t td.nm small { color: var(--ink-3); font-weight: 400; margin-left: 4px; display: inline; }
+table.ps-t tr.p0 td { font-weight: 800; border-bottom: 2px solid var(--line); } table.ps-t tr.p1 td.nm { font-weight: 700; }
+table.ps-t tr.p2 td.nm { padding-left: 22px; } table.ps-t tr.p3 td.nm { padding-left: 40px; color: var(--ink-2); } table.ps-t tr.p3 td { font-size: 13.5px; color: var(--ink-2); }
+table.ps-t tr.mu td { color: var(--ink-3); }
+.co-tl li.co-gh { list-style: none; padding: 8px 10px 4px; font-weight: 800; font-size: 13.5px; color: var(--ink); background: var(--tint, #f3f6fa); position: sticky; top: 0; z-index: 1; } .co-tl li.co-gh small { font-weight: 500; color: var(--ink-3); }
+.co-tl li .b.po { color: var(--ink-2); font-size: 13px; }
 </style>
 </head>
 <body>
-<header id="shell" data-page="orders" data-title="수주·납기" data-sub="도금·컬러 주문 잔량 · 납기 지연 예상 · 주문 추적"></header>
+<header id="shell" data-page="orders" data-title="수주·납기" data-sub="도금·컬러 주문 잔량 · 납기 지연 예상 · 주문진도"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611042345"></script>
-<script src="engine/crypto.js?v=2611042345"></script>
-<script src="ui/ct.js?v=2611042345"></script>
-<script src="ct_orders.js?v=2611042345"></script>
+<script src="ui/shell.js?v=2611042353"></script>
+<script src="engine/crypto.js?v=2611042353"></script>
+<script src="ui/ct.js?v=2611042353"></script>
+<script src="ct_orders.js?v=2611042353"></script>
 </body>
 </html>
