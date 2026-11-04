@@ -32,6 +32,30 @@ table.t.rl td.l { white-space: normal !important; }
 .chgl b { color: var(--warn); }
 .pill { display: inline-block; font-size: 13.5px; font-weight: 700; border-radius: 10px; padding: 1px 8px; background: var(--warn-bg); color: var(--warn); }
 .pill.ro { background: var(--grid); color: var(--ink-2); }
+
+/* 계산 규칙(11/5) */
+.rl-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; }
+.rl-tabs button { border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font: inherit; font-size: 14px; font-weight: 700; padding: 7px 14px; border-radius: 8px; cursor: pointer; }
+.rl-tabs button small { font-weight: 500; color: var(--ink-3); margin-left: 3px; }
+.rl-tabs button[aria-pressed="true"] { background: var(--brand-2, #1f5fae); border-color: var(--brand-2, #1f5fae); color: #fff; } .rl-tabs button[aria-pressed="true"] small { color: rgba(255,255,255,.8); }
+.rl-flow { list-style: none; margin: 0; padding: 0; counter-reset: none; }
+.rl-st { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; position: relative; padding-bottom: 14px; }
+.rl-st:not(:last-child)::before { content: ''; position: absolute; left: 17px; top: 36px; bottom: 0; width: 2px; background: var(--line); }
+.rl-n { width: 34px; height: 34px; border-radius: 50%; background: var(--brand-2, #1f5fae); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.rl-b { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; background: var(--surface); }
+.rl-h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; } .rl-h b { font-size: 15.5px; }
+.rl-g { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 12px; font-size: 14px; line-height: 1.6; }
+.rl-g > span { color: var(--ink-3); font-size: 13.5px; font-weight: 700; } .rl-g p { margin: 0; } .rl-g p.rl-v { font-weight: 700; font-variant-numeric: tabular-nums; } .rl-g p.rl-s { color: var(--ink-2); font-size: 13.5px; }
+.rl-auto, .rl-edit { display: inline-block; font-size: 12.5px; font-weight: 700; border-radius: 6px; padding: 1px 7px; }
+.rl-auto { background: var(--grid); color: var(--ink-2); } .rl-edit { background: var(--warn-bg); color: var(--warn); }
+.rl-ex { margin-top: 18px; border: 1px solid var(--brand-2, #1f5fae); border-radius: 10px; padding: 14px 16px; background: var(--tint); }
+.rl-exh { font-weight: 800; font-size: 15px; margin-bottom: 8px; color: var(--brand-2, #1f5fae); }
+.rl-pick { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 0 0 12px; font-size: 14px; } .rl-pick label { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.rl-pick select, .rl-pick input { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); }
+.rl-why { margin: 0; padding-left: 20px; line-height: 1.75; font-size: 14px; } .rl-why li { margin-bottom: 8px; }
+table.t.rl-t { width: auto; margin-top: 6px; font-size: 13.5px; } table.t.rl-t td, table.t.rl-t th { padding: 6px 10px; } table.t.rl-t td.l, table.t.rl-t th.l { text-align: left; }
+table.t.rl-t td.rl-why-t { white-space: normal; min-width: 260px; max-width: 520px; color: var(--ink-2); line-height: 1.5; }
+@media (max-width: 640px) { .rl-g { grid-template-columns: 1fr; } .rl-g > span { margin-top: 4px; } .rl-st { grid-template-columns: 28px minmax(0, 1fr); gap: 8px; } .rl-n { width: 28px; height: 28px; font-size: 13.5px; } .rl-st:not(:last-child)::before { left: 13px; top: 30px; } }
 </style>
 </head>
 <body>
@@ -64,25 +88,16 @@ table.t.rl td.l { white-space: normal !important; }
         <button type="button" class="btn" id="t-save">저장만</button><button type="button" class="btn primary" id="t-apply">저장하고 적용</button><button type="button" class="btn" id="t-reset">되돌리기</button></div>
       <p class="small" id="t-res"></p>
     </section>
-    <section class="card"><h2>규칙 목록 <small>계획이 따르는 규칙 전부 — <span class="pill">수정</span> = 위 표에서 숫자를 바꿀 수 있음 · <span class="pill ro">고정</span> = 바꾸려면 요청(결정 기록)</small></h2>
-      <div class="scroll"><table class="t rl"><thead><tr><th>구분</th><th class="l">규칙</th><th>값</th><th class="l">근거·결정</th><th></th></tr></thead><tbody id="t-rules"></tbody></table></div>
+    <section class="card" id="r-sec"><h2>계산 규칙 <small id="r-cnt"></small><small>계산 순서대로 · <span class="rl-edit">수정 가능</span> = 위 표에서 바꿈 · <span class="rl-auto">자동</span> = 엔진 고정(바꾸려면 결정 기록으로 요청)</small></h2>
+      <div class="seg rl-tabs" id="r-tabs" role="tablist"></div>
+      <div id="r-body"></div>
     </section>
-    <section class="card"><h2>예시: 1CCL 11/23 계획재 PGS 584t 은 이렇게 정해짐 <small>11/4 게시 계획</small></h2>
-      <ol class="small" style="line-height:1.8;margin:0 0 10px 18px">
-        <li>1CCL 11월 계획재는 운영안(R15) 배치 160 → 161 → … → 200 순서를 그대로 지킴(같은 사양·색상끼리 묶어 교체 휴지 최소)</li>
-        <li>먼저 수출·주문재 로트를 넣고, 남은 시간에 배치를 펼침: 배치 시작 = 그 달 쓸 수 있는 시간 × 앞 배치까지 누적 물량 비율 → 배치 184~187 차례가 11/24 무렵</li>
-        <li>휴지 집약(앞날부터 꽉 채움)으로 하루 당겨져 11/23</li>
-        <li>11/23 1,440분 중 VERACRUZ 벌크(수출)가 먼저 171분 → 남은 1,269분을 배치 순서대로 채움. 톤 = 배치마다 운영안 물량·시간 비율</li>
-      </ol>
-      <div class="scroll"><table class="t"><thead><tr><th class="l">들어간 것</th><th class="l">사양</th><th>시간(분)</th><th>물량(t)</th></tr></thead><tbody>
-        <tr><td class="l">수출 벌크 VERACRUZ(중남미)</td><td class="l">PGS</td><td>171</td><td>50</td></tr>
-        <tr><td class="l">운영안 배치 184(나머지, 11/22 에 30t)</td><td class="l">PGS 0.52×1219 GT1N520S</td><td>208</td><td>68.7</td></tr>
-        <tr><td class="l">운영안 배치 185</td><td class="l">PGS 0.52×1070 GT1EC60A</td><td>644</td><td>319.5</td></tr>
-        <tr><td class="l">운영안 배치 186</td><td class="l">PGS 0.52×1070 GT1WC90G</td><td>271</td><td>119.5</td></tr>
-        <tr><td class="l">운영안 배치 187(일부, 나머지 11/24)</td><td class="l">PGS 0.52×1040 GT1EC60A</td><td>146</td><td>76.0</td></tr>
-        <tr><td class="l"><b>계</b></td><td></td><td><b>1,440</b></td><td><b>계획재 584 + 수출 50</b></td></tr>
-      </tbody></table></div>
-      <p class="small muted" style="margin-top:8px">'184' 등은 운영안 배치 번호(톤 아님). 가동 캘린더 칸을 누르면 행마다 이 근거 문구가 나옴. 11/5 바로잡음: VERACRUZ 벌크(선적 완료기한 11/9)가 '어제 계획 자리 먼저' 규칙으로 11/23·25·27 에 묶여 있던 것 → 기한 넘긴 자리는 다시 찾게 고쳐 11/6~8 로 옮김(이 예시 숫자는 바뀌기 전 11/4 게시 계획)</p>
+    <section class="card" id="x-sec"><h2>왜 그날, 그 라인에서, 그 시간에? <small>지금 게시된 계획·생산 캘린더로 단계별 이유</small></h2>
+      <div class="rl-pick"><label>라인 <select id="x-line"></select></label><label>날짜 <input type="date" id="x-date"></label></div>
+      <div id="x-out"></div>
+      <h3 style="margin-top:22px">소재 — 부족 시작 → 입고 필요일 → 발주 마감</h3>
+      <div class="rl-pick"><label>소재 <select id="x-mat"></select></label></div>
+      <div id="x-mout"></div>
     </section>
     <section class="card"><h2>바꾼 이력 <small id="t-hn"></small></h2>
       <div class="scroll"><table class="t hist"><thead><tr><th>저장 시각</th><th>바꾼 사람</th><th class="l">바뀐 항목(직전 저장 대비)</th><th class="l">이유</th><th>적용</th></tr></thead><tbody id="t-hist"></tbody></table></div>
@@ -92,6 +107,7 @@ table.t.rl td.l { white-space: normal !important; }
 </main>
 <footer class="foot"><div class="wrap"><span>저장 = 공유 저장소(모든 사람이 같은 값) · 적용 = 매시 정각(08~20시) 확인 → 40~70분 계산 → 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611042345"></script>
+<script src="rules_logic.js?v=2611050000"></script>
 <script src="engine/crypto.js?v=2611042345"></script>
 <script>
 (function () {
@@ -173,41 +189,10 @@ table.t.rl td.l { white-space: normal !important; }
     $('t-st').className = 'st-box ' + (req ? 'run' : cls); $('t-st').innerHTML = h;
     if ($('t-force')) $('t-force').onclick = () => save(true, true);
   }
-  function drawRules() {
-    const A = APPLIED, P = (IG && IG.planP) || null;
-    const E = (t) => `<span class="pill">수정</span>`, R = '<span class="pill ro">고정</span>';
-    const L = [
-      ['공통', '하루 = 07시~다음날 07시(MES 일수 기준). 실적·계획·휴지·작업지시·화면 날짜가 모두 이 생산일', '07:00', '10/22 사용자', R],
-      ['월별 생산량', '그룹별 그달 생산량 = 판매계획 + 월말 목표 재고 − 월초 재고 (재고가 목표보다 많으면 덜 만들고, 적으면 더 만듦)', '', '10/12 · 계획 엔진', R],
-      ['월별 생산량', '월말 목표 재고 = ① 목표 일수 × 다음 달 하루 판매량 (도금 = TF 일수, 컬러 = 생산주기 + 안전재고)', `수출 ${A.days['G수출']}·국내 ${A.days['G국내']}·자가재 ${A.days['G자가재']}일, 자동차 AL-STS ${A.days['AL-STS']}·임가공 ${A.days['임가공']}·그 외 ${A.days['기타']}일`, '09-30 TF 확정 · 10/22 도금도 TF(사용자)', E()],
-      ['월별 생산량', '공장 월말 재고 합이 ② 상한을 넘지 않게(그룹 목표보다 먼저)', MAXK.map((k) => `${k} ${n0(A.stockMax[k])}t`).join(' · '), "'27 판생그룹 목표(10/12)", E()],
-      ['도금', '라인별 강종 — 1CGL AL·AZ, 2CGL AL·MAC(AL-STS 포함). 강종을 바꾸면 M/C(강종 전환)', '', '설비 조건', R],
-      ['도금', '일정은 두 단계로 정함: 먼저 M/C 횟수(납기 지연·결품까지 따져)를 가장 적게 → 그 M/C 날짜로 미리 만드는 양(톤·일)을 가장 적게', '', '계획 엔진', R],
-      ['도금', '하루 생산 시간 = 1,440분 − ③ M/C·더미·설비 정지·재가동 시간', `M/C 1번 1CGL ${n0(A.plating.switchDummy['1CGL'])} · 2CGL ${n0(A.plating.switchDummy['2CGL'])}분`, 'MES 실적(조건 분석)', E()],
-      ['도금', '생산 속도 = 라인·강종·판매그룹별 실적 속도(2025.1~2026.7, 더미 코일 빼고)', P && P.rateBase ? Object.entries(P.rateBase).map(([k, v]) => `${k} ${(v * 60).toFixed(1)}t/h`).join(' · ') : '', '조건 분석 화면에서 실적과 비교', R],
-      ['도금', '정기 수리 기간은 생산 안 함', P && P.shutdowns ? P.shutdowns.map((x) => `${x.line} ${+x.start.slice(5, 7)}/${+x.start.slice(8)}~${+x.end.slice(5, 7)}/${+x.end.slice(8)}`).join(' · ') : '2CGL 11/23~12/6', '회사 정비 계획', R],
-      ['도금', '주문재는 납기 ③ 며칠 전부터 생산(자가재는 제한 없음)', `${n0(A.plating.releaseDays)}일 전`, '계획 엔진', E()],
-      ['도금', '매일 아침 다시 계산: 어제까지 MES 실적을 넣고, 게시된 M/C 날짜는 그대로, ④ 앞쪽 며칠은 강종 고정', `강종 고정 ${n0(A.replan.freezeDays)}일 · M/C 1번 = 지연 ${n0(A.replan.tradeoff)}톤·일`, '10/20 · 10/22 사용자(③안)', E()],
-      ['도금', '결품(못 만듦)은 지연보다 훨씬 무겁게 봄 — 늦더라도 만드는 쪽을 고름', '결품 1t = 지연 2만 톤·일', '10/20', R],
-      ['자가재', '컬러에 보낼 도금 자가재는 컬러 생산일 8일 전까지. 직판재(외부 판매)에 지연·결품이 없을 때만 반순 앞당김', '8일', '팀 리드타임 표 · 10/13', R],
-      ['도금', '수요 = 실주문 먼저(미생산 주문, 마감 = 필요 생산일: 수출 출항·내수 납기 기준), 모자라는 만큼만 그 달 판매계획으로 보충. 소재 없는 주문은 예상 입고 + 5일부터 생산 가능', '', '10/30 사용자', R],
-      ['도금', '생산 캘린더 칸 채우는 순서: 확정(작업지시) → 편성(소재 있음) → 예상(2주 안 입고), 같은 단계는 필요 생산일 빠른 주문부터. 칸 안 표시는 넓은 폭 → 좁은 폭, 같은 폭은 얇은 것 먼저', '', '10/28·10/29', R],
-      ['컬러', '월 물량 = 판생속보 그룹 목표를 판매계획 품목 비율로 나눔(첫 달은 재고 뺀 필요량 비율) − 이번 달 실적. 컬러건재 = 계획재(운영안 R15) + 주문재', '', '10/16 · 10/21', R],
-      ['컬러', '수출 벌크·컨테이너 구분 = TF 판생 컬러건재수출·컬러가전수출 시트의 「생산기준(배선일정)」 칸에 \'벌크\'가 있으면 벌크. \'○일까지\' = 선적 완료기한', '벌크 400t·컨테이너 100t 로트', 'TF 파일', R],
-      ['컬러', '로트 시작~마감: 벌크 = 선적 완료기한 10일 전 ~ 기한 / 컨테이너 = 기한 있으면 10일 전 ~ 기한, 없으면 월 균등 / 가전내수 80t·주문재 60t·수요개발 60t = 월 균등', '', '10/6 엔진 설계', R],
-      ['컬러', '배정 우선순위: 수출 벌크 → 수출 컨테이너 → 가전내수·수요개발·주문재 → 계획재(남는 시간). 같은 순위는 마감 빠른 것·큰 로트 먼저. 집약 묶음(PVC Sol 월 1회 등)과 한 라인 전용 품명을 먼저', '', 'L-21(10/17) · 10/19', R],
-      ['컬러', '라인: 필수 라인 → 차면 두 번째로 많이 만든 라인 / 필수 없으면 우선 1 → 2 → 3, 속도 빠른 라인 우선, 2CCL 은 이미 가동하는 날에 몰아줌', '', 'L-20(10/13·10/16)', R],
-      ['컬러', '날짜 찾기: 시작~마감 안 → 그 전(선행 생산) → 그 뒤(지연). 재계산 때는 어제 계획 자리를 먼저 시도(일정이 통째로 바뀌지 않게) — 단 그 자리가 기한을 넘긴 자리면 쓰지 않고 처음부터 다시 찾음', '', '10/19 · 11/5 사용자', R],
-      ['컬러', '계획재 = 운영안(R15) 배치 순서 그대로. 배치 시작 = 그 달 쓸 수 있는 시간(1,440분 − 수출·주문재가 쓴 시간) × 앞 배치까지 누적 물량 비율 → 월 전체에 고르게', '', '10/19 · R15', R],
-      ['컬러', '휴지 집약: 라인마다 순서 그대로 앞날부터 꽉 채워 휴지를 덩어리로(늦추지 않음, 최대 30일 당김, 구매 소재가 그날까지 안 들어오면 안 당김)', '최대 30일', '10/19 결정', R],
-      ['컬러', '속도 = 단위생산량 표(품목 × 라인 × 부서 kg/min × 0.06). 휴지계획은 계획 정지만 그날 시간에서 뺌(Test 는 빼지 않음)', '', '10/16·10/21 사용자', R],
-      ['컬러', '생산 캘린더(2주~월말)와 통합 계획은 같은 게시 계획(휴지 집약 반영)을 씀', '', '11/5 바로잡음', R],
-      ['출하', '하루 출하 계획 = 이번 달 남은 양(속보 월차 − 실적)을 MES 최근 완결 달의 월중 출하 패턴(말일 정렬) 비중으로 나눔 — 국내·자동차·컬러. 도금수출은 선적창 모양 그대로', '', '11/5 사용자(10/21 고르게 펴기에서 바꿈)', R],
-      ['소재', 'F/H 입고 예정 = 발주 + 35일(TF 기준). 수입 FH = 발주 다음다음 달 7일경', '35일', '팀 리드타임 표(매주 발주 +5주)', R],
-      ['소재', '입고 필요일 = 처음 쓰는 날 − 투입 여유. 재고·이미 발주한 것을 먼저 쓰고 모자라는 만큼 27년 배정 비중대로 발주', '컬러 7일 · 도금 5일', '팀 리드타임 표', R],
-      ['작업지시', '도금·컬러 작업지시 순서 조건(강종·표면사상·후처리 약액·두께·폭)과 더미·휴지 기준표 — 1년 실적 + 학습 방 규칙, 새 규칙은 확인 뒤 반영', '<a href="cg_wo.html">도금</a> · <a href="wo.html">컬러</a> 작업지시 순서 → [작업지시 규칙] 탭', '10/21 · 10/22 반영', R],
-    ];
-    $('t-rules').innerHTML = L.map((r) => `<tr><td class="g">${r[0]}</td><td class="l">${r[1]}</td><td class="v l">${r[2]}</td><td class="l small">${r[3]}</td><td>${r[4]}</td></tr>`).join('');
+  let rulesOn = false;
+  function drawRules() {   // 11/5: 규칙은 rules_logic.js(탭 · 단계 · 설명기)
+    if (rulesOn || !window.RULES) return; rulesOn = true;
+    RULES.init({ A: APPLIED, IG, PW, P: (IG && IG.planP) || null }).catch((e) => { document.getElementById('r-body').textContent = '규칙 화면을 그리지 못했습니다: ' + e.message; });
   }
   function drawHist() {
     $('t-hn').textContent = HIST.length ? `${HIST.length}건` : '';
