@@ -57,12 +57,12 @@
     const noShip = open.filter((o) => o.ful === '출하 확인 불가');
     const past = open.filter((o) => (o.risk === '위험' || o.risk === '주의') && o.last && o.last < asOf);
     const K = [
-      { label: '납기 위험', v: n0(risk.length), unit: '건', sub: `${n0(T(risk))}t · 주의 ${warn.length}건`, tone: risk.length ? 'bad' : 'ok', href: 'ct_orders.html#risk' },
+      { label: '납기 지연 예상', v: n0(risk.length), unit: '건', sub: `${n0(T(risk))}t · 점검 필요 ${warn.length}건`, tone: risk.length ? 'bad' : 'ok', href: 'ct_orders.html#risk' },
       { label: '소재 부족 확정', v: n0(sT(mSure)), unit: 't', sub: `확정 ${mSure.length}개 · 예상 ${mExp.length}개 ${n0(sT(mExp))}t`, tone: mSure.length ? 'bad' : mExp.length ? 'warn' : 'ok', href: 'ct_mat.html' },
-      { label: '생산계획 이행', v: pr == null ? '-' : pr, unit: '%', sub: `월 누계 실적 ${n0(act)} / 계획 ${n0(plan)}t`, tone: tone(pr), href: 'ct_prod.html#perf' },
-      { label: '출하 차질', v: n0(shipGap), unit: 't', sub: shipBad.length ? `계획 누계 미달 ${shipBad.map((x) => x.name).join('·')}` : '계획 누계 충족', tone: shipGap > 500 ? 'bad' : shipGap > 0.5 ? 'warn' : 'ok', href: 'ct_prod.html#ship' },
-      { label: '생산 차질', v: lag.length, unit: '라인', sub: lag.length ? lag.map((x) => `${x.line} −${n0(x.sched - x.actual)}t`).join(' · ') : '계획 대비 95% 이상', tone: lag.length ? 'warn' : 'ok', href: 'ct_prod.html#run' },
-      { label: '판정 불가 · 기한 경과', v: n0(nd.length), unit: '건', sub: `조치 기한 지남 ${past.length}건 · 출하 확인 불가 ${noShip.length}건`, tone: past.length ? 'bad' : nd.length ? 'warn' : 'ok', href: 'ct_orders.html#risk' },
+      { label: '생산 진도율', v: pr == null ? '-' : pr, unit: '%', sub: `실적 ${n0(act)} / 일정 누계 ${n0(plan)}t`, tone: tone(pr), href: 'ct_prod.html#perf' },
+      { label: '출하 미달', v: n0(shipGap), unit: 't', sub: shipBad.length ? `일정 누계 미달 ${shipBad.map((x) => x.name).join('·')}` : '일정 누계 충족', tone: shipGap > 500 ? 'bad' : shipGap > 0.5 ? 'warn' : 'ok', href: 'ct_prod.html#ship' },
+      { label: '생산 미달', v: lag.length, unit: '라인', sub: lag.length ? lag.map((x) => `${x.line} −${n0(x.sched - x.actual)}t`).join(' · ') : '계획 대비 95% 이상', tone: lag.length ? 'warn' : 'ok', href: 'ct_prod.html#run' },
+      { label: '자료 확인 필요', v: n0(nd.length), unit: '건', sub: `조치일 지남 ${past.length}건 · 출하 실적 없음 ${noShip.length}건`, tone: past.length ? 'bad' : nd.length ? 'warn' : 'ok', href: 'ct_orders.html#risk' },
     ];
 
     // ③ 조치 우선순위 TOP10: 원인 × 판매그룹 묶음 + 소재 마감 + 현장 예외
@@ -84,15 +84,15 @@
     const top = acts.slice(0, 10);
     const left = (d) => (d == null ? '-' : diff(d, asOf) < 0 ? `<b class="ct-neg">${md(d)} · ${-diff(d, asOf)}일 지남</b>` : `${md(d)} <small class="ct-dd">D-${diff(d, asOf)}</small>`);
     const stCell = (a) => `<span class="ct-new" data-id="${a.id}">${esc(ST[a.id] || '신규')}</span>`;
-    const actTbl = top.length ? `<div class="ct-wrap"><table class="ct-t"><colgroup><col style="width:68px"><col style="width:132px"><col><col style="width:76px"><col style="width:136px"><col style="width:108px"><col style="width:72px"></colgroup><thead><tr><th>위험</th><th>유형</th><th>대상</th><th class="r">영향 톤</th><th>조치 마감</th><th>담당</th><th>상태</th></tr></thead><tbody>${top.map((a, i) => `<tr class="ck" tabindex="0" data-i="${i}"><td>${CT.badge(a.risk)}</td><td class="nw"><b>${esc(a.type)}</b></td><td class="w">${esc(a.what)}</td><td class="r">${a.t == null ? '' : n0(a.t)}</td><td class="nw">${left(a.last)}</td><td class="nw">${esc(a.dept || '')}</td><td class="nw">${stCell(a)}</td></tr>`).join('')}</tbody></table></div>${acts.length > 10 ? `<p class="ct-note">상위 10건 / 전체 ${acts.length}건 · <a href="ct_issue.html#now">이슈·조정에서 전체 보기</a></p>` : ''}` : '<p class="ct-note">기간 안 조치 대상 없음</p>';
+    const actTbl = top.length ? `<div class="ct-wrap"><table class="ct-t"><colgroup><col style="width:150px"><col><col style="width:84px"><col style="width:136px"><col style="width:108px"><col style="width:72px"></colgroup><thead><tr><th>무엇이 문제</th><th>대상</th><th class="r">해당 물량</th><th>조치 마감</th><th>조치 부서</th><th>진행</th></tr></thead><tbody>${top.map((a, i) => `<tr class="ck" tabindex="0" data-i="${i}"><td class="nw">${CT.badgeT(a.risk, a.type)}</td><td class="w">${esc(a.what)}</td><td class="r">${a.t == null ? '' : n0(a.t)}</td><td class="nw">${left(a.last)}</td><td class="nw">${esc(a.dept || '')}</td><td class="nw">${stCell(a)}</td></tr>`).join('')}</tbody></table></div>${acts.length > 10 ? `<p class="ct-note">상위 10건 / 전체 ${acts.length}건 · <a href="ct_issue.html#now">이슈·조정에서 전체 보기</a></p>` : ''}` : '<p class="ct-note">기간 안 조치 대상 없음</p>';
 
     // ④ 공정별 상태(도금/컬러/소재/출하 같은 크기)
     const rk = (pl) => open.filter((o) => o.pl === pl && o.risk === '위험').length;
     const proc = [];
-    if (CT.inScope('G')) proc.push({ n: '도금', v: pct(cgA, cgP), u: '%', tone: tone(pct(cgA, cgP)), s: [`실적 ${n0(cgA)} / 계획 ${n0(cgP)}t`, `위험 주문 ${rk('G')}건`, lag.length ? `차질 ${lag.map((x) => x.line).join('·')}` : '라인 차질 없음'], href: 'ct_prod.html#perf' });
-    if (CT.inScope('C')) proc.push({ n: '컬러', v: pct(ccA, ccP), u: '%', tone: tone(pct(ccA, ccP)), s: [`실적 ${n0(ccA)} / 계획 ${n0(ccP)}t`, `위험 주문 ${rk('C')}건`, M.ccMissing.length ? `주문 자료 ${M.ccLines.join('·')}만` : '4개 라인 주문 반영'], href: 'ct_prod.html#perf' });
-    proc.push({ n: '소재', v: mSure.length, u: '개 확정', tone: mSure.length ? 'bad' : mExp.length ? 'warn' : 'ok', s: [`부족 예상 ${mExp.length}개 · 발주 마감 지남 ${mats.filter((m) => m.st === 'late').length}`, `소재 원인 주문 ${matOrd.length}건`], href: 'ct_mat.html' });
-    proc.push({ n: '출하', v: n0(shipGap), u: 't 미달', tone: shipGap > 500 ? 'bad' : shipGap > 0.5 ? 'warn' : 'ok', s: [shipBad.length ? `미달 ${shipBad.map((x) => x.name).join('·')}` : '계획 누계 충족', `출하 확인 불가 ${noShip.length}건`], href: 'ct_prod.html#ship' });
+    if (CT.inScope('G')) proc.push({ n: '도금', v: pct(cgA, cgP), u: '%', tone: tone(pct(cgA, cgP)), s: [`실적 ${n0(cgA)} / 계획 ${n0(cgP)}t`, `납기 지연 예상 ${rk('G')}건`, lag.length ? `미달 ${lag.map((x) => x.line).join('·')}` : '라인 미달 없음'], href: 'ct_prod.html#perf' });
+    if (CT.inScope('C')) proc.push({ n: '컬러', v: pct(ccA, ccP), u: '%', tone: tone(pct(ccA, ccP)), s: [`실적 ${n0(ccA)} / 계획 ${n0(ccP)}t`, `납기 지연 예상 ${rk('C')}건`, M.ccMissing.length ? `주문 자료 ${M.ccLines.join('·')}만` : '4개 라인 주문 반영'], href: 'ct_prod.html#perf' });
+    proc.push({ n: '소재', v: mSure.length, u: '개 확정', tone: mSure.length ? 'bad' : mExp.length ? 'warn' : 'ok', s: [`예상 ${mExp.length}개 · 마감 지남 ${mats.filter((m) => m.st === 'late').length}개`, `소재 원인 주문 ${matOrd.length}건`], href: 'ct_mat.html' });
+    proc.push({ n: '출하', v: n0(shipGap), u: 't 미달', tone: shipGap > 500 ? 'bad' : shipGap > 0.5 ? 'warn' : 'ok', s: [shipBad.length ? `미달 ${shipBad.map((x) => x.name).join('·')}` : '일정 누계 충족', `출하 실적 없음 ${noShip.length}건`], href: 'ct_prod.html#ship' });
     const procHtml = `<div class="ct-proc">${proc.map((x) => `<a class="ct-pc ${x.tone}" href="${x.href}"><div class="h"><b>${x.n}</b><span class="v">${x.v == null ? '-' : x.v}<small>${x.u}</small></span></div>${x.s.map((t) => `<div class="s">${esc(t)}</div>`).join('')}</a>`).join('')}</div>`;
 
     // ⑤ 기간 전망: 당일(오늘·내일) · 7일(일별) · 30일(주별)
@@ -108,7 +108,7 @@
       const lbl = ds.length > 1 ? `${md(ds[0])}~${md(ds[ds.length - 1])}` : `${md(ds[0])} <small class="ct-wd">${wd(ds[0])}${ds[0] === asOf ? ' · 오늘' : ''}</small>`;
       return `<tr><td class="nw"><b>${lbl}</b></td>${CT.inScope('G') ? `<td class="r">${n0(sum(gT))}</td>` : ''}${CT.inScope('C') ? `<td class="r">${n0(sum(cT))}</td>` : ''}<td class="r">${o.length ? `${o.length}건 · ${n0(T(o))}t` : '-'}</td><td class="r">${r.length ? `<b class="ct-neg">${r.length}</b>` : '-'}</td><td class="w">${esc(es.slice(0, 3).join(' · '))}${es.length > 3 ? ` 외 ${es.length - 3}` : ''}</td></tr>`;
     };
-    const fc = `<table class="ct-t ct-fc"><thead><tr><th>${per === 30 ? '주간' : '날짜'}</th>${CT.inScope('G') ? '<th class="r">도금 계획 t</th>' : ''}${CT.inScope('C') ? '<th class="r">컬러 계획 t</th>' : ''}<th class="r">생산 필요 주문</th><th class="r">위험</th><th>주요 일정</th></tr></thead><tbody>${buckets.map(fRow).join('')}</tbody></table>`;
+    const fc = `<table class="ct-t ct-fc"><thead><tr><th>${per === 30 ? '주간' : '날짜'}</th>${CT.inScope('G') ? '<th class="r">도금 계획 t</th>' : ''}${CT.inScope('C') ? '<th class="r">컬러 계획 t</th>' : ''}<th class="r">생산 필요 주문</th><th class="r">지연 예상</th><th>주요 일정</th></tr></thead><tbody>${buckets.map(fRow).join('')}</tbody></table>`;
 
     // ⑥ (접힘) 수주 이행 흐름 — 도금·컬러 따로, 출하 확인 불가 분리
     const flow = (pl, nm) => {
@@ -120,28 +120,28 @@
         ['소재 확보', `${n0(op.filter((o) => o.matSt === '확보' || o.matSt === '재고 있음').length)}<small>건</small>`, `미확보 <b class="bad">${op.filter((o) => o.matSt !== '확보' && o.matSt !== '재고 있음').length}</b>건`],
         ['생산 중', `${n0(F('생산 중'))}<small>건</small>`, `생산 전 ${F('생산 전')}건`],
         ['생산 완료', `${n0(F('출하 확인 불가') + F('부분 출하') + F('출하 완료'))}<small>건</small>`, `생산 ${n0(os.reduce((a, o) => a + Math.min(o.prodT || 0, o.ordT || 0), 0))}t`],
-        ['출하', pl === 'G' ? `${n0(F('출하 완료'))}<small>건 완료</small>` : '<small>자료 없음</small>', pl === 'G' ? `부분 ${F('부분 출하')} · <b class="bad">확인 불가 ${F('출하 확인 불가')}</b>건` : `확인 불가 ${F('출하 확인 불가')}건(컬러 출하 연결 전)`],
+        ['출하', pl === 'G' ? `${n0(F('출하 완료'))}<small>건 완료</small>` : '<small>자료 없음</small>', pl === 'G' ? `부분 ${F('부분 출하')} · <b class="bad">실적 없음 ${F('출하 확인 불가')}</b>건` : `실적 없음 ${F('출하 확인 불가')}건(컬러 출하 연결 전)`],
       ];
       return `<div class="ct-flh">${nm} <small>${pl === 'G' ? `납기 −30~+90일 주문 · ${md(M.cgAt)}` : `${M.ccLines.join('·')} 작업지시대상 · ${md(M.ccAt)}`}</small></div><div class="ct-flow">${cells.map(([l, v, s]) => `<div class="ct-fs"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('')}</div>`;
     };
     const why = {}; for (const o of nd) why[o.dataWhy || '기타'] = (why[o.dataWhy || '기타'] || 0) + 1;
     const exc = Object.entries(why).map(([k, v]) => `${k} ${v}건`).concat(badSrc.map((x) => `${x.name} ${x.tip}`));
     const gOpen = open.filter((o) => o.pl === 'G').length, cOpen = open.filter((o) => o.pl === 'C').length;
-    const cnt = [CT.inScope('G') ? `도금 진행 ${gOpen}건` : '', CT.inScope('C') ? `컬러 진행 ${cOpen}건` : '', `출하 확인 불가 ${noShip.length}건`].filter(Boolean).join(' · ');
+    const cnt = [CT.inScope('G') ? `도금 진행 ${gOpen}건` : '', CT.inScope('C') ? `컬러 진행 ${cOpen}건` : '', `출하 실적 없음 ${noShip.length}건`].filter(Boolean).join(' · ');
 
     const main = document.getElementById('ct-main');
     main.innerHTML = basis
       + `<div class="ct-bar"><span class="ct-note"><b>${({ day: '당일 상황', week: '7일 전망', month: '월간 전망' })[view]}</b> · 조치 마감 ${md(until)}까지 · ${SCN}</span><a class="ct-note" href="board.html">상세 관제판 →</a></div>`
       + CT.kpis(K)
-      + `<div class="ct-2c"><section class="card"><h2>조치 우선순위 TOP 10 <small>위험 → 마감 빠른 순</small></h2>${actTbl}</section><section class="card"><h2>공정별 상태 <small>월 누계</small></h2>${procHtml}</section></div>`
-      + `<section class="card"><h2>${per === 1 ? '오늘·내일' : per === 7 ? '7일' : '30일'} 생산 전망 <small>계획 톤 · 생산 필요일이 그 기간인 주문${per === 30 ? ' · 주 단위' : ''}</small></h2><div class="ct-wrap">${fc}</div></section>`
-      + `<details class="card ct-fold"><summary><h2>수주 이행 흐름 <small>${cnt}</small></h2></summary>${flow('G', '도금')}${flow('C', '컬러')}</details>`
-      + (exc.length ? `<details class="card ct-fold"><summary><h2>자료 신뢰성 예외 <small>${exc.length}종 · 판정 불가 ${nd.length}건</small></h2></summary><ul class="ct-ul">${exc.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></details>` : '');
+      + `<div class="ct-2c"><section class="card"><h2>우선 조치 10건 <small>납기 지연 예상 → 마감 빠른 순</small></h2>${actTbl}</section><section class="card"><h2>라인별 진도 <small>월 누계</small></h2>${procHtml}</section></div>`
+      + `<section class="card"><h2>${per === 1 ? '오늘·내일' : per === 7 ? '7일' : '30일'} 생산 계획 <small>계획량 · 생산 필요일이 그 기간인 주문${per === 30 ? ' · 주 단위' : ''}</small></h2><div class="ct-wrap">${fc}</div></section>`
+      + `<details class="card ct-fold"><summary><h2>주문 진행 현황 <small>${cnt}</small></h2></summary>${flow('G', '도금')}${flow('C', '컬러')}</details>`
+      + (exc.length ? `<details class="card ct-fold"><summary><h2>자료 확인 필요 <small>${exc.length}종 · ${nd.length}건</small></h2></summary><ul class="ct-ul">${exc.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></details>` : '');
 
     const open1 = (a) => {
       if (a.os) {
         const os = a.os.slice().sort(CT.riskSort);
-        CT.panel(`<p class="ct-note">${esc(a.dept || '')} · 마감 ${md(a.last) || '-'} · <a href="ct_orders.html#risk">수주·납기에서 보기</a></p><table class="ct-t"><thead><tr><th>위험</th><th>주문</th><th>이행</th><th class="r">잔량</th><th>마감</th></tr></thead><tbody>${os.map((o, j) => `<tr class="ck" tabindex="0" data-j="${j}"><td>${CT.badge(o.risk)}</td><td class="id">${esc(o.id)}<small>${esc(o.item)}</small></td><td>${CT.fulBadge(o.ful)}</td><td class="r">${n1(o.remT)}</td><td class="nw">${md(o.last) || '-'}</td></tr>`).join('')}</tbody></table>`, `${a.type} · ${a.grp || ''}`,
+        CT.panel(`<p class="ct-note">${esc(a.dept || '')} · 마감 ${md(a.last) || '-'} · <a href="ct_orders.html#risk">수주·납기에서 보기</a></p><table class="ct-t"><thead><tr><th>문제</th><th>주문</th><th>진행 단계</th><th class="r">잔량</th><th>마감</th></tr></thead><tbody>${os.map((o, j) => `<tr class="ck" tabindex="0" data-j="${j}"><td class="nw">${CT.badge(o)}</td><td class="id">${esc(o.id)}<small>${esc(o.item)}</small></td><td>${CT.fulBadge(o.ful)}</td><td class="r">${n1(o.remT)}</td><td class="nw">${md(o.last) || '-'}</td></tr>`).join('')}</tbody></table>`, `${a.type} · ${a.grp || ''}`,
           (p) => { p.querySelectorAll('tr.ck').forEach((r) => r.onclick = () => { const o = os[+r.dataset.j]; CT.panel(CT.orderDetail(o), o.id); }); CT.keyRows(p); });
       } else if (a.href) location.href = a.href;
     };

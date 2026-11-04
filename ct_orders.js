@@ -56,9 +56,9 @@
     const s = sorter(F.sk, F.dir, (o) => o.remT || 0);
     return F.by ? A.sort((a, b) => (a.grp < b.grp ? -1 : a.grp > b.grp ? 1 : 0) || s(a, b)) : A.sort(s);
   }
-  const HEAD_S = () => `<thead><tr>${th('risk', '위험', F, 'sk s1')}${th('id', '주문번호', F, 'sk s2')}${th('grp', '판매그룹', F)}${th('item', '품명·규격', F)}${th('remT', '수주잔량(t)', F, 'r')}`
-    + `${th('mat', '소재 확보', F)}${th('eta', '생산완료 예상일', F)}${th('need', '생산요청일', F, '', '수출 출항 −1 · 내수 납기 −1 · 컬러 = 납기')}${th('due', '출하완료일', F, '', '납기(수출은 출항일 같이 표시)')}${th('ful', '이행 단계', F)}</tr></thead>`;
-  const rowS = (o) => `<tr class="ck" data-id="${esc(o.id)}"><td class="sk s1">${CT.badge(o.risk)}</td>${idCell(o, plName(o))}`
+  const HEAD_S = () => `<thead><tr>${th('risk', '상태', F, 'sk s1')}${th('id', '주문번호', F, 'sk s2')}${th('grp', '판매그룹', F)}${th('item', '품명·규격', F)}${th('remT', '수주잔량(t)', F, 'r')}`
+    + `${th('mat', '소재 확보', F)}${th('eta', '생산 완료 예정일', F)}${th('need', '생산요청일', F, '', '수출 출항 −1 · 내수 납기 −1 · 컬러 = 납기')}${th('due', '출하완료일', F, '', '납기(수출은 출항일 같이 표시)')}${th('ful', '진행 단계', F)}</tr></thead>`;
+  const rowS = (o) => `<tr class="ck" data-id="${esc(o.id)}"><td class="sk s1">${CT.badge(o)}</td>${idCell(o, plName(o))}`
     + `<td>${esc(o.grp)}${o.grpEst ? '<small>추정</small>' : ''}</td><td class="w">${esc(o.item || '-')}<small>${esc(o.size)}</small></td><td class="r"><b>${n1(o.remT)}</b></td>`
     + `<td>${matCell(o)}</td><td>${o.etaDone ? md(o.etaDone) : '<span class="mu">-</span>'}${o.etaSrc ? `<small>${esc(o.etaSrc)}</small>` : ''}</td>`
     + `<td>${md(o.needProd) || '<span class="mu">-</span>'}</td><td>${dueCell(o)}</td><td>${CT.fulBadge(o.ful)}</td></tr>`;
@@ -83,8 +83,8 @@
     const k = CT.kpis([
       { label: '수주잔량', v: n0(sum(act, (o) => o.remT)), unit: 't', sub: `${n0(act.length)}건 · 출하 완료 제외`, tone: 'info' },
       { label: '금주 생산완료 필요', v: n0(sum(wP, (o) => o.remT)), unit: 't', sub: `${n0(wP.length)}건 · ~${md(wk)} · 지난 것 포함`, tone: wP.length ? 'warn' : 'ok' },
-      { label: '금주 출하 필요(도금)', v: n0(sum(wS, (o) => o.unshipT)), unit: 't', sub: `${n0(wS.length)}건 · 출하 확인 불가 ${n0(wS.filter((o) => o.ful === '출하 확인 불가').length)}건 포함${wC.length ? `<br>컬러 ${n0(wC.length)}건 출하 확인 불가` : ''}`, tone: 'info' },
-      { label: '납기 위험', v: n0(risk.length), unit: '건', sub: `${n0(sum(risk, imp))}t`, tone: risk.length ? 'bad' : 'ok', href: '#risk' },
+      { label: '금주 출하 필요(도금)', v: n0(sum(wS, (o) => o.unshipT)), unit: 't', sub: `${n0(wS.length)}건 · 출하 실적 없음 ${n0(wS.filter((o) => o.ful === '출하 확인 불가').length)}건 포함${wC.length ? `<br>컬러 ${n0(wC.length)}건 출하 확인 불가` : ''}`, tone: 'info' },
+      { label: '납기 지연 예상', v: n0(risk.length), unit: '건', sub: `${n0(sum(risk, imp))}t`, tone: risk.length ? 'bad' : 'ok', href: '#risk' },
     ]);
     const grps = [...new Set(L.map((o) => o.grp))].sort();
     const sc = CT.scope(), plLock = sc !== 'all';
@@ -92,7 +92,7 @@
     const sel = (id, lab, cur, opts) => `<label class="co-sel"><span>${lab}</span><select id="${id}"${id === 'co-pl' && plLock ? ' disabled title="상단 범위(도금/컬러)를 따름"' : ''}><option value="">전체</option>${opts.map(([v, n]) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>`;
     return k + shipNote()
       + `<div class="co-f1">${sel('co-grp', '판매그룹', F.grp, grps.map((g) => [g, g]))}${sel('co-pl', '공정', plLock ? sc : F.pl, [['G', '도금'], ['C', '컬러']])}`
-      + `${sel('co-risk', '위험 상태', F.risk, CT.RISK.map((r) => [r, r]))}${sel('co-ful', '이행 단계', F.ful, CT.FUL.map((r) => [r, r]))}</div>`
+      + `${sel('co-risk', '상태', F.risk, CT.RISK.map((r) => [r, CT.rl(r)]))}${sel('co-ful', '진행 단계', F.ful, CT.FUL.map((r) => [r, CT.fl(r)]))}</div>`
       + `<div class="co-f2"><input id="co-q" type="search" placeholder="주문번호·품명·고객·담당" value="${esc(F.q)}" aria-label="주문 찾기">`
       + `<label class="nw"><input type="checkbox" id="co-done"${F.done ? ' checked' : ''}> 완료 포함</label><label class="nw"><input type="checkbox" id="co-by"${F.by ? ' checked' : ''}> 판매그룹 묶음</label><span class="cnt" id="co-cnt"></span></div>`
       + '<div class="co-tw" id="co-tbl"></div>';
@@ -109,12 +109,12 @@
   const riskAll = () => L.filter((o) => OPEN.includes(o.risk));
   function drawRisk() {
     const A = riskAll().filter((o) => !R.cause || o.cause === R.cause).sort(sorter(R.sk, R.dir, imp)), V = A.slice(0, R.lim);
-    const rows = V.map((o) => `<tr class="ck" data-id="${esc(o.id)}"><td class="sk s1">${CT.badge(o.risk)}</td>`
+    const rows = V.map((o) => `<tr class="ck" data-id="${esc(o.id)}"><td class="sk s1">${CT.badge(o)}</td>`
       + `<td>${o.last ? `<b>${md(o.last)}</b> <span class="lf">${CT.leftTxt(o)}</span>` : '<span class="mu">-</span>'}</td>${idCell(o, o.grp + ' · ' + plName(o))}`
       + `<td class="r"><b>${n1(imp(o))}</b></td><td>${md(o.needProd) || '<span class="mu">-</span>'}</td><td>${dueCell(o)}</td>`
-      + `<td>${esc(o.cause === 'data' ? (o.dataWhy || CT.CAUSE.data) : CT.CAUSE[o.cause] || '-')}</td><td>${esc(o.dept || '-')}</td><td><span class="co-act">미조치</span></td></tr>`).join('');
-    $('co-tbl').innerHTML = `<table class="ct-t co-t"><thead><tr>${th('risk', '위험 등급', R, 'sk s1')}${th('last', '마지막 조정 가능일', R, '', '이 날까지 조치해야 납기를 지킬 수 있는 마지막 날')}${th('id', '주문번호·판매그룹', R, 'sk s2')}`
-      + `${th('imp', '영향(t)', R, 'r', '생산 끝난 도금 = 미출하 · 그 외 = 잔량')}${th('need', '생산요청일', R)}${th('due', '출하완료일', R)}${th('cause', '위험 원인', R)}${th('dept', '담당 부서', R)}<th>조치 상태</th></tr></thead>`
+      + `<td>${esc(CT.why(o) || '-')}</td><td>${esc(o.dept || '-')}</td><td><span class="co-act">미조치</span></td></tr>`).join('');
+    $('co-tbl').innerHTML = `<table class="ct-t co-t"><thead><tr>${th('risk', '상태', R, 'sk s1')}${th('last', '조치 마감일', R, '', '이 날까지 조치해야 납기를 지킬 수 있는 마지막 날')}${th('id', '주문번호·판매그룹', R, 'sk s2')}`
+      + `${th('imp', '해당 물량(t)', R, 'r', '생산 끝난 도금 = 미출하 · 그 외 = 잔량')}${th('need', '생산요청일', R)}${th('due', '출하완료일', R)}${th('cause', '근거', R)}${th('dept', '조치 부서', R)}<th>조치 상태</th></tr></thead>`
       + `<tbody>${rows || '<tr><td colspan="9" class="mu">해당 주문이 없습니다.</td></tr>'}</tbody></table>` + more(A.length, R.lim);
     $('co-cnt').textContent = `${n0(A.length)}건 · ${n0(sum(A, imp))}t`;
     pinLeft($('co-tbl').querySelector('table')); bindSort($('co-tbl'), R, drawRisk); bindRows($('co-tbl'));
@@ -125,14 +125,14 @@
     const A = riskAll(), asOf = M.asOf;
     const red = A.filter((o) => o.risk === '위험'), warn = A.filter((o) => o.risk === '주의'), past = A.filter((o) => o.last && o.last < asOf && o.risk !== '판정 불가'), na = A.filter((o) => o.risk === '판정 불가');
     const k = CT.kpis([
-      { label: '위험', v: n0(red.length), unit: '건', sub: `주의 ${n0(warn.length)}건`, tone: red.length ? 'bad' : 'ok' },
-      { label: '영향 톤(위험+주의)', v: n0(sum(red.concat(warn), imp)), unit: 't', sub: `위험 ${n0(sum(red, imp))}t`, tone: red.length ? 'bad' : 'ok' },
-      { label: '조치 기한 경과', v: n0(past.length), unit: '건', sub: `${n0(sum(past, imp))}t · 마지막 조정일 지남`, tone: past.length ? 'bad' : 'ok' },
-      { label: '판정 불가', v: n0(na.length), unit: '건', sub: '자료 확인 필요', tone: na.length ? 'warn' : 'ok' },
+      { label: '납기 지연 예상', v: n0(red.length), unit: '건', sub: `점검 필요 ${n0(warn.length)}건`, tone: red.length ? 'bad' : 'ok' },
+      { label: '해당 물량', v: n0(sum(red.concat(warn), imp)), unit: 't', sub: `지연 예상 ${n0(sum(red, imp))}t · 점검 필요 포함`, tone: red.length ? 'bad' : 'ok' },
+      { label: '조치일 지남', v: n0(past.length), unit: '건', sub: `${n0(sum(past, imp))}t · 조치 마감일 지남`, tone: past.length ? 'bad' : 'ok' },
+      { label: '자료 확인 필요', v: n0(na.length), unit: '건', sub: '납기·주문량 없음 · 장기 미종결 · 출하 실적 없음', tone: na.length ? 'warn' : 'ok' },
     ]);
     const chips = [['', '전체', A.length], ...Object.keys(CT.CAUSE).map((c) => [c, CT.CAUSE[c], A.filter((o) => o.cause === c).length])]
       .map(([c, n, cnt]) => `<button type="button" class="co-chip" data-c="${c}" aria-pressed="${c === R.cause}"${cnt || !c ? '' : ' disabled'}>${esc(n)} <b>${n0(cnt)}</b></button>`).join('');
-    return k + shipNote() + `<div class="co-chips" role="group" aria-label="위험 원인">${chips}<span class="cnt" id="co-cnt"></span></div><div class="co-tw" id="co-tbl"></div>`;
+    return k + shipNote() + `<div class="co-chips" role="group" aria-label="원인">${chips}<span class="cnt" id="co-cnt"></span></div><div class="co-tw" id="co-tbl"></div>`;
   }
   function bindRisk() {
     document.querySelectorAll('.co-chip').forEach((b) => b.onclick = () => { R.cause = b.dataset.c; R.lim = 200; drawRisk(); });
@@ -147,16 +147,16 @@
   function drawTrackList() {
     const A = trackList();
     $('co-tl').innerHTML = A.length ? A.slice(0, 300).map((o) => `<li class="ck${o.id === T.id ? ' on' : ''}" data-id="${esc(o.id)}" role="option" aria-selected="${o.id === T.id}">`
-      + `<div class="a">${CT.badge(o.risk)}<b>${esc(o.id)}</b></div><div class="b">${esc(o.grp)} · ${esc(plName(o))}<span>${md(o.due) ? '출하 ' + md(o.due) : ''}</span></div></li>`).join('')
+      + `<div class="a">${CT.badge(o)}<b>${esc(o.id)}</b></div><div class="b">${esc(o.grp)} · ${esc(plName(o))}<span>${md(o.due) ? '출하 ' + md(o.due) : ''}</span></div></li>`).join('')
       : '<li class="mu">해당 주문이 없습니다.</li>';
-    $('co-tn').textContent = T.q ? `찾기 ${n0(A.length)}건` : `위험·주의·판정 불가 ${n0(A.length)}건`;
+    $('co-tn').textContent = T.q ? `찾기 ${n0(A.length)}건` : `지연 예상·점검·자료 확인 ${n0(A.length)}건`;
     $('co-tl').querySelectorAll('li.ck').forEach((li) => { li.onclick = () => pickTrack(li.dataset.id); });
     CT.keyRows($('co-tl'));
   }
   function drawTrackDetail() {
     const o = T.id && byId[T.id], box = $('co-td');
     if (!o) { box.innerHTML = '<p class="ct-note">왼쪽에서 주문을 고르거나 주문번호로 찾으세요.</p>'; return; }
-    box.innerHTML = `<div class="co-th"><div class="h1"><b>${esc(o.id)}</b>${CT.badge(o.risk)}${CT.fulBadge(o.ful)}</div>`
+    box.innerHTML = `<div class="co-th"><div class="h1"><b>${esc(o.id)}</b>${CT.badge(o)}${CT.fulBadge(o.ful)}</div>`
       + `<div class="h2"><span>${esc(o.grp)} · ${esc(plName(o))}</span><span>생산요청 <b>${md(o.needProd) || '-'}</b></span><span>출하완료 <b>${md(o.due) || '-'}</b>${o.pl === 'G' && o.exp && o.ship ? ` <small>출항 ${md(o.ship)}</small>` : ''}</span></div></div>`
       + `<div class="co-tdb">${CT.orderDetail(o)}</div>`;
   }
@@ -207,16 +207,16 @@
         + `<div class="dt"><b>${md(d)}</b><span>${wd(d)}</span>${today ? '<em>오늘</em>' : ''}</div>`
         + (c.P.length ? `<div class="mk p"><i>■</i>생산요청 <b>${c.P.length}</b>건 <span>${n0(sum(c.P, (o) => o.remT))}t</span></div>` : '')
         + (c.S.length ? `<div class="mk s"><i>▲</i>출하완료 <b>${c.S.length}</b>건 <span>${n0(sum(c.S, shipT))}t</span></div>` : '')
-        + (c.rk ? `<div class="mk r">위험 <b>${c.rk}</b>건</div>` : '') + '</div>';
+        + (c.rk ? `<div class="mk r">지연 예상 <b>${c.rk}</b>건</div>` : '') + '</div>';
     }
     return shipNote() + `<div class="co-calh"><button type="button" class="lnk" id="co-prev" aria-label="이전 주">◀ 이전 주</button><b>${md(s0)} ~ ${md(s1)}</b>`
       + `<button type="button" class="lnk" id="co-next" aria-label="다음 주">다음 주 ▶</button>${calOff ? '<button type="button" class="lnk" id="co-now">이번 주</button>' : ''}`
-      + '<span class="co-lg"><i class="p">■</i> 생산요청일 · <i class="s">▲</i> 출하완료일 · <i class="r">위험</i></span></div>'
+      + '<span class="co-lg"><i class="p">■</i> 생산요청일 · <i class="s">▲</i> 출하완료일 · <i class="r">지연 예상</i></span></div>'
       + `<div class="co-cal"><div class="co-wh">${['월', '화', '수', '목', '금', '토', '일'].map((x) => `<div>${x}</div>`).join('')}</div><div class="co-cg">${cells}</div></div>`;
   }
   function dayPanel(d) {
     const c = calDay(d);
-    const tbl = (A, t, tf) => (A.length ? `<h4>${t} ${A.length}건 · ${n0(sum(A, tf))}t</h4><table class="ct-t"><tbody>${A.sort(CT.riskSort).map((o) => `<tr class="ck" data-id="${esc(o.id)}"><td>${CT.badge(o.risk)}</td><td class="id">${esc(o.id)}<small>${esc(o.grp)} · ${esc(plName(o))}</small></td><td class="r">${n1(tf(o))}t</td></tr>`).join('')}</tbody></table>` : '');
+    const tbl = (A, t, tf) => (A.length ? `<h4>${t} ${A.length}건 · ${n0(sum(A, tf))}t</h4><table class="ct-t"><tbody>${A.sort(CT.riskSort).map((o) => `<tr class="ck" data-id="${esc(o.id)}"><td>${CT.badge(o)}</td><td class="id">${esc(o.id)}<small>${esc(o.grp)} · ${esc(plName(o))}</small></td><td class="r">${n1(tf(o))}t</td></tr>`).join('')}</tbody></table>` : '');
     CT.panel(tbl(c.P, '■ 생산요청', (o) => o.remT) + tbl(c.S, '▲ 출하완료', shipT), `${md(d)}(${wd(d)}) 주문`, (p) => {
       p.querySelectorAll('tr.ck').forEach((tr) => { tr.onclick = () => { const o = byId[tr.dataset.id]; if (o) CT.panel(CT.orderDetail(o), o.id); }; });
     });
@@ -244,7 +244,7 @@
     const body = v === 'risk' ? viewRisk() : v === 'track' ? viewTrack() : v === 'cal' ? viewCal() : viewStatus();
     $('ct-main').innerHTML = basis + `<section class="card co-card co-${v}" id="co-body">${body}</section>`;
     ({ status: bindStatus, risk: bindRisk, track: bindTrack, cal: bindCal })[v]();
-    document.title = `${({ status: '수주 현황', risk: '납기 위험', track: '주문 추적', cal: '납기 캘린더' })[v]} · 수주·납기`;
+    document.title = `${({ status: '수주 현황', risk: '납기 지연 예상', track: '주문 추적', cal: '납기 캘린더' })[v]} · 수주·납기`;
   }
   CT.onView(() => { if (D0) { CT.panel(null); render(D0); } });
   CT.boot(['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json'], render);

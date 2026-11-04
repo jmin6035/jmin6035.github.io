@@ -29,15 +29,15 @@
     const pr = Object.entries(pf).filter(([g]) => CT.inScope(/^컬러|^수요/.test(g) ? 'C' : 'G')).sort((a, b) => b[1].t - a[1].t);
     if (pr.length) {
       const tot = pr.reduce((a, [, x]) => [a[0] + x.ok, a[1] + x.known], [0, 0]), p = pc(tot[0], tot[1]);
-      cards.push(card('수주 이행', `최근 2주 생산 · 생산 필요일 안 완료 · ${md(cg.perf.from)}~`, big(p, tone(p), `${n0(tot[0])} / ${n0(tot[1])}t`)
+      cards.push(card('납기 내 생산', `최근 2주 생산 · 생산 필요일 안 완료 · ${md(cg.perf.from)}~`, big(p, tone(p), `${n0(tot[0])} / ${n0(tot[1])}t`)
         + tbl(['판매그룹', '생산(t)', '기한 안(t)', '준수율'], pr.map(([g, x]) => { const q = pc(x.ok, x.known); return `<tr><td class="id">${esc(CT.grpName(g))}</td><td class="r">${n0(x.t)}</td><td class="r">${n0(x.ok)}</td><td class="r"><b class="${tone(q)}">${q}%</b></td></tr>`; }))));
       const worst = pr.filter(([, x]) => x.known >= 50).sort((a, b) => a[1].ok / a[1].known - b[1].ok / b[1].known)[0];
       if (worst) {
         const cz = M.all.filter((o) => o.grp === CT.grpName(worst[0]) && o.risk === '위험'), cc = {};
         cz.forEach((o) => { cc[o.cause] = (cc[o.cause] || 0) + (o.remT || 0); });
         const top = Object.entries(cc).sort((a, b) => b[1] - a[1])[0];
-        why.push(['수주 이행', `${CT.grpName(worst[0])} ${pc(worst[1].ok, worst[1].known)}% 가장 낮음`, top ? 'rel' : 'chk',
-          top ? `지금 같은 그룹 위험 주문의 주원인 ${CT.CAUSE[top[0]]} ${n0(top[1])}t — 현재 판정이라 지난 2주 미준수의 직접 원인은 아님` : '같은 그룹 위험 주문 없음 — 미준수 주문별 지연 사유 자료 없음']);
+        why.push(['납기 내 생산', `${CT.grpName(worst[0])} ${pc(worst[1].ok, worst[1].known)}% 가장 낮음`, top ? 'rel' : 'chk',
+          top ? `지금 같은 그룹 지연 예상 주문의 주원인 ${CT.CAUSE[top[0]]} ${n0(top[1])}t — 지금 상태 기준이라 지난 2주 미준수의 직접 원인은 아님` : '같은 그룹 지연 예상 주문 없음 — 미준수 주문별 지연 사유 자료 없음']);
       }
     }
     // ② 생산계획(도금: 그날 아침 계획 대비)
@@ -45,7 +45,7 @@
     if (acc.length) {
       const roll = P.roll, p = roll ? pc(roll.actual, roll.plan) : null;
       cards.push(card('생산계획 정확도', `그날 아침 계획 대비 실적 · 최근 ${acc[0][1].days}일`, (roll ? big(p, tone(p, 98, 90), `도금 10/1~${md(roll.asOf)} 실적 ${n0(roll.actual)} / 계획 ${n0(roll.plan)}t`) : '')
-        + tbl(['라인', '계획(t)', '실적(t)', '편차', '하루 오차', '미달 일수'], acc.map(([l, x]) => `<tr><td class="id">${esc(l)}</td><td class="r">${n0(x.plan)}</td><td class="r">${n0(x.actual)}</td><td class="r"><b class="${Math.abs(x.bias) <= 5 ? 'pos' : Math.abs(x.bias) <= 15 ? 'wrn' : 'neg'}">${x.bias >= 0 ? '+' : ''}${n1(x.bias)}%</b></td><td class="r">${n1(x.mae)}%</td><td class="r">${x.under}일</td></tr>`))));
+        + tbl(['라인', '계획(t)', '실적(t)', '차이', '하루 오차', '미달 일수'], acc.map(([l, x]) => `<tr><td class="id">${esc(l)}</td><td class="r">${n0(x.plan)}</td><td class="r">${n0(x.actual)}</td><td class="r"><b class="${Math.abs(x.bias) <= 5 ? 'pos' : Math.abs(x.bias) <= 15 ? 'wrn' : 'neg'}">${x.bias >= 0 ? '+' : ''}${n1(x.bias)}%</b></td><td class="r">${n1(x.mae)}%</td><td class="r">${x.under}일</td></tr>`))));
       // 라인별: 미달이 큰 날에 MES 휴지 기록이 있으면 확인된 원인, 없으면 추가 확인 필요(편차 큰 라인의 휴지를 원인으로 단정하지 않음)
       for (const [l, x] of acc) {
         const H = (GA.accHist || []).filter((a) => a[1] === l && a[3] < a[2] * 0.9);   // 계획의 90% 미만인 날
@@ -115,9 +115,9 @@
     const ks = Object.keys(LV);
     const rows = A.why.slice().sort((a, b) => ks.indexOf(a[2]) - ks.indexOf(b[2]));
     const met = [...new Set(rows.map((w) => w[0]))];
-    return `<section class="card"><h2>편차 원인 <small>근거 등급별</small></h2>`
+    return `<section class="card"><h2>미달 원인 <small>근거 확인 정도별</small></h2>`
       + `<div class="pf-lv">${ks.map((k) => `<span class="pf-l ${LV[k][1]}">${LV[k][0]} <b>${n(k)}</b></span>`).join('')}<span class="sub">확인된 원인 = MES 휴지코드·입고 이력 근거 · 연관 가능 = 같은 시기 관찰 · 추가 확인 = 근거 없음</span></div>`
-      + met.map((mt) => `<h3 class="pf-h">${esc(mt)}</h3><div class="ct-wrap"><table class="ct-t pf-t"><thead><tr><th>편차</th><th>근거 등급</th><th>근거</th></tr></thead><tbody>${rows.filter((w) => w[0] === mt).map((w) => `<tr><td class="w1"><b>${esc(w[1])}</b></td><td><span class="pf-l ${LV[w[2]][1]}">${LV[w[2]][0]}</span></td><td class="w">${esc(w[3])}</td></tr>`).join('')}</tbody></table></div>`).join('')
-      + (rows.length ? '' : '<p class="ct-note">편차 없음</p>') + '</section>';
+      + met.map((mt) => `<h3 class="pf-h">${esc(mt)}</h3><div class="ct-wrap"><table class="ct-t pf-t"><thead><tr><th>차이</th><th>근거 확인</th><th>근거</th></tr></thead><tbody>${rows.filter((w) => w[0] === mt).map((w) => `<tr><td class="w1"><b>${esc(w[1])}</b></td><td><span class="pf-l ${LV[w[2]][1]}">${LV[w[2]][0]}</span></td><td class="w">${esc(w[3])}</td></tr>`).join('')}</tbody></table></div>`).join('')
+      + (rows.length ? '' : '<p class="ct-note">차이 없음</p>') + '</section>';
   }
 })();

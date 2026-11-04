@@ -86,7 +86,7 @@
         else if (s === 'down') body = `<span class="st">${full ? '' : '계획 휴지'}</span>`;
         else if (s === 'unp') body = '<span class="st">비계획 휴지</span><small>실적 0</small>';
         else body = '<span class="st">자료 없음</span>';
-        return `<td class="${cls}" data-k="${l}|${d}" tabindex="0">${body}${c.ev.length ? `<span class="ev">${esc(c.ev[0])}</span>` : ''}${rk.length ? `<i class="rk" title="납기 위험 주문 ${rk.length}건">${rk.length}</i>` : ''}</td>`;
+        return `<td class="${cls}" data-k="${l}|${d}" tabindex="0">${body}${c.ev.length ? `<span class="ev">${esc(c.ev[0])}</span>` : ''}${rk.length ? `<i class="rk" title="납기 지연 예상 주문 ${rk.length}건">${rk.length}</i>` : ''}</td>`;
       }).join('');
       return `<tr><th class="ln">${l}</th>${tds}<td class="r tot">${n0(sum)}</td></tr>`;
     };
@@ -98,9 +98,9 @@
       { label: '계획 생산량', v: n0(sumT), unit: 't', tone: 'info', sub: lbl },
       { label: '가용 능력(오늘 이후)', v: sumCap > 0 ? n0(sumCap) : '자료 없음', unit: sumCap > 0 ? 't' : '', tone: 'info', sub: capMiss ? `능력 계산 못 한 라인·일 ${capMiss}` : '' },
       { label: '휴지', v: idle, unit: '라인·일', tone: idle ? 'warn' : 'ok', sub: '계획 + 비계획' },
-      { label: '위험 주문', v: risk.size, unit: '건', tone: risk.size ? 'bad' : 'ok', sub: '이 기간 생산 필요일' },
+      { label: '지연 예상 주문', v: risk.size, unit: '건', tone: risk.size ? 'bad' : 'ok', sub: '이 기간 생산 필요일' },
     ]);
-    const lg = '<p class="ct-note lgd">' + [['plan', '계획 생산'], ['act', '실적 생산'], ['down', '계획 휴지'], ['stop', '종일 정지'], ['unp', '비계획 휴지'], ['nod', '자료 없음'], ['mc', 'M/C']].map(([c, t]) => `<span><i class="lg ${c}"></i>${t}</span>`).join('') + '<span><i class="rk">n</i>납기 위험 주문</span></p>';
+    const lg = '<p class="ct-note lgd">' + [['plan', '계획 생산'], ['act', '실적 생산'], ['down', '계획 휴지'], ['stop', '종일 정지'], ['unp', '비계획 휴지'], ['nod', '자료 없음'], ['mc', 'M/C']].map(([c, t]) => `<span><i class="lg ${c}"></i>${t}</span>`).join('') + '<span><i class="rk">n</i>납기 지연 예상 주문</span></p>';
     return kp + `<section class="card"><div class="hd"><h2>통합 생산일정</h2>${nav}${CT.tabs('pl-span', [['7', '7일'], ['14', '14일'], ['m', '월간']], String(span))}</div>${tbl}${lg}</section>`;
   }
 
@@ -113,7 +113,7 @@
       + (c.ev.length ? `<div class="ct-kv"><span>가동</span><b>${c.ev.map(esc).join(' · ')}</b></div>` : '')
       + (X.cap(l, d) != null ? `<div class="ct-kv"><span>능력(추정)</span><b>${n0(X.cap(l, d))}t</b></div>` : '')
       + (items.length ? `<h4>${LG.includes(l) ? '강종 · 판매그룹' : '판매그룹'}</h4>${items.map(([g, t]) => `<div class="ct-kv"><span>${esc(g)}</span><b>${n1(t)}t</b></div>`).join('')}` : '')
-      + `<h4>이날 생산 필요 주문 ${os.length}건</h4>` + (os.length ? `<table class="ct-t">${os.map((o, i) => `<tr class="ck" data-i="${i}"><td>${CT.badge(o.risk)}</td><td class="id">${esc(o.id)}<small>${esc(o.grp)}</small></td><td class="r">${n1(o.remT)}t</td></tr>`).join('')}</table>` : '<p class="ct-note">없음</p>');
+      + `<h4>이날 생산 필요 주문 ${os.length}건</h4>` + (os.length ? `<table class="ct-t">${os.map((o, i) => `<tr class="ck" data-i="${i}"><td>${CT.badge(o)}</td><td class="id">${esc(o.id)}<small>${esc(o.grp)}</small></td><td class="r">${n1(o.remT)}t</td></tr>`).join('')}</table>` : '<p class="ct-note">없음</p>');
     CT.panel(html, `${l} · ${md(d)}(${WD[wd(d)]})`, (p) => p.querySelectorAll('tr.ck').forEach((tr) => tr.onclick = () => { const o = os[+tr.dataset.i]; CT.panel(CT.orderDetail(o), o.id); }));
   }
 
@@ -133,7 +133,7 @@
       return { l, w, need, cap, over, aff };
     });
     const tone = (r) => (r == null ? '' : r > 1.005 ? 'bad' : r >= 0.95 ? 'warn' : 'ok');   // 컬러는 편성이 하루를 꽉 채워 100% 가 보통 → 병목 = 100% 초과
-    const sumT = `<div class="ct-wrap"><table class="ct-t ls"><thead><tr><th>라인</th><th class="r">필요 생산량</th><th class="r">가용 능력</th><th class="r">부하율</th><th class="r">초과량</th><th class="r">영향 주문</th></tr></thead><tbody>`
+    const sumT = `<div class="ct-wrap"><table class="ct-t ls"><thead><tr><th>라인</th><th class="r">필요 생산량</th><th class="r">가용 능력</th><th class="r">부하율</th><th class="r">초과량</th><th class="r">해당 주문</th></tr></thead><tbody>`
       + R.map((x) => { const r = x.cap ? x.need / x.cap : null; return `<tr class="ck" data-l="${x.l}"><td class="id">${x.l}</td><td class="r">${n0(x.need)}t</td><td class="r">${x.cap ? n0(x.cap) + 't' : '<span class="sub">자료 없음</span>'}</td>`
         + `<td class="r">${r == null ? '<span class="sub">-</span>' : `<b class="${tone(r)}">${Math.round(r * 100)}%</b>`}</td><td class="r">${x.over >= 1 ? `<b class="bad">${n0(x.over)}t</b>` : '0'}</td><td class="r">${x.aff.length ? `<b class="bad">${x.aff.length}</b>건` : '0'}</td></tr>`; }).join('')
       + '</tbody></table></div>';
@@ -177,7 +177,7 @@
     }
     mv.sort((p, q) => (p.dd == null) - (q.dd == null) || (q.dd ?? 0) - (p.dd ?? 0));
     const late = (m) => m.y && m.due && m.y > m.due;
-    const mvT = mv.length ? `<div class="ct-wrap"><table class="ct-t mv"><thead><tr><th>판매그룹</th><th>강종</th><th>마감</th><th>직전 완료</th><th>지금 완료</th><th class="r">변동</th><th>판정</th></tr></thead><tbody>${(mvAll ? mv : mv.slice(0, 30)).map((m) => `<tr><td>${esc(m.g)}</td><td>${esc(m.fam)}</td><td>${md(m.due)}</td><td>${m.x ? md(m.x) : '없음'}</td><td>${m.y ? md(m.y) : '빠짐'}</td>`
+    const mvT = mv.length ? `<div class="ct-wrap"><table class="ct-t mv"><thead><tr><th>판매그룹</th><th>강종</th><th>마감</th><th>직전 완료</th><th>지금 완료</th><th class="r">변동</th><th>상태</th></tr></thead><tbody>${(mvAll ? mv : mv.slice(0, 30)).map((m) => `<tr><td>${esc(m.g)}</td><td>${esc(m.fam)}</td><td>${md(m.due)}</td><td>${m.x ? md(m.x) : '없음'}</td><td>${m.y ? md(m.y) : '빠짐'}</td>`
       + `<td class="r">${m.dd == null ? '-' : `<b class="${m.dd > 0 ? 'up' : 'dn'}">${m.dd > 0 ? '+' : ''}${m.dd}일</b>`}</td><td>${m.dd == null ? `<span class="ct-b na">${m.y ? '새로 생김' : '계획에서 빠짐'}</span>` : late(m) ? '<span class="ct-b bad">지연</span>' : m.dd > 0 ? '<span class="ct-b warn">늦어짐</span>' : '<span class="ct-b ok">당겨짐</span>'}</td></tr>`).join('')}</tbody></table></div>${mv.length > 30 ? `<button type="button" class="more" id="mv-more">${mvAll ? '30개만' : `전체 ${mv.length}개`}</button>` : ''}` : '<p class="ct-note">완료일이 바뀐 묶음 없음</p>';
     const at = (s) => (s ? `${md(s)} ${String(s).slice(11, 16)}` : '-');
     const hd = `<div class="cmp-h"><span><small>직전</small><b>${at(A.savedAt)}</b><small>재계획 ${md(ta)}</small></span><span class="ar">→</span><span><small>지금</small><b>${at(B.savedAt)}</b><small>재계획 ${md(tb)}</small></span><span class="ct-b na">비교만 — 계획에 반영하지 않음</span></div>`;
@@ -208,7 +208,7 @@
     }
     if (v === 'load') document.querySelectorAll('table.ls tr.ck').forEach((tr) => tr.onclick = () => {
       const x = lr.R.find((r) => r.l === tr.dataset.l), os = x.aff.slice().sort(CT.riskSort);
-      CT.panel(`<h4>영향 주문 ${os.length}건 <small>8주 안 생산 필요 · 위험</small></h4>` + (os.length ? `<table class="ct-t">${os.map((o, i) => `<tr class="ck" data-i="${i}"><td class="id">${esc(o.id)}<small>${esc(o.grp)} · ${md(o.needProd)}</small></td><td class="r">${n1(o.remT)}t</td></tr>`).join('')}</table>` : '<p class="ct-note">없음</p>'),
+      CT.panel(`<h4>해당 주문 ${os.length}건 <small>8주 안 생산 필요 · 지연 예상</small></h4>` + (os.length ? `<table class="ct-t">${os.map((o, i) => `<tr class="ck" data-i="${i}"><td class="id">${esc(o.id)}<small>${esc(o.grp)} · ${md(o.needProd)}</small></td><td class="r">${n1(o.remT)}t</td></tr>`).join('')}</table>` : '<p class="ct-note">없음</p>'),
         `${x.l} 부하`, (p) => p.querySelectorAll('tr.ck').forEach((r) => r.onclick = () => { const o = os[+r.dataset.i]; CT.panel(CT.orderDetail(o), o.id); }));
     });
     const mm = $('mv-more'); if (mm) mm.onclick = () => { mvAll = !mvAll; render(D); };

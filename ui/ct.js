@@ -41,7 +41,25 @@
   /* ---------- 주문 모델 ---------- */
   const GN = { 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차강판', 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발' };
   CT.grpName = (g) => GN[g] || g || '판매그룹 모름';
-  CT.CAUSE = { mat: '소재 미확보', plate: '도금 지연 → 컬러', cap: '생산 능력·순서', ship: '출하 지연', data: '판정 불가(자료)' };
+  CT.CAUSE = { mat: '소재 입고 늦음', plate: '자가재(도금) 늦음', cap: '생산 편성 늦음', ship: '출하 늦음', data: '자료 확인' };
+  /* 화면 표시 말(11/4 사용자 '원래 우리가 쓰는 말투로 · 위험이 뭐가 위험하다는 거냐') — 내부 값(o.risk·o.ful)은 그대로, 보이는 글자만 바꿈 */
+  CT.RL = { 위험: '납기 지연 예상', 주의: '점검 필요', '판정 불가': '자료 확인 필요', 정상: '정상', 완료: '완료' };
+  CT.FL = { '출하 확인 불가': '출하 실적 없음' };
+  CT.rl = (r) => CT.RL[r] || r;
+  CT.fl = (f) => CT.FL[f] || f;
+  /* 주문 한 건이 '무엇이' 문제인지 */
+  CT.tag = (o) => {
+    if (!o || o.risk === '정상') return '정상';
+    if (o.risk === '판정 불가') return '자료 확인';
+    if (o.risk === '주의') {
+      if (o.cause === 'mat') return o.matSt === '미발주' ? '소재 발주 필요' : o.matSt === '입고 대기' ? '소재 입고 대기' : '소재 입고 확인';
+      if (o.cause === 'plate') return '자가재(도금) 확인';
+      return '점검 필요';
+    }
+    if (o.cause === 'mat' && o.matSt === '미발주') return '소재 미발주';
+    if (o.cause === 'mat' && o.pl === 'C' && o.matSt === '미확보') return '소재 없음';
+    return CT.CAUSE[o.cause] || '납기 지연 예상';
+  };
   CT.DEPT = { mat: '구매(소재)', plate: '도금 생산', cap: '생산기획', ship: '물류·출하', data: '수주(자료 확인)' };
   CT.RISK = ['위험', '주의', '판정 불가', '정상'];
   CT.FUL = ['생산 전', '생산 중', '출하 확인 불가', '부분 출하', '출하 완료'];
@@ -98,7 +116,7 @@
       { k: '자가재(도금)', st: !x.self ? 'na' : selfG ? (selfG.ful !== '생산 전' && selfG.ful !== '생산 중' ? 'done' : 'cur') : 'todo', note: x.self ? (selfG ? `${selfG.ful} · ${CT.n1(selfG.prodT)}/${CT.n1(selfG.ordT)}t` : '도금 주문 정보 없음') : '해당 없음' },
       { k: '작업 편성', st: x.woT ? 'done' : x.sche ? 'cur' : 'todo', d: x.sche, plan: x.due, note: x.woT ? `지시 ${CT.n1(x.woT)}t` : x.can ? `가동가능 ${CT.md(x.can)}` : '' },
       { k: '컬러 생산', st: x.prodT >= x.ordT - 0.5 ? 'done' : x.prodT ? 'cur' : 'todo', d: x.sche, plan: x.due, note: `${CT.n1(x.prodT)} / ${CT.n1(x.ordT)}t` },
-      { k: '출하', st: 'na', note: '출하 확인 불가 — 컬러 주문별 출하 자료 없음' },
+      { k: '출하', st: 'na', note: '출하 실적 없음 — 컬러 주문별 출하 자료 없음' },
     ];
     o.matSt = x.st === '매치 완료' ? '확보' : x.st === '소재 있음' ? '재고 있음' : x.st === '입고 대기' ? '입고 대기' : '미확보';
     o.prodSt = x.prodT ? '생산 중' : x.woT ? '지시됨' : '생산 전';
@@ -135,7 +153,18 @@
 
   /* ---------- 화면 부품 ---------- */
   const RC = { 위험: 'bad', 주의: 'warn', '판정 불가': 'na', 정상: 'ok', 완료: 'done' };
-  CT.badge = (r) => `<span class="ct-b ${RC[r] || 'na'}">${esc(r)}</span>`;
+  CT.badge = (x) => (x && typeof x === 'object' ? `<span class="ct-b ${RC[x.risk] || 'na'}" title="${esc(x.dataWhy || '')}">${esc(CT.tag(x))}</span>` : `<span class="ct-b ${RC[x] || 'na'}">${esc(CT.rl(x))}</span>`);
+  /* 왜 그런지 한 줄(날짜 근거) */
+  CT.why = (o) => {
+    const d = CT.md;
+    if (o.cause === 'data') return o.dataWhy || '자료 확인';
+    if (o.cause === 'mat') return o.pl === 'G' ? `입고 필요 ${d(o.needIn || o.last) || '-'} · ${o.matSt}` : `소재 ${o.matSt} · 납기 ${d(o.due)}`;
+    if (o.cause === 'cap') return `편성 ${d(o.sche) || '-'} > 생산 필요 ${d(o.needProd) || '-'}`;
+    if (o.cause === 'plate') return `자가재 ${o.self || ''} 진행 늦음`;
+    if (o.cause === 'ship') return `납기 ${d(o.due)} 지남 · 미출하 ${CT.n1(o.unshipT || 0)}t`;
+    return '';
+  };
+  CT.badgeT = (r, txt) => `<span class="ct-b ${RC[r] || 'na'}">${esc(txt)}</span>`;   // 등급 색 + 무엇이 문제인지 글자
   CT.leftTxt = (o) => (o.left == null ? '' : o.left < 0 ? `<b class="ct-neg">${-o.left}일 지남</b>` : o.left === 0 ? '<b class="ct-neg">오늘</b>' : `D-${o.left}`);
   /* 기준일 띠: [{name, at, kind: 실적|확정계획|재계획|추정, ok}] */
   CT.basis = (items) => `<div class="ct-basis">${items.filter(Boolean).map((x) => `<span class="ct-bs ${x.ok === false ? 'bad' : ''}" title="${esc(x.tip || '')}"><b>${esc(x.name)}</b> ${esc(x.at ? CT.md(x.at) + (String(x.at).length > 10 ? ' ' + String(x.at).slice(11, 16) : '') : '없음')}${x.kind ? ` <i>${esc(x.kind)}</i>` : ''}</span>`).join('')}</div>`;
@@ -169,7 +198,7 @@
   /* 이슈 id·상태(06 이슈·조정과 공유): 키 'ord|cause|pl|grp' · 'mat|소재키' · 'exc|문구', 상태 이벤트 {t:'issue', id, st} */
   CT.issueId = (s) => { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return 'I-' + (h >>> 0).toString(36).toUpperCase().slice(0, 6); };
   CT.issueState = (evs) => { const m = {}; for (const e of evs || []) if (e && e.t === 'issue' && e.id && e.st) m[e.id] = e.st; return m; };
-  CT.fulBadge = (f) => `<span class="ct-f ${{ '출하 완료': 'ok', '부분 출하': 'warn', '출하 확인 불가': 'na', '생산 중': 'mid', '생산 전': 'pre' }[f] || 'na'}">${esc(f)}</span>`;
+  CT.fulBadge = (f) => `<span class="ct-f ${{ '출하 완료': 'ok', '부분 출하': 'warn', '출하 확인 불가': 'na', '생산 중': 'mid', '생산 전': 'pre' }[f] || 'na'}">${esc(CT.fl(f))}</span>`;
   /* 공유 저장(결정 기록과 같은 저장소 — 암호화한 이벤트 추가만): 이슈 상태·조치 이력 */
   const API = 'https://gatcqxrzaonjsixajrwd.supabase.co/rest/v1/cgl_decisions', KEY = 'sb_publishable_BlfAhxz_v3yg6iJw_nbRaA_YMFAOS7K';
   const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
@@ -193,10 +222,10 @@
   CT.orderDetail = (o) => {
     const kv = (k, v) => (v == null || v === '' ? '' : `<div class="ct-kv"><span>${esc(k)}</span><b>${v}</b></div>`);
     const st = { done: '완료', cur: '진행', todo: '대기', na: '해당 없음' };
-    return `<div class="ct-pd-h">${CT.badge(o.risk)} ${CT.fulBadge(o.ful)} ${o.cause ? `<span class="ct-cause">${esc(o.dataWhy || CT.CAUSE[o.cause])}</span>` : ''}</div>`
+    return `<div class="ct-pd-h">${CT.badge(o)} ${CT.fulBadge(o.ful)} ${o.cause ? `<span class="ct-cause">${esc(CT.why(o))}</span>` : ''}</div>`
       + kv('판매그룹', esc(o.grp) + (o.grpEst ? ' <small>(추정)</small>' : '')) + kv('공정·라인', `${o.pl === 'G' ? '도금' : '컬러'} ${esc(o.line || '')}`) + kv('품목', esc(o.item)) + kv('두께×폭', esc(o.size))
       + kv('고객사', esc(o.cus || '')) + kv('담당', esc(o.man || '')) + kv('수주량', CT.n1(o.ordT) + 't') + kv('생산', CT.n1(o.prodT) + 't') + kv('잔량', CT.n1(o.remT) + 't')
-      + kv('미출하', o.unshipT == null ? '확인 불가' : CT.n1(o.unshipT) + 't') + kv('예상 완료', o.etaDone ? `${CT.md(o.etaDone)} <small>${esc(o.etaSrc || '')}</small>` : '') + kv('납기', CT.md(o.due)) + kv(o.pl === 'G' ? '출항·입항' : '', o.ship ? CT.md(o.ship) : '') + kv('생산 필요일', CT.md(o.needProd)) + kv('마지막 조정일', o.last ? `${CT.md(o.last)} ${CT.leftTxt(o)}` : '') + kv('담당 부서', esc(o.dept || ''))
-      + `<h4>주문 추적</h4><ol class="ct-tl">${o.steps.map((s) => `<li class="${s.st}"><div class="t"><b>${esc(s.k)}</b><span>${s.st === 'na' && /출하/.test(s.k) ? '확인 불가' : st[s.st]}</span></div><div class="d">${s.d ? `실제·예정 ${CT.md(s.d)}` : ''}${s.plan ? ` · 필요 ${CT.md(s.plan)}` : ''}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</li>`).join('')}</ol>`;
+      + kv('미출하', o.unshipT == null ? '출하 실적 없음' : CT.n1(o.unshipT) + 't') + kv('생산 완료 예정', o.etaDone ? `${CT.md(o.etaDone)} <small>${esc(o.etaSrc || '')}</small>` : '') + kv('납기', CT.md(o.due)) + kv(o.pl === 'G' ? '출항·입항' : '', o.ship ? CT.md(o.ship) : '') + kv('생산 필요일', CT.md(o.needProd)) + kv('조치 마감일', o.last ? `${CT.md(o.last)} ${CT.leftTxt(o)}` : '') + kv('조치 부서', esc(o.dept || ''))
+      + `<h4>주문 추적</h4><ol class="ct-tl">${o.steps.map((s) => `<li class="${s.st}"><div class="t"><b>${esc(s.k)}</b><span>${s.st === 'na' && /출하/.test(s.k) ? '실적 없음' : st[s.st]}</span></div><div class="d">${s.d ? `실제·예정 ${CT.md(s.d)}` : ''}${s.plan ? ` · 필요 ${CT.md(s.plan)}` : ''}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</li>`).join('')}</ol>`;
   };
 })();

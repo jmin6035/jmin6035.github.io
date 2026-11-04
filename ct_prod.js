@@ -125,17 +125,17 @@
     const tot = loss.reduce((a, z) => [a[0] + z.h, a[1] + z.t], [0, 0]);
     return CT.basis([{ name: '도금 MES', at: X.asOfG, kind: '실적' }, lines.some((l) => l.pl === 'C') && { name: '컬러 MES', at: X.asOfC, kind: '실적' }])
       + card('라인 상태 <small>실시간 아님 · 최근 수집 자료 기준</small><span class="unit">톤 · 시간</span>', tbl)
-      + card(`휴지 유형별 손실 <small>최근 7일 · 합 ${n1(tot[0])}h · 추정 ${n0(tot[1])}t · 줄을 누르면 영향 가능 주문</small><span class="unit">시간 · 톤</span>`,
-        lr.length ? t([th('휴지 유형'), th('라인'), th('시간', 1), th('t/h', 1, '기준 기간 평균 시간당 생산'), th('추정 영향(t)', 1, '시간 × t/h')], lr) : '<p class="ct-note">기록 없음</p>');
+      + card(`휴지 유형별 손실 <small>최근 7일 · 합 ${n1(tot[0])}h · 추정 ${n0(tot[1])}t · 줄을 누르면 관련 주문</small><span class="unit">시간 · 톤</span>`,
+        lr.length ? t([th('휴지 유형'), th('라인'), th('시간', 1), th('t/h', 1, '기준 기간 평균 시간당 생산'), th('추정 손실(t)', 1, '시간 × t/h')], lr) : '<p class="ct-note">기록 없음</p>');
   }
   function linePanel(X, line) {
     const l = X.lines.find((x) => x.line === line), to = CT.addD(X.M.asOf, 7);
     const O = X.M.all.filter((o) => o.line === line && !o.closed && o.remT > 0.5 && o.needProd && o.needProd <= to).sort((a, b) => String(a.needProd).localeCompare(String(b.needProd)));
     const st = []; days(l.asOfL, 7).reverse().forEach((d) => (X.stopsOn(l, d) || []).forEach((s) => st.push([d, s[2], s[1]])));
-    const html = `<div class="ct-kv"><span>영향 가능 주문</span><b>${O.length}건 · ${n0(O.reduce((a, o) => a + o.remT, 0))}t</b></div><div class="ct-kv"><span>기준</span><b>생산 필요일 ~${md(to)} · 미완료</b></div>`
-      + `<h4>영향 가능 주문</h4>${O.length ? `<table class="ct-t"><tbody>${O.slice(0, 60).map((o, i) => `<tr class="ck" data-o="${i}"><td>${CT.badge(o.risk)}</td><td class="id">${esc(o.id)}<small>${esc(o.grp)}</small></td><td class="r">${n1(o.remT)}t</td><td>${md(o.needProd)}</td></tr>`).join('')}</tbody></table>` : '<p class="ct-note">없음</p>'}`
+    const html = `<div class="ct-kv"><span>관련 주문</span><b>${O.length}건 · ${n0(O.reduce((a, o) => a + o.remT, 0))}t</b></div><div class="ct-kv"><span>기준</span><b>생산 필요일 ~${md(to)} · 미완료</b></div>`
+      + `<h4>관련 주문</h4>${O.length ? `<table class="ct-t"><tbody>${O.slice(0, 60).map((o, i) => `<tr class="ck" data-o="${i}"><td>${CT.badge(o)}</td><td class="id">${esc(o.id)}<small>${esc(o.grp)}</small></td><td class="r">${n1(o.remT)}t</td><td>${md(o.needProd)}</td></tr>`).join('')}</tbody></table>` : '<p class="ct-note">없음</p>'}`
       + `<h4>최근 7일 휴지</h4>${st.length ? `<table class="ct-t"><tbody>${st.slice(0, 40).map((s) => `<tr><td>${md(s[0])}</td><td class="w">${esc(s[1])}</td><td class="r">${n0(s[2])}분</td></tr>`).join('')}</tbody></table>` : '<p class="ct-note">기록 없음</p>'}`;
-    CT.panel(html, `${line} 영향 가능 주문`, (p) => p.querySelectorAll('tr[data-o]').forEach((r) => r.onclick = () => { const o = O[+r.dataset.o]; CT.panel(CT.orderDetail(o), o.id); }));
+    CT.panel(html, `${line} 관련 주문`, (p) => p.querySelectorAll('tr[data-o]').forEach((r) => r.onclick = () => { const o = O[+r.dataset.o]; CT.panel(CT.orderDetail(o), o.id); }));
   }
 
   /* #ship 출하 실적 */
@@ -157,7 +157,7 @@
       { label: `${+mon.slice(5)}월 출하계획`, v: n0(mP), unit: 't', tone: 'info', sub: `판생속보 ${md(P.sr && P.sr.asOf)}` },
       { label: '출하 실적(누계)', v: n0(mA), unit: 't', tone: 'info', sub: `월 진도 ${pc(mA, mP)}%` },
       { label: '일정 미달량', v: n0(short), unit: 't', tone: short >= 1 ? 'warn' : 'ok', sub: '그룹별 일정 누계 − 실적(미달만)' },
-      { label: '미출하 주문', v: n0(late.length), unit: '건', tone: late.length ? 'bad' : 'ok', sub: `도금 · 납기 경과 ${n0(late.reduce((a, o) => a + o.unshipT, 0))}t · 출하 확인 불가 ${n0(unk.length)}건${stale.length ? ` · 장기 미종결 ${n0(stale.length)}건 제외` : ''}` },
+      { label: '미출하 주문', v: n0(late.length), unit: '건', tone: late.length ? 'bad' : 'ok', sub: `도금 · 납기 경과 ${n0(late.reduce((a, o) => a + o.unshipT, 0))}t · 출하 실적 없음 ${n0(unk.length)}건${stale.length ? ` · 장기 미종결 ${n0(stale.length)}건 제외` : ''}` },
     ];
     const row = (s) => { const d = s.a - s.sched;
       return `<tr><td class="id">${esc(s.name)}</td><td class="r">${n0(s.month)}</td><td class="r">${n0(s.sched)}</td><td class="r"><b>${n0(s.a)}</b></td><td class="r ${d >= 0 ? 'pos' : 'neg'}">${sgn(d)}</td>`
@@ -170,13 +170,13 @@
     const to = CT.addD(asOf, 7);
     const L = G.filter((o) => !o.closed && o.due && ((o.due <= asOf && o.unshipT > 0.5) || (o.due <= to && o.risk === '위험'))).sort((a, b) => String(a.due).localeCompare(String(b.due)) || b.unshipT - a.unshipT);
     X.shipL = L;
-    const orow = (o) => `<tr class="ck" data-o="${L.indexOf(o)}"><td class="id">${esc(o.id)}<small>${esc(o.item)}</small></td><td>${esc(o.cus || '-')}</td><td><b class="${o.due < asOf ? 'neg' : ''}">${md(o.due)}</b></td><td>${CT.fulBadge(o.ful)}</td><td class="r"><b>${n1(o.unshipT)}</b></td><td>${CT.badge(o.risk)}</td></tr>`;
+    const orow = (o) => `<tr class="ck" data-o="${L.indexOf(o)}"><td class="id">${esc(o.id)}<small>${esc(o.item)}</small></td><td>${esc(o.cus || '-')}</td><td><b class="${o.due < asOf ? 'neg' : ''}">${md(o.due)}</b></td><td>${CT.fulBadge(o.ful)}</td><td class="r"><b>${n1(o.unshipT)}</b></td><td>${CT.badge(o)}</td></tr>`;
     const byG = [...new Set(L.map((o) => o.grp))].map((g) => [g, L.filter((o) => o.grp === g)]).sort((a, b) => b[1].length - a[1].length);
     const og = byG.map(([g, R], i) => `<details class="pp-g"${i ? "" : " open"}><summary><b>${esc(g)}</b><span>${R.length}건</span><span>미출하 ${n0(R.reduce((a, o) => a + o.unshipT, 0))}t</span>${R.filter((o) => o.ful === '출하 확인 불가').length ? `<span class="sub">확인 불가 ${R.filter((o) => o.ful === '출하 확인 불가').length}건</span>` : ''}</summary>`
-      + t([th('주문'), th('고객사'), th('납기'), th('이행'), th('미출하(t)', 1), th('위험')], R.slice(0, 30).map(orow)) + (R.length > 30 ? `<p class="ct-note">납기 빠른 30건 · 외 ${R.length - 30}건</p>` : '') + '</details>').join('');
+      + t([th('주문'), th('고객사'), th('납기'), th('진행 단계'), th('미출하(t)', 1), th('상태')], R.slice(0, 30).map(orow)) + (R.length > 30 ? `<p class="ct-note">납기 빠른 30건 · 외 ${R.length - 30}건</p>` : '') + '</details>').join('');
     return CT.basis([{ name: '판생속보', at: P.sr && P.sr.asOf, kind: '확정계획' }, { name: 'MES 출하', at: P.shipDay && P.shipDay.asOf, kind: '실적' }, { name: '주문 진도', at: asOf, kind: '실적' }])
       + card('출하 실적 <small>판매그룹 · 월 누계</small><span class="unit">톤</span>', CT.kpis(k) + tbl)
-      + `<div class="pp-2">${card(`미출하·지연 예상 주문 <small>도금 ${L.length}건 · 납기 경과 미출하 + 7일 안 위험 · 컬러는 주문별 출하 자료 없음</small><span class="unit">톤</span>`, L.length ? og : '<p class="ct-note">없음</p>')}`
+      + `<div class="pp-2">${card(`미출하·지연 예상 주문 <small>도금 ${L.length}건 · 납기 경과 미출하 + 7일 안 지연 예상 · 컬러는 주문별 출하 자료 없음</small><span class="unit">톤</span>`, L.length ? og : '<p class="ct-note">없음</p>')}`
       + `${card(`일별 출하 <small>${+mon.slice(5)}월 · 일별 계획 자료 없음</small><span class="unit">톤</span>`, ds.length ? t([th('일자'), ...S.map((s) => th(esc(s.key), 1)), th('계', 1)], dr) : '<p class="ct-note">자료 없음</p>')}</div>`;
   }
 
