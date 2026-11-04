@@ -129,15 +129,97 @@
     const stCell = (a) => `<span class="ct-new" data-id="${a.id}">${esc(ST[a.id] || '신규')}</span>`;
     const actTbl = top.length ? `<div class="ct-wrap"><table class="ct-t"><colgroup><col style="width:150px"><col><col style="width:84px"><col style="width:136px"><col style="width:108px"><col style="width:72px"></colgroup><thead><tr><th>무엇이 문제</th><th>대상</th><th class="r">해당 물량</th><th>조치 마감</th><th>조치 부서</th><th>진행</th></tr></thead><tbody>${top.map((a, i) => `<tr class="ck" tabindex="0" data-i="${i}"><td class="nw">${CT.badgeT(a.risk, a.type)}</td><td class="w">${esc(a.what)}</td><td class="r">${a.t == null ? '' : n0(a.t)}</td><td class="nw">${left(a.last)}</td><td class="nw">${esc(a.dept || '')}</td><td class="nw">${stCell(a)}</td></tr>`).join('')}</tbody></table></div>${acts.length > 10 ? `<p class="ct-note">상위 10건 / 전체 ${acts.length}건 · <a href="ct_issue.html#now">이슈·조정에서 전체 보기</a></p>` : ''}` : '<p class="ct-note">기간 안 조치 대상 없음</p>';
 
-    // ④ 공정별 상태(도금/컬러/소재/출하 같은 크기)
-    const rk = (pl) => open.filter((o) => o.pl === pl && o.risk === '위험').length;
-    const proc = [];
-    if (CT.inScope('G')) proc.push({ n: '도금', v: pct(cgA, cgP), u: '%', tone: tone(pct(cgA, cgP)), s: [`실적 ${n0(cgA)} / 계획 ${n0(cgP)}t`, `납기 지연 예상 ${rk('G')}건`, gl.some((x) => x.sched && x.actual < x.sched * 0.95) ? `미달 ${gl.filter((x) => x.sched && x.actual < x.sched * 0.95).map((x) => x.line).join('·')}` : '라인 미달 없음'], href: 'ct_prod.html#perf' });
-    if (CT.inScope('C')) proc.push({ n: '컬러', v: pct(ccA, ccP), u: '%', tone: tone(pct(ccA, ccP)), s: [`실적 ${n0(ccA)} / 계획 ${n0(ccP)}t`, `납기 지연 예상 ${rk('C')}건`, M.ccMissing.length ? `주문 자료 ${M.ccLines.join('·')}만` : '4개 라인 주문 반영'], href: 'ct_prod.html#perf' });
-    proc.push({ n: '소재', v: mSure.length, u: '개 확정', tone: mSure.length ? 'bad' : mExp.length ? 'warn' : 'ok', s: [`예상 ${mExp.length}개 · 마감 지남 ${mats.filter((m) => m.st === 'late').length}개`, `소재 원인 주문 ${matOrd.length}건`], href: 'ct_mat.html' });
-    const mGap = ship.reduce((a, x) => a + Math.max(0, (x.sched || 0) - (x.actual || 0)), 0), mBad = ship.filter((x) => (x.sched || 0) - (x.actual || 0) > 0.5);
-    proc.push({ n: '출하', v: n0(mGap), u: 't 미달', tone: mGap > 500 ? 'bad' : mGap > 0.5 ? 'warn' : 'ok', s: [mBad.length ? `미달 ${mBad.map((x) => x.name).join('·')}` : '일정 누계 충족', `출하 실적 없음 ${noShip.length}건`], href: 'ct_prod.html#ship' });
-    const procHtml = `<div class="ct-proc">${proc.map((x) => `<a class="ct-pc ${x.tone}" href="${x.href}"><div class="h"><b>${x.n}</b><span class="v">${x.v == null ? '-' : x.v}<small>${x.u}</small></span></div>${x.s.map((t) => `<div class="s">${esc(t)}</div>`).join('')}</a>`).join('')}</div>`;
+    // ④ 라인별 진도(11/5 사용자 '라인별 진도를 키우고 한눈에, 공장별 라인별로'): 공장 → 라인 카드(진도율 · 계획 대비 막대 · 일별 막대)
+    const ndays = ndM(asOf), mon = asOf.slice(0, 7);
+    const futG = {}; for (const r of L.rows || []) if (r[0] > (((L.replan || {}).t0) || '')) futG[`${r[1]}|${r[0]}`] = (futG[`${r[1]}|${r[0]}`] || 0) + (+r[4] || 0);
+    const colP = {}, colA = {}; for (const c of W.color || []) { const t = Object.values(c.g || {}).reduce((a, v) => a + v, 0); (c.act ? colA : colP)[`${c.l}|${c.d}`] = ((c.act ? colA : colP)[`${c.l}|${c.d}`] || 0) + t; }
+    const cdown = {}; for (const r of W.colorDown || []) if (r[2] !== 'test') cdown[`${r[1]}|${r[0]}`] = (cdown[`${r[1]}|${r[0]}`] || 0) + (+r[3] || 0);
+    const accAct = {}; for (const l of Object.keys(P.acc || {})) for (const r of (P.acc[l].last || [])) accAct[`${r[1]}|${r[0]}`] = r[3];
+    const actOn = (x, d) => { const r = (x.days || []).find((z) => z[0] === d); return r ? +r[1] || 0 : (accAct[`${x.line}|${d}`] ?? null); };   // 지난달 날은 도금 계획 대비 기록(acc)에서
+    const futPlan = (x, d) => (x.pl === 'G' ? (futG[`${x.line}|${d}`] ?? null) : (colP[`${x.line}|${d}`] ?? null));
+    const pastPlan = (x, d) => (x.pl === 'G' ? planOn(x, d) : null);                                  // 컬러는 지난 날 일 계획 기록 없음(실적으로 덮어 게시)
+    const chartDays = view === 'month' ? Array.from({ length: ndays }, (_, i) => `${mon}-${String(i + 1).padStart(2, '0')}`)
+      : view === 'week' ? Array.from({ length: 7 }, (_, i) => addD(p0, i)) : Array.from({ length: 14 }, (_, i) => addD(asOf, i - 10));
+    const sig = (v) => `${v >= 0 ? '+' : '−'}${n0(Math.abs(v))}`;
+    const LN = ['1CGL', '2CGL', '1CCL', '2CCL', '3CCL', '4CCL'].map((ln) => (P.lines || []).find((x) => x.line === ln)).filter((x) => x && CT.inScope(x.pl)).map((x) => {
+      const lf = lastFull(x);
+      const dd = chartDays.map((d) => {
+        const past = d <= lf, a = past ? actOn(x, d) : null, pp = past ? pastPlan(x, d) : futPlan(x, d);
+        const stop = past && a != null && !a;
+        return { d, a, p: pp, past, stop };
+      });
+      const st0 = actOn(x, lf), stopD = x.pl === 'C' && (cdown[`${x.line}|${addD(lf, 1)}`] || 0) >= 1380;
+      const status = st0 > 0.5 ? ['가동', 'ok'] : stopD || (cdown[`${x.line}|${lf}`] || 0) >= 1380 ? ['휴지', 'na'] : ['정지', 'bad'];
+      let big, bigU = '%', sub, max, act, mark, markL, diffT = null, tn = '';
+      if (view === 'month') {
+        if (x.pl === 'G') {
+          act = x.actual || 0; mark = x.sched || 0; max = Math.max(x.month || 0, act); markL = '일정 누계';
+          big = mark ? Math.round(act / mark * 100) : null; diffT = act - mark; tn = tone(big);
+          sub = `실적 ${n0(act)} / 일정 누계 ${n0(mark)}t · 월차 ${n0(x.month)}t`;
+        } else {
+          const mp = chartDays.reduce((a, d) => a + (d <= lf ? (actOn(x, d) || 0) : (colP[`${x.line}|${d}`] || 0)), 0);
+          const run = chartDays.filter((d) => (cdown[`${x.line}|${d}`] || 0) < 1380);                    // 계획 휴지 날 빼고 경과(휴지 많은 라인을 고르게 경과로 나누면 과소평가)
+          const el = run.length ? run.filter((d) => d <= lf).length / run.length : 0;
+          act = x.actual || 0; max = Math.max(mp, act); mark = mp * el; markL = `경과 ${Math.round(el * 100)}%`;
+          big = mp ? Math.round(act / mp * 100) : null; diffT = act - mark;
+          tn = big == null ? '' : big >= el * 100 ? 'ok' : big >= el * 100 - 10 ? 'warn' : 'bad';
+          sub = mp ? `실적 ${n0(act)} / 월 계획 ${n0(mp)}t · 가동일 경과 ${Math.round(el * 100)}%` : '이번 달 계획 없음';
+        }
+      } else {
+        const ds = view === 'day' ? [lf] : chartDays;
+        const done = dd.filter((z) => ds.includes(z.d) && z.past), fut = dd.filter((z) => ds.includes(z.d) && !z.past);
+        act = done.reduce((a, z) => a + (z.a || 0), 0);
+        const pDone = done.every((z) => z.p != null) ? done.reduce((a, z) => a + (z.p || 0), 0) : null;
+        const pFut = fut.reduce((a, z) => a + (z.p || 0), 0);
+        if (view === 'day') {
+          mark = pDone; max = Math.max(pDone || 0, act); markL = '계획';
+          big = pDone ? Math.round(act / pDone * 100) : null; diffT = pDone != null ? act - pDone : null; tn = tone(big);
+          sub = `${md(lf)} 실적 ${n0(act)}t${pDone != null ? ` / 계획 ${n0(pDone)}t` : ' · 지난 날 일 계획 기록 없음'}`;
+        } else {
+          mark = pDone || 0; max = Math.max((pDone || 0) + pFut, act + pFut); markL = '지난 날 계획';
+          big = done.length && pDone ? Math.round(act / pDone * 100) : null; diffT = done.length && pDone != null ? act - pDone : null; tn = tone(big);
+          sub = done.length ? `실적 ${n0(act)}t(${md(done[0].d)}~${md(done[done.length - 1].d)})${pDone != null ? ` / 계획 ${n0(pDone)}t` : ''} · 남은 계획 ${n0(pFut)}t` : `실적 집계 전 · 이번 주 계획 ${n0(pFut)}t`;
+        }
+        if (big == null && !(view === 'week' && !done.length)) { big = n0(act); bigU = 't'; }
+      }
+      const stopDays = x.pl === 'C' ? Array.from({ length: ndays }, (_, i) => `${mon}-${String(i + 1).padStart(2, '0')}`).filter((d) => (cdown[`${x.line}|${d}`] || 0) >= 1380).length : 0;
+      const foot = x.pl === 'G' ? `현재 ${x.fam || '-'}${x.next ? ` · 다음 ${md(x.next[0])} ${x.next[1]}` : ''}` : `${+mon.slice(5)}월 계획 휴지 ${stopDays}일`;
+      return { x, dd, status, big, bigU, sub, max, act, mark, markL, diffT, tn, foot };
+    });
+    const bar = (r) => {
+      if (!r.max || r.mark == null) return `<div class="ln-bar e"><span>${!r.max ? '계획 없음' : '지난 날 일 계획 기록 없음 — 진도는 월간에서'}</span></div><div class="ln-bl"><span></span><span></span></div>`;
+      const w = Math.min(100, r.act / r.max * 100), m = r.mark != null ? Math.min(100, r.mark / r.max * 100) : null;
+      return `<div class="ln-bar"><i class="${r.tn}" style="width:${w.toFixed(1)}%"></i>${m != null && r.mark > 0 ? `<em style="left:${m.toFixed(1)}%" title="${esc(r.markL)} ${n0(r.mark)}t"></em>` : ''}</div>`
+        + `<div class="ln-bl"><span>${r.mark != null && r.mark > 0 ? `▼ ${esc(r.markL)} ${n0(r.mark)}t` : ''}</span><span>${n0(r.max)}t</span></div>`;
+    };
+    const spark = (r) => {
+      const n = r.dd.length, H = 54, bw = 10, gap = 3, Wd = n * (bw + gap);
+      const mx = Math.max(1, ...r.dd.map((z) => Math.max(z.a || 0, z.p || 0)));
+      const y = (v) => H - Math.max(0, v) / mx * (H - 4);
+      const g = r.dd.map((z, i) => {
+        const x0 = i * (bw + gap);
+        let h = '';
+        if (z.past && z.a == null) h += '';                                                       // 자료 없는 날(컬러 지난달 등): 비움
+        else if (z.past) h += z.stop ? `<rect x="${x0}" y="${H - 3}" width="${bw}" height="3" class="sp-stop"/>` : `<rect x="${x0}" y="${y(z.a || 0)}" width="${bw}" height="${H - y(z.a || 0)}" class="sp-a${z.p != null && z.a < z.p * 0.95 ? ' lo' : ''}"/>`;
+        else if (z.p) h += `<rect x="${x0}" y="${y(z.p)}" width="${bw}" height="${H - y(z.p)}" class="sp-f"/>`;
+        if (z.past && z.p != null && z.p > 0) h += `<line x1="${x0 - 1}" x2="${x0 + bw + 1}" y1="${y(z.p)}" y2="${y(z.p)}" class="sp-p"/>`;
+        if (z.d === asOf) h += `<line x1="${x0 + bw / 2}" x2="${x0 + bw / 2}" y1="0" y2="${H}" class="sp-t"/>`;
+        return `<g><title>${md(z.d)} ${z.past ? `실적 ${n0(z.a || 0)}t${z.p != null ? ` · 계획 ${n0(z.p)}t` : ''}${z.stop ? ' · 정지/휴지' : ''}` : `계획 ${n0(z.p || 0)}t`}</title>${h}</g>`;
+      }).join('');
+      return `<svg class="ln-sp" viewBox="0 0 ${Wd} ${H}" preserveAspectRatio="none" role="img" aria-label="일별 생산">${g}</svg><div class="ln-sl"><span>${md(r.dd[0].d)}</span><span>${md(r.dd[n - 1].d)}</span></div>`;
+    };
+    const card = (r) => `<a class="ln-c ${r.tn}" href="ct_prod.html#perf"><div class="ln-h"><b>${r.x.line}</b><span class="ln-st ${r.status[1]}">${r.status[0]}</span><span class="ln-big">${r.big == null ? '<small>집계 전</small>' : `${r.big}<small>${r.bigU}</small>`}</span></div>`
+      + `<div class="ln-sub">${esc(r.sub)}${r.diffT != null ? ` <b class="${r.diffT >= 0 ? 'pos' : 'neg'}">${sig(r.diffT)}t</b>` : ''}</div>${bar(r)}${spark(r)}<div class="ln-ft">${esc(r.foot)}</div></a>`;
+    const plant = (pl, nm) => {
+      const rs = LN.filter((r) => r.x.pl === pl);
+      if (!rs.length) return '';
+      const pa = rs.reduce((a, r) => a + (r.act || 0), 0), pm = rs.reduce((a, r) => a + (r.mark || 0), 0), pmax = rs.reduce((a, r) => a + (r.max || 0), 0);
+      if (view === 'week' && !pa && !pm) return `<div class="ln-pl"><div class="ln-ph"><b>${nm}</b><span>실적 집계 전 · 이번 주 계획 ${n0(pmax)}t</span></div><div class="ln-grid n${rs.length}">${rs.map(card).join('')}</div></div>`;
+      const hp = pm ? Math.round(pa / pm * 100) : null;
+      const lbl = view === 'month' ? (pl === 'G' ? '일정 누계' : '가동일 경과 기준') : '계획';
+      return `<div class="ln-pl"><div class="ln-ph"><b>${nm}</b><span>실적 ${n0(pa)}t${pm ? ` / ${lbl} ${n0(pm)}t · <b class="${tone(hp)}">${hp}%</b>` : ''}</span></div><div class="ln-grid n${rs.length}">${rs.map(card).join('')}</div></div>`;
+    };
+    const lineSec = `<section class="card ln-sec"><h2>라인별 진도 <small>${pLbl} · ${view === 'month' ? '막대 = 월 실적(▼ 도금 일정 누계 · 컬러 가동일 경과 기준)' : view === 'week' ? '막대 = 이번 주 실적(▼ 지난 날 계획)' : '막대 = 최근 마감일 실적(▼ 계획)'} · 일별 막대 = 실적, 옅은 막대 = 앞으로 계획, 가로선 = 그날 계획</small></h2>${plant('G', '도금 공장')}${plant('C', '컬러 공장')}</section>`;
 
     // ⑤ 기간 전망: 당일(오늘·내일) · 7일(일별) · 30일(주별)
     const days = view === 'day' ? [asOf, addD(asOf, 1)] : Array.from({ length: diff(p1, p0) + 1 }, (_, i) => addD(p0, i));
@@ -177,8 +259,9 @@
     main.innerHTML = basis
       + `<div class="ct-bar"><span class="ct-note"><b>${({ day: '금일 현황', week: '7일 전망', month: '월간 전망' })[view]}</b> · ${pLbl} · ${SCN}</span><a class="ct-note" href="board.html">상세 관제판 →</a></div>`
       + CT.kpis(K)
-      + `<div class="ct-2c"><section class="card"><h2>우선 조치 10건 <small>납기 지연 예상 → 마감 빠른 순</small></h2>${actTbl}</section><section class="card"><h2>라인별 진도 <small>${+asOf.slice(5, 7)}월 누계</small></h2>${procHtml}</section></div>`
+      + lineSec
       + `<section class="card"><h2>${view === 'day' ? '오늘·내일' : view === 'week' ? '이번 주' : `${+asOf.slice(5, 7)}월`} 생산 계획 <small>${pLbl} · 계획량 · 생산 필요일이 그날인 주문${view === 'month' ? ' · 수요일 시작 주 단위' : ''}</small></h2><div class="ct-wrap">${fc}</div></section>`
+      + `<section class="card"><h2>우선 조치 10건 <small>납기 지연 예상 → 마감 빠른 순</small></h2>${actTbl}</section>`
       + `<details class="card ct-fold"><summary><h2>주문 진행 현황 <small>${cnt}</small></h2></summary>${flow('G', '도금')}${flow('C', '컬러')}</details>`
       + (exc.length ? `<details class="card ct-fold"><summary><h2>자료 확인 필요 <small>${exc.length}종 · ${nd.length}건</small></h2></summary><ul class="ct-ul">${exc.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></details>` : '');
 

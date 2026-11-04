@@ -49,11 +49,32 @@ table.co-t .lf { font-size: 13.5px; }
 .co-tl li.on { background: var(--tint-2); box-shadow: inset 3px 0 0 var(--brand-2, #1f5fae); } .co-tl li:hover { background: var(--hover); }
 .co-tl .a { display: flex; gap: 6px; align-items: center; white-space: nowrap; } .co-tl .a b { font-size: 13.5px; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; }
 .co-tl .b { display: flex; justify-content: space-between; gap: 6px; font-size: 13.5px; color: var(--ink-2); margin-top: 3px; white-space: nowrap; } .co-tl .b span { font-variant-numeric: tabular-nums; }
-.co-td { min-width: 0; max-width: 760px; }
-.co-th { position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--line); padding: 4px 0 10px; margin-bottom: 10px; }
-.co-th .h1 { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .co-th .h1 b { font-size: 19px; font-variant-numeric: tabular-nums; }
-.co-th .h2 { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 6px; font-size: 14.5px; color: var(--ink-2); } .co-th .h2 span { white-space: nowrap; } .co-th .h2 b { color: var(--ink); font-variant-numeric: tabular-nums; } .co-th small { font-size: 13.5px; }
-.co-tdb { font-size: 14.5px; } .co-tdb .ct-pd-h { display: none; }
+.co-tc { display: flex; flex-wrap: wrap; gap: 6px; } .co-tc .co-chip { font-size: 13.5px; padding: 4px 10px; }
+.co-tl .b b { color: var(--ink); }
+.co-td { min-width: 0; }
+.co-th { border-bottom: 1px solid var(--line); padding: 2px 0 12px; margin-bottom: 14px; }
+.co-th .h1 { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; } .co-th .h1 > b { font-size: 21px; font-variant-numeric: tabular-nums; }
+.co-th .who { font-size: 14.5px; color: var(--ink-2); }
+.co-story { margin: 8px 0 0; font-size: 16px; line-height: 1.55; color: var(--ink); }
+/* 단계 흐름(가로) */
+.co-flow { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
+.co-flow li { position: relative; padding: 26px 10px 0 0; font-size: 13.5px; }
+.co-flow li::before { content: ''; position: absolute; left: 0; right: 0; top: 8px; height: 3px; background: var(--line); }
+.co-flow li:first-child::before { left: 8px; } .co-flow li:last-child::before { right: auto; width: 8px; }
+.co-flow li.done::before { background: var(--good); }
+.co-flow li > i { position: absolute; left: 0; top: 1px; width: 17px; height: 17px; border-radius: 50%; background: var(--surface); border: 3px solid var(--line); box-sizing: border-box; }
+.co-flow li.done > i { background: var(--good); border-color: var(--good); } .co-flow li.cur > i { border-color: var(--brand-2, #1f5fae); background: var(--tint-2); } .co-flow li.na > i { border-style: dashed; }
+.co-flow .k { font-size: 15px; font-weight: 800; } .co-flow .s { color: var(--ink-2); margin-top: 1px; } .co-flow li.cur .s { color: var(--brand-2, #1f5fae); font-weight: 700; } .co-flow li.done .s { color: var(--good); font-weight: 700; }
+.co-flow .d { margin-top: 4px; display: flex; flex-direction: column; gap: 1px; font-variant-numeric: tabular-nums; } .co-flow .n { margin-top: 4px; color: var(--ink-2); line-height: 1.4; }
+/* 핵심 숫자 */
+.co-figs { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 10px; margin: 0 0 16px; }
+.co-figs .f { padding: 10px 12px; border-left: 1px solid var(--grid); min-width: 0; } .co-figs .f:first-child { border-left: 0; }
+.co-figs span { font-size: 13.5px; color: var(--ink-2); font-weight: 700; } .co-figs b { display: block; font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; margin-top: 2px; white-space: nowrap; }
+.co-figs small { font-size: 13.5px; font-weight: 600; color: var(--ink-2); margin-left: 2px; } .co-figs .f > div { font-size: 13.5px; color: var(--ink-2); } .co-figs em { font-style: normal; font-weight: 700; }
+/* 속성 격자 */
+.co-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 24px; }
+.co-grid .g { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--grid); font-size: 14.5px; }
+.co-grid .g span { color: var(--ink-2); white-space: nowrap; } .co-grid .g b { text-align: right; font-weight: 700; } .co-grid small { font-size: 13.5px; color: var(--ink-2); font-weight: 500; }
 /* 납기 캘린더 */
 .co-calh { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 0 0 10px; } .co-calh > b { font-size: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .co-lg { margin-left: auto; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; } .co-lg i { font-style: normal; font-weight: 800; }
@@ -68,8 +89,12 @@ table.co-t .lf { font-size: 13.5px; }
 .co-cd .mk { white-space: nowrap; line-height: 1.55; } .co-cd .mk i { font-style: normal; margin-right: 3px; } .co-cd .mk span { color: var(--ink-2); }
 .co-cd .mk.r { color: var(--bad); font-weight: 700; }
 @media (max-width: 1200px) { .co-cd .mk { white-space: normal; } }
+@media (max-width: 1450px) and (min-width: 901px) { .co-figs { grid-template-columns: repeat(4, minmax(0, 1fr)); } .co-figs .f:nth-child(5) { border-left: 0; } .co-figs .f:nth-child(n+5) { border-top: 1px solid var(--grid); } .co-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 900px) {
   .co-trk { grid-template-columns: 1fr; } .co-tlw { position: static; } .co-tl { max-height: 260px; }
+  .co-figs { grid-template-columns: repeat(2, minmax(0, 1fr)); } .co-figs .f { border-left: 0; border-top: 1px solid var(--grid); } .co-figs .f:nth-child(-n+2) { border-top: 0; }
+  .co-grid { grid-template-columns: 1fr; }
+  .co-flow { grid-template-columns: 1fr; } .co-flow li { padding: 0 0 12px 30px; } .co-flow li::before { left: 7px !important; right: auto !important; width: 3px !important; top: 0; bottom: 0; height: auto; } .co-flow li > i { top: 0; }
   .co-wh { display: none; } .co-cg { grid-template-columns: 1fr; gap: 4px; }
   .co-cd { min-height: 0; display: grid; grid-template-columns: 86px 1fr; gap: 1px 8px; align-items: baseline; } .co-cd .dt { margin: 0; grid-row: 1 / span 3; } .co-cd .mk { grid-column: 2; white-space: nowrap; } .co-cd .dt { white-space: nowrap; } .co-cd .dt em { margin-left: 4px; } .co-cd:not(.ck):not(.td) { display: none; }
   .co-lg { margin-left: 0; } .cnt { margin-left: 0; }

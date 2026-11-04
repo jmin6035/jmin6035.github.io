@@ -9,7 +9,7 @@
   const OPEN = ['위험', '주의', '판정 불가'];
   const F = { grp: '', pl: '', risk: '', ful: '', q: '', done: false, by: false, sk: 'risk', dir: 1, lim: 200 };
   const R = { cause: '', sk: 'risk', dir: 1, lim: 200 };
-  const T = { id: null, q: '' };
+  const T = { id: null, q: '', tag: '' };
   let calOff = 0, D0 = null, M = null, L = [], byId = {};
   const plName = (o) => `${o.pl === 'G' ? '도금' : '컬러'} ${o.line || ''}`.trim();
   const imp = (o) => (o.pl === 'G' && o.ful !== '생산 전' && o.ful !== '생산 중' ? (o.unshipT || 0) : (o.remT || 0));   // 영향 톤: 생산 끝난 도금 = 미출하, 그 외 = 잔량
@@ -145,25 +145,65 @@
   }
 
   /* ---------- #track 주문 추적 ---------- */
-  function trackList() {
+  // 11/5 사용자 '왜 이런 식으로 화면 구성을 한 거지?' — 상세를 한 줄 상황 → 단계 흐름(가로) → 핵심 숫자 → 속성 격자 순으로, 화면 폭 전체 사용
+  function trackBase() {
     if (T.q) { const q = T.q.toUpperCase(); return L.filter((o) => [o.id, o.item, o.cus, o.man].join(' ').toUpperCase().includes(q)).sort(CT.riskSort).slice(0, 200); }
     return L.filter((o) => OPEN.includes(o.risk)).sort(CT.riskSort);
   }
+  function trackList() { const A = trackBase(); return T.tag ? A.filter((o) => CT.tag(o) === T.tag) : A; }
   function drawTrackList() {
-    const A = trackList();
-    $('co-tl').innerHTML = A.length ? A.slice(0, 300).map((o) => `<li class="ck${o.id === T.id ? ' on' : ''}" data-id="${esc(o.id)}" role="option" aria-selected="${o.id === T.id}">`
-      + `<div class="a">${CT.badge(o)}<b>${esc(o.id)}</b></div><div class="b">${esc(o.grp)} · ${esc(plName(o))}<span>${md(o.due) ? '출하 ' + md(o.due) : ''}</span></div></li>`).join('')
+    const B = trackBase(), A = trackList(), cnt = {};
+    B.forEach((o) => { const k = CT.tag(o); cnt[k] = (cnt[k] || 0) + 1; });
+    if (T.tag && !cnt[T.tag]) T.tag = '';
+    $('co-tc').innerHTML = [['', '전체', B.length]].concat(Object.entries(cnt).sort((x, y) => y[1] - x[1]).map(([k, v]) => [k, k, v]))
+      .map(([k, nm, v]) => `<button type="button" class="co-chip" data-k="${esc(k)}" aria-pressed="${(T.tag || '') === k}">${esc(nm)}<b>${n0(v)}</b></button>`).join('');
+    $('co-tc').querySelectorAll('button').forEach((b) => { b.onclick = () => { T.tag = b.dataset.k; drawTrackList(); const f = trackList()[0]; if (f && !trackList().some((o) => o.id === T.id)) pickTrack(f.id); }; });
+    const A2 = trackList();
+    $('co-tl').innerHTML = A2.length ? A2.slice(0, 300).map((o) => `<li class="ck${o.id === T.id ? ' on' : ''}" data-id="${esc(o.id)}" role="option" aria-selected="${o.id === T.id}">`
+      + `<div class="a">${CT.badge(o)}<b>${esc(o.id)}</b></div><div class="b"><span>${esc(o.grp)} · ${esc(plName(o))}</span><span>납기 <b>${md(o.due) || '-'}</b> · 잔량 <b>${n1(o.remT || 0)}t</b></span></div></li>`).join('')
       : '<li class="mu">해당 주문이 없습니다.</li>';
-    $('co-tn').textContent = T.q ? `찾기 ${n0(A.length)}건` : `지연 예상·점검·자료 확인 ${n0(A.length)}건`;
+    $('co-tn').textContent = T.q ? `찾기 ${n0(A2.length)}건` : `지연 예상·점검·자료 확인 ${n0(A2.length)}건${A2.length > 300 ? ' · 앞 300건 표시' : ''}`;
     $('co-tl').querySelectorAll('li.ck').forEach((li) => { li.onclick = () => pickTrack(li.dataset.id); });
     CT.keyRows($('co-tl'));
+    return A;
+  }
+  /* 한 줄 상황: 왜 · 납기와 오늘 · 물량 */
+  function storyOf(o) {
+    const asOf = M.asOf, dd = o.due ? CT.diff(o.due, asOf) : null;
+    const why = o.risk === '정상' ? '정상 진행 중' : o.cause === 'data' ? `자료 확인 필요(${o.dataWhy || '자료 누락'})`
+      : ({ mat: o.matSt === '미발주' ? '소재를 아직 발주하지 않아' : o.pl === 'C' && o.matSt === '미확보' ? '소재가 없어' : '소재 입고가 늦어',
+        cap: '생산 편성일이 생산 필요일보다 늦어', plate: '자가재(도금) 생산이 늦어', ship: '생산은 끝났지만 출하가 늦어' })[o.cause] || '확인 필요';
+    const due = dd == null ? '납기 없음' : dd < 0 ? `${md(o.due)} 납기에서 <b class="ct-neg">${-dd}일 지남</b>` : dd === 0 ? `<b class="ct-neg">오늘 납기</b>` : `${md(o.due)} 납기까지 ${dd}일`;
+    const pdone = !['생산 전', '생산 중'].includes(o.ful);
+    const qty = pdone ? `${n1(o.ordT || 0)}t 중 ${n1(o.prodT || 0)}t 생산 — 생산 완료 처리됨` : `${n1(o.ordT || 0)}t 중 ${n1(o.prodT || 0)}t 생산, ${n1(o.remT || 0)}t 남음`;
+    const sh = o.unshipT == null ? '출하 실적 없음(컬러 주문별 출하 자료 없음)' : o.ful === '출하 확인 불가' ? '출하 실적 없음' : o.ful === '출하 완료' ? '출하 완료' : (o.fwdT || 0) > 0.5 ? `출하 ${n1(o.fwdT)}t · 미출하 ${n1(o.unshipT)}t` : '아직 출하 전';
+    return `${esc(why)} — ${due} · ${qty} · ${sh}`;
   }
   function drawTrackDetail() {
     const o = T.id && byId[T.id], box = $('co-td');
     if (!o) { box.innerHTML = '<p class="ct-note">왼쪽에서 주문을 고르거나 주문번호로 찾으세요.</p>'; return; }
-    box.innerHTML = `<div class="co-th"><div class="h1"><b>${esc(o.id)}</b>${CT.badge(o)}${CT.fulBadge(o.ful)}</div>`
-      + `<div class="h2"><span>${esc(o.grp)} · ${esc(plName(o))}</span><span>생산요청 <b>${md(o.needProd) || '-'}</b></span><span>출하완료 <b>${md(o.due) || '-'}</b>${o.pl === 'G' && o.exp && o.ship ? ` <small>출항 ${md(o.ship)}</small>` : ''}</span></div></div>`
-      + `<div class="co-tdb">${CT.orderDetail(o)}</div>`;
+    const asOf = M.asOf, ST = { done: '완료', cur: '진행 중', todo: '대기', na: '해당 없음' };
+    const dateCell = (d, plan, st) => {
+      if (!d && !plan) return '';
+      const late = d && plan && d > plan, lb = st === 'done' ? '실제' : d && d < asOf ? '예정(지남)' : '예정';
+      return `${d ? `<span class="${late ? 'ct-neg' : ''}">${lb} <b>${md(d)}</b></span>` : ''}${plan ? `<span>필요 <b>${md(plan)}</b></span>` : ''}`;
+    };
+    const steps = o.steps.filter((s) => s.st !== 'na' || /출하/.test(s.k));
+    const tl = `<ol class="co-flow" style="--n:${steps.length}">${steps.map((s) => `<li class="${s.st}"><i></i><div class="k">${esc(s.k)}</div>`
+      + `<div class="s">${s.st === 'na' && /출하/.test(s.k) ? '실적 없음' : ST[s.st]}</div><div class="d">${dateCell(s.d, s.plan, s.st)}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</li>`).join('')}</ol>`;
+    const left = o.last ? (CT.diff(o.last, asOf) < 0 ? `<em class="ct-neg">${-CT.diff(o.last, asOf)}일 지남</em>` : (CT.diff(o.last, asOf) === 0 ? `<em class="ct-neg">오늘</em>` : `<em>D-${CT.diff(o.last, asOf)}</em>`)) : '';
+    const fig = (k, v, u, sub) => `<div class="f"><span>${k}</span><b>${v}${u ? `<small>${u}</small>` : ''}</b>${sub ? `<div>${sub}</div>` : ''}</div>`;
+    const figs = `<div class="co-figs">${fig('수주량', n1(o.ordT || 0), 't')}${fig('생산', n1(o.prodT || 0), 't')}${fig('잔량', n1(o.remT || 0), 't')}`
+      + fig('미출하', o.unshipT == null ? '-' : n1(o.unshipT), o.unshipT == null ? '' : 't', o.unshipT == null || o.ful === '출하 확인 불가' ? '출하 실적 없음' : '')
+      + fig('납기', md(o.due) || '-', '', o.pl === 'G' && o.exp && o.ship ? `출항 ${md(o.ship)}` : '') + fig('생산 필요일', md(o.needProd) || '-', '')
+      + fig('조치 마감일', md(o.last) || '-', '', left) + '</div>';
+    const kv = (k, v) => (v == null || v === '' ? '' : `<div class="g"><span>${esc(k)}</span><b>${v}</b></div>`);
+    const grid = `<div class="co-grid">${kv('판매그룹', esc(o.grp) + (o.grpEst ? ' <small>(추정)</small>' : ''))}${kv('고객사', esc(o.cus || ''))}${kv('담당', esc(o.man || ''))}`
+      + kv('공정·라인', esc(plName(o))) + kv('품목', esc(o.item)) + kv('두께×폭', esc(o.size)) + kv('지연 근거', o.cause ? esc(CT.why(o)) : '')
+      + kv('조치 부서', esc(o.dept || '')) + kv('진행 단계', CT.fulBadge(o.ful)) + kv('생산 완료 예정', o.etaDone ? `${md(o.etaDone)} <small>${esc(o.etaSrc || '')}</small>` : '')
+      + kv('소재', esc(o.matSt || '')) + (o.self ? kv('자가재(도금 주문)', esc(o.self)) : '') + '</div>';
+    box.innerHTML = `<div class="co-th"><div class="h1"><b>${esc(o.id)}</b>${CT.badge(o)}<span class="who">${[o.cus, o.grp, plName(o)].filter(Boolean).map(esc).join(' · ')}</span></div>`
+      + `<p class="co-story">${storyOf(o)}</p></div>${tl}${figs}${grid}`;
   }
   function pickTrack(id) {
     T.id = id;
@@ -174,7 +214,7 @@
   function viewTrack() {
     if (!T.id) { const f = L.filter((o) => OPEN.includes(o.risk)).sort(CT.riskSort)[0]; T.id = f ? f.id : null; }
     return `<div class="co-trk"><div class="co-tlw"><input id="co-tq" type="search" placeholder="주문번호·품명·고객·담당 (Enter)" value="${esc(T.q)}" aria-label="주문 찾기">`
-      + `<div class="co-tn" id="co-tn"></div><ul class="co-tl" id="co-tl" role="listbox" aria-label="주문 목록"></ul></div><section class="co-td" id="co-td"></section></div>`;
+      + `<div class="co-tc" id="co-tc"></div><div class="co-tn" id="co-tn"></div><ul class="co-tl" id="co-tl" role="listbox" aria-label="주문 목록"></ul></div><section class="co-td" id="co-td"></section></div>`;
   }
   function bindTrack() {
     const qi = $('co-tq');
