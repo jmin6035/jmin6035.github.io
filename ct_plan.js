@@ -22,20 +22,23 @@
       if (c0.blackout > 0.5) { c.ev.push(`정지 ${n0(c0.blackout)}분`); c.down += c0.blackout; }
       if (!c.fam) c.fam = c0.fam;
     }
-    for (const x of I.color || []) { const c = C(`${x.l}|${x.d}`); for (const [g, t] of Object.entries(x.g || {})) { c.t += t; c.items[g] = (c.items[g] || 0) + t; } if (x.act) c.act = true; }
+    for (const x of I.color || []) { const c = C(`${x.l}|${x.d}`); c.min = (c.min || 0) + (+x.min || 0); for (const [g, t] of Object.entries(x.g || {})) { c.t += t; c.items[g] = (c.items[g] || 0) + t; } if (x.act) c.act = true; }
     for (const [d, l, k, m] of I.colorDown || []) { const c = C(`${l}|${d}`); c.down += +m || 0; if (m >= 120) c.ev.push(`${KN[k] || k} ${m >= 1439 ? '종일' : n0(m) + '분'}`); }
-    // 라인 하루 능력(t): 도금 = 가용 분/60 × 라인 t/hr(최근 실적), 컬러 = 최근 12주 하루 생산 t × (1 − 정지분/1440)
+    // 라인 하루 능력: 도금 = 가용분(캘린더 − 정지)/60 × 라인 t/h(최근 실적) → t, 컬러 = 정지 뺀 1,440분(계획 편성이 분 단위라 부하 = 편성 분 ÷ 가용 분)
     const tph = {}; for (const x of P.lines || []) tph[x.line] = x.tph;
-    const tpd = {}; for (const x of (D.color_actual || {}).lines || []) tpd[x.line] = (x.w0 || {}).tpd;
-    const cap = (l, d) => {
-      if (LG.includes(l)) { const m = capG[`${l}|${d}`]; return m == null || !tph[l] ? null : Math.max(0, m - ((cell[`${l}|${d}`] || {}).down || 0)) / 60 * tph[l]; }
-      if (!tpd[l]) return null; return tpd[l] * Math.max(0, 1440 - Math.min(1440, (cell[`${l}|${d}`] || {}).down || 0)) / 1440;
+    const avail = (l, d) => {
+      const c = cell[`${l}|${d}`] || {};
+      if (LG.includes(l)) { const m = capG[`${l}|${d}`]; return m == null ? null : Math.max(0, m - (c.down || 0)); }
+      return Math.max(0, 1440 - Math.min(1440, c.down || 0));
     };
+    const used = (l, d) => { const c = cell[`${l}|${d}`] || {}; return LG.includes(l) ? (tph[l] ? (c.t || 0) / tph[l] * 60 : null) : (c.min || 0); };
+    const cap = (l, d) => { const a = avail(l, d), c = cell[`${l}|${d}`] || {}; if (a == null) return null; if (LG.includes(l)) return tph[l] ? a / 60 * tph[l] : null; return c.min > 0 ? (c.t || 0) * a / c.min : null; };
+    const tpd = {};
     const OM = CT.orders(D);
     const due = {};                                          // `${line}|${needProd}` → 주문(완료 제외)
     for (const o of OM.all) { if (o.risk === '완료' || !o.needProd || !o.line) continue; (due[`${o.line}|${o.needProd}`] = due[`${o.line}|${o.needProd}`] || []).push(o); }
     const days = [...new Set(Object.keys(cell).map((k) => k.split('|')[1]))].sort();
-    return { asOf, cell, cap, due, days, L, I, P, OM, tph, tpd };
+    return { asOf, cell, cap, avail, used, due, days, L, I, P, OM, tph, tpd };
   }
 
   function weekGrid() {
@@ -79,24 +82,25 @@
     const mon = (d) => addD(d, -((wd(d) + 6) % 7));
     const w0 = mon(X.asOf), weeks = Array.from({ length: 8 }, (_, i) => addD(w0, 7 * i));
     const R = lines.map((l) => ({ l, w: weeks.map((s) => {
-      let need = 0, cap = 0, capOk = true;
-      for (let i = 0; i < 7; i++) { const d = addD(s, i); if (d < X.asOf) continue; need += (X.cell[`${l}|${d}`] || {}).t || 0; const c = X.cap(l, d); if (c == null) capOk = false; else cap += c; }
-      return { s, need, cap: capOk ? cap : null, r: capOk && cap > 0 ? need / cap : null };
+      let need = 0, av = 0, us = 0, ok = true;
+      for (let i = 0; i < 7; i++) { const d = addD(s, i); if (d < X.asOf) continue; need += (X.cell[`${l}|${d}`] || {}).t || 0; const a = X.avail(l, d), u = X.used(l, d); if (a == null || u == null) { if (((X.cell[`${l}|${d}`] || {}).t || 0) > 0.5) ok = false; continue; } av += a; us += u; }
+      const r = ok && av > 0 ? us / av : null;
+      return { s, need, r, idle: av <= 0 && need < 0.5, cap: r ? need / r : null };
     }) }));
-    const tone = (r) => (r == null ? '' : r >= 0.95 ? 'bad' : r >= 0.85 ? 'warn' : 'ok');
-    const bot = R.flatMap((x) => x.w.map((w) => ({ l: x.l, ...w }))).filter((w) => w.r != null && w.r >= 0.95);
+    const tone = (r) => (r == null ? '' : r > 1.005 ? 'bad' : r >= 0.95 ? 'warn' : 'ok');   // 컬러는 편성이 하루를 꽉 채워 100% 가 보통 → 병목 = 100% 초과
+    const bot = R.flatMap((x) => x.w.map((w) => ({ l: x.l, ...w }))).filter((w) => w.r != null && w.r > 1.005);
     const over = bot.reduce((a, w) => a + Math.max(0, w.need - w.cap), 0);
     const kp = CT.kpis([
       { label: '8주 필요 생산량', v: n0(R.reduce((a, x) => a + x.w.reduce((b, w) => b + w.need, 0), 0)), unit: 't', tone: 'info' },
-      { label: '병목(부하 95% 이상)', v: bot.length, unit: '라인·주', tone: bot.length ? 'bad' : 'ok', sub: bot.slice(0, 3).map((w) => `${w.l} ${md(w.s)}주`).join(' · ') },
+      { label: '병목(부하 100% 초과)', v: bot.length, unit: '라인·주', tone: bot.length ? 'bad' : 'ok', sub: bot.slice(0, 3).map((w) => `${w.l} ${md(w.s)}주`).join(' · ') },
       { label: '이월 예상', v: n0(over), unit: 't', tone: over >= 1 ? 'bad' : 'ok', sub: '부하 초과분 합' },
     ]);
-    const bar = (w) => (w.r == null ? '<span class="sub">능력 자료 없음</span>' : `<div class="lb ${tone(w.r)}" title="필요 ${n0(w.need)}t / 능력 ${n0(w.cap)}t"><i style="width:${Math.min(100, w.r * 100).toFixed(1)}%"></i></div><b class="${tone(w.r)}">${Math.round(w.r * 100)}%</b>`);
+    const bar = (w) => (w.idle ? '<span class="sub">정비·휴지</span>' : w.r == null ? '<span class="sub">능력 자료 없음</span>' : `<div class="lb ${tone(w.r)}" title="계획 ${n0(w.need)}t / 능력 ${n0(w.cap)}t${w.need > w.cap ? ` · 이월 ${n0(w.need - w.cap)}t` : ''}"><i style="width:${Math.min(100, w.r * 100).toFixed(1)}%"></i></div><b class="${tone(w.r)}">${Math.round(w.r * 100)}%</b>`);
     const tbl = `<div class="ct-wrap"><table class="ct-t ld"><thead><tr><th>라인</th>${weeks.map((s) => `<th>${md(s)}주</th>`).join('')}</tr></thead><tbody>`
-      + R.map((x) => `<tr><td class="id">${x.l}</td>${x.w.map((w) => `<td class="lc">${bar(w)}<small>${n0(w.need)} / ${w.cap == null ? '-' : n0(w.cap)}t${w.cap != null && w.need > w.cap ? ` · 이월 ${n0(w.need - w.cap)}t` : ''}</small></td>`).join('')}</tr>`).join('')
+      + R.map((x) => `<tr><td class="id">${x.l}</td>${x.w.map((w) => `<td class="lc">${bar(w)}<small>${w.idle ? '' : `${n0(w.need)}t`}</small></td>`).join('')}</tr>`).join('')
       + '</tbody></table></div>';
-    const tl = Object.entries(X.tph).filter(([l]) => LG.includes(l)).map(([l, v]) => `${l} ${n1(v)}t/h`).join(' · '), cl = Object.entries(X.tpd).map(([l, v]) => `${l} ${n0(v)}t/일`).join(' · ');
-    return kp + tbl + `<p class="ct-note">부하 = 계획 생산 ÷ 능력. 능력(추정) = 도금 가용분 ÷ 60 × 최근 t/h(${tl}) · 컬러 최근 12주 하루 생산 × 정지 뺀 시간 비율(${cl}). 이번 주는 오늘부터</p>`;
+    const tl = Object.entries(X.tph).filter(([l]) => LG.includes(l)).map(([l, v]) => `${l} ${n1(v)}t/h`).join(' · ');
+    return kp + tbl + `<p class="ct-note">부하 = 도금: 계획 톤 ÷ (가용분 × 최근 실적 t/h: ${tl}) · 컬러: 편성 분 ÷ 정지 뺀 분 · 칸 숫자 = 계획 톤 · 이번 주는 오늘부터</p>`;
   }
 
   function render(D) {
