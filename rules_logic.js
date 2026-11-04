@@ -171,7 +171,7 @@
     let h = `<ol class="rl-why"><li><b>하루 능력</b> = 1,440분${down ? ` − 계획정지 ${n0(down)}분` : ''} = ${n0(1440 - down)}분 · 계획 ${n0(used)}분 사용 · ${n0(tot)}t${cell.act ? ' <b>(지난 날 — MES 실적)</b>' : ''}</li>`;
     h += `<li><b>들어간 물량과 이유</b><div class="scroll"><table class="t rl-t"><thead><tr><th class="l">그룹</th><th class="l">품명</th><th class="l">목적지·사양</th><th>톤</th><th>분</th><th>t/h</th><th class="l">이유(엔진 기록)</th></tr></thead><tbody>`
       + rows.map((r) => `<tr><td class="l">${esc(r[0])}</td><td class="l">${esc(r[1])}</td><td class="l">${esc([r[2], r[3]].filter(Boolean).join(' · '))}</td><td>${n1(r[5])}</td><td>${n0(r[6])}</td><td>${n1(r[7])}</td><td class="l rl-why-t"><div class="rl-wt">${esc(r[8] || '')}</div></td></tr>`).join('')
-      + '</tbody></table></div><p class="small muted">이유 칸의 \'우선순위 n(…)\' 표기는 화면용 옛 번호입니다 — 실제 배정 순서는 컬러 탭 \'배정 우선순위\'(수출 벌크 → 컨테이너 → 가전내수·수요개발·주문재 → 계획재). \'원래 M/D\' = 휴지 집약 전 날짜</p></li>';
+      + '</tbody></table></div><p class="small muted">이유 칸 = 엔진이 배정할 때 남긴 근거(우선순위 1 수출 벌크 · 2 수출 컨테이너 · 3 가전내수·수요개발·주문재 · 4 계획재)</p></li>';
     const cc = ((CTX.D.CC || {}).lines || {})[line], c2 = cc && cc.find((x) => x.d === d);
     if (c2) {
       const wo = (c2.items || []).filter((x) => x.kind === '작업지시').sort((a, b) => String(a.start).localeCompare(String(b.start)));
