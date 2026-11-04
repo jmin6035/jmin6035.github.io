@@ -12,14 +12,18 @@
     Storage.prototype.getItem = function (k) { return isPw(k) ? null : g.call(this, k); };
     Storage.prototype.setItem = function (k, v) { if (!isPw(k)) s.call(this, k, v); };
   }
-  const NAV = [
-    ['home', 'index.html', '관제판'], ['supply', 'supply.html', '가동'], ['matcal', 'matcal.html', '소재 관제'], ['integrated', 'integrated.html', '재고'], ['cgorder', 'cg_order.html', '주문·납기 도금'], ['ccorder', 'cc_order.html', '주문·납기 컬러'], ['report', 'report.html', '주간 보고'],
-    '|도금', ['status', 'status.html', '가동 현황'], ['analysis', 'analysis.html', '조건 분석'], ['platact', 'plating_actual.html', '실적'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['cgcal', 'cg_calendar.html', '생산 캘린더'], ['cgwo', 'cg_wo.html', '작업지시 순서'],
-    '|컬러', ['colorstat', 'color_status.html', '가동 현황'], ['coloranal', 'color_analysis.html', '조건 분석'], ['coloract', 'color_actual.html', '실적'], ['planstock', 'planstock.html', '계획재'], ['cccal', 'cc_calendar.html', '생산 캘린더'], ['wo', 'wo.html', '작업지시 순서'],
-    '|소재', ['procure', 'procure.html', '소재 발주'],
-    '|계획 계산', ['rolling', 'rolling.html', '도금 계획 계산'], ['colorcalc', 'color_calc.html', '컬러 계획 계산'], '|',
-    ['decisions', 'decisions.html', '결정 기록'], ['rules', 'rules.html', '계획 규칙'], ['health', 'health.html', '자료 상태'], ['docs', 'docs.html', '문서'],
+  /* 11/4 사용자 '전면 개편'(control_tower_redesign PRD): 공장별 25개 메뉴 → 의사결정 목적 7개. 지금 화면은 각 메뉴의 탭으로 묶고, 단계마다 새 화면으로 바꿈(gadong-plan/docs/22) */
+  const MENU = [
+    ['ct1', '통합 관제', 'home', [['home', 'index.html', '전체 현황']]],
+    ['ct2', '수주·납기', 'cgorder', [['cgorder', 'cg_order.html', '도금 주문'], ['ccorder', 'cc_order.html', '컬러 주문']]],
+    ['ct3', '생산계획', 'supply', [['supply', 'supply.html', '가동 일정'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더'], ['cgwo', 'cg_wo.html', '도금 작업지시 순서'], ['wo', 'wo.html', '컬러 작업지시 순서']]],
+    ['ct4', '소재·재고', 'matcal', [['matcal', 'matcal.html', '소재 관제'], ['integrated', 'integrated.html', '재고 전망'], ['planstock', 'planstock.html', '계획재'], ['procure', 'procure.html', '소재 발주']]],
+    ['ct5', '생산·출하', 'platact', [['platact', 'plating_actual.html', '도금 실적'], ['coloract', 'color_actual.html', '컬러 실적'], ['status', 'status.html', '도금 가동 현황'], ['colorstat', 'color_status.html', '컬러 가동 현황']]],
+    ['ct6', '이슈·조정', 'decisions', [['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더']]],
+    ['ct7', '분석·보고', 'report', [['report', 'report.html', '주간 보고'], ['analysis', 'analysis.html', '도금 조건 분석'], ['coloranal', 'color_analysis.html', '컬러 조건 분석']]],
   ];
+  const ADMIN = [['rolling', 'rolling.html', '도금 계획 계산'], ['colorcalc', 'color_calc.html', '컬러 계획 계산'], ['rules', 'rules.html', '계획 규칙'], ['health', 'health.html', '자료 상태'], ['docs', 'docs.html', '문서']];
+  const NAV = [...MENU.flatMap((m) => m[3]), '|관리·도움말', ...ADMIN];
   /* 공개 화면 제한(11/2 사용자 'IT 보안 검토 동안 가동 캘린더·소재 캘린더·재고 추이만 남기고 나머지 숨김').
      되돌리려면 SHOW = null. 목록에 없는 화면을 직접 열면 가동 캘린더로 보내고, 남긴 화면 안의 다른 화면 링크는 글자만 남김 */
   const SHOW = null;   // 11/2 회의 뒤 사용자 '다시 전부 다 보여줘' — 3화면만 남기려면 ['supply', 'matcal', 'integrated']
@@ -55,7 +59,7 @@
     scope = v; try { localStorage.setItem(SKEY, v); } catch (e) { /* 무시 */ }
     document.documentElement.dataset.scope = v;
     document.querySelectorAll('.scope-seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.sc === v)));
-    document.querySelectorAll('.shell-nav a[data-only]').forEach((a) => a.classList.toggle('dim', v !== 'all' && !a.dataset.only.includes(v)));
+    document.querySelectorAll('.shell-nav a[data-only], .ct-tabs a[data-only]').forEach((a) => a.classList.toggle('dim', v !== 'all' && !a.dataset.only.includes(v)));
     notice();
     subs.forEach((f) => { try { f(v); } catch (e) { console.error(e); } });
   }
@@ -104,15 +108,16 @@
     const d = h.dataset, esc = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     // 메뉴: '경영 보고'(오너용 5개)는 늘 펼침, 나머지 실무 묶음은 접어 두고 머리글을 누르면 펼침(지금 화면이 든 묶음은 자동으로 펼침, 펼친 상태 기억)
     let open0 = []; try { open0 = JSON.parse(localStorage.getItem(NKEY) || '[]'); } catch (e) { /* 무시 */ }
-    const secs = []; let cur = { g: SHOWF ? '가동계획' : '관제', items: [] }; secs.push(cur);
-    NAV.forEach((x) => { if (typeof x === 'string') { cur = { g: x.slice(1) || '관리', items: [] }; secs.push(cur); } else cur.items.push(x); });
-    const link = (x) => { const on = x[0] === d.page || (x[0] === 'docs' && DOCS.includes(d.page));
-      return `<a href="${x[1]}"${on ? ' aria-current="page"' : ''}${ONLY[x[0]] ? ` data-only="${ONLY[x[0]]}"` : ''}>${icon(x[0])}<span>${x[2]}</span></a>`; };
-    const nav = secs.map((S, i) => {
-      if (i === 0) return `<div class="nv-grp first">${S.g}</div>${S.items.map(link).join('')}`;
-      const here = S.items.some((x) => x[0] === d.page || (x[0] === 'docs' && DOCS.includes(d.page))), op = here || open0.includes(S.g);
-      return `${i === 1 ? '<div class="nv-sup">실무</div>' : ''}<div class="nv-sec${op ? ' open' : ''}" data-g="${S.g}"><button type="button" class="nv-grp nv-tg" aria-expanded="${op}"${GRPCLR[S.g] ? ` style="--gk:${GRPCLR[S.g]}"` : ''}>${S.g}<span class="nv-n">${S.items.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${S.items.map(link).join('')}</div></div>`;
-    }).join('');
+    const isOn = (x) => x[0] === d.page || (x[0] === 'docs' && DOCS.includes(d.page));
+    const curM = MENU.find((m) => m[3].some(isOn));
+    const mOK = (m) => !SHOWF || m[3].some((t) => SHOWF.includes(t[1]));
+    const mlink = (m, i) => { const t0 = SHOWF ? m[3].find((t) => SHOWF.includes(t[1])) : m[3][0];
+      return `<a href="${t0[1]}" class="nv-m"${m === curM ? ' aria-current="page"' : ''}>${icon(m[2])}<span><small class="nv-no">${String(i + 1).padStart(2, '0')}</small>${m[1]}</span></a>`; };
+    const link = (x) => `<a href="${x[1]}"${isOn(x) ? ' aria-current="page"' : ''}${ONLY[x[0]] ? ` data-only="${ONLY[x[0]]}"` : ''}>${icon(x[0])}<span>${x[2]}</span></a>`;
+    const adm = SHOWF ? [] : ADMIN, aOpen = adm.some(isOn) || open0.includes('관리·도움말');
+    const nav = MENU.map((m, i) => (mOK(m) ? mlink(m, i) : '')).join('')
+      + (adm.length ? `<div class="nv-sec${aOpen ? ' open' : ''}" data-g="관리·도움말"><button type="button" class="nv-grp nv-tg" aria-expanded="${aOpen}">관리·도움말<span class="nv-n">${adm.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${adm.map(link).join('')}</div></div>` : '');
+    const tabs = curM && curM[3].length > 1 ? `<nav class="ct-tabs noprint" aria-label="${esc(curM[1])} 탭">${curM[3].filter((t) => !SHOWF || SHOWF.includes(t[1])).map((t) => `<a href="${t[1]}"${isOn(t) ? ' aria-current="page"' : ''}${ONLY[t[0]] ? ` data-only="${ONLY[t[0]]}"` : ''}>${esc(t[2])}</a>`).join('')}</nav>` : '';
     const TH = { auto: '자동', light: '밝게', dark: '어둡게' };
     h.className = 'shell-top';
     h.innerHTML = `<div class="topbar noprint"><button type="button" class="hamb" aria-label="메뉴 열기" aria-expanded="false"><i></i><i></i><i></i></button><a class="brand" href="${HOME}">${MARK}<span class="bt"><b>POSCO STEELEON</b><small>도금·컬러 가동계획</small></span></a><a class="fresh" id="ui-fresh-m" href="health.html" hidden></a></div>
@@ -125,7 +130,7 @@
         </div>
       </aside>
       <div class="scrim noprint" aria-hidden="true"></div>
-      <div class="wrap shell-head"><div class="sh-l">${d.crumb ? `<div class="crumb">${esc(d.crumb)}</div>` : ''}<div class="h1row"><h1>${esc(d.title || document.title)}</h1>${HELP[d.page] ? '<button type="button" class="hbtn noprint" aria-expanded="false" aria-controls="ui-help" title="이 화면 사용법">?</button>' : ''}</div>${d.sub != null ? `<p class="sub" id="ui-sub">${esc(d.sub)}</p>` : ''}${HELP[d.page] ? `<p class="help" id="ui-help" hidden><b>이 화면에서</b>${esc(HELP[d.page])}</p>` : ''}</div></div>`;
+      <div class="wrap shell-head"><div class="sh-l">${curM || d.crumb ? `<div class="crumb">${esc(curM ? `${String(MENU.indexOf(curM) + 1).padStart(2, '0')} ${curM[1]}` : d.crumb)}</div>` : ''}<div class="h1row"><h1>${esc(d.title || document.title)}</h1>${HELP[d.page] ? '<button type="button" class="hbtn noprint" aria-expanded="false" aria-controls="ui-help" title="이 화면 사용법">?</button>' : ''}</div>${d.sub != null ? `<p class="sub" id="ui-sub">${esc(d.sub)}</p>` : ''}${HELP[d.page] ? `<p class="help" id="ui-help" hidden><b>이 화면에서</b>${esc(HELP[d.page])}</p>` : ''}${tabs}</div></div>`;
     document.body.classList.add('has-side');
     const hb = h.querySelector('.hbtn'); if (hb) hb.addEventListener('click', () => { const p = h.querySelector('#ui-help'), v = p.hidden; p.hidden = !v; hb.setAttribute('aria-expanded', String(v)); });
     const open = (v) => { document.body.classList.toggle('nav-open', v); h.querySelector('.hamb').setAttribute('aria-expanded', String(v)); };
@@ -138,7 +143,7 @@
     }));
     const curA = h.querySelector('.shell-nav a[aria-current]'); if (curA) requestAnimationFrame(() => curA.scrollIntoView({ block: 'nearest' }));
     h.querySelectorAll('.scope-seg button').forEach((b) => b.addEventListener('click', () => { if (b.dataset.sc !== scope) setScope(b.dataset.sc); }));
-    h.querySelectorAll('.shell-nav a[data-only]').forEach((a) => a.classList.toggle('dim', scope !== 'all' && !a.dataset.only.includes(scope)));
+    h.querySelectorAll('.shell-nav a[data-only], .ct-tabs a[data-only]').forEach((a) => a.classList.toggle('dim', scope !== 'all' && !a.dataset.only.includes(scope)));
     notice();
     h.querySelector('#ui-theme').addEventListener('click', (e) => {
       theme = { auto: 'light', light: 'dark', dark: 'auto' }[theme]; try { localStorage.setItem(TKEY, theme); } catch (x) { /* 무시 */ }

@@ -1017,3 +1017,11 @@ html body table.t th.gsep { border-left: 2px solid rgba(255,255,255,.7) !importa
 .ctl-strip .cs-c{display:inline-flex;gap:2px;margin-left:4px}.ctl-strip .cs-c i{width:7px;height:14px;border-radius:2px;background:#ced4da}
 .ctl-strip .cs-c i.bad{background:#e03131}.ctl-strip .cs-c i.warn{background:#f08c00}.ctl-strip .cs-c i.ok{background:#2f9e44}
 .cdot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:4px;vertical-align:middle;background:#adb5bd}.cdot.bad{background:#e03131}.cdot.warn{background:#f08c00}.cdot.ok{background:#2f9e44}
+/* 11/4 개편 1단계: 메뉴 7개 + 탭 막대 */
+.shell-nav a.nv-m span { display: inline-flex; align-items: baseline; gap: 8px; }
+.shell-nav .nv-no { font-size: 13.5px; font-weight: 700; opacity: .55; font-variant-numeric: tabular-nums; }
+.ct-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 14px 0 0; border-bottom: 1px solid var(--line); }
+.ct-tabs a { padding: 8px 14px; font-size: 14.5px; font-weight: 600; color: var(--ink-2); text-decoration: none; border-bottom: 3px solid transparent; margin-bottom: -1px; white-space: nowrap; border-radius: 6px 6px 0 0; }
+.ct-tabs a:hover { color: var(--ink); background: var(--hover, rgba(0,0,0,.04)); }
+.ct-tabs a[aria-current="page"] { color: var(--brand-2, #1f5fae); border-bottom-color: var(--brand-2, #1f5fae); font-weight: 800; }
+.ct-tabs a.dim { opacity: .45; }
