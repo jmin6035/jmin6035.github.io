@@ -47,6 +47,9 @@
     const pr = pct(act, plan);
     const lag = gl.filter((x) => x.sched && x.actual < x.sched * 0.95);
     const mats = ((MO.groups || {}).mats || []).filter((m) => CT.inScope(m.plant) && m.short > 0 && (m.st === 'late' || m.st === 'soon'));
+    const mAll = ((MO.groups || {}).mats || []).filter((m) => CT.inScope(m.plant) && m.short > 0.5);
+    const mSure = mAll.filter((m) => m.first && m.first < addD(MO.today || asOf, (m.lt || 0) + (m.safe || 0))), mExp = mAll.filter((m) => !mSure.includes(m));   // 04 부족·조치와 같은 기준
+    const sT = (xs) => xs.reduce((a, m) => a + m.short, 0);
     const matOrd = open.filter((o) => o.cause === 'mat' && (o.risk === '위험' || o.risk === '주의'));
     const SG = { 도금판매: 'G', 도금수출: 'G', 자동차강판: 'G', 컬러수출: 'C', 컬러건재: 'C' };
     const ship = ((P.sr || {}).ship || []).filter((x) => SG[x.name] && CT.inScope(SG[x.name]));
@@ -55,7 +58,7 @@
     const past = open.filter((o) => (o.risk === '위험' || o.risk === '주의') && o.last && o.last < asOf);
     const K = [
       { label: '납기 위험', v: n0(risk.length), unit: '건', sub: `${n0(T(risk))}t · 주의 ${warn.length}건`, tone: risk.length ? 'bad' : 'ok', href: 'ct_orders.html#risk' },
-      { label: '소재 부족', v: n0(mats.reduce((a, m) => a + m.short, 0)), unit: 't', sub: `${mats.length}개 소재 · 영향 주문 ${matOrd.length}건`, tone: mats.some((m) => m.st === 'late') ? 'bad' : mats.length ? 'warn' : 'ok', href: 'ct_mat.html' },
+      { label: '소재 부족 확정', v: n0(sT(mSure)), unit: 't', sub: `확정 ${mSure.length}개 · 예상 ${mExp.length}개 ${n0(sT(mExp))}t`, tone: mSure.length ? 'bad' : mExp.length ? 'warn' : 'ok', href: 'ct_mat.html' },
       { label: '생산계획 이행', v: pr == null ? '-' : pr, unit: '%', sub: `월 누계 실적 ${n0(act)} / 계획 ${n0(plan)}t`, tone: tone(pr), href: 'ct_prod.html#perf' },
       { label: '출하 차질', v: n0(shipGap), unit: 't', sub: shipBad.length ? `계획 누계 미달 ${shipBad.map((x) => x.name).join('·')}` : '계획 누계 충족', tone: shipGap > 500 ? 'bad' : shipGap > 0.5 ? 'warn' : 'ok', href: 'ct_prod.html#ship' },
       { label: '생산 차질', v: lag.length, unit: '라인', sub: lag.length ? lag.map((x) => `${x.line} −${n0(x.sched - x.actual)}t`).join(' · ') : '계획 대비 95% 이상', tone: lag.length ? 'warn' : 'ok', href: 'ct_prod.html#run' },
@@ -88,7 +91,7 @@
     const proc = [];
     if (CT.inScope('G')) proc.push({ n: '도금', v: pct(cgA, cgP), u: '%', tone: tone(pct(cgA, cgP)), s: [`실적 ${n0(cgA)} / 계획 ${n0(cgP)}t`, `위험 주문 ${rk('G')}건`, lag.length ? `차질 ${lag.map((x) => x.line).join('·')}` : '라인 차질 없음'], href: 'ct_prod.html#perf' });
     if (CT.inScope('C')) proc.push({ n: '컬러', v: pct(ccA, ccP), u: '%', tone: tone(pct(ccA, ccP)), s: [`실적 ${n0(ccA)} / 계획 ${n0(ccP)}t`, `위험 주문 ${rk('C')}건`, M.ccMissing.length ? `주문 자료 ${M.ccLines.join('·')}만` : '4개 라인 주문 반영'], href: 'ct_prod.html#perf' });
-    proc.push({ n: '소재', v: mats.length, u: '개 부족', tone: mats.some((m) => m.st === 'late') ? 'bad' : mats.length ? 'warn' : 'ok', s: [`마감 지남 ${mats.filter((m) => m.st === 'late').length} · 2주 안 ${mats.filter((m) => m.st === 'soon').length}`, `소재 원인 주문 ${matOrd.length}건`], href: 'ct_mat.html' });
+    proc.push({ n: '소재', v: mSure.length, u: '개 확정', tone: mSure.length ? 'bad' : mExp.length ? 'warn' : 'ok', s: [`부족 예상 ${mExp.length}개 · 발주 마감 지남 ${mats.filter((m) => m.st === 'late').length}`, `소재 원인 주문 ${matOrd.length}건`], href: 'ct_mat.html' });
     proc.push({ n: '출하', v: n0(shipGap), u: 't 미달', tone: shipGap > 500 ? 'bad' : shipGap > 0.5 ? 'warn' : 'ok', s: [shipBad.length ? `미달 ${shipBad.map((x) => x.name).join('·')}` : '계획 누계 충족', `출하 확인 불가 ${noShip.length}건`], href: 'ct_prod.html#ship' });
     const procHtml = `<div class="ct-proc">${proc.map((x) => `<a class="ct-pc ${x.tone}" href="${x.href}"><div class="h"><b>${x.n}</b><span class="v">${x.v == null ? '-' : x.v}<small>${x.u}</small></span></div>${x.s.map((t) => `<div class="s">${esc(t)}</div>`).join('')}</a>`).join('')}</div>`;
 

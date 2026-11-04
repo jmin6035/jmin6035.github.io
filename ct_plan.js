@@ -175,16 +175,16 @@
       const x = a.done[k], y = b.done[k], r = y || x; if (!x || !y) { if (r.d >= t0) mv.push({ ...r, x: x && x.d, y: y && y.d, dd: null }); continue; }
       const dd = CT.diff(y.d, x.d); if (Math.abs(dd) >= 1 && (x.d >= t0 || y.d >= t0)) mv.push({ ...r, x: x.d, y: y.d, dd });
     }
-    mv.sort((p, q) => (q.dd ?? 0) - (p.dd ?? 0));
+    mv.sort((p, q) => (p.dd == null) - (q.dd == null) || (q.dd ?? 0) - (p.dd ?? 0));
     const late = (m) => m.y && m.due && m.y > m.due;
     const mvT = mv.length ? `<div class="ct-wrap"><table class="ct-t mv"><thead><tr><th>판매그룹</th><th>강종</th><th>마감</th><th>직전 완료</th><th>지금 완료</th><th class="r">변동</th><th>판정</th></tr></thead><tbody>${(mvAll ? mv : mv.slice(0, 30)).map((m) => `<tr><td>${esc(m.g)}</td><td>${esc(m.fam)}</td><td>${md(m.due)}</td><td>${m.x ? md(m.x) : '없음'}</td><td>${m.y ? md(m.y) : '빠짐'}</td>`
-      + `<td class="r">${m.dd == null ? '-' : `<b class="${m.dd > 0 ? 'up' : 'dn'}">${m.dd > 0 ? '+' : ''}${m.dd}일</b>`}</td><td>${late(m) ? '<span class="ct-b bad">지연</span>' : m.dd > 0 ? '<span class="ct-b warn">늦어짐</span>' : '<span class="ct-b ok">당겨짐</span>'}</td></tr>`).join('')}</tbody></table></div>${mv.length > 30 ? `<button type="button" class="more" id="mv-more">${mvAll ? '30개만' : `전체 ${mv.length}개`}</button>` : ''}` : '<p class="ct-note">완료일이 바뀐 묶음 없음</p>';
+      + `<td class="r">${m.dd == null ? '-' : `<b class="${m.dd > 0 ? 'up' : 'dn'}">${m.dd > 0 ? '+' : ''}${m.dd}일</b>`}</td><td>${m.dd == null ? `<span class="ct-b na">${m.y ? '새로 생김' : '계획에서 빠짐'}</span>` : late(m) ? '<span class="ct-b bad">지연</span>' : m.dd > 0 ? '<span class="ct-b warn">늦어짐</span>' : '<span class="ct-b ok">당겨짐</span>'}</td></tr>`).join('')}</tbody></table></div>${mv.length > 30 ? `<button type="button" class="more" id="mv-more">${mvAll ? '30개만' : `전체 ${mv.length}개`}</button>` : ''}` : '<p class="ct-note">완료일이 바뀐 묶음 없음</p>';
     const at = (s) => (s ? `${md(s)} ${String(s).slice(11, 16)}` : '-');
     const hd = `<div class="cmp-h"><span><small>직전</small><b>${at(A.savedAt)}</b><small>재계획 ${md(ta)}</small></span><span class="ar">→</span><span><small>지금</small><b>${at(B.savedAt)}</b><small>재계획 ${md(tb)}</small></span><span class="ct-b na">비교만 — 계획에 반영하지 않음</span></div>`;
     return `<section class="card"><h2>계획 변경 비교 <small>도금 · ${md(t0)}부터 · 컬러는 직전 판 없음</small></h2>${hd}</section>` + kp
       + `<section class="card"><h2>라인 × 주 생산량 <small>t</small></h2>${wkT}</section>`
       + `<section class="card"><h2>M/C 일정 <small>${mcSame ? '변동 없음' : '빨강 = 새 일정'}</small></h2>${mcT}</section>`
-      + `<section class="card"><h2>완료일이 바뀐 묶음 <small>${mv.length}개 · 늦어진 것 먼저 · 마감 넘김 ${mv.filter(late).length}개</small></h2>${mvT}</section>`;
+      + `<section class="card"><h2>완료일이 바뀐 묶음 <small>${mv.length}개 · 늦어진 것 먼저 · 마감 넘김 ${mv.filter((m) => m.dd != null && late(m)).length}개</small></h2>${mvT}</section>`;
   }
 
   function render(D) {
