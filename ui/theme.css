@@ -1075,3 +1075,10 @@ table.ct-t td small, table.ct-t td .sub { display: block; font-size: 13.5px; col
 html body table.ct-t th, html body table.ct-t td { text-align: left !important; white-space: nowrap !important; }
 html body table.ct-t th.r, html body table.ct-t td.r { text-align: right !important; }
 html body table.ct-t td.w { white-space: normal !important; word-break: keep-all; }
+/* 11/4 2차: 이행 단계 칩 · 패널 너비 520 · 포커스 */
+.ct-f { display: inline-block; border-radius: 6px; padding: 1px 8px; font-size: 13.5px; font-weight: 700; white-space: nowrap; border: 1px solid var(--line); }
+.ct-f.ok { color: var(--good); border-color: var(--good); } .ct-f.warn { color: var(--warn); border-color: var(--warn); } .ct-f.na { color: var(--ink-2); background: var(--sub); border-style: dashed; }
+.ct-f.mid { color: var(--brand-2, #1f5fae); } .ct-f.pre { color: var(--ink-2); }
+.ct-panel { width: min(520px, 100vw) !important; }
+.ck:focus-visible { outline: 2px solid var(--brand-2, #1f5fae); outline-offset: -2px; }
+.ct-tabs a.hid { margin-left: 8px; border-left: 1px solid var(--line); border-radius: 0; color: var(--ink-2); }

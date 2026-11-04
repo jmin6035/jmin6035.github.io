@@ -13,17 +13,18 @@
     Storage.prototype.setItem = function (k, v) { if (!isPw(k)) s.call(this, k, v); };
   }
   /* 11/4 사용자 '전면 개편'(control_tower_redesign PRD): 공장별 25개 메뉴 → 의사결정 목적 7개. 지금 화면은 각 메뉴의 탭으로 묶고, 단계마다 새 화면으로 바꿈(gadong-plan/docs/22) */
+  /* 11/4 2차 진단 3장: 메뉴 탭 = 업무 질문(화면 안에 탭을 또 두지 않음 — '#이름'으로 같은 화면의 하위 화면). 4번째 칸 'h' = 탭 막대에는 안 보이는 전문 화면(메뉴에는 속함) */
   const MENU = [
-    ['ct1', '통합 관제', 'home', [['home', 'index.html', '전체 현황'], ['board', 'board.html', '판매그룹 관제판']]],
-    ['ct2', '수주·납기', 'cgorder', [['orders', 'ct_orders.html', '통합 수주·납기'], ['cgorder', 'cg_order.html', '도금 주문'], ['ccorder', 'cc_order.html', '컬러 주문']]],
-    ['ct3', '생산계획', 'supply', [['plan7', 'ct_plan.html', '주간 일정·부하'], ['supply', 'supply.html', '가동 캘린더'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더'], ['cgwo', 'cg_wo.html', '도금 작업지시 순서'], ['wo', 'wo.html', '컬러 작업지시 순서']]],
-    ['ct4', '소재·재고', 'matcal', [['matshort', 'ct_mat.html', '소재 부족·조치'], ['matcal', 'matcal.html', '소재 관제'], ['integrated', 'integrated.html', '재고 전망'], ['planstock', 'planstock.html', '계획재'], ['procure', 'procure.html', '소재 발주']]],
-    ['ct5', '생산·출하', 'platact', [['prodsum', 'ct_prod.html', '실적·출하 요약'], ['platact', 'plating_actual.html', '도금 실적'], ['coloract', 'color_actual.html', '컬러 실적'], ['status', 'status.html', '도금 가동 현황'], ['colorstat', 'color_status.html', '컬러 가동 현황']]],
-    ['ct6', '이슈·조정', 'decisions', [['issues', 'ct_issue.html', '이슈 후보'], ['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더']]],
-    ['ct7', '분석·보고', 'report', [['perf', 'ct_perf.html', '성과 분석'], ['report', 'report.html', '주간 보고'], ['analysis', 'analysis.html', '도금 조건 분석'], ['coloranal', 'color_analysis.html', '컬러 조건 분석']]],
+    ['ct1', '통합 관제', 'home', [['home', 'index.html#day', '당일 상황'], ['home', 'index.html#week', '7일 전망'], ['home', 'index.html#month', '월간 전망'], ['board', 'board.html', '판매그룹 관제판', 'h']]],
+    ['ct2', '수주·납기', 'cgorder', [['orders', 'ct_orders.html#status', '수주 현황'], ['orders', 'ct_orders.html#risk', '납기 위험'], ['orders', 'ct_orders.html#track', '주문 추적'], ['orders', 'ct_orders.html#cal', '납기 캘린더'], ['cgorder', 'cg_order.html', '도금 주문진도', 'h'], ['ccorder', 'cc_order.html', '컬러 주문·납기', 'h']]],
+    ['ct3', '생산계획', 'supply', [['plan7', 'ct_plan.html#week', '통합 생산일정'], ['plan7', 'ct_plan.html#load', '부하·능력'], ['plan7', 'ct_plan.html#cmp', '계획 변경 비교'], ['supply', 'supply.html', '월간 가동'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더', 'h'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더', 'h'], ['cgwo', 'cg_wo.html', '도금 작업지시 순서', 'h'], ['wo', 'wo.html', '컬러 작업지시 순서', 'h']]],
+    ['ct4', '소재·재고', 'matcal', [['matcal', 'matcal.html', '소재 수급'], ['matshort', 'ct_mat.html', '부족·조치'], ['integrated', 'integrated.html', '재고 전망'], ['procure', 'procure.html', '발주 일정'], ['planstock', 'planstock.html', '계획재', 'h']]],
+    ['ct5', '생산·출하', 'platact', [['prodsum', 'ct_prod.html#perf', '생산 실적'], ['prodsum', 'ct_prod.html#run', '가동·차질'], ['prodsum', 'ct_prod.html#ship', '출하 실적'], ['prodsum', 'ct_prod.html#stock', '제품 재고'], ['platact', 'plating_actual.html', '도금 실적', 'h'], ['coloract', 'color_actual.html', '컬러 실적', 'h'], ['status', 'status.html', '도금 가동 현황', 'h'], ['colorstat', 'color_status.html', '컬러 가동 현황', 'h']]],
+    ['ct6', '이슈·조정', 'decisions', [['issues', 'ct_issue.html#now', '이슈 현황'], ['issues', 'ct_issue.html#req', '조정 요청'], ['decisions', 'decisions.html', '결정 이력'], ['cgtasks', 'cg_tasks.html', '업무 캘린더', 'h']]],
+    ['ct7', '분석·보고', 'report', [['perf', 'ct_perf.html#ops', '운영 성과'], ['perf', 'ct_perf.html#cause', '편차 원인'], ['report', 'report.html', '주간 보고'], ['analysis', 'analysis.html', '도금 조건 분석', 'h'], ['coloranal', 'color_analysis.html', '컬러 조건 분석', 'h']]],
   ];
   const ADMIN = [['rolling', 'rolling.html', '도금 계획 계산'], ['colorcalc', 'color_calc.html', '컬러 계획 계산'], ['rules', 'rules.html', '계획 규칙'], ['health', 'health.html', '자료 상태'], ['docs', 'docs.html', '문서']];
-  const NAV = [...MENU.flatMap((m) => m[3]), '|관리·도움말', ...ADMIN];
+  const NAV = [...MENU.flatMap((m) => m[3]).filter((t, k, A) => A.findIndex((u) => u[1].split('#')[0] === t[1].split('#')[0]) === k).map((t) => [t[0], t[1].split('#')[0], t[2]]), '|관리·도움말', ...ADMIN];
   /* 공개 화면 제한(11/2 사용자 'IT 보안 검토 동안 가동 캘린더·소재 캘린더·재고 추이만 남기고 나머지 숨김').
      되돌리려면 SHOW = null. 목록에 없는 화면을 직접 열면 가동 캘린더로 보내고, 남긴 화면 안의 다른 화면 링크는 글자만 남김 */
   const SHOW = null;   // 11/2 회의 뒤 사용자 '다시 전부 다 보여줘' — 3화면만 남기려면 ['supply', 'matcal', 'integrated']
@@ -117,7 +118,9 @@
     const adm = SHOWF ? [] : ADMIN, aOpen = adm.some(isOn) || open0.includes('관리·도움말');
     const nav = MENU.map((m, i) => (mOK(m) ? mlink(m, i) : '')).join('')
       + (adm.length ? `<div class="nv-sec${aOpen ? ' open' : ''}" data-g="관리·도움말"><button type="button" class="nv-grp nv-tg" aria-expanded="${aOpen}">관리·도움말<span class="nv-n">${adm.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${adm.map(link).join('')}</div></div>` : '');
-    const tabs = curM && curM[3].length > 1 ? `<nav class="ct-tabs noprint" aria-label="${esc(curM[1])} 탭">${curM[3].filter((t) => !SHOWF || SHOWF.includes(t[1])).map((t) => `<a href="${t[1]}"${isOn(t) ? ' aria-current="page"' : ''}${ONLY[t[0]] ? ` data-only="${ONLY[t[0]]}"` : ''}>${esc(t[2])}</a>`).join('')}</nav>` : '';
+    const vis = curM ? curM[3].filter((t) => t[3] !== 'h' && (!SHOWF || SHOWF.includes(t[1].split('#')[0]))) : [];
+    const hid = curM ? curM[3].find((t) => t[3] === 'h' && t[0] === d.page) : null;   // 전문 화면을 열었을 때는 그 화면 이름도 탭 끝에 보임
+    const tabs = vis.length > 1 || hid ? `<nav class="ct-tabs noprint" aria-label="${esc(curM[1])} 탭">${vis.concat(hid ? [hid] : []).map((t) => `<a href="${t[1]}" data-tab="${t[0]}|${t[1].split('#')[1] || ''}"${ONLY[t[0]] ? ` data-only="${ONLY[t[0]]}"` : ''}${t === hid ? ' class="hid"' : ''}>${esc(t[2])}</a>`).join('')}</nav>` : '';
     const TH = { auto: '자동', light: '밝게', dark: '어둡게' };
     h.className = 'shell-top';
     h.innerHTML = `<div class="topbar noprint"><button type="button" class="hamb" aria-label="메뉴 열기" aria-expanded="false"><i></i><i></i><i></i></button><a class="brand" href="${HOME}">${MARK}<span class="bt"><b>POSCO STEELEON</b><small>도금·컬러 가동계획</small></span></a><a class="fresh" id="ui-fresh-m" href="health.html" hidden></a></div>
@@ -141,6 +144,10 @@
       const sec = b.parentElement, v = !sec.classList.contains('open'); sec.classList.toggle('open', v); b.setAttribute('aria-expanded', String(v));
       const L = [...h.querySelectorAll('.nv-sec.open')].map((x) => x.dataset.g); try { localStorage.setItem(NKEY, JSON.stringify(L)); } catch (e) { /* 무시 */ }
     }));
+    const markTab = () => { const hs = (location.hash || '').slice(1), L = [...h.querySelectorAll('.ct-tabs a')], mine = L.filter((a) => a.dataset.tab.split('|')[0] === d.page);
+      const on = mine.find((a) => a.dataset.tab.split('|')[1] === hs) || mine.find((a) => !a.dataset.tab.split('|')[1]) || mine[0];
+      L.forEach((a) => (a === on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'))); };
+    markTab(); addEventListener('hashchange', markTab);
     const curA = h.querySelector('.shell-nav a[aria-current]'); if (curA) requestAnimationFrame(() => curA.scrollIntoView({ block: 'nearest' }));
     h.querySelectorAll('.scope-seg button').forEach((b) => b.addEventListener('click', () => { if (b.dataset.sc !== scope) setScope(b.dataset.sc); }));
     h.querySelectorAll('.shell-nav a[data-only], .ct-tabs a[data-only]').forEach((a) => a.classList.toggle('dim', scope !== 'all' && !a.dataset.only.includes(scope)));
