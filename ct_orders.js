@@ -1,5 +1,5 @@
 /* 02 수주·납기 통합(11/4 2차 진단 2·5·11장): 도금 주문진도 + 컬러 주문·납기 → 한 주문 모델(ui/ct.js CT.orders)
-   하위 화면 = 주소 #뒤(메뉴 탭과 같음, 화면 안 탭 없음): #status 수주 현황 · #risk 납기 위험 · #track 주문 추적 · #cal 납기 캘린더
+   하위 화면 = 주소 #뒤(메뉴 탭과 같음, 화면 안 탭 없음): #status 수주 현황 · #risk 납기 위험 · #track 주문진도 · #cal 납기 캘린더
    출하 확인 불가(출하 실적 연결 없음)는 완료로 보지 않음 */
 (function () {
   'use strict';
@@ -144,8 +144,16 @@
     drawRisk();
   }
 
-  /* ---------- #track 주문 추적 ---------- */
+  /* ---------- #track 주문진도 ---------- */
   // 11/5 사용자 '왜 이런 식으로 화면 구성을 한 거지?' — 상세를 한 줄 상황 → 단계 흐름(가로) → 핵심 숫자 → 속성 격자 순으로, 화면 폭 전체 사용
+  /* 매치없음 컬러 주문의 소재: 소재발주현황(SMMTA1080 = 발주·입고 표) 발주처·발주일·입고납기 / 재고기반(계약번호 6번째 C) / 발주 없음 */
+  function poLine(o) {
+    if (o.pl !== 'C' || (o.mchT || 0) > 0.0005) return '';
+    if (o.po && o.po.no) return `발주 ${esc(o.po.sup || '')} · ${md(o.po.ordDt) || '-'} 발주 · 입고납기 <b>${md(o.po.dle) || '-'}</b>${o.po.entT ? ` · 입고 ${n1(o.po.entT)}t` : ''}`;
+    if (o.route === '재고기반') return `재고기반 주문서 · 소재 재고 ${n1(o.matT || 0)}t`;
+    if (o.self) return `자가재(도금) ${esc(o.self)}`;
+    return '<span class="ct-neg">소재 발주 없음</span>';
+  }
   function trackBase() {
     if (T.q) { const q = T.q.toUpperCase(); return L.filter((o) => [o.id, o.item, o.cus, o.man].join(' ').toUpperCase().includes(q)).sort(CT.riskSort).slice(0, 200); }
     return L.filter((o) => OPEN.includes(o.risk)).sort(CT.riskSort);
@@ -159,8 +167,9 @@
       .map(([k, nm, v]) => `<button type="button" class="co-chip" data-k="${esc(k)}" aria-pressed="${(T.tag || '') === k}">${esc(nm)}<b>${n0(v)}</b></button>`).join('');
     $('co-tc').querySelectorAll('button').forEach((b) => { b.onclick = () => { T.tag = b.dataset.k; drawTrackList(); const f = trackList()[0]; if (f && !trackList().some((o) => o.id === T.id)) pickTrack(f.id); }; });
     const A2 = trackList();
-    $('co-tl').innerHTML = A2.length ? A2.slice(0, 300).map((o) => `<li class="ck${o.id === T.id ? ' on' : ''}" data-id="${esc(o.id)}" role="option" aria-selected="${o.id === T.id}">`
-      + `<div class="a">${CT.badge(o)}<b>${esc(o.id)}</b></div><div class="b"><span>${esc(o.grp)} · ${esc(plName(o))}</span><span>납기 <b>${md(o.due) || '-'}</b> · 잔량 <b>${n1(o.remT || 0)}t</b></span></div></li>`).join('')
+    const A3 = A2.slice(0, 300).sort((x, y) => String(x.grp).localeCompare(String(y.grp)) || CT.riskSort(x, y)); let gp = null;   // 판매그룹별로 묶어(11/5 주문진도)
+    $('co-tl').innerHTML = A2.length ? A3.map((o) => `${o.grp !== gp ? `<li class="co-gh" role="presentation">${esc(gp = o.grp)} <small>${n0(A3.filter((x) => x.grp === o.grp).length)}건</small></li>` : ''}<li class="ck${o.id === T.id ? ' on' : ''}" data-id="${esc(o.id)}" role="option" aria-selected="${o.id === T.id}">`
+      + `<div class="a">${CT.badge(o)}<b>${esc(o.id)}</b></div><div class="b"><span>${esc(o.grp)} · ${esc(plName(o))}</span><span>납기 <b>${md(o.due) || '-'}</b> · 잔량 <b>${n1(o.remT || 0)}t</b></span></div>${poLine(o) ? `<div class="b po">${poLine(o)}</div>` : ''}</li>`).join('')
       : '<li class="mu">해당 주문이 없습니다.</li>';
     $('co-tn').textContent = T.q ? `찾기 ${n0(A2.length)}건` : `지연 예상·점검·자료 확인 ${n0(A2.length)}건${A2.length > 300 ? ' · 앞 300건 표시' : ''}`;
     $('co-tl').querySelectorAll('li.ck').forEach((li) => { li.onclick = () => pickTrack(li.dataset.id); });
@@ -201,7 +210,7 @@
     const grid = `<div class="co-grid">${kv('판매그룹', esc(o.grp) + (o.grpEst ? ' <small>(추정)</small>' : ''))}${kv('고객사', esc(o.cus || ''))}${kv('담당', esc(o.man || ''))}`
       + kv('공정·라인', esc(plName(o))) + kv('품목', esc(o.item)) + kv('두께×폭', esc(o.size)) + kv('지연 근거', o.cause ? esc(CT.why(o)) : '')
       + kv('조치 부서', esc(o.dept || '')) + kv('진행 단계', CT.fulBadge(o.ful)) + kv('생산 완료 예정', o.etaDone ? `${md(o.etaDone)} <small>${esc(o.etaSrc || '')}</small>` : '')
-      + kv('소재', esc(o.matSt || '')) + (o.self ? kv('자가재(도금 주문)', esc(o.self)) : '') + '</div>';
+      + kv('소재', esc(o.matSt || '')) + (o.self ? kv('자가재(도금 주문)', esc(o.self)) : '') + (poLine(o) ? kv('소재 발주(SMMTA1080)', poLine(o)) : '') + (o.src && o.src.wst ? kv('작업 상태', esc(o.src.wst)) : '') + '</div>';
     box.innerHTML = `<div class="co-th"><div class="h1"><b>${esc(o.id)}</b>${CT.badge(o)}<span class="who">${[o.cus, o.grp, plName(o)].filter(Boolean).map(esc).join(' · ')}</span></div>`
       + `<p class="co-story">${storyOf(o)}</p></div>${tl}${figs}${grid}`;
   }
@@ -211,9 +220,56 @@
     drawTrackDetail();
     if (matchMedia('(max-width: 900px)').matches) $('co-td').scrollIntoView({ block: 'start' });
   }
+  /* 주문진도 요약(11/5 사용자 'SSCHC1010 작업지시대상선정 요약 — 우리로 치면 주문진도'): 라인별 · 전체
+     원본 전체 = 잔여 있음 + 1,000kg 이하(제외) + 잔여 없음(제외). 매치있음 = 매치량>0(이미 생산에 쓴 소재 제외), 아래 작업 상태 4줄은 안 끝난 작업지시(PF_CC_WORK_ORD) 기준.
+     작업가능일 = 매치된 소재로 만들 수 있는 양(주문별 min(잔여, 매치)) ÷ 라인 하루 능력 */
+  const CAPC = { '1CCL': 480, '2CCL': 400, '3CCL': 200, '4CCL': 250 }, CAPG = { '1CGL': 719, '2CGL': 927 };
+  let PS = { line: '' };
+  function progSum() {
+    const cc = (D0 || {}).cc_order_progress, out = [];
+    const agg = (rs) => [rs.length, ...['ordT', 'prodT', 'remT', 'mchT', 'matT'].map((k) => rs.reduce((a, r) => a + (+r[k] || 0), 0))];
+    const add = (a, b) => a.map((v, i) => v + (b[i] || 0));
+    const row = (nm, v, days, cls = '', tip = '') => `<tr class="${cls}"${tip ? ` title="${esc(tip)}"` : ''}><td class="nm">${nm}</td><td class="r">${n0(v[0])}</td>${v.slice(1).map((x) => `<td class="r">${x == null ? '-' : n0(x)}</td>`).join('')}<td class="r">${days == null ? '-' : `<b>${days.toFixed(1)}</b>`}</td></tr>`;
+    const head = '<thead><tr><th>구분</th><th class="r">건수</th><th class="r">주문량</th><th class="r">생산량</th><th class="r">주문잔여량</th><th class="r">매치량</th><th class="r">소재량</th><th class="r">작업가능일</th></tr></thead>';
+    if (cc && CT.inScope('C')) {
+      const sel = PS.line && CAPC[PS.line] ? [PS.line] : cc.lines || [];
+      const R = (cc.rows || []).filter((r) => sel.includes(r.line));
+      const ex = sel.reduce((a, l) => ({ zero: add(a.zero, ((cc.excl || {})[l] || {}).zero || []), small: add(a.small, ((cc.excl || {})[l] || {}).small || []) }), { zero: [0, 0, 0, 0, 0, 0], small: [0, 0, 0, 0, 0, 0] });
+      const cap = sel.reduce((a, l) => a + (CAPC[l] || 0), 0);
+      const inc = agg(R), mR = R.filter((r) => r.mchT > 0.0005), nR = R.filter((r) => !(r.mchT > 0.0005)), sR = R.filter((r) => r.matT > 0.0005);
+      const can = (rs) => rs.reduce((a, r) => a + Math.min(+r.remT || 0, +r.mchT || 0), 0);
+      const W = ['작업대기', '지시대기', '부자재입고대기', '중단'], WT = { 작업대기: 'SSCHC1030 — 확정된 작업지시, 생산 우선순위 조정·지시 취소 검토', 지시대기: 'SSCHC1020 — 작업지시 편성·확정 전(매치만 되고 지시 없는 주문 포함)', 부자재입고대기: '도료·PF 입고 상태 대기(W)·발주 진행(P) — MES 상태값 추정', 중단: '작업지시 보류(RSV_YN) — 현재 0건' };
+      const has = add(inc, ex.small);
+      let h = row('원본 전체', add(has, ex.zero), null, 'p0') + row('주문잔여량 있음', has, null, 'p1')
+        + row('├ 매치있음 <small>매치량 &gt; 0</small>', agg(mR), cap ? can(mR) / cap : null, 'p2', '작업가능일 = 매치된 소재로 만들 수 있는 양 ÷ 라인 하루 능력')
+        + W.map((w) => { const rs = mR.filter((r) => r.wst === w); return row(`<span class="sub">└ ${w}</span>`, agg(rs), cap && rs.length ? can(rs) / cap : null, 'p3', WT[w]); }).join('')
+        + row('├ 매치없음 <small>매치량 = 0</small>', agg(nR), null, 'p2') + row('├ 소재량있음 <small>소재량 &gt; 0 · 위와 겹침</small>', agg(sR), null, 'p2')
+        + row('└ 1,000kg 이하(제외)', ex.small, null, 'p2 mu') + row('주문잔여량 없음(제외)', ex.zero, null, 'p1 mu');
+      out.push(`<div class="ps-blk"><div class="ps-h"><b>컬러 주문진도</b> <span>${md(cc.asOf)} · MES 작업지시대상(SSCHC1010 기준) · ${sel.join('·')} · 하루 능력 ${sel.map((l) => `${l.slice(0, 1)}라인 ${CAPC[l]}t`).join(' · ')}${sel.length > 1 ? ` = ${n0(cap)}t` : ''}</span></div>`
+        + `<div class="ct-wrap"><table class="ct-t ps-t">${head}<tbody>${h}</tbody></table></div></div>`);
+    }
+    const cg = (D0 || {}).cg_order_progress;
+    if (cg && CT.inScope('G') && (!PS.line || CAPG[PS.line])) {
+      const sel = PS.line && CAPG[PS.line] ? [PS.line] : ['1CGL', '2CGL'];
+      const G = (M.G || []).filter((o) => sel.includes(o.line));
+      const open = G.filter((o) => !o.closed && (o.remT || 0) > 0.5), done = G.filter((o) => !(!o.closed && (o.remT || 0) > 0.5));
+      const ag = (os) => [os.length, ...['ordT', 'prodT', 'remT'].map((k) => os.reduce((a, o) => a + (+o[k] || 0), 0)), null, os.reduce((a, o) => a + (o.entT || 0), 0)];
+      const cap = sel.reduce((a, l) => a + CAPG[l], 0), ok = open.filter((o) => o.matSt === '확보');
+      const st = (nm, k) => open.filter((o) => o.matSt === k);
+      const h = row('원본 전체', ag(G), null, 'p0') + row('주문잔여량 있음', ag(open), null, 'p1')
+        + row('├ 소재 입고 완료', ag(ok), cap ? ok.reduce((a, o) => a + o.remT, 0) / cap : null, 'p2', '작업가능일 = 소재 들어온 주문 잔여량 ÷ 라인 하루 능력')
+        + row('├ 소재 진행(발주·입고 중)', ag(st('', '진행')), null, 'p2') + row('├ 소재 입고 지연', ag(st('', '지연')), null, 'p2') + row('├ 소재 미발주', ag(st('', '미발주')), null, 'p2')
+        + row('주문잔여량 없음·생산 완료', ag(done), null, 'p1 mu');
+      out.push(`<div class="ps-blk"><div class="ps-h"><b>도금 주문진도</b> <span>${md(cg.asOf)} · 주문진도(납기 −30~+90일) · ${sel.join('·')} · 하루 능력 ${sel.map((l) => `${l} ${CAPG[l]}t`).join(' · ')} · 매치량 칸 = 해당 없음, 소재량 = 입고된 소재</span></div>`
+        + `<div class="ct-wrap"><table class="ct-t ps-t">${head}<tbody>${h}</tbody></table></div></div>`);
+    }
+    if (!out.length) return '';
+    const opts = [['', '전체']].concat(CT.inScope('G') ? [['1CGL', '1CGL'], ['2CGL', '2CGL']] : []).concat(CT.inScope('C') ? (((D0 || {}).cc_order_progress || {}).lines || []).map((l) => [l, l]) : []);
+    return `<div class="ps"><div class="seg ct-seg ps-seg" role="group" aria-label="라인">${opts.map(([k, n]) => `<button type="button" data-l="${k}" aria-pressed="${PS.line === k}">${n}</button>`).join('')}</div><div class="ps-g">${out.join('')}</div></div>`;
+  }
   function viewTrack() {
     if (!T.id) { const f = L.filter((o) => OPEN.includes(o.risk)).sort(CT.riskSort)[0]; T.id = f ? f.id : null; }
-    return `<div class="co-trk"><div class="co-tlw"><input id="co-tq" type="search" placeholder="주문번호·품명·고객·담당 (Enter)" value="${esc(T.q)}" aria-label="주문 찾기">`
+    return `<div id="co-ps">${progSum()}</div><div class="co-trk"><div class="co-tlw"><input id="co-tq" type="search" placeholder="주문번호·품명·고객·담당 (Enter)" value="${esc(T.q)}" aria-label="주문 찾기">`
       + `<div class="co-tc" id="co-tc"></div><div class="co-tn" id="co-tn"></div><ul class="co-tl" id="co-tl" role="listbox" aria-label="주문 목록"></ul></div><section class="co-td" id="co-td"></section></div>`;
   }
   function bindTrack() {
@@ -229,6 +285,8 @@
       const n = it[Math.max(0, Math.min(it.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))]; if (n) n.focus();
       if (e.key === 'ArrowUp' && i <= 0) qi.focus();
     });
+    const bindPS = () => document.querySelectorAll('.ps-seg button').forEach((bt) => bt.onclick = () => { PS.line = bt.dataset.l; $('co-ps').innerHTML = progSum(); bindPS(); });
+    bindPS();
     drawTrackList(); drawTrackDetail();
   }
 
@@ -289,7 +347,7 @@
     const body = v === 'risk' ? viewRisk() : v === 'track' ? viewTrack() : v === 'cal' ? viewCal() : viewStatus();
     $('ct-main').innerHTML = basis + `<section class="card co-card co-${v}" id="co-body">${body}</section>`;
     ({ status: bindStatus, risk: bindRisk, track: bindTrack, cal: bindCal })[v]();
-    document.title = `${({ status: '수주 현황', risk: '납기 지연 예상', track: '주문 추적', cal: '납기 캘린더' })[v]} · 수주·납기`;
+    document.title = `${({ status: '수주 현황', risk: '납기 지연 예상', track: '주문진도', cal: '납기 캘린더' })[v]} · 수주·납기`;
   }
   CT.onView(() => { if (D0) { CT.panel(null); render(D0); } });
   CT.boot(['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json'], render);
