@@ -43,7 +43,7 @@
   /* ---------- 주문 모델 ---------- */
   const GN = { 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차강판', 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발' };
   CT.grpName = (g) => GN[g] || g || '판매그룹 모름';
-  CT.CAUSE = { mat: '소재 입고 지연', plate: '자가재(도금) 지연', cap: '생산 지연', ship: '출하 지연', data: '자료 확인' };
+  CT.CAUSE = { mat: '소재 입고 지연', match: '소재 매치 지연', paint: '도료 입고 지연', plate: '자가재(도금) 지연', cap: '생산 지연', ship: '출하 지연', data: '자료 확인' };
   /* 화면 표시 말(11/4 사용자 '원래 우리가 쓰는 말투로 · 위험이 뭐가 위험하다는 거냐') — 내부 값(o.risk·o.ful)은 그대로, 보이는 글자만 바꿈 */
   CT.RL = { 위험: '납기 지연 예상', 주의: '점검 필요', '판정 불가': '자료 확인 필요', 정상: '정상', 완료: '완료' };
   CT.FL = { '출하 확인 불가': '출하 실적 없음' };
@@ -52,7 +52,7 @@
   /* 주문 한 건이 '무엇이' 문제인지 */
   CT.tag = (o) => {
     if (!o || o.risk === '정상') return '정상';
-    if (o.risk === '판정 불가') return '자료 확인';
+    if (o.risk === '판정 불가') return /출하 실적/.test(o.dataWhy || '') ? '출하 미확인' : '자료 확인';   // 11/5: 생산은 끝났고 출하 실적만 안 이어진 주문(지연 아님)을 '자료 확인'과 분리
     if (o.risk === '주의') {
       if (o.cause === 'mat') return o.matSt === '미발주' ? '소재 발주 필요' : o.matSt === '입고 대기' ? '소재 입고 대기' : '소재 입고 확인';
       if (o.cause === 'plate') return '자가재(도금) 확인';
@@ -62,7 +62,7 @@
     if (o.cause === 'mat' && o.pl === 'C' && o.matSt === '미확보') return '소재 없음';
     return CT.CAUSE[o.cause] || '납기 지연 예상';
   };
-  CT.DEPT = { mat: '구매(소재)', plate: '도금 생산', cap: '생산기획', ship: '물류·출하', data: '수주(자료 확인)' };
+  CT.DEPT = { mat: '구매(소재)', match: '생산기획(컬러 매치)', paint: '구매(도료)', plate: '도금 생산', cap: '생산기획', ship: '물류·출하', data: '수주(자료 확인)' };
   CT.RISK = ['위험', '주의', '판정 불가', '정상'];
   CT.FUL = ['생산 전', '생산 중', '출하 확인 불가', '부분 출하', '출하 완료'];
   const STALE = 60;   // 납기가 이만큼 지났는데 미종결이면 실제 위험보다 MES 종결 누락일 가능성이 커 '판정 불가'로 분리(11/4)
@@ -87,7 +87,7 @@
     o.prodSt = x.st;
     // 위험 판정(PRD 13): 완료 → 출하 지연 → 소재 → 능력·순서 → 자료
     // 이행 단계(위험 등급과 별개, 11/4 2차 진단 2.1): 생산 완료 ≠ 납기 이행. 출하 실적이 이어지지 않은 완료 주문은 '출하 확인 불가'(출하 완료로 추정하지 않음)
-    const pDone = x.st === '생산 완료' || (ordT && prodT >= ordT - 0.5);
+    const pDone = x.st === '생산 완료' || (ordT && prodT >= ordT - Math.min(0.5, ordT * 0.05));   // 11/5: 1t 미만 주문이 생산 0 인데 완료로 잡히던 것(허용 오차 0.5t 고정) → 주문량 5% 와 0.5t 중 작은 값
     o.ful = pDone ? (o.fwdT >= ordT - 0.5 && ordT ? '출하 완료' : o.fwdT > 0.5 ? '부분 출하' : '출하 확인 불가') : prodT > 0.5 ? '생산 중' : '생산 전';
     o.unshipT = pDone ? Math.max(0, ordT - o.fwdT) : ordT - o.fwdT;       // 미출하량(출하 실적 기준) — 출하 확인 불가면 과대일 수 있음
     o.closed = o.ful === '출하 완료';
@@ -98,6 +98,7 @@
     else if (!ordT) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = '주문량 없음'; }
     else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = `납기 ${STALE}일 넘게 지남 · MES 미종결(종결 처리 확인)`; }
     else if (x.lateIn) { o.risk = '위험'; o.cause = 'mat'; o.last = x.needIn; }
+    else if (x.st === '미발주' && prodT < 0.5) { o.risk = x.needIn && CT.diff(x.needIn, asOf) <= 35 ? '위험' : '주의'; o.cause = 'mat'; o.last = x.needIn; }   // 11/5: 소재 미발주인데 '생산 지연'으로 나오던 것 — 원인은 소재
     else if (sche && needProd && sche > needProd && remT > 0.5) { o.risk = '위험'; o.cause = 'cap'; o.last = needProd; }
     else if (x.hurry || x.chk) { o.risk = '주의'; o.cause = 'mat'; o.last = x.needIn; }
     else if (x.st === '미발주') { o.risk = x.needIn && CT.diff(x.needIn, asOf) <= 35 ? '위험' : '주의'; o.cause = 'mat'; o.last = x.needIn; }
@@ -123,17 +124,17 @@
     o.matSt = x.st === '매치 완료' ? '확보' : x.st === '소재 있음' ? '재고 있음' : x.st === '입고 대기' ? '입고 대기' : '미확보';
     o.prodSt = x.prodT ? '생산 중' : x.woT ? '지시됨' : '생산 전';
     const soon = x.due && CT.diff(x.due, asOf) <= 14;
-    const pDone = x.ordT && x.prodT >= x.ordT - 0.5;
+    const pDone = x.ordT && x.prodT >= x.ordT - Math.min(0.5, x.ordT * 0.05);
     o.ful = pDone ? '출하 확인 불가' : x.prodT > 0.5 ? '생산 중' : '생산 전';   // 컬러 주문별 출하 자료 없음
     o.unshipT = null; o.closed = false;
     if (pDone) { o.risk = x.due && x.due < asOf ? '판정 불가' : '정상'; if (o.risk === '판정 불가') { o.cause = 'data'; o.dataWhy = '생산 완료 · 출하 실적 연결 없음'; } }
     else if (!x.due) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = '납기 없음'; }
     else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = `납기 ${STALE}일 넘게 지남 · MES 미종결(종결 처리 확인)`; }
     else if (selfG && selfG.risk === '위험' && x.st !== '매치 완료') { o.risk = '위험'; o.cause = 'plate'; o.last = selfG.last || addD(x.due, -8); }
-    else if (x.lateCan) { o.risk = '위험'; o.cause = 'mat'; o.last = x.can; }
+    else if (x.lateCan) { o.risk = '위험'; o.cause = /도료/.test(x.canBy || '') ? 'paint' : 'mat'; o.last = x.can; }   // 11/5: 매치 끝났는데 도료가 늦는 주문을 '소재 입고 지연'으로 부르던 것
     else if (x.st === '소재 없음') { o.risk = x.lateDue || soon ? '위험' : '주의'; o.cause = 'mat'; o.last = addD(x.due, -7); }
     else if (x.sche && x.sche > x.due) { o.risk = '위험'; o.cause = 'cap'; o.last = x.due; }
-    else if (x.lateDue) { o.risk = '위험'; o.cause = x.st === '매치 완료' ? 'cap' : 'mat'; o.last = asOf; }
+    else if (x.lateDue) { o.risk = '위험'; o.cause = x.st === '매치 완료' ? 'cap' : x.st === '소재 있음' ? 'match' : 'mat'; o.last = asOf; }   // 11/5: 규격 재고가 있는데 매치 안 된 주문 = '소재 매치 지연'(입고 문제 아님)
     else if (x.st === '입고 대기') { o.risk = '주의'; o.cause = x.self ? 'plate' : 'mat'; o.last = addD(x.due, -7); }
     else o.risk = '정상';
     o.etaDone = x.sche || null;
@@ -163,6 +164,8 @@
     if (o.cause === 'mat') return o.pl === 'G' ? `입고 필요 ${d(o.needIn || o.last) || '-'} · ${o.matSt}` : `소재 ${o.matSt} · 납기 ${d(o.due)}`;
     if (o.cause === 'cap') return `편성 ${d(o.sche) || '-'} > 생산 필요 ${d(o.needProd) || '-'}`;
     if (o.cause === 'plate') return `자가재 ${o.self || ''} 진행 지연`;
+    if (o.cause === 'match') return `규격 재고 있음 · 매치 안 됨 · 납기 ${d(o.due)}`;
+    if (o.cause === 'paint') return `도료 입고 ${d(o.src.can)} > 납기 ${d(o.due)}`;
     if (o.cause === 'ship') return `납기 ${d(o.due)} 지남 · 미출하 ${CT.n1(o.unshipT || 0)}t`;
     return '';
   };

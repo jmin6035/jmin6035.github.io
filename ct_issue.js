@@ -4,14 +4,14 @@
 (function () {
   'use strict';
   const { esc, n0, n1, md } = CT;
-  const TYPE = { mat: '소재', plate: '생산', cap: '생산', ship: '출하', data: '자료' };
+  const TYPE = { mat: '소재', match: '생산', paint: '소재', plate: '생산', cap: '생산', ship: '출하', data: '자료' };
   const ST = ['신규', '접수', '조치 중', '완료', '보류'];
   const STC = { 신규: 'na', 접수: 'warn', '조치 중': 'mid', 완료: 'ok', 보류: 'pre' };
   // 화면 표시(11/5 사용자 '미처리·조치 중으로는 뭘 했는지 모름') — 저장 값(st)은 그대로
   const STN = { 신규: '담당 미지정(접수 전)', 접수: '접수됨(조치 전)', '조치 중': '조치 진행 중', 완료: '종결', 보류: '보류' };
   // 원인별 해야 할 조치
-  const ACT = { mat: '소재 발주·입고 앞당김 요청', cap: '생산 순서·편성 조정', plate: '자가재(도금) 생산 앞당김', ship: '선적·배차 일정 확인', data: 'MES 주문 종결·자료 정정' };
-  const CSH = { mat: '소재', cap: '생산', plate: '자가재', ship: '출하', data: '자료' };
+  const ACT = { mat: '소재 발주·입고 앞당김 요청', match: '규격 재고 매치·편성', paint: '도료 입고 앞당김 요청', cap: '생산 순서·편성 조정', plate: '자가재(도금) 생산 앞당김', ship: '선적·배차 일정 확인', data: 'MES 주문 종결·자료 정정' };
+  const CSH = { mat: '소재', match: '매치', paint: '도료', cap: '생산', plate: '자가재', ship: '출하', data: '자료' };
   const VIEWS = ['now', 'req'];
   const FIL = [['', '전체'], ['auto', '담당 미지정'], ['open', '조치 진행 중'], ['done', '종결']];
   let fil = '', EV = null, evErr = '', bound = false, DD = null;
