@@ -132,7 +132,7 @@
     const actTbl = top.length ? `<div class="ct-wrap"><table class="ct-t"><colgroup><col style="width:150px"><col><col style="width:84px"><col style="width:136px"><col style="width:108px"><col style="width:72px"></colgroup><thead><tr><th>무엇이 문제</th><th>대상</th><th class="r">해당 물량</th><th>조치 마감</th><th>조치 부서</th><th>진행</th></tr></thead><tbody>${top.map((a, i) => `<tr class="ck" tabindex="0" data-i="${i}"><td class="nw">${CT.badgeT(a.risk, a.type)}</td><td class="w">${esc(a.what)}</td><td class="r">${a.t == null ? '' : n0(a.t)}</td><td class="nw">${left(a.last)}</td><td class="nw">${esc(a.dept || '')}</td><td class="nw">${stCell(a)}</td></tr>`).join('')}</tbody></table></div>${acts.length > 10 ? `<p class="ct-note">상위 10건 / 전체 ${acts.length}건 · <a href="ct_issue.html#now">이슈·조정에서 전체 보기</a></p>` : ''}` : '<p class="ct-note">기간 안 조치 대상 없음</p>';
 
     // ④ 라인별 진도(11/5 사용자 '라인별 진도를 키우고 한눈에, 공장별 라인별로'): 공장 → 라인 카드(진도율 · 계획 대비 막대 · 일별 막대)
-    const ndays = ndM(asOf), mon = asOf.slice(0, 7);
+    const ndays = ndM(asOf), mon = asOf.slice(0, 7), RUN = P.running && P.running.lines ? P.running : null;
     const futG = {}; for (const r of L.rows || []) if (r[0] > (((L.replan || {}).t0) || '')) futG[`${r[1]}|${r[0]}`] = (futG[`${r[1]}|${r[0]}`] || 0) + (+r[4] || 0);
     const colP = {}, colA = {}; for (const c of W.color || []) { const t = Object.values(c.g || {}).reduce((a, v) => a + v, 0); (c.act ? colA : colP)[`${c.l}|${c.d}`] = ((c.act ? colA : colP)[`${c.l}|${c.d}`] || 0) + t; }
     const cdown = {}; for (const r of W.colorDown || []) if (r[2] !== 'test') cdown[`${r[1]}|${r[0]}`] = (cdown[`${r[1]}|${r[0]}`] || 0) + (+r[3] || 0);
@@ -205,12 +205,14 @@
       const grid = [1, 0.5, 0].map((f) => `<div class="ch-g" style="bottom:${f * 100}%"><span>${n0(mx * f)}</span></div>`).join('');
       const cols = r.dd.map((z, i) => {
         const lo = z.past && z.a != null && z.p != null && z.p > 0 && z.a < z.p * 0.95;
-        const tip = `${md(z.d)}(${wd(z.d)}) ${z.past ? (z.a == null ? '실적 자료 없음' : `실적 ${n0(z.a)}t${z.p != null ? ` · 계획 ${n0(z.p)}t` : ''}${z.stop ? ' · 정지/휴지' : ''}`) : `계획 ${n0(z.p || 0)}t`}`;
+        const tip = `${md(z.d)}(${wd(z.d)}) ${!z.past && RUN && z.d === RUN.d ? `진행 중 ${n0(+(RUN.lines || {})[r.x.line] || 0)}t(07시~, 마감 전) · ` : ''}${z.past ? (z.a == null ? '실적 자료 없음' : `실적 ${n0(z.a)}t${z.p != null ? ` · 계획 ${n0(z.p)}t` : ''}${z.stop ? ' · 정지/휴지' : ''}`) : `계획 ${n0(z.p || 0)}t`}`;
+        const rt = !z.past && RUN && z.d === RUN.d ? (+(RUN.lines || {})[r.x.line] || 0) : null;
         let body = '', val = '';
         if (z.past && z.a == null) body = '<i class="ch-na">자료<br>없음</i>';
         else if (z.past && z.stop) body = `<i class="ch-na">${rest(z.d) ? '계획<br>휴지' : '정지'}</i>`;
         else if (z.past) { body = `<b class="ch-a${lo ? ' lo' : ''}" style="height:${pc(z.a)}"></b>`; val = n0(z.a); }
         else if (z.p) { body = `<b class="ch-f" style="height:${pc(z.p)}"></b>`; val = n0(z.p); }
+        if (rt != null) { body = (z.p ? `<b class="ch-f" style="height:${pc(z.p)}"></b>` : '') + `<b class="ch-r" style="height:${pc(rt)}"></b>`; val = n0(rt); }   // 오늘 진행분(마감 전, 11/5 사용자)
         else body = `<i class="ch-na">${rest(z.d) ? '계획<br>휴지' : '계획<br>없음'}</i>`;
         if (z.past && z.p != null && z.p > 0) body += `<em class="ch-p" style="bottom:${pc(z.p)}"></em>`;
         const ti = r.dd.findIndex((q) => q.d === asOf), dn = +z.d.slice(8);
@@ -220,11 +222,16 @@
         return `<div class="ch-c${z.d === asOf ? ' today' : ''}${z.past ? '' : ' fut'}${inP && view !== 'month' ? ' sel' : ''}${off ? ' off' : ''}" title="${esc(tip)}"><div class="ch-v${lo ? ' lo' : ''}">${many ? '' : val}</div><div class="ch-b">${body}</div>`
           + `<div class="ch-x">${showD ? `${+z.d.slice(5, 7)}/${+z.d.slice(8)}<small>${z.d === asOf ? '오늘' : wd(z.d)}</small>` : ''}</div></div>`;
       }).join('');
-      const leg = `<div class="ch-leg"><span><b class="k a"></b>실적</span><span><b class="k lo"></b>계획 95% 미만</span><span><b class="k p"></b>그날 계획</span><span><b class="k f"></b>앞으로 계획</span><span><b class="k o"></b>휴지·정비</span><span class="u">단위 t</span></div>`;
+      const leg = `<div class="ch-leg"><span><b class="k a"></b>실적</span><span><b class="k lo"></b>계획 95% 미만</span><span><b class="k p"></b>그날 계획</span><span><b class="k f"></b>앞으로 계획</span>${RUN ? '<span><b class="k r"></b>오늘 진행 중</span>' : ''}<span><b class="k o"></b>휴지·정비</span><span class="u">단위 t</span></div>`;
       return `${leg}<div class="ch${many ? ' many' : ''}"><div class="ch-in">${grid}<div class="ch-cols" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${cols}</div></div></div>`;
     };
+    const runLine = (r) => {                                                                      // 오늘 진행분(07시~ 마감 전) — 진도율에는 안 넣고 참고로(11/5 사용자 '화면에 보여줘')
+      if (!RUN || RUN.d <= lastFull(r.x)) return '';
+      const t = +(RUN.lines || {})[r.x.line] || 0, p = futPlan(r.x, RUN.d);
+      return `<div class="ln-run">오늘 ${md(RUN.d)} 진행 중 <b>${n0(t)}t</b>${p ? ` / 계획 ${n0(p)}t` : ''}<span>07시~ · 마감 전</span></div>`;
+    };
     const card = (r) => `<a class="ln-c ${r.tn}" href="ct_prod.html#perf"><div class="ln-h"><b>${r.x.line}</b><span class="ln-st ${r.status[1]}">${r.status[0]}</span><span class="ln-big">${r.big == null ? '<small>집계 전</small>' : `${r.big}<small>${r.bigU}</small>`}</span></div>`
-      + `<div class="ln-sub">${esc(r.sub)}${r.diffT != null ? ` <b class="${r.diffT >= 0 ? 'pos' : 'neg'}">${sig(r.diffT)}t</b>` : ''}</div>${bar(r)}${spark(r)}<div class="ln-ft">${esc(r.foot)}</div></a>`;
+      + `<div class="ln-sub">${esc(r.sub)}${r.diffT != null ? ` <b class="${r.diffT >= 0 ? 'pos' : 'neg'}">${sig(r.diffT)}t</b>` : ''}</div>${runLine(r)}${bar(r)}${spark(r)}<div class="ln-ft">${esc(r.foot)}</div></a>`;
     const plant = (pl, nm) => {
       const rs = LN.filter((r) => r.x.pl === pl);
       if (!rs.length) return '';
