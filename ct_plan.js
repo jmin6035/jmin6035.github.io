@@ -128,7 +128,7 @@
   function loadView() {
     const LS = lines(), m0 = X.today.slice(0, 7);
     const lastD = [X.hz.G, X.hz.C].filter(Boolean).sort().pop() || addD(X.today, 55);
-    const months = []; for (let m = m0; m <= lastD.slice(0, 7) && months.length < 3; m = addD(m + '-01', 32).slice(0, 7)) months.push(m);
+    const months = []; for (let m = m0; m <= lastD.slice(0, 7) && months.length < 4; m = addD(m + '-01', 32).slice(0, 7)) months.push(m);
     const mEnd = (m) => addD(addD(m + '-01', 32).slice(0, 7) + '-01', -1);
     const tone = (r) => (r == null ? '' : r > 1.005 ? 'bad' : r >= 0.95 ? 'warn' : 'ok');   // 컬러는 편성이 하루를 꽉 채워 100% 가 보통 → 병목 = 100% 초과
     const calc = (l, ds) => {                                  // ds: 날짜들(오늘 이후만 계산)
