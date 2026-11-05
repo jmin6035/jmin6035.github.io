@@ -116,19 +116,24 @@
       exp: x.exp, man: x.man, ordT: x.ordT, prodT: x.prodT, remT: x.remT, due: x.due, needProd: x.due, sche: x.sche, can: x.can, mchT: x.mchT, matT: x.matT, woT: x.woT, route: x.route, self: x.self, po: x.po, src: x };
     o.steps = [
       { k: '수주 확정', st: 'done' },
-      { k: '소재 확보', st: x.st === '매치 완료' ? 'done' : x.st === '소재 없음' ? 'todo' : 'cur', note: x.st === '매치 완료' ? `매치 ${CT.n1(x.mchT)}t` : x.st === '소재 있음' ? `규격 재고 ${CT.n1(x.matT)}t(매치 전)` : x.st === '입고 대기' ? (x.self ? `자가재 ${x.self}` : `소재 발주 ${(x.po && x.po.no) || ''}`) : '소재 없음' },
+      { k: '소재 확보', st: x.endShort || x.st === '매치 완료' ? 'done' : x.mchUsedT > 0.05 ? 'cur' : x.st === '소재 없음' ? 'todo' : 'cur',   // 11/5: 생산에 이미 쓴 매치 소재도 보임
+        note: [x.mchUsedT > 0.05 ? `매치 소재 ${CT.n1(x.mchUsedT)}t 생산에 사용` : '', x.endShort ? '' : x.st === '매치 완료' ? `남은 매치 ${CT.n1(x.mchT)}t` : x.st === '소재 있음' ? `규격 재고 ${CT.n1(x.matT)}t(매치 전)` : x.st === '입고 대기' ? (x.self ? `자가재 ${x.self}` : `소재 발주 ${(x.po && x.po.no) || ''}`) : `남은 ${CT.n1(x.remT)}t 소재 없음`].filter(Boolean).join(' · ') },
       { k: '자가재(도금)', st: !x.self ? 'na' : selfG ? (selfG.ful !== '생산 전' && selfG.ful !== '생산 중' ? 'done' : 'cur') : 'todo', note: x.self ? (selfG ? `${selfG.ful} · ${CT.n1(selfG.prodT)}/${CT.n1(selfG.ordT)}t` : '도금 주문 정보 없음') : '해당 없음' },
-      { k: '작업 편성', st: x.woT ? 'done' : x.sche ? 'cur' : 'todo', d: x.sche, plan: x.due, note: x.woT ? `지시 ${CT.n1(x.woT)}t` : x.can ? `가동가능 ${CT.md(x.can)}` : '' },
-      { k: '컬러 생산', st: x.prodT >= x.ordT - 0.5 ? 'done' : x.prodT ? 'cur' : 'todo', d: x.sche, plan: x.due, note: `${CT.n1(x.prodT)} / ${CT.n1(x.ordT)}t` },
-      { k: '출하', st: 'na', note: '출하 실적 없음 — 컬러 주문별 출하 자료 없음' },
+      { k: '작업 편성', st: x.woT || x.woDoneT > 0.05 ? 'done' : x.sche ? 'cur' : 'todo', d: x.sche, plan: x.due, note: [x.woDoneT > 0.05 ? `지시 완료 ${CT.n1(x.woDoneT)}t` : '', x.woT ? `진행 지시 ${CT.n1(x.woT)}t` : '', !x.woT && x.can ? `가동가능 ${CT.md(x.can)}` : ''].filter(Boolean).join(' · ') },
+      { k: '컬러 생산', st: x.endShort || x.prodT >= x.ordT - 0.5 ? 'done' : x.prodT ? 'cur' : 'todo', d: x.sche, plan: x.due, note: `${CT.n1(x.prodT)} / ${CT.n1(x.ordT)}t${x.endShort ? ` · 잔량 ${CT.n1(x.remT)}t 미생산 마감(MES 종결 전)` : ''}` },
+      { k: '출하', st: x.fwdT > 0.5 ? (x.fwdT >= x.prodT - Math.min(0.5, x.prodT * 0.05) && (x.endShort || x.prodT >= x.ordT - 0.5) ? 'done' : 'cur') : 'todo', d: x.fwdLast, plan: x.due, note: x.fwdT > 0.5 ? `출하 ${CT.n1(x.fwdT)}t` : '출하 실적 없음' },   // 11/5: 컬러도 MES 출고 실적을 코일번호로 연결
     ];
     o.matSt = x.st === '매치 완료' ? '확보' : x.st === '소재 있음' ? '재고 있음' : x.st === '입고 대기' ? '입고 대기' : '미확보';
     o.prodSt = x.prodT ? '생산 중' : x.woT ? '지시됨' : '생산 전';
     const soon = x.due && CT.diff(x.due, asOf) <= 14;
-    const pDone = x.ordT && x.prodT >= x.ordT - Math.min(0.5, x.ordT * 0.05);
-    o.ful = pDone ? '출하 확인 불가' : x.prodT > 0.5 ? '생산 중' : '생산 전';   // 컬러 주문별 출하 자료 없음
-    o.unshipT = null; o.closed = false;
-    if (pDone) { o.risk = x.due && x.due < asOf ? '판정 불가' : '정상'; if (o.risk === '판정 불가') { o.cause = 'data'; o.dataWhy = '생산 완료 · 출하 실적 연결 없음'; } }
+    const pDone = x.endShort || (x.ordT && x.prodT >= x.ordT - Math.min(0.5, x.ordT * 0.05));
+    const shipped = (x.fwdT || 0) >= x.prodT - Math.min(0.5, x.prodT * 0.05);
+    o.fwdT = x.fwdT || 0;
+    o.ful = pDone ? (x.fwdT > 0.5 ? (shipped ? '출하 완료' : '부분 출하') : '출하 확인 불가') : x.prodT > 0.5 ? '생산 중' : '생산 전';
+    o.unshipT = pDone ? Math.max(0, x.prodT - (x.fwdT || 0)) : null; o.closed = o.ful === '출하 완료';
+    if (o.closed) { o.risk = '정상'; if (x.endShort) o.note = `잔량 ${CT.n1(x.remT)}t 미생산 마감 — MES 종결 처리 필요`; }
+    else if (pDone && o.ful === '부분 출하' && x.due && x.due < asOf) { o.risk = '위험'; o.cause = 'ship'; o.last = asOf; }
+    else if (pDone) { o.risk = x.due && x.due < asOf ? '판정 불가' : '정상'; if (o.risk === '판정 불가') { o.cause = 'data'; o.dataWhy = '생산 완료 · 출하 실적 연결 없음'; } }
     else if (!x.due) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = '납기 없음'; }
     else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = `납기 ${STALE}일 넘게 지남 · MES 미종결(종결 처리 확인)`; }
     else if (selfG && selfG.risk === '위험' && x.st !== '매치 완료') { o.risk = '위험'; o.cause = 'plate'; o.last = selfG.last || addD(x.due, -8); }

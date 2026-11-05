@@ -176,7 +176,7 @@
       + t([th('주문'), th('고객사'), th('납기'), th('진행 단계'), th('미출하(t)', 1), th('상태')], R.slice(0, 30).map(orow)) + (R.length > 30 ? `<p class="ct-note">납기 빠른 30건 · 외 ${R.length - 30}건</p>` : '') + '</details>').join('');
     return CT.basis([{ name: '판생속보', at: P.sr && P.sr.asOf, kind: '확정계획' }, { name: 'MES 출하', at: P.shipDay && P.shipDay.asOf, kind: '실적' }, { name: '주문 진도', at: asOf, kind: '실적' }])
       + card('출하 실적 <small>판매그룹 · 월 누계</small><span class="unit">톤</span>', CT.kpis(k) + tbl)
-      + `<div class="pp-2">${card(`미출하·지연 예상 주문 <small>도금 ${L.length}건 · 납기 경과 미출하 + 7일 안 지연 예상 · 컬러는 주문별 출하 자료 없음</small><span class="unit">톤</span>`, L.length ? og : '<p class="ct-note">없음</p>')}`
+      + `<div class="pp-2">${card(`미출하·지연 예상 주문 <small>도금 ${L.length}건 · 납기 경과 미출하 + 7일 안 지연 예상 · 컬러 포함(출고 실적 코일 연결) 없음</small><span class="unit">톤</span>`, L.length ? og : '<p class="ct-note">없음</p>')}`
       + `${card(`일별 출하 <small>${+mon.slice(5)}월 · 일별 계획 자료 없음</small><span class="unit">톤</span>`, ds.length ? t([th('일자'), ...S.map((s) => th(esc(s.key), 1)), th('계', 1)], dr) : '<p class="ct-note">자료 없음</p>')}</div>`;
   }
 

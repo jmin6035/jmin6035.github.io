@@ -317,7 +317,7 @@
         ['소재 확보', `${n0(op.filter((o) => o.matSt === '확보' || o.matSt === '재고 있음').length)}<small>건</small>`, `미확보 <b class="bad">${op.filter((o) => o.matSt !== '확보' && o.matSt !== '재고 있음').length}</b>건`],
         ['생산 중', `${n0(F('생산 중'))}<small>건</small>`, `생산 전 ${F('생산 전')}건`],
         ['생산 완료', `${n0(F('출하 확인 불가') + F('부분 출하') + F('출하 완료'))}<small>건</small>`, `생산 ${n0(os.reduce((a, o) => a + Math.min(o.prodT || 0, o.ordT || 0), 0))}t`],
-        ['출하', pl === 'G' ? `${n0(F('출하 완료'))}<small>건 완료</small>` : '<small>자료 없음</small>', pl === 'G' ? `부분 ${F('부분 출하')} · <b class="bad">실적 없음 ${F('출하 확인 불가')}</b>건` : `실적 없음 ${F('출하 확인 불가')}건(컬러 출하 연결 전)`],
+        ['출하', `${n0(F('출하 완료'))}<small>건 완료</small>`, `부분 ${F('부분 출하')} · <b class="bad">출하 실적 없음 ${F('출하 확인 불가')}</b>건`],
       ];
       return `<div class="ct-flh">${nm} <small>${pl === 'G' ? `납기 −30~+90일 주문 · ${md(M.cgAt)}` : `${M.ccLines.join('·')} 작업지시대상 · ${md(M.ccAt)}`}</small></div><div class="ct-flow">${cells.map(([l, v, s]) => `<div class="ct-fs"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('')}</div>`;
     };

@@ -21,9 +21,8 @@
 
   /* 출하 근거 한 줄 — 출하가 나오는 곳마다 */
   function shipNote() {
-    const done = M.G.filter((o) => CT.inScope('G') && !['생산 전', '생산 중'].includes(o.ful));
-    const lk = done.filter((o) => (o.fwdT || 0) > 0.5).length;
-    return `<p class="ct-note co-sn">도금 출하 실적 연결 ${n0(lk)}/${n0(done.length)}건 · 컬러 주문별 출하 없음</p>`;
+    const part = (L, nm) => { const d_ = L.filter((o) => CT.inScope(o.pl) && !['생산 전', '생산 중'].includes(o.ful)); return d_.length ? `${nm} 생산 끝난 ${n0(d_.length)}건 중 출하 연결 ${n0(d_.filter((o) => (o.fwdT || 0) > 0.5).length)}건` : ''; };
+    return `<p class="ct-note co-sn">${[part(M.G, '도금'), part(M.C, '컬러')].filter(Boolean).join(' · ')} — MES 출고 실적(7/1~)을 코일번호로 주문에 연결</p>`;
   }
 
   /* ---------- 정렬 ---------- */
@@ -185,7 +184,7 @@
     const due = dd == null ? '납기 없음' : dd < 0 ? `${md(o.due)} 납기에서 <b class="ct-neg">${-dd}일 지남</b>` : dd === 0 ? `<b class="ct-neg">오늘 납기</b>` : `${md(o.due)} 납기까지 ${dd}일`;
     const pdone = !['생산 전', '생산 중'].includes(o.ful);
     const qty = pdone ? `${n1(o.ordT || 0)}t 중 ${n1(o.prodT || 0)}t 생산 — 생산 완료 처리됨` : `${n1(o.ordT || 0)}t 중 ${n1(o.prodT || 0)}t 생산, ${n1(o.remT || 0)}t 남음`;
-    const sh = o.unshipT == null ? '출하 실적 없음(컬러 주문별 출하 자료 없음)' : o.ful === '출하 확인 불가' ? '출하 실적 없음' : o.ful === '출하 완료' ? '출하 완료' : (o.fwdT || 0) > 0.5 ? `출하 ${n1(o.fwdT)}t · 미출하 ${n1(o.unshipT)}t` : '아직 출하 전';
+    const sh = o.unshipT == null ? '생산 전' : o.ful === '출하 확인 불가' ? '출하 실적 없음' : o.ful === '출하 완료' ? '출하 완료' : (o.fwdT || 0) > 0.5 ? `출하 ${n1(o.fwdT)}t · 미출하 ${n1(o.unshipT)}t` : '아직 출하 전';
     return `${esc(why)} — ${due} · ${qty} · ${sh}`;
   }
   function drawTrackDetail() {
