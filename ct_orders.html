@@ -6,7 +6,7 @@
 <title>수주·납기</title>
 <meta name="description" content="도금·컬러 주문을 한 목록으로 — 수주 잔량·납기 지연 예상·주문진도">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611050335">
+<link rel="stylesheet" href="ui/theme.css?v=2611050509">
 <style>
 main.wrap { max-width: none; }
 section.card.co-card { padding: 54px 16px 14px !important; }
@@ -120,6 +120,9 @@ table.co-t .lf { font-size: 13.5px; }
 .pc { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 12px; background: var(--surface); margin: 0 0 14px; }
 .pch { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 10px; } .pch b { font-size: 17px; } .pch span { font-size: 13.5px; color: var(--ink-3); }
 .pts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 14px; } .pts.p5 { grid-template-columns: repeat(5, minmax(0, 1fr)); } .pts.p6 { grid-template-columns: repeat(6, minmax(0, 1fr)); } table.pl-t tr.sub2 td { font-size: 13px; color: var(--ink-2); padding-top: 3px; padding-bottom: 3px; } table.pl-t tr.sub2 td:first-child { padding-left: 26px; } table.pl-t tr.ind td:first-child { padding-left: 22px; } table.pl-t tr.grp td { border-top: 1px solid var(--line); background: var(--surface-2, #f6f8fb); }
+.pt.ck, table.pl-t tr.ck { cursor: pointer; } .pt.ck:hover, .pt.ck[aria-expanded="true"] { box-shadow: 0 0 0 2px var(--brand-2, #1f5fae) inset; } table.pl-t tr.ck:hover td { background: rgba(31,95,174,.06); } table.pl-t tr.ck[aria-expanded="true"] td { background: rgba(31,95,174,.10); } table.pl-t .tg { margin-left: 6px; font-size: 12px; color: var(--ink-3); }
+.ps-exp { margin: 14px 0 6px; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); } .ps-exh { font-size: 15px; margin: 0 0 8px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; } .ps-exh .ps-x { margin-left: auto; font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface-2, #f6f8fb); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+.ps-gs { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; color: var(--ink-2); margin: 0 0 8px; } .ps-et { max-height: 520px; overflow: auto; } .ps-et table td, .ps-et table th { white-space: nowrap; padding: 5px 10px; font-size: 13.5px; } .ps-et tr.gh td { background: var(--surface-2, #f6f8fb); font-size: 13.5px; }
 .pt { border-radius: 10px; background: var(--surface-2, #f6f7f9); padding: 10px 12px; border-left: 4px solid var(--line); }
 .pt.ok { border-left-color: #0ca30c; } .pt.bad { border-left-color: #d03b3b; } .pt.warn { border-left-color: #eda100; }
 .pt .k { font-size: 13.5px; font-weight: 700; color: var(--ink-2); } .pt .v { font-size: 26px; font-weight: 800; margin: 2px 0; } .pt .v small { font-size: 13.5px; font-weight: 600; color: var(--ink-2); margin-left: 3px; }
@@ -140,9 +143,9 @@ table.pdt tr.lv0 td { border-bottom: 2px solid var(--line); } table.pdt tr.mu td
 <header id="shell" data-page="orders" data-title="수주·납기" data-sub="도금·컬러 주문 잔량 · 납기 지연 예상 · 주문진도"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611050335"></script>
-<script src="engine/crypto.js?v=2611050335"></script>
-<script src="ui/ct.js?v=2611050335"></script>
-<script src="ct_orders.js?v=2611050335"></script>
+<script src="ui/shell.js?v=2611050509"></script>
+<script src="engine/crypto.js?v=2611050509"></script>
+<script src="ui/ct.js?v=2611050509"></script>
+<script src="ct_orders.js?v=2611050509"></script>
 </body>
 </html>
