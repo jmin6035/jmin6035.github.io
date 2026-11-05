@@ -162,7 +162,7 @@
       const heat = `<div class="ct-wrap"><table class="ct-t ld"><thead><tr><th>라인</th>${wk.map(([a, b]) => `<th>${md(a)}~${md(b)}</th>`).join('')}</tr></thead><tbody>`
         + R.map((x) => `<tr><td class="id">${x.l}</td>${x.w.map((w) => `<td class="lc">${bar(w)}<small>${w.idle || w.out || w.need < 0.5 ? '' : `${n0(w.need)}t`}</small></td>`).join('')}</tr>`).join('')
         + '</tbody></table></div>';
-      return `<section class="card"><h2>${mm} 라인별 부하 <small>${rng}</small></h2>${sumT}<h4 class="ld-h">주별 부하율 <small>수요일 시작 · 달 경계에서 끊음</small></h4>${heat}</section>`;
+      return `<section class="card"><h2>${mm} 라인별 부하 <small>${rng}</small></h2><div class="ld-row"><div class="ld-l">${sumT}</div><div class="ld-r"><h4 class="ld-h">주별 부하율 <small>수요일 시작 · 달 경계에서 끊음</small></h4>${heat}</div></div></section>`;   // 11/5 사용자 '옆으로 붙여 — 전부'
     });
     const tl = LG.filter((l) => X.tph[l]).map((l) => `${l} ${n1(X.tph[l])}t/h`).join(' · ');
     const f = `<p class="ct-note">도금 능력 = 가용분 ÷ 60 × 최근 t/h(${tl}) · 컬러 부하 = 편성분 ÷ 정지 뺀 가용분 · 오늘(${md(X.today)}) 이후만</p>`;
