@@ -88,8 +88,9 @@
     // 위험 판정(PRD 13): 완료 → 출하 지연 → 소재 → 능력·순서 → 자료
     // 이행 단계(위험 등급과 별개, 11/4 2차 진단 2.1): 생산 완료 ≠ 납기 이행. 출하 실적이 이어지지 않은 완료 주문은 '출하 확인 불가'(출하 완료로 추정하지 않음)
     const pDone = x.st === '생산 완료' || (ordT && prodT >= ordT - Math.min(0.5, ordT * 0.05));   // 11/5: 1t 미만 주문이 생산 0 인데 완료로 잡히던 것(허용 오차 0.5t 고정) → 주문량 5% 와 0.5t 중 작은 값
-    o.ful = pDone ? (o.fwdT >= ordT - 0.5 && ordT ? '출하 완료' : o.fwdT > 0.5 ? '부분 출하' : '출하 확인 불가') : prodT > 0.5 ? '생산 중' : '생산 전';
-    o.unshipT = pDone ? Math.max(0, ordT - o.fwdT) : ordT - o.fwdT;       // 미출하량(출하 실적 기준) — 출하 확인 불가면 과대일 수 있음
+    const shipBase = Math.min(ordT || 0, Math.max(prodT, x.prodT || 0)) || ordT;   // 11/5: 생산 완료 처리된 주문은 '생산한 만큼' 다 나갔으면 출하 완료(주문량보다 적게 끝난 주문이 '부분 출하'로 잡히던 것)
+    o.ful = pDone ? (ordT && o.fwdT >= shipBase - Math.min(0.5, shipBase * 0.05) ? '출하 완료' : o.fwdT > 0.5 ? '부분 출하' : '출하 확인 불가') : prodT > 0.5 ? '생산 중' : '생산 전';
+    o.unshipT = pDone ? Math.max(0, shipBase - o.fwdT) : ordT - o.fwdT;       // 미출하량(출하 실적 기준) — 출하 확인 불가면 과대일 수 있음
     o.closed = o.ful === '출하 완료';
     if (o.closed) o.risk = '정상';
     else if (pDone && x.due && x.due < asOf) { o.risk = o.fwdT > 0.5 ? '위험' : '판정 불가'; o.cause = o.fwdT > 0.5 ? 'ship' : 'data'; o.dataWhy = o.fwdT > 0.5 ? '' : '생산 완료 · 출하 실적 연결 없음'; o.last = asOf; }
