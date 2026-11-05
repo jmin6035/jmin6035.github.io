@@ -234,6 +234,32 @@
       const lbl = view === 'month' ? (pl === 'G' ? '일정 누계' : '가동일 경과 기준') : '계획';
       return `<div class="ln-pl"><div class="ln-ph"><b>${nm}</b><span>실적 ${n0(pa)}t${pm ? ` / ${lbl} ${n0(pm)}t · <b class="${tone(hp)}">${hp}%</b>` : ''}</span></div><div class="ln-grid n${rs.length > 2 ? 2 : rs.length}">${rs.map(card).join('')}</div></div>`;
     };
+    // ④-2 판매그룹별 현황(11/5 사용자 '통합관제에 그룹별로 표현해'): 관제 띠(ui/ctl.js)와 같은 값 — 생산·출하·재고·소재·납기
+    const GROUP_ORD = { G수출: '도금수출', G국내: '도금국내', G자동차: '자동차강판', C수출: '컬러수출', C건재: '컬러건재', C수요: '수요개발' };
+    const CR = (window.UI && UI.ctlRows) ? (UI.ctlRows(P, MO) || []) : [];
+    const ndG = ndM(asOf), elapsed = Math.min(1, (+asOf.slice(8) - 1) / ndG);
+    const TFD = { G수출: 15, G국내: 20, G자동차: 30, C수출: 15, C건재: 20 };
+    const SRv = (k) => { const SR = P.stockRoll || {}, wi = (SR.weeks || []).findIndex((w) => w >= (SR.asOf || '')), a = (SR.v || {})[k] || []; for (let i = Math.max(0, wi); i >= 0; i--) if (a[i] != null) return a[i]; return null; };
+    const SLB = { bad: '조치', warn: '주의', ok: '정상', na: '–' };
+    const meter = (v, max, mark, tone, aria) => `<div class="gm" role="img" aria-label="${esc(aria)}"><i class="${tone}" style="width:${max > 0 ? Math.min(100, v / max * 100).toFixed(1) : 0}%"></i>${mark != null && max > 0 ? `<em style="left:${Math.min(100, mark / max * 100).toFixed(1)}%"></em>` : ''}</div>`;
+    const gcard = (g) => {
+      const r = CR.find((x) => x.key === g.key) || { cells: ['na', 'na', 'na', 'na', 'na'], vals: [], w: 'na' };
+      const Pd = g.prod || {}, S = g.ship;
+      const fin = (Pd.actual || 0) + (Pd.after || 0), pace = (Pd.month || 0) * elapsed;
+      const prod = `<div class="gr"><span class="gk">생산</span><div class="gv">${meter(Pd.actual || 0, Pd.month || 0, pace, r.cells[0], `생산 실적 ${n0(Pd.actual || 0)}t / 월 계획 ${n0(Pd.month || 0)}t`)}`
+        + `<div class="gt"><b>${n0(Pd.actual || 0)}</b> / ${n0(Pd.month || 0)}t <span class="${r.cells[0]}">월말 예상 ${Pd.month ? Math.floor(fin / Pd.month * 100) : '-'}%</span></div></div></div>`;
+      const ship = !S ? '' : `<div class="gr"><span class="gk">출하</span><div class="gv">${meter(S.actual || 0, S.month || 0, S.sched || null, r.cells[1], `출하 실적 ${n0(S.actual || 0)}t / 월 ${n0(S.month || 0)}t`)}`
+        + `<div class="gt"><b>${n0(S.actual || 0)}</b> / ${n0(S.month || 0)}t <span class="${r.cells[1]}">${S.sched ? (S.actual >= S.sched ? `일정 누계 ${n0(S.sched)}t 충족` : `일정 누계 대비 −${n0(S.sched - S.actual)}t`) : '일정 누계 없음'}</span></div></div></div>`;
+      const st = SRv(g.key), dly = S && S.month ? S.month / ndG : 0, cov = st != null && dly ? st / dly : null, tg = TFD[g.key];
+      const stock = st == null ? '' : `<div class="gr"><span class="gk">재고</span><div class="gv">${cov != null && tg ? meter(cov, tg * 2, tg, r.cells[2], `재고 ${Math.round(cov)}일 / 목표 ${tg}일`) : ''}<div class="gt"><b>${n0(st)}t</b>${cov != null ? ` · <span class="${r.cells[2]}">${Math.round(cov)}일</span>${tg ? ` / 목표 ${tg}일` : ''}` : ''}</div></div></div>`;
+      const mv = r.vals[3] || [], mat = r.cells[3] === 'na' && (!mv[0] || mv[0] === '–') ? '' : `<div class="gr"><span class="gk">소재</span><div class="gv"><div class="gt"><span class="${r.cells[3]}"><b>${esc(mv[0] || '–')}</b></span>${mv[1] ? ` · ${mv[1]}` : ''}</div></div></div>`;
+      const gn = GROUP_ORD[g.key], os = g.key === 'G자가재' ? open.filter((o) => o.pl === 'G' && /^자가재/.test(o.grp)) : open.filter((o) => o.grp === gn && o.pl === g.pl);
+      const late = os.filter((o) => o.risk === '위험'), dv = r.vals[4] || [];
+      const due = `<div class="gr"><span class="gk">납기</span><div class="gv"><div class="gt">${late.length ? `<span class="bad"><b>지연 예상 ${n0(late.length)}건</b></span> · ${n0(late.reduce((a, o) => a + (o.remT || 0), 0))}t` : '<span class="ok"><b>지연 예상 0건</b></span>'}${g.pl === 'G' && dv[0] && dv[0] !== '–' ? ` · <span class="${r.cells[4]}">${esc(dv[0])}</span>` : ''}</div></div></div>`;
+      return `<a class="gc ${r.w}" href="board.html"><div class="gh"><b>${esc(g.name.replace(/\(.*\)/, ''))}</b><span class="gs ${r.w}">${SLB[r.w]}</span></div>${prod}${ship}${stock}${mat}${due}</a>`;
+    };
+    const gsec = (pl, nm) => { const gs = (P.groups || []).filter((g) => g.pl === pl && CT.inScope(pl)); return gs.length ? `<div class="gp"><div class="ln-ph"><b>${nm}</b><span>${gs.length}개 판매그룹</span></div><div class="gg">${gs.map(gcard).join('')}</div></div>` : ''; };
+    const grpSec = `<section class="card g-sec"><h2>판매그룹별 현황 <small>${view === 'month' ? '' : '이번 달 누계 · '}생산·출하 = 실적 / 월 계획(▼ ${view === 'month' ? '경과일 기준 예상 위치 · 출하는 일정 누계' : '경과일·일정 누계'}) · 재고 = 하루 출하 기준 일수(▼ 목표) · 카드 색 = 가장 나쁜 신호</small></h2>${gsec('G', '도금')}${gsec('C', '컬러')}</section>`;
     const lineSec = `<section class="card ln-sec"><h2>라인별 진도 <small>${pLbl} · 공장 → 라인 · 막대 = 기간 실적(▼ 계획), 아래 = 일별 실적과 계획</small></h2>${plant('G', '도금 공장')}${plant('C', '컬러 공장')}</section>`;
 
     // ⑤-1 오늘·내일 라인별 생산 계약(11/5 사용자 '오늘 내일 생산계획도 실 계약을 보여줘야'): 도금 = 생산 캘린더(확정·편성·예상), 컬러 = 생산 캘린더(작업지시·계획 편성)
@@ -305,6 +331,7 @@
       + `<div class="ct-bar"><span class="ct-note"><b>${({ day: '금일 현황', week: '7일 전망', month: '월간 전망' })[view]}</b> · ${pLbl} · ${SCN}</span><a class="ct-note" href="board.html">상세 관제판 →</a></div>`
       + CT.kpis(K)
       + lineSec
+      + grpSec
       + (view === 'day' ? conSec : `<section class="card"><h2>${view === 'day' ? '오늘·내일' : view === 'week' ? '이번 주' : `${+asOf.slice(5, 7)}월`} 생산 계획 <small>${pLbl} · 계획량 · 생산 필요일이 그날인 주문${view === 'month' ? ' · 수요일 시작 주 단위' : ''}</small></h2><div class="ct-wrap">${fc}</div></section>`)
       + `<section class="card"><h2>우선 조치 10건 <small>납기 지연 예상 → 마감 빠른 순</small></h2>${actTbl}</section>`
       + `<details class="card ct-fold"><summary><h2>주문 진행 현황 <small>${cnt}</small></h2></summary>${flow('G', '도금')}${flow('C', '컬러')}</details>`

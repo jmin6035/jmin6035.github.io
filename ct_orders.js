@@ -156,7 +156,7 @@
   }
   function trackBase() {
     if (T.q) { const q = T.q.toUpperCase(); return L.filter((o) => [o.id, o.item, o.cus, o.man].join(' ').toUpperCase().includes(q)).sort(CT.riskSort).slice(0, 200); }
-    return L.filter((o) => OPEN.includes(o.risk)).sort(CT.riskSort);
+    return L.filter((o) => OPEN.includes(o.risk) && (!PS.line || o.line === PS.line)).sort(CT.riskSort);
   }
   function trackList() { const A = trackBase(); return T.tag ? A.filter((o) => CT.tag(o) === T.tag) : A; }
   function drawTrackList() {
@@ -225,47 +225,72 @@
      작업가능일 = 매치된 소재로 만들 수 있는 양(주문별 min(잔여, 매치)) ÷ 라인 하루 능력 */
   const CAPC = { '1CCL': 480, '2CCL': 400, '3CCL': 200, '4CCL': 250 }, CAPG = { '1CGL': 719, '2CGL': 927 };
   let PS = { line: '' };
-  function progSum() {
+  /* 범주(11/5 사용자 '주문진도 표 다시 이쁘게'): 잔여량을 상태별로 나눠 한 막대(작업 가능 쪽 = 초록 계열, 대기 = 노랑, 없음 = 빨강) */
+  const CATC = [['작업대기', '#008300', '확정된 작업지시(SSCHC1030) — 바로 생산'], ['지시대기', '#1baf7a', '작업지시 편성·확정 전(SSCHC1020)'], ['부자재입고대기', '#eda100', '도료·PF 입고 대기'], ['중단', '#8c8c8c', '작업지시 보류'],
+    ['재고 있음(매치 전)', '#2a78d6', '규격 맞는 소재 재고가 있으나 매치 전'], ['발주 진행', '#eb6834', '소재 발주됨 — 입고 대기'], ['발주 없음', '#d03b3b', '매치·재고·발주 모두 없음 — 소재 발주 필요']];
+  const CATG = [['소재 입고 완료', '#008300', '소재가 들어와 바로 생산 가능'], ['소재 진행', '#2a78d6', 'F/H 발주·포스코 진행 중'], ['소재 입고 지연', '#eb6834', '필요 입고일보다 늦음'], ['소재 미발주', '#d03b3b', '소재 발주 전']];
+  const catC = (r) => (r.mchT > 0.0005 ? (r.wst || '지시대기') : r.st === '소재 있음' ? '재고 있음(매치 전)' : r.po || r.st === '입고 대기' ? '발주 진행' : '발주 없음');
+  const catG = (o) => ({ 확보: '소재 입고 완료', 진행: '소재 진행', 지연: '소재 입고 지연', 미발주: '소재 미발주' })[o.matSt] || '소재 진행';
+  function psData(sel) {   // sel = 라인 목록 → {pl, rows[{cat,rem,n}], tot, can, cap, ex, tbl}
     const cc = (D0 || {}).cc_order_progress, out = [];
-    const agg = (rs) => [rs.length, ...['ordT', 'prodT', 'remT', 'mchT', 'matT'].map((k) => rs.reduce((a, r) => a + (+r[k] || 0), 0))];
-    const add = (a, b) => a.map((v, i) => v + (b[i] || 0));
-    const row = (nm, v, days, cls = '', tip = '') => `<tr class="${cls}"${tip ? ` title="${esc(tip)}"` : ''}><td class="nm">${nm}</td><td class="r">${n0(v[0])}</td>${v.slice(1).map((x) => `<td class="r">${x == null ? '-' : n0(x)}</td>`).join('')}<td class="r">${days == null ? '-' : `<b>${days.toFixed(1)}</b>`}</td></tr>`;
-    const head = '<thead><tr><th>구분</th><th class="r">건수</th><th class="r">주문량</th><th class="r">생산량</th><th class="r">주문잔여량</th><th class="r">매치량</th><th class="r">소재량</th><th class="r">작업가능일</th></tr></thead>';
-    if (cc && CT.inScope('C')) {
-      const sel = PS.line && CAPC[PS.line] ? [PS.line] : cc.lines || [];
-      const R = (cc.rows || []).filter((r) => sel.includes(r.line));
-      const ex = sel.reduce((a, l) => ({ zero: add(a.zero, ((cc.excl || {})[l] || {}).zero || []), small: add(a.small, ((cc.excl || {})[l] || {}).small || []) }), { zero: [0, 0, 0, 0, 0, 0], small: [0, 0, 0, 0, 0, 0] });
-      const cap = sel.reduce((a, l) => a + (CAPC[l] || 0), 0);
-      const inc = agg(R), mR = R.filter((r) => r.mchT > 0.0005), nR = R.filter((r) => !(r.mchT > 0.0005)), sR = R.filter((r) => r.matT > 0.0005);
-      const can = (rs) => rs.reduce((a, r) => a + Math.min(+r.remT || 0, +r.mchT || 0), 0);
-      const W = ['작업대기', '지시대기', '부자재입고대기', '중단'], WT = { 작업대기: 'SSCHC1030 — 확정된 작업지시, 생산 우선순위 조정·지시 취소 검토', 지시대기: 'SSCHC1020 — 작업지시 편성·확정 전(매치만 되고 지시 없는 주문 포함)', 부자재입고대기: '도료·PF 입고 상태 대기(W)·발주 진행(P) — MES 상태값 추정', 중단: '작업지시 보류(RSV_YN) — 현재 0건' };
-      const has = add(inc, ex.small);
-      let h = row('원본 전체', add(has, ex.zero), null, 'p0') + row('주문잔여량 있음', has, null, 'p1')
-        + row('├ 매치있음 <small>매치량 &gt; 0</small>', agg(mR), cap ? can(mR) / cap : null, 'p2', '작업가능일 = 매치된 소재로 만들 수 있는 양 ÷ 라인 하루 능력')
-        + W.map((w) => { const rs = mR.filter((r) => r.wst === w); return row(`<span class="sub">└ ${w}</span>`, agg(rs), cap && rs.length ? can(rs) / cap : null, 'p3', WT[w]); }).join('')
-        + row('├ 매치없음 <small>매치량 = 0</small>', agg(nR), null, 'p2') + row('├ 소재량있음 <small>소재량 &gt; 0 · 위와 겹침</small>', agg(sR), null, 'p2')
-        + row('└ 1,000kg 이하(제외)', ex.small, null, 'p2 mu') + row('주문잔여량 없음(제외)', ex.zero, null, 'p1 mu');
-      out.push(`<div class="ps-blk"><div class="ps-h"><b>컬러 주문진도</b> <span>${md(cc.asOf)} · MES 작업지시대상(SSCHC1010 기준) · ${sel.join('·')} · 하루 능력 ${sel.map((l) => `${l.slice(0, 1)}라인 ${CAPC[l]}t`).join(' · ')}${sel.length > 1 ? ` = ${n0(cap)}t` : ''}</span></div>`
-        + `<div class="ct-wrap"><table class="ct-t ps-t">${head}<tbody>${h}</tbody></table></div></div>`);
+    const cl = sel.filter((l) => CAPC[l]), gl = sel.filter((l) => CAPG[l]);
+    if (cc && cl.length) {
+      const R = (cc.rows || []).filter((r) => cl.includes(r.line)), cap = cl.reduce((a, l) => a + CAPC[l], 0);
+      const ex = cl.reduce((a, l) => { const e = (cc.excl || {})[l] || {}; return { zero: a.zero + ((e.zero || [])[0] || 0), small: a.small + ((e.small || [])[0] || 0), zT: a.zT + ((e.zero || [])[1] || 0), sT: a.sT + ((e.small || [])[1] || 0) }; }, { zero: 0, small: 0, zT: 0, sT: 0 });
+      const can = R.filter((r) => r.mchT > 0.0005).reduce((a, r) => a + Math.min(+r.remT || 0, +r.mchT || 0), 0);
+      const exA = (k) => cl.reduce((a, l) => { const e = (((cc.excl || {})[l] || {})[k]) || []; return a.map((v, i) => v + (+e[i] || 0)); }, [0, 0, 0, 0, 0]);
+      out.push({ pl: 'C', nm: '컬러', R, cap, can, ex, exZ: exA('zero'), exS: exA('small'), cats: CATC.map(([k, c, t]) => { const rs = R.filter((r) => catC(r) === k); return { k, c, t, n: rs.length, rem: rs.reduce((a, r) => a + (+r.remT || 0), 0), rs }; }) });
     }
-    const cg = (D0 || {}).cg_order_progress;
-    if (cg && CT.inScope('G') && (!PS.line || CAPG[PS.line])) {
-      const sel = PS.line && CAPG[PS.line] ? [PS.line] : ['1CGL', '2CGL'];
-      const G = (M.G || []).filter((o) => sel.includes(o.line));
-      const open = G.filter((o) => !o.closed && (o.remT || 0) > 0.5), done = G.filter((o) => !(!o.closed && (o.remT || 0) > 0.5));
-      const ag = (os) => [os.length, ...['ordT', 'prodT', 'remT'].map((k) => os.reduce((a, o) => a + (+o[k] || 0), 0)), null, os.reduce((a, o) => a + (o.entT || 0), 0)];
-      const cap = sel.reduce((a, l) => a + CAPG[l], 0), ok = open.filter((o) => o.matSt === '확보');
-      const st = (nm, k) => open.filter((o) => o.matSt === k);
-      const h = row('원본 전체', ag(G), null, 'p0') + row('주문잔여량 있음', ag(open), null, 'p1')
-        + row('├ 소재 입고 완료', ag(ok), cap ? ok.reduce((a, o) => a + o.remT, 0) / cap : null, 'p2', '작업가능일 = 소재 들어온 주문 잔여량 ÷ 라인 하루 능력')
-        + row('├ 소재 진행(발주·입고 중)', ag(st('', '진행')), null, 'p2') + row('├ 소재 입고 지연', ag(st('', '지연')), null, 'p2') + row('├ 소재 미발주', ag(st('', '미발주')), null, 'p2')
-        + row('주문잔여량 없음·생산 완료', ag(done), null, 'p1 mu');
-      out.push(`<div class="ps-blk"><div class="ps-h"><b>도금 주문진도</b> <span>${md(cg.asOf)} · 주문진도(납기 −30~+90일) · ${sel.join('·')} · 하루 능력 ${sel.map((l) => `${l} ${CAPG[l]}t`).join(' · ')} · 매치량 칸 = 해당 없음, 소재량 = 입고된 소재</span></div>`
-        + `<div class="ct-wrap"><table class="ct-t ps-t">${head}<tbody>${h}</tbody></table></div></div>`);
+    if (gl.length && (D0 || {}).cg_order_progress) {
+      const G = (M.G || []).filter((o) => gl.includes(o.line)), R = G.filter((o) => !o.closed && (o.remT || 0) > 0.5), cap = gl.reduce((a, l) => a + CAPG[l], 0);
+      const can = R.filter((o) => o.matSt === '확보').reduce((a, o) => a + o.remT, 0);
+      out.push({ pl: 'G', nm: '도금', R, cap, can, ex: { zero: G.length - R.length, small: 0, zT: 0, sT: 0 }, all: G, cats: CATG.map(([k, c, t]) => { const rs = R.filter((o) => catG(o) === k); return { k, c, t, n: rs.length, rem: rs.reduce((a, o) => a + (o.remT || 0), 0), rs }; }) });
     }
-    if (!out.length) return '';
-    const opts = [['', '전체']].concat(CT.inScope('G') ? [['1CGL', '1CGL'], ['2CGL', '2CGL']] : []).concat(CT.inScope('C') ? (((D0 || {}).cc_order_progress || {}).lines || []).map((l) => [l, l]) : []);
-    return `<div class="ps"><div class="seg ct-seg ps-seg" role="group" aria-label="라인">${opts.map(([k, n]) => `<button type="button" data-l="${k}" aria-pressed="${PS.line === k}">${n}</button>`).join('')}</div><div class="ps-g">${out.join('')}</div></div>`;
+    return out;
+  }
+  const segBar = (cats, tall) => { const T_ = cats.reduce((a, c) => a + c.rem, 0) || 1;
+    return `<div class="sb${tall ? ' tall' : ''}" role="img" aria-label="${esc(cats.filter((c) => c.rem > 0.5).map((c) => `${c.k} ${n0(c.rem)}t`).join(', '))}">${cats.filter((c) => c.rem > 0.5).map((c) => { const w = c.rem / T_ * 100;
+      return `<span style="flex:${c.rem.toFixed(1)} 0 0;background:${c.c}" title="${esc(`${c.k} ${n0(c.rem)}t · ${c.n}건 (${Math.round(w)}%)`)}">${tall && w >= 7 ? `${Math.round(w)}%` : ''}</span>`; }).join('')}</div>`; };
+  function psCard(d, title) {
+    const tot = d.cats.reduce((a, c) => a + c.rem, 0), n = d.cats.reduce((a, c) => a + c.n, 0), days = d.cap ? d.can / d.cap : null;
+    const bad = d.cats.find((c) => /없음|미발주/.test(c.k)) || { n: 0, rem: 0 }, wait = d.cats.filter((c) => !/작업대기|지시대기|입고 완료|없음|미발주/.test(c.k));
+    const tile = (k, v, u, sub, tone = '') => `<div class="pt ${tone}"><div class="k">${k}</div><div class="v">${v}<small>${u}</small></div><div class="s">${sub}</div></div>`;
+    const tiles = `<div class="pts">${tile('주문잔여량', n0(tot), 't', `${n0(n)}건 · ${d.pl === 'C' ? '1,000kg 넘는 미생산분' : '미생산 주문'}`)}`
+      + tile(d.pl === 'C' ? '매치 완료 → 바로 생산 가능' : '소재 입고 → 바로 생산 가능', n0(d.can), 't', days == null ? '' : `작업가능일 <b>${days.toFixed(1)}일</b> = ${n0(d.can)} ÷ 하루 ${n0(d.cap)}t`, 'ok')
+      + tile(d.pl === 'C' ? '발주 없음(소재 없음)' : '소재 미발주', n0(bad.rem), 't', `${n0(bad.n)}건 — 소재 발주 필요`, bad.n ? 'bad' : '')
+      + tile('대기', n0(wait.reduce((a, c) => a + c.rem, 0)), 't', wait.filter((c) => c.n).map((c) => `${c.k} ${n0(c.n)}건`).join(' · ') || '없음', 'warn') + '</div>';
+    const leg = `<table class="ct-t pl-t"><thead><tr><th>상태</th><th class="r">건수</th><th class="r">잔여량(t)</th><th class="r">비중</th><th>뜻</th></tr></thead><tbody>${d.cats.map((c) => `<tr${c.n ? '' : ' class="mu"'}><td class="nw"><i class="sw" style="background:${c.c}"></i>${esc(c.k)}</td><td class="r">${n0(c.n)}</td><td class="r"><b>${n0(c.rem)}</b></td><td class="r">${tot ? Math.round(c.rem / tot * 100) : 0}%</td><td class="mu2">${esc(c.t)}</td></tr>`).join('')}`
+      + `<tr class="tot"><td>합계</td><td class="r">${n0(n)}</td><td class="r"><b>${n0(tot)}</b></td><td class="r">100%</td><td class="mu2">제외: ${d.pl === 'C' ? `1,000kg 이하 ${n0(d.ex.small)}건 · 잔여 없음 ${n0(d.ex.zero)}건` : `잔여 없음·생산 완료 ${n0(d.ex.zero)}건`}</td></tr></tbody></table>`;
+    // 상세 표(SSCHC1010 양식): 들여쓰기 단계, 소재량 합계는 주문 간 중복이라 뺌
+    const ag = (rs) => [rs.length, ...['ordT', 'prodT', 'remT', 'mchT'].map((k) => rs.reduce((a, r) => a + (+r[k] || 0), 0))];
+    const tr = (lv, nm, v, dy, cls = '') => `<tr class="lv${lv} ${cls}"><td class="nm">${nm}</td>${v.map((x, i) => `<td class="r">${x == null || (i === 4 && d.pl === 'G') ? '<span class="mu">–</span>' : n0(x)}</td>`).join('')}<td class="r">${dy == null ? '<span class="mu">–</span>' : `<b>${dy.toFixed(1)}</b>`}</td></tr>`;
+    const canOf = (rs) => (d.pl === 'C' ? rs.reduce((a, r) => a + Math.min(+r.remT || 0, +r.mchT || 0), 0) : rs.reduce((a, o) => a + (o.remT || 0), 0));
+    const add = (x, y) => x.map((v, i) => v + (y[i] || 0));
+    let body = d.pl === 'C' ? tr(0, '원본 전체', add(add(ag(d.R), d.exS), d.exZ), null, 'b') : tr(0, '원본 전체', ag(d.all || d.R), null, 'b');
+    body += tr(0, '주문잔여량 있음', d.pl === 'C' ? add(ag(d.R), d.exS) : ag(d.R), null, 'b');
+    if (d.pl === 'C') {
+      const mR = d.R.filter((r) => r.mchT > 0.0005), nR = d.R.filter((r) => !(r.mchT > 0.0005));
+      body += tr(1, '매치 있음', ag(mR), d.cap ? canOf(mR) / d.cap : null, 'b') + d.cats.slice(0, 4).map((c) => tr(2, c.k, ag(c.rs), d.cap && c.n ? canOf(c.rs) / d.cap : null)).join('')
+        + tr(1, '매치 없음', ag(nR), null, 'b') + d.cats.slice(4).map((c) => tr(2, c.k, ag(c.rs), null)).join('')
+        + tr(1, '1,000kg 이하(제외)', d.exS, null, 'mu') + tr(0, '주문잔여량 없음(제외)', d.exZ, null, 'mu');
+    } else body += d.cats.map((c, i) => tr(1, c.k, ag(c.rs), i === 0 && d.cap ? canOf(c.rs) / d.cap : null)).join('') + tr(0, '잔여 없음·생산 완료(제외)', ag((d.all || []).filter((o) => !d.R.includes(o))), null, 'mu');
+    const det = `<details class="pd"><summary>상세 표 <small>${d.pl === 'C' ? 'SSCHC1010 양식 — ' : ''}건수·주문량·생산량·잔여량·매치량·작업가능일</small></summary><div class="ct-wrap"><table class="ct-t pdt"><thead><tr><th>구분</th><th class="r">건수</th><th class="r">주문량(t)</th><th class="r">생산량(t)</th><th class="r">잔여량(t)</th><th class="r">매치량(t)</th><th class="r">작업가능일</th></tr></thead><tbody>${body}</tbody></table></div>`
+      + `<p class="ct-note">작업가능일 = 바로 생산 가능한 양 ÷ 라인 하루 능력(${d.pl === 'C' ? '1CCL 480 · 2CCL 400 · 3CCL 200 · 4CCL 250t' : '1CGL 719 · 2CGL 927t'}). 소재량(규격 맞는 재고)은 같은 재고가 여러 주문에 겹쳐 잡혀 합계를 내지 않고 주문별로만 보여줍니다.</p></details>`;
+    return `<section class="pc"><div class="pch"><b>${esc(title)}</b><span>${md(((D0 || {})[d.pl === 'C' ? 'cc_order_progress' : 'cg_order_progress'] || {}).asOf)} 기준 · ${d.pl === 'C' ? 'MES 작업지시대상(SSCHC1010) 기준' : '도금 주문진도(납기 −30~+90일)'}</span></div>${tiles}${segBar(d.cats, true)}${leg}${det}</section>`;
+  }
+  function progSum() {
+    const cc = (D0 || {}).cc_order_progress;
+    const lines = (CT.inScope('G') ? ['1CGL', '2CGL'] : []).concat(CT.inScope('C') ? ((cc || {}).lines || []) : []);
+    if (!lines.length) return '';
+    if (PS.line && !lines.includes(PS.line)) PS.line = '';
+    const tabs = `<div class="seg ct-seg ps-seg" role="group" aria-label="라인">${[['', '전체']].concat(lines.map((l) => [l, l])).map(([k, n]) => `<button type="button" data-l="${k}" aria-pressed="${PS.line === k}">${n}</button>`).join('')}</div>`;
+    let body = '';
+    if (!PS.line) {
+      const mini = lines.map((l) => { const d = psData([l])[0]; if (!d) return ''; const tot = d.cats.reduce((a, c) => a + c.rem, 0), days = d.cap ? d.can / d.cap : null, none = d.cats.find((c) => /없음|미발주/.test(c.k)) || { n: 0 };
+        return `<button type="button" class="pm" data-l="${l}"><div class="h"><b>${l}</b><span>${n0(d.cats.reduce((a, c) => a + c.n, 0))}건</span></div><div class="v">${n0(tot)}<small>t 잔여</small></div>${segBar(d.cats, false)}<div class="s"><span class="nw">바로 생산 <b>${n0(d.can)}t</b>${days != null ? ` · ${days.toFixed(1)}일` : ''}</span>${none.n ? ` · <span class="bad nw">${none.k} ${n0(none.n)}건</span>` : ''}</div></button>`; }).join('');
+      body = `<div class="pms">${mini}</div>` + psData(lines).map((d) => psCard(d, `${d.nm} 전체 주문진도`)).join('');
+    } else body = psData([PS.line]).map((d) => psCard(d, `${PS.line} 주문진도`)).join('');
+    return `<div class="ps">${tabs}${body}</div>`;
   }
   function viewTrack() {
     if (!T.id) { const f = L.filter((o) => OPEN.includes(o.risk)).sort(CT.riskSort)[0]; T.id = f ? f.id : null; }
@@ -285,7 +310,7 @@
       const n = it[Math.max(0, Math.min(it.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))]; if (n) n.focus();
       if (e.key === 'ArrowUp' && i <= 0) qi.focus();
     });
-    const bindPS = () => document.querySelectorAll('.ps-seg button').forEach((bt) => bt.onclick = () => { PS.line = bt.dataset.l; $('co-ps').innerHTML = progSum(); bindPS(); });
+    const bindPS = () => document.querySelectorAll('.ps-seg button, .pm').forEach((bt) => bt.onclick = () => { PS.line = bt.dataset.l; $('co-ps').innerHTML = progSum(); bindPS(); drawTrackList(); const f = trackList()[0]; if (f && !trackList().some((o) => o.id === T.id)) pickTrack(f.id); });
     bindPS();
     drawTrackList(); drawTrackDetail();
   }
