@@ -6,7 +6,7 @@
 <title>계획 규칙</title>
 <meta name="description" content="계획 엔진이 따르는 규칙 목록 — 수치는 고치고 '적용'을 누르면 1시간 안에 다시 계산·게시, 바꾼 이력이 남음">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611050624">
+<link rel="stylesheet" href="ui/theme.css?v=2611050626">
 <style>
 .tr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 18px; }
 table.t.tr td, table.t.tr th { padding: 8px 12px; }
@@ -72,9 +72,9 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
     <section class="card"><h2>수치 고치기 <small id="t-src"></small></h2>
       <p class="tr-note" id="t-note"></p>
       <div class="tr-grid">
-        <div><h3>① 그룹별 월말 재고 목표(일수)</h3>
-          <p class="small" style="margin:-4px 0 8px">달마다 생산량을 정할 때 <b>월말에 남길 재고 = 이 일수 × 다음 달 하루 판매량</b>이 되게 맞춥니다(TF 목표 일수). 일수를 늘리면 그 그룹을 더 만들어 재고를 쌓습니다.</p>
-          <div class="scroll"><table class="t tr"><thead><tr><th class="l">판매 그룹</th><th>지금 계획</th><th>바꿀 값(일)</th></tr></thead><tbody id="t-days"></tbody></table></div></div>
+        <div><h3>① 그룹별 월말 재고 상한(TF 목표 일수)</h3>
+          <p class="small" style="margin:-4px 0 8px">월말 재고가 <b>이 일수 × 다음 달 하루 판매량</b>을 넘지 않게 합니다(11/5부터 상한). 계획에 쓰는 일수는 '계획 일수' — 실측 출하 대기 중앙값, 상한보다 크면 상한(계획 규칙 '재고 목표(그룹별)' 탭).</p>
+          <div class="scroll"><table class="t tr"><thead><tr><th class="l">판매 그룹</th><th>계획 일수</th><th>상한(지금)</th><th>바꿀 상한(일)</th></tr></thead><tbody id="t-days"></tbody></table></div></div>
         <div><h3>② 공장 월말 재고 상한(톤)</h3>
           <p class="small" style="margin:-4px 0 8px">월말 재고 합이 이 톤을 넘지 않게 생산을 줄입니다('27 판생그룹 목표). ①의 그룹 목표보다 먼저 지킵니다.</p>
           <div class="scroll"><table class="t tr"><thead><tr><th class="l">재고 구분</th><th>지금 계획</th><th>바꿀 값(t)</th></tr></thead><tbody id="t-max"></tbody></table></div>
@@ -107,9 +107,9 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>저장 = 공유 저장소(모든 사람이 같은 값) · 적용 = 매시 정각(08~20시) 확인 → 40~70분 계산 → 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611050624"></script>
-<script src="rules_logic.js?v=2611050624"></script>
-<script src="engine/crypto.js?v=2611050624"></script>
+<script src="ui/shell.js?v=2611050626"></script>
+<script src="rules_logic.js?v=2611050626"></script>
+<script src="engine/crypto.js?v=2611050626"></script>
 <script>
 (function () {
   'use strict';
@@ -139,7 +139,7 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
   let PW = '', IG = null, APPLIED = null, LATEST = null, HIST = [], ST = {}, CUR = null;
 
   const full = (o) => ({ days: Object.assign({}, DEF.days, o && o.days), stockMax: Object.assign({}, DEF.stockMax, o && o.stockMax),
-    plating: Object.assign({}, DEF.plating, o && o.plating), replan: Object.assign({}, DEF.replan, o && o.replan), src: o && o.src, modeG: o && o.modeG, modeC: o && o.modeC });
+    plating: Object.assign({}, DEF.plating, o && o.plating), replan: Object.assign({}, DEF.replan, o && o.replan), src: o && o.src, target: o && o.target, modeG: o && o.modeG, modeC: o && o.modeC });
   function valid(o) {
     if (!o || !o.days || !o.stockMax) return false;
     const inR = (v, lo, hi) => typeof v === 'number' && isFinite(v) && v >= lo && v <= hi;
@@ -163,8 +163,8 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
   const inp = (s, k, v, lo, hi, step, l) => `<input type="number" min="${lo}" max="${hi}" step="${step}" data-s="${s}" data-k="${esc(k)}"${l ? ` data-l="${l}"` : ''} value="${v}">`;
   function draw() {
     const A = APPLIED, C = cur(), offC = A.modeC && A.modeC !== 'tf';
-    $('t-days').innerHTML = DAYS.map(([sec, k, lb, sub]) => (!k ? `<tr><td class="l">${lb}</td><td></td><td></td></tr>`
-      : `<tr><td class="l">${sub ? '└ ' : ''}${lb}${sec === '컬러' && offC ? ' <span class="tr-off">지금 계획 미적용</span>' : ''}</td><td class="num">${n0(A.days[k])}일</td><td>${inp('days', k, C.days[k], 0, 120, 1)}</td></tr>`)).join('');
+    $('t-days').innerHTML = DAYS.map(([sec, k, lb, sub]) => (!k ? `<tr><td class="l">${lb}</td><td></td><td></td><td></td></tr>`
+      : `<tr><td class="l">${sub ? '└ ' : ''}${lb}${sec === '컬러' && offC ? ' <span class="tr-off">지금 계획 미적용</span>' : ''}</td><td class="num"><b>${n0(Math.min((A.target || {})[k] ?? ({ G국내: 7, 주문재: 8, 수요개발: 8, 건재수출: 10, 가전수출: 10 })[k] ?? A.days[k], A.days[k]))}일</b></td><td class="num">${n0(A.days[k])}일</td><td>${inp('days', k, C.days[k], 0, 120, 1)}</td></tr>`)).join('');
     $('t-max').innerHTML = MAXK.map((k) => `<tr><td class="l">${esc(k)}</td><td class="num">${n0(A.stockMax[k])}t</td><td>${inp('stockMax', k, C.stockMax[k], 1, 100000, 100)}</td></tr>`).join('');
     $('t-pl').innerHTML = PL.map(([k, lb, u, lo, hi, ds]) => `<tr><td class="l"><b>${lb}</b> <small class="muted">${u}</small></td><td class="l small ds">${ds}</td>${['1CGL', '2CGL'].map((l) => `<td class="num">${n0(A.plating[k][l])}</td><td>${inp('plating', k, C.plating[k][l], lo, hi, 0.01, l)}</td>`).join('')}</tr>`).join('')
       + `<tr><td class="l"><b>주문재 생산 시작</b> <small class="muted">일</small></td><td class="l small ds">납기(선적) 며칠 전부터 만들 수 있는지 — 너무 일찍 만들어 재고가 쌓이는 것을 막음. 자가재는 제한 없음, 두 라인 같은 값</td><td class="num">${n0(A.plating.releaseDays)}일</td><td>${inp('plating', 'releaseDays', C.plating.releaseDays, 1, 90, 1)}</td><td colspan="2" class="tr-off">← 같은 값</td></tr>`;
