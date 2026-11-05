@@ -67,6 +67,28 @@
   CT.FUL = ['생산 전', '생산 중', '출하 확인 불가', '부분 출하', '출하 완료'];
   const STALE = 60;   // 납기가 이만큼 지났는데 미종결이면 실제 위험보다 MES 종결 누락일 가능성이 커 '판정 불가'로 분리(11/4)
   CT.STAGE = ['수주 확정', '소재 확보', '작업 편성', '생산', '출하'];
+  /* 포스코 진행 단계(11/5 사용자 '도금쪽 포스코 진행상황 어디 갔지 — 주문진도에 추가'): 예전 도금 주문진도(cg_order.js) 단계 띠와 같은 기준.
+     x.stg = {포스코 공정명: 톤}(posco 주문진행), 입고 = entT. 공정 물량이 없으면 접수 전 / 착수 전 / 포스코 생산 끝·입고 전 / 미발주 */
+  CT.PH = [['접수', ['요수배']], ['제강', ['출강대', 'SLAB']], ['열연', ['열연압연', '열연정정']], ['냉연', ['냉연대기', '3차압연', '소둔', '포스코 도금', '냉연정정', '판정대']],
+    ['출하', ['입고대기', '운송지시대기', '운송', '유통기지 입고', '유통기지 출하지시', '유통기지 운송']], ['입고', []]];
+  CT.posco = (x) => {
+    const s = (x && x.stg) || {}, pt = CT.PH.map(([, L]) => L.reduce((a, nm) => a + (+s[nm] || 0), 0));
+    pt[5] = (x && x.entT) || 0;
+    const fill = (k) => CT.PH.map((_, i) => (i < k ? 'done' : 'todo'));
+    let st, pre = null, cur = '';
+    if ((x.remIn || 0) <= 0.5 && (x.entT || 0) >= 0.5) { st = fill(5); st[5] = 'in'; pre = '입고 끝'; }
+    else if (Object.keys(s).length) {
+      const first = pt.findIndex((v, i) => i < 5 && v >= 0.05);
+      st = fill(first).map((v, i) => (i < 5 && pt[i] >= 0.05 ? 'cur' : v)); if (pt[5] >= 0.5) st[5] = 'in';
+      cur = Object.entries(s).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([nm, t]) => `${nm} ${CT.n1(t)}t`).join(' · ');
+    } else if (x.runSt === 'done') { st = fill(5); st[4] = 'cur'; if (pt[5] >= 0.5) st[5] = 'in'; pre = '포스코 생산 끝 · 입고 전'; }
+    else if (x.runRow) { st = fill(1); st[0] = 'cur'; pre = '포스코 착수 전'; }
+    else { st = fill(0); pre = x.purT ? '포스코 접수 전' : '미발주'; }
+    return { pt, st, pre, cur };
+  };
+  CT.poscoBar = (x) => { const P = CT.posco(x);
+    return `<div class="pbar ph">${CT.PH.map(([nm]) => `<span>${nm}</span>`).join('')}</div><div class="pbar">${CT.PH.map(([nm, L], i) => `<span class="ps ${P.st[i]}" title="${CT.esc ? CT.esc(nm) : nm}${P.pt[i] >= 0.05 ? ` ${CT.n1(P.pt[i])}t` : ''}"></span>`).join('')}</div>`
+      + `<div class="pn">${P.cur || P.pre || ''}</div>`; };
   /* 도금: 소재(F/H 발주·포스코 진행·입고) → 생산 → 출하. 생산 필요일 = 수출 출항 − 1 · 내수 납기 − 1, 필요 입고일 = 생산 필요일 − 5 (cg_order_progress 와 같음) */
   function gRow(x, asOf, CAL) {
     const ordT = x.ordT || x.purT || 0, prodT = Math.min(x.prodT || 0, ordT || x.prodT || 0), remT = Math.max(0, ordT - prodT);

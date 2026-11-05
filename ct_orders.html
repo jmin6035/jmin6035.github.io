@@ -6,7 +6,7 @@
 <title>수주·납기</title>
 <meta name="description" content="도금·컬러 주문을 한 목록으로 — 수주 잔량·납기 지연 예상·주문진도">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611050218">
+<link rel="stylesheet" href="ui/theme.css?v=2611050222">
 <style>
 main.wrap { max-width: none; }
 section.card.co-card { padding: 54px 16px 14px !important; }
@@ -106,6 +106,11 @@ table.co-t .lf { font-size: 13.5px; }
 .co-tl li .b.po { color: var(--ink-2); font-size: 13px; }
 /* 주문진도 요약(11/5 다시) */
 .ps { margin: 0 0 16px; } .ps-seg { margin: 0 0 12px; }
+.pbar { display: flex; gap: 2px; margin: 2px 0 4px; } .pbar .ps { flex: 1; height: 14px; border-radius: 3px; margin: 0; } .pbar.ph { margin: 3px 0 0; } .pbar.ph span { flex: 1; text-align: center; font-size: 13.5px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.pbar .ps.done { background: #6f8fb0; } .pbar .ps.cur { background: #e8890c; } .pbar .ps.todo { background: var(--grid, #e6e9ee); } .pbar .ps.in { background: #2e7d32; } .pn { font-size: 13.5px; font-weight: 700; color: #9a5105; }
+.co-posco { margin: 12px 0 14px; max-width: 560px; } .co-posco h4, .ps-h { font-size: 15px; font-weight: 800; margin: 16px 0 8px; } .co-posco h4 small, .ps-h small { font-size: 13px; font-weight: 500; color: var(--ink-2); margin-left: 6px; } .co-posco h4 { margin-top: 0; }
+.lg2 { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; } .lg2 > div { min-width: 0; } .lg2r .ps-h { margin-top: 4px; } table.pos-t { width: auto; } table.pos-t th, table.pos-t td { padding: 6px 14px; white-space: nowrap; } table.pos-t tr.mu2 td { font-size: 13px; color: var(--ink-2); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pbar .ps.done { background: #4d6680; } :root:not([data-theme="light"]) .pn { color: #f0a35e; } } :root[data-theme="dark"] .pbar .ps.done { background: #4d6680; } :root[data-theme="dark"] .pn { color: #f0a35e; }
 .pms { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin: 0 0 14px; }
 .pm { text-align: left; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
 .pm:hover, .pm:focus-visible { border-color: var(--brand-2, #1f5fae); }
@@ -135,9 +140,9 @@ table.pdt tr.lv0 td { border-bottom: 2px solid var(--line); } table.pdt tr.mu td
 <header id="shell" data-page="orders" data-title="수주·납기" data-sub="도금·컬러 주문 잔량 · 납기 지연 예상 · 주문진도"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611050218"></script>
-<script src="engine/crypto.js?v=2611050218"></script>
-<script src="ui/ct.js?v=2611050218"></script>
-<script src="ct_orders.js?v=2611050218"></script>
+<script src="ui/shell.js?v=2611050222"></script>
+<script src="engine/crypto.js?v=2611050222"></script>
+<script src="ui/ct.js?v=2611050222"></script>
+<script src="ct_orders.js?v=2611050222"></script>
 </body>
 </html>
