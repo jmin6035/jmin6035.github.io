@@ -396,20 +396,30 @@
   }
   const shipT = (o) => (o.pl === 'G' ? o.unshipT || 0 : o.remT || 0);
   function viewCal() {
-    const asOf = M.asOf, s0 = CT.addD(monday(asOf), calOff * 7), s1 = CT.addD(s0, 27);
-    let cells = '';
-    for (let i = 0; i < 28; i++) {
-      const d = CT.addD(s0, i), c = calDay(d), past = d < asOf, today = d === asOf;
+    // 11/5 사용자 '납기캘린더 수정': 4주 넘기기 → 월 단위 달력(달 경계에서 끊음) · 이번 달 합계 · 날마다 도금/컬러 나눠 톤 크게
+    const asOf = M.asOf, m0 = CT.addD(asOf.slice(0, 7) + '-15', 30.4 * calOff | 0).slice(0, 7), first = m0 + '-01';
+    const last = CT.addD(CT.addD(first, 40).slice(0, 7) + '-01', -1), lead = (new Date(first + 'T00:00:00Z').getUTCDay() + 6) % 7;
+    const both = CT.inScope('G') && CT.inScope('C');
+    const split = (A, tf) => ['G', 'C'].filter((p) => CT.inScope(p)).map((p) => { const X = A.filter((o) => o.pl === p); return { p, n: X.length, t: sum(X, tf) }; });
+    let cells = '', mP = [], mS = [], mR = new Set();
+    for (let i = 0; i < lead; i++) cells += '<div class="co-cd blank" aria-hidden="true"></div>';
+    for (let d = first; d <= last; d = CT.addD(d, 1)) {
+      const c = calDay(d), past = d < asOf, today = d === asOf, wk = (new Date(d + 'T00:00:00Z').getUTCDay() + 6) % 7;
+      mP = mP.concat(c.P); mS = mS.concat(c.S); c.P.concat(c.S).filter((o) => o.risk === '위험').forEach((o) => mR.add(o.id));
       const has = c.P.length || c.S.length;
-      cells += `<div class="co-cd${today ? ' td' : ''}${past ? ' ps' : ''}${i % 7 > 4 ? ' we' : ''}${has ? ' ck' : ''}" data-d="${d}"${has ? ` role="button" aria-label="${md(d)} 주문 ${c.P.length + c.S.length}건"` : ''}>`
-        + `<div class="dt"><b>${md(d)}</b><span>${wd(d)}</span>${today ? '<em>오늘</em>' : ''}</div>`
-        + (c.P.length ? `<div class="mk p"><i>■</i>생산요청 <b>${c.P.length}</b>건 <span>${n0(sum(c.P, (o) => o.remT))}t</span></div>` : '')
-        + (c.S.length ? `<div class="mk s"><i>▲</i>출하완료 <b>${c.S.length}</b>건 <span>${n0(sum(c.S, shipT))}t</span></div>` : '')
-        + (c.rk ? `<div class="mk r">지연 예상 <b>${c.rk}</b>건</div>` : '') + '</div>';
+      const line = (cls, ic, nm, A, tf) => (A.length ? `<div class="mk ${cls}"><i>${ic}</i>${nm} <b>${n0(sum(A, tf))}t</b> <span>${A.length}건</span>${both ? `<div class="pp">${split(A, tf).filter((x) => x.n).map((x) => `<span class="pl ${x.p}">${x.p === 'G' ? '도금' : '컬러'} ${n0(x.t)}t</span>`).join('')}</div>` : ''}</div>` : '');
+      cells += `<div class="co-cd${today ? ' td' : ''}${past ? ' ps' : ''}${wk > 4 ? ' we' : ''}${has ? ' ck' : ''}" data-d="${d}"${has ? ` role="button" aria-label="${md(d)} 주문 ${c.P.length + c.S.length}건"` : ''}>`
+        + `<div class="dt"><b>${+d.slice(8)}</b><span>${wd(d)}</span>${today ? '<em>오늘</em>' : ''}${c.rk ? `<em class="rk">지연 ${c.rk}</em>` : ''}</div>`
+        + line('p', '■', '생산요청', c.P, (o) => o.remT) + line('s', '▲', '출하완료', c.S, shipT) + '</div>';
     }
-    return shipNote() + `<div class="co-calh"><button type="button" class="lnk" id="co-prev" aria-label="이전 주">◀ 이전 주</button><b>${md(s0)} ~ ${md(s1)}</b>`
-      + `<button type="button" class="lnk" id="co-next" aria-label="다음 주">다음 주 ▶</button>${calOff ? '<button type="button" class="lnk" id="co-now">이번 주</button>' : ''}`
-      + '<span class="co-lg"><i class="p">■</i> 생산요청일 · <i class="s">▲</i> 출하완료일 · <i class="r">지연 예상</i></span></div>'
+    const kp = CT.kpis([
+      { label: `${+m0.slice(5)}월 생산요청`, v: n0(sum(mP, (o) => o.remT)), unit: 't', tone: 'info', sub: `${n0(mP.length)}건${both ? ' · ' + split(mP, (o) => o.remT).map((x) => `${x.p === 'G' ? '도금' : '컬러'} ${n0(x.t)}t`).join(' · ') : ''}` },
+      { label: `${+m0.slice(5)}월 출하완료`, v: n0(sum(mS, shipT)), unit: 't', tone: 'info', sub: `${n0(mS.length)}건${both ? ' · ' + split(mS, shipT).map((x) => `${x.p === 'G' ? '도금' : '컬러'} ${n0(x.t)}t`).join(' · ') : ''}` },
+      { label: '지연 예상', v: n0(mR.size), unit: '건', tone: mR.size ? 'bad' : 'ok', sub: '이 달 생산요청·출하완료 주문 중' },
+    ]);
+    return shipNote() + kp + `<div class="co-calh"><button type="button" class="lnk" id="co-prev" aria-label="이전 달">◀ 이전 달</button><b>${m0.slice(0, 4)}년 ${+m0.slice(5)}월</b>`
+      + `<button type="button" class="lnk" id="co-next" aria-label="다음 달">다음 달 ▶</button>${calOff ? '<button type="button" class="lnk" id="co-now">이번 달</button>' : ''}`
+      + '<span class="co-lg"><i class="p">■</i> 생산요청일(남은 생산 t) · <i class="s">▲</i> 출하완료일(미출하 t) · <i class="r">지연 n</i> = 지연 예상 주문</span></div>'
       + `<div class="co-cal"><div class="co-wh">${['월', '화', '수', '목', '금', '토', '일'].map((x) => `<div>${x}</div>`).join('')}</div><div class="co-cg">${cells}</div></div>`;
   }
   function dayPanel(d) {

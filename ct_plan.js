@@ -70,8 +70,10 @@
 
   function range() {
     if (span === 'm') { const m = base.slice(0, 7), e = addD(m + '-01', 40).slice(0, 7) + '-01'; const ds = []; for (let d = m + '-01'; d < e; d = addD(d, 1)) ds.push(d); return ds; }
-    return Array.from({ length: span }, (_, i) => addD(base, i));
+    const mEnd = addD(addD(base.slice(0, 7) + '-01', 40).slice(0, 7) + '-01', -1);   // 11/5: 수요일 시작 · 달 경계에서 끊음(다른 화면과 같은 규칙)
+    const ds = []; for (let d = base; d <= mEnd && ds.length < span; d = addD(d, 1)) ds.push(d); return ds;
   }
+  const wkStart = (d) => { const w = CT.wed(d), m1 = d.slice(0, 8) + '01'; return w < m1 ? m1 : w; };
 
   const CCK = [['작업대기', 'kw', '작업대기'], ['지시대기', 'ky', '지시대기'], ['부자재 입고대기', 'kb', '부자재'], ['계획편성', 'kg', '계획']];
   function weekView() {
@@ -102,7 +104,7 @@
           ccRed = cx.woShort > 0 || cx.short > 0;
           sum += cx.cap - c.t; sumT += cx.cap - c.t;                  // 계·KPI 도 캘린더 편성 톤으로
           body = `<b>${n0(cx.cap)}</b><span class="ccb">${CCK.map(([k, cl]) => (K[k] ? `<i class="${cl}" style="width:${(100 * K[k][1] / base).toFixed(1)}%"></i>` : '')).join('')}</span>`
-            + `<small>${CCK.filter(([k]) => K[k]).map(([k, , nm]) => `${nm} ${n0(K[k][0])}`).join(' · ')}</small>${ccRed ? `<small class="ccs">${cx.woShort > 0 ? '작업대기 부족' : '빈 시간'} ${n1(cx.woShort || cx.short)}h</small>` : ''}`;
+            + `<small class="ccd">${CCK.filter(([k]) => K[k]).map(([k, , nm]) => { const nn = new Set((cx.items || []).filter((i) => i.kind === k && i.con).map((i) => i.con)).size; return `${nm} ${n0(K[k][0])}${nn ? `(${nn}건)` : ''}`; }).join(' · ')}</small>${ccRed ? `<small class="ccs">${cx.woShort > 0 ? '작업대기 부족' : '빈 시간'} ${n1(cx.woShort || cx.short)}h</small>` : ''}`;   // 11/5 컬러 담당 규칙: 24시간 미달 = 빨강(칸 왼쪽 줄 + 글자)
         }
         const cls = [s, full ? 'stop' : '', c.ev.some((e) => /M\/C/.test(e)) ? 'mc' : '', ccRed ? 'ccr' : ''].join(' ');
         return `<td class="${cls}" data-k="${l}|${d}" tabindex="0">${body}${c.ev.length ? `<span class="ev">${esc(c.ev[0])}</span>` : ''}${rk.length ? `<i class="rk" title="납기 지연 예상 주문 ${rk.length}건">${rk.length}</i>` : ''}</td>`;
@@ -263,19 +265,20 @@
 
   function render(D) {
     DD = D; X = prep(D);
-    if (!base) base = mon(X.today);
+    if (!base) base = wkStart(X.today);
     const v = CT.view('week', VIEWS), L = X.L, I = X.I;
     const bs = CT.basis([{ name: '도금 재계획', at: (L.replan || {}).t0 || (D['latest.plan'] || {}).savedAt, kind: '재계획' }, v === 'cmp' ? { name: '직전 계획', at: (D.plan_prev || {}).savedAt, kind: '비교' } : { name: '컬러 계획', at: I.built, kind: '확정계획' }, { name: '실적', at: X.asOf, kind: '실적' }]);
     let body, lr;
     if (v === 'load') { lr = loadView(); body = lr.html; } else if (v === 'cmp') body = cmpView(D); else body = weekView();
     $('ct-main').innerHTML = bs + body;
     if (v === 'week') {
-      $('pl-span').querySelectorAll('button').forEach((b) => b.onclick = () => { span = b.dataset.k === 'm' ? 'm' : +b.dataset.k; base = span === 'm' ? base.slice(0, 7) + '-01' : mon(base); render(D); });
+      $('pl-span').querySelectorAll('button').forEach((b) => b.onclick = () => { span = b.dataset.k === 'm' ? 'm' : +b.dataset.k; base = span === 'm' ? base.slice(0, 7) + '-01' : wkStart(base); render(D); });
       document.querySelectorAll('.card .nav button').forEach((b) => b.onclick = () => {
         const n = +b.dataset.n;
-        if (!n) base = span === 'm' ? X.today.slice(0, 7) + '-01' : mon(X.today);
+        if (!n) base = span === 'm' ? X.today.slice(0, 7) + '-01' : wkStart(X.today);
         else if (span === 'm') base = addD(base.slice(0, 7) + '-15', 30 * n).slice(0, 7) + '-01';
-        else base = addD(base, 7 * n);
+        else if (n > 0) { const r = range(); base = addD(r[r.length - 1], 1); }   // 다음 = 지금 보이는 마지막 날 다음(달 경계 포함)
+        else { let b = wkStart(addD(base, -1)); if (span === 14) b = wkStart(addD(b, -1)) < b ? wkStart(addD(b, -1)) : b; base = b; }
         render(D);
       });
       document.querySelectorAll('table.wk td[data-k]').forEach((td) => { td.onclick = () => cellPanel(td.dataset.k); td.onkeydown = (e) => { if (e.key === 'Enter') cellPanel(td.dataset.k); }; });

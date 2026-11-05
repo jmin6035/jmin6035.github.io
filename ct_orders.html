@@ -6,7 +6,7 @@
 <title>수주·납기</title>
 <meta name="description" content="도금·컬러 주문을 한 목록으로 — 수주 잔량·납기 지연 예상·주문진도">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611050626">
+<link rel="stylesheet" href="ui/theme.css?v=2611050637">
 <style>
 main.wrap { max-width: none; }
 section.card.co-card { padding: 54px 16px 14px !important; }
@@ -88,6 +88,9 @@ table.co-t .lf { font-size: 13.5px; }
 .co-cd .dt { display: flex; gap: 5px; align-items: baseline; margin-bottom: 5px; } .co-cd .dt b { font-size: 15px; } .co-cd .dt span { color: var(--ink-2); } .co-cd .dt em { font-style: normal; font-weight: 800; color: var(--brand-2, #1f5fae); margin-left: auto; }
 .co-cd .mk { white-space: nowrap; line-height: 1.55; } .co-cd .mk i { font-style: normal; margin-right: 3px; } .co-cd .mk span { color: var(--ink-2); }
 .co-cd .mk.r { color: var(--bad); font-weight: 700; }
+.co-cd.blank { border: 0; background: transparent; min-height: 0; } .co-cd .dt em.rk { color: var(--bad); background: color-mix(in srgb, var(--bad) 10%, transparent); border-radius: 999px; padding: 0 7px; font-size: 12.5px; }
+.co-cd .mk b { font-size: 15px; } .co-cd .mk .pp { display: flex; flex-wrap: wrap; gap: 0 6px; margin: 0 0 3px 14px; } .co-cd .mk .pp .pl { font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+.co-cd .mk .pp .pl.G::before, .co-cd .mk .pp .pl.C::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; vertical-align: 1px; } .co-cd .mk .pp .pl.G::before { background: #1f5fae; } .co-cd .mk .pp .pl.C::before { background: #0f8b8d; }
 @media (max-width: 1200px) { .co-cd .mk { white-space: normal; } }
 @media (max-width: 1450px) and (min-width: 901px) { .co-figs { grid-template-columns: repeat(4, minmax(0, 1fr)); } .co-figs .f:nth-child(5) { border-left: 0; } .co-figs .f:nth-child(n+5) { border-top: 1px solid var(--grid); } .co-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 900px) {
@@ -95,7 +98,7 @@ table.co-t .lf { font-size: 13.5px; }
   .co-figs { grid-template-columns: repeat(2, minmax(0, 1fr)); } .co-figs .f { border-left: 0; border-top: 1px solid var(--grid); } .co-figs .f:nth-child(-n+2) { border-top: 0; }
   .co-grid { grid-template-columns: 1fr; }
   .co-flow { grid-template-columns: 1fr; } .co-flow li { padding: 0 0 12px 30px; } .co-flow li::before { left: 7px !important; right: auto !important; width: 3px !important; top: 0; bottom: 0; height: auto; } .co-flow li > i { top: 0; }
-  .co-wh { display: none; } .co-cg { grid-template-columns: 1fr; gap: 4px; }
+  .co-wh { display: none; } .co-cg { grid-template-columns: 1fr; gap: 4px; } .co-cd.blank { display: none; }
   .co-cd { min-height: 0; display: grid; grid-template-columns: 86px 1fr; gap: 1px 8px; align-items: baseline; } .co-cd .dt { margin: 0; grid-row: 1 / span 3; } .co-cd .mk { grid-column: 2; white-space: nowrap; } .co-cd .dt { white-space: nowrap; } .co-cd .dt em { margin-left: 4px; } .co-cd:not(.ck):not(.td) { display: none; }
   .co-lg { margin-left: 0; } .cnt { margin-left: 0; }
   .co-f2 input[type=search] { width: 100%; }
@@ -143,9 +146,9 @@ table.pdt tr.lv0 td { border-bottom: 2px solid var(--line); } table.pdt tr.mu td
 <header id="shell" data-page="orders" data-title="수주·납기" data-sub="도금·컬러 주문 잔량 · 납기 지연 예상 · 주문진도"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611050626"></script>
-<script src="engine/crypto.js?v=2611050626"></script>
-<script src="ui/ct.js?v=2611050626"></script>
-<script src="ct_orders.js?v=2611050626"></script>
+<script src="ui/shell.js?v=2611050637"></script>
+<script src="engine/crypto.js?v=2611050637"></script>
+<script src="ui/ct.js?v=2611050637"></script>
+<script src="ct_orders.js?v=2611050637"></script>
 </body>
 </html>

@@ -6,12 +6,12 @@
 <title>생산계획</title>
 <meta name="description" content="도금·컬러 라인별 주간 생산 일정과 주차별 라인 부하">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611050626">
+<link rel="stylesheet" href="ui/theme.css?v=2611050637">
 <style>
 main.wrap { max-width: none; }
 .card .hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-right: 96px; }
 .card .hd .ct-seg { margin: 0; }
-table.wk { border-collapse: separate; border-spacing: 3px; width: 100%; font-variant-numeric: tabular-nums; }
+table.wk { border-collapse: separate; border-spacing: 3px; width: 100%; table-layout: fixed; font-variant-numeric: tabular-nums; } table.wk th.r, table.wk td.tot { width: 76px; }
 table.wk th { font-size: 13.5px; font-weight: 700; color: var(--ink-2); padding: 4px 6px; white-space: nowrap; text-align: center; }
 table.wk th small { display: block; font-weight: 600; } table.wk th.sun { color: var(--bad); } table.wk th.sat { color: var(--brand-2, #1f5fae); }
 table.wk th.td { background: var(--tint-2); border-radius: 6px; color: var(--ink); }
@@ -23,8 +23,8 @@ table.wk td:hover, table.wk td:focus { border-color: var(--brand-2, #1f5fae); ou
 table.wk td b { display: block; font-size: 15px; } table.wk td small { display: block; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 table.wk td .ccb { display: flex; height: 6px; margin: 3px 4px 2px; border-radius: 2px; overflow: hidden; background: var(--grid, #e6e9ee); } table.wk td .ccb i { display: block; height: 100%; }
 .kw { background: #44546a; } .ky { background: #e0a800; } .kb { background: #2a78d6; } .kg { background: #2e7d32; }
-table.wk td.ccr { background: color-mix(in srgb, var(--bad-bg, #fde8e8) 70%, var(--surface)); box-shadow: inset 3px 0 0 var(--bad); } table.wk td small.ccs { color: var(--bad); font-weight: 800; }
-.lgd .ccl { white-space: normal; } .lgd i.cci { display: inline-block; width: 12px; height: 10px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: 0; } i.lg.ccr { background: color-mix(in srgb, var(--bad-bg, #fde8e8) 70%, #fff); box-shadow: inset 3px 0 0 var(--bad); }
+table.wk td.ccr { box-shadow: inset 3px 0 0 var(--bad); } table.wk td small.ccs { color: var(--bad); font-weight: 800; white-space: normal; } table.wk td small.ccd { white-space: normal; line-height: 1.3; }
+.lgd .ccl { white-space: normal; } .lgd i.cci { display: inline-block; width: 12px; height: 10px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: 0; } i.lg.ccr { box-shadow: inset 3px 0 0 var(--bad); }
 table.wk td .st { display: block; font-size: 13.5px; font-weight: 700; white-space: nowrap; text-align: left; }
 table.wk td.act { background: var(--sub); } table.wk td.act b { font-style: italic; }
 table.wk td.down { background: repeating-linear-gradient(135deg, var(--surface) 0 6px, var(--grid) 6px 8px); } table.wk td.down .st { color: var(--ink-2); }
@@ -62,9 +62,9 @@ table.ld td.lc { min-width: 96px; } table.ld td.lc b { font-size: 14.5px; } tabl
 <header id="shell" data-page="plan7" data-title="생산계획" data-sub="주간 생산 일정 · 라인 부하 · 계획 변경 비교"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611050626"></script>
-<script src="engine/crypto.js?v=2611050626"></script>
-<script src="ui/ct.js?v=2611050626"></script>
-<script src="ct_plan.js?v=2611050626"></script>
+<script src="ui/shell.js?v=2611050637"></script>
+<script src="engine/crypto.js?v=2611050637"></script>
+<script src="ui/ct.js?v=2611050637"></script>
+<script src="ct_plan.js?v=2611050637"></script>
 </body>
 </html>
