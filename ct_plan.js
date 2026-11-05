@@ -170,12 +170,14 @@
   }
 
   /* 계획 변경 비교: A = 직전 게시(plan_prev), B = 지금 게시(latest.plan). 비교만 — 계획에 반영하지 않음 */
-  function cmpView(D) {
+  const wkOf = (d) => { const w = CT.wed(d), m1 = d.slice(0, 8) + '01'; return w < m1 ? m1 : w; };   // 수요일 시작 주 · 달 경계에서 끊음(11/5)
+  function cmpView(D) { return (CT.inScope('G') ? cmpG(D) : '') + (CT.inScope('C') ? cmpC(D) : ''); }
+  function cmpG(D) {
     const A = D.plan_prev, B = D['latest.plan'];
-    if (!A || !B) return '<section class="card"><h2>계획 변경 비교</h2><p class="ct-note">직전 게시 계획이 없습니다.</p></section>';
+    if (!A || !B) return '<section class="card"><h2>도금 계획 변경</h2><p class="ct-note">직전 게시 계획이 없습니다.</p></section>';
     const ra = A.result || {}, rb = B.result || {}, ta = (ra.replan || {}).t0, tb = (rb.replan || {}).t0;
     const t0 = [ta, tb].filter(Boolean).sort().pop() || X.today;
-    const agg = (r) => { const w = {}, done = {}; for (const x of r.rows || []) { const [d, l, fam, g, t, due] = x; if (+t < 0.05) continue; const k = `${g}|${fam}|${due}`; if (!done[k] || d > done[k].d) done[k] = { d, g, fam, due }; if (d < t0) continue; const s = `${l}|${mon(d)}`; w[s] = (w[s] || 0) + (+t || 0); } return { w, done }; };
+    const agg = (r) => { const w = {}, done = {}; for (const x of r.rows || []) { const [d, l, fam, g, t, due] = x; if (+t < 0.05) continue; const k = `${g}|${fam}|${due}`; if (!done[k] || d > done[k].d) done[k] = { d, g, fam, due }; if (d < t0) continue; const s = `${l}|${wkOf(d)}`; w[s] = (w[s] || 0) + (+t || 0); } return { w, done }; };
     const a = agg(ra), b = agg(rb);
     const wks = [...new Set([...Object.keys(a.w), ...Object.keys(b.w)].map((k) => k.split('|')[1]))].sort();
     const LS = LG.filter((l) => CT.inScope('G'));
@@ -204,10 +206,47 @@
       + `<td class="r">${m.dd == null ? '-' : `<b class="${m.dd > 0 ? 'up' : 'dn'}">${m.dd > 0 ? '+' : ''}${m.dd}일</b>`}</td><td>${m.dd == null ? `<span class="ct-b na">${m.y ? '새로 생김' : '계획에서 빠짐'}</span>` : late(m) ? '<span class="ct-b bad">지연</span>' : m.dd > 0 ? '<span class="ct-b warn">늦어짐</span>' : '<span class="ct-b ok">당겨짐</span>'}</td></tr>`).join('')}</tbody></table></div>${mv.length > 30 ? `<button type="button" class="more" id="mv-more">${mvAll ? '30개만' : `전체 ${mv.length}개`}</button>` : ''}` : '<p class="ct-note">완료일이 바뀐 묶음 없음</p>';
     const at = (s) => (s ? `${md(s)} ${String(s).slice(11, 16)}` : '-');
     const hd = `<div class="cmp-h"><span><small>직전</small><b>${at(A.savedAt)}</b><small>재계획 ${md(ta)}</small></span><span class="ar">→</span><span><small>지금</small><b>${at(B.savedAt)}</b><small>재계획 ${md(tb)}</small></span><span class="ct-b na">비교만 — 계획에 반영하지 않음</span></div>`;
-    return `<section class="card"><h2>계획 변경 비교 <small>도금 · ${md(t0)}부터 · 컬러는 직전 판 없음</small></h2>${hd}</section>` + kp
-      + `<section class="card"><h2>라인 × 주 생산량 <small>t</small></h2>${wkT}</section>`
+    return `<section class="card"><h2>도금 계획 변경 <small>${md(t0)}부터</small></h2>${hd}</section>` + kp
+      + `<section class="card"><h2>도금 라인 × 주 생산량 <small>t · 수요일 시작</small></h2>${wkT}</section>`
       + `<section class="card"><h2>M/C 일정 <small>${mcSame ? '변동 없음' : '빨강 = 새 일정'}</small></h2>${mcT}</section>`
       + `<section class="card"><h2>완료일이 바뀐 묶음 <small>${mv.length}개 · 늦어진 것 먼저 · 마감 넘김 ${mv.filter((m) => m.dd != null && late(m)).length}개</small></h2>${mvT}</section>`;
+  }
+
+  /* 컬러 계획 변경(11/5 사용자 '계획변경비교에 컬러는 왜 없노'): 직전 = integrated_prev(오늘 이후 컬러 편성이 지금과 다른 가장 최근 판, tools/plan_prev.py) */
+  function cmpC(D) {
+    const A = D.integrated_prev, B = D.integrated;
+    if (!A || !B) return '<section class="card"><h2>컬러 계획 변경</h2><p class="ct-note">직전 컬러 계획 판이 없습니다.</p></section>';
+    const t0 = X.today, LS = LC;
+    const agg = (O) => { const w = {}, g = {}, dn = {};
+      for (const c of O.color || []) { if (c.act || c.d < t0) continue; const t = Object.values(c.g || {}).reduce((a, v) => a + (+v || 0), 0); w[`${c.l}|${wkOf(c.d)}`] = (w[`${c.l}|${wkOf(c.d)}`] || 0) + t;
+        for (const [k, v] of Object.entries(c.g || {})) g[`${k}|${c.d.slice(0, 7)}`] = (g[`${k}|${c.d.slice(0, 7)}`] || 0) + (+v || 0); }
+      for (const r of O.colorDown || []) if (r[2] !== 'test' && r[0] >= t0 && (+r[3] || 0) >= 1380) (dn[r[1]] = dn[r[1]] || new Set()).add(r[0]);
+      const un = (O.colorUnplaced || []).filter((u) => u.ym >= t0.slice(0, 7)).reduce((a, u) => a + (+u.t || 0), 0);
+      return { w, g, dn, un, tot: Object.values(w).reduce((a, v) => a + v, 0), end: (O.color || []).map((c) => c.d).sort().pop() };
+    };
+    const a = agg(A), b = agg(B);
+    const dl = (v) => (Math.abs(v) < 0.5 ? '<span class="sub">0</span>' : `<b class="${v > 0 ? 'up' : 'dn'}">${v > 0 ? '+' : ''}${n0(v)}</b>`);
+    const dnN = (x) => LS.reduce((q, l) => q + ((x.dn[l] || new Set()).size), 0);
+    const kp = CT.kpis([
+      { label: '편성량(오늘 이후)', v: n0(b.tot), unit: 't', tone: 'info', sub: `직전 ${n0(a.tot)}t · Δ ${n0(b.tot - a.tot)}t` },
+      { label: '미편성', v: n0(b.un), unit: 't', tone: b.un > a.un + 0.5 ? 'bad' : 'ok', sub: `직전 ${n0(a.un)}t · Δ ${n0(b.un - a.un)}t` },
+      { label: '계획 휴지일(라인 합)', v: String(dnN(b)), unit: '일', tone: 'info', sub: `직전 ${dnN(a)}일` },
+    ]);
+    const wks = [...new Set([...Object.keys(a.w), ...Object.keys(b.w)].map((k) => k.split('|')[1]))].sort();
+    const wkT = `<div class="ct-wrap"><table class="ct-t cw"><thead><tr><th rowspan="2">주</th>${LS.map((l) => `<th colspan="3" class="c">${l}</th>`).join('')}</tr><tr>${LS.map(() => '<th class="r">직전</th><th class="r">지금</th><th class="r">Δ</th>').join('')}</tr></thead><tbody>`
+      + wks.map((s) => `<tr><td class="id">${md(s < t0 ? t0 : s)}~</td>${LS.map((l) => { const x = a.w[`${l}|${s}`] || 0, y = b.w[`${l}|${s}`] || 0; return `<td class="r">${n0(x)}</td><td class="r">${n0(y)}</td><td class="r">${dl(y - x)}</td>`; }).join('')}</tr>`).join('')
+      + `<tr class="sum"><td>계</td>${LS.map((l) => { const x = wks.reduce((q, s) => q + (a.w[`${l}|${s}`] || 0), 0), y = wks.reduce((q, s) => q + (b.w[`${l}|${s}`] || 0), 0); return `<td class="r">${n0(x)}</td><td class="r">${n0(y)}</td><td class="r">${dl(y - x)}</td>`; }).join('')}</tr></tbody></table></div>`;
+    const yms = [...new Set([...Object.keys(a.g), ...Object.keys(b.g)].map((k) => k.split('|')[1]))].sort(), gs = ['계획재', '주문재', '건재수출', '가전수출', '가전내수', '수요개발'].filter((g) => yms.some((m) => a.g[`${g}|${m}`] || b.g[`${g}|${m}`]));
+    const gT = `<div class="ct-wrap"><table class="ct-t cw"><thead><tr><th rowspan="2">그룹</th>${yms.map((m) => `<th colspan="3" class="c">${+m.slice(5)}월</th>`).join('')}</tr><tr>${yms.map(() => '<th class="r">직전</th><th class="r">지금</th><th class="r">Δ</th>').join('')}</tr></thead><tbody>`
+      + gs.map((g) => `<tr><td class="id">${esc(g)}</td>${yms.map((m) => { const x = a.g[`${g}|${m}`] || 0, y = b.g[`${g}|${m}`] || 0; return `<td class="r">${n0(x)}</td><td class="r">${n0(y)}</td><td class="r">${dl(y - x)}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div>';
+    const dnT = LS.map((l) => { const x = a.dn[l] || new Set(), y = b.dn[l] || new Set(), add = [...y].filter((d) => !x.has(d)).sort(), del = [...x].filter((d) => !y.has(d)).sort();
+      return `<tr><td class="id">${l}</td><td>${add.map((d) => `<span class="new">${md(d)}</span>`).join(' ') || '<span class="sub">-</span>'}</td><td>${del.map((d) => `<span class="gone">${md(d)}</span>`).join(' ') || '<span class="sub">-</span>'}</td></tr>`; }).join('');
+    const at = (s) => (s ? `${md(String(s).slice(0, 10))} ${String(s).slice(11, 16)}` : '-');
+    const hd = `<div class="cmp-h"><span><small>직전</small><b>${at(A.built)}</b><small>계획 끝 ${md(a.end)}</small></span><span class="ar">→</span><span><small>지금</small><b>${at(B.built)}</b><small>계획 끝 ${md(b.end)}</small></span><span class="ct-b na">비교만 — 계획에 반영하지 않음</span></div>`;
+    return `<section class="card"><h2>컬러 계획 변경 <small>${md(t0)}부터</small></h2>${hd}</section>` + kp
+      + `<section class="card"><h2>컬러 라인 × 주 생산량 <small>t · 수요일 시작</small></h2>${wkT}</section>`
+      + `<section class="card"><h2>컬러 그룹 × 월 물량 <small>t · 오늘 이후 편성</small></h2>${gT}</section>`
+      + `<section class="card"><h2>계획 휴지일 변경 <small>종일 휴지만</small></h2><div class="ct-wrap"><table class="ct-t mc"><thead><tr><th>라인</th><th>새로 쉼</th><th>휴지 풀림</th></tr></thead><tbody>${dnT}</tbody></table></div></section>`;
   }
 
   function render(D) {
@@ -238,5 +277,5 @@
     CT.keyRows(document.getElementById('ct-main'));
   }
   CT.onView(() => { if (DD) { CT.panel(null); render(DD); } });
-  CT.boot(['latest.plan.enc.json', 'plan_prev.enc.json', 'integrated.enc.json', 'portal.enc.json', 'cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'color_actual.enc.json'], render);
+  CT.boot(['latest.plan.enc.json', 'plan_prev.enc.json', 'integrated.enc.json', 'integrated_prev.enc.json', 'portal.enc.json', 'cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'color_actual.enc.json'], render);
 })();
