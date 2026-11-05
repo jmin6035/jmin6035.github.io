@@ -205,7 +205,7 @@
       const grid = [1, 0.5, 0].map((f) => `<div class="ch-g" style="bottom:${f * 100}%"><span>${n0(mx * f)}</span></div>`).join('');
       const cols = r.dd.map((z, i) => {
         const lo = z.past && z.a != null && z.p != null && z.p > 0 && z.a < z.p * 0.95;
-        const tip = `${md(z.d)}(${wd(z.d)}) ${!z.past && RUN && z.d === RUN.d ? `진행 중 ${n0(+(RUN.lines || {})[r.x.line] || 0)}t(07시~, 마감 전) · ` : ''}${z.past ? (z.a == null ? '실적 자료 없음' : `실적 ${n0(z.a)}t${z.p != null ? ` · 계획 ${n0(z.p)}t` : ''}${z.stop ? ' · 정지/휴지' : ''}`) : `계획 ${n0(z.p || 0)}t`}`;
+        const tip = `${md(z.d)}(${wd(z.d)}) ${!z.past && RUN && z.d === RUN.d ? `진행 중 ${n0(+(RUN.lines || {})[r.x.line] || 0)}t(07:00~${RUN.at || ''}, 마감 전) · ` : ''}${z.past ? (z.a == null ? '실적 자료 없음' : `실적 ${n0(z.a)}t${z.p != null ? ` · 계획 ${n0(z.p)}t` : ''}${z.stop ? ' · 정지/휴지' : ''}`) : `계획 ${n0(z.p || 0)}t`}`;
         const rt = !z.past && RUN && z.d === RUN.d ? (+(RUN.lines || {})[r.x.line] || 0) : null;
         let body = '', val = '';
         if (z.past && z.a == null) body = '<i class="ch-na">자료<br>없음</i>';
@@ -228,7 +228,7 @@
     const runLine = (r) => {                                                                      // 오늘 진행분(07시~ 마감 전) — 진도율에는 안 넣고 참고로(11/5 사용자 '화면에 보여줘')
       if (!RUN || RUN.d <= lastFull(r.x)) return '';
       const t = +(RUN.lines || {})[r.x.line] || 0, p = futPlan(r.x, RUN.d);
-      return `<div class="ln-run">오늘 ${md(RUN.d)} 진행 중 <b>${n0(t)}t</b>${p ? ` / 계획 ${n0(p)}t` : ''}<span>07시~ · 마감 전</span></div>`;
+      return `<div class="ln-run">오늘 ${md(RUN.d)} 진행 중 <b>${n0(t)}t</b>${p ? ` / 계획 ${n0(p)}t` : ''}<span>${RUN.at ? `07:00~${RUN.at}` : "07시부터"} · 마감 전</span></div>`;
     };
     const card = (r) => `<a class="ln-c ${r.tn}" href="ct_prod.html#perf"><div class="ln-h"><b>${r.x.line}</b><span class="ln-st ${r.status[1]}">${r.status[0]}</span><span class="ln-big">${r.big == null ? '<small>집계 전</small>' : `${r.big}<small>${r.bigU}</small>`}</span></div>`
       + `<div class="ln-sub">${esc(r.sub)}${r.diffT != null ? ` <b class="${r.diffT >= 0 ? 'pos' : 'neg'}">${sig(r.diffT)}t</b>` : ''}</div>${runLine(r)}${bar(r)}${spark(r)}<div class="ln-ft">${esc(r.foot)}</div></a>`;
