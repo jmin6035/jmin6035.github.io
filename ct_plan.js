@@ -49,7 +49,9 @@
     const days = [...new Set(Object.keys(cell).map((k) => k.split('|')[1]))].sort();
     // 계획 끝 날(11/5): 도금 = 재계획 행·캘린더 끝(분기 말), 컬러 = 통합 계획 끝 — 그 뒤 칸은 '계획 범위 밖'
     const hz = { G: [...(L.rows || []).map((r) => r[0]), ...(L.cal || []).map((c) => c.date)].sort().pop() || '', C: (I.color || []).map((x) => x.d).sort().pop() || '' };
-    return { asOf, today, cell, known, cap, avail, used, due, days, L, I, P, OM, tph, hz };
+    // 컬러 생산 캘린더(11/5 컬러 담당 편성 규칙): 라인·날 = 작업대기량 → 지시대기 → 부자재 입고대기 → 계획편성(24시간 기준)
+    const cc = {}; for (const [l, C] of Object.entries((D.cc_calendar || {}).lines || {})) for (const c of C) cc[`${l}|${c.d}`] = c;
+    return { asOf, today, cell, known, cap, avail, used, due, days, L, I, P, OM, tph, hz, cc };
   }
   const lines = () => [...(CT.inScope('G') ? LG : []), ...(CT.inScope('C') ? LC : [])];
 
@@ -71,6 +73,7 @@
     return Array.from({ length: span }, (_, i) => addD(base, i));
   }
 
+  const CCK = [['작업대기', 'kw', '작업대기'], ['지시대기', 'ky', '지시대기'], ['부자재 입고대기', 'kb', '부자재'], ['계획편성', 'kg', '계획']];
   function weekView() {
     const ds = range(), LS = lines();
     const head = `<tr><th class="ln">라인</th>${ds.map((d) => `<th class="${wd(d) === 0 ? 'sun' : wd(d) === 6 ? 'sat' : ''}${d === X.today ? ' td' : ''}">${md(d)}<small>${WD[wd(d)]}</small></th>`).join('')}<th class="r">계</th></tr>`;
@@ -85,7 +88,6 @@
         const rk = (X.due[`${l}|${d}`] || []).filter((o) => o.risk === '위험'); rk.forEach((o) => risk.add(o.id));
         const top = Object.entries(c.items).sort((a, b) => b[1] - a[1])[0];
         const full = s === 'down' && c.down >= 1439;
-        const cls = [s, full ? 'stop' : '', c.ev.some((e) => /M\/C/.test(e)) ? 'mc' : ''].join(' ');
         let body;
         if (s === 'plan' || s === 'act') body = `<b>${n0(c.t)}</b><small>${esc(top ? (LG.includes(l) ? top[0].split(' ')[0] : top[0]) : '')}</small>`;
         else if (s === 'down') body = `<span class="st">${full ? '' : '계획 휴지'}</span>`;
@@ -93,6 +95,16 @@
         else if (s === 'free') body = '<span class="st">계획 물량 없음</span>';
         else if (s === 'out') body = '<span class="st">계획 범위 밖</span>';
         else body = '<span class="st">자료 없음</span><small>실적 미수신</small>';
+        const cx = LC.includes(l) && d >= X.today ? X.cc[`${l}|${d}`] : null;   // 컬러 오늘 이후 = 생산 캘린더 편성(라인별 구분, 11/5)
+        let ccRed = false;
+        if (cx && !cx.stop && cx.k && Object.keys(cx.k).length) {
+          const K = cx.k, base = cx.capH || 24;
+          ccRed = cx.woShort > 0 || cx.short > 0;
+          sum += cx.cap - c.t; sumT += cx.cap - c.t;                  // 계·KPI 도 캘린더 편성 톤으로
+          body = `<b>${n0(cx.cap)}</b><span class="ccb">${CCK.map(([k, cl]) => (K[k] ? `<i class="${cl}" style="width:${(100 * K[k][1] / base).toFixed(1)}%"></i>` : '')).join('')}</span>`
+            + `<small>${CCK.filter(([k]) => K[k]).map(([k, , nm]) => `${nm} ${n0(K[k][0])}`).join(' · ')}</small>${ccRed ? `<small class="ccs">${cx.woShort > 0 ? '작업대기 부족' : '빈 시간'} ${n1(cx.woShort || cx.short)}h</small>` : ''}`;
+        }
+        const cls = [s, full ? 'stop' : '', c.ev.some((e) => /M\/C/.test(e)) ? 'mc' : '', ccRed ? 'ccr' : ''].join(' ');
         return `<td class="${cls}" data-k="${l}|${d}" tabindex="0">${body}${c.ev.length ? `<span class="ev">${esc(c.ev[0])}</span>` : ''}${rk.length ? `<i class="rk" title="납기 지연 예상 주문 ${rk.length}건">${rk.length}</i>` : ''}</td>`;
       }).join('');
       return `<tr><th class="ln">${l}</th>${tds}<td class="r tot">${n0(sum)}</td></tr>`;
@@ -107,7 +119,7 @@
       { label: '휴지', v: idle, unit: '라인·일', tone: idle ? 'warn' : 'ok', sub: '계획 휴지 + 물량 없음 + 비계획' },
       { label: '지연 예상 주문', v: risk.size, unit: '건', tone: risk.size ? 'bad' : 'ok', sub: '이 기간 생산 필요일' },
     ]);
-    const lg = '<p class="ct-note lgd">' + [['plan', '계획 생산'], ['act', '실적 생산'], ['down', '계획 휴지'], ['stop', '종일 정지'], ['unp', '비계획 휴지'], ['free', '계획 물량 없음'], ['out', '계획 범위 밖'], ['nod', '자료 없음(실적 미수신)'], ['mc', 'M/C']].map(([c, t]) => `<span><i class="lg ${c}"></i>${t}</span>`).join('') + '<span><i class="rk">n</i>납기 지연 예상 주문</span></p>';
+    const lg = '<p class="ct-note lgd">' + [['plan', '계획 생산'], ['act', '실적 생산'], ['down', '계획 휴지'], ['stop', '종일 정지'], ['unp', '비계획 휴지'], ['free', '계획 물량 없음'], ['out', '계획 범위 밖'], ['nod', '자료 없음(실적 미수신)'], ['mc', 'M/C']].map(([c, t]) => `<span><i class="lg ${c}"></i>${t}</span>`).join('') + '<span><i class="rk">n</i>납기 지연 예상 주문</span>' + (CT.inScope('C') ? `<span class="ccl">컬러(오늘 이후): ${CCK.map(([k, cl]) => `<i class="cci ${cl}"></i>${k === '작업대기' ? '작업대기량' : k}`).join(' ')} · <i class="lg ccr"></i>작업대기 24시간 부족·빈 시간</span>` : '') + '</p>';
     return kp + `<section class="card"><div class="hd"><h2>통합 생산일정</h2>${nav}${CT.tabs('pl-span', [['7', '7일'], ['14', '14일'], ['m', '월간']], String(span))}</div>${tbl}${lg}</section>`;
   }
 
@@ -277,5 +289,5 @@
     CT.keyRows(document.getElementById('ct-main'));
   }
   CT.onView(() => { if (DD) { CT.panel(null); render(DD); } });
-  CT.boot(['latest.plan.enc.json', 'plan_prev.enc.json', 'integrated.enc.json', 'integrated_prev.enc.json', 'portal.enc.json', 'cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'color_actual.enc.json'], render);
+  CT.boot(['latest.plan.enc.json', 'plan_prev.enc.json', 'integrated.enc.json', 'integrated_prev.enc.json', 'portal.enc.json', 'cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'cc_calendar.enc.json', 'color_actual.enc.json'], render);
 })();

@@ -271,7 +271,7 @@
 
     // ⑤-1 오늘·내일 라인별 생산 계약(11/5 사용자 '오늘 내일 생산계획도 실 계약을 보여줘야'): 도금 = 생산 캘린더(확정·편성·예상), 컬러 = 생산 캘린더(작업지시·계획 편성)
     const CG = D.cg_calendar || {}, CC = D.cc_calendar || {};
-    const KO = { 확정: 0, 작업지시: 0, 편성: 1, 예상: 2, '계획 편성': 3 };
+    const KO = { 확정: 0, 작업지시: 0, 작업대기량: 0, 작업대기: 0, 편성: 1, 지시대기: 1, 예상: 2, '부자재 입고대기': 2, '계획 편성': 3, 계획편성: 3 };   // 11/5 컬러 캘린더 구분명(작업대기량·지시대기·부자재 입고대기·계획편성) 추가
     const conDay = (d) => ['1CGL', '2CGL', '1CCL', '2CCL', '3CCL', '4CCL'].filter((ln) => CT.inScope(/CGL/.test(ln) ? 'G' : 'C')).map((ln) => {
       const pl = /CGL/.test(ln) ? 'G' : 'C', src = pl === 'G' ? CG : CC, cell = ((src.lines || {})[ln] || []).find((x) => x.d === d);
       if (!cell) return `<tr class="cd-h"><td colspan="9"><b>${ln}</b> <span class="cd-s">생산 캘린더에 ${md(d)} 칸 없음(${md(src.asOf)} 기준)</span></td></tr>`;

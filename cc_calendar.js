@@ -1,5 +1,6 @@
 /* 컬러 생산 캘린더: published/cc_calendar.enc.json (tools/cc_calendar.py)
-   10/30 사용자 '11월 상세 계획 — 컬러 도금 둘 다 포털에': 1~4CCL × 오늘 ~ 월말, 칸 = MES 작업지시(작업지시 순서 시각표) + 남는 능력은 컬러 계획 편성(주문 연결 전) */
+   10/30 사용자 '11월 상세 계획 — 컬러 도금 둘 다 포털에': 1~4CCL × 오늘 ~ 월말.
+   11/5 컬러 담당 편성 규칙: 칸 = 라인 하루 24시간에 작업대기량(1030) → 지시대기(1020, 부원료 입고 뒤, 노랑) → 부자재 입고대기(파랑) → 계획편성(초록). 작업대기로 24시간 못 채운 날 = 빨강 */
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
@@ -16,44 +17,49 @@
   const END = () => md(O.days[O.days.length - 1]);
   const sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
 
+  const KD = [['작업대기', '작업대기량', 'kw', 'SSCHC1030 확정 지시 — 생산우선순위 순번대로, 계약별 총 작업시간'], ['지시대기', '지시대기', 'ky', 'SSCHC1020 미확정 — 부원료 최종 입고일 뒤, 작업지시 순서대로'],
+    ['부자재 입고대기', '부자재 입고대기', 'kb', '도료 입고 일정 없음 — 지시대기 마지막 뒤'], ['계획편성', '계획편성', 'kg', '작업대기·지시대기 뒤 남는 시간 = 통합 컬러 계획']];
+  const H = (v) => `${n1(v)}<small>h</small>`;
   function kpis() {
-    const S = O.summary, tot = (k) => sum(LINES, (l) => S[l][k] || 0), M = O.mat || {};
+    const S = O.summary, tk = (k, j) => sum(LINES, (l) => ((S[l].kind || {})[k] || [0, 0])[j]);
     const k = (l, v, b, tone) => `<div class="kpi${tone ? ' tone-' + tone : ''}"><div class="l">${l}</div><div class="v">${v}</div><div class="b">${b}</div></div>`;
     const wu = LINES.filter((l) => S[l].woUntil).map((l) => `${l.slice(0, 1)}라인 ~${md(S[l].woUntil)}`).join(' · ');
-    const st = LINES.filter((l) => S[l].stopDays).map((l) => `${l} ${S[l].stopDays}일`).join(' · ');
+    const sh = LINES.filter((l) => S[l].woShortH >= 0.5).map((l) => `${l.slice(0, 1)}라인 ${n1(S[l].woShortH)}h`).join(' · ');
     return '<div class="kpis" style="margin:0 0 14px">'
-      + k(`${END()}까지 라인 능력`, `${n0(tot('cap'))}<small>t</small>`, `작업지시 ${n0(tot('wo'))} · 계획 편성 ${n0(tot('planT'))}`, 'brand')
-      + k('MES 작업지시', `${n0(tot('wo'))}<small>t</small>`, wu || '-', 'good')
-      + k('라인 정지', st ? `${sum(LINES, (l) => S[l].stopDays)}<small>일</small>` : '없음', st || '휴지·수리 없음', st ? 'warn' : 'good')
-      + k('구매 소재', `${n0(M.buyStock)}<small>t</small>`, `재고 · ${END()}까지 입고 예정 ${n0(M.buySoon)}t`, 'brand')
-      + k('자가재 소재(도금 → 컬러)', `${n0(M.selfStock)}<small>t</small>`, `재고 · ${END()}까지 도금 생산 ${n0(M.selfCg)}t`, 'brand')
+      + k('작업대기량(1030 확정)', `${n0(tk('작업대기', 0))}<small>t</small>`, `${n1(tk('작업대기', 1))}h · ${wu || '-'}`, 'brand')
+      + k('작업대기 24시간 부족', sh ? `${n1(sum(LINES, (l) => S[l].woShortH || 0))}<small>h</small>` : '없음', sh || '작업대기로 하루 24시간 채움', sh ? 'bad' : 'good')
+      + k('지시대기(1020)', `${n0(tk('지시대기', 0))}<small>t</small>`, `${n1(tk('지시대기', 1))}h · 부원료 입고 뒤`, 'warn')
+      + k('부자재 입고대기', `${n0(tk('부자재 입고대기', 0))}<small>t</small>`, `${n1(tk('부자재 입고대기', 1))}h · 도료 일정 없음`, 'brand')
+      + k('계획편성', `${n0(tk('계획편성', 0))}<small>t</small>`, `${n1(tk('계획편성', 1))}h · 통합 컬러 계획`, 'good')
       + '</div>';
   }
 
   function cell(c, ln) {
-    const cap = c.cap || 0, base = cap || 1, w = (v) => `${(100 * v / base).toFixed(1)}%`;
-    if (c.stop) return `<button type="button" class="cell stp" data-ln="${ln}" data-d="${c.d}"><div class="ct"><span class="ev">정지</span></div><div class="tv">0<small>t</small></div></button>`;
-    const gs = Object.entries(c.grp || {}).filter(([, v]) => v >= 1).slice(0, 3).map(([g, v]) => `<span>${esc(g)} ${n0(v)}</span>`).join('');
-    return `<button type="button" class="cell" data-ln="${ln}" data-d="${c.d}">`
-      + `<div class="bar"><i class="c" style="width:${w(c.wo)}"></i><i class="f ccp" style="width:${w(c.planT)}"></i></div>`
-      + `<div class="tv">${n0(c.wo + c.planT)}<small>t</small></div>`
-      + `<div class="gl">${gs}</div>`
-      + (c.wo >= 0.5 && c.planT >= 0.5 ? `<div class="pi">작업지시 ${n0(c.wo)} · 계획 ${n0(c.planT)}</div>` : c.wo >= 0.5 ? '<div class="pi">작업지시</div>' : '<div class="pi">계획 편성</div>')
+    if (c.stop) return `<button type="button" class="cell stp" data-ln="${ln}" data-d="${c.d}"><div class="ct"><span class="ev">정지</span></div><div class="tv">0<small>h</small></div></button>`;
+    const K = c.k || {}, base = c.capH || 24, w = (v) => `${(100 * v / base).toFixed(1)}%`;
+    const red = c.woShort > 0 || c.short > 0;
+    const lines = KD.filter(([k]) => K[k]).map(([k, nm, cl]) => `<span class="${cl}t">${nm} ${n1(K[k][1])}h</span>`).join('');
+    return `<button type="button" class="cell${red ? ' fl' : ''}" data-ln="${ln}" data-d="${c.d}" title="${esc(`가용 ${n1(c.capH)}h · 편성 ${n1(c.usedH)}h`)}">`
+      + `<div class="bar">${KD.map(([k, , cl]) => (K[k] ? `<i class="${cl}" style="width:${w(K[k][1])}"></i>` : '')).join('')}</div>`
+      + `<div class="tv">${n0(c.cap)}<small>t</small> <span class="hv">${n1(c.usedH)}/${n1(c.capH)}h</span></div>`
+      + `<div class="gl">${lines}</div>`
+      + (c.woShort > 0 ? `<div class="sh">작업대기 부족 ${n1(c.woShort)}h</div>` : c.short > 0 ? `<div class="sh">빈 시간 ${n1(c.short)}h</div>` : '')
       + '</button>';
   }
 
   function weekTable(days) {
     const idx = (d) => O.days.indexOf(d);
     const head = days.map((d) => { const wd = dt(d).getDay(); return `<th class="${wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}</th>`; }).join('');
-    const rows = LINES.map((ln) => `<tr><th>${ln}<small>${n0(sum(days, (d) => O.lines[ln][idx(d)].cap))}t</small></th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}</tr>`).join('');
+    const rows = LINES.map((ln) => `<tr><th>${ln}<small>${n0(sum(days, (d) => O.lines[ln][idx(d)].cap))}t · ${n0(sum(days, (d) => O.lines[ln][idx(d)].usedH))}h</small></th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}</tr>`).join('');
     const sd = (d) => sum(LINES, (l) => O.lines[l][idx(d)].cap);
     const tot = `<tr class="dsum"><th>하루 합<small>${n0(sum(days, sd))}t</small></th>${days.map((d) => `<td><b>${n0(sd(d))}</b><small>t</small></td>`).join('')}</tr>`;
     return `<table class="cg"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
   }
 
   function calCard() {
-    return `<section class="card"><h2>라인별 ~${END()} <small title="하루 능력 = 통합 컬러 계획의 그날 편성 톤(휴지계획 반영) · 작업지시 = MES 1020 편성 대상(소재 매치)을 「작업지시 순서」가 짠 시각표 날짜 · 남는 능력 = 계획 편성(그룹 비율)">칸을 누르면 그날 목록 · 능력 = 컬러 계획</small></h2>`
-      + '<div class="lg"><span title="MES 작업지시(소재 매치) — 「작업지시 순서」 시각표 날짜"><i style="background:var(--c-conf)"></i>작업지시</span><span title="작업지시 이후 남는 능력 — 컬러 계획 편성(그룹 비율), 주문 연결 전"><i class="ccp" style="box-shadow:inset 0 0 0 1px var(--line)"></i>계획 편성(주문 연결 전)</span><span><i style="background:var(--tint-2);box-shadow:inset 0 0 0 1px var(--line)"></i>정지(휴지·수리)</span></div>'
+    return `<section class="card"><h2>라인별 ~${END()} <small>라인 하루 24시간(계획 휴지 뺌) · 칸을 누르면 그날 계약 목록</small></h2>`
+      + `<div class="lg">${KD.map(([, nm, cl, t]) => `<span title="${esc(t)}"><i class="${cl}"></i>${nm}</span>`).join('')}<span><i style="background:var(--bad-bg);box-shadow:inset 3px 0 0 var(--bad)"></i>작업대기 24시간 부족·빈 시간</span><span><i style="background:var(--tint-2);box-shadow:inset 0 0 0 1px var(--line)"></i>정지(휴지·수리)</span></div>`
+      + (O.cus ? '' : '<p class="msg" style="margin:0 0 10px">DUMMY 고객 제외: 컬러 계약 고객사 자료(snap_cc_cus_names)가 사내 PC 다음 실행부터 들어옴 — 지금은 DUMMY 포함</p>')
       + Array.from({ length: Math.ceil(O.days.length / 7) }, (_, w) => `<div class="wk">${weekTable(O.days.slice(w * 7, w * 7 + 7))}</div>`).join('') + '</section>';
   }
 
@@ -71,22 +77,19 @@
 
   function openDay(ln, d) {
     const c = O.lines[ln][O.days.indexOf(d)], dlg = $('cc-dlg');
-    const wo = c.items.filter((i) => i.kind === '작업지시'), pl = c.items.filter((i) => i.kind === '계획 편성');
-    let body = '';
-    if (c.stop) body = '<p class="msg">라인 정지(휴지·수리)</p>';
-    if (wo.length) {
-      body += '<table class="it cmp"><colgroup><col style="width:11%"><col style="width:21%"><col style="width:11%"><col style="width:11%"><col style="width:13%"><col style="width:11%"><col style="width:9%"><col style="width:13%"></colgroup>'
-        + '<thead><tr><th>순서</th><th>계약번호-행번</th><th>품명</th><th>그룹</th><th>두께×폭</th><th>상도 색</th><th class="num">톤</th><th>시작</th></tr></thead><tbody>'
-        + wo.map((i, k) => `<tr><td class="sq"><span class="kd k확정">작업지시</span> ${k + 1}</td><td><div class="con">${esc(i.con)}</div></td><td><b>${esc(i.item || '')}</b></td><td class="nw">${esc(i.grp || '')}</td>`
-          + `<td class="sz">${i.thk ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw">${esc(i.color || '')}</td><td class="num"><b>${n1(i.t)}</b></td><td class="nw">${esc(i.start || '')}</td></tr>`).join('')
+    let body = c.stop ? '<p class="msg">라인 정지(휴지·수리)</p>' : '';
+    for (const [k, nm, cl] of KD) {
+      const I = c.items.filter((i) => i.kind === k);
+      if (!I.length) continue;
+      if (k === '계획편성') { body += `<div class="fgl kgbg">${nm} ${n0(sum(I, (i) => i.t))}t · ${n1(sum(I, (i) => i.h))}h(주문 연결 전) — ${I.map((i) => `${esc(i.grp)} ${n0(i.t)}t`).join(' · ')}${(c.planItems || []).length ? `<div class="pi">그날 계획 품명: ${c.planItems.map(([p, t]) => `${esc(p)} ${n0(t)}`).join(' · ')}</div>` : ''}</div>`; continue; }
+      body += `<h4 class="kh"><i class="${cl}"></i>${nm} <small>${I.length}건 · ${n0(sum(I, (i) => i.t))}t · ${n1(sum(I, (i) => i.h))}h</small></h4>`
+        + '<table class="it cmp"><thead><tr><th>순서</th><th>계약번호-행번</th><th>품명</th><th>그룹</th><th>두께×폭</th><th>상도 색</th><th class="num">톤</th><th class="num">시간</th><th>부원료 준비</th></tr></thead><tbody>'
+        + I.map((i, j) => `<tr><td class="sq">${j + 1}</td><td><div class="con">${esc(i.con)}${i.cont ? ' <small>(이어짐)</small>' : ''}</div></td><td><b>${esc(i.item || '')}</b></td><td class="nw">${esc(i.grp || '')}</td>`
+          + `<td class="sz">${i.thk ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw">${esc(i.color || '')}</td><td class="num"><b>${n1(i.t)}</b></td><td class="num">${n1(i.h)}</td><td class="nw">${k === '부자재 입고대기' ? '<span class="bad">일정 없음</span>' : md(i.ready) || '-'}</td></tr>`).join('')
         + '</tbody></table>';
     }
-    if (pl.length) {
-      body += `<div class="fgl" style="background:var(--tint-2);color:var(--ink);margin-top:${wo.length ? 12 : 0}px">계획 편성 ${n0(sum(pl, (i) => i.t))}t(주문 연결 전) — ${pl.map((i) => `${esc(i.grp)} ${n0(i.t)}`).join(' · ')}`
-        + `${(c.planItems || []).length ? `<div class="pi">그날 계획 품명: ${c.planItems.map(([p, t]) => `${esc(p)} ${n0(t)}`).join(' · ')}</div>` : ''}</div>`;
-    }
     if (!body) body = '<p class="msg">배정 없음</p>';
-    dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>능력 <b>${n0(c.cap)}t</b> = ${[['작업지시', c.wo], ['계획 편성', c.planT]].filter(([, v]) => v >= 0.5).map(([k, v]) => `${k} ${n0(v)}`).join(' + ') || '0'}</span>`
+    dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>가용 <b>${n1(c.capH)}h</b> · 편성 ${n1(c.usedH)}h${c.woShort > 0 ? ` · <b class="bad">작업대기 부족 ${n1(c.woShort)}h</b>` : c.short > 0 ? ` · <b class="bad">빈 시간 ${n1(c.short)}h</b>` : ''}</span>`
       + `<span class="x"><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
     $('cc-x').onclick = () => dlg.close();
     if (!dlg.open) dlg.showModal();
