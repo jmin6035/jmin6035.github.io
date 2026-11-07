@@ -6,7 +6,7 @@
 <title>수주 관제</title>
 <meta name="description" content="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준) — 수주팀 화면 양식">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611070202">
+<link rel="stylesheet" href="ui/theme.css?v=2611070222">
 <style>
 main.wrap { max-width: none; }
 #ui-ctl { display: none !important; }   /* 포털 공통 그룹 상태 띠 — ① 그룹 매트릭스와 같은 내용이라 이 탭에서만 숨김 */
@@ -52,19 +52,39 @@ main.wrap { max-width: none; }
 .sj-bar u { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
 .sj-gb { margin: 0 0 14px; font-size: 13.5px; } .sj-gb .h { display: flex; justify-content: space-between; gap: 8px; } .sj-gb .h span { font-weight: 700; }
 td .sj-bar { min-width: 150px; }
-/* 일별 계획 캘린더 */
-.sj-cal { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; table-layout: fixed; width: 100%; min-width: 1200px; }
-.sj-cal th, .sj-cal td { border: 1px solid var(--grid, var(--line)); padding: 0; height: 32px; width: 36px; min-width: 36px; font-size: 12.5px; }
-.sj-cal th { background: var(--th, var(--sub)); font-weight: 700; color: var(--ink-2); height: 40px; line-height: 1.25; }
-.sj-cal th.we { color: var(--bad); }
-.sj-cal .lab { width: 118px; min-width: 118px; padding: 0 10px; font-weight: 700; background: var(--surface); position: sticky; left: 0; z-index: 1; }
-.sj-cal td.lab small { display: block; font-weight: 500; color: var(--ink-2); font-size: 12.5px; }
-.sj-cal .now { box-shadow: inset 0 0 0 2px var(--bad); }
-.sj-cal td.ok { background: var(--good-bg); } .sj-cal td.warn { background: var(--warn-bg); } .sj-cal td.bad { background: var(--bad-bg); }
-.sj-cal td.ac { font-weight: 800; } .sj-cal td.pl { color: var(--ink); background: var(--tint); } .sj-cal td.zero { color: var(--ink-3, var(--ink-2)); background: var(--sub); }
-.sj-cal td.in { font-weight: 800; }
-.sj-cal tr.sec td { text-align: left !important; font-weight: 700; background: var(--tint-2, var(--tint)); padding: 0 10px; height: 30px; font-size: 13px; }
-.sj-cal tr.wk td { font-size: 12.5px; color: var(--ink-2); }
+/* 일별 계획 캘린더 — 칸 글자 한 크기, 가동(초록·노랑·빨강) / 생산주(파랑) / 소재(같은 3색, 숫자 진하게) 구분 */
+.sj-clg { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--ink-2); margin: 0 0 10px; }
+.sj-clg span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; } .sj-clg .gap { margin-left: 10px; }
+.sj-clg i { display: inline-block; width: 16px; height: 12px; border-radius: 3px; border: 1px solid var(--line); }
+.sj-clg i.nowk { border: 2px solid var(--bad); background: none; }
+html body main table.sj-cal { border-collapse: collapse; table-layout: fixed; width: 100%; min-width: 1180px; font-variant-numeric: tabular-nums; }
+html body main table.sj-cal th, html body main table.sj-cal td { border: 1px solid var(--line); padding: 0 1px; height: 30px; font-size: 12.5px !important; line-height: 1.2; overflow: hidden; }
+html body main table.sj-cal thead th { background: var(--th, var(--sub)); color: var(--ink-2); height: 38px; }
+.sj-cal thead th b { display: block; font-size: 13px; color: var(--ink); } .sj-cal thead th span { display: block; font-size: 11.5px; font-weight: 500; }
+.sj-cal thead th.we b, .sj-cal thead th.we span { color: var(--bad); }
+html body main table.sj-cal .lab { width: 112px; text-align: left !important; padding: 0 10px; background: var(--surface); position: sticky; left: 0; z-index: 1; }
+.sj-cal td.lab b { display: block; font-size: 13px; color: var(--ink); } .sj-cal td.lab span { display: block; font-size: 11.5px; color: var(--ink-2); font-weight: 500; }
+html body main table.sj-cal .wst { border-left: 2px solid var(--ink-2) !important; }
+html body main table.sj-cal td.gsep:not(.wst), html body main table.sj-cal th.gsep:not(.wst) { border-left: 1px solid var(--line) !important; }   /* 공통 월 구분선이 요일 '월'을 달로 읽어 생기던 굵은 선 지움 */
+html body main table.sj-cal .now { box-shadow: inset 0 0 0 2px var(--bad); }
+/* 가동 칸 */
+.sj-cal td.ac { font-weight: 700; color: var(--ink); }
+.sj-cal td.a1, .sj-clg i.a1 { background: #dcefe3; } .sj-cal td.a2, .sj-clg i.a2 { background: #fbecc8; } .sj-cal td.a3, .sj-clg i.a3 { background: #f8d4d4; } .sj-cal td.a0 { background: var(--surface); }
+.sj-cal td.pl, .sj-clg i.pl { background: var(--surface); color: var(--ink-2); font-weight: 500; }
+.sj-cal td.id, .sj-clg i.id { background: repeating-linear-gradient(135deg, var(--sub) 0 4px, transparent 4px 8px); color: var(--ink-3, var(--ink-2)); }
+.sj-cal td.nd { color: var(--ink-3, var(--ink-2)); }
+/* 생산주 줄(파랑 계열) */
+.sj-cal tr.wk td { font-size: 12px !important; font-weight: 700; }
+.sj-cal td.w0 { background: var(--sub); color: var(--ink-2); }
+.sj-cal td.w1, .sj-clg i.w1 { background: #dbe7fb; color: #1f4f9c; }
+.sj-cal td.w2, .sj-clg i.w2 { background: #fff; color: #1f4f9c; box-shadow: inset 0 0 0 2px #5b8de0; }
+.sj-cal td.w3, .sj-clg i.w3 { background: #fff; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
+.sj-clg i.w2 { border: 2px solid #5b8de0; } .sj-clg i.w1 { border-color: #b7cdf3; }
+/* 구역 머리 */
+html body main table.sj-cal tr.sec td { text-align: left !important; background: var(--ink); color: var(--surface); font-weight: 700; font-size: 13px !important; padding: 0 10px; height: 28px; }
+/* 소재 칸 */
+.sj-cal td.m1, .sj-cal td.m2, .sj-cal td.m3 { font-weight: 700; } .sj-cal td.m1 { background: #dcefe3; } .sj-cal td.m2 { background: #fbecc8; } .sj-cal td.m3 { background: #f8d4d4; color: #9b1c1c; }
+.sj-cal td i { font-style: normal; font-size: 10px; color: #1f4f9c; margin-left: 1px; }
 .sj-in { font: inherit; font-size: 13.5px; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; background: var(--surface); color: var(--ink); width: 110px; }
 select.sj-in { width: auto; }
 .pos { color: var(--good); } .neg { color: var(--bad); } .wrn { color: var(--warn); }
@@ -74,9 +94,9 @@ select.sj-in { width: auto; }
 <header id="shell" data-page="suju" data-title="수주 관제" data-sub="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준)"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보·통합 계획 → 사내 PC 자동 실행 → 암호화 게시 · 화면 양식 = 수주팀 개발 요청(r1)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611070202"></script>
-<script src="engine/crypto.js?v=2611070202"></script>
-<script src="ui/ct.js?v=2611070202"></script>
-<script src="suju.js?v=2611070202"></script>
+<script src="ui/shell.js?v=2611070222"></script>
+<script src="engine/crypto.js?v=2611070222"></script>
+<script src="ui/ct.js?v=2611070222"></script>
+<script src="suju.js?v=2611070222"></script>
 </body>
 </html>
