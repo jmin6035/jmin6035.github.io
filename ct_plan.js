@@ -205,7 +205,8 @@
     if (!A || !B) return '<section class="card"><h2>도금 계획 변경</h2><p class="ct-note">직전 게시 계획이 없습니다.</p></section>';
     const ra = A.result || {}, rb = B.result || {}, ta = (ra.replan || {}).t0, tb = (rb.replan || {}).t0;
     const t0 = [ta, tb].filter(Boolean).sort().pop() || X.today;
-    const agg = (r) => { const w = {}, done = {}; for (const x of r.rows || []) { const [d, l, fam, g, t, due] = x; if (+t < 0.05) continue; const k = `${g}|${fam}|${due}`; if (!done[k] || d > done[k].d) done[k] = { d, g, fam, due }; if (d < t0) continue; const s = `${l}|${wkOf(d)}`; w[s] = (w[s] || 0) + (+t || 0); } return { w, done }; };
+    const endOf = (r) => (r.rows || []).reduce((m, x) => (x[0] > m ? x[0] : m), ''), eA = endOf(ra), eB = endOf(rb), tE = [eA, eB].filter(Boolean).sort()[0] || '9999';   // 11/7 점검: 두 판의 계획 끝이 달라(12/31 vs 2/28) 1~2월이 '증가'로 잡히던 것 → 짧은 쪽 끝까지만 비교
+    const agg = (r) => { const w = {}, done = {}; for (const x of r.rows || []) { const [d, l, fam, g, t, due] = x; if (+t < 0.05) continue; const k = `${g}|${fam}|${due}`; if (d > tE) continue; if (!done[k] || d > done[k].d) done[k] = { d, g, fam, due }; if (d < t0) continue; const s = `${l}|${wkOf(d)}`; w[s] = (w[s] || 0) + (+t || 0); } return { w, done }; };
     const a = agg(ra), b = agg(rb);
     const wks = [...new Set([...Object.keys(a.w), ...Object.keys(b.w)].map((k) => k.split('|')[1]))].sort();
     const LS = LG.filter((l) => CT.inScope('G'));
@@ -213,7 +214,7 @@
     const wkT = `<div class="ct-wrap"><table class="ct-t cw"><thead><tr><th rowspan="2">주</th>${LS.map((l) => `<th colspan="3" class="c">${l}</th>`).join('')}</tr><tr>${LS.map(() => '<th class="r">직전</th><th class="r">지금</th><th class="r">Δ</th>').join('')}</tr></thead><tbody>`
       + wks.map((s) => `<tr><td class="id">${md(s < t0 ? t0 : s)}~</td>${LS.map((l) => { const x = a.w[`${l}|${s}`] || 0, y = b.w[`${l}|${s}`] || 0; return `<td class="r">${n0(x)}</td><td class="r">${n0(y)}</td><td class="r">${dl(y - x)}</td>`; }).join('')}</tr>`).join('')
       + `<tr class="sum"><td>계</td>${LS.map((l) => { const x = wks.reduce((q, s) => q + (a.w[`${l}|${s}`] || 0), 0), y = wks.reduce((q, s) => q + (b.w[`${l}|${s}`] || 0), 0); return `<td class="r">${n0(x)}</td><td class="r">${n0(y)}</td><td class="r">${dl(y - x)}</td>`; }).join('')}</tr></tbody></table></div>`;
-    const mc = (r, l) => (r.cal || []).filter((c) => c.line === l && c.date >= t0 && /M\/C/.test(c.event || '')).map((c) => c.date);
+    const mc = (r, l) => (r.cal || []).filter((c) => c.line === l && c.date >= t0 && c.date <= tE && /M\/C/.test(c.event || '')).map((c) => c.date);
     const mcSame = LS.every((l) => mc(ra, l).join() === mc(rb, l).join());
     const mcT = `<div class="ct-wrap"><table class="ct-t mc"><thead><tr><th>라인</th><th>직전 M/C</th><th>지금 M/C</th></tr></thead><tbody>${LS.map((l) => { const x = mc(ra, l), y = mc(rb, l), sx = new Set(x), sy = new Set(y);
       return `<tr><td class="id">${l}</td><td>${x.map((d) => `<span class="${sy.has(d) ? '' : 'gone'}">${md(d)}</span>`).join(' ') || '-'}</td><td>${y.map((d) => `<span class="${sx.has(d) ? '' : 'new'}">${md(d)}</span>`).join(' ') || '-'}</td></tr>`; }).join('')}</tbody></table></div>`;
@@ -225,16 +226,16 @@
     ]);
     const mv = [];
     for (const k of new Set([...Object.keys(a.done), ...Object.keys(b.done)])) {
-      const x = a.done[k], y = b.done[k], r = y || x; if (!x || !y) { if (r.d >= t0) mv.push({ ...r, x: x && x.d, y: y && y.d, dd: null }); continue; }
+      const x = a.done[k], y = b.done[k], r = y || x; if (r.due && r.due > tE) continue; if (!x || !y) { if (r.d >= t0) mv.push({ ...r, x: x && x.d, y: y && y.d, dd: null }); continue; }
       const dd = CT.diff(y.d, x.d); if (Math.abs(dd) >= 1 && (x.d >= t0 || y.d >= t0)) mv.push({ ...r, x: x.d, y: y.d, dd });
     }
     mv.sort((p, q) => (p.dd == null) - (q.dd == null) || (q.dd ?? 0) - (p.dd ?? 0));
     const late = (m) => m.y && m.due && m.y > m.due;
     const mvT = mv.length ? `<div class="ct-wrap"><table class="ct-t mv"><thead><tr><th>판매그룹</th><th>강종</th><th>마감</th><th>직전 완료</th><th>지금 완료</th><th class="r">변동</th><th>상태</th></tr></thead><tbody>${(mvAll ? mv : mv.slice(0, 30)).map((m) => `<tr><td>${esc(m.g)}</td><td>${esc(m.fam)}</td><td>${md(m.due)}</td><td>${m.x ? md(m.x) : '없음'}</td><td>${m.y ? md(m.y) : '빠짐'}</td>`
       + `<td class="r">${m.dd == null ? '-' : `<b class="${m.dd > 0 ? 'up' : 'dn'}">${m.dd > 0 ? '+' : ''}${m.dd}일</b>`}</td><td>${m.dd == null ? `<span class="ct-b na">${m.y ? '새로 생김' : '계획에서 빠짐'}</span>` : late(m) ? '<span class="ct-b bad">지연</span>' : m.dd > 0 ? '<span class="ct-b warn">늦어짐</span>' : '<span class="ct-b ok">당겨짐</span>'}</td></tr>`).join('')}</tbody></table></div>${mv.length > 30 ? `<button type="button" class="more" id="mv-more">${mvAll ? '30개만' : `전체 ${mv.length}개`}</button>` : ''}` : '<p class="ct-note">완료일이 바뀐 묶음 없음</p>';
-    const at = (s) => (s ? `${md(s)} ${String(s).slice(11, 16)}` : '-');
+    const at = (s) => { if (!s) return '-'; const z = /Z$|[+-]\d\d:?\d\d$/.test(String(s)) ? new Date(new Date(s).getTime() + 9 * 3600e3).toISOString() : String(s); return `${md(z.slice(0, 10))} ${z.slice(11, 16)}`; };   // 11/7 점검: UTC → 한국 시각
     const hd = `<div class="cmp-h"><span><small>직전</small><b>${at(A.savedAt)}</b><small>재계획 ${md(ta)}</small></span><span class="ar">→</span><span><small>지금</small><b>${at(B.savedAt)}</b><small>재계획 ${md(tb)}</small></span><span class="ct-b na">비교만 — 계획에 반영하지 않음</span></div>`;
-    return `<section class="card"><h2>도금 계획 변경 <small>${md(t0)}부터</small></h2>${hd}</section>` + kp
+    return `<section class="card"><h2>도금 계획 변경 <small>${md(t0)}~${md(tE)}${eA !== eB ? ` (직전 판 끝 ${md(eA)} · 지금 판 끝 ${md(eB)} — 같은 기간만 비교, 위 결품·지연·M/C 회수는 각 판 전체 기간)` : ''}</small></h2>${hd}</section>` + kp
       + `<section class="card"><h2>도금 라인 × 주 생산량 <small>t · 수요일 시작</small></h2>${wkT}</section>`
       + `<section class="card"><h2>M/C 일정 <small>${mcSame ? '변동 없음' : '빨강 = 새 일정'}</small></h2>${mcT}</section>`
       + `<section class="card"><h2>완료일이 바뀐 묶음 <small>${mv.length}개 · 늦어진 것 먼저 · 마감 넘김 ${mv.filter((m) => m.dd != null && late(m)).length}개</small></h2>${mvT}</section>`;
