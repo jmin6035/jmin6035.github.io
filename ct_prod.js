@@ -142,8 +142,8 @@
   function shipRows(X) {
     const { P, mon } = X, SD = (P.shipDay && P.shipDay.g) || {};
     return ((P.sr && P.sr.ship) || []).filter((s) => SHIPK[s.name] && CT.inScope(SHIPK[s.name][0])).map((s) => {
-      const k = SHIPK[s.name], a = SD[k] ? Object.entries(SD[k]).filter(([d]) => d.slice(0, 7) === mon).reduce((x, [, v]) => x + v, 0) : s.actual;
-      return { ...s, key: k, pl: k[0], a };
+      const k = SHIPK[s.name], mes = SD[k] ? Object.entries(SD[k]).filter(([d]) => d.slice(0, 7) === mon).reduce((x, [, v]) => x + v, 0) : null, a = s.actual != null ? s.actual : mes;   // 11/7 점검: 위 관제 띠와 같은 판생 실적(MES 출고는 11/1 일요일분·도금수출 선적일 기준이라 달라 참고)
+      return { ...s, key: k, pl: k[0], a, mes };
     });
   }
   function ship(X) {

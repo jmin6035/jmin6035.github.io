@@ -109,7 +109,7 @@
     const T = O.tot, ms = O.months, i0 = ms.indexOf(O.month);
     const rows = ms.slice(i0).map((m, k) => {
       const e = T.end[k], r = e / T.target;
-      return `<tr><td class="l nm">${mon(m)}${k === 0 ? ' <small class="muted">(남은 분)</small>' : ''}</td><td title="TF 예측 ${n0((T.fcTF || T.fc)[i0 + k])}t">${n0(T.fc[i0 + k])}</td><td title="운영안 ${n0((T.prodTF || T.prod)[i0 + k])}t">${n0(T.prod[i0 + k])}</td><td><b>${n0(e)}</b></td><td class="${r > 1.5 ? 'bad' : r > 1.1 ? 'warn' : ''}">${Math.round(r * 100)}%</td></tr>`;
+      return `<tr><td class="l nm">${mon(m)}${k === 0 ? ' <small class="muted">(남은 분)</small>' : ''}</td><td title="TF 예측 ${n0((T.fcTF || T.fc)[i0 + k])}t">${n0(k === 0 && T.fcM != null ? Math.max(0, T.fcM - (T.shipM || 0)) : T.fc[i0 + k])}</td><td title="운영안 ${n0((T.prodTF || T.prod)[i0 + k])}t">${n0(k === 0 && T.planM != null ? Math.max(0, T.planM - (T.prodM || 0)) : T.prod[i0 + k])}</td><td><b>${n0(e)}</b></td><td class="${r > 1.5 ? 'bad' : r > 1.1 ? 'warn' : ''}">${Math.round(r * 100)}%</td></tr>`;
     }).join('');
     return card('ps-mon', '월별 예측', '다음 달부터 출하 = 실제 출하 속도 반영 · 생산 = 목표 재고 유지 양(컬러 계획과 같은 기준)', '단위: 톤',
       `<div class="scroll"><table class="t big"><thead><tr><th class="l">월</th><th title="TF 판매 예측과 최근 3개월 실제 출하 평균 중 작은 값(이번 달은 TF 예측)">출하 예상</th><th title="운영안 이하, 목표 재고를 지키는 양까지(이번 달은 운영안)">생산</th><th>월말 예상 재고</th><th>목표 대비</th></tr></thead><tbody>${rows}</tbody></table></div>

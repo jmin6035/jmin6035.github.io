@@ -111,15 +111,16 @@
   const SAFE = { C: 7, G: 5 };
   function prepMat(P) {
     if (!P) return null;
-    const ds = D.days.filter((d) => d >= today), out = [];
+    const t0 = P.today && P.today < today ? P.today : today;   // 11/7 점검: 재고는 자료일(11/5 아침 = 11/4 마감) 기준 → 그날부터 소요를 빼야 함(오늘부터 빼면 이틀치 사용이 빠짐)
+    const ds = D.days.filter((d) => d >= t0), out = [];
     const keys = [...new Set(P.units.map((u) => `${u.plant}:${u.code}`))];
     for (const k of keys) {
       const [plant, code] = k.split(':');
       if (plant === 'G' && code === 'N') continue;                     // 임가공(포스코 지급)
       const use = {}, arr = {};
-      for (const u of P.units) if (`${u.plant}:${u.code}` === k) for (let i = 0; i < 7; i++) { const d = add(u.wk, i); if (d >= today) use[d] = (use[d] || 0) + u.t / 7; }
+      for (const u of P.units) if (`${u.plant}:${u.code}` === k) for (let i = 0; i < 7; i++) { const d = add(u.wk, i); if (d >= t0) use[d] = (use[d] || 0) + u.t / 7; }
       let past = 0;                                                     // 오늘 이전 날짜의 기발주 = 이미 들어온 것 → 오늘 재고에 더함(FH 재고는 입고 자료가 없어서)
-      for (const a of P.known || []) if (`${a.plant}:${a.code}` === k) { if (a.date <= today) past += a.t; else arr[a.date] = (arr[a.date] || 0) + a.t; }
+      for (const a of P.known || []) if (`${a.plant}:${a.code}` === k) { if (a.date < t0) past += a.t; else arr[a.date] = (arr[a.date] || 0) + a.t; }
       const s0 = (P.stock[k] || 0) + past;
       let st = s0, run = null; const stock = {};
       for (const d of ds) { st += (arr[d] || 0) - (use[d] || 0); stock[d] = st; if (run == null && st < 0) run = d; }

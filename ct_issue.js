@@ -85,7 +85,7 @@
   }
   const stB = (s) => `<span class="ct-f ${STC[s] || 'na'}">${esc(STN[s] || s)}</span>`;
   const stCell = (x) => `${stB(x.st)}${x.over ? '<small class="ct-neg">조치일 지남</small>' : ''}${x.st !== '신규' && x.st !== '완료' ? `<small>담당 ${esc(x.owner || x.dept)}${x.dueEff ? ` · 기한 ${md(x.dueEff)}` : ''}</small>` : ''}`;
-  const dueTd = (x, asOf) => (x.dueEff ? `<b class="${x.over ? 'ct-neg' : ''}">${md(x.dueEff)}</b>${x.over ? `<small class="ct-neg">${CT.diff(asOf, x.dueEff)}일 지남</small>` : x.st === '완료' ? '' : `<small>D-${CT.diff(x.dueEff, asOf)}</small>`}` : '<span class="sub">즉시 확인</span>');
+  const dueTd = (x, asOf) => (x.dueEff ? `<b class="${x.over ? 'ct-neg' : ''}">${md(x.dueEff)}</b>${x.over ? `<small class="ct-neg">${CT.diff(CT.today(), x.dueEff)}일 지남</small>` : x.st === '완료' ? '' : `<small>D-${CT.diff(x.dueEff, CT.today())}</small>`}` : '<span class="sub">즉시 확인</span>');
 
   /* #now 이슈 현황 */
   function now(B) {

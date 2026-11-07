@@ -150,6 +150,11 @@
       }
     }
     stops.sort((a, b) => (a.line < b.line ? -1 : a.line > b.line ? 1 : a.s - b.s));
+    { // 11/7 점검: 같은 라인에서 겹친 휴지 구간은 한 번만(MES 중복 행 — cglplan/mes.py 와 같음)
+      const mg = [], last = {};
+      for (let x of stops) { const pe = last[x.line]; if (pe != null && x.s < pe) { if (x.e <= pe) continue; x = Object.assign({}, x, { s: pe, t: x.e - pe }); } mg.push(x); last[x.line] = Math.max(pe ?? x.e, x.e); }
+      stops.length = 0; stops.push(...mg);
+    }
     if (!coils.length) checks.push({ level: 'error', msg: '해석된 코일이 없음(라인번호·시각 확인)' });
     if (dup) checks.push({ level: 'info', msg: `같은 표 안의 중복 제품번호 ${dup}건 제외` });
     if (coilT.length > 1) checks.push({ level: 'info', msg: `코일 실적 표 ${coilT.length}개를 제품번호로 병합` });

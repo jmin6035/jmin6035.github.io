@@ -76,6 +76,7 @@
   function viewStatus() {
     const asOf = M.asOf, w0 = CT.wed(asOf), w1 = CT.addD(w0, 6), act = L.filter((o) => !o.closed);   // 금주 = 수요일 시작 7일(11/5 사용자)
     const risk = act.filter((o) => o.risk === '위험');
+    const actSelf = act.filter((o) => /^자가재\(/.test(o.grp || '')), actS = act.filter((o) => !/^자가재\(/.test(o.grp || ''));   // 11/7 점검: 자가재 + 컬러 주문 = 이중 계상(docs/22)
     const inW = (d) => d && d >= w0 && d <= w1;
     const wP = act.filter((o) => inW(o.needProd) && (o.ful === '생산 전' || o.ful === '생산 중') && o.risk !== '판정 불가');
     const shipD = (o) => o.ship || o.due;                                        // 출하 일정 = 출항(수출) · 납기(내수)
@@ -85,7 +86,7 @@
     const wC = act.filter((o) => o.pl === 'C' && inW(o.due));
     const wl = `${md(w0)}(수)~${md(w1)}(화)`;
     const k = CT.kpis([
-      { label: '수주잔량', v: n0(sum(act, (o) => o.remT)), unit: 't', sub: `${n0(act.length)}건 · 출하 완료 제외`, tone: 'info' },
+      { label: '수주잔량', v: n0(sum(actS, (o) => o.remT)), unit: 't', sub: `${n0(actS.length)}건 · 출하 완료 제외${actSelf.length ? `<br>자가재(컬러 투입용 도금) ${n0(actSelf.length)}건 ${n0(sum(actSelf, (o) => o.remT))}t 별도 — 컬러 주문과 겹침` : ''}`, tone: 'info' },
       { label: '금주 생산완료 필요', v: n0(sum(wP, (o) => o.remT)), unit: 't', sub: `${n0(wP.length)}건 · ${wl} 생산 필요일`, tone: wP.length ? 'warn' : 'ok' },
       ...(CT.inScope('G') ? [{ label: '금주 출하 필요(도금)', v: n0(sum(wS, (o) => o.unshipT)), unit: 't', sub: `${n0(wS.length)}건 · ${wl} 출항·납기${wNo.length ? `<br>출하 실적 없음 ${n0(wNo.length)}건 별도(생산 완료)` : ''}${wC.length ? `<br>컬러 ${n0(wC.length)}건 출하 실적 없음` : ''}`, tone: 'info' }] : [{ label: '금주 납기(컬러)', v: n0(sum(wC, (o) => o.remT)), unit: 't', sub: `${n0(wC.length)}건 · ${wl} 납기 · 컬러 주문별 출하 자료 없음` }]),
       { label: '납기 지연 예상', v: n0(risk.length), unit: '건', sub: `${n0(sum(risk, imp))}t`, tone: risk.length ? 'bad' : 'ok', href: '#risk' },
@@ -244,7 +245,7 @@
     if (!(r.mchT > 0.0005)) return K0;
     if (paintWait(r)) return '부자재 대기';
     return r.can ? '작업 대기' : '부자재 대기'; };
-  const catG = (o) => ((o.src && (o.src.runSt === 'wait' || o.src.woWait)) ? '작업지시량' : o.matSt !== '확보' ? K0 : '작업 대기');   // 현장 작업지시에 올랐으면 소재는 있는 것
+  const catG = (o) => ((o.src && o.src.woWait) ? '작업지시량' : o.matSt !== '확보' ? K0 : '작업 대기');   // 현장 작업지시에 올랐으면 소재는 있는 것
   const CFG = {
     C: { cat: catC, sub: MSUB, subOf: msub, tiles: ['부자재 대기', '작업 대기'], leaves: [[K0, '#d03b3b', '매치된 소재 없음 — 아래는 소재 상태'], ['부자재 대기', '#eda100', '매치 뒤 부원료(도료·PF) 입고 대기 — 부자재입고대기 · 도료 입고 예정일이 오늘 뒤 · 부자재 일정 없음'],
       ['작업 대기', '#2a78d6', '부자재 있음(도료 입고 예정일 지남) — 작업지시 확정 전(SSCHC1020 지시대기)'], ['작업지시량', '#008300', 'SSCHC1030 생산우선순위 — 확정 지시 남은 양(DUMMY 제외)']] },

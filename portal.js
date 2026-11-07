@@ -191,15 +191,15 @@
   }
   // 월말·4분기 전망(사용자 10/21: 표 → 한눈에) — 왼쪽 = 달마다 생산 예상 vs 계획 막대, 오른쪽 = 제품 재고 지금 → 월말 기둥 + 월말 최대 선
   function fcCard(O) {
-    const M = O.months || [], pm = O.planMonth, pl = O.plating || {}, cl = (O.color || {}).lines || {};
+    const M = O.months || [], pm = O.planMonth, pl = O.plating || {}, cl = (IG && IG.colorLines) || (O.color || {}).lines || {};   // 11/7 점검: 포털 기준 파일(11/2)의 컬러 월차는 0 → 지금 통합 계획 값
     const ends = M.map((m) => `${m}-${String(dim(m)).padStart(2, '0')}`);
     const prod = [], CM = M.indexOf(String(O.asOf).slice(0, 7));   // 이번 달 칸(예전엔 첫 달 고정 → 11월에도 '10월' 줄에 이번 달 전망이 들어가던 것 고침)
     if (pm && UI.inScope('G')) prod.push(['도금', 'G', M.map((m, i) => (i === CM && FC.G ? [FC.G.fc, FC.G.m, '속보 월차'] : [pm.g1[i] + pm.g2[i], (pl.g1 || [])[i] + (pl.g2 || [])[i], '확정 계획']))]);
     if (UI.inScope('C') && Object.keys(cl).length) { const tot = (m, k) => Object.values(cl[m] || {}).reduce((a, x) => a + (x[k] || 0), 0);
       prod.push(['컬러', 'C', M.map((m, i) => (i === CM && FC.C ? [FC.C.fc, FC.C.m, '속보 월차'] : [tot(m, 'placed'), tot(m, 'plan'), '월차']))]); }
-    const pbar = ([nm, pl_, R]) => `<div class="fp-g"><div class="fp-gh">${nm} 생산 <small>${FC[pl_] && CM >= 0 ? `${+M[CM].slice(5)}월 실적 <b>${n0(FC[pl_].a)}t</b> · 오늘까지 일정 대비 <b class="${toneP(FC[pl_].a / FC[pl_].sc)}">${Math.round(FC[pl_].a / FC[pl_].sc * 100)}%</b> · ` : ''}4분기 ${n0(R.reduce((a, r) => a + r[0], 0))}t / 계획 ${n0(R.reduce((a, r) => a + (r[1] || 0), 0))}t</small></div>`
+    const pbar = ([nm, pl_, R]) => `<div class="fp-g"><div class="fp-gh">${nm} 생산 <small>${FC[pl_] && CM >= 0 ? `${+M[CM].slice(5)}월 실적 <b>${n0(FC[pl_].a)}t</b> · 오늘까지 일정 대비 <b class="${toneP(FC[pl_].a / FC[pl_].sc)}">${Math.round(FC[pl_].a / FC[pl_].sc * 100)}%</b> · ` : ''}4분기 ${n0(R.reduce((a, r) => a + r[0], 0))}t / 계획 ${n0(R.reduce((a, r) => a + (r[1] || 0), 0))}t${R.some((r) => !r[1]) ? '(계획 없는 달 있음)' : ''}</small></div>`
       + R.map(([v, ref, lb], i) => { const r = ref ? v / ref : 0, t = toneP(r), mx = Math.max(v, ref, 1) * 1.04;
-        return `<div class="fp-r ${t}" title="${+M[i].slice(5)}월 ${nm} 예상 ${n0(v)}t / ${lb} ${n0(ref)}t"><span class="fp-m">${+M[i].slice(5)}월</span><span class="fp-b"><i style="width:${v / mx * 100}%"></i><u style="left:${ref / mx * 100}%"></u></span><span class="fp-v"><b>${Math.round(r * 100)}%</b> ${n0(v)}t</span></div>`; }).join('') + '</div>';
+        return `<div class="fp-r ${t}" title="${+M[i].slice(5)}월 ${nm} 예상 ${n0(v)}t / ${lb} ${n0(ref)}t"><span class="fp-m">${+M[i].slice(5)}월</span><span class="fp-b"><i style="width:${v / mx * 100}%"></i><u style="left:${ref / mx * 100}%"></u></span><span class="fp-v"><b>${ref ? Math.round(r * 100) + '%' : '계획 없음'}</b> ${n0(v)}t</span></div>`; }).join('') + '</div>';
     const st = {}; ((O.sr || {}).stock || []).forEach((x) => { st[x.name] = x; });
     const stk = [];
     for (const [keys, nm, k, pl_] of [[CK, '컬러 제품', 'c', 'C'], [GK, '도금 판매재', 'g', 'G']]) {
