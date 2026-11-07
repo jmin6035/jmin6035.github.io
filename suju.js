@@ -243,16 +243,24 @@
     return SV(W, H, b, l + ' 일별 계획 실적');
   }
   // 재고일수 추이: 그룹마다 작은 그래프(점 위 숫자 · 상한 점선 · 상태 색)
-  function miniTrend(k, nm) {
-    const t = D.trend, v = t.v[k], cap = t.cap[k], W = 150, H = 118, L = 16, R = 16, Tp = 22, Bt = 22, n = v.length, vv = v.filter((q) => q != null).concat(cap ? [cap] : []);
-    const lo = Math.max(0, Math.min(...vv) - 6), hi = Math.max(...vv) + 4, x = (i) => L + (n > 1 ? i / (n - 1) : .5) * (W - L - R), y = (q) => Tp + (1 - (q - lo) / (hi - lo)) * (H - Tp - Bt);
-    const col = (q) => (!cap ? '#2457c5' : q <= cap ? '#1e7a46' : q <= cap + 5 ? '#b7791f' : '#c0392b');
-    let b = cap ? `<line x1="${L - 8}" x2="${W - R + 8}" y1="${y(cap)}" y2="${y(cap)}" stroke="var(--ink-2)" stroke-dasharray="4 3"/>` + tx(L - 8, y(cap) + 13, `상한 ${cap}일`, { a: 'start', s: 11 }) : '';
-    b += `<polyline points="${v.map((q, i) => (q == null ? '' : `${x(i)},${y(q)}`)).join(' ')}" fill="none" stroke="#9aa6b8" stroke-width="2"/>`;
-    b += v.map((q, i) => (q == null ? '' : `<circle cx="${x(i)}" cy="${y(q)}" r="4.5" fill="${col(q)}"/>` + tx(x(i), y(q) - 8, q, { c: col(q), w: 800, s: 12.5 }))).join('');
-    b += t.months.map((m, i) => tx(x(i), H - 5, `${+m.slice(5)}월`, { s: 11.5 })).join('');
-    const last = v[v.length - 1];
-    return `<div class="sj-mt"><div class="h"><b>${esc(nm)}</b>${B(!cap || last == null ? null : last <= cap ? '정상' : last <= cap + 5 ? '주의' : '경고', last == null ? '–' : `${+t.months[n - 1].slice(5)}월 ${last}일`)}</div>${SV(W, H, b, nm)}</div>`;
+  // 일별 재고일수(11/7 사용자 '날짜가 중요 — 월말은 예측'): 실선 = 실제(어제까지) · 점선 = 전망 · 가로 점선 = 상한
+  function dayStock(e, nm) {
+    const x0 = D.stockDaily[e]; if (!x0 || !x0.rows.length) return '';
+    const n5 = Math.max(1, Object.keys(D.stockDaily).filter((k) => inPl(k[0])).length), R = x0.rows, cap = x0.cap, W = Math.max(200, Math.floor((CW(1) - 12 * (n5 - 1)) / n5) - 18), H = 140, L = 26, Rp = 10, Tp = 16, Bt = 20, nd = D.nDays;
+    const vs = R.map((r) => r[2]).concat(cap ? [cap] : []), lo = Math.max(0, Math.floor(Math.min(...vs) - 3)), hi = Math.ceil(Math.max(...vs) + 3);
+    const x = (d) => L + (+d.slice(8) - 1) / (nd - 1) * (W - L - Rp), y = (v) => Tp + (1 - (v - lo) / (hi - lo)) * (H - Tp - Bt);
+    const col = (v) => (!cap ? '#2457c5' : v <= cap ? '#1e7a46' : v <= cap + 5 ? '#b7791f' : '#c0392b');
+    const A = R.filter((r) => r[3] === 'a'), F = R.filter((r) => r[3] === 'f'), la = A[A.length - 1], lf = F[F.length - 1];
+    let b = [lo, Math.round((lo + hi) / 2), hi].map((v) => `<line x1="${L}" x2="${W - Rp}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid, var(--line))"/>` + tx(L - 4, y(v) + 4, v, { a: 'end', s: 10.5 })).join('');
+    if (cap) b += `<line x1="${L}" x2="${W - Rp}" y1="${y(cap)}" y2="${y(cap)}" stroke="var(--ink-2)" stroke-dasharray="5 3"/>` + tx(W - Rp, y(cap) - 4, `상한 ${cap}일`, { a: 'end', s: 10.5 });
+    if (A.length) b += `<polyline points="${A.map((r) => `${x(r[0])},${y(r[2])}`).join(' ')}" fill="none" stroke="var(--ink)" stroke-width="2.4"/>`;
+    if (F.length) b += `<polyline points="${(la ? [la] : []).concat(F).map((r) => `${x(r[0])},${y(r[2])}`).join(' ')}" fill="none" stroke="#7d8aa0" stroke-width="1.8" stroke-dasharray="4 3"/>`;
+    const td = D.today; if (td.slice(0, 7) === D.month) b += `<line x1="${x(td)}" x2="${x(td)}" y1="${Tp}" y2="${H - Bt}" stroke="var(--bad)" stroke-dasharray="2 3"/>`;
+    if (la) b += `<circle cx="${x(la[0])}" cy="${y(la[2])}" r="4.5" fill="${col(la[2])}" stroke="#fff" stroke-width="1.5"/>` + tx(x(la[0]), y(la[2]) - 8, la[2], { c: col(la[2]), w: 800, s: 12.5 });
+    if (lf) b += `<circle cx="${x(lf[0])}" cy="${y(lf[2])}" r="3.5" fill="#fff" stroke="${col(lf[2])}" stroke-width="2"/>` + tx(x(lf[0]) - 2, y(lf[2]) - 7, lf[2], { a: 'end', c: col(lf[2]), w: 700, s: 11.5 });
+    b += [1, 10, 20, nd].map((d, i, A) => tx(L + (d - 1) / (nd - 1) * (W - L - Rp), H - 5, `${+D.month.slice(5)}/${d}`, { s: 10.5, a: i === A.length - 1 ? 'end' : i === 0 ? 'start' : 'middle' })).join('');
+    const st = la ? (!cap ? null : la[2] <= cap ? '정상' : la[2] <= cap + 5 ? '주의' : '경고') : null;
+    return `<div class="sj-mt"><div class="h"><b>${esc(nm)}</b>${B(st, la ? `${md(la[0])} ${la[2]}일` : '–')}</div>${SV(W, H, b, nm)}<div class="ft"><span>재고 ${la ? n0(la[1]) : '–'}t · 하루 판매 ${n0(x0.dem)}t</span><span>월말 전망 ${lf ? lf[2] + '일' : '–'}</span></div></div>`;
   }
   /* ---------- ③ 생산 ---------- */
   function prod() {
@@ -317,7 +325,7 @@
     const cell = (v, cap) => { if (v == null) return '<td class="r">–</td>'; const c = !cap ? '' : v <= cap ? 'a1' : v <= cap + 5 ? 'a2' : 'a3'; return `<td class="r sj-dc ${c}"><b>${v}</b>일</td>`; };
     const trow = ks.map((k) => { const v = t.v[k], cap = t.cap[k], d = v.length > 1 && v[v.length - 1] != null && v[0] != null ? v[v.length - 1] - v[0] : null;
       return `<tr><td class="nm">${NM[k] || k}</td><td class="r">${cap ? cap + '일' : '–'}</td>${v.map((x) => cell(x, cap)).join('')}<td class="r">${d == null ? '–' : `<span class="${d > 0 ? 'wrn' : 'pos'}">${d > 0 ? '▲' : d < 0 ? '▼' : ''} ${Math.abs(d).toFixed(1)}일</span>`}</td></tr>`; });
-    const c2 = card(3, '월별 재고일수 — 표', '칸 색 = 상한 대비(초록 이하 · 노랑 +5일까지 · 빨강 초과)',
+    const c2 = card(3, '월말 재고일수 전망 — 표', '칸 색 = 상한 대비(초록 이하 · 노랑 +5일까지 · 빨강 초과)',
       tbl(['그룹', ['상한', 'r'], ...t.months.map((m) => [`${m.slice(2).replace('-', '.')}월말`, 'r']), [`${t.months[0].slice(5)}→${t.months[t.months.length - 1].slice(5)}월 변화`, 'r']], trow)
       + '<p class="sj-foot">재고일수 = 예상 월말 재고 ÷ (다음 달 판매 ÷ 다음 달 일수) · 이달 값은 ① 재고 브릿지가 실재고로 다시 맞춘 값과 조금 다를 수 있음(이 표는 엔진 계획 그대로)</p>');
     const whc = ['C', 'G'].filter(inPl).map((p) => { const w = D.wh[p], r = w.cur / w.cap * 100; return `<div class="sj-gb"><div class="h"><span>${p === 'C' ? '컬러' : '도금'} 창고</span><b class="${r > 100 ? 'neg' : r > 90 ? 'wrn' : 'pos'}">${kt(w.cur)} / ${kt(w.cap)} (${Math.round(r)}%)</b></div><div class="sj-bar"><i style="width:${Math.min(100, r / 1.3)}%;background:${r > 100 ? 'var(--bad)' : r > 90 ? 'var(--warn)' : 'var(--good)'}"></i><u style="left:${100 / 1.3}%"></u></div><div class="sj-foot" style="margin:2px 0 0">${w.parts.map((q) => `${esc(q[0])} ${kt(q[1])}`).join(' · ')}</div></div>`; }).join('');
@@ -326,8 +334,9 @@
     const c4 = card(4, '계획재 사양 상태', `R15 ${r.n || '-'}개 사양 · 실재고 ${T(r.stock)} / 목표 ${T(r.target)}톤 (${r.target ? Math.round(r.stock / r.target * 100) : '-'}%)`,
       `<div class="ct-kpis" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:0">${[['정상 생산', cnt.ok], ['목표 초과(생산 중단 대상)', cnt.over], ['생산 뒤처짐', cnt.behind], ['부족·결품 우려', cnt.short]].map(([k, v], i) => `<div class="ct-kpi ${['ok', 'bad', 'warn', 'bad'][i]}"><div class="l">${k}</div><div class="v">${v ?? 0}<small>개</small></div></div>`).join('')}</div><p class="sj-foot">계획재 화면(R15 운영안) 판정 기준 · 재개 예정·제외(6개월 6톤 미만) 구분은 R15 지침서 규칙 연결 후 추가</p>`);
     const NM2 = { G수출: '도금수출', G국내: '도금국내', G자동차: '자동차', G자가재: '도금 자가재', C수출: '컬러수출', C건재: '컬러건재', C수요: '수요개발' };
-    const cm = card(2, '월별 재고일수 추이', `${D.trend.months[0].slice(2).replace('-', '.')} ~ ${D.trend.months[D.trend.months.length - 1].slice(2).replace('-', '.')} 예상 월말 · 점 색 = 상한 대비(초록 이하 · 노랑 +5일 · 빨강 초과) · 점선 = 상한`,
-      `<div class="sj-mts">${Object.keys(D.trend.v).filter((k) => inPl(k[0])).map((k) => miniTrend(k, NM2[k] || k)).join('')}</div>`);
+    const cm = card(2, '일별 재고일수', `${md(D.asOf)}까지 실제(실선) · 이후 전망(점선, 재고 전망 화면과 같은 계산) · 점 = 최근 실제 · 가로 점선 = 상한 · 재고일수 = 재고 ÷ 이달 판매계획 하루 평균`,
+      `<div class="sj-mts" style="grid-template-columns:repeat(${Math.max(1, Object.keys(D.stockDaily || {}).filter((k) => inPl(k[0])).length)},minmax(0,1fr))">${Object.keys(D.stockDaily || {}).filter((k) => inPl(k[0])).map((k) => dayStock(k, NM2[k] || k)).join('')}</div>`
+      + '<p class="sj-foot">도금수출은 반순 끝날(15일·말일)에 선적분이 한꺼번에 나가는 것으로 계산해 그날 크게 떨어짐 · 컬러건재는 판생 재고(장기재고 포함) 기준 · 자가재·수요개발은 일별 자료 없음 · 아래 표 = 월말 전망(엔진 계획)</p>');
     return c1 + cm + c2.replace("'월별 재고일수 추이'", '') + `<div class="sj-g2e">${c3}${c4}</div>` + '<p class="sj-foot">출하 예정 없는 재고(출하오더 비연결 가용재고 · 180일) = 재고↔출하오더 연결 조회 추가 후 표시</p>';
   }
 
