@@ -6,86 +6,67 @@
 <title>수주 관제</title>
 <meta name="description" content="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준) — 수주팀 화면 양식">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611070154">
+<link rel="stylesheet" href="ui/theme.css?v=2611070202">
 <style>
 main.wrap { max-width: none; }
+#ui-ctl { display: none !important; }   /* 포털 공통 그룹 상태 띠 — ① 그룹 매트릭스와 같은 내용이라 이 탭에서만 숨김 */
+/* 머리: 기준일·필터·마감 */
 .sj-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 4px 0 10px; font-size: 13.5px; }
 .sj-pill { border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; background: var(--surface); white-space: nowrap; }
 .sj-pill.b { background: var(--tint); font-weight: 700; color: var(--brand-2); border-color: transparent; }
 .sj-pill.s { color: var(--ink-2); }
-.sj-flt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 10px; font-size: 13.5px; }
-.sj-flt select { font: inherit; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
-.sj-dl { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin-left: auto; }
-.sj-dl b.h { font-size: 13.5px; margin-right: 2px; }
-.sj-chip { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 13px; white-space: nowrap; background: var(--surface); }
+.sj-flt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; font-size: 13.5px; }
+.sj-flt select { font: inherit; font-size: 13.5px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.sj-dl { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.sj-chip { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 13.5px; white-space: nowrap; background: var(--surface); }
 .sj-chip .d { font-weight: 800; margin-right: 4px; }
-.sj-chip.r { border-color: #e2a3a3; } .sj-chip.r .d { color: var(--bad); }
-.sj-chip.o { border-color: #e7c48a; } .sj-chip.o .d { color: var(--warn); }
-.sj-chip.n .d { color: var(--brand-2); }
-.sj-sch { position: relative; background: var(--sub); border-radius: 8px; padding: 6px 6px 18px; margin: 0 0 14px; }
-.sj-sch .cap { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-2); margin: 0 0 4px; }
-.sj-sch .rows { position: relative; height: 84px; }
-.sj-sch .bar { position: absolute; height: 22px; border-radius: 4px; color: #fff; font-size: 12.5px; line-height: 22px; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sj-sch .now { position: absolute; top: 0; bottom: 0; width: 2px; background: #c0262d; }
-.sj-sch .ax { position: absolute; left: 6px; right: 6px; bottom: 2px; height: 14px; font-size: 12px; color: var(--ink-2); }
-.sj-sch .ax span { position: absolute; transform: translateX(-50%); }
-.sj-h { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 6px 0 12px; }
-.sj-h h2 { font-size: 22px; margin: 0; } .sj-h p { margin: 4px 0 0; color: var(--ink-2); font-size: 13.5px; }
-.sj-n { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: var(--surface); font-size: 12.5px; font-weight: 800; margin-right: 8px; vertical-align: 2px; }
-.card h3 { font-size: 16px; margin: 0 0 10px; } .card h3 small { font-size: 13px; color: var(--ink-2); font-weight: 500; margin-left: 6px; }
-.sj-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 0 0 18px; }
-@media (max-width: 1100px) { .sj-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.sj-k { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; background: var(--surface); }
-.sj-k .t { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 14px; }
-.sj-k .v { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; margin: 6px 0 4px; font-variant-numeric: tabular-nums; }
-.sj-k .v small { font-size: 16px; } .sj-k .s { font-size: 13px; color: var(--ink-2); line-height: 1.5; }
-.sj-b { display: inline-block; border-radius: 999px; padding: 1px 9px; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
-.sj-b.ok { background: #e3f4ea; color: #1b7a43; } .sj-b.w { background: #fdf0d8; color: #9a5b00; } .sj-b.bad { background: #fde3e3; color: #b42323; } .sj-b.na { background: var(--sub); color: var(--ink-2); }
-.sj-t { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
-.sj-t th { text-align: left; font-weight: 700; color: var(--ink-2); background: var(--sub); padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.sj-t td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
-.sj-t th.r, .sj-t td.r { text-align: right; } .sj-t td.c, .sj-t th.c { text-align: center; }
-.sj-t tr.tot td { font-weight: 800; background: var(--tint); }
-.sj-t td.nm { font-weight: 700; white-space: nowrap; } .sj-t td.sub { color: var(--ink-2); font-size: 13px; }
-.sj-tag { display: inline-block; background: var(--sub); border-radius: 4px; padding: 1px 6px; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
-.sj-wrap { overflow-x: auto; }
-.sj-foot { font-size: 13px; color: var(--ink-2); margin: 8px 0 0; line-height: 1.6; }
-.sj-g2 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; } .sj-g2 > .card { margin: 0 0 18px; }
+.sj-chip.r .d { color: var(--bad); } .sj-chip.o .d { color: var(--warn); } .sj-chip.n .d { color: var(--brand-2); }
+/* 월간 운영 일정 띠: 짧은 막대는 이름을 막대 밖에 */
+.sj-sch { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px 6px; margin: 0 0 18px; }
+.sj-sch .cap { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--ink-2); margin: 0 0 6px; font-weight: 700; }
+.sj-gr { display: grid; grid-template-columns: 330px minmax(0, 1fr); align-items: center; gap: 12px; min-height: 26px; }
+.sj-gr .nm { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .sj-gr .nm .ct-b { font-size: 12.5px; padding: 1px 8px; margin-right: 4px; }
+.sj-gr .tl { position: relative; height: 20px; background: var(--sub); border-radius: 4px; }
+.sj-gr .tl .sb { position: absolute; top: 2px; bottom: 2px; border-radius: 3px; color: #fff; font-size: 12px; line-height: 16px; padding-left: 4px; overflow: hidden; white-space: nowrap; }
+.sj-gr .tl .now { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--bad); }
+.sj-gr .tl.ax { background: none; height: 18px; font-size: 12.5px; color: var(--ink-2); } .sj-gr .tl.ax span { position: absolute; transform: translateX(-50%); }
+.sj-h { margin: 4px 0 14px; } .sj-h h2 { font-size: 22px; margin: 0; } .sj-h p { margin: 4px 0 0; color: var(--ink-2); font-size: 13.5px; }
+/* KPI 칸 수 */
+.ct-kpis.sj-k4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ct-kpis.sj-lc { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+@media (max-width: 1300px) { .ct-kpis.sj-k4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ct-kpis.sj-lc { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.ct-kpi .l .ct-b { margin-left: 6px; font-size: 12.5px; padding: 1px 8px; }
+.ct-kpi .s { line-height: 1.55; }
+.sj-kv { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; padding: 2px 0; } .sj-kv span { color: var(--ink-2); white-space: nowrap; } .sj-kv b { text-align: right; }
+.sj-pv td { vertical-align: top !important; } .sj-pv .it { display: block; white-space: nowrap; font-size: 13px; line-height: 1.6; text-align: left; }
+.sj-lg span { white-space: nowrap; margin-right: 14px; display: inline-block; } .sj-kv b { font-variant-numeric: tabular-nums; }
+.sj-tag { display: inline-block; background: var(--sub); border-radius: 4px; padding: 1px 6px; font-size: 13px; color: var(--ink-2); white-space: nowrap; margin: 1px 2px; }
+.sj-foot { font-size: 13.5px; color: var(--ink-2); margin: 10px 0 0; line-height: 1.6; }
+.sj-g2 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; } .sj-g2 > .card, .sj-g2 > div > .card { margin: 0 0 18px; }
 .sj-g2e { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; } .sj-g2e > .card { margin: 0 0 18px; }
 @media (max-width: 1100px) { .sj-g2, .sj-g2e { grid-template-columns: 1fr; } }
-.sj-cal { border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; min-width: 1100px; width: 100%; table-layout: fixed; }
-.sj-cal th, .sj-cal td { border: 1px solid var(--line); padding: 3px 2px; text-align: center; }
-.sj-cal th { background: var(--sub); font-weight: 700; }
-.sj-cal th.we { color: #c0262d; } .sj-cal td.lab, .sj-cal th.lab { text-align: left; width: 132px; padding: 3px 6px; font-weight: 700; background: var(--surface); }
-.sj-cal td.lab small { display: block; font-weight: 500; color: var(--ink-2); font-size: 12px; }
-.sj-cal .now { outline: 2px solid #c0262d; outline-offset: -2px; }
-.sj-cal td.ac { background: #e7f5ec; } .sj-cal td.ac.w { background: #fdf0d8; } .sj-cal td.ac.bad { background: #fde3e3; }
-.sj-cal td.pl { background: #eef3fd; } .sj-cal td.zero { color: var(--ink-2); background: var(--sub); }
-.sj-cal td.md.ok { background: #e7f5ec; } .sj-cal td.md.w { background: #fdf0d8; } .sj-cal td.md.bad { background: #fde3e3; }
-.sj-cal td small { display: block; font-size: 11.5px; color: var(--ink-2); }
-.sj-cal tr.sec td { text-align: left; font-weight: 800; background: var(--tint); padding: 5px 6px; }
-.sj-wk { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
-@media (max-width: 1100px) { .sj-wk { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.sj-wc { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 13.5px; }
-.sj-wc.cur { border: 2px solid var(--brand-2); background: var(--tint); } .sj-wc.run { background: #fff7ea; border-color: #e7c48a; }
-.sj-wc b { display: block; font-size: 14.5px; } .sj-wc .s { color: var(--ink-2); font-size: 13px; }
-.sj-seg { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
-.sj-seg button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
-.sj-seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
-.sj-bar { position: relative; height: 10px; background: var(--sub); border-radius: 5px; margin: 4px 0 2px; }
+.sj-svg { display: block; max-width: 100%; height: auto; } .sj-svg text { font-size: 12.5px; fill: var(--ink-2); }
+/* 진도 막대 */
+.sj-bar { position: relative; height: 10px; background: var(--sub); border-radius: 5px; margin: 6px 0 2px; }
 .sj-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; }
 .sj-bar u { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
-.sj-gb { margin: 0 0 12px; font-size: 13.5px; } .sj-gb .h { display: flex; justify-content: space-between; } .sj-gb .h span { font-weight: 700; }
-.sj-lc { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin: 0 0 6px; }
-@media (max-width: 1300px) { .sj-lc { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.sj-lc .sj-k { border-top: 4px solid var(--good); } .sj-lc .sj-k.w { border-top-color: var(--warn); } .sj-lc .sj-k.bad { border-top-color: var(--bad); } .sj-lc .sj-k.na { border-top-color: var(--line); }
-.sj-kv { display: flex; justify-content: space-between; font-size: 13px; padding: 1px 0; } .sj-kv span { color: var(--ink-2); }
-.sj-in { font: inherit; font-size: 13px; border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; background: var(--surface); color: var(--ink); }
-.sj-wait { color: var(--ink-2); font-size: 13.5px; background: var(--sub); border: 1px dashed var(--line); border-radius: 8px; padding: 12px 14px; }
-.sj-svg text { font-size: 12px; fill: var(--ink-2); }
-.sj-pv td { vertical-align: top; } .sj-pv .it { display: block; white-space: nowrap; font-size: 13px; } .sj-pv .it b { font-weight: 700; }
-#ui-ctl { display: none !important; }   /* 포털 공통 그룹 상태 띠 — ① 그룹 매트릭스와 같은 내용이라 이 탭에서만 숨김(11/7 점검) */
-.sj-nf { font-size: 12.5px; color: var(--ink-2); font-weight: 500; margin-left: 6px; }
+.sj-gb { margin: 0 0 14px; font-size: 13.5px; } .sj-gb .h { display: flex; justify-content: space-between; gap: 8px; } .sj-gb .h span { font-weight: 700; }
+td .sj-bar { min-width: 150px; }
+/* 일별 계획 캘린더 */
+.sj-cal { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; table-layout: fixed; width: 100%; min-width: 1200px; }
+.sj-cal th, .sj-cal td { border: 1px solid var(--grid, var(--line)); padding: 0; height: 32px; width: 36px; min-width: 36px; font-size: 12.5px; }
+.sj-cal th { background: var(--th, var(--sub)); font-weight: 700; color: var(--ink-2); height: 40px; line-height: 1.25; }
+.sj-cal th.we { color: var(--bad); }
+.sj-cal .lab { width: 118px; min-width: 118px; padding: 0 10px; font-weight: 700; background: var(--surface); position: sticky; left: 0; z-index: 1; }
+.sj-cal td.lab small { display: block; font-weight: 500; color: var(--ink-2); font-size: 12.5px; }
+.sj-cal .now { box-shadow: inset 0 0 0 2px var(--bad); }
+.sj-cal td.ok { background: var(--good-bg); } .sj-cal td.warn { background: var(--warn-bg); } .sj-cal td.bad { background: var(--bad-bg); }
+.sj-cal td.ac { font-weight: 800; } .sj-cal td.pl { color: var(--ink); background: var(--tint); } .sj-cal td.zero { color: var(--ink-3, var(--ink-2)); background: var(--sub); }
+.sj-cal td.in { font-weight: 800; }
+.sj-cal tr.sec td { text-align: left !important; font-weight: 700; background: var(--tint-2, var(--tint)); padding: 0 10px; height: 30px; font-size: 13px; }
+.sj-cal tr.wk td { font-size: 12.5px; color: var(--ink-2); }
+.sj-in { font: inherit; font-size: 13.5px; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; background: var(--surface); color: var(--ink); width: 110px; }
+select.sj-in { width: auto; }
 .pos { color: var(--good); } .neg { color: var(--bad); } .wrn { color: var(--warn); }
 </style>
 </head>
@@ -93,9 +74,9 @@ main.wrap { max-width: none; }
 <header id="shell" data-page="suju" data-title="수주 관제" data-sub="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준)"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보·통합 계획 → 사내 PC 자동 실행 → 암호화 게시 · 화면 양식 = 수주팀 개발 요청(r1)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611070154"></script>
-<script src="engine/crypto.js?v=2611070154"></script>
-<script src="ui/ct.js?v=2611070154"></script>
-<script src="suju.js?v=2611070154"></script>
+<script src="ui/shell.js?v=2611070202"></script>
+<script src="engine/crypto.js?v=2611070202"></script>
+<script src="ui/ct.js?v=2611070202"></script>
+<script src="suju.js?v=2611070202"></script>
 </body>
 </html>
