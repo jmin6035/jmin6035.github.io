@@ -6,7 +6,7 @@
 <title>수주 관제</title>
 <meta name="description" content="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준) — 수주팀 화면 양식">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611070222">
+<link rel="stylesheet" href="ui/theme.css?v=2611070230">
 <style>
 main.wrap { max-width: none; }
 #ui-ctl { display: none !important; }   /* 포털 공통 그룹 상태 띠 — ① 그룹 매트릭스와 같은 내용이라 이 탭에서만 숨김 */
@@ -85,6 +85,13 @@ html body main table.sj-cal tr.sec td { text-align: left !important; background:
 /* 소재 칸 */
 .sj-cal td.m1, .sj-cal td.m2, .sj-cal td.m3 { font-weight: 700; } .sj-cal td.m1 { background: #dcefe3; } .sj-cal td.m2 { background: #fbecc8; } .sj-cal td.m3 { background: #f8d4d4; color: #9b1c1c; }
 .sj-cal td i { font-style: normal; font-size: 10px; color: #1f4f9c; margin-left: 1px; }
+.sj-cbt td.sj-cb { width: 38%; min-width: 260px; }
+.sj-cb .tr { position: relative; height: 16px; border-radius: 4px; overflow: hidden; }
+.sj-cb .tr i { position: absolute; top: 0; bottom: 0; left: 0; } .sj-cb .tr i.s { background: var(--sub); } .sj-cb .tr i.o { border-radius: 4px 0 0 4px; }
+.sj-cb .tr i.g, .sj-clg i.gsh { background: repeating-linear-gradient(135deg, #e5a3a3 0 4px, #f8d4d4 4px 8px); }
+.sj-cb .tr u { position: absolute; top: -2px; bottom: -2px; width: 3px; margin-left: -1px; background: var(--ink); }
+.sj-clg i.bl { width: 3px; height: 14px; background: var(--ink); border: 0; border-radius: 0; }
+.sj-dc.a1 { background: #dcefe3; } .sj-dc.a2 { background: #fbecc8; } .sj-dc.a3 { background: #f8d4d4; }
 .sj-in { font: inherit; font-size: 13.5px; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; background: var(--surface); color: var(--ink); width: 110px; }
 select.sj-in { width: auto; }
 .pos { color: var(--good); } .neg { color: var(--bad); } .wrn { color: var(--warn); }
@@ -94,9 +101,9 @@ select.sj-in { width: auto; }
 <header id="shell" data-page="suju" data-title="수주 관제" data-sub="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준)"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보·통합 계획 → 사내 PC 자동 실행 → 암호화 게시 · 화면 양식 = 수주팀 개발 요청(r1)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611070222"></script>
-<script src="engine/crypto.js?v=2611070222"></script>
-<script src="ui/ct.js?v=2611070222"></script>
-<script src="suju.js?v=2611070222"></script>
+<script src="ui/shell.js?v=2611070230"></script>
+<script src="engine/crypto.js?v=2611070230"></script>
+<script src="ui/ct.js?v=2611070230"></script>
+<script src="suju.js?v=2611070230"></script>
 </body>
 </html>
