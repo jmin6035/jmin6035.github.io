@@ -5,7 +5,7 @@
   'use strict';
   const { esc, n0, md } = CT;
   const VIEWS = ['dash', 'order', 'prod', 'mat', 'stock', 'close'];
-  const TITLE = { dash: ['종합 관제판', '이번 달 판매계획만큼 주문이 들어오고, 계획대로 만들고, 소재가 제때 들어오고, 재고가 상한 안에 있는가'],
+  const TITLE = { dash: ['종합 관제판', '월 기준(이번 달 1일 ~ 오늘 누계) — 판매계획만큼 주문이 들어오고, 계획대로 만들고, 소재가 제때 들어오고, 재고가 상한 안에 있는가. 주문 확정만 주 단위(수요일 마감 → 다음 생산주)로 따짐'],
     order: ['수주 진도 관제', '언제까지 얼마를 더 받아야 하는가 — 주문 마감(매주 수 오전, W+1 생산) 기준으로 확정돼야 할 물량과 실제 확정 주문 비교'],
     prod: ['생산 관제', '확정된 주문을 계획대로 만들고 있는가 — 라인별 월 가동, 일별 계획 대비 실적, 다음 주 편성, T/hr 실적'],
     mat: ['소재 관제', '만들 소재가 제때 들어오는가 — 소재별 월 수급, 결품 위험, 이번 주 발주 대상'],
@@ -69,9 +69,9 @@
     // 월간 운영 일정: 왼쪽 = 일정 이름 · 상태, 오른쪽 = 날짜 막대(11/7 점검: 막대 안 글자가 잘리고 겹치던 것 → 이름 칸 분리)
     const X = (d) => ((d - 1) / nd * 100);
     const it = C.schedule.slice().sort((a, b) => a.from - b.from || a.to - b.to).map((s) => { const z = Math.min(s.to, nd), st = day > z ? ['완료', 'na'] : day >= s.from ? ['진행', 'warn'] : [`D-${s.from - day}`, 'ok'];
-      return `<div class="sj-gr"><div class="nm"><span class="ct-b ${st[1]}">${st[0]}</span> ${esc(s.label)}</div><div class="tl"><div class="sb" style="left:${X(s.from)}%;width:${Math.max(1.6, (z - s.from + 1) / nd * 100)}%;background:${s.color}" title="${s.from}${s.to !== s.from ? '~' + z : ''}일 ${esc(s.label)}"><span>${s.from}${s.to !== s.from ? '~' + z : ''}</span></div><div class="now" style="left:${X(day) + 0.5 / nd * 100}%"></div></div></div>`; }).join('');
+      return `<div class="sj-gr"><div class="nm"><span class="ct-b ${st[1]}">${st[0]}</span> <b class="dt">${+ym.slice(5)}/${s.from}${s.to !== s.from ? '~' + z : ''}</b> ${esc(s.label)}</div><div class="tl"><div class="sb" style="left:${X(s.from)}%;width:${Math.max(1.6, (z - s.from + 1) / nd * 100)}%;background:${s.color}" title="${s.from}${s.to !== s.from ? '~' + z : ''}일 ${esc(s.label)}"><span>${s.from}${s.to !== s.from ? '~' + z : ''}</span></div><div class="now" style="left:${X(day) + 0.5 / nd * 100}%"></div></div></div>`; }).join('');
     const ax = [1, 5, 10, 15, 20, 25, nd].map((d) => `<span style="left:${X(d)}%">${d}일</span>`).join('');
-    const sch = `<div class="sj-sch"><div class="cap"><span>월간 운영 일정 (${+ym.slice(5)}월)</span><span>빨간 선 = 오늘 ${md(td)}</span></div>${it}<div class="sj-gr"><div class="nm"></div><div class="tl ax">${ax}</div></div></div>`;
+    const sch = `<div class="sj-sch"><div class="cap"><span>월간 운영 일정 (${+ym.slice(5)}월) — 매달 같은 날짜에 하는 수주팀 업무 · 막대 = 그 일을 하는 기간(일)</span><span>빨간 선 = 오늘 ${md(td)} · 완료 = 기간 지남 · 진행 = 기간 중 · D-n = 시작까지 남은 날</span></div>${it}<div class="sj-gr"><div class="nm"></div><div class="tl ax">${ax}</div></div></div>`;
     return top + flt + (CT.view('dash', VIEWS) === 'dash' ? sch : '');
   }
 
@@ -100,9 +100,9 @@
       + `<td class="r">${T(g.end)}</td><td class="r">${g.endDays == null ? (g.key === '계획재' ? '목표 대비' : '–') : `${g.endDays} / ${g.cap || '-'}일`}</td><td class="c">${B(g.stockSt)}</td></tr>`);
     const sum = (k) => G.filter((g) => g.key !== '자가재').reduce((a, g) => a + (g[k] || 0), 0);   // 자가재 = 컬러 투입(내부) — 합계에서 빼야 이중 계산 없음
     rows.push(`<tr class="tot"><td></td><td>합계</td><td class="sub">자가재 제외(내부 투입)</td><td class="r">${T(sum('sales'))}</td><td class="r">${T(sum('base'))}</td><td class="r">${T(sum('orders'))}</td><td class="c">${pct(prog)}</td><td class="r">${T(pc)}</td><td class="r">${T(ac)}</td><td class="c">${pct(pc ? ac / pc * 100 : null)}</td><td class="r">${T(sum('end'))}</td><td></td><td></td></tr>`);
-    const mx = card(2, '그룹 관제 매트릭스', `${+D.month.slice(5)}월 누계 · 기준일 ${md(D.today)} · 기준선 = 이달 1일~${md(D.cut)}(W+1) 편성`,
-      tbl(['공장', '그룹', '운영유형', ['판매계획', 'r'], ['기준선', 'r'], ['확정', 'r'], ['수주 진도', 'c'], ['월초 계획누계', 'r'], ['생산 실적', 'r'], ['생산 진도', 'c'], ['예상 월말재고', 'r'], ['재고일수/상한', 'r'], ['재고', 'c']], rows)
-      + `<p class="sj-foot"><b>확정</b> = 이달 생산 실적 + 기준선 기간(~${md(D.cut)}) 안에 만들 이달 이후 납기 잔량 중 소재 매치(도금: 소재 입고·생산 중) · 숫자에 마우스 = 등록 주문 전체 · <b>생산 진도</b> = 그룹 실적 ÷ 엔진 월초 계획 누계(그룹별 판생 계획이 없어서 — KPI·③ 라인은 판생 일정누계 기준) · 판매계획 = 판생속보 월차(도금) · 통합 계획 판매(컬러, 세부 그룹은 이달 편성 비율) · 계획재 = R15 생산계획 · 자가재 = 컬러 투입 필요 · 컬러 세부 그룹 생산 실적은 실적 코일의 그룹 기준이라 계획 그룹과 섞일 수 있음 · 재고 = 통합 계획 예상 월말(컬러 수출 3개 그룹·주문재는 그룹 합으로만 계산 — ⑤ 재고 화면)</p>`);
+    const mx = card(2, '그룹 관제 매트릭스', `월 기준 · ${+D.month.slice(5)}월 1일~오늘 누계 · 기준일 ${md(D.today)} · 기준선 = 이달 1일~${md(D.cut)}(W+1) 편성`,
+      tbl(['공장', '그룹', '운영유형', ['판매계획<small>이달 판매(출하) 목표</small>', 'r'], [`기준선<small>${md(D.month + '-01')}~${md(D.cut)} 생산 편성</small>`, 'r'], ['확정 주문<small>실적 + 소재 매치</small>', 'r'], ['수주 진도<small>확정 ÷ 기준선</small>', 'c'], [`생산 계획<small>월초 판 ${md(D.month + '-01')}~${md(D.asOf)}</small>`, 'r'], [`생산 실적<small>${md(D.month + '-01')}~${md(D.asOf)}</small>`, 'r'], ['생산 진도<small>실적 ÷ 계획</small>', 'c'], ['재고<small>예상 월말</small>', 'r'], ['재고일수<small>예상 / 상한</small>', 'r'], ['재고', 'c']], rows, 'sj-mx')
+      + `<div class="sj-def"><div><b>기준선</b> 오늘까지 주문이 확정돼 있어야 할 양 = 이달 1일부터 ${md(D.cut)}(지난 수요일 마감으로 확정되는 다음 생산주의 끝)까지 일별가동계획에 편성된 생산량</div><div><b>확정 주문</b> 이달 이미 생산한 양 + ${md(D.cut)}까지 만들 주문 잔량 중 소재가 매치된 양(도금 = 소재 입고·생산 중) · 숫자에 마우스 = 소재 매치 전 포함 등록 주문</div><div><b>생산 계획·실적</b> <u>생산</u> 기준(출하 아님) · 계획 = 이달 초 게시 계획의 1일~${md(D.asOf)} 생산 계획 합 · 실적 = 같은 기간 생산 실적 · 생산 진도는 그룹별 판생 계획이 없어 엔진 계획 대비(KPI·③ 라인은 판생 일정누계 기준)</div></div><p class="sj-foot">판매계획 = 판생속보 월차(도금) · 통합 계획 판매(컬러, 세부 그룹은 이달 편성 비율) · 계획재 = R15 생산계획 · 자가재 = 컬러 투입 필요 · 컬러 세부 그룹 생산 실적은 실적 코일의 그룹 기준이라 계획 그룹과 섞일 수 있음 · 재고 = 통합 계획 예상 월말(컬러 수출 3개 그룹·주문재는 그룹 합으로만 계산 — ⑤ 재고 화면)</p>`);
     return `<div class="ct-kpis sj-k4">${k1}${k2}${k3}${k4}</div>` + mx + calendar() + actions() + signals();
   }
 
