@@ -13,7 +13,7 @@
   const SBN = { G수출: ['도금수출'], G국내: ['도금국내'], G자동차: ['자동차내수', '자동차수출'], G자가재: ['자가재'] };
   function rowsOf(O) {
     const G = (O.groups || []).filter((g) => UI.inScope(g.pl)); if (!G.length) return '';
-    const SR = O.stockRoll || {}, wi = (SR.weeks || []).findIndex((w) => w >= (SR.asOf || '')) , cur = (k) => { const a = (SR.v || {})[k] || []; for (let i = Math.max(0, wi); i >= 0; i--) if (a[i] != null) return a[i]; return null; };
+    const SR = O.stockRoll || {}, wi = (SR.weeks || []).findIndex((w) => w >= (SR.asOf || '')) , cur = (k) => { const kk = k === 'G자가재' ? '도금 제품(자가재)' : 'g:' + k; let bd = '', bv = null; for (const [d, q, v] of O.stockTrend || []) if (q === kk && d >= bd) { bd = d; bv = v; } if (bv != null) return bv; const a = (SR.v || {})[k] || []; for (let i = Math.max(0, wi); i >= 0; i--) if (a[i] != null) return a[i]; return null; };   // 11/7 점검: 지금 재고 = 판생 실재고
     const SB = ((O.plating || {}).now || {}).shortBy || [];
     const sig = (tone, big, sub, href) => `<td class="ct ${tone}"><a href="${href}"><b>${big}</b>${sub ? `<small>${sub}</small>` : ''}</a></td>`;
     const rank = { bad: 0, warn: 1, ok: 2, na: 3 }, worst = [], vals = [];

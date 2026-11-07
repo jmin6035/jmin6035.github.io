@@ -20,11 +20,11 @@
     const mEnd = asOf.slice(0, 8) + String(ndM(asOf)).padStart(2, '0');
     const p1 = view === 'day' ? asOf : view === 'week' ? (addD(CT.wed(asOf), 6) > mEnd ? mEnd : addD(CT.wed(asOf), 6)) : mEnd;
     const pLbl = view === 'day' ? `${md(asOf)} ${wd(asOf)}` : view === 'week' ? `${md(p0)}(수)~${md(p1)}(화)` : `${+asOf.slice(5, 7)}월(${md(p0)}~${md(p1)})`;
-    const until = p1, inP = (d) => d && d >= p0 && d <= p1;
+    const until = p1, inP = (d) => d && d >= (p0 > asOf ? p0 : asOf) && d <= p1;   // 11/7 점검: 이미 지난 납기는 '기간 안'에서 빼고 아래 overdue 로
     const open = M.all.filter((o) => !o.closed && CT.inScope(o.pl));
     const inWin = (o) => inP(o.last || o.needProd);
     const risk = open.filter((o) => o.risk === '위험' && inWin(o)), warn = open.filter((o) => o.risk === '주의' && inWin(o)), nd = open.filter((o) => o.risk === '판정 불가');
-    const overdue = open.filter((o) => (o.risk === '위험' || o.risk === '주의') && (o.last || o.needProd) && (o.last || o.needProd) < p0);
+    const overdue = open.filter((o) => (o.risk === '위험' || o.risk === '주의') && (o.last || o.needProd) && (o.last || o.needProd) < asOf);
     const T = (xs) => xs.reduce((a, o) => a + (o.remT || 0), 0);
     const SCN = ({ all: '전체', G: '도금', C: '컬러' })[CT.scope()];
 
@@ -40,7 +40,7 @@
       { name: '컬러 주문', at: M.ccAt, kind: M.ccMissing.length ? `${M.ccLines.join('·')}만` : '실적', ok: !M.ccMissing.length, tip: M.ccMissing.length ? `${M.ccMissing.join('·')} 자료 없음` : '' },
       { name: '소재', at: MO.today, kind: '추정' },
     ];
-    src.forEach((x) => { if (x.ok !== false && (!x.at || diff(String(x.at).slice(0, 10), asOf) < -1)) { x.ok = false; x.tip = x.tip || (x.at ? '이틀 이상 지난 자료' : '자료 없음'); } });
+    src.forEach((x) => { if (x.ok !== false && (!x.at || diff(String(x.at).slice(0, 10), CT.today()) < -1)) { x.ok = false; x.tip = x.tip || (x.at ? '이틀 이상 지난 자료' : '자료 없음'); } });
     const badSrc = src.filter((x) => x.ok === false);
     const basis = `<details class="ct-ds"><summary><b>자료 상태</b> 기준 ${md(asOf)} · ${src.length}개 중 ${badSrc.length ? `<b class="ct-neg">확인 필요 ${badSrc.length}</b> (${badSrc.map((x) => esc(x.name)).join('·')})` : '모두 최신'} <span class="ct-more">자세히</span></summary>${CT.basis(src)}</details>`;
 
@@ -213,7 +213,7 @@
         else if (z.past) { body = `<b class="ch-a${lo ? ' lo' : ''}" style="height:${pc(z.a)}"></b>`; val = n0(z.a); }
         else if (z.p) { body = `<b class="ch-f" style="height:${pc(z.p)}"></b>`; val = n0(z.p); }
         if (rt != null) { body = (z.p ? `<b class="ch-f" style="height:${pc(z.p)}"></b>` : '') + `<b class="ch-r" style="height:${pc(rt)}"></b>`; val = n0(rt); }   // 오늘 진행분(마감 전, 11/5 사용자)
-        else body = `<i class="ch-na">${rest(z.d) ? '계획<br>휴지' : '계획<br>없음'}</i>`;
+        else if (!body) body = `<i class="ch-na">${rest(z.d) ? '계획<br>휴지' : '계획<br>없음'}</i>`;   // 11/7 점검: else 로 모든 칸을 덮던 것
         if (z.past && z.p != null && z.p > 0) body += `<em class="ch-p" style="bottom:${pc(z.p)}"></em>`;
         const ti = r.dd.findIndex((q) => q.d === asOf), dn = +z.d.slice(8);
         const showD = !many || z.d === asOf || ((dn === 1 || dn % 5 === 0 || i === n - 1) && (ti < 0 || Math.abs(i - ti) > 1));
@@ -228,7 +228,7 @@
     const runLine = (r) => {                                                                      // 오늘 진행분(07시~ 마감 전) — 진도율에는 안 넣고 참고로(11/5 사용자 '화면에 보여줘')
       if (!RUN || RUN.d <= lastFull(r.x)) return '';
       const t = +(RUN.lines || {})[r.x.line] || 0, p = futPlan(r.x, RUN.d);
-      return `<div class="ln-run">오늘 ${md(RUN.d)} 진행 중 <b>${n0(t)}t</b>${p ? ` / 계획 ${n0(p)}t` : ''}<span>${RUN.at ? `07:00~${RUN.at}` : "07시부터"} · 마감 전</span></div>`;
+      return `<div class="ln-run">오늘 ${md(RUN.d)} 진행 중 <b>${n0(t)}t</b>${p ? ` / 계획 ${n0(p)}t` : ''}<span>${(r.x.pl === 'C' ? RUN.ccUpto : RUN.at) ? `07:00~${r.x.pl === 'C' ? RUN.ccUpto : RUN.at}` : "07시부터"} · 마감 전</span></div>`;
     };
     const card = (r) => `<a class="ln-c ${r.tn}" href="ct_prod.html#perf"><div class="ln-h"><b>${r.x.line}</b><span class="ln-st ${r.status[1]}">${r.status[0]}</span><span class="ln-big">${r.big == null ? '<small>집계 전</small>' : `${r.big}<small>${r.bigU}</small>`}</span></div>`
       + `<div class="ln-sub">${esc(r.sub)}${r.diffT != null ? ` <b class="${r.diffT >= 0 ? 'pos' : 'neg'}">${sig(r.diffT)}t</b>` : ''}</div>${runLine(r)}${bar(r)}${spark(r)}<div class="ln-ft">${esc(r.foot)}</div></a>`;
@@ -246,7 +246,7 @@
     const CR = (window.UI && UI.ctlRows) ? (UI.ctlRows(P, MO) || []) : [];
     const ndG = ndM(asOf), elapsed = Math.min(1, (+asOf.slice(8) - 1) / ndG);
     const TFD = { G수출: 15, G국내: 20, G자동차: 30, C수출: 15, C건재: 20 };   // TF 목표 일수 = 상한(11/5 운영 개선: 계획 목표는 실측 출하 대기 — 도금국내 7·주문재 8·컬러수출 10일, 계획 규칙 화면)
-    const SRv = (k) => { const SR = P.stockRoll || {}, wi = (SR.weeks || []).findIndex((w) => w >= (SR.asOf || '')), a = (SR.v || {})[k] || []; for (let i = Math.max(0, wi); i >= 0; i--) if (a[i] != null) return a[i]; return null; };
+    const SRv = (k) => { const kk = k === 'G자가재' ? '도금 제품(자가재)' : 'g:' + k; let bd = '', bv = null; for (const [d, q, v] of P.stockTrend || []) if (q === kk && d <= asOf && d >= bd) { bd = d; bv = v; } if (bv != null) return bv; const SR = P.stockRoll || {}, wi = (SR.weeks || []).findIndex((w) => w >= (SR.asOf || '')), a = (SR.v || {})[k] || []; for (let i = Math.max(0, wi); i >= 0; i--) if (a[i] != null) return a[i]; return null; };   // 11/7 점검: 주말 예상치 대신 판생 실재고
     const SLB = { bad: '조치', warn: '주의', ok: '정상', na: '–' };
     const meter = (v, max, mark, tone, aria) => `<div class="gm" role="img" aria-label="${esc(aria)}"><i class="${tone}" style="width:${max > 0 ? Math.min(100, v / max * 100).toFixed(1) : 0}%"></i>${mark != null && max > 0 ? `<em style="left:${Math.min(100, mark / max * 100).toFixed(1)}%"></em>` : ''}</div>`;
     const gcard = (g) => {
@@ -254,7 +254,7 @@
       const Pd = g.prod || {}, S = g.ship;
       const fin = (Pd.actual || 0) + (Pd.after || 0), pace = (Pd.month || 0) * elapsed;
       const prod = `<div class="gr"><span class="gk">생산</span><div class="gv">${meter(Pd.actual || 0, Pd.month || 0, pace, r.cells[0], `생산 실적 ${n0(Pd.actual || 0)}t / 월 계획 ${n0(Pd.month || 0)}t`)}`
-        + `<div class="gt"><b>${n0(Pd.actual || 0)}</b> / ${n0(Pd.month || 0)}t <span class="${r.cells[0]}">월말 예상 ${Pd.month ? Math.floor(fin / Pd.month * 100) : '-'}%</span></div></div></div>`;
+        + `<div class="gt"><b>${n0(Pd.actual || 0)}</b> / ${n0(Pd.month || 0)}t <span class="${r.cells[0]}">월말 예상 ${Pd.month ? Math.round(fin / Pd.month * 100) : '-'}%</span></div></div></div>`;
       const ship = !S ? '' : `<div class="gr"><span class="gk">출하</span><div class="gv">${meter(S.actual || 0, S.month || 0, S.sched || null, r.cells[1], `출하 실적 ${n0(S.actual || 0)}t / 월 ${n0(S.month || 0)}t`)}`
         + `<div class="gt"><b>${n0(S.actual || 0)}</b> / ${n0(S.month || 0)}t <span class="${r.cells[1]}">${S.sched ? (S.actual >= S.sched ? `일정 누계 ${n0(S.sched)}t 충족` : `일정 누계 대비 −${n0(S.sched - S.actual)}t`) : '일정 누계 없음'}</span></div></div></div>`;
       const st = SRv(g.key), dly = S && S.month ? S.month / ndG : 0, cov = st != null && dly ? st / dly : null, tg = TFD[g.key];

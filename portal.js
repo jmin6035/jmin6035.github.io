@@ -44,7 +44,9 @@
     return `<svg class="sp" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="이번 달 하루 생산량"><path class="ar" d="${li} L${W},${H} L0,${H} Z"/><path class="li" d="${li}"/>${dots}</svg>`;
   }
   function lines(O) {
-    return (O.lines || []).filter((x) => UI.inScope(x.pl)).map((x) => {
+    return (O.lines || []).filter((x) => UI.inScope(x.pl)).map((x0) => {
+      const x = Object.assign({}, x0, { days: (x0.days || []).filter((d) => !O.asOf || d[0] <= O.asOf) });   // 11/7 점검: 오늘 07시~ 중간값을 '어제'로 보이던 것
+      if (!x.days.length) x.days = [[O.asOf || '', 0]];
       const r = x.sched ? x.actual / x.sched : null, cls = r == null ? '' : r >= 0.98 ? 'good' : r >= 0.9 ? 'warn' : 'bad';
       const t = x.days.map((d) => `${md(d[0])} ${n0(d[1])}t`).join(' · ');
       return `<div class="ln" data-dom="${x.pl}" title="이번 달: ${t}"><div class="hd"><b>${x.line}</b>${x.fam ? `<span class="fam">${esc(x.fam)}</span>` : ''}<span class="pc ${cls}">${r == null ? '-' : Math.round(r * 100) + '%'}</span></div>
