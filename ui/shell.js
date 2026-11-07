@@ -15,6 +15,8 @@
   /* 11/4 사용자 '전면 개편'(control_tower_redesign PRD): 공장별 25개 메뉴 → 의사결정 목적 7개. 지금 화면은 각 메뉴의 탭으로 묶고, 단계마다 새 화면으로 바꿈(gadong-plan/docs/22) */
   /* 11/4 2차 진단 3장: 메뉴 탭 = 업무 질문(화면 안에 탭을 또 두지 않음 — '#이름'으로 같은 화면의 하위 화면). 4번째 칸 'h' = 탭 막대에는 안 보이는 전문 화면(메뉴에는 속함) */
   const MENU = [
+    /* 11/7 사용자 '기존 것은 전부 두고 탭 하나 만들어서 수주팀 PDF 양식(수주 관제 r1) 그대로' */
+    ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '수주 진도'], ['suju', 'suju.html#prod', '생산'], ['suju', 'suju.html#mat', '소재'], ['suju', 'suju.html#stock', '재고'], ['suju', 'suju.html#close', '월 실적 마감']]],
     ['ct1', '통합 관제', 'home', [['home', 'index.html#day', '금일 현황'], ['home', 'index.html#week', '7일 전망'], ['home', 'index.html#month', '월간 전망'], ['board', 'board.html', '판매그룹 관제판', 'h']]],
     ['ct2', '수주·납기', 'cgorder', [['orders', 'ct_orders.html#status', '수주 현황'], ['orders', 'ct_orders.html#risk', '납기 지연 예상'], ['orders', 'ct_orders.html#track', '주문진도'], ['orders', 'ct_orders.html#cal', '납기 캘린더'], ['cgorder', 'cg_order.html', '도금 주문진도', 'h'], ['ccorder', 'cc_order.html', '컬러 주문·납기', 'h']]],
     ['ct3', '생산계획', 'supply', [['plan7', 'ct_plan.html#week', '주간 생산 일정'], ['plan7', 'ct_plan.html#load', '라인 부하'], ['plan7', 'ct_plan.html#cmp', '계획 변경 비교'], ['supply', 'supply.html', '월간 가동'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더', 'h'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더', 'h'], ['cgwo', 'cg_wo.html', '도금 작업지시 순서', 'h'], ['wo', 'wo.html', '컬러 작업지시 순서', 'h']]],
