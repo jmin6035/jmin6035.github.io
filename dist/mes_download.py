@@ -1330,9 +1330,12 @@ def main():
                 od_ = c_.get('out_dir') or 'out'
                 acc_ = os.path.join(od_ if os.path.isabs(od_) else os.path.join(HERE, od_), 'extra_acc', 'snap_stock.json')
                 have_ = {r[0] for r in json.load(open(acc_, encoding='utf-8')).get('rows') or []} if os.path.exists(acc_) else set()
-                if len(months) > 2 and set(months[2:]) <= have_:
-                    print(f'  재고현황 {months[-1]}~{months[2]} 는 누적본에 있음 → {months[1]}·{months[0]} 만 받음')
-                    months = months[:2]
+                if len(months) > 2:
+                    # 11/9: 누적본이 없으면(새 폴더) 6개월을 한 화면에서 연달아 받다가 Edge 메모리 부족(Out of Memory)으로 멈춤
+                    # → 이번 달·지난달 + 누적본에 없는 옛 달 1개만(나머지는 다음 실행에서 한 달씩 채움)
+                    miss_ = [m for m in months[2:] if m not in have_]
+                    print(f'  재고현황: 이번 달·지난달 {months[1]}·{months[0]}' + (f' + 빠진 옛 달 {miss_[0]}(남은 {len(miss_) - 1}개월은 다음 실행에서)' if miss_ else ' (옛 달은 누적본에 있음)'))
+                    months = months[:2] + miss_[:1]
             except Exception as e:
                 print(f'  (재고현황 누적본 확인 실패 — 전부 받음: {e})')
             print(f'▶ snap_stock (재고현황 SMKTF1030, 기준월 {months[-1]}~{months[0]}, 최신부터, 분석용)')
