@@ -177,6 +177,97 @@ def task_settings():
         print('추가 설정 실패(시각 등록은 됨) — 작업 스케줄러에서 CGL auto > 설정 > "예약된 시작 시간을 놓친 경우 가능한 대로 빨리 작업 시작" 체크\n' + (r.stderr or '')[:300])
 
 
+DIST_URL = 'https://jmin6035.github.io/dist/'
+SKIP_PUSH = False
+
+
+def local_version():
+    try:
+        return re.search(r"AUTO_VERSION = '([^']+)'", open(os.path.join(HERE, 'cglplan', 'auto.py'), encoding='utf-8').read()).group(1)
+    except Exception:
+        return '?'
+
+
+def _fetch(url, timeout=60):
+    """사이트에서 받기: 파이썬 → 안 되면 PowerShell(Windows 로그인 자격·시스템 프록시)"""
+    try:
+        ctx = ssl.create_default_context()
+        if hasattr(ssl, 'VERIFY_X509_STRICT'):
+            ctx.verify_flags &= ~ssl.VERIFY_X509_STRICT
+        with urllib.request.urlopen(urllib.request.Request(url + f'?v={int(time.time())}'), timeout=timeout, context=ctx) as r:
+            return r.read()
+    except Exception as e1:
+        if os.name != 'nt':
+            raise
+        tmp = os.path.join(HERE, 'out', '_dl.bin')
+        r = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
+                            f"Invoke-WebRequest -UseBasicParsing -UseDefaultCredentials -Uri '{url}?v={int(time.time())}' -OutFile '{tmp}'"],
+                           capture_output=True, text=True, errors='replace', timeout=timeout + 30)
+        if r.returncode or not os.path.exists(tmp):
+            raise RuntimeError(f'{e1} / PowerShell: {(r.stderr or "")[:200]}')
+        b = open(tmp, 'rb').read()
+        os.remove(tmp)
+        return b
+
+
+def self_update():
+    """2026-11-09: 고칠 때마다 사람이 파일을 바꿔 깔아야 해서 사내 PC가 옛 판으로 계속 멈춰 있었음 →
+    실행할 때마다 사이트 dist/version.txt 와 비교해 새 판이면 묶음(zip)을 받아 덮어쓰고(auto_config.json·mes·out 은 그대로) 같은 명령으로 다시 실행"""
+    if os.environ.get('CGL_UPDATED') or '--no-update' in sys.argv:
+        return
+    cur = local_version()
+    try:
+        new = _fetch(DIST_URL + 'version.txt', 30).decode('utf-8', 'replace').strip()
+    except Exception as e:
+        print(f'자동 업데이트 확인 실패(지금 판으로 계속): {e}')
+        return
+    if not new or new == cur or len(new) > 60:
+        print(f'설치 묶음 최신({cur})')
+        return
+    print(f'새 설치 묶음 {new} (지금 {cur}) → 받아서 바꿈')
+    try:
+        import io
+        import zipfile
+        z = zipfile.ZipFile(io.BytesIO(_fetch(DIST_URL + 'cglplan_auto.zip', 120)))
+        for n in z.namelist():
+            if n.endswith('/') or n in ('auto_config.json',) or n.startswith(('mes/', 'out/')):
+                continue
+            dst = os.path.join(HERE, *n.split('/'))
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            with open(dst, 'wb') as f:
+                f.write(z.read(n))
+    except Exception as e:
+        print(f'자동 업데이트 실패(지금 판으로 계속): {e}')
+        return
+    print('바꾼 판으로 다시 실행')
+    sys.stdout.flush()
+    global SKIP_PUSH
+    SKIP_PUSH = True                                     # 실행 기록은 다시 실행한 쪽이 올림
+    env = dict(os.environ, CGL_UPDATED='1', PYTHONUTF8='1', PYTHONUNBUFFERED='1')
+    rc = subprocess.call([sys.executable, os.path.join(HERE, 'mes_download.py')] + sys.argv[1:], cwd=HERE, env=env)
+    raise SystemExit(rc)
+
+
+def ensure_tasks():
+    """예약 작업 자가 점검(2026-11-09): 'CGL auto'·'CGL remote' 가 없거나 다른 폴더를 가리키면 이 폴더로 다시 등록. 상태는 실행 기록에 남김"""
+    if os.name != 'nt':
+        return
+    ok = True
+    for tn in ('CGL auto', 'CGL remote'):
+        q = subprocess.run(['schtasks', '/Query', '/TN', tn, '/V', '/FO', 'LIST'], capture_output=True, text=True, errors='replace')
+        out = q.stdout or ''
+        keys = ('상태', 'Status', '마지막 실행', 'Last Run', '마지막 결과', 'Last Result', '다음 실행', 'Next Run', '실행할 작업', 'Task To Run', '로그온 모드', 'Logon Mode')
+        print(f'[예약 작업 {tn}] ' + (' | '.join(' '.join(l.split()) for l in out.splitlines() if l.strip().startswith(keys)) or '없음'))
+        if q.returncode or os.path.join(HERE, 'mes_download.py').lower() not in out.lower().replace('"', ''):
+            ok = False
+    if not ok:
+        print('예약 작업이 없거나 다른 폴더를 가리킴 → 이 폴더로 다시 등록')
+        try:
+            register_task()
+        except Exception as e:
+            print(f'예약 작업 재등록 실패: {e}')
+
+
 def main():
     try:
         os.makedirs(os.path.join(HERE, 'out'), exist_ok=True)
@@ -201,9 +292,12 @@ def main():
     ap.add_argument('--stock-months', type=int, default=6, help='재고현황 기준월 몇 달치(이번 달 포함, 기본 6)')
     ap.add_argument('--remote-only', action='store_true', help='원격 조회 목록만 실행하고 추가 자료만 게시(재계획 없음, 약 10분)')
     ap.add_argument('--register', action='store_true', help='매일 07:35 자동 실행을 Windows 작업 스케줄러에 등록(.bat 없이 파이썬 직접 실행)')
+    ap.add_argument('--no-update', action='store_true', help='자동 업데이트 건너뜀')
     a = ap.parse_args()
     if a.register:
         sys.exit(register_task())
+    self_update()
+    ensure_tasks()
     today = datetime.date.today()
     months = []                                          # 재고현황 조회 달(⑤에서 채움)
     d1 = a.d1 or (today - datetime.timedelta(days=1)).strftime('%Y%m%d')
@@ -1429,6 +1523,6 @@ if __name__ == '__main__':
         traceback.print_exc()
         code = f'{type(e).__name__}: {e}'
     finally:
-        if '--register' not in sys.argv:
+        if '--register' not in sys.argv and not SKIP_PUSH:
             push_log(code)
     sys.exit(code if isinstance(code, int) or code is None else 1)
