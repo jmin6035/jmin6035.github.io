@@ -155,7 +155,9 @@ def register_task(at='07:35', every='09:35-19:40'):
     st, et = every.split('-')
     cmd2 = f'"{exe}" "{os.path.join(HERE, "mes_download.py")}" --remote-only'
     subprocess.run(['schtasks', '/Delete', '/TN', 'CGL remote', '/F'], capture_output=True)
-    r2 = subprocess.run(['schtasks', '/Create', '/TN', 'CGL remote', '/TR', cmd2, '/SC', 'HOURLY', '/MO', '2', '/ST', st, '/ET', et, '/F'], capture_output=True, text=True, errors='replace')
+    h0, m0 = map(int, st.split(':')); h1, m1 = map(int, et.split(':')); du = (h1 * 60 + m1) - (h0 * 60 + m0)
+    # 11/5: 예전 /SC HOURLY /ST /ET 는 '한 번만(등록한 날)' 트리거가 돼 다음 날부터 안 돌았음 → 매일 + 2시간 반복(/RI 120) + 반복 기간(/DU)
+    r2 = subprocess.run(['schtasks', '/Create', '/TN', 'CGL remote', '/TR', cmd2, '/SC', 'DAILY', '/ST', st, '/RI', '120', '/DU', f'{du // 60:02d}:{du % 60:02d}', '/F'], capture_output=True, text=True, errors='replace')
     print((r2.stdout or '') + (r2.stderr or ''))
     print(f'등록됨: 원격 조회만 {st}~{et} 2시간마다 — {cmd2}' if not r2.returncode else '원격 조회 2시간 등록 실패(매일 실행은 등록됨)')
     task_settings()
@@ -1387,10 +1389,46 @@ def main():
         sys.exit(pr.wait())
 
 
-if __name__ == '__main__':
+def push_log(code):
+    """실행 기록(out/run_log.txt)을 암호화해 published/runlog_{auto|remote}.enc.json 으로 올림 — 성공·실패 상관없이.
+    2026-11-08: 사내 PC가 중간에 멈추면 업로드가 하나도 안 돼 클라우드에서 원인을 볼 수 없었음(11/5 16:50 이후 사흘)"""
     try:
-        main()
-    except RemoteOnlyDone:
-        print('원격 조회 끝 → 추가 자료만 게시')
-        env = dict(os.environ, PYTHONUTF8='1', PYTHONUNBUFFERED='1')
-        sys.exit(subprocess.call([sys.executable, '-m', 'cglplan', 'pushextra', '--config', os.path.join(HERE, 'auto_config.json')], cwd=HERE, env=env))
+        sys.stdout.flush()
+        cfg = json.loads(open(os.path.join(HERE, 'auto_config.json'), encoding='utf-8-sig').read(), strict=False)
+        sbc, pw = cfg.get('supabase') or {}, cfg.get('analysis_password') or cfg.get('password')
+        if not (sbc.get('url') and sbc.get('key') and pw):
+            return
+        sys.path.insert(0, HERE)
+        from cglplan import publish as PB
+        from cglplan.supa import Supa
+        log = open(os.path.join(HERE, 'out', 'run_log.txt'), encoding='utf-8', errors='replace').read()[-200000:]
+        tag = 'remote' if '--remote-only' in sys.argv else 'auto'
+        body = {'at': datetime.datetime.now().isoformat(timespec='seconds'), 'exit': str(code), 'argv': sys.argv[1:], 'log': log}
+        Supa(sbc['url'], ''.join(str(sbc['key']).split()), sbc.get('ssl_verify', True)).upload(
+            'published', f'runlog_{tag}.enc.json', json.dumps(PB.encrypt(body, pw, '실행 기록')))
+        print(f'실행 기록 올림(runlog_{tag})')
+    except Exception as e:
+        print(f'실행 기록 올리기 실패: {e}')
+
+
+if __name__ == '__main__':
+    code = 0
+    try:
+        try:
+            main()
+        except RemoteOnlyDone:
+            print('원격 조회 끝 → 추가 자료만 게시')
+            env = dict(os.environ, PYTHONUTF8='1', PYTHONUNBUFFERED='1')
+            code = subprocess.call([sys.executable, '-m', 'cglplan', 'pushextra', '--config', os.path.join(HERE, 'auto_config.json')], cwd=HERE, env=env)
+    except SystemExit as e:
+        code = e.code
+        if code not in (0, None):
+            print(f'멈춤: {code}')
+    except BaseException as e:
+        import traceback
+        traceback.print_exc()
+        code = f'{type(e).__name__}: {e}'
+    finally:
+        if '--register' not in sys.argv:
+            push_log(code)
+    sys.exit(code if isinstance(code, int) or code is None else 1)
