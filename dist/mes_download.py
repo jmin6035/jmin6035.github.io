@@ -248,6 +248,67 @@ def self_update():
     raise SystemExit(rc)
 
 
+def seed_acc():
+    """누적본 복구(11/9 사용자 '이미 5개월치를 다 가지고 있는데 왜 매번 다시 가져오냐'): out/extra_acc 에 재고현황 누적본이 없으면(새 폴더)
+    서버 게시본(published/extradata.enc.json — 지난 실행까지 쌓인 전 표)을 받아 표마다 파일로 풀어 둠. 메모리를 안 쓰게 압축을 흘려 풀며 표 경계만 셈"""
+    try:
+        cfg = json.loads(open(os.path.join(HERE, 'auto_config.json'), encoding='utf-8-sig').read(), strict=False)
+        od = cfg.get('out_dir') or 'out'
+        acc = os.path.join(od if os.path.isabs(od) else os.path.join(HERE, od), 'extra_acc')
+        if os.path.exists(os.path.join(acc, 'snap_stock.json')):
+            return
+        sbc, pw = cfg.get('supabase') or {}, cfg.get('analysis_password') or cfg.get('password')
+        if not (sbc.get('url') and pw):
+            return
+        print('누적본 없음 → 서버 게시본에서 복구(한 번만)')
+        import base64, zlib
+        sys.path.insert(0, HERE)
+        from cglplan import publish as PB
+        from cglplan.supa import make_ctx
+        with urllib.request.urlopen(sbc['url'].rstrip('/') + f'/storage/v1/object/public/published/extradata.enc.json?v={int(time.time())}',
+                                    timeout=300, context=make_ctx(sbc.get('ssl_verify', True))) as r:
+            env = json.loads(r.read())
+        gz = PB._aes()(PB._key(pw, base64.b64decode(env['salt']), env['iter'])).decrypt(base64.b64decode(env['iv']), base64.b64decode(env['ct']), None)
+        del env
+        os.makedirs(acc, exist_ok=True)
+        dz = zlib.decompressobj(16 + zlib.MAX_WBITS)
+        depth, ins, esc, key, kbuf, out, n = 0, False, False, None, None, None, 0
+        for i in range(0, len(gz), 1 << 20):
+            chunk = dz.decompress(gz[i:i + (1 << 20)])
+            start = 0
+            for j, c in enumerate(chunk):
+                if ins:
+                    if esc:
+                        esc = False
+                    elif c == 92:
+                        esc = True
+                    elif c == 34:
+                        ins = False
+                        if kbuf is not None and depth == 2 and out is None:
+                            key = bytes(kbuf).decode('utf-8'); kbuf = None
+                    elif kbuf is not None and out is None:
+                        kbuf.append(c)
+                    continue
+                if c == 34:
+                    ins = True
+                    if depth == 2 and out is None:
+                        kbuf = bytearray()
+                elif c in (123, 91):
+                    depth += 1
+                    if depth == 3 and key:
+                        out = open(os.path.join(acc, key + '.json'), 'wb'); start = j
+                elif c in (125, 93):
+                    depth -= 1
+                    if depth == 2 and out is not None:
+                        out.write(chunk[start:j + 1]); out.close(); out = None; key = None; n += 1
+            if out is not None:
+                out.write(chunk[start:])
+        del gz
+        print(f'누적본 복구: 표 {n}개')
+    except Exception as e:
+        print(f'누적본 복구 실패(계속 진행): {e}')
+
+
 def ensure_tasks():
     """예약 작업 자가 점검(2026-11-09): 'CGL auto'·'CGL remote' 가 없거나 다른 폴더를 가리키면 이 폴더로 다시 등록. 상태는 실행 기록에 남김"""
     if os.name != 'nt':
@@ -298,6 +359,7 @@ def main():
         sys.exit(register_task())
     self_update()
     ensure_tasks()
+    seed_acc()
     today = datetime.date.today()
     months = []                                          # 재고현황 조회 달(⑤에서 채움)
     d1 = a.d1 or (today - datetime.timedelta(days=1)).strftime('%Y%m%d')
@@ -1331,11 +1393,9 @@ def main():
                 acc_ = os.path.join(od_ if os.path.isabs(od_) else os.path.join(HERE, od_), 'extra_acc', 'snap_stock.json')
                 have_ = {r[0] for r in json.load(open(acc_, encoding='utf-8')).get('rows') or []} if os.path.exists(acc_) else set()
                 if len(months) > 2:
-                    # 11/9: 누적본이 없으면(새 폴더) 6개월을 한 화면에서 연달아 받다가 Edge 메모리 부족(Out of Memory)으로 멈춤
-                    # → 이번 달·지난달 + 누적본에 없는 옛 달 1개만(나머지는 다음 실행에서 한 달씩 채움)
-                    miss_ = [m for m in months[2:] if m not in have_]
-                    print(f'  재고현황: 이번 달·지난달 {months[1]}·{months[0]}' + (f' + 빠진 옛 달 {miss_[0]}(남은 {len(miss_) - 1}개월은 다음 실행에서)' if miss_ else ' (옛 달은 누적본에 있음)'))
-                    months = months[:2] + miss_[:1]
+                    # 11/9: 마감된 옛 달은 안 바뀜 → 항상 이번 달·지난달만(6개월 연속 조회는 Edge 메모리 부족). 옛 달은 누적본(seed_acc 로 서버에서 복구)에 있음
+                    print(f'  재고현황: 이번 달·지난달 {months[1]}·{months[0]}만 (옛 달 누적본 {len(have_)}개월)')
+                    months = months[:2]
             except Exception as e:
                 print(f'  (재고현황 누적본 확인 실패 — 전부 받음: {e})')
             print(f'▶ snap_stock (재고현황 SMKTF1030, 기준월 {months[-1]}~{months[0]}, 최신부터, 분석용)')
