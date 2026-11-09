@@ -81,8 +81,18 @@
       if (!fu || baseState[`${l}|${act.t0}`] === cur) continue;
       for (let d = GP.addDays(act.t0, 1); d <= fu; d = GP.addDays(d, 1)) if (`${l}|${d}` in baseState) baseState[`${l}|${d}`] = cur;
     }
-    const MO = { t0: act.t0, init: act.state, freezeUntil: O.freezeDays > 0 ? GP.addDays(act.t0, O.freezeDays) : null, baseState, allowLate: O.allowLate, maxLate: O.maxLate, lateW: O.lateW, shortW: O.shortW, stabW: O.stabW, stabW2: O.stabW2, extraDown: act.extraDown || {} };
-    const lockNotes = [];
+    const lockNotes = [], XD = act.extraDown || {};
+    if (fu) for (const l of P.lines) {                                // 11/9: 동결 기간 안 M/C 날에 추가 정지가 겹쳐 전환 시간이 안 나오면 그날부터 동결 풀기(안 풀면 해 없음 — mcLock 의 clash 와 같은 기준)
+      for (let d = GP.addDays(act.t0, 1); d <= fu; d = GP.addDays(d, 1)) {
+        const a = baseState[`${l}|${GP.addDays(d, -1)}`], b = baseState[`${l}|${d}`];
+        if (a && b && a !== b && (XD[`${l}|${d}`] || 0) > 1440 - P.equipDown[l] - Math.max(P.switchDummy[l], P.restartFamchg[l])) {
+          for (let z = d; z <= fu; z = GP.addDays(z, 1)) delete baseState[`${l}|${z}`];
+          lockNotes.push(`${l} 동결 기간 M/C ${GP.md(d)}에 추가 정지가 겹쳐 그날부터 동결 해제 — 전환일 재검토`);
+          break;
+        }
+      }
+    }
+    const MO = { t0: act.t0, init: act.state, freezeUntil: O.freezeDays > 0 ? GP.addDays(act.t0, O.freezeDays) : null, baseState, allowLate: O.allowLate, maxLate: O.maxLate, lateW: O.lateW, shortW: O.shortW, stabW: O.stabW, stabW2: O.stabW2, extraDown: XD };
     if (O.lockMC) MO.lock = GP.mcLock(P, H, R, act, lockNotes);
     log && log(`실적 ${GP.fmt(GP.sum(act.rows, (r) => r[4]))}t 반영(~${GP.md(act.t0)}), 남은 수요 ${GP.fmt(GP.sum(rem, (b) => b.orig))}t, 강종 동결 ~${MO.freezeUntil ? GP.md(MO.freezeUntil) : '없음'}`);
     const PS = Object.assign({}, P, { timeLimit1: O.timeLimit, timeLimit2: O.timeLimit, phase2Mode: O.phase2Mode });
