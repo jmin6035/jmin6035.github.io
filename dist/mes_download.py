@@ -137,7 +137,7 @@ class RemoteOnlyDone(Exception):
     """--remote-only: 원격 조회만 끝내고 나머지 내려받기는 건너뜀(main 밖에서 받아 추가 자료만 게시)"""
 
 
-def register_task(at='07:35', every='09:35-19:40'):
+def register_task(at='07:35', every='09:35-07:30'):
     """작업 스케줄러 등록: 이 파이썬으로 이 폴더의 mes_download.py 를 매일 at 에 실행. 옛 작업 이름은 지움"""
     exe = sys.executable
     cmd = f'"{exe}" "{os.path.join(HERE, "mes_download.py")}"'
@@ -155,11 +155,11 @@ def register_task(at='07:35', every='09:35-19:40'):
     st, et = every.split('-')
     cmd2 = f'"{exe}" "{os.path.join(HERE, "mes_download.py")}" --remote-only'
     subprocess.run(['schtasks', '/Delete', '/TN', 'CGL remote', '/F'], capture_output=True)
-    h0, m0 = map(int, st.split(':')); h1, m1 = map(int, et.split(':')); du = (h1 * 60 + m1) - (h0 * 60 + m0)
+    h0, m0 = map(int, st.split(':')); h1, m1 = map(int, et.split(':')); du = ((h1 * 60 + m1) - (h0 * 60 + m0)) % 1440   # 11/9 사용자 '24시간 2시간씩': 09:35~다음 날 05:35(07:35 은 전체 실행)
     # 11/5: 예전 /SC HOURLY /ST /ET 는 '한 번만(등록한 날)' 트리거가 돼 다음 날부터 안 돌았음 → 매일 + 2시간 반복(/RI 120) + 반복 기간(/DU)
     r2 = subprocess.run(['schtasks', '/Create', '/TN', 'CGL remote', '/TR', cmd2, '/SC', 'DAILY', '/ST', st, '/RI', '120', '/DU', f'{du // 60:02d}:{du % 60:02d}', '/F'], capture_output=True, text=True, errors='replace')
     print((r2.stdout or '') + (r2.stderr or ''))
-    print(f'등록됨: 원격 조회만 {st}~{et} 2시간마다 — {cmd2}' if not r2.returncode else '원격 조회 2시간 등록 실패(매일 실행은 등록됨)')
+    print(f'등록됨: 원격 조회만 {st}부터 2시간마다(24시간, 07:35 은 전체 실행) — {cmd2}' if not r2.returncode else '원격 조회 2시간 등록 실패(매일 실행은 등록됨)')
     task_settings()
     return 0
 
@@ -365,10 +365,14 @@ def ensure_tasks():
         print(f'[예약 작업 {tn}] ' + (' | '.join(' '.join(l.split()) for l in out.splitlines() if l.strip().startswith(keys)) or '없음'))
         if q.returncode or os.path.join(HERE, 'mes_download.py').lower() not in out.lower().replace('"', ''):
             ok = False
+    if not os.path.exists(os.path.join(HERE, 'out', 'tasks_24h')):   # 11/9: 원격 조회 24시간(2시간마다)으로 바뀜 → 한 번 다시 등록
+        ok = False
     if not ok:
         print('예약 작업이 없거나 다른 폴더를 가리킴 → 이 폴더로 다시 등록')
         try:
-            register_task()
+            if register_task() == 0:
+                os.makedirs(os.path.join(HERE, 'out'), exist_ok=True)
+                open(os.path.join(HERE, 'out', 'tasks_24h'), 'w').write('1')
         except Exception as e:
             print(f'예약 작업 재등록 실패: {e}')
 
