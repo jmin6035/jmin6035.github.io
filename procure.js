@@ -126,7 +126,7 @@
       ${auto}<h3>직접 입력 <small>MES 밖 기발주(수입 등)·날짜 변경</small></h3>
       <div class="bar"><button type="button" class="btn" data-add="arr">+ 줄 추가</button><label class="btn">엑셀 업로드<input type="file" accept=".xlsx" data-up="arr" hidden></label><span class="small">양식: 소재조달_양식_v0.xlsx '입고예정' 시트 (업체 · 소재 · 수량(t) · 입고예정일 · 발주번호 · 메모)</span></div>
       <div class="scroll"><table class="t ed"><thead><tr><th>업체</th><th>소재</th><th>수량(t)</th><th>입고예정일</th><th>발주번호</th><th>메모</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="c muted">없음 — 지금 판단은 재고만으로 충당</td></tr>'}</tbody></table></div>
-      <h3>현재 재고(구매소재, 자가 제외)</h3><p class="small">${esc(D.stockNote)}</p>
+      <h3>현재 재고(구매소재, 자가 제외) <small>MES 소재재고 · 판생속보와 정의 다름</small></h3><p class="small">${esc(D.stockNote)}</p>
       <div class="chips">${Object.entries(D.stock).filter(([k, t]) => t >= 1 && UI.inScope(k[0])).sort((a, b) => b[1] - a[1]).map(([k, t]) => `<span class="chip">${PL[k[0]]} ${esc(codeNm(k.slice(2)))} <b>${n0(t)}t</b></span>`).join('')}</div>`);
   }
 

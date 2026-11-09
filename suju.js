@@ -92,7 +92,7 @@
     const k3 = kpi(1, '소재 결품 위험', mw.length ? '경고' : mo.length ? '주의' : '정상', `경고 ${mw.length} · 주의 ${mo.length}`,
       `${mw.concat(mo).map((x) => `<b>${esc(x.name)}</b> 월말 ${x.days}일분(${T(x.end)}t)`).join('<br>') || '모든 소재 월말 7일분 이상'}<br>7일분 미만 주의 · 5일분 미만 경고`);
     const k4 = kpi(1, '창고 재고', whCur / whCap > 1 ? '경고' : whCur / whCap > 0.9 ? '주의' : '정상', kt(whCur),
-      `상한 ${kt(whCap)}의 ${Math.round(whCur / whCap * 100)}% (상한 = PDF 예시값, 판생 값 대기)<br>${wh.map((x) => x.parts.map((p) => `${p[0]} ${kt(p[1])}`).join(' · ')).join(' / ')}`);
+      `상한 ${kt(whCap)}의 ${Math.round(whCur / whCap * 100)}% (상한 = PDF 예시값, 판생 값 대기)<br>판생속보 ${wh.map((x) => x.parts.map((p) => `${p[0]} ${kt(p[1])}`).join(' · ')).join(' / ')}`);   // 11/9: 재고 원천 표기(판생속보)
     // ② 그룹 관제 매트릭스
     const rows = G.map((g) => `<tr><td class="sub">${g.plant === 'C' ? '컬러' : '도금'}</td><td class="nm">${esc(g.name)}</td><td><span class="sj-tag">${esc(g.type)}</span></td>`
       + `<td class="r" title="${esc(g.key === '자가재' ? '도금 자가재 생산 계획(이달 편성)' : g.salesSrc)}">${T(g.sales)}</td><td class="r">${T(g.base)}</td><td class="r" title="등록 주문(실적+잔량) ${T(g.ordReg)}t">${T(g.orders)}</td><td class="c"${g.progGrp ? ` title="판정 = ${esc(g.progGrp)}(세부 그룹은 품명으로 추정해 섞임)"` : g.progSt === '확인' ? ' title="확정 주문이 계획 편성보다 훨씬 많음 — 주문이 계획에 안 들어감"' : ''}>${g.prog == null ? '<span class="ct-b na">–</span>' : `${B(g.progSt, pct(g.prog))}${g.progGrp ? '<sup>합</sup>' : ''}`}</td>`   // 11/9: 자가재 판매계획 칸 = 도금 자가재 편성(라벨 '컬러 투입 필요' 정정)
@@ -298,7 +298,7 @@
   function mat() {
     const M = D.mats.filter((x) => inPl(x.plant));
     const rows = M.map((x) => `<tr><td class="nm">${esc(x.name)}<div class="sub">${x.cls.map((c) => `<span class="sj-tag">${esc(c)}</span>`).join(' ')}</div></td><td>${x.plant === 'G' ? '도금' : '컬러'}</td><td class="r">${x.lt}</td><td class="r">${T(x.stock)}</td><td class="r">${T(x.use)}</td><td class="r">${T(x.recv)}</td><td class="r">${T(x.dueIn)}</td><td class="r"><b>${T(x.end)}</b></td><td class="r"><b class="${x.st === '경고' ? 'neg' : x.st === '주의' ? 'wrn' : ''}">${x.days == null ? '–' : x.days + '일'}</b></td><td class="c">${B(x.st)}</td></tr>`);
-    const c1 = card(1, '소재별 월 수급표', `${+D.month.slice(5)}월 · 단위 톤 · 재고일수 최소 7일 관리`, tbl(['소재(포함 발주구분)', '공장', ['L/T(일)', 'r'], [`${md(D.asOf)} 재고`, 'r'], ['월 소요(계획)', 'r'], ['이달 입고 실적', 'r'], ['입고 예정(잔여)', 'r'], ['예상 월말 재고', 'r'], ['재고일수', 'r'], ['상태', 'c']], rows)
+    const c1 = card(1, '소재별 월 수급표', `${+D.month.slice(5)}월 · 단위 톤 · 재고일수 최소 7일 관리`, tbl(['소재(포함 발주구분)', '공장', ['L/T(일)', 'r'], [`${md(D.asOf)} 재고<small>MES 소재재고</small>`, 'r'], ['월 소요(계획)', 'r'], ['이달 입고 실적', 'r'], ['입고 예정(잔여)', 'r'], ['예상 월말 재고', 'r'], ['재고일수', 'r'], ['상태', 'c']], rows)   // 11/9: 재고 원천 표기(MES 소재재고 — 창고·판생속보와 정의 다름)
       + `<p class="sj-foot">${D.matsNoUse && D.matsNoUse.length ? `계획 소요가 없어 뺀 소재: ${D.matsNoUse.join('·')} · ` : ''}예상 월말 = 재고(MES ${md(D.asOf)} 마감) + 입고 예정(MES 미입고 발주) − 남은 날 계획 소요 · 재고는 MES 소재 코드 합이라 ⑤ 창고(판생속보 분류)와 수백~천 t 다름 · 월 소요 = 컬러 계획 × 품명별 소재 비중, 도금 = F/H 계획 사용 · 행은 소재 코드 단위(포함 발주구분 표시) — PDF의 소재발주구분 13종 행(${D.cfg.matClasses.map((c) => c.key).join('·')})은 MES 발주구분 코드표를 받아 공급사·용도로 나누는 다음 단계에서 바꿈</p>`);
     const S = D.matShort.filter((x) => (x.gap || 0) > 0);
     const LT = UI.matLate(D.matLate);                       // 발주 마감 지남 = 공통 기준(ui/shell.js UI.matLate, 11/8)
