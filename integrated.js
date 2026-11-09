@@ -111,14 +111,15 @@
       return Object.assign({}, r, { v: W.map((d, i) => { const j = SRL.weeks.indexOf(d); return j >= 0 && v[j] != null ? v[j] : r.v[i]; }), roll: true });
     }) }) : P0;
     const wi = Math.max(0, W.findIndex((d) => d >= today)), last = W.length - 1;
-    const st = (r, i) => {                                             // 칸 상태: bad 부족 · warn 목표 90% 미만 · over 130% 초과 · ok
+    const st = (r, i) => {                                             // 칸 상태: bad 부족 · warn 목표 90% 미만 · over 상한일수 초과 · ok
       const v = r.v[i];
       if (v < 0 || (r.ss && r.ss[i] && v < r.ss[i])) return 'bad';
       if (r.tgt && v < r.tgt[i] * 0.9) return 'warn';
-      if (r.tgt && v > r.tgt[i] * 1.3) return 'over';
+      const TR = O.tfRules || {}, dy = (TR.days || {})[r.k], tg = (TR.target || {})[r.k];   // 11/9: 과잉 = 상한일수 넘을 때만(다른 화면과 같은 기준) — 목표 1.3배였음
+      if (r.tgt && v > r.tgt[i] * (dy && tg ? dy / tg : 1.3)) return 'over';
       return 'ok';
     };
-    const SN = { ok: '목표 부근', warn: '목표 미만', bad: '부족 위험', over: '과잉' };
+    const SN = { ok: '목표 부근', warn: '목표 미만', bad: '부족 위험', over: '상한 초과' };
     const ACT = {}; ((PT && PT.stockTrend) || []).forEach(([d, k, t]) => { const g = k.startsWith('g:') ? k.slice(2) : k === '도금 제품(자가재)' ? '자가재' : null; if (g) (ACT[g] = ACT[g] || []).push([d, t]); });   // 실제 재고(속보 원천 표) 일별
     const dd = (a, b) => (new Date(a + 'T00:00:00') - new Date(b + 'T00:00:00')) / 864e5;
     const rows = P.stockWeek.filter((r) => inS(plOf(r.k)) && !/^(FH|컬러 구매)/.test(r.k));   // 구매 소재는 소재 발주 화면
