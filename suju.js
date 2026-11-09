@@ -92,7 +92,7 @@
     const k3 = kpi(1, '소재 결품 위험', mw.length ? '경고' : mo.length ? '주의' : '정상', `경고 ${mw.length} · 주의 ${mo.length}`,
       `${mw.concat(mo).map((x) => `<b>${esc(x.name)}</b> 월말 ${x.days}일분(${T(x.end)}t)`).join('<br>') || '모든 소재 월말 7일분 이상'}<br>7일분 미만 주의 · 5일분 미만 경고`);
     const k4 = kpi(1, '창고 재고', whCur / whCap > 1 ? '경고' : whCur / whCap > 0.9 ? '주의' : '정상', kt(whCur),
-      `상한 ${kt(whCap)}의 ${Math.round(whCur / whCap * 100)}% (상한 = PDF 예시값, 판생 값 대기)<br>판생속보 ${wh.map((x) => x.parts.map((p) => `${p[0]} ${kt(p[1])}`).join(' · ')).join(' / ')}`);   // 11/9: 재고 원천 표기(판생속보)
+      `상한 ${kt(whCap)}의 ${Math.round(whCur / whCap * 100)}% (상한 = '27 판생 월말 최대, 계획 규칙)<br>판생속보 ${wh.map((x) => x.parts.map((p) => `${p[0]} ${kt(p[1])}`).join(' · ')).join(' / ')}`);   // 11/9: 재고 원천 표기(판생속보)
     // ② 그룹 관제 매트릭스
     const rows = G.map((g) => `<tr><td class="sub">${g.plant === 'C' ? '컬러' : '도금'}</td><td class="nm">${esc(g.name)}</td><td><span class="sj-tag">${esc(g.type)}</span></td>`
       + `<td class="r" title="${esc(g.key === '자가재' ? '도금 자가재 생산 계획(이달 편성)' : g.salesSrc)}">${T(g.sales)}</td><td class="r">${T(g.base)}</td><td class="r" title="등록 주문(실적+잔량) ${T(g.ordReg)}t">${T(g.orders)}</td><td class="c"${g.progGrp ? ` title="판정 = ${esc(g.progGrp)}(세부 그룹은 품명으로 추정해 섞임)"` : g.progSt === '확인' ? ' title="확정 주문이 계획 편성보다 훨씬 많음 — 주문이 계획에 안 들어감"' : ''}>${g.prog == null ? '<span class="ct-b na">–</span>' : `${B(g.progSt, pct(g.prog))}${g.progGrp ? '<sup>합</sup>' : ''}`}</td>`   // 11/9: 자가재 판매계획 칸 = 도금 자가재 편성(라벨 '컬러 투입 필요' 정정)
@@ -171,7 +171,7 @@
   function signals() {
     return card(5, '신호등 기준 (전 화면 공통)', `기준값 출처: ${D.cfg.src}`,
       tbl(['지표', '산식', '정상', '주의', '경고'], D.cfg.signals.map((s) => `<tr><td class="nm">${esc(s.name)}</td><td class="wrap">${esc(s.calc)}</td><td class="pos">${esc(s.ok)}</td><td class="wrn">${esc(s.warn)}</td><td class="neg">${esc(s.bad)}</td></tr>`))
-      + `<p class="sj-foot">창고 상한(컬러 ${kt(D.cfg.warehouse.C.cap)} · 도금 ${kt(D.cfg.warehouse.G.cap)}) = PDF 예시값으로 임시 설정 — 판생 확정값 받으면 바꿈</p>`);
+      + `<p class="sj-foot">창고 상한 = '27 판생 월말 최대(계획 규칙 — 컬러 ${kt(D.wh.C.cap)} · 도금 ${kt(D.wh.G.cap)}, 도금 자가재는 상한 항목이 없어 제외)</p>`);
   }
 
   /* ---------- ② 수주 진도 ---------- */
@@ -356,7 +356,7 @@
       tbl(['그룹', ['상한', 'r'], ...t.months.map((m) => [`${m.slice(2).replace('-', '.')}월말`, 'r']), [`${t.months[0].slice(5)}→${t.months[t.months.length - 1].slice(5)}월 변화`, 'r']], trow)
       + '<p class="sj-foot">재고일수 = 월말 재고 ÷ (그 달 판매계획 ÷ 일수) · 지난 달 = 월말 실재고 · 이달 = 위 브릿지 예상 월말과 같은 값 · 다음 달 = 이달 예상 + 일별 편성 − 판매계획</p>');
     const whc = ['C', 'G'].filter(inPl).map((p) => { const w = D.wh[p], r = w.cur / w.cap * 100; return `<div class="sj-gb"><div class="h"><span>${p === 'C' ? '컬러' : '도금'} 창고</span><b class="${r > 100 ? 'neg' : r > 90 ? 'wrn' : 'pos'}">${kt(w.cur)} / ${kt(w.cap)} (${Math.round(r)}%)</b></div><div class="sj-bar"><i style="width:${Math.min(100, r / 1.3)}%;background:${r > 100 ? 'var(--bad)' : r > 90 ? 'var(--warn)' : 'var(--good)'}"></i><u style="left:${100 / 1.3}%"></u></div><div class="sj-foot" style="margin:2px 0 0">${w.parts.map((q) => `${esc(q[0])} ${kt(q[1])}`).join(' · ')}</div></div>`; }).join('');
-    const c3 = card(3, '창고 상한 (max 목표재고)', '판생속보 현재 재고(소재+제품) ÷ 상한', whc + '<p class="sj-foot">검은 선 = 100% · 90% 이상 주의 · 100% 초과 시 판생 경영층 보고 · 상한 = PDF 예시값(임시)</p>');
+    const c3 = card(3, '창고 상한 (max 목표재고)', '판생속보 현재 재고(소재+제품) ÷ 상한', whc + '<p class="sj-foot">검은 선 = 100% · 90% 이상 주의 · 100% 초과 시 판생 경영층 보고 · 상한 = ’27 판생 월말 최대(계획 규칙)</p>');
     const r = D.r15, cnt = r.cnt || {};
     const c4 = card(4, '계획재 사양 상태', `R15 ${r.n || '-'}개 사양 · 실재고 ${T(r.stock)} / 목표 ${T(r.target)}톤 (${r.target ? Math.round(r.stock / r.target * 100) : '-'}%)`,
       `<div class="ct-kpis" style="grid-template-columns:repeat(2,minmax(0,1fr));margin:0">${[['정상 생산', cnt.ok], ['목표 초과(생산 중단 대상)', cnt.over], ['생산 뒤처짐', cnt.behind], ['부족·결품 우려', cnt.short]].map(([k, v], i) => `<div class="ct-kpi ${['ok', 'bad', 'warn', 'bad'][i]}"><div class="l">${k}</div><div class="v">${v ?? 0}<small>개</small></div></div>`).join('')}</div><p class="sj-foot">계획재 화면(R15 운영안) 판정 기준 · 재개 예정·제외(6개월 6톤 미만) 구분은 R15 지침서 규칙 연결 후 추가</p>`);
