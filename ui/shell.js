@@ -306,7 +306,7 @@
 
   /* 화면 아래쪽 카드는 보일 때 움직임 시작: 처음 그릴 때 화면 밖이던 카드(와 그 안의 막대·선·행 애니메이션)를 멈춰 두었다가
      스크롤해서 들어오면 재생 — 전부 한꺼번에 재생되면 아래쪽은 내려가 볼 때 이미 끝나 있어 움직임이 안 보였음 */
-  const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.remove('rv-wait'); io.unobserve(e.target); } }), { threshold: 0.06, rootMargin: '0px 0px -40px 0px' }) : null;
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.remove('rv-wait'); io.unobserve(e.target); } }), { threshold: 0, rootMargin: '0px 0px -40px 0px' }) : null;   // threshold 0: 화면보다 훨씬 긴 카드(cg_wo 표 약 2만px)는 6% 가 한 화면에 안 들어와 영영 안 보였음
   const hold = (el) => {
     if (!io || el.dataset.rvq) return;
     el.dataset.rvq = '1';
