@@ -13,6 +13,7 @@
   const n1 = (v) => (v == null || isNaN(v) ? '-' : (+v).toFixed(1));
   const WD = '일월화수목금토';
   const md = (d) => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}` : '');
+  const TODAY = new Date(Date.now() + 9 * 3600e3 - 7 * 3600e3).toISOString().slice(0, 10);   // MES 일자(07시 기준, KST)
   const dnm = (d) => `${md(d)}(${WD[new Date(d + 'T00:00:00Z').getUTCDay()]})`;
   // 시각 = 한국 시각 그대로 '분'으로(시간대 변환 없이)
   const tms = (s) => { const m = String(s).match(/(\d{4})-(\d\d)-(\d\d)[ T](\d\d):(\d\d)/); return m ? Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5]) / 6e4 : NaN; };
@@ -196,10 +197,19 @@
       return `<span class="cp al">${esc(x.al || x.sur)}</span><span class="cp sz">${(+x.thick).toFixed(2)} × ${n0(x.width)}</span>`
         + (t.cot ? `<span class="cp" title="도금량">${esc(t.cot)}</span>` : '') + (x.trt ? `<span class="cp" title="후처리">${esc(t.aft || '후처리 없음')}</span>` : '')
         + (x.grade ? `<span class="cp" title="재질(열처리 등급)">${esc(GR[x.grade] || x.grade)}</span>` : '') + (x.ge ? '<span class="cp wr" title="용도 가전">가전</span>' : '')
-        + (x.grp && x.grp !== '미상' ? `<span class="cp" title="판매그룹">${esc(x.grp)}</span>` : '');
+        + (x.grp && x.grp !== '미상' ? `<span class="cp" title="판매그룹">${esc(x.grp)}</span>` : '')
+        + (x.spec ? `<span class="cp" title="주문 사양">${esc(x.spec)}</span>` : '')
+        + `<span class="cp" title="담당자 - 목적지(내수는 고객사)">${esc(x.man || '담당 미상')} - ${esc(x.dst || '목적지 미상')}</span>`
+        + `<span class="cp${x.ent && x.ent > TODAY ? ' wr' : ''}" title="소재 입고일">소재 입고 ${x.ent ? md(x.ent) : '-'}</span>`;
     }
-    return `<span class="cp cl" title="색(도료 종류·색상번호)">${esc(x.color)}</span><span class="cp">${esc(x.item)}</span><span class="cp sz">${(+x.thk).toFixed(2)} × ${n0(x.wdt)}</span>`
-      + `<span class="cp" title="판매그룹">${esc(x.g)}</span>` + (x.block !== 'general' ? `<span class="cp wr">${esc(R.blockNm[x.block])}</span>` : '');
+    const dtm = (v) => (v ? String(v).slice(5, 16).replace('-', '/') : '');   // 11/9: 풀 코드 8자리·담당자-목적지·도료/PF 입고 일시
+    return (x.code ? `<span class="cp cl" title="상도 풀 코드${x.codeBack ? ' · 이면 ' + esc(x.codeBack) : ''}">${esc(x.code)}</span>` : `<span class="cp cl wr" title="풀 코드 없음(MES 도료 소요 자료 대기) — 도료 종류·색상번호">${esc(x.color)}</span>`)
+      + (x.codeBack ? `<span class="cp" title="이면 풀 코드">이면 ${esc(x.codeBack)}</span>` : '')
+      + `<span class="cp">${esc(x.item)}</span><span class="cp sz">${(+x.thk).toFixed(2)} × ${n0(x.wdt)}</span>`
+      + `<span class="cp" title="판매그룹">${esc(x.g)}</span>` + (x.block !== 'general' ? `<span class="cp wr">${esc(R.blockNm[x.block])}</span>` : '')
+      + `<span class="cp" title="담당자 - 목적지(내수는 고객사)">${esc(x.man || '담당 미상')} - ${esc(x.dst || '목적지 미상')}</span>`
+      + `<span class="cp${x.paintAt && new Date(x.paintAt.replace(' ', 'T')) > new Date() ? ' wr' : ''}" title="도료 입고(예정) 일시">도료 ${x.paintAt ? dtm(x.paintAt) : x.paintSts === 'F' ? '입고완료' : x.paintSts ? '입고대기(일정 없음)' : '-'}</span>`
+      + (x.pfNeed ? `<span class="cp${x.pfAt && new Date(x.pfAt.replace(' ', 'T')) > new Date() ? ' wr' : ''}" title="PF 입고(예정) 일시">PF ${x.pfAt ? dtm(x.pfAt) : x.pfSts === 'F' ? '입고완료' : x.pfSts ? '입고대기(일정 없음)' : '-'}</span>` : '');
   }
   function jobRow(l, v, days, n) {
     const x = v.x, bad = CK && CK.some((c) => c.id === x.id && c.l === l && c.lv === 'bad');
