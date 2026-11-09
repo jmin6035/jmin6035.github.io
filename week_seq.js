@@ -22,7 +22,7 @@
   const hhmm = (m) => iso(m).slice(11);
   const hrs = (m) => (m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 >= 1 ? ' ' + Math.round(m % 60) + '분' : ''}` : `${Math.round(m)}분`);
   const LINES = { cg: ['1CGL', '2CGL'], cc: ['1CCL', '2CCL', '3CCL', '4CCL'] };
-  const POOLNM = { pre: '주 시작 전에 끝날 작업', over: '이번 주 시간이 모자라 다음 주로', later: '생산예정일이 다음 주 이후', out: '직접 뺀 작업', new: '새로 들어온 작업' };
+  const POOLNM = { pre: '기간 시작 전에 끝날 작업', over: '기간 안에 시간이 모자람(뒤로 밀림)', later: '생산예정일이 기간 뒤', out: '직접 뺀 작업', new: '새로 들어온 작업' };
   const GR = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E 극저', GREL: 'Gr.E 저탄', GRA: 'Gr.A', GRB: 'Gr.B' };
   const IND = { A: '508', B: '610', C: '305' };
 
@@ -112,12 +112,12 @@
       const load = {};
       ev.forEach((v) => { if (v.k === 'w') return; const d = dayOf(v.s); const m = v.k === 'j' ? v.e - v.ds : (v.e2 || v.e) - v.s; load[d] = (load[d] || 0) + m; });   // 그날 시작한 작업·휴지 합(기다림 제외)
       Object.entries(load).forEach(([d, m]) => { if (m > 1440.5 && tms(d + ' 07:00') < W1) add('warn', '하루 1,440분 초과', l, null, `${l} ${dnm(d)} 그날 시작한 작업·휴지 ${n0(m)}분 — 다음날로 ${n0(m - 1440)}분 넘어감`); });
-      js.forEach((v) => { if (v.e > W1) add('warn', '주 끝 넘김', l, v.x, `${l} ${conOf(v.x)} 끝 ${md(iso(v.e))} ${hhmm(v.e)} — 주 끝 ${md(iso(W1))} 07:00 넘김`); });
+      js.forEach((v) => { if (v.e > W1) add('warn', '기간 끝 넘김', l, v.x, `${l} ${conOf(v.x)} 끝 ${md(iso(v.e))} ${hhmm(v.e)} — 기간 끝 ${md(iso(W1))} 07:00 넘김`); });
       js.forEach((v) => {
         const x = v.x, end = dayOf(v.e), due = plant === 'cg' ? x.dlv : x.due;
         if (due && due < end) {
-          if (due >= D.week) add('bad', '납기 넘김', l, x, `${l} ${conOf(x)} 납기 ${md(due)} → 끝 ${dnm(end)}`);
-          else add('info', '납기 이미 지남', l, x, `${l} ${conOf(x)} 납기 ${md(due)}(주 시작 전) — 끝 ${dnm(end)}`);
+          if (due >= dayOf(tms(D.w0))) add('bad', '납기 넘김', l, x, `${l} ${conOf(x)} 납기 ${md(due)} → 끝 ${dnm(end)}`);
+          else add('info', '납기 이미 지남', l, x, `${l} ${conOf(x)} 납기 ${md(due)}(오늘 전) — 끝 ${dnm(end)}`);
         }
       });
       if (plant === 'cg') checkCG(l, js, add); else checkCC(l, js, ev, add);
@@ -243,8 +243,8 @@
       + `${lsel}<button data-a="gap" data-i="${v.i}" title="이 작업 앞에 휴지·더미 넣기">+휴지</button><button class="x" data-a="del" data-i="${v.i}" title="빼기(빠진 작업으로)">✕</button></td></tr>`;
   }
   function draw() {
-    const W0 = tms(D.w0), W1 = tms(D.w1), days = Array.from({ length: 7 }, (_, i) => dayOf(W0 + i * 1440));
-    $('ws-wk').textContent = `${dnm(days[0])} ~ ${dnm(days[6])}`;
+    const W0 = tms(D.w0), W1 = tms(D.w1), days = Array.from({ length: Math.max(1, Math.round((W1 - W0) / 1440)) }, (_, i) => dayOf(W0 + i * 1440));   // 11/10 사용자 '수요일로 자르지 마' — 오늘부터 1030 확정이 끝날 때까지
+    $('ws-wk').textContent = `${dnm(days[0])} ~ ${dnm(days[days.length - 1])}`;
     $('ws-wk').title = `${iso(W0)} ~ ${iso(W1)} (하루 = 07시 ~ 다음날 07시)`;
     const v = $('ws-ver');
     if (dirty) { v.className = 'ws-ver ed'; v.textContent = '고침 · 저장 전'; }
@@ -261,7 +261,7 @@
       const nb = CK ? CK.filter((c) => c.l === l && c.lv === 'bad').length : null;
       return `<button type="button" class="ws-k" data-l="${l}" aria-pressed="${l === line}"><div class="ln">${l}</div><div class="v">${js.length}<small>건</small> ${n0(js.reduce((s, q) => s + q.x.t, 0))}<small>t</small></div>`
         + `<div class="b">생산 <b>${hrs(run)}</b> · 전환 휴지 <b>${hrs(ch)}</b></div><div class="b">계획·직접 휴지 <b>${hrs(pl)}</b>${wt ? ` · 기다림 <b>${hrs(wt)}</b>` : ''}</div>`
-        + `<div class="b">${left >= 0 ? `남는 시간 <b>${hrs(left)}</b>` : `<span class="w">주 끝 ${hrs(-left)} 넘침</span>`}${nb != null ? ` · 점검 ${nb ? `<span class="w">위반 ${nb}</span>` : '<b>위반 0</b>'}` : ''}</div></button>`;
+        + `<div class="b">${left >= 0 ? `남는 시간 <b>${hrs(left)}</b>` : `<span class="w">기간 끝 ${hrs(-left)} 넘침</span>`}${nb != null ? ` · 점검 ${nb ? `<span class="w">위반 ${nb}</span>` : '<b>위반 0</b>'}` : ''}</div></button>`;
     }).join('');
     $('ws-kpis').querySelectorAll('.ws-k').forEach((b) => (b.onclick = () => { line = b.dataset.l; draw(); }));
     // 순서 표(요일별)
@@ -272,13 +272,13 @@
     const bar = (d) => { const b0 = tms(d + ' 07:00'); const seg = (a, z, c) => { const x0 = Math.max(0, a - b0), x1 = Math.min(1440, z - b0); return x1 > x0 ? `<i class="${c}" style="left:${(x0 / 14.4).toFixed(2)}%;width:${((x1 - x0) / 14.4).toFixed(2)}%"></i>` : ''; };
       return `<div class="dbar">${ev.map((q) => (q.k === 'j' ? seg(q.ds, q.s, 'd') + seg(q.s, q.e, 'r') : seg(q.s, q.e2 || q.e, q.k === 'p' ? (/샘플|test|시험/i.test(q.ev) ? 'p sm' : 'p') : q.k === 'g' ? 'd' : 'g'))).join('')}</div>`; };
     const dayHead = (d) => { const o = dsum[d] || { n: 0, t: 0, run: 0, dn: 0 }; const over = o.run + o.dn > 1440.5;
-      return `<tr class="dh" data-d="${d}"><td colspan="7"><div class="dhh"><b>${d === 'over' ? `주 끝(${md(iso(W1))} 07:00) 넘김` : dnm(d)}</b><span>작업 ${o.n}건 · ${n0(o.t)}t</span><span>생산 ${n0(o.run)}분 · 휴지 ${n0(o.dn)}분</span>${over && d !== 'over' ? `<em title="그날 시작한 작업·휴지 합이 1,440분 넘음">다음날로 ${n0(o.run + o.dn - 1440)}분</em>` : ''}</div>${d === 'over' ? '' : bar(d)}</td></tr>`; };
+      return `<tr class="dh" data-d="${d}"><td colspan="7"><div class="dhh"><b>${d === 'over' ? `기간 끝(${md(iso(W1))} 07:00) 넘김` : dnm(d)}</b><span>작업 ${o.n}건 · ${n0(o.t)}t</span><span>생산 ${n0(o.run)}분 · 휴지 ${n0(o.dn)}분</span>${over && d !== 'over' ? `<em title="그날 시작한 작업·휴지 합이 1,440분 넘음">다음날로 ${n0(o.run + o.dn - 1440)}분</em>` : ''}</div>${d === 'over' ? '' : bar(d)}</td></tr>`; };
     const shown = new Set();
     ev.forEach((q) => {
       const d = q.s >= W1 ? 'over' : dayOf(q.s);
       if (d !== curD) { days.filter((x) => x > (curD || '') && x < d && !shown.has(x)).forEach((x) => { h += dayHead(x); shown.add(x); }); h += dayHead(d); shown.add(d); curD = d; }
       if (q.k === 'p') { const sm = /샘플|test|시험/i.test(q.ev), nm = q.ev === 'plan' ? '휴지계획' : q.ev;   // 11/10 사용자 '샘플 부분 잘 보이게'
-        h += `<tr class="ev pz${sm ? ' sm' : ''}"><td></td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e)}</td><td colspan="4"><span class="pk">${esc(nm)}</span> ${sm ? '' : '계획 휴지 '}<b>${hrs(q.e - q.s)}</b>${sm ? ' — 이 시간엔 생산 작업 안 넣음' : ''}</td></tr>`; }
+        h += `<tr class="ev pz${sm ? ' sm' : ''}"><td></td><td></td><td class="tm">${q.e - q.s >= 1440 ? '<b>종일</b>' : `<b>${hhmm(q.s)}</b>–${hhmm(q.e)}`}</td><td colspan="4"><span class="pk">${esc(nm)}</span> ${sm ? '' : '계획 휴지 '}<b>${hrs(q.e - q.s)}</b>${sm ? ' — 이 시간엔 생산 작업 안 넣음' : ''}</td></tr>`; }
       else if (q.k === 'w') h += `<tr class="ev w"><td></td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e)}</td><td colspan="4">기다림 <b>${hrs(q.e - q.s)}</b> · ${esc(q.x.con)} 도료·PF 준비 ${md(q.x.ready)} 07:00</td></tr>`;
       else if (q.k === 'g') h += `<tr class="ev g" draggable="true" data-i="${q.i}"><td class="hd">⋮⋮</td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e2)}</td><td colspan="3">직접 넣은 휴지·더미 <input type="number" min="0" max="2880" step="5" data-a="gmin" data-i="${q.i}" value="${q.e.min}">분 <input class="nt" data-a="gnote" data-i="${q.i}" placeholder="사유(롤 교체·더미 등)" value="${esc(q.e.note || '')}"></td><td class="ac"><button data-a="up" data-i="${q.i}">↑</button><button data-a="dn" data-i="${q.i}">↓</button><button class="x" data-a="del" data-i="${q.i}">✕</button></td></tr>`;
       else {
@@ -289,7 +289,7 @@
       }
     });
     days.filter((x) => !shown.has(x)).forEach((x) => { h += dayHead(x); });
-    if (!ev.length) h += `<tr><td colspan="7" class="muted">이 라인에 이번 주 작업이 없습니다${D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}. 오른쪽 빠진 작업에서 넣을 수 있습니다.</td></tr>`;
+    if (!ev.length) h += `<tr><td colspan="7" class="muted">이 라인에 기간 안 작업이 없습니다${D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}. 오른쪽 빠진 작업에서 넣을 수 있습니다.</td></tr>`;
     $('ws-tbl').innerHTML = `<colgroup><col style="width:30px"><col style="width:44px"><col style="width:118px"><col style="width:196px"><col><col style="width:104px"><col style="width:${plant === 'cc' ? 176 : 150}px"></colgroup>` + h;
     drawPool(); drawCk(); bind();
   }
@@ -302,7 +302,7 @@
     const nm = POOLNM;
     const was = $('ws-pool').querySelector('details'), op = was ? was.open : false, sub = {};
     $('ws-pool').querySelectorAll('.pl-g').forEach((d) => { sub[d.dataset.k] = d.open; });
-    $('ws-pool').innerHTML = `<details${op ? ' open' : ''}><summary>${line} 이번 주에 못 넣은 작업 <span>${P.length}건 · ${n0(P.reduce((s, p) => s + p.x.t, 0))}t — 끌어다 놓거나 '넣기'</span></summary><div class="pl-cols">` + ord.filter((k) => G[k]).map((k) => `<details class="pl-g" data-k="${k}"${(k in sub ? sub[k] : k === 'out' || k === 'new' || k === 'over') ? ' open' : ''}><summary>${nm[k]} <span>${G[k].length}건 · ${n0(G[k].reduce((s, x) => s + x.t, 0))}t</span></summary><div class="pl-body">`
+    $('ws-pool').innerHTML = `<details${op ? ' open' : ''}><summary>${line} 기간 안에 못 넣은 작업 <span>${P.length}건 · ${n0(P.reduce((s, p) => s + p.x.t, 0))}t — 끌어다 놓거나 '넣기'</span></summary><div class="pl-cols">` + ord.filter((k) => G[k]).map((k) => `<details class="pl-g" data-k="${k}"${(k in sub ? sub[k] : k === 'out' || k === 'new' || k === 'over') ? ' open' : ''}><summary>${nm[k]} <span>${G[k].length}건 · ${n0(G[k].reduce((s, x) => s + x.t, 0))}t</span></summary><div class="pl-body">`
       + G[k].slice(0, 300).map((x) => `<div class="pl-i" draggable="true" data-id="${esc(x.id)}"><div><span class="cn">${esc(x.con || x.id)}</span>${plant === 'cc' && x.item ? ' <b>' + esc(x.item) + '</b>' : ''}<span class="sub"> · ${n1(x.t)}t${plant === 'cc' && x.len ? ' / ' + n0(x.len) + 'm' : ''}${plant === 'cg' ? (x.n > 1 ? ' · ' + x.n + '코일' : '') + (x.req ? ' · 예정 ' + md(x.req) : '') : (x.ready && x.ready > TODAY ? ' · ' + md(x.ready) + '부터 가능' : '')}${(plant === 'cg' ? x.dlv : x.due) ? ' · 납기 ' + md(plant === 'cg' ? x.dlv : x.due) : ''}</span><div class="sp">${chips(x)}</div></div><button data-a="add" data-id="${esc(x.id)}">넣기</button></div>`).join('')
       + (G[k].length > 300 ? `<div class="sub">외 ${G[k].length - 300}건</div>` : '') + '</div></details>').join('') + '</div></details>';
   }
@@ -351,7 +351,7 @@
     const P = $('ws-pool');
     P.querySelectorAll('.pl-i').forEach((d) => { d.ondragstart = (e) => { drag = { from: 'pool', id: d.dataset.id }; try { e.dataTransfer.setData('text/plain', 'x'); } catch (er) { /* 무시 */ } }; });
     P.querySelectorAll('button[data-a="add"]').forEach((b) => (b.onclick = () => {
-      const x = J[b.dataset.id], d = prompt(`넣을 날(수~화 중) — 예: ${md(dayOf(tms(D.w0)))}`, md(dayOf(tms(D.w0))));
+      const x = J[b.dataset.id], d = prompt(`넣을 날 — 예: ${md(dayOf(tms(D.w0)))}`, md(dayOf(tms(D.w0))));
       if (d == null) return;
       const m = String(d).match(/(\d+)\/(\d+)/); const day = m ? `${D.week.slice(0, 4)}-${String(m[1]).padStart(2, '0')}-${String(m[2]).padStart(2, '0')}` : dayOf(tms(D.w0));
       insertAtDay(plant === 'cc' ? line : x.line, { k: 'j', id: x.id }, day); touch();
@@ -406,7 +406,7 @@
     if (!DATA[p]) { const env = await GP.latest(`week_seq_${p}.enc.json`); if (!env) throw new Error('자료 없음'); DATA[p] = await GP.decryptJSON(env, PW); }
     D = DATA[p]; R = D.rules; J = {}; D.jobs.forEach((x) => { J[x.id] = x; });
     line = LINES[p].find((l) => (D.lines[l].seq || []).length) || LINES[p][0];
-    $('ws-meta').textContent = `자료 ${D.now} 기준 · 초안 만든 시각 ${D.built} · 하루 = 07시 ~ 다음날 07시(수 07:00 ~ 다음 수 07:00 = 수~화 7일)`;
+    $('ws-meta').textContent = `자료 ${D.now} 기준 · 초안 만든 시각 ${D.built} · 하루 = 07시 ~ 다음날 07시 · 기간 = 오늘부터 7일(컬러는 1030 확정 작업이 끝날 때까지)`;
     $('ws-miss').innerHTML = (D.missing || []).length ? `<div class="miss">${(D.missing || []).map(esc).join('<br>')}</div>` : '';
     await loadVers();
     const last = VERS[VERS.length - 1];
