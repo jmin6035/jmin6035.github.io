@@ -309,6 +309,23 @@ def seed_acc():
         print(f'누적본 복구 실패(계속 진행): {e}')
 
 
+def kill_stale_browsers():
+    """11/9: 앞 실행에서 멈춘 자동화 브라우저(Chrome/Edge)가 남아 있으면 새 실행이 MES 첫 화면부터 응답 없음(120초)으로 죽음 →
+    자동화로 띄운 창(명령줄에 --test-type=webdriver)과 드라이버만 끔. 사용자가 직접 연 브라우저는 건드리지 않음"""
+    if os.name != 'nt':
+        return
+    ps = ("$n=0; Get-CimInstance Win32_Process | Where-Object { ($_.Name -in @('chrome.exe','msedge.exe') -and $_.CommandLine -match '--test-type=webdriver') "
+          "-or $_.Name -in @('chromedriver.exe','msedgedriver.exe') } | ForEach-Object { try { Stop-Process -Id $_.ProcessId -Force -ErrorAction Stop; $n++ } catch {} }; $n")
+    try:
+        r = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps], capture_output=True, text=True, errors='replace', timeout=60)
+        n = (r.stdout or '').strip().splitlines()[-1:] or ['0']
+        if n[0] not in ('0', ''):
+            print(f'남아 있던 자동화 브라우저·드라이버 {n[0]}개 끔')
+            time.sleep(3)
+    except Exception as e:
+        print(f'남은 브라우저 정리 실패(계속): {e}')
+
+
 def ensure_tasks():
     """예약 작업 자가 점검(2026-11-09): 'CGL auto'·'CGL remote' 가 없거나 다른 폴더를 가리키면 이 폴더로 다시 등록. 상태는 실행 기록에 남김"""
     if os.name != 'nt':
@@ -360,6 +377,7 @@ def main():
     self_update()
     ensure_tasks()
     seed_acc()
+    kill_stale_browsers()
     today = datetime.date.today()
     months = []                                          # 재고현황 조회 달(⑤에서 채움)
     d1 = a.d1 or (today - datetime.timedelta(days=1)).strftime('%Y%m%d')
@@ -1598,6 +1616,18 @@ if __name__ == '__main__':
         import traceback
         traceback.print_exc()
         code = f'{type(e).__name__}: {e}'
+        # 11/9: 브라우저가 응답 없음(Read timed out)으로 죽으면 남은 자동화 브라우저를 끄고 한 번 더 처음부터(실행 기록은 다시 실행한 쪽이 올림)
+        if ('timed out' in str(e).lower() or 'Timeout' in type(e).__name__ or 'MaxRetry' in type(e).__name__) and not os.environ.get('CGL_RETRY') \
+                and '--register' not in sys.argv:
+            print('브라우저 응답 없음 → 남은 브라우저를 끄고 한 번 더 실행')
+            try:
+                kill_stale_browsers()
+            except Exception:
+                pass
+            sys.stdout.flush()
+            SKIP_PUSH = True
+            code = subprocess.call([sys.executable, os.path.join(HERE, 'mes_download.py')] + sys.argv[1:], cwd=HERE,
+                                   env=dict(os.environ, CGL_RETRY='1', CGL_UPDATED='1', PYTHONUTF8='1', PYTHONUNBUFFERED='1'))
     finally:
         if '--register' not in sys.argv and not SKIP_PUSH:
             push_log(code)
