@@ -309,6 +309,33 @@ def seed_acc():
         print(f'누적본 복구 실패(계속 진행): {e}')
 
 
+_LOCK = None
+
+
+def acquire_lock():
+    """한 번에 하나만(11/9): 07:35 전체 실행이 길어질 때 2시간 원격 조회가 겹치면 같은 MES 계정 두 창 + 시작 정리가 앞 실행의 브라우저를 끔 →
+    잠금 파일(Windows 파일 잠금 — 프로세스가 끝나면 자동으로 풀림)이 잡혀 있으면 이번 실행은 건너뜀"""
+    global _LOCK, SKIP_PUSH
+    if os.environ.get('CGL_LOCKED') or os.name != 'nt':
+        return True
+    try:
+        import msvcrt
+        os.makedirs(os.path.join(HERE, 'out'), exist_ok=True)
+        f = open(os.path.join(HERE, 'out', 'run.lock'), 'a+')
+        f.seek(0)
+        msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+        _LOCK = f
+        os.environ['CGL_LOCKED'] = '1'                   # 다시 실행(업데이트·재시도)하는 자식은 잠금 건너뜀
+        return True
+    except OSError:
+        print('다른 실행이 아직 돌고 있음 → 이번 실행은 건너뜀')
+        SKIP_PUSH = True
+        return False
+    except Exception as e:
+        print(f'잠금 확인 실패(계속): {e}')
+        return True
+
+
 def kill_stale_browsers():
     """11/9: 앞 실행에서 멈춘 자동화 브라우저(Chrome/Edge)가 남아 있으면 새 실행이 MES 첫 화면부터 응답 없음(120초)으로 죽음 →
     자동화로 띄운 창(명령줄에 --test-type=webdriver)과 드라이버만 끔. 사용자가 직접 연 브라우저는 건드리지 않음"""
@@ -374,6 +401,8 @@ def main():
     a = ap.parse_args()
     if a.register:
         sys.exit(register_task())
+    if not acquire_lock():
+        sys.exit(0)
     self_update()
     ensure_tasks()
     seed_acc()
@@ -1256,15 +1285,18 @@ def main():
         driver.find_element(By.XPATH, '//*[@id="loginsubmit"]').click()
         time.sleep(8)
 
-    def revive():
+    def revive(force=False):
         """11/9: 재고현황 화면에서 브라우저가 멈춰(응답 없음 120초) 판매생산속보에서 실행 전체가 죽고 업로드가 하나도 안 됐음 →
         브라우저가 응답하지 않으면 새로 띄워 다시 로그인하고 남은 화면을 계속"""
         nonlocal driver
-        try:
-            driver.execute_script('return 1')
-            return
-        except Exception as e:
-            print(f'  브라우저 응답 없음 → 새로 띄워 다시 로그인 ({str(e).splitlines()[0][:100] if str(e) else type(e).__name__})')
+        if not force:
+            try:
+                driver.execute_script('return 1')
+                return
+            except Exception as e:
+                print(f'  브라우저 응답 없음 → 새로 띄워 다시 로그인 ({str(e).splitlines()[0][:100] if str(e) else type(e).__name__})')
+        else:
+            print('  브라우저를 새로 띄워 다시 로그인')
         try:
             driver.quit()
         except Exception:
@@ -1272,19 +1304,45 @@ def main():
         driver = make_driver()
         login()
 
-    try:
-        login()
-        if a.remote_only:                                   # 원격 조회만: 쿼리 화면 → 조회 목록 실행 → 끝
-            menu('쿼리')
-            box = frame_with('//*[@id="QUERY_CONTTextArea"]')
-            if box is None:
-                raise RuntimeError('쿼리 입력창을 찾지 못함')
+    qbox = [None]
 
-            def run_sql(sql):
-                box.send_keys(Keys.CONTROL + 'a', Keys.BACKSPACE)
-                time.sleep(0.5)
-                box.send_keys(sql)
-                driver.execute_script('arguments[0].click();', driver.find_element(By.XPATH, '//*[@id="mnuCust1Btn"]/span'))
+    def open_query():
+        """쿼리 화면 열기 — 11/9: 첫 화면이 응답 없음(120초)으로 실행 전체가 죽었음 → 안 되면 브라우저를 새로 띄워 한 번 더"""
+        for k in (0, 1):
+            try:
+                if k:
+                    revive(force=True)
+                menu('쿼리')
+                qbox[0] = frame_with('//*[@id="QUERY_CONTTextArea"]')
+                if qbox[0] is not None:
+                    return
+                raise RuntimeError('쿼리 입력창을 찾지 못함')
+            except Exception as e:
+                print(f'  ⚠ 쿼리 화면: {str(e).splitlines()[0][:150] if str(e) else type(e).__name__}' + (' → 다시 시도' if not k else ''))
+                if k:
+                    raise
+
+    def run_sql(sql):
+        box = qbox[0]
+        box.send_keys(Keys.CONTROL + 'a', Keys.BACKSPACE)
+        time.sleep(0.5)
+        box.send_keys(sql)
+        driver.execute_script('arguments[0].click();', driver.find_element(By.XPATH, '//*[@id="mnuCust1Btn"]/span'))
+
+    try:
+        for k in (0, 1):                                    # 로그인도 한 번 더(브라우저 새로)
+            try:
+                if k:
+                    revive(force=True)
+                else:
+                    login()
+                break
+            except Exception as e:
+                print(f'  ⚠ 로그인: {str(e).splitlines()[0][:150] if str(e) else type(e).__name__}' + (' → 브라우저 새로 띄워 다시' if not k else ''))
+                if k:
+                    raise
+        if a.remote_only:                                   # 원격 조회만: 쿼리 화면 → 조회 목록 실행 → 끝
+            open_query()
             remote_queries(run_sql)
             raise RemoteOnlyDone()
         if a.stock_manual:                                  # 사람이 화면을 열고 조회 → 엔터 → 표를 읽어 저장
@@ -1320,22 +1378,22 @@ def main():
         if not a.stock_only:
             # ①② 쿼리 화면
             print(f'쿼리 화면 — 기간 {d0} ~ {d1}')
-            menu('쿼리')
-            box = frame_with('//*[@id="QUERY_CONTTextArea"]')
-            if box is None:
-                raise RuntimeError('쿼리 입력창을 찾지 못함')
-            def run_sql(sql):
-                box.send_keys(Keys.CONTROL + 'a', Keys.BACKSPACE)
-                time.sleep(0.5)
-                box.send_keys(sql)
-                driver.execute_script('arguments[0].click();', driver.find_element(By.XPATH, '//*[@id="mnuCust1Btn"]/span'))
-            # 생산은 10일씩(하루 최대 ~540코일 → 10일 ≤ 5,400행), 휴지는 행이 적어 15일씩
+            open_query()
+            # 생산은 10일씩(하루 최대 ~540코일 → 10일 ≤ 5,400행), 휴지는 행이 적어 15일씩. 11/9: 실패하면 브라우저 새로 → 한 번 더, 그래도 안 되면 건너뜀(누적본 유지)
             for name, mk, step in [('q_prod.xlsx', q_prod, 10), ('q_brk.xlsx', q_brk, 15)]:
                 print(f'▶ {name}')
-                if run_chunks(name[:-5], 'gridQueryRslt', lambda c0, c1: run_sql(mk(c0, c1)), step) is None:
-                    run_sql(mk(d0, d1))
-                    time.sleep(15)
-                    export('//*[@id="row0gridQueryRslt"]/div[1]', name)
+                for k in (0, 1):
+                    try:
+                        if k:
+                            revive(force=True)
+                            open_query()
+                        if run_chunks(name[:-5], 'gridQueryRslt', lambda c0, c1: run_sql(mk(c0, c1)), step) is None:
+                            run_sql(mk(d0, d1))
+                            time.sleep(15)
+                            export('//*[@id="row0gridQueryRslt"]/div[1]', name)
+                        break
+                    except Exception as e:
+                        print(f'  ⚠ {name}: {str(e).splitlines()[0][:150] if str(e) else type(e).__name__}' + (' → 다시 시도' if not k else ' → 건너뜀'))
             # ④ 분석용 추가 자료(컬러 생산·휴지, 출하, 재고 추이) — 실패해도 도금 자동 실행에는 영향 없음
             if not a.no_extra:
                 for name, mk, step in [('color_prod', q_color, 7), ('color_brk', q_color_brk, 7), ('ship', q_ship, 7), ('stock_trend', q_stock_trend, 100)] + STOCK_RPT:
@@ -1350,37 +1408,42 @@ def main():
                     remote_queries(run_sql)
                 except Exception as e:
                     print(f'  ⚠ 원격 조회 목록: 실패 — 건너뜀 ({str(e).splitlines()[0][:150] if str(e) else type(e).__name__})')
-            # ③ 생산실적 조회(도금) 화면
-            print('▶ screen_prod.xlsx (생산실적 조회)')
-            menu('생산실적 조회')
-            if frame_with('//*[@id="dropdownlistContentS_PLT_CLS"]') is None:
-                raise RuntimeError('생산실적 조회 화면을 찾지 못함')
-            driver.execute_script("try { var jq = window.$ || window.jQuery; var dd = jq('#S_PLT_CLS'); var it = dd.jqxDropDownList('getItems'); "
-                                  "for (var i = 0; i < it.length; i++) { if (it[i].label.indexOf('도금') !== -1) { dd.jqxDropDownList('selectIndex', it[i].index); break; } } } catch (e) {}")
-            time.sleep(1)
-            SET_DATE_JS = r'''
-              var jq = window.$ || window.jQuery, s = arguments[1], out = [];
-              ['S_PRD_DT_FR', 'S_PRD_DT_TO'].forEach(function (id, i) {
-                var v = s[i], d = new Date(+v.slice(0, 4), +v.slice(4, 6) - 1, +v.slice(6, 8));
-                try { jq('#' + id).jqxDateTimeInput('setDate', d); out.push(jq('#' + id).jqxDateTimeInput('getText')); } catch (e) { out.push(null); }
-              });
-              return out;'''
+            revive()
+            # ③ 생산실적 조회(도금) 화면 — 11/9: 실패해도 실행 전체를 멈추지 않음(쿼리 코일 자료로 계산 가능)
+            try:
+                print('▶ screen_prod.xlsx (생산실적 조회)')
+                menu('생산실적 조회')
+                if frame_with('//*[@id="dropdownlistContentS_PLT_CLS"]') is None:
+                    raise RuntimeError('생산실적 조회 화면을 찾지 못함')
+                driver.execute_script("try { var jq = window.$ || window.jQuery; var dd = jq('#S_PLT_CLS'); var it = dd.jqxDropDownList('getItems'); "
+                                      "for (var i = 0; i < it.length; i++) { if (it[i].label.indexOf('도금') !== -1) { dd.jqxDropDownList('selectIndex', it[i].index); break; } } } catch (e) {}")
+                time.sleep(1)
+                SET_DATE_JS = r'''
+                  var jq = window.$ || window.jQuery, s = arguments[1], out = [];
+                  ['S_PRD_DT_FR', 'S_PRD_DT_TO'].forEach(function (id, i) {
+                    var v = s[i], d = new Date(+v.slice(0, 4), +v.slice(4, 6) - 1, +v.slice(6, 8));
+                    try { jq('#' + id).jqxDateTimeInput('setDate', d); out.push(jq('#' + id).jqxDateTimeInput('getText')); } catch (e) { out.push(null); }
+                  });
+                  return out;'''
 
-            def run_screen(c0, c1):
-                got = driver.execute_script(SET_DATE_JS, None, [c0, c1])
-                if not got or None in got:                   # 날짜 위젯 함수가 없으면 키보드 입력
-                    for xp, v in (('//*[@id="inputS_PRD_DT_FR"]', c0), ('//*[@id="inputS_PRD_DT_TO"]', c1)):
-                        el = driver.find_element(By.XPATH, xp)
-                        el.click()
-                        el.send_keys(Keys.CONTROL + 'a', Keys.BACKSPACE, fmt(v), Keys.TAB)
-                    got = [driver.find_element(By.XPATH, '//*[@id="inputS_PRD_DT_FR"]').get_attribute('value'),
-                           driver.find_element(By.XPATH, '//*[@id="inputS_PRD_DT_TO"]').get_attribute('value')]
-                want = [fmt(c0), fmt(c1)]
-                if [str(x or '').replace('/', '-').replace('.', '-')[:10] for x in got] != want:
-                    print(f'    ⚠ 화면 날짜가 {got} 로 들어감(원한 값 {want})')
-                driver.execute_script('arguments[0].click();', WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="mnuSearchBtn"]/span'))))
-            if run_chunks('screen_prod', None, run_screen, 10) is None:
-                export("//div[contains(@class, 'jqx-grid-cell')]", 'screen_prod.xlsx')
+                def run_screen(c0, c1):
+                    got = driver.execute_script(SET_DATE_JS, None, [c0, c1])
+                    if not got or None in got:                   # 날짜 위젯 함수가 없으면 키보드 입력
+                        for xp, v in (('//*[@id="inputS_PRD_DT_FR"]', c0), ('//*[@id="inputS_PRD_DT_TO"]', c1)):
+                            el = driver.find_element(By.XPATH, xp)
+                            el.click()
+                            el.send_keys(Keys.CONTROL + 'a', Keys.BACKSPACE, fmt(v), Keys.TAB)
+                        got = [driver.find_element(By.XPATH, '//*[@id="inputS_PRD_DT_FR"]').get_attribute('value'),
+                               driver.find_element(By.XPATH, '//*[@id="inputS_PRD_DT_TO"]').get_attribute('value')]
+                    want = [fmt(c0), fmt(c1)]
+                    if [str(x or '').replace('/', '-').replace('.', '-')[:10] for x in got] != want:
+                        print(f'    ⚠ 화면 날짜가 {got} 로 들어감(원한 값 {want})')
+                    driver.execute_script('arguments[0].click();', WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="mnuSearchBtn"]/span'))))
+                if run_chunks('screen_prod', None, run_screen, 10) is None:
+                    export("//div[contains(@class, 'jqx-grid-cell')]", 'screen_prod.xlsx')
+            except Exception as e:
+                print(f'  ⚠ 생산실적 조회: 실패 — 건너뜀 ({str(e).splitlines()[0][:150] if str(e) else type(e).__name__})')
+            revive()
         # ⑤ 재고현황 [SMKTF1030] — 조회기준 '기준월', 월별로 조회해 합침(사용자 안내 2026-10-02)
         if not a.no_extra:
             MONTH_JS = r"""
@@ -1582,7 +1645,10 @@ def main():
                     driver.get(mes_url)
                     time.sleep(6)
     finally:
-        driver.quit()
+        try:
+            driver.quit()                                   # 11/9: 멈춘 브라우저면 quit 도 오류 → 그래도 계산·업로드는 계속
+        except Exception:
+            pass
         shutil.rmtree(dl, ignore_errors=True)
     print('받은 파일:', ok_files, '/ 분석용:', extra_files)
     if len(ok_files) < 3 and not a.stock_only and not a.probe and not a.stock_manual:
