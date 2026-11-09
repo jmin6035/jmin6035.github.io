@@ -7,6 +7,15 @@
   const diff = (a, b) => Math.round((new Date(a + 'T00:00:00Z') - new Date(b + 'T00:00:00Z')) / 864e5);
   const G_CODES = 'FHNTY';
   const plantOf = (code) => (G_CODES.includes(code) ? 'G' : 'C');
+  // 11/9 회의 F14·E3·E4: 발주 마감 = 정해진 발주일 — 창구(매월 a~b일) 유형은 그 창구, P-FH 는 매주 화요일, 그 외 매주 월요일(tools/mat_order_spec.py order_day 와 같은 규칙)
+  const ORDER_WIN = { '수입-FH': [10, 20], '수입AZ': [10, 20], '수입GI': [10, 20], '서림GI': [1, 10], '동종AZ': [10, 15], '동종GI': [10, 15], 'P-MAC': [1, 5] };
+  const orderDay = (x, cls) => {
+    if (!x) return x;
+    const w = ORDER_WIN[cls], d = +x.slice(8, 10);
+    if (w) { if (d > w[1]) return x.slice(0, 8) + String(w[1]).padStart(2, '0'); if (d >= w[0]) return x; const p = addD(x.slice(0, 8) + '01', -1); return p.slice(0, 8) + String(w[1]).padStart(2, '0'); }
+    const wd = (new Date(x + 'T00:00:00Z').getUTCDay() + 6) % 7, k = (wd - (/^P-FH/.test(cls || '') ? 1 : 0) + 7) % 7;
+    return addD(x, -k);
+  };
   function make(ctx) {
     /* ---------- 저장 상태 ---------- */
     function defaults() {
@@ -72,7 +81,7 @@
         const dec = S.dec[u.key] || {};
         // 업체별 나눔(2026-10-14): 부족량을 27년 배정 비중대로 나눔(사양 맞는 업체만, 배정 없으면 균등) → 리드타임 안에 못 맞추는 업체 몫은 맞추는 업체로 넘김(배정 비중대로) → 담당자가 업체별 수량을 고치면 그 값
         const elig = cand.filter(specOk), wsum = elig.reduce((a, x) => a + (+x.share || 0), 0);
-        const split = elig.map((x) => ({ s: x, t: short * (wsum > 0 ? (+x.share || 0) / wsum : 1 / elig.length), late: +x.lt > left, moved: 0, dl: addD(needBy, -x.lt) }));
+        const split = elig.map((x) => { const dl = orderDay(addD(needBy, -x.lt), x.cls); return { s: x, t: short * (wsum > 0 ? (+x.share || 0) / wsum : 1 / elig.length), late: dl < S.today, moved: 0, dl }; });
         const okP = split.filter((x) => !x.late), lateT = split.filter((x) => x.late).reduce((a, x) => a + x.t, 0);
         if (lateT > 0 && okP.length) {
           const ow = okP.reduce((a, x) => a + (+x.s.share || 0), 0);
@@ -89,11 +98,11 @@
         else if (!okP.length) kind = S.arr.some((a) => a.code === u.code && plantOf(a.code) === u.plant) || autoArr().some((a) => a.code === u.code && a.plant === u.plant) ? 'adjust' : 'check';   // 그 소재 기발주를 넣었으면 '조정', 아니면 '기발주 확인'
         else if (lateT >= 1) kind = 'alt';
         else kind = 'normal';
-        const deadline = parts.length ? parts.map((x) => x.dl).sort()[0] : (cand[0] ? addD(needBy, -cand[0].lt) : null);
+        const deadline = parts.length ? parts.map((x) => x.dl).sort()[0] : (cand[0] ? orderDay(addD(needBy, -cand[0].lt), cand[0].cls) : null);
         return { ...u, needBy, left, short: POS ? 0 : short, cover, cand, feas, rec, kind, deadline, dec, specOk, split, parts: POS || short < 1 ? [] : parts };
       });
     }
     return { defaults, load, save, units, monday, autoArr, judge };
   }
-  window.ProcCalc = { make, ST_KEY, plantOf, addD, diff };
+  window.ProcCalc = { make, ST_KEY, plantOf, addD, diff, orderDay };
 })();

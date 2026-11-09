@@ -6,7 +6,7 @@
 <title>소재 캘린더</title>
 <meta name="description" content="일별 가동 · 자가재 · 구매 소재(발주·입고·재고) · 제품 재고를 한 달력에서">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611091505">
+<link rel="stylesheet" href="ui/theme.css?v=2611091622">
 <style>
 .sbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 10px; font-size: 13.5px; color: var(--ink-2); }
 .sbar b { color: var(--ink); }
@@ -171,6 +171,7 @@ table.sc td.inb2 { background: var(--pt-inb); color: var(--pt-inbT); font-weight
 table.sc td.lo { background: var(--warn-bg); color: var(--warn); font-weight: 800; }
 table.sc td.neg { background: var(--bad-bg); color: var(--bad); font-weight: 800; }
 table.sc td.dl { outline: 2px solid var(--bad); outline-offset: -2px; }
+#s-cal2 tr.sec td.lb { overflow: visible; }   /* 11/10: 묶음 제목('자가재 재고 (도금 → 컬러 소재, 기말)')이 왼쪽 칸 폭에서 잘리던 것 — 옆 빈 칸 위로 이어 씀 */
 #s-cal2 tr.sub td.lb { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 6px; }
 #s-cal2 tbody td:not(.lb) { font-variant-numeric: tabular-nums; }
 
@@ -197,6 +198,8 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
 .oj-mx tr.oj-gst td{background:var(--surface-2,#f7f8fa);font-size:13.5px;border-bottom:2px solid var(--line,#ccc)}.oj-mx tr.oj-gst .oj-dot{padding:1px 8px}.oj-mx tr.oj-gst .oj-gn{font-size:13.5px;font-weight:700;margin-top:2px}
 .oj-mx td.oj-sup{font-size:13.5px;color:var(--ink-2,#555);white-space:normal;word-break:keep-all;min-width:120px}
 .oj-h{margin:16px 0 6px;font-size:16px}.oj-det{margin-top:14px}.oj-det summary{cursor:pointer;font-weight:700}
+.oj-t.oj-mx{table-layout:auto}.oj-t.oj-mx th{word-break:keep-all;vertical-align:bottom}.oj-t.oj-mx td.nw .oj-nx,.oj-t.oj-mx td.nw .oj-now{white-space:nowrap}
+.oj-nx{font-size:13.5px;color:var(--ink-2,#555);font-weight:600}.oj-now{display:inline-block;margin-top:2px;font-size:13.5px;font-weight:800;color:#fff;background:var(--bad,#c92a2a);border-radius:999px;padding:0 8px}.oj-def{display:inline-block;font-size:13.5px;font-weight:700;color:var(--warn,#b35c00);background:var(--warn-bg,#fff3e0);border-radius:6px;padding:0 5px}
 .oj-t{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}.oj-t th{background:var(--surface-2,#f4f6f8);font-weight:600;color:var(--muted,#555)}.oj-t th,.oj-t td{border-bottom:1px solid var(--grid,#e8ebef);text-align:center}.oj-t td.r,.oj-t th.r{text-align:right}.oj-t caption{text-align:left;padding:4px 2px}.oj-t td,.oj-t th{padding:5px 8px;vertical-align:middle}.nw{white-space:nowrap}.neg{color:#c92a2a}
 </style>
 </head>
@@ -236,10 +239,10 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2611091505"></script>
-<script src="engine/crypto.js?v=2611091505"></script>
-<script src="ui/cal.js?v=2611091505"></script>
-<script src="ui/proccalc.js?v=2611091505"></script>
-<script src="supply.js?v=2611091505"></script>
+<script src="ui/shell.js?v=2611091622"></script>
+<script src="engine/crypto.js?v=2611091622"></script>
+<script src="ui/cal.js?v=2611091622"></script>
+<script src="ui/proccalc.js?v=2611091622"></script>
+<script src="supply.js?v=2611091622"></script>
 </body>
 </html>

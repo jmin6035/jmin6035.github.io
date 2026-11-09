@@ -13,7 +13,7 @@
   const PLANT = document.body.dataset.plant === 'G' ? 'G' : 'C';
   const CFG = PLANT === 'G'
     ? { L: ['1CGL', '2CGL'], file: 'plating_actual.enc.json', name: '도금', prodHead: '제품 · 강종',
-        stopNote: 'MES 휴지 실적의 사유로 분류 — 강종 전환(Mode change) / 정기수리(SINK ROLL 교체 등) / 설비·운전(기계·전기·운전이상) / 기타. 시간은 더미 코일 포함, 톤은 더미 제외.' }
+        stopNote: 'MES 휴지 실적의 사유로 분류 — 강종 전환 / 정기수리(싱크롤 교체 등) / 설비·운전(기계·전기·운전이상) / 기타. 시간은 더미 코일 포함, 톤은 더미 제외.' }
     : { L: ['1CCL', '2CCL', '3CCL', '4CCL'], file: 'color_actual.enc.json', name: '컬러', prodHead: '품명',
         stopNote: '휴지 사유 메모(SPL_REM)의 키워드로 분류 — 색상교체·청소 / 테스트·도막조정 / 폭·롤·두께 전환 / 기타. 주간 보고와 같은 기준.' };
   const L = CFG.L;
@@ -36,16 +36,21 @@
   const S0 = (k) => O.lines.reduce((a, x) => a + (x.w0[k] || 0), 0), S1 = (k) => O.lines.reduce((a, x) => a + (x.w1[k] || 0), 0);
   function lineTable() {
     const M = Object.fromEntries(O.month.rows.map((x) => [x.line, x]));
+    const SH = (w, l) => (O.stops && O.stops[w] && O.stops[w][l] ? O.stops.cats.reduce((a, c) => a + (O.stops[w][l][c] || 0), 0) : null);   // 11/10 점검: 휴지 칸 = 아래 '휴지 구성' 합계와 같은 값(휴지 실적 ÷ 7일)
     const rows = O.lines.map((x, i) => {
-      const m = M[x.line] || {}; const r = m.sched ? m.actual / m.sched : null;
+      const m = M[x.line] || {}; const r = m.sched ? m.actual / m.sched : null, off = !x.w1.days;
       return `<tr><td class="l nm"><i class="dot" style="background:${COL[i]}"></i>${x.line}</td><td>${n0(m.month)}</td><td>${n0(m.sched)}</td><td><b>${n0(m.actual)}</b></td>
         <td class="pbar">${r != null ? `<div><i class="${r >= 0.98 ? 'ok' : r >= 0.9 ? 'wn' : 'bd'}" style="width:${Math.min(100, r * 100)}%"></i></div><b>${(r * 100).toFixed(1)}%</b>` : '<span class="muted">일정 없음</span>'}</td>
-        <td>${n0(x.w0.tpd)}</td><td><b>${n0(x.w1.tpd)}</b></td><td>${!x.w1.days ? '<span class="muted" title="지난주 가동일 0일 — 계획휴지·수리">휴지</span>' : dl(pct(x.w1.tpd, x.w0.tpd))}</td><td>${n1(x.w0.tph)} → <b>${n1(x.w1.tph)}</b></td><td>${x.w0.thick ? x.w0.thick.toFixed(2) : '-'} → ${x.w1.thick ? x.w1.thick.toFixed(2) : '-'}</td><td>${n1(x.w0.stopH)} → <b>${n1(x.w1.stopH)}</b></td><td>${n1(x.w1.days)}</td></tr>`;
+        <td>${n0(x.w0.tpd)}</td><td><b>${n0(x.w1.tpd)}</b></td><td>${!x.w1.days ? '<span class="muted" title="지난주 가동일 0일 — 계획휴지·수리">휴지</span>' : dl(pct(x.w1.tpd, x.w0.tpd))}</td><td>${n1(x.w0.tph)} → <b>${off ? '휴지' : n1(x.w1.tph)}</b></td><td>${x.w0.thick ? x.w0.thick.toFixed(2) : '-'} → ${off ? '휴지' : x.w1.thick ? x.w1.thick.toFixed(2) : '-'}</td><td>${n1(SH('w0', x.line))} → <b>${off ? '휴지' : n1(SH('w1', x.line))}</b></td><td>${n1(x.w1.days)}</td></tr>`;
     }).join('');
     const t = O.month.rows.find((x) => /계$/.test(x.line));
-    return card('ca-line', '라인별 진도 · 주간 비교', `이번 달 = MES 판매생산속보 ${O.month.asOf || ''} · 주간 = 지난주 vs ${BW()} 평균`, '단위: 톤', `<div class="scroll"><table class="t big"><thead><tr><th class="l" rowspan="2">라인</th><th colspan="4">${MON()}월 진도 (MES 월차계획)</th><th colspan="3">생산 t/일</th><th rowspan="2">속도 t/hr <small>정지 포함</small></th><th rowspan="2">평균 두께 mm</th><th rowspan="2">휴지 h/가동일</th><th rowspan="2">가동일 <small>지난주</small></th></tr>
+    const TPH = (w) => { const L2 = O.lines.filter((x) => x[w].tpd > 0 && x[w].tph); const h = L2.reduce((a, x) => a + x[w].tpd / x[w].tph, 0); return h ? L2.reduce((a, x) => a + x[w].tpd, 0) / h : null; };   // 계 속도 = 전체 톤 ÷ 전체 시간(라인 속도 합 아님)
+    const SHA = (w) => { const L2 = O.lines.filter((x) => w === 'w0' || x.w1.days); return L2.length ? L2.reduce((a, x) => a + (SH(w, x.line) || 0), 0) / L2.length : null; };
+    const mes = (O.month.rows || []).some((x) => x.src === 'MES');
+    if (t && mes) t.actual = O.lines.reduce((a, x) => a + Math.round((M[x.line] || {}).actual || 0), 0);   // 계 = 라인 값(반올림)의 합 — 월별 표 합계와 같은 값(14,976 vs 14,975 방지)
+    return card('ca-line', '라인별 진도 · 주간 비교', `월차·일정 = 판매생산속보 ${O.month.asOf || ''}${mes ? ` · 실적 = MES 코일(~${md(O.asOf)})` : ''} · 주간 = 지난주 vs ${BW()} 평균`, '단위: 톤', `<div class="scroll"><table class="t big"><thead><tr><th class="l" rowspan="2">라인</th><th colspan="4">${MON()}월 진도 (MES 월차계획)</th><th colspan="3">생산 t/일</th><th rowspan="2">속도 t/hr <small>정지 포함</small></th><th rowspan="2">평균 두께 mm</th><th rowspan="2">휴지 h/일</th><th rowspan="2">가동일 <small>지난주</small></th></tr>
       <tr><th>월차</th><th>일정 누계</th><th>실적 누계</th><th>달성률</th><th>${BW()} 평균</th><th>지난주</th><th>증감</th></tr></thead><tbody>${rows}
-      ${t ? `<tr class="total"><td class="l">${CFG.name} 계</td><td>${n0(t.month)}</td><td>${n0(t.sched)}</td><td>${n0(t.actual)}</td><td class="pbar">${t.sched ? `<div><i class="${t.actual / t.sched >= 0.98 ? 'ok' : t.actual / t.sched >= 0.9 ? 'wn' : 'bd'}" style="width:${Math.min(100, t.actual / t.sched * 100)}%"></i></div><b>${(t.actual / t.sched * 100).toFixed(1)}%</b>` : '<span class="muted">일정 없음</span>'}</td><td>${n0(S0('tpd'))}</td><td><b>${n0(S1('tpd'))}</b></td><td>${dl(pct(S1('tpd'), S0('tpd')))}</td><td>${n1(S0('tph'))} → <b>${n1(S1('tph'))}</b> <small class="muted">합</small></td><td></td><td>${n1(S0('stopH') / L.length)} → <b>${n1(S1('stopH') / L.length)}</b> <small class="muted">평균</small></td><td></td></tr>` : ''}</tbody></table></div>
+      ${t ? `<tr class="total"><td class="l">${CFG.name} 계</td><td>${n0(t.month)}</td><td>${n0(t.sched)}</td><td>${n0(t.actual)}</td><td class="pbar">${t.sched ? `<div><i class="${t.actual / t.sched >= 0.98 ? 'ok' : t.actual / t.sched >= 0.9 ? 'wn' : 'bd'}" style="width:${Math.min(100, t.actual / t.sched * 100)}%"></i></div><b>${(t.actual / t.sched * 100).toFixed(1)}%</b>` : '<span class="muted">일정 없음</span>'}</td><td>${n0(S0('tpd'))}</td><td><b>${n0(S1('tpd'))}</b></td><td>${dl(pct(S1('tpd'), S0('tpd')))}</td><td>${n1(TPH('w0'))} → <b>${n1(TPH('w1'))}</b></td><td></td><td>${n1(SHA('w0'))} → <b>${n1(SHA('w1'))}</b> <small class="muted">평균</small></td><td></td></tr>` : ''}</tbody></table></div>
       <p class="small">속도 = 생산 t ÷ (작업 + 정지 시간) — 주간 보고와 같은 정의. MES 속보의 t/hr(정지 제외)와는 다름.</p>`);
   }
   /* 막대 하나짜리 그래프: 값 막대 + 기준선(평균·목표) */
@@ -95,8 +100,8 @@
       const td = O.weekly.map((w, k) => ({ d: w.w, v: t[k], dim: k !== last }));
       const hd = O.weekly.map((w, k) => ({ d: w.w, v: h[k], dim: k !== last }));
       return `<div class="wk-card"><h3><i style="background:${COL[i]}"></i>${l} <small>지난주 ${md(xs[last])}~</small></h3>
-        <div class="wk-ch"><p>생산량 t/일 — 지난주 <b>${n0(t[last])}</b> ${dl(pct(t[last], at))} <span class="muted">${BW()} 평균 ${n0(at)}</span></p>${bars(td, COL[i], [{ n: '평균', v: at, c: 'var(--ink-3)', dash: '3 4' }], 150, 560, n0, (d) => md(d.d), (d) => `<b>${md(d.d)} 주</b> ${n0(d.v)} t/일`)}</div>
-        <div class="wk-ch"><p>생산속도 t/hr (정지 포함) — 지난주 <b>${n1(h[last])}</b> ${dl(pct(h[last], ah))} <span class="muted">${BW()} 평균 ${n1(ah)}</span></p>${bars(hd, COL[i], [{ n: '평균', v: ah, c: 'var(--ink-3)', dash: '3 4' }], 150, 560, n1, (d) => md(d.d), (d) => `<b>${md(d.d)} 주</b> ${n1(d.v)} t/hr`)}</div></div>`;
+        <div class="wk-ch"><p>생산량 t/일 — 지난주 <b>${t[last] ? n0(t[last]) : '휴지'}</b> ${t[last] ? dl(pct(t[last], at)) : ''} <span class="muted">${BW()} 평균 ${n0(at)}</span></p>${bars(td, COL[i], [{ n: '평균', v: at, c: 'var(--ink-3)', dash: '3 4' }], 150, 560, n0, (d) => md(d.d), (d) => `<b>${md(d.d)} 주</b> ${n0(d.v)} t/일`)}</div>
+        <div class="wk-ch"><p>생산속도 t/hr (정지 포함) — 지난주 <b>${h[last] != null ? n1(h[last]) : '휴지'}</b> ${h[last] != null ? dl(pct(h[last], ah)) : ''} <span class="muted">${BW()} 평균 ${n1(ah)}</span></p>${bars(hd, COL[i], [{ n: '평균', v: ah, c: 'var(--ink-3)', dash: '3 4' }], 150, 560, n1, (d) => md(d.d), (d) => `<b>${md(d.d)} 주</b> ${n1(d.v)} t/hr`)}</div></div>`;
     };
     return card('ca-wk', '라인별 주간 추이', `최근 ${xs.length}주 · 진한 막대 = 지난주, 점선 = ${BW()} 평균`, '', `<div class="wk-grid">${L.map(mini).join('')}</div>`);
   }
@@ -108,20 +113,21 @@
   }
   function stops() {
     const S = O.stops, C = S.cats;
-    const rows = L.map((l) => `<tr><td class="l nm">${l}</td>${C.map((c) => `<td>${n1(S.w0[l][c])} → <b>${n1(S.w1[l][c])}</b></td>`).join('')}<td>${n1(C.reduce((a, c) => a + S.w0[l][c], 0))} → <b>${n1(C.reduce((a, c) => a + S.w1[l][c], 0))}</b></td></tr>`).join('');
+    const off = (l) => { const x = O.lines.find((y) => y.line === l); return x && !x.w1.days; };   // 지난주 가동 0일(계획휴지·수리) — 0.0 대신 '휴지'
+    const rows = L.map((l) => `<tr><td class="l nm">${l}</td>${C.map((c) => `<td>${n1(S.w0[l][c])} → <b>${off(l) ? '휴지' : n1(S.w1[l][c])}</b></td>`).join('')}<td>${n1(C.reduce((a, c) => a + S.w0[l][c], 0))} → <b>${off(l) ? '휴지' : n1(C.reduce((a, c) => a + S.w1[l][c], 0))}</b></td></tr>`).join('');
     return card('ca-stop', '휴지 구성', `라인별 하루 평균 정지 시간 — ${BW()} 평균 → 지난주(굵게)`, '단위: 시간/일', `<div class="scroll"><table class="t big"><thead><tr><th class="l">라인</th>${C.map((c) => `<th>${c}</th>`).join('')}<th>합계</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="small">${CFG.stopNote}</p>`);
   }
   function mcCard() {                                              // 도금만: 강종 전환(M/C) 실적
     if (!O.mc || !O.mc.length) return '';
-    const rows = O.mc.slice().reverse().map((m) => `<tr><td class="l">${md(m.d)}</td><td class="l nm">${m.line}</td><td class="l">${esc(m.from)} → ${esc(m.to)}</td><td><b>${n1(m.h)}</b></td><td class="l">${m.sd ? '정기수리와 함께' : '단독'}</td></tr>`).join('');
-    return card('ca-mc', '강종 전환(M/C) 실적', '최근 12회 · MES 휴지(Mode change) 시간', '단위: 시간', `<div class="scroll"><table class="t big"><thead><tr><th class="l">날짜</th><th class="l">라인</th><th class="l">전환</th><th>정지 시간</th><th class="l">구분</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="small">정지 시간 = 휴지 실적의 Mode change 시간 합. 재가동 후 더미 코일로 조건을 맞추는 시간은 들어가지 않음(조건 분석 화면 참고).</p>`);
+    const rows = O.mc.slice().reverse().map((m) => `<tr><td class="l">${md(m.d)}</td><td class="l nm">${m.line}</td><td class="l">${m.from || m.to ? `${esc(m.from || '?')} → ${esc(m.to || '?')}` : '<span class="muted">휴지 기록에 강종 없음</span>'}</td><td><b>${n1(m.h)}</b></td><td class="l">${m.sd ? '정기수리와 함께' : '단독'}</td></tr>`).join('');
+    return card('ca-mc', '강종 전환(M/C) 실적', `${md(O.from)} 이후 ${O.mc.length}회 · MES 휴지 시간`, '단위: 시간', `<div class="scroll"><table class="t big"><thead><tr><th class="l">날짜</th><th class="l">라인</th><th class="l">전환</th><th>정지 시간</th><th class="l">구분</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="small">정지 시간 = 휴지 실적의 강종 전환 시간 합. 재가동 후 더미 코일로 조건을 맞추는 시간은 들어가지 않음(조건 분석 화면 참고).</p>`);
   }
   const monLabel = (m) => `${+m.slice(5)}월${O.from && O.from.slice(0, 7) === m && +O.from.slice(8) > 1 ? `<small class="muted">(${+O.from.slice(8)}일~)</small>` : ''}`;
   function monthly() {
-    const D = O.dept, nm = (k) => (/^\d+$/.test(k) ? `기타(${k})` : k);
-    return card('ca-mon', '월별 생산', `라인별 · 부서별 · 월 단위 (${+O.asOf.slice(5, 7)}월은 ${md(O.asOf)}까지 누계)`, '단위: 톤', `<div class="grid2"><div class="scroll"><table class="t big"><thead><tr><th class="l">월</th>${L.map((l) => `<th>${l}</th>`).join('')}<th>합계</th></tr></thead><tbody>${O.monthly.map((m) => `<tr><td class="l">${monLabel(m.m)}</td>${L.map((l) => `<td>${n0(m[l])}</td>`).join('')}<td><b>${n0(L.reduce((a, l) => a + m[l], 0))}</b></td></tr>`).join('')}</tbody></table></div>
+    const D = O.dept, nm = (k) => (/^\d+$/.test(k) ? `기타(${k})` : k.replace(/그룹$/, ''));
+    return card('ca-mon', '월별 생산', `라인별 · 부서별 · 월 단위 (${+O.asOf.slice(5, 7)}월은 ${md(O.asOf)}까지 누계)`, '단위: 톤', `<div class="grid2" style="grid-template-columns:${PLANT === 'G' ? 'auto minmax(0,1fr)' : ''}"><div class="scroll"><table class="t big"><thead><tr><th class="l">월</th>${L.map((l) => `<th>${l}</th>`).join('')}<th>합계</th></tr></thead><tbody>${O.monthly.map((m) => `<tr><td class="l">${monLabel(m.m)}</td>${L.map((l) => `<td>${n0(m[l])}</td>`).join('')}<td><b>${n0(L.reduce((a, l) => a + m[l], 0))}</b></td></tr>`).join('')}</tbody></table></div>
       <div class="scroll"><table class="t big"><thead><tr><th class="l">월</th>${D.names.map((k) => `<th>${esc(nm(k))}</th>`).join('')}</tr></thead><tbody>${D.rows.map((m) => `<tr><td class="l">${monLabel(m.m)}</td>${D.names.map((k) => `<td>${n0(m[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`);
   }
   function render() {

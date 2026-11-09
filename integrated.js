@@ -201,7 +201,7 @@
       <div class="legend"><span><i style="background:var(--brand)"></i>주말 재고(계획)</span><span><i style="background:var(--s3)"></i>실제(속보, 일별)</span><span><i class="dash" style="background:var(--ink-2)"></i>목표</span><span><i class="box" style="background:color-mix(in srgb, var(--good) 18%, transparent)"></i>정상 범위(목표의 90~130%)</span><span><i class="dash" style="background:var(--bad)"></i>안전재고</span></div>
       <div class="dc-grid st-charts">${rows.map(mini).join('')}</div>
       <details class="tv"><summary>주별 표로 보기 (단위 천t)</summary><div class="scroll"><table class="t heat"><thead>${head}</thead><tbody>${body}</tbody></table></div></details>
-      <p class="small">구매 소재(F/H · 컬러 소재)의 재고·입고·발주는 <a href="procure.html">소재 발주</a>에서. 계산: 제품 = 매일 롤링 — 어제 말 실제 재고(판매생산속보 원천 표) + 아침 재계획 생산 − 계획 출고(가동 캘린더 재고와 같은 값). 재고 목표: 공장 월말 최대 = '27 판생그룹 목표(도금 판매재 22,300 · 컬러 제품 19,320 · 도금 소재 12,600 · 컬러 소재 20,940t), 그룹 = TF 목표 일수(2026-10-12 결정). 자가재 = 9월말 재고 + 도금 입고 − 컬러 출고(생산일 8일 전). 실제 재고(초록 선) = 판매생산속보 원천 표(MES 속보 8·9번 표)의 부서별 날짜별 합계 — 속보와 같은 값. 자가재는 속보에 강종별 값이 없어 실제 선 없음.</p>`) };
+      <p class="small">구매 소재(F/H, 컬러 소재)의 재고·입고·발주는 <a href="procure.html">소재 발주</a>에서. 계산: 제품 = 매일 롤링 — 어제 말 실제 재고(판매생산속보 원천 표) + 아침 재계획 생산 − 계획 출고(가동 캘린더 재고와 같은 값). 재고 목표: 공장 월말 최대 = '27 판생그룹 목표(도금 판매재 22,300 · 컬러 제품 19,320 · 도금 소재 12,600 · 컬러 소재 20,940t), 그룹 = TF 목표 일수(2026-10-12 결정). 자가재 = 기초재고(재고현황 월말) + 도금 입고 − 컬러 출고(생산일 8일 전). 실제 재고(초록 선) = 판매생산속보 원천 표(MES 속보 8·9번 표)의 부서별 날짜별 합계 — 속보와 같은 값. 자가재는 속보에 강종별 값이 없어 실제 선 없음.</p>`) };
   }
 
   // 재고 그래프 마우스 올리면 수치(2026-10-14): 커서와 가장 가까운 날짜의 점들(계획·실제)을 한 상자에 — 점의 <title> 문구 그대로
@@ -336,7 +336,7 @@
     if (rs.length) {
       const r = rs[rs.length - 1];
       const st = Object.entries(r.stock).filter(([g]) => g !== 'C수요' && inS(plOf(g))).map(([g, v]) => `<tr><td class="l">${esc(GN[g] || (g === 'G자가재' ? '도금 자가재' : g))}</td><td>${n0(v.begin)}</td><td>+${n0(v.prod)}</td><td>−${n0(v.ship)}</td><td><b>${n0(v.now)}</b></td><td>${v.mes != null ? n0(v.mes) : (v.mesPair != null ? n0(v.mesPair) + '<span class="muted">(국내+자동차)</span>' : '-')}</td><td>${v.plan == null ? '-' : n0(v.plan)}</td><td class="${v.plan != null && Math.abs(v.now - v.plan) > 0.1 * Math.max(1, v.plan) ? 'neg' : ''}">${v.plan == null ? '-' : (v.now - v.plan > 0 ? '+' : '') + n0(v.now - v.plan)}</td></tr>`).join('');
-      daily += `<h3>현재 재고 추정 (${md(r.asOf)} 말, t)</h3><div class="scroll"><table class="t"><thead><tr><th>그룹</th><th>9월말</th><th>생산</th><th>출하</th><th>현재(추정)</th><th>MES 속보 실제</th><th>계획상</th><th>차이</th></tr></thead><tbody>${st}</tbody></table></div>`;
+      daily += `<h3>현재 재고 추정 (${md(r.asOf)} 말, t)</h3><div class="scroll"><table class="t"><thead><tr><th>그룹</th><th>기초</th><th>생산</th><th>출하</th><th>현재(추정)</th><th>MES 속보 실제</th><th>계획상</th><th>차이</th></tr></thead><tbody>${st}</tbody></table></div>`;
     }
     // 재계획 주기 비교(시뮬레이션)
     let sim = '';
@@ -387,7 +387,7 @@
     $('g-main').innerHTML = secs.map((s) => s.html).join('');
     secs.forEach((s) => s.after && s.after());
     hoverTips($('g-main'));
-    UI.sub(`${{ all: '제품·자가재', G: '도금 제품·자가재', C: '컬러 제품' }[UI.scope()]} 주말 재고 — 목표 대비 · ${MONTHS[0].slice(0, 4)}년 ${+MONTHS[0].slice(5)}~${+MONTHS[MONTHS.length - 1].slice(5)}월 · 기준 ${md(UI.today(O.asOf))}`);   // 계산 시각 대신 공통 기준일(11/8) · 11/9: 달 범위 = 자료
+    UI.sub(`${{ all: '제품·자가재', G: '도금 제품·자가재', C: '컬러 제품' }[UI.scope()]} 주말 재고 — 목표 대비 · ${(() => { const W = O.weeks && O.weeks.length ? [O.weeks[0], O.weeks[O.weeks.length - 1]] : [MONTHS[0], MONTHS[MONTHS.length - 1]]; return `${W[0].slice(0, 4)}년 ${+W[0].slice(5, 7)}~${W[1].slice(0, 4) !== W[0].slice(0, 4) ? `${W[1].slice(2, 4)}년 ` : ''}${+W[1].slice(5, 7)}월`; })()} · 기준 ${md(UI.today(O.asOf))}`);   // 11/10: 달 범위 = 재고 추이 주(weeks) — 계획 자료 달(27.2월까지)로 써서 '10~2월'인데 그래프는 12월까지였음   // 계산 시각 대신 공통 기준일(11/8) · 11/9: 달 범위 = 자료
     UI.reveal($('g-main'));
     const seg = document.querySelector('.seg');
     const pb = seg && seg.closest('.pagebar'); if (pb) pb.hidden = true;   // 기준 계획 하나만 게시

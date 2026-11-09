@@ -71,19 +71,20 @@
     $('a-cands').querySelectorAll('#a-cf button').forEach((b) => b.onclick = () => { cf = b.dataset.f; renderCands(a); });
   }
 
+  /* 11/10 점검: 월별 제품 생산량 = 모든 품명(mtons) — 100t 이상 품명만 더하면 실적보다 작음 */
   function renderWeekly(a) {                                      // 월 단위(이번 달 = 누계, 잘린 첫 달 제외)
     const W = a.monthly || [], ms = a.months || [], mn = (m) => `${+m.slice(5)}월${m === a.asOf.slice(0, 7) ? ` <small class="muted">(~${md(a.asOf)})</small>` : ''}`;
     const keys = [...new Set(W.map((r) => `${r[1]}|${r[2]}`))].sort((x, y) => (x.split('|')[0] === y.split('|')[0] ? 0 : x < y ? -1 : 1));
     const cell = (k, m) => {
       const r = W.find((x) => x[0] === m && `${x[1]}|${x[2]}` === k);
-      if (!r || !(r[4] > 0)) return '<td class="n muted">-</td>';
+      if (!r || !(r[4] > 0) || r[3] < 20) return `<td class="n muted"${r && r[3] > 0 ? ` title="${fmt(r[3], 1)}t — 20t 미만이라 속도 생략"` : ''}>-</td>`;   // 11/10 점검: 몇 톤짜리 달이 0.0·0.9 t/hr 로 보이던 것
       const rate = r[3] / r[4], c = a.cur[k], d = c ? rate / c - 1 : 0;
       return `<td class="n ${d <= -0.05 ? 'neg' : d >= 0.05 ? 'pos' : ''}" title="${fmt(r[3])}t · ${r[5]}코일">${fmt(rate, 1)}</td>`;
     };
     $('a-weekly').innerHTML = `<tr><th>라인·품명</th>${ms.map((m) => `<th>${mn(m)}</th>`).join('')}<th>계획 속도</th></tr>`
       + keys.map((k) => `<tr><td>${k.split('|').join(' ')}</td>${ms.map((m) => cell(k, m)).join('')}<td class="n">${a.cur[k] ? fmt(a.cur[k], 1) : '-'}</td></tr>`).join('');
     const lines = Object.keys(a.lines);
-    $('a-wtons').innerHTML = `<tr><th>월</th>${lines.map((l) => `<th>${l}</th>`).join('')}<th>합계</th></tr>` + ms.map((m) => { const v = lines.map((l) => W.filter((r) => r[0] === m && r[1] === l).reduce((s_, r) => s_ + r[3], 0)); return `<tr><td>${mn(m)}</td>${v.map((x) => `<td class="n">${fmt(x)}</td>`).join('')}<td class="n"><b>${fmt(v.reduce((p, q) => p + q, 0))}</b></td></tr>`; }).join('');
+    $('a-wtons').innerHTML = `<tr><th>월</th>${lines.map((l) => `<th>${l}</th>`).join('')}<th>합계</th></tr>` + ms.map((m) => { const v = lines.map((l) => (a.mtons ? (a.mtons.find((r) => r[0] === m && r[1] === l) || [0, 0, 0])[2] : W.filter((r) => r[0] === m && r[1] === l).reduce((s_, r) => s_ + r[3], 0))); return `<tr><td>${mn(m)}</td>${v.map((x) => `<td class="n">${fmt(x)}</td>`).join('')}<td class="n"><b>${fmt(v.reduce((p, q) => p + Math.round(q), 0))}</b></td></tr>`; }).join('');
     $('a-events').innerHTML = `<tr><th>월</th>${lines.map((l) => `<th>${l}</th>`).join('')}</tr>` + ms.map((m) => `<tr><td>${mn(m)}</td>${lines.map((l) => {
       const r = (a.mstop || []).find((x) => x[0] === m && x[1] === l); return `<td class="n">${r && r[3] ? fmt(r[2] / r[3], 1) : '-'}</td>`; }).join('')}</tr>`).join('');
   }

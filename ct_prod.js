@@ -29,7 +29,11 @@
       return { ...l, asOfL: l.pl === 'G' ? asOfG : asOfC, rate: (ref.w0 && ref.w0.tph) || l.tph || 0 };   // 손실 환산 속도 = 기준 기간 평균 t/h
     });
     const daily = (pl) => (pl === 'G' ? GA.daily : CA.daily) || [];
-    const prodOn = (l, d) => { const r = daily(l.pl).find((x) => x.d === d); return r ? +r[l.line] || 0 : null; };
+    const accA = {}; (GA.accHist || []).forEach((a) => { accA[`${a[1]}|${a[0]}`] = a[3]; });   // 11/10 점검: 일별 자료(daily)는 이번 달만 → 지난달 날은 도금 = 계획 대비 기록 실적, 컬러 = 그룹별 일 실적 합(10/26~31 '-' 이던 것)
+    const cBy = (CA.byGroup || {}).days || {};
+    const prodOn = (l, d) => { const r = daily(l.pl).find((x) => x.d === d); if (r) return +r[l.line] || 0;
+      if (l.pl === 'G') return accA[`${l.line}|${d}`] != null ? +accA[`${l.line}|${d}`] : null;
+      const v = (cBy[d] || {})[l.line]; return v ? Object.values(v[0] || {}).reduce((a, t) => a + (+t || 0), 0) : (cBy[d] ? 0 : null); };
     // 하루 비가동(분, 유형별): 도금 = 1440 − 가동분(MES) 을 휴지 기록·더미로 나누고 나머지 '사유 기록 없음', 컬러 = MES 실제 휴지
     const stopsOn = (l, d) => {
       if (l.pl === 'G') {
@@ -70,7 +74,7 @@
     const Lp = L.filter((x) => x.plan != null), dPlan = Lp.reduce((a, x) => a + x.plan, 0), dAct = Lp.reduce((a, x) => a + x.act, 0);
     const Lc = L.filter((x) => x.plan == null);
     const k = [
-      { label: `${+mon.slice(5)}월 생산계획`, v: n0(mPlan), unit: 't', tone: 'info', sub: '기준 계획 · 판매그룹 합' },   // 11/9: 값 = 확정(기준) 계획 월 물량(pages.py groups.prod.month) — '최신 가동계획' 아님
+      { label: `${+mon.slice(5)}월 생산계획`, v: n0(mPlan), unit: 't', tone: 'info', sub: '그룹 월 계획 합(도금 TF · 컬러 월간 계획)' },   // 11/9: 값 = 확정(기준) 계획 월 물량(pages.py groups.prod.month) — '최신 가동계획' 아님
       { label: '생산실적(누계)', v: n0(mAct), unit: 't', tone: 'info', sub: `MES ~${md(asOfG)}${Lc.length && asOfC !== asOfG ? ` · 컬러 ~${md(asOfC)}` : ''}` },
       { label: '계획 대비 차이', v: Lp.length ? sgn(dAct - dPlan) : '-', unit: 't', tone: !Lp.length ? '' : dAct >= dPlan ? 'ok' : dAct >= dPlan * 0.95 ? 'warn' : 'bad', sub: Lp.length ? `일정 누계 대비 ${pc(dAct, dPlan)}%` : '라인 계획 없음' },
       { label: '이월 예상', v: n0(carry), unit: 't', tone: carry >= 1 ? 'warn' : 'ok', sub: '월 계획 − 실적 − 남은 계획' },
@@ -111,8 +115,8 @@
     const R = lines.map((l) => {
       const D7 = days(l.asOfL, 7), p7 = D7.reduce((a, d) => a + (prodOn(l, d) || 0), 0), s7 = D7.reduce((a, d) => a + (stopsOn(l, d) || []).reduce((b, s) => b + s[1], 0), 0) / 60;
       const p1 = prodOn(l, l.asOfL), s1 = (stopsOn(l, l.asOfL) || []).reduce((b, s) => b + s[1], 0) / 60;
-      const nx = l.pl === 'G' ? l.next : (() => { const e = ev.find((e_) => e_.pl === 'C' && e_.text.startsWith(l.line)); return e ? [e.d, e.text.replace(l.line + ' ', '')] : null; })();
-      const st = !p1 && s1 >= 23 ? ['정지', 'neg'] : s1 >= 4 ? ['부분 정지', 'wrn'] : ['가동', 'pos'];
+      const nx = l.pl === 'G' || l.next ? l.next : (() => { const e = ev.find((e_) => e_.pl === 'C' && e_.text.startsWith(l.line)); return e ? [e.d, e.text.replace(l.line + ' ', '')] : null; })();
+      const st = !p1 && (stopsOn(l, l.asOfL) || []).some((s) => s[0] === FULL) ? ['계획 휴지', 'sub'] : !p1 && s1 >= 23 ? ['정지', 'neg'] : s1 >= 4 ? ['부분 정지', 'wrn'] : ['가동', 'pos'];   // 11/10 점검: 2CCL 계획 휴지가 '정지'(빨강)로
       const cat = {}; D7.forEach((d) => (stopsOn(l, d) || []).forEach((s) => { cat[s[0]] = (cat[s[0]] || 0) + s[1] / 60; }));
       return { l, p7, s7, p1, s1, nx, st, cat };
     });
@@ -142,7 +146,7 @@
   function shipRows(X) {
     const { P, mon } = X, SD = (P.shipDay && P.shipDay.g) || {};
     return ((P.sr && P.sr.ship) || []).filter((s) => SHIPK[s.name] && CT.inScope(SHIPK[s.name][0])).map((s) => {
-      const k = SHIPK[s.name], mes = SD[k] ? Object.entries(SD[k]).filter(([d]) => d.slice(0, 7) === mon).reduce((x, [, v]) => x + v, 0) : null, a = s.actual != null ? s.actual : mes;   // 11/7 점검: 위 관제 띠와 같은 판생 실적(MES 출고는 11/1 일요일분·도금수출 선적일 기준이라 달라 참고)
+      const k = SHIPK[s.name], mes = SD[k] ? Object.entries(SD[k]).filter(([d]) => d.slice(0, 7) === mon).reduce((x, [, v]) => x + v, 0) : null, g_ = (P.groups || []).find((x) => x.key === k), a = g_ && g_.ship ? g_.ship.actual : mes != null ? mes : s.actual;   // 11/10 점검(F8 출하 실적 = MES 영업매출 1300): 관제 칩·그룹 표와 같은 값(속보 4,885 vs 일별 합 5,203 이던 것)
       return { ...s, key: k, pl: k[0], a, mes };
     });
   }
@@ -168,9 +172,9 @@
     const dr = ds.map((d) => `<tr><td class="id">${md(d)}</td>${S.map((s) => `<td class="r">${(SD[s.key] || {})[d] ? n0(SD[s.key][d]) : '<span class="sub">0</span>'}</td>`).join('')}<td class="r"><b>${n0(S.reduce((a, s) => a + ((SD[s.key] || {})[d] || 0), 0))}</b></td></tr>`);
     // 미출하·지연 예상 주문(도금): 납기 경과 미출하 + 7일 안 납기 위험
     const to = CT.addD(asOf, 7);
-    const L = G.filter((o) => !o.closed && o.due && ((o.due <= asOf && o.unshipT > 0.5) || (o.due <= to && o.risk === '위험'))).sort((a, b) => String(a.due).localeCompare(String(b.due)) || b.unshipT - a.unshipT);
+    const L = G.filter((o) => !o.closed && o.due && o.unshipT > 0.5 && (o.due <= asOf || (o.due <= to && o.risk === '위험'))).sort((a, b) => String(a.due).localeCompare(String(b.due)) || b.unshipT - a.unshipT);
     X.shipL = L;
-    const orow = (o) => `<tr class="ck" data-o="${L.indexOf(o)}"><td class="id">${esc(o.id)}<small>${esc(o.item)}</small></td><td>${esc(o.cus || '-')}</td><td><b class="${o.due < asOf ? 'neg' : ''}">${md(o.due)}</b></td><td>${CT.fulBadge(o.ful)}</td><td class="r"><b>${n1(o.unshipT)}</b></td><td>${CT.badge(o)}</td></tr>`;
+    const orow = (o) => `<tr class="ck" data-o="${L.indexOf(o)}"><td class="id">${esc(o.id)}<small>${esc(o.item)}</small></td><td>${esc(o.cus || '-')}</td><td><b class="${(o.ship && o.ship > o.due ? o.ship : o.due) < asOf ? 'neg' : ''}">${md(o.due)}</b>${o.ship && o.ship > o.due ? `<small>선적 ${md(o.ship)}</small>` : ''}</td><td>${CT.fulBadge(o.ful)}</td><td class="r"><b>${n1(o.unshipT)}</b></td><td>${CT.badge(o)}</td></tr>`;
     const byG = [...new Set(L.map((o) => o.grp))].map((g) => [g, L.filter((o) => o.grp === g)]).sort((a, b) => b[1].length - a[1].length);
     const og = byG.map(([g, R], i) => `<details class="pp-g"${i ? "" : " open"}><summary><b>${esc(g)}</b><span>${R.length}건</span><span>미출하 ${n0(R.reduce((a, o) => a + o.unshipT, 0))}t</span>${R.filter((o) => o.ful === '출하 확인 불가').length ? `<span class="sub">확인 불가 ${R.filter((o) => o.ful === '출하 확인 불가').length}건</span>` : ''}</summary>`
       + t([th('주문'), th('고객사'), th('납기'), th('진행 단계'), th('미출하(t)', 1), th('상태')], R.slice(0, 30).map(orow)) + (R.length > 30 ? `<p class="ct-note">납기 빠른 30건 · 외 ${R.length - 30}건</p>` : '') + '</details>').join('');

@@ -87,7 +87,7 @@
         sum += c.t; sumT += c.t;
         if (d >= X.today) { const cp = X.cap(l, d); if (cp == null) { if (c.t >= 0.5) capMiss++; } else sumCap += cp; }
         if (s === 'down' || s === 'unp' || s === 'free') idle++;
-        const rk = (X.due[`${l}|${d}`] || []).filter((o) => o.risk === '위험'); rk.forEach((o) => risk.add(o.id));
+        const rk = d < X.today ? [] : (X.due[`${l}|${d}`] || []).filter((o) => o.risk === '위험' && !risk.has(o.id)); rk.forEach((o) => risk.add(o.id));   // 11/10 점검: 지난 날 = 이미 지남(지연 예상 아님), 같은 주문 두 칸 → 한 번(카드 99 = 칸 숫자 합)
         const top = Object.entries(c.items).sort((a, b) => b[1] - a[1])[0];
         const full = s === 'down' && c.down >= 1439;
         let body;
@@ -132,7 +132,7 @@
       { label: '계획 생산량', v: n0(sumT), unit: 't', tone: 'info', sub: lbl },
       { label: '가용 능력(오늘 이후)', v: sumCap > 0 ? n0(sumCap) : '자료 없음', unit: sumCap > 0 ? 't' : '', tone: 'info', sub: capMiss ? `능력 계산 못 한 라인·일 ${capMiss}` : '' },
       { label: '휴지', v: idle, unit: '라인·일', tone: idle ? 'warn' : 'ok', sub: '계획 휴지 + 물량 없음 + 비계획' },
-      { label: '지연 예상 주문', v: risk.size, unit: '건', tone: risk.size ? 'bad' : 'ok', sub: '이 기간 생산 필요일' },
+      { label: '지연 예상 주문', v: risk.size, unit: '건', tone: risk.size ? 'bad' : 'ok', sub: '오늘 이후 생산 필요일 · 지난 날은 납기 화면' },
     ]);
     const lg = '<p class="ct-note lgd">' + [['plan', '계획 생산'], ['act', '실적 생산'], ['down', '계획 휴지'], ['stop', '종일 정지'], ['unp', '비계획 휴지'], ['free', '계획 물량 없음'], ['out', '계획 범위 밖'], ['nod', '자료 없음(실적 미수신)'], ['mc', 'M/C']].map(([c, t]) => `<span><i class="lg ${c}"></i>${t}</span>`).join('') + '<span><i class="rk">n</i>납기 지연 예상 주문</span>' + (CT.inScope('C') ? `<span class="ccl">컬러(오늘 이후): ${CCK.map(([k, cl]) => `<i class="cci ${cl}"></i>${k === '작업대기' ? '작업대기량' : k}`).join(' ')} · <i class="lg ccr"></i>작업대기 24시간 부족·빈 시간</span>` : '') + '</p>';
     const lg2 = span !== 7 ? '<p class="ct-note">14일·월간: 칸 = 톤 · 아래 막대 = 컬러 구분(작업대기·지시대기·부자재·계획) · 위 빨간 줄 = 24시간 부족 · 주황 점 = M/C·S/D·Test 등 · 빨간 숫자 = 납기 지연 예상 주문 · 칸에 마우스를 올리거나 누르면 자세히</p>' : '';
@@ -182,7 +182,7 @@
       });
       allR.push(...R);
       const mm = `${+m.slice(5)}월`, rng = `${md(m === m0 ? X.today : s0)}~${md(e)}`;
-      const sumT = `<div class="ct-wrap"><table class="ct-t ls"><thead><tr><th>라인</th><th class="r">필요 생산량</th><th class="r">가용 능력</th><th class="r">부하율</th><th class="r">초과량</th><th class="r">해당 주문</th></tr></thead><tbody>`
+      const sumT = `<div class="ct-wrap"><table class="ct-t ls"><thead><tr><th>라인</th><th class="r">필요 생산량</th><th class="r">가용 능력</th><th class="r">부하율</th><th class="r" title="주마다 능력을 넘는 양의 합 — 월 부하율이 100% 아래여도 특정 주가 넘으면 생김">주별 초과 합</th><th class="r">해당 주문</th></tr></thead><tbody>`
         + R.map((x) => { const r = x.cap ? x.need / x.cap : null; return x.out ? `<tr><td class="id">${x.l}</td><td class="r" colspan="5"><span class="sub">계획 범위 밖 — ${LG.includes(x.l) ? '도금 재계획' : '컬러 계획'}은 ${md(X.hz[LG.includes(x.l) ? 'G' : 'C'])}까지</span></td></tr>` : `<tr class="ck" data-l="${x.l}" data-m="${m}"><td class="id">${x.l}</td><td class="r">${n0(x.need)}t</td><td class="r">${x.cap ? n0(x.cap) + 't' : (x.need < 0.5 ? '<span class="sub">-</span>' : '<span class="sub">계산 못 함</span>')}</td>`
           + `<td class="r">${r == null ? '<span class="sub">-</span>' : `<b class="${tone(r)}">${Math.round(r * 100)}%</b>`}</td><td class="r">${x.over >= 1 ? `<b class="bad">${n0(x.over)}t</b>` : '0'}</td><td class="r">${x.aff.length ? `<b class="bad">${x.aff.length}</b>건` : '0'}</td></tr>`; }).join('')
         + '</tbody></table></div>';
@@ -275,14 +275,14 @@
     return `<section class="card"><h2>컬러 계획 변경 <small>${md(t0)}부터</small></h2>${hd}</section>` + kp
       + `<section class="card"><h2>컬러 라인 × 주 생산량 <small>t · 수요일 시작</small></h2>${wkT}</section>`
       + `<section class="card"><h2>컬러 그룹 × 월 물량 <small>t · 오늘 이후 편성</small></h2>${gT}</section>`
-      + `<section class="card"><h2>계획 휴지일 변경 <small>종일 휴지만</small></h2><div class="ct-wrap"><table class="ct-t mc"><thead><tr><th>라인</th><th>새로 쉼</th><th>휴지 풀림</th></tr></thead><tbody>${dnT}</tbody></table></div></section>`;
+      + `<section class="card"><h2>계획 휴지일 변경 <small>종일 휴지만</small></h2>${dnT.includes('class="new"') || dnT.includes('class="gone"') ? `<div class="ct-wrap"><table class="ct-t mc"><thead><tr><th>라인</th><th>새로 쉼</th><th>휴지 풀림</th></tr></thead><tbody>${dnT}</tbody></table></div>` : '<p class="ct-note">변동 없음</p>'}</section>`;   // 11/10 점검: 전부 '-' 인 표 대신 한 줄
   }
 
   function render(D) {
     DD = D; X = prep(D);
     if (!base) base = wkStart(X.today);
     const v = CT.view('week', VIEWS), L = X.L, I = X.I;
-    const bs = CT.basis([{ name: '도금 재계획', at: (L.replan || {}).t0 || (D['latest.plan'] || {}).savedAt, kind: '재계획' }, v === 'cmp' ? { name: '직전 계획', at: (D.plan_prev || {}).savedAt, kind: '비교' } : { name: '컬러 계획', at: I.built, kind: '확정계획' }, { name: '실적', at: X.asOf, kind: '실적' }]);
+    const bs = CT.basis([{ name: '도금 재계획', at: (L.replan || {}).t0 || (D['latest.plan'] || {}).savedAt, kind: '재계획' }, v === 'cmp' ? { name: '직전 계획', at: (() => { const s_ = (D.plan_prev || {}).savedAt; return s_ && /Z$|[+-]\d\d:?\d\d$/.test(String(s_)) ? new Date(new Date(s_).getTime() + 9 * 3600e3).toISOString().slice(0, 16) : s_; })(), kind: '비교' } : { name: '컬러 계획', at: I.built, kind: '확정계획' }, { name: '실적', at: X.asOf, kind: '실적' }]);
     let body, lr;
     if (v === 'load') { lr = loadView(); body = lr.html; } else if (v === 'cmp') body = cmpView(D); else body = weekView();
     $('ct-main').innerHTML = bs + body;

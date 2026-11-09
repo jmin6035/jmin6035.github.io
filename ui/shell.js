@@ -195,17 +195,16 @@
       tip: items.map((x) => `${x.name} ${Math.round(x.t)}t${x.by === 'spec' && x.sizes ? `(${x.sizes.map((s) => `${s[1]} ${s[2]}t`).join(', ')})` : ''}`).join(' · ') };
   };
   /* 11/9: 소재 단위 상태·발주 마감 한 기준 — late = UI.matLate 항목만(3달 총 부족 아님, lateT = 그 몫), soon = 발주 마감 2주 안, plan = 그 뒤, ok = 부족 없음.
-     발주 마감 = 업체별 리드타임(portal procureBy.nearAll — 대시보드 '발주 마감 임박'과 같은 값) 중 가장 이른 날, 없으면 mat_order 대표 리드타임 값
-     UI.matView(MO = mat_order, P = portal) → MO.groups.mats 각각 {…m, st, lateT, deadline} */
-  UI.matView = (MO, P) => {
-    const G = (MO && MO.groups) || {}, LI = MO && MO.late && MO.late.items ? new Map(MO.late.items.map((x) => [x.key, x.t || 0])) : null;
-    const NA = Object.values((P && P.procureBy) || {}).flatMap((x) => x.nearAll || []), td = (MO && MO.today) || clockDay();
+     발주 마감 = mat_order(tools/mat_order_spec.py) 의 정해진 발주일(P-FH 화 · 그 외 월 · 수입 10~20일 등 창구), next = 남은 부족의 다음 발주일
+     UI.matView(MO = mat_order) → MO.groups.mats 각각 {…m, st, lateT, deadline, next} */
+  UI.matView = (MO) => {   // 11/10: 마감일 = mat_order 한 곳(정해진 발주일, 11/9 회의 F14) — 예전 portal 업체별 마감(nearAll)과 섞어 화면마다 날짜가 달랐음
+    const G = (MO && MO.groups) || {}, LI = MO && MO.late && MO.late.items ? new Map(MO.late.items.map((x) => [x.key, x])) : null, td = (MO && MO.today) || clockDay();
     const soon = new Date(Date.parse(td + 'T00:00:00Z') + 14 * 864e5).toISOString().slice(0, 10);
     return (G.mats || []).map((m) => {
-      const lt = LI ? LI.get(m.key) || 0 : m.late || 0, nd = NA.filter((x) => x.plant === m.plant && x.mat === m.name).map((x) => x.deadline).sort()[0];
-      const dl = nd && (!m.deadline || nd < m.deadline) ? nd : m.deadline;
-      const st = lt >= 0.5 ? 'late' : !(m.short > 0.5) ? 'ok' : dl && dl <= soon ? 'soon' : 'plan';
-      return Object.assign({}, m, { st, lateT: lt, deadline: dl });
+      const li = LI ? LI.get(m.key) : null, lt = LI ? (li ? li.t || 0 : 0) : m.late || 0;
+      const dl = lt >= 0.5 && li && li.deadline ? li.deadline : m.deadline, nx = m.next || (dl && dl >= td ? dl : null);   // 마감 지남 = 지난 발주일, next = 남은 부족의 다음 발주일
+      const st = lt >= 0.5 ? 'late' : !(m.short > 0.5) || m.pos ? 'ok' : nx && nx <= soon ? 'soon' : 'plan';   // pos = 포스코 지급(임가공, 우리 발주 아님)
+      return Object.assign({}, m, { st, lateT: lt, deadline: dl, next: nx });
     });
   };
 

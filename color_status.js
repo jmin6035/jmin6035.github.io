@@ -121,14 +121,14 @@
   const shortWhy = (m, l) => (O.colorUnplaced || []).some((x) => x.ym === m && String(x.lines).split('·').includes(l)) ? '가동시간 부족' : '배정할 물량 없음';
   function renderEvents() {                                      // 도금 '강종 전환 일정' 자리: 라인별 편성 / MES 월차 한도
     $('d-events').innerHTML = `<tr><th>라인</th>${MONTHS.map((m) => `<th>${+m.slice(5)}월 편성 / 한도</th>`).join('')}</tr>`
-      + LINES.map((l) => `<tr class="evrow"><td>${l}</td>${MONTHS.map((m) => { const g = cap(m, l) - placed(m, l); return `<td>${fmt(placed(m, l))} / ${fmt(cap(m, l))}${g > 50 ? ` <span class="pill warn" title="MES 월차까지 ${fmt(g)}t 남음 — ${shortWhy(m, l)}">${fmt(g)}t 남음 · ${shortWhy(m, l)}</span>` : ''}</td>`; }).join('')}</tr>`).join('')
-      + `<tr class="evrow"><td><b>계</b></td>${MONTHS.map((m) => `<td><b>${fmt(sum(LINES, (l) => placed(m, l)))}</b> / ${fmt(sum(LINES, (l) => cap(m, l)))}</td>`).join('')}</tr>`;
+      + LINES.map((l) => `<tr class="evrow"><td>${l}</td>${MONTHS.map((m) => { const c = cap(m, l), g = c - placed(m, l); return `<td>${fmt(placed(m, l))} / ${c ? fmt(c) : '<span class="muted" title="MES 월차는 이번 달만 있음">-</span>'}${c && g > 50 ? ` <span class="pill warn" title="MES 월차까지 ${fmt(g)}t 남음 — ${shortWhy(m, l)}">${fmt(g)}t 남음 · ${shortWhy(m, l)}</span>` : c && g < -50 ? ` <span class="pill down" title="편성이 MES 월차보다 ${fmt(-g)}t 많음">${fmt(-g)}t 초과</span>` : ''}</td>`; }).join('')}</tr>`).join('')
+      + `<tr class="evrow"><td><b>계</b></td>${MONTHS.map((m) => { const c = sum(LINES, (l) => cap(m, l)); return `<td><b>${fmt(sum(LINES, (l) => placed(m, l)))}</b> / ${c ? fmt(c) : '-'}</td>`; }).join('')}</tr>`;   // 11/10 점검: 월차 없는 달 '0' → '-', 한도 초과(2CCL 118%·3CCL 102%) 경고
   }
   function renderLoad() {
     $('d-load').innerHTML = LINES.map((l) => `<div class="load-grp"><b>${l}</b>` + MONTHS.map((m) => {
-      const v = load(m, l);
-      return `<div class="load-row"><span>${+m.slice(5)}월</span><div class="load-track"><div class="load-fill ${v >= 0.995 ? 'full' : ''}" style="width:${Math.min(100, v * 100)}%"></div><div class="load-100"></div></div><span class="n">${fmt(v * 100, 1)}%</span></div>`;
-    }).join('') + '</div>').join('') + '<p class="hint">부하 = 편성 ÷ MES 월차 한도. 강조 색 막대 = 한도까지 채움(100%). 오른쪽 세로선 = 100%.</p>';
+      const v = load(m, l), c = cap(m, l);
+      return `<div class="load-row"><span>${+m.slice(5)}월</span><div class="load-track"><div class="load-fill ${v >= 0.995 ? 'full' : ''}" style="width:${Math.min(100, v * 100)}%"></div><div class="load-100"></div></div><span class="n${v > 1.005 ? ' neg' : ''}">${c ? fmt(v * 100, 1) + '%' : '-'}</span></div>`;
+    }).join('') + '</div>').join('') + '<p class="hint">부하 = 편성 ÷ MES 월차 한도(이번 달만 있음 — 다른 달 \'-\'). 강조 색 막대 = 한도까지 채움(100%), 빨간 숫자 = 한도 초과.</p>';
   }
 
   function renderNow() {
@@ -140,13 +140,17 @@
       const gs = c ? Object.entries(c.g).filter(([, v]) => v > 0.5).sort((a, b) => b[1] - a[1]) : [];
       const pa = {}; if (c) for (const r of c.rows) pa[r[1]] = (pa[r[1]] || 0) + (+r[5] || 0);
       const items = Object.entries(pa).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `<li><span>${esc(k)}</span><b>${fmt(v)}t</b></li>`).join('');
-      const toDate = sum(O.color.filter((x) => x.l === l && x.d.startsWith(m) && x.d <= d), tot), mPlan = monT(m, l), mc = cap(m, l);
+      const toDate = sum(O.color.filter((x) => x.l === l && x.d.startsWith(m) && x.d <= d && x.act), tot), mPlan = monT(m, l), mc = cap(m, l);   // 11/10 점검: 진도 = 실적(MES)만 — 오늘 계획을 더해 3,585(실적 3,360)로 보이던 것
+      const hd = new Set((O.colorDown || []).filter((x) => x[1] === l && HARD.includes(x[2])).map((x) => x[0])), nd1 = (x) => new Date(Date.parse(x + 'T00:00:00Z') + 864e5).toISOString().slice(0, 10);
+      let runEnd = null; if (hd.has(d)) { runEnd = d; while (hd.has(nd1(runEnd))) runEnd = nd1(runEnd); }   // 진행 중인 수리·계획휴지의 끝
+      const ck = (dnP[`${l}|${d}`] || []).find((x) => HARD.includes(x[0]));
       const next = O.color.filter((x) => x.l === l && x.d > d && tot(x) < 0.5).map((x) => x.d)[0];
-      const nx = (O.colorDown || []).filter((x) => x[1] === l && x[0] > d && HARD.includes(x[2])).sort((a, b) => (a[0] < b[0] ? -1 : 1))[0];
-      const off = !c || T < 0.5, st = off ? ['비가동', 'bad'] : c.act ? ['실적', 'good'] : ['계획', 'info'];
+      const nx = (O.colorDown || []).filter((x) => x[1] === l && x[0] > (runEnd || d) && HARD.includes(x[2])).sort((a, b) => (a[0] < b[0] ? -1 : 1))[0];   // 11/10 점검: 진행 중인 정지의 다음 날을 '다음 정지 D-1'로 보이던 것
+      const off = !c || T < 0.5, st = off ? ['비가동', 'bad'] : c.act ? ['실적', 'good'] : ['월간 계획', 'info'];
       const pr = mc ? Math.min(1, toDate / mc) : 0;
       const chips = [dnTxt(l, d) ? `<span class="tag warn">당일 ${esc(dnTxt(l, d))}</span>` : '',
-        nx ? `<span class="tag ${dd(nx[0]) <= 7 ? 'bad' : ''}">${KN[nx[2]]} ${md(nx[0])} · D-${dd(nx[0])}</span>` : '<span class="tag">4분기 S/D·수리 없음</span>',
+        runEnd && ck ? `<span class="tag bad">${KN[ck[0]]} 중 ~${md(runEnd)}</span>` : '',
+        nx ? `<span class="tag ${dd(nx[0]) <= 7 ? 'bad' : ''}">${KN[nx[2]]} ${md(nx[0])} · D-${dd(nx[0])}</span>` : '<span class="tag">이후 S/D·수리 없음</span>',
         next ? `<span class="tag">비가동 ${md(next)} · D-${dd(next)}</span>` : ''].filter(Boolean).join('');
       return `<div class="ln-card${off ? ' off' : ''}"><div class="ln-h"><b>${l}</b><span class="tag ${st[1]}">${st[0]}</span></div>
         <div class="ln-big">${off ? '-' : fmt(T)}<small>t</small><span>${off ? '당일 생산 없음' : `가동 ${fmt(hrs, 1)}h / 24h`}</span></div>
@@ -155,7 +159,7 @@
         <div class="ln-mix">${gs.length ? gs.map(([g, v]) => `<i style="flex:${v};background:${GVAR[g]}" title="${GL(g)} ${fmt(v)}t"></i>`).join('') : '<i style="flex:1;background:var(--grid)"></i>'}</div>
         <div class="ln-mixl">${gs.map(([g, v]) => `<span><i style="background:${GVAR[g]}"></i>${GL(g)} ${fmt(v)}t</span>`).join('') || '<span class="muted">-</span>'}</div>
         ${items ? `<p class="ln-l">주요 품목</p><ul class="ln-items">${items}</ul>` : ''}
-        <p class="ln-l">${mm}월 진도 <span>${fmt(toDate)} / 월차 ${fmt(mc)}t · ${Math.round(pr * 100)}%</span></p>
+        <p class="ln-l">${mm}월 진도 <span>실적 ${fmt(toDate)} / 월차 ${fmt(mc)}t · ${Math.round(pr * 100)}%</span></p>
         <div class="ln-prog" title="세로선 = 경과일 ${Math.round(el * 100)}%"><i style="width:${pr * 100}%"></i><u style="left:${el * 100}%"></u></div>
         <p class="ln-sub">계획 편성 ${fmt(mPlan)}t · 세로선 = 경과일(${Math.round(el * 100)}%)</p>
         <div class="ln-chips">${chips}</div></div>`;

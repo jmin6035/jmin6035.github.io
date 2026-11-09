@@ -6,7 +6,7 @@
 <title>계획 규칙</title>
 <meta name="description" content="계획 엔진이 따르는 규칙 목록 — 수치는 고치고 '적용'을 누르면 1시간 안에 다시 계산·게시, 바꾼 이력이 남음">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611091505">
+<link rel="stylesheet" href="ui/theme.css?v=2611091622">
 <style>
 .tr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 18px; }
 table.t.tr td, table.t.tr th { padding: 8px 12px; }
@@ -25,6 +25,7 @@ table.t.tr input.chg { border-color: var(--warn); background: var(--warn-bg); fo
 .st-box.ok { border-left: 5px solid var(--good); } .st-box.run { border-left: 5px solid var(--brand-2); } .st-box.hold, .st-box.fail { border-left: 5px solid var(--warn); }
 .st-box b.big { font-size: 16px; }
 table.t.hist td, table.t.rl td { white-space: normal; vertical-align: top; }
+html body table.t.hist td.chgl { min-width: 420px; line-height: 1.6; } html body table.t.hist td.wrap:not(.chgl) { min-width: 260px; max-width: 420px; line-height: 1.5; color: var(--ink-2); }
 table.t.hist td.l, table.t.rl td.l { text-align: left; }
 table.t.rl td.g { white-space: nowrap; font-weight: 700; color: var(--brand); }
 table.t.rl td.v { white-space: normal !important; font-variant-numeric: tabular-nums; min-width: 220px; max-width: 360px; }
@@ -109,9 +110,9 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>저장 = 공유 저장소(모든 사람이 같은 값) · 적용 = 매시 정각(08~20시) 확인 → 40~70분 계산 → 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611091505"></script>
-<script src="rules_logic.js?v=2611091505"></script>
-<script src="engine/crypto.js?v=2611091505"></script>
+<script src="ui/shell.js?v=2611091622"></script>
+<script src="rules_logic.js?v=2611091622"></script>
+<script src="engine/crypto.js?v=2611091622"></script>
 <script>
 (function () {
   'use strict';
@@ -155,7 +156,7 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
     const r = await fetch(API + '?select=id,at,who,apply,payload&order=id.desc&limit=100', { headers: H });
     if (!r.ok) throw new Error('공유 저장소 읽기 ' + r.status);
     const out = [];
-    for (const x of await r.json()) { try { const o = await GP.decryptJSON(JSON.parse(x.payload), PW); if (valid(o)) out.push(Object.assign({ id: x.id, at: x.at, who: x.who, apply: x.apply }, full(o), { memo: o.memo, force: o.force })); } catch (e) { /* 암호 다른 줄 = 건너뜀 */ } }
+    for (const x of await r.json()) { try { const o = await GP.decryptJSON(JSON.parse(x.payload), PW); if (valid(o)) out.push(Object.assign({ id: x.id, at: x.at, who: x.who, apply: x.apply }, full(o), { memo: o.memo, force: o.force, has: { target: !!o.target, plating: !!o.plating, replan: !!o.replan } })); } catch (e) { /* 암호 다른 줄 = 건너뜀 */ } }
     HIST = out; LATEST = out[0] || null;
   }
   async function loadStatus() {
@@ -175,7 +176,7 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
       + `<tr><td class="l"><b>주문재 생산 시작</b> <small class="muted">일</small></td><td class="l small ds">납기(선적) 며칠 전부터 만들 수 있는지의 전체 한도 — 주문마다 ① 상한 일수 창이 먼저 걸림. 자가재는 제한 없음, 자동차 45일·AL-STS 30일(TF)은 따로, 두 라인 같은 값</td><td class="num">${n0(A.plating.releaseDays)}일</td><td>${inp('plating', 'releaseDays', C.plating.releaseDays, 1, 90, 1)}</td><td colspan="2" class="tr-off">← 같은 값</td></tr>`;
     $('t-rp').innerHTML = RP.map(([k, lb, u, lo, hi, ds]) => `<tr><td class="l"><b>${lb}</b></td><td class="l small ds">${ds}</td><td class="num">${n0(A.replan[k])}${u === '일' ? '일' : '톤·일'}</td><td>${inp('replan', k, C.replan[k], lo, hi, 1)}</td></tr>`).join('');
     const src = A.src;
-    $('t-src').textContent = src && src.id ? `'지금 계획' = 지금 게시된 계획에 쓴 값(#${src.id} ${kst(src.at)} ${src.who || ''} 적용)` : "'지금 계획' = 지금 게시된 계획(10/22)에 쓴 값";
+    $('t-src').textContent = src && src.id ? `'지금 계획' = 지금 게시된 계획에 쓴 값(#${src.id} ${kst(src.at)} ${src.who || ''} 적용)` : `'지금 계획' = 지금 게시된 계획에 쓴 값${src && src.at ? `(${String(src.at).slice(5, 10).replace('-', '/')} ${src.who || ''} — cglplan/tf_rules.json)` : ''}`;   // 11/10 점검: '(10/22)' 고정 문구 → 실제 기준
     $('t-note').innerHTML = `숫자를 바꾼 뒤 <b>저장하고 적용</b>을 눌러야 계획에 들어갑니다(<b>저장만</b>은 이력만 남기고 계획은 그대로).<br>`
       + `① 매시 정각(08~20시)에 적용 요청이 있는지 확인 → ② 있으면 <b>월별 생산량 → 컬러·도금 일별 일정</b>을 어제까지 실적을 넣어 다시 계산(40~70분) → ③ 게시. 진행은 위 '적용 상태'에 보입니다.<br>`
       + `다시 계산한 결과에 <b>결품이 생기거나, 남은 M/C가 3번 이상 늘거나, 납기 지연이 크게 늘면</b> 게시하지 않고 '검토 대기'로 멈춥니다 — 결과를 보고 '그래도 적용'을 누르면 게시합니다.<br>`
@@ -185,7 +186,7 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
   function drawStatus() {
     const req = LATEST && LATEST.apply && (!ST.lastRequestId || LATEST.id > ST.lastRequestId) ? LATEST : null;
     const r = ST.result, p = ST.prev, cls = { '게시': 'ok', '계산 중': 'run', '검토 대기': 'hold', '실패': 'fail' }[ST.state] || '';
-    let h = CUR && CUR.t0 ? `<div><b class="big">지금 계획</b> · 실적 ~${esc(String(CUR.t0).slice(5))} · 남은 M/C <b>${CUR.mc}회</b> · 납기 지연 <b>${n0(CUR.late)}톤·일</b> · 결품 <b>${n0(CUR.short)}t</b></div>` : '';
+    let h = CUR && CUR.t0 ? `<div><b class="big">지금 계획</b> · 실적 ~${esc(String(CUR.t0).slice(5))} · 남은 M/C <b>${CUR.mc}회</b> · 납기 지연 <b>${n0(Math.round(CUR.late || 0))}톤·일</b> · 결품 <b>${n0(CUR.short)}t</b></div>` : '';
     if (ST.state) h += '<div class="muted" style="margin-top:6px">마지막 규칙 적용</div>';
     if (req) h += `<div><b class="big">적용 요청됨</b> — #${req.id} ${kst(req.at)} ${esc(req.who)}: 다음 정시 확인 뒤 계산을 시작합니다(최대 1시간 + 계산 40~70분)</div>`;
     if (ST.state) h += `<div><b class="big">${esc(ST.state)}</b> · #${ST.lastRequestId} ${esc((ST.request || {}).who || '')} · ${kst(ST.at)} — ${esc(ST.msg || '')}</div>`
@@ -211,11 +212,14 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
     F.push(['plating', 'releaseDays', null, '주문재 생산 시작', '일']);
     RP.forEach(([k, lb, u]) => F.push(['replan', k, null, lb, u === '일' ? '일' : '']));
     const g = (o, s, k, l) => { const x = o && o[s] && o[s][k]; return l ? x && x[l] : x; };
-    $('t-hist').innerHTML = HIST.map((h, i) => {
-      const p = HIST[i + 1], ch = p ? F.filter(([s, k, l]) => g(p, s, k, l) !== g(h, s, k, l)).map(([s, k, l, nm, u]) => `${esc(nm)} ${n0(g(p, s, k, l))} → <b>${n0(g(h, s, k, l))}${u}</b>`) : [];
+    // 11/10 점검: 11/9 회의 값(15일·가전내수 30일)은 파일(cglplan/tf_rules.json)로 바로 반영돼 저장 이력에 없음 — 맨 위 '지금 계획' 줄로 보여 이력(15→7 등)과 표 값이 달라 보이지 않게
+    const A0 = APPLIED, h0 = HIST[0], cf = h0 && A0 && A0.src && !A0.src.id ? F.filter(([s, k, l]) => g(h0, s, k, l) != null && g(A0, s, k, l) != null && g(h0, s, k, l) !== g(A0, s, k, l)).map(([s, k, l, nm, u]) => `${esc(nm)} ${n0(g(h0, s, k, l))} → <b>${n0(g(A0, s, k, l))}${u}</b>`) : [];
+    const top = cf.length ? `<tr><td>${esc(String(A0.src.at || '').slice(0, 10))}</td><td>${esc(A0.src.who || '파일')}</td><td class="l wrap chgl">${cf.join(' · ')}</td><td class="l wrap">11/9 회의 결정 — 파일(cglplan/tf_rules.json)로 반영</td><td><b>지금 계획</b></td></tr>` : '';
+    $('t-hist').innerHTML = top + HIST.map((h, i) => {
+      const p = HIST[i + 1], ch = p ? F.filter(([s, k, l]) => !(p.has && p.has[s] === false) && g(p, s, k, l) !== g(h, s, k, l)).map(([s, k, l, nm, u]) => `${esc(nm)} ${n0(g(p, s, k, l))} → <b>${n0(g(h, s, k, l))}${u}</b>`) : [];
       const used = APPLIED.src && APPLIED.src.id === h.id;
       const ap = used ? '<b>지금 계획</b>' : h.apply ? (ST.lastRequestId >= h.id ? (ST.lastRequestId === h.id ? esc(ST.state || '') : '처리됨') : '적용 요청') : '저장만';
-      return `<tr><td>${esc(kst(h.at))}</td><td>${esc(h.who)}</td><td class="l chgl">${p ? (ch.join(' · ') || '바뀐 값 없음') : '첫 기록'}${h.force ? ' <span class="pill">그래도 적용</span>' : ''}</td><td class="l">${esc(h.memo || '')}</td><td>${ap}</td></tr>`;
+      return `<tr><td>${esc(kst(h.at))}</td><td>${esc(h.who)}</td><td class="l wrap chgl">${p ? (ch.join(' · ') || '바뀐 값 없음') : '첫 기록'}${h.force ? ' <span class="pill">그래도 적용</span>' : ''}</td><td class="l wrap">${esc(h.memo || '')}</td><td>${ap}</td></tr>`;
     }).join('') || '<tr><td colspan="5" class="muted">아직 저장한 기록이 없습니다</td></tr>';
   }
   function marks() {

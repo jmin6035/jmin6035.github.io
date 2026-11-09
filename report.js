@@ -56,7 +56,7 @@
     let g = '';
     for (let v = lo; v <= hi + 1e-9; v += step) g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="13" fill="var(--ink-3)">${fmt(v)}</text>`;
     const every = Math.ceil(x.length / 7);
-    x.forEach((d, i) => { if (i % every === 0 || i === x.length - 1) g += `<text x="${X(i)}" y="${H - 6}" text-anchor="middle" font-size="13" fill="var(--ink-3)">${esc(d)}</text>`; });
+    x.forEach((d, i) => { const last = i === x.length - 1; if ((i % every === 0 && !(i < x.length - 1 && X(x.length - 1) - X(i) < tw(d) + 8)) || last) g += `<text x="${X(i)}" y="${H - 6}" text-anchor="middle" font-size="13" fill="var(--ink-3)">${esc(d)}</text>`; });   // 11/10 점검: 마지막 날짜와 겹치는 눈금 글자 빼기('11/611/8')
     refs.forEach((r) => {
       g += `<line x1="${L}" x2="${W - R}" y1="${Y(r.v)}" y2="${Y(r.v)}" stroke="${r.color || 'var(--down)'}" stroke-width="1.5" stroke-dasharray="6 4"/>`;
       // 목표 글자는 선이 지나가지 않는 자리(오른쪽 위 → 오른쪽 아래 → 왼쪽 위 → 왼쪽 아래)에
@@ -96,6 +96,8 @@
     let g = '';
     for (let v = 0; v <= top + 1e-9; v += step) g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="13" fill="var(--ink-3)">${fmt(v)}</text>`;
     const every = Math.ceil(x.length / 8);
+    const keep = new Set(); { let nx = Infinity; for (let i = x.length - 1; i >= 0; i--) if ((i % every === 0 || i === x.length - 1 || hi.includes(i)) && nx - X(i) >= 38) { keep.add(i); nx = X(i); } }   // 11/10 점검: 날짜 글자 겹침('10/20/21') — 뒤에서부터 간격 38 이상만
+    const LBL = (i) => keep.has(i);
     data.forEach((row, i) => {
       let acc = 0;
       cats.forEach((c, k) => {
@@ -105,7 +107,7 @@
       });
       const show = x.length <= 14 || hi.includes(i) || i === x.length - 1;
       if (show && tot[i] > 0) g += `<text x="${X(i)}" y="${Y(tot[i]) - 4}" text-anchor="middle" font-size="10.5" ${hi.includes(i) ? 'font-weight="700" fill="var(--ink)"' : 'fill="var(--ink-2)"'}>${(totalFmt || fmt)(tot[i])}</text>`;
-      if (i % every === 0 || i === x.length - 1 || hi.includes(i)) g += `<text x="${X(i)}" y="${H - 6}" text-anchor="middle" font-size="13" fill="var(--ink-3)">${esc(x[i])}</text>`;
+      if ((i % every === 0 || i === x.length - 1 || hi.includes(i)) && LBL(i)) g += `<text x="${X(i)}" y="${H - 6}" text-anchor="middle" font-size="13" fill="var(--ink-3)">${esc(x[i])}</text>`;
       g += `<rect class="hb" data-i="${i}" x="${X(i) - (W - L - R) / x.length / 2}" y="${T}" width="${(W - L - R) / x.length}" height="${H - T - B}" fill="transparent"/>`;
     });
     el.innerHTML = legend(cats.map((c) => ({ name: c, box: true }))) + `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(cats.join(', '))} 누적">${g}</svg><div class="tip"></div>`;
@@ -150,6 +152,7 @@
     const w1 = `${md(P.w1[0])}~${md(P.w1[1])}`;
     const asOf = (M && M.asOf) || (ST_ && ST_.asOf);
     const asOfS = asOf ? md(asOf) : md(P.to);
+    const MN = (() => { const a_ = String((M && M.asOf) || P.to || ''), m_ = +a_.slice(5, 7), d_ = +a_.slice(8, 10); return d_ > 1 ? m_ : (m_ + 10) % 12 + 1; })();   // 11/10 점검: '10월' 고정 글자 → 속보 달(속보는 전날까지)
     const h1 = document.querySelector('.shell-head h1'); if (h1) h1.textContent = `주간 실적 보고 — ${o.title || w1}`;
     document.title = `주간 보고 ${o.title || w1}`;
     UI.sub(`주간 실적 ${w1} · 월 진도·재고 ${asOfS} 기준 · 작성 ${new Date(o.createdAt).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })}`);
@@ -164,9 +167,9 @@
     const pG = prod('도금 계'), pC = prod('컬러 계');
     const cp = stk('컬러 제품'), gm = stk('도금 소재(F/H)');
     const K = {
-      plating: { name: '도금 생산', key: [pG ? `10월 누계 <b>${n0(pG.actual)}</b>t · 일정 대비 <b>${rate(pG.actual, pG.sched)}%</b>` : '', pa ? `4분기 누적 계획 대비 <b>${sgn(pa.actualT - pa.planT)}</b>t` : ''], st: auto(pG && pG.actual / pG.sched * 100, 98, 90) },
-      color: { name: '컬러 생산', key: [pC ? `10월 누계 <b>${n0(pC.actual)}</b>t · 일정 대비 <b>${rate(pC.actual, pC.sched)}%</b>` : '', co ? `지난주 ${n0(sumC(co.rows, 'w1'))}t/일 (12주 평균 대비 ${sgn(pct(sumC(co.rows, 'w1'), sumC(co.rows, 'w0')), n1)}%)` : ''], st: auto(pC && pC.actual / pC.sched * 100, 98, 90) },
-      ship: { name: '출하', key: [shipT ? `10월 누계 <b>${n0(shipT.actual)}</b>t · 일정 대비 <b>${rate(shipT.actual, shipT.sched)}%</b>` : '', (() => { const m = sh && sh.monthly && sh.monthly[sh.monthly.length - 1]; return m ? `${+m.month.slice(5)}월 말일 출하 ${n0(m.lastDay)}t (월의 ${rate(m.lastDay, m.total)}%)` : ''; })()], st: auto(shipT && shipT.actual / shipT.sched * 100, 95, 80) },
+      plating: { name: '도금 생산', key: [pG ? `${MN}월 누계 <b>${n0(pG.actual)}</b>t · 일정 대비 <b>${rate(pG.actual, pG.sched)}%</b>` : '', pa ? `4분기 누적 계획 대비 <b>${sgn(pa.actualT - pa.planT)}</b>t` : ''], st: auto(pG && pG.actual / pG.sched * 100, 98, 90) },
+      color: { name: '컬러 생산', key: [pC ? `${MN}월 누계 <b>${n0(pC.actual)}</b>t · 일정 대비 <b>${rate(pC.actual, pC.sched)}%</b>` : '', co ? `지난주 ${n0(sumC(co.rows, 'w1'))}t/일 (12주 평균 대비 ${sgn(pct(sumC(co.rows, 'w1'), sumC(co.rows, 'w0')), n1)}%)` : ''], st: auto(pC && pC.actual / pC.sched * 100, 98, 90) },
+      ship: { name: '출하', key: [shipT ? `${MN}월 누계 <b>${n0(shipT.actual)}</b>t · 일정 대비 <b>${rate(shipT.actual, shipT.sched)}%</b>` : '', (() => { const m = sh && sh.monthly && sh.monthly[sh.monthly.length - 1]; return m ? `${+m.month.slice(5)}월 말일 출하 ${n0(m.lastDay)}t (월의 ${rate(m.lastDay, m.total)}%)` : ''; })()], st: auto(shipT && shipT.actual / shipT.sched * 100, 95, 80) },
       stock: { name: '재고', key: [cp ? `컬러 제품 <b>${n0(cp.current)}</b>t · 목표의 <b>${rate(cp.current, cp.target)}%</b>` : '', gm ? `도금 소재 ${n0(gm.current)}t · 목표의 ${rate(gm.current, gm.target)}%` : ''], st: ST_ && ST_.now ? (ST_.now.some((x) => x.target && x.current / x.target > 1.3) ? 'bad' : ST_.now.some((x) => x.target && x.current / x.target > 1.1) ? 'warn' : 'good') : null },
     };
     let h = '';
@@ -174,9 +177,9 @@
 
     // ① 한 장 요약: 구분별 타일(상태 · 대표 수치 1개 · 진도 막대 · 조치 한 줄) + 결정 필요 사항 카드
     const big = {
-      plating: pG && { v: rate(pG.actual, pG.sched), lbl: '10월 일정 대비', sub: `${n0(pG.actual)}t / 일정 ${n0(pG.sched)}t`, r: pG.actual / pG.sched, x2: pa ? `4분기 누적 계획 대비 ${sgn(pa.actualT - pa.planT)}t` : '' },
-      color: pC && { v: rate(pC.actual, pC.sched), lbl: '10월 일정 대비', sub: `${n0(pC.actual)}t / 일정 ${n0(pC.sched)}t`, r: pC.actual / pC.sched, x2: co ? `지난주 ${n0(sumC(co.rows, 'w1'))}t/일 · 12주 평균 대비 ${sgn(pct(sumC(co.rows, 'w1'), sumC(co.rows, 'w0')), n1)}%` : '' },
-      ship: shipT && { v: rate(shipT.actual, shipT.sched), lbl: '10월 출하 일정 대비', sub: `${n0(shipT.actual)}t / 일정 ${n0(shipT.sched)}t`, r: shipT.actual / shipT.sched, x2: (() => { const m = sh && sh.monthly && sh.monthly[sh.monthly.length - 1]; return m ? `${+m.month.slice(5)}월 말일 하루 출하가 월의 ${rate(m.lastDay, m.total)}%` : ''; })() },
+      plating: pG && { v: rate(pG.actual, pG.sched), lbl: `${MN}월 일정 대비`, sub: `${n0(pG.actual)}t / 일정 ${n0(pG.sched)}t`, r: pG.actual / pG.sched, x2: pa ? `4분기 누적 계획 대비 ${sgn(pa.actualT - pa.planT)}t` : '' },
+      color: pC && { v: rate(pC.actual, pC.sched), lbl: `${MN}월 일정 대비`, sub: `${n0(pC.actual)}t / 일정 ${n0(pC.sched)}t`, r: pC.actual / pC.sched, x2: co ? `지난주 ${n0(sumC(co.rows, 'w1'))}t/일 · 12주 평균 대비 ${sgn(pct(sumC(co.rows, 'w1'), sumC(co.rows, 'w0')), n1)}%` : '' },
+      ship: shipT && { v: rate(shipT.actual, shipT.sched), lbl: `${MN}월 출하 일정 대비`, sub: `${n0(shipT.actual)}t / 일정 ${n0(shipT.sched)}t`, r: shipT.actual / shipT.sched, x2: (() => { const m = sh && sh.monthly && sh.monthly[sh.monthly.length - 1]; return m ? `${+m.month.slice(5)}월 말일 하루 출하가 월의 ${rate(m.lastDay, m.total)}%` : ''; })() },
       stock: cp && { v: rate(cp.current, cp.target), lbl: '컬러 제품 재고 · 목표 대비', sub: `${n0(cp.current)}t / 목표 ${n0(cp.target)}t`, r: cp.current / cp.target, over: true, x2: gm ? `도금 소재 ${n0(gm.current)}t · 목표의 ${rate(gm.current, gm.target)}%` : '' },
     };
     let t = '<div class="sum-tiles">';
@@ -196,9 +199,9 @@
 
     // ② 도금
     let b = '<div class="grid2">';
-    if (M) b += `<div><p class="ttl">10월 진도 <span class="muted">MES 월차계획 · ${asOfS} 기준</span></p>` +
+    if (M) b += `<div><p class="ttl">${MN}월 진도 <span class="muted">MES 월차계획 · ${asOfS} 기준</span></p>` +
       bullets(M.prod.filter((x) => x.plant === '도금').map((x) => ({ name: x.line, v: x.actual, ref: x.sched, total: /계$/.test(x.line) })), { mode: 'prod' }) +
-      `<p class="hint">막대 = 실적 누계 · 세로선 = ${asOfS}까지 일정 · 10월 계획 ${n0(pG && pG.month)}t</p></div>`;
+      `<p class="hint">막대 = 실적 누계 · 세로선 = ${asOfS}까지 일정 · ${MN}월 계획 ${n0(pG && pG.month)}t</p></div>`;
     if (pa) b += box('c-pl-plan', '4분기 누적 생산 — 기준 계획 vs 실적', 't');
     b += '</div>';
     let d = '<div class="scroll"><table class="t"><thead><tr><th>라인</th><th>앞 ${(o.period && o.period.nW0) || 12}주 평균 t/일</th><th>보고 주 t/일</th><th>증감</th><th>속도 t/hr <span class="muted">정지 포함</span></th><th>평균 두께 mm</th><th>가동일당 휴지 h</th></tr></thead><tbody>' +
@@ -220,7 +223,7 @@
     // ③ 컬러
     if (co) {
       b = '<div class="grid2">';
-      if (M) b += `<div><p class="ttl">10월 진도 <span class="muted">MES 월차계획 · ${asOfS} 기준</span></p>` +
+      if (M) b += `<div><p class="ttl">${MN}월 진도 <span class="muted">MES 월차계획 · ${asOfS} 기준</span></p>` +
         bullets(M.prod.filter((x) => x.plant === '컬러').map((x) => ({ name: x.line, v: x.actual, ref: x.sched, total: /계$/.test(x.line) })), { mode: 'prod' }) + '</div>';
       b += box('c-co-week', '주별 생산량 (라인 누적)', 't/일') + '</div>';
       d = '<div class="scroll"><table class="t"><thead><tr><th>라인</th><th>앞 ${(o.period && (o.period.nW0c || o.period.nW0)) || 12}주 평균 t/일</th><th>보고 주 t/일</th><th>증감</th><th>가동일</th><th>속도 t/hr <span class="muted">정지 포함</span></th><th>가동일당 휴지 h</th><th>주요 품목 (t)</th></tr></thead><tbody>' +
@@ -234,7 +237,7 @@
     // ④ 출하
     if (sh || M) {
       b = '<div class="grid2">';
-      if (M) b += `<div><p class="ttl">10월 출하 진도 <span class="muted">MES 월차계획 · ${asOfS} 기준</span></p>` +
+      if (M) b += `<div><p class="ttl">${MN}월 출하 진도 <span class="muted">MES 월차계획 · ${asOfS} 기준</span></p>` +
         bullets(M.ship.filter((x) => x.month).map((x) => ({ name: x.name, v: x.actual, ref: x.sched, total: x.name === '합계' })), { mode: 'prod' }) + '</div>';
       if (sh && sh.daily) b += box('c-ship-day', '최근 4주 일별 판매 출하', 't/일');
       b += '</div>';

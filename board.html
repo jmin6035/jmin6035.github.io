@@ -7,7 +7,7 @@
 <meta name="description" content="포스코스틸리온 도금·컬러 가동계획 — 오늘 핵심 지표와 메뉴">
 <script>if (/[?&]src=/.test(location.search)) location.replace('status.html' + location.search);</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611091505">
+<link rel="stylesheet" href="ui/theme.css?v=2611091622">
 <style>
 /* ===== 홈 대시보드: 촘촘한 격자 · 숫자와 막대 중심 · 설명은 접기 ===== */
 .dash { display: grid; gap: 12px; margin-top: 10px; }
@@ -59,10 +59,10 @@ table.gt tr.tot td { font-weight: 800; border-top: 1px solid var(--line); backgr
 .fp-v { font-size: 14px; color: var(--ink-2); white-space: nowrap; } .fp-v b { color: var(--tc); font-size: 15px; margin-right: 4px; }
 .fs-g { margin-bottom: 16px; }
 .fs-c { position: relative; height: 150px; display: flex; gap: 14px; align-items: flex-end; padding: 0 84px 22px 4px; border-bottom: 1px solid var(--line); }
-.fs-col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; }
+.fs-col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; z-index: 3; }
 .fs-col > span { position: absolute; bottom: -20px; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
 .fs-bar { width: min(56px, 70%); background: var(--tc, var(--good)); border-radius: 4px 4px 0 0; position: relative; animation: grow .9s var(--ease) both; transform-origin: bottom; }
-.fs-bar b { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 13.5px; color: var(--ink); white-space: nowrap; }
+.fs-bar b { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 13.5px; color: var(--ink); white-space: nowrap; background: var(--surface); padding: 0 4px; border-radius: 3px; }
 .fs-col.good { --tc: color-mix(in srgb, var(--good) 75%, var(--surface)); } .fs-col.warn { --tc: color-mix(in srgb, var(--warn) 80%, var(--surface)); } .fs-col.bad { --tc: color-mix(in srgb, var(--bad) 80%, var(--surface)); }
 .fs-max { position: absolute; left: 0; right: 0; height: 0; border-top: 2px dashed var(--ink); z-index: 2; pointer-events: none; }
 .fs-max span { position: absolute; right: 0; top: -9px; font-size: 13.5px; font-style: normal; color: var(--ink); background: var(--surface); padding: 0 4px; }
@@ -199,10 +199,10 @@ td.ct.bad{background:color-mix(in srgb,#e03131 16%,transparent)}td.ct.warn{backg
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="h-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2611091505"></script>
-<script src="engine/crypto.js?v=2611091505"></script>
-<script src="ui/cal.js?v=2611091505"></script>
-<script src="ui/ctl.js?v=2611091505"></script>
-<script src="portal.js?v=2611091505"></script>
+<script src="ui/shell.js?v=2611091622"></script>
+<script src="engine/crypto.js?v=2611091622"></script>
+<script src="ui/cal.js?v=2611091622"></script>
+<script src="ui/ctl.js?v=2611091622"></script>
+<script src="portal.js?v=2611091622"></script>
 </body>
 </html>

@@ -16,7 +16,8 @@
   function rowsOf(O) {
     const G = (O.groups || []).filter((g) => UI.inScope(g.pl)); if (!G.length) return '';
     const SR = O.stockRoll || {}, wi = (SR.weeks || []).findIndex((w) => w >= (SR.asOf || '')) , cur = (k) => { const kk = k === 'G자가재' ? '도금 제품(자가재)' : 'g:' + k; let bd = '', bv = null; for (const [d, q, v] of O.stockTrend || []) if (q === kk && d >= bd) { bd = d; bv = v; } if (bv != null) return bv; const a = (SR.v || {})[k] || []; for (let i = Math.max(0, wi); i >= 0; i--) if (a[i] != null) return a[i]; return null; };   // 11/7 점검: 지금 재고 = 판생 실재고
-    const SB = ((O.plating || {}).now || {}).shortBy || [];
+    const NW = (O.plating || {}).now || {}, SB = NW.shortOrder || NW.shortBy || [], SF = NW.shortFill || [];   // 11/10 점검: 결품 = 주문 결품만, 판매계획 보충 미편성은 따로(관제판 '주문 결품 0t'과 칩 '결품 3,123t'이 달랐음)
+    const UT = {}; for (const x of (MO && MO.groups ? MO.groups.groups : [])) for (const m of x.mats || []) UT[m.key] = (UT[m.key] || 0) + (m.use || 0);   // 소재 총 사용량 → 그룹 몫
     const VM = new Map(UI.matView(MO, O).map((m) => [m.key, m])), SR_ = { late: 0, soon: 1, plan: 2, ok: 3 };   // 11/9: 소재 상태 = 공통 기준(UI.matView — 마감 지남은 matLate 만)
     const sig = (tone, big, sub, href) => `<td class="ct ${tone}"><a href="${href}"><b>${big}</b>${sub ? `<small>${sub}</small>` : ''}</a></td>`;
     const rank = { bad: 0, warn: 1, ok: 2, na: 3 }, worst = [], vals = [];
@@ -26,12 +27,15 @@
       const S = g.ship, sp = S && S.month > 0 ? S.actual / Math.max(1, S.sched) : null;
       const ship = !S ? ['na', '–', ''] : [S.sched < 1 ? 'ok' : sp < 0.9 ? 'bad' : sp < 1 ? 'warn' : 'ok', n0(S.actual), `오늘까지 계획 ${n0(S.sched)} · 월 ${n0(S.month)}`];
       const st = cur(g.key), d = UI.ctlTfd(g.key), dly = S && S.month ? S.month / dim((O.today || O.asOf).slice(0, 7)) : 0, cov = st != null && dly ? st / dly : null;
-      const stock = cov == null || !d ? ['na', st != null ? n0(st) : '–', ''] : [cov < d * 0.5 ? 'bad' : cov > d ? 'warn' : 'ok', `${Math.round(cov)}일`, `${n0(st)}t · 상한 ${d}일`];
+      const stock = cov == null || !d ? ['na', st != null ? n0(st) + 't' : '–', ''] : [cov < d * 0.5 ? 'bad' : cov > d ? 'warn' : 'ok', `${Math.round(cov)}일`, `${n0(st)}t · 상한 ${d}일`];
       const mg = (MO && MO.groups ? MO.groups.groups : []).filter((x) => (MOG[g.key] || []).includes(x.group));
-      const ma = mg.flatMap((x) => x.mats || []).filter((x) => !(x.use < 1)).map((x) => VM.get(x.key) || x).sort((a, b) => SR_[a.st] - SR_[b.st] || (b.lateT || 0) - (a.lateT || 0) || String(a.deadline || '9').localeCompare(String(b.deadline || '9')))[0];   // 11/9: 그룹 상태 = 쓰는 소재 중 가장 급한 것(공통 기준)
+      // 11/10 점검: 부족 톤 = 그 소재 부족 × 이 그룹 사용 비중(7개 그룹이 같은 2,938t 로 보이던 것)
+      const gu = {}; mg.forEach((x) => (x.mats || []).forEach((m) => { gu[m.key] = (gu[m.key] || 0) + (m.use || 0); }));
+      const ma = mg.flatMap((x) => x.mats || []).filter((x) => !(x.use < 1)).filter((x, i, A) => A.findIndex((y) => y.key === x.key) === i).map((x) => { const v = VM.get(x.key) || x; return Object.assign({}, v, { lateT: Math.round((v.lateT || 0) * (UT[x.key] ? gu[x.key] / UT[x.key] : 1)) }); }).sort((a, b) => SR_[a.st] - SR_[b.st] || (b.lateT || 0) - (a.lateT || 0) || String(a.deadline || '9').localeCompare(String(b.deadline || '9')))[0];   // 11/9: 그룹 상태 = 쓰는 소재 중 가장 급한 것(공통 기준)
       const mat = !mg.length ? ['na', '–', ''] : !ma || ma.st === 'ok' ? ['ok', '충당', ''] : [{ late: 'bad', soon: 'warn', plan: 'ok' }[ma.st], { late: '마감 지남', soon: '2주 안 발주', plan: '발주 예정' }[ma.st], ma.st === 'late' ? `${esc(ma.name)} ${n0(ma.lateT)}t` : `${esc(ma.name)} ${md(ma.deadline)}까지`];
       const sh = SB.filter((x) => (SBN[g.key] || []).some((n) => x.startsWith(n + ' '))).map((x) => +(x.match(/([\d,]+)t$/) || [0, '0'])[1].replace(/,/g, ''));
-      const due = g.pl !== 'G' ? ['na', '–', ''] : sh.length ? ['bad', `결품 ${n0(sh.reduce((a, b) => a + b, 0))}t`, `${sh.length}건`] : ['ok', '결품 0', ''];
+      const sf = SF.filter((x) => (SBN[g.key] || []).some((n) => x.startsWith(n + ' '))).map((x) => +(x.match(/([\d,]+)t$/) || [0, '0'])[1].replace(/,/g, ''));
+      const due = g.pl !== 'G' ? ['na', '–', ''] : sh.length ? ['bad', `결품 ${n0(sh.reduce((a, b) => a + b, 0))}t`, `주문 ${sh.length}건`] : sf.length ? ['warn', `미편성 ${n0(sf.reduce((a, b) => a + b, 0))}t`, `판매계획 보충 ${sf.length}건`] : ['ok', '결품 0', ''];
       const all = [prod, ship, stock, mat, due]; worst.push(...all.map((x) => x[0])); vals.push(...all.map((x) => [x[1], x[2]]));
       const w = all.reduce((a, x) => (rank[x[0]] < rank[a] ? x[0] : a), 'na');
       return `<tr><td class="cg"><span class="cdot ${w}"></span><b>${esc(g.name.replace(/\(.*\)/, ''))}</b></td>`
@@ -63,7 +67,7 @@
     const SD = O.shipDay || {}, ship = (g) => Object.entries((SD.g || {})[g] || {}).filter(([d]) => d.slice(0, 7) === m).reduce((a, [, v]) => a + v, 0);
     const eom = m + '-' + String(dim(m)).padStart(2, '0'), stEnd = {};
     for (const [d, k, v] of O.stockTrend || []) if (d === eom && k.startsWith('g:')) stEnd[k.slice(2)] = v;
-    const SB = ((O.plating || {}).now || {}).shortBy || [], mm = +m.slice(5);
+    const NW = (O.plating || {}).now || {}, SB = NW.shortOrder || NW.shortBy || [], SF = NW.shortFill || [], mm = +m.slice(5);
     const G = (O.groups || []).filter((g) => UI.inScope(g.pl));
     const sig = (tone, big, sub, href) => `<td class="ct ${tone}"><a href="${href}"><b>${big}</b>${sub ? `<small>${sub}</small>` : ''}</a></td>`;
     const pct = (a, p) => (p > 0 ? a / p : null), tone = (r) => (r == null ? 'na' : r < 0.95 ? 'bad' : r < 1 ? 'warn' : 'ok');
@@ -86,8 +90,9 @@
         const ms = mg.flatMap((x) => x.mats).map((x) => VM.get(x.key) || x).filter((x) => x.first && x.first.slice(0, 7) <= m && x.st !== 'ok').sort((a, b) => (a.deadline < b.deadline ? -1 : 1))[0];
         c4 = ms ? [{ late: 'bad', soon: 'warn', plan: 'ok' }[ms.st] || 'ok', `${esc(ms.name)}`, `${md(ms.deadline)}까지 발주 · ${md(ms.first)}부터 부족`] : ['ok', '충당', ''];
         const nm = { G수출: ['도금수출'], G국내: ['도금국내'], G자동차: ['자동차내수', '자동차수출'], G자가재: ['자가재'] }[g.key] || [];
-        const sh = SB.filter((x) => nm.some((n) => x.startsWith(n + ' ')) && +(x.match(/ (\d+)\/\d+ /) || [0, 0])[1] === mm).map((x) => +(x.match(/([\d,]+)t$/) || [0, '0'])[1].replace(/,/g, ''));
-        c5 = g.pl !== 'G' ? ['na', '–', ''] : sh.length ? ['bad', `결품 ${n0(sh.reduce((a, b) => a + b, 0))}t`, `${sh.length}건`] : ['ok', '결품 0', ''];
+        const pick = (L) => L.filter((x) => nm.some((n) => x.startsWith(n + ' ')) && +(x.match(/ (\d+)\/\d+ /) || [0, 0])[1] === mm).map((x) => +(x.match(/([\d,]+)t$/) || [0, '0'])[1].replace(/,/g, ''));
+        const sh = pick(SB), sf = pick(SF), sm = (L) => n0(L.reduce((a, b) => a + b, 0));
+        c5 = g.pl !== 'G' ? ['na', '–', ''] : sh.length ? ['bad', `결품 ${sm(sh)}t`, `주문 ${sh.length}건`] : sf.length ? ['warn', `미편성 ${sm(sf)}t`, `판매계획 보충 ${sf.length}건`] : ['ok', '결품 0', ''];
       }
       const all = [c1, c2, c3, c4, c5], rk = { bad: 0, warn: 1, ok: 2, na: 3 }, w = all.reduce((a, x) => (rk[x[0]] < rk[a] ? x[0] : a), 'na');
       return `<tr><td class="cg"><span class="cdot ${w}"></span><b>${esc(g.name.replace(/\(.*\)/, ''))}</b></td>` + sig(c1[0], c1[1], c1[2], 'supply.html') + sig(c2[0], c2[1], c2[2], 'supply.html') + sig(c3[0], c3[1], c3[2], 'integrated.html') + sig(c4[0], c4[1], c4[2], 'matcal.html') + sig(c5[0], c5[1], c5[2], 'cg_order.html') + '</tr>';

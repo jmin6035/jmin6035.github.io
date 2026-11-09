@@ -9,7 +9,7 @@
   const sg = (v) => (Math.abs(v) < 0.5 ? '0' : (v > 0 ? '+' : '−') + n0(Math.abs(v)));
   const LINES = ['1CCL', '2CCL', '3CCL', '4CCL'], MONTHS0 = ['2026-10', '2026-11', '2026-12'];   // 11/9: 달 = 결과 자료(render), 이 값은 자료 없을 때만
   const GL = (g) => (g === '주문재' ? '건재 주문재' : g);
-  const fmtT = (s) => (s ? String(s).replace('T', ' ').slice(0, 16) : '-');
+  const fmtT = (s) => { if (!s) return '-'; const t = String(s); if (/(Z|[+-]\d\d:?\d\d)$/.test(t)) { const d = new Date(t); if (!isNaN(d)) return new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' '); } return t.replace('T', ' ').slice(0, 16); };   // 11/10 점검: UTC 시각(14:49)을 한국 시각(23:49)으로
   let pw = '', E = {}, D = {}, worker = null, result = null, uploads = {}, names = {}, reading = 0, moves = [];
 
   const envs = Promise.all(['color_calc_files.enc.json', 'color_calc_mes.enc.json', 'integrated.enc.json', 'color_prev.enc.json'].map((n) => GP.latest(n)))

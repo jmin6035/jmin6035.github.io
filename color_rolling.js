@@ -18,7 +18,7 @@
   function render() {
     const el = $('r-sec'); if (!el || !R) return;
     el.hidden = false;
-    $('r-meta').textContent = `확정 창 ${md(R.window[0])}~${md(R.window[1])} · 작업지시 ${String(R.woNow || '').slice(5).replace('-', '/')} · 확정 ${fmt(R.conf.t)}t`;
+    $('r-meta').textContent = `확정 창 ${md(R.window[0])}~${md(R.window[1])} · 작업지시 ${String(R.woNow || '').slice(5).replace('-', '/')} · 확정 ${fmt(R.conf.t)}t${R.actTo ? ` · 실적 = MES ~${md(R.actTo)}${R.actTo >= R.asOf ? '(오늘 진행분 포함)' : ''}` : ''}`;   // 11/10 점검: 실적 6,104(오늘 진행분 포함) vs 다른 화면 ~11/8 5,921 — 기준일 표시
     $('r-tabs').innerHTML = R.months.map((m, i) => `<button type="button" data-m="${i}" aria-pressed="${i === mi}">${+m.slice(5)}월</button>`).join('');
     const m = R.months[mi], G = R.groups.filter((x) => x.ym === m && (x.plan > 0.5 || x.act + x.conf + x.roll > 0.5));
     const sum = (k) => G.reduce((s, x) => s + x[k], 0);

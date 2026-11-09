@@ -30,15 +30,15 @@
       const d = c.cur && c.act != null ? c.act / c.cur - 1 : null;
       return `<tr><td><input type="checkbox" data-cand="${i}" ${c.apply ? 'checked' : ''} ${c.act != null ? '' : 'disabled'} aria-label="${esc(c.label)} 반영"></td><td class="l">${esc(c.label)} <small class="muted">${esc(c.unit)}</small></td>`
         + `<td class="n">${v(c, c.cur)}</td><td class="n"><b>${v(c, c.act)}</b></td><td class="n ${c.flag ? 'neg' : ''}">${d == null ? '-' : (d > 0 ? '+' : '') + GP.fmt(d * 100, 1) + '%'}</td>`
-        + `<td class="l muted">${esc(c.basis || '')}</td><td>${c.apply ? '<span class="pill warn">반영 권장</span>' : c.flag ? '<span class="pill">검토(표본 부족)</span>' : '유지'}</td></tr>`;
+        + `<td class="l muted">${esc(c.basis || '').replace(/\d{4,}(?=코일)/g, (n) => GP.fmt(+n))}</td><td>${c.apply ? '<span class="pill warn">반영 권장</span>' : c.flag ? '<span class="pill">검토(표본 부족)</span>' : '유지'}</td></tr>`;
     }).join('');
     renderWeekly(a);
     $('a-events').innerHTML = '<tr><th>시작</th><th>라인</th><th>전환</th><th>손실(분)</th><th>정지(분)</th><th>사유</th></tr>' + (a.events.map((e) =>
-      `<tr><td>${esc(e.at)}</td><td>${e.line}</td><td>${e.kind === 'M/C' ? `${e.from}→${e.to}` : esc(e.kind)}</td><td class="n"><b>${GP.fmt(e.minutes)}</b></td><td class="n">${e.stopMin != null ? GP.fmt(e.stopMin) : '-'}</td><td class="l">${esc(e.reason || '')}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">기간 중 강종 전환 없음</td></tr>');
+      `<tr><td>${esc(e.at)}</td><td>${e.line}</td><td>${e.kind === 'M/C' ? `${e.from}→${e.to}` : esc(e.kind)}</td><td class="n"><b>${GP.fmt(e.minutes)}</b></td><td class="n">${e.stopMin != null ? GP.fmt(e.stopMin) : '-'}</td><td class="l wrap">${esc(e.reason || '')}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">기간 중 강종 전환 없음</td></tr>');
     const RS = a.reasons || [];
     $('a-reason-card').hidden = !RS.length;
     const days = Object.fromEntries(Object.entries(a.lines).map(([l, x]) => [l, x.opDays || x.days || 1]));
-    $('a-reasons').innerHTML = '<tr><th>라인</th><th>구분</th><th>사유</th><th>분</th><th>건</th><th>분/일</th></tr>' + RS.map((x) =>
+    $('a-reasons').innerHTML = '<tr><th>라인</th><th>구분</th><th>사유</th><th>분</th><th title="휴지 기록 줄 수 — M/C 한 번이 여러 줄로 기록되기도 함">기록 수</th><th>분/일</th></tr>' + RS.map((x) =>
       `<tr><td>${x.line}</td><td>${esc(x.kind)}</td><td class="l">${esc(x.reason)}</td><td class="n">${GP.fmt(x.minutes)}</td><td class="n">${x.n}</td><td class="n">${GP.fmt(x.minutes / days[x.line], 1)}</td></tr>`).join('');
     $('a-checks').innerHTML = (a.checks || []).map((c) => `<li class="${c.level}">${{ error: '오류', warn: '경고', info: '정보' }[c.level]} · ${esc(c.msg)}</li>`).join('');
     $('a-msg').textContent = '';
@@ -58,7 +58,10 @@
       + keys.map((k) => `<tr><td class="l">${k.split('|').join(' ')}</td>${weeks.map((w) => cell(k, w)).join('')}<td class="n">${cur[k] ? GP.fmt(cur[k] * 60, 1) : '-'}</td></tr>`).join('')
       : '<tr><td class="muted">주별 자료 없음</td></tr>';
     const lines = [...new Set(W.map((r) => r[1]))].sort();
-    $('a-wtons').innerHTML = weeks.length ? `<tr><th>주</th>${lines.map((l) => `<th>${l}</th>`).join('')}</tr>` + weeks.map((w) => `<tr><td>${GP.md(w)}~</td>${lines.map((l) => `<td class="n">${GP.fmt(GP.sum(W.filter((r) => r[0] === w && r[1] === l), (r) => r[4]))}</td>`).join('')}</tr>`).join('') : '';
+    $('a-wtons').innerHTML = weeks.length ? `<tr><th>주</th>${lines.map((l) => `<th>${l}</th>`).join('')}</tr>` + weeks.map((w) => `<tr><td>${GP.md(w)}~</td>${lines.map((l) => `<td class="n">${GP.fmt(GP.sum(W.filter((r) => r[0] === w && r[1] === l), (r) => r[4]))}</td>`).join('')}</tr>`).join('')
+      + (() => { const wt = (l) => GP.sum(W.filter((r) => r[1] === l), (r) => r[4]), lt = (l) => ((a.lines || {})[l] || {}).tons;   // 11/10 점검: 주별 합(27,504)과 라인 요약(27,593)이 달라 보이던 것 — 차이 = 강종·부서 미분류 코일
+        const df = lines.map((l) => [l, lt(l) != null ? lt(l) - wt(l) : 0]).filter((x) => Math.abs(x[1]) >= 1);
+        return `<tr class="tot"><td><b>합계</b></td>${lines.map((l) => `<td class="n"><b>${GP.fmt(wt(l))}</b></td>`).join('')}</tr>` + (df.length ? `<tr><td colspan="${lines.length + 1}" class="l wrap muted">라인 요약과 차이 = 강종·부서 미분류 코일(${df.map(([l, v]) => `${l} ${GP.fmt(v)}t`).join(', ')})</td></tr>` : ''); })() : '';
   }
 
   // M/C 손실과 비강종 더미는 같은 라인끼리 함께 체크(한쪽만 바꾸면 손실 이중 계상)

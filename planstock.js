@@ -58,25 +58,25 @@
     const K = ['수입 FH', 'P-FH', 'P-GI', '서림 GI'];
     const S = O.orderSum;
     const rows = K.filter((k) => S[k]).map((k) => { const x = S[k]; const sup = (O.orders.find((o) => o.kind === k) || {}).sup || '';
-      return `<tr><td><b>${k}</b></td><td>${esc(sup.replace(/\s*\(자가 도금\)/, ''))}</td><td class="${x.past > 0.5 ? 'bad' : ''}"><b>${n0(x.past)}</b></td><td class="${x.soon > 0.5 ? 'warn' : ''}"><b>${n0(x.soon)}</b></td><td>${n0(x.t - x.past - x.soon)}</td><td><b>${n0(x.t)}</b></td></tr>`; }).join('');
+      return `<tr><td><b>${k}</b></td><td>${esc(sup.replace(/\s*\(자가 도금\)/, ''))}</td><td>${n0(x.past)}</td><td class="${x.soon > 0.5 ? 'warn' : ''}"><b>${n0(x.soon)}</b></td><td>${n0(x.t - x.past - x.soon)}</td><td><b>${n0(x.t)}</b></td></tr>`; }).join('');
     const next = O.orders.filter((o) => o.state === 'soon').sort((a, b) => (a.o1 < b.o1 ? -1 : 1));
     const LT = UI.matLate(MO && MO.late);   // 소재 '발주 마감 지남' 공통 기준(ui/shell.js UI.matLate, 11/8) — 부족·조치·소재 수급·수주 관제와 같은 값
     return card('ps-osum', '소재 발주 요약', `생산 일정(10월 ~ 3월) 기준 · ${md(UI.today(O.today))} 현재`, '단위: 톤',
-      (LT ? `<p class="ps-late" title="${esc(LT.tip)}">발주 마감 지남 부족 <b>${n0(LT.t)}t</b> <span>${LT.items.map((x) => esc(x.name)).join(' · ')}</span></p>` : '')
-      + `<div class="scroll"><table class="t big"><thead><tr><th>소재</th><th>업체</th><th title="발주 기간이 지났는데 발주 기록이 없는 양(재고 차감 전) — 실제 부족은 위 '발주 마감 지남'">기간 지남·미발주</th><th>2주 내 마감</th><th>이후</th><th>합계</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      (LT ? `<p class="ps-late" title="${esc(LT.tip)}">마감 지난 부족 <b>${n0(LT.t)}t</b> <span>${LT.items.map((x) => esc(x.name)).join(' · ')}</span></p>` : '')
+      + `<div class="scroll"><table class="t big"><thead><tr><th>소재</th><th>업체</th><th title="발주 기간이 지난 생산분 필요량(재고 차감 전) — 경고 아님, 실제 부족은 위 '마감 지난 부족'">기간 지남 <small>재고 차감 전</small></th><th>2주 내 마감</th><th>이후</th><th>합계</th></tr></thead><tbody>${rows}</tbody></table></div>`
       + (next.length ? `<p class="small"><b>최우선 발주:</b> ${next.slice(0, 3).map((o) => `${md(o.o1)}까지 ${o.kind} ${n0(o.t - (o.ordered || 0))}t(${md(o.arr)} 입고)`).join(' · ')}</p>` : '')
-      + '<p class="small">기간 지남·미발주 = 발주 마감이 오늘 이전인데 기발주 자료가 없는 양(미발주, 수입 FH 는 기발주 반영). FH 는 자가 도금 소재. 실제로 이미 발주됐는지 구매와 대조 필요.</p>');
+      + '<p class="small">기간 지남 = 발주일이 지난 생산분의 소재 필요량(재고·기발주 빼기 전). 실제 부족은 위 \'마감 지난 부족\'(소재 관제와 같은 값).</p>');
   }
   function fhCard() {
     const today = UI.today(O.today);   // 공통 기준일(11/8)
     const win = (m) => { const y = +m.slice(0, 4), mm = +m.slice(5); const om = mm - 2 <= 0 ? mm + 10 : mm - 2, oy = mm - 2 <= 0 ? y - 1 : y; return [`${oy}-${String(om).padStart(2, '0')}-10`, `${oy}-${String(om).padStart(2, '0')}-20`]; };
-    const rows = Object.entries(O.fh).filter(([m]) => m >= '2026-10').map(([m, [need, have]]) => {
-      const left = Math.max(0, need - have), [o0, o1] = win(m);
+    const rows = Object.entries(O.fh).filter(([m]) => m >= '2026-10').map(([m, [need, have, cov]]) => {
+      const left = Math.max(0, need - (cov != null ? cov : have)), [o0, o1] = win(m);   // 11/10: 앞 달에 남은 기발주는 뒤 달에 씀(cov = 누적 충당, planstock.py) — 예전엔 달마다 따로 빼 '기간 지남' 4,123t(발주 요약 703t 과 다름)
       const st = left < 0.5 ? ['충분', 'good'] : today > o1 ? ['기간 지남', 'bad'] : today >= o0 ? ['발주 기간 중', 'warn'] : [`${md(o0)}부터`, ''];
       return `<tr><td><b>${+m.slice(5)}월적</b>${m.slice(0, 4) !== '2026' ? ` <small>'${m.slice(2, 4)}</small>` : ''}</td><td>${md(o0)}~${md(o1)}</td><td>${md(`${m}-07`)}</td><td>${n0(need)}</td><td>${n0(have)}</td><td class="${st[1] === 'bad' ? 'bad' : st[1] === 'warn' ? 'warn' : ''}"><b>${n0(left)}</b></td><td><span class="tag ${st[1]}">${st[0]}</span></td></tr>`; }).join('');
     return card('ps-fh', '수입 FH 월적', '계획재용 수입 FH — 필요량 · 기발주 · 남은 발주', '단위: 톤',
       `<div class="scroll"><table class="t big"><thead><tr><th>월적</th><th>발주 기간</th><th>입고</th><th>필요</th><th>기발주</th><th>남은 발주</th><th>판정</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="small">기발주 = 기초재고 파일의 수입 FH 발주량(10월적 4,600t · 11월적 1,925t). 10월적 남는 1,837t 은 11월 이후 생산에 먼저 쓸 수 있음.</p>`);
+      <p class="small">기발주 = 기초재고 파일의 그 달 입고분 수입 FH 발주량 · 남은 발주 = 필요 − (앞 달에 남은 기발주 + 그 달 기발주)</p>`);
   }
   function trend() {
     const D = O.daily, W = 1200, H = 340, pl0 = 64, pr = 150, pt = 16, pb = 34;
@@ -93,7 +93,7 @@
     const n = D.days.length;
     g += `<polyline class="ln" fill="none" stroke="var(--s1)" stroke-width="3" points="${D.stock.map((v, i) => `${x(i)},${y(v)}`).join(' ')}"/>`;
     if (D.future.length) g += `<polyline fill="none" stroke="var(--s1)" stroke-width="3" stroke-dasharray="4 6" opacity=".75" points="${[[n - 1, D.stock[n - 1]]].concat(D.future.map((f, j) => [n + j, f[1]])).map(([i, v]) => `${x(i)},${y(v)}`).join(' ')}"/>`;
-    xs.forEach((d, i) => { if (i % every === 0 && i < xs.length - 1) { const v = i >= n ? D.future[i - n][1] : D.stock[i]; g += `<text x="${x(i)}" y="${y(v) - 9}" text-anchor="middle" style="font-size:12.5px;font-weight:700;fill:var(--ink-2);paint-order:stroke;stroke:var(--surface);stroke-width:3.5px">${n0(v)}</text>`; } });   // 날짜 눈금마다 값(11/2 사용자 '숫자 보이게')
+    xs.forEach((d, i) => { if (i % every === 0 && i < xs.length - 1) { const v = i >= n ? D.future[i - n][1] : D.stock[i]; g += `<text x="${x(i) + (i ? 0 : 4)}" y="${y(v) - 9}" text-anchor="${i ? 'middle' : 'start'}" style="font-size:12.5px;font-weight:700;fill:var(--ink-2);paint-order:stroke;stroke:var(--surface);stroke-width:3.5px">${n0(v)}</text>`; } });   // 날짜 눈금마다 값(11/2 사용자 '숫자 보이게')
     const lv = D.future.length ? D.future[D.future.length - 1][1] : D.stock[n - 1];
     g += `<text x="${x(xs.length - 1) + 8}" y="${y(lv) - 10}" class="lab">${D.future.length ? '월말 예상 ' : ''}${n0(lv)}</text>`;
     xs.forEach((d, i) => {
@@ -103,8 +103,8 @@
     });
     const T = O.tot, sr = T.stock / T.target, er = T.end[0] / T.target, tn = (r) => (r > 1.5 ? 'bad' : r > 1.1 ? 'warn' : 'good');
     const head = `<div class="ps-head"><span><b class="ps-n">${n0(T.stock)}t</b> ${md(O.asOf)} 추정 · 목표 ${n0(T.target)}t의 <b class="tone-${tn(sr)}">${Math.round(sr * 100)}%</b></span><span>${mon(O.month)} 생산 <b>${n0(T.prodM)}t</b> / 계획 ${n0(T.planM)}t · 출하 <b>${n0(T.shipM)}t</b> / 예측 ${n0(T.fcM)}t</span><span>${mon(O.month)}말 예상 <b>${n0(T.end[0])}t</b> (목표의 <b class="tone-${tn(er)}">${Math.round(er * 100)}%</b>) · 결품·안전재고 미만 ${(O.flags.short || 0) + (O.flags.low || 0)}개 사양</span></div>`;   // 예전 '주요 지표' 4칸을 그래프 머리로(11/2 사용자 '숫자 따로 그래프 따로 말고 하나로')
-    return card('ps-trend', '계획재 재고 추이', `9월말 MES 재고 + 매일 생산 − 출하 · 점선 = ${mon(O.month)}말까지 예상(남은 계획 생산 − 남은 예측 판매)`, '단위: 톤',
-      head + `<div class="legend"><span><i class="box" style="background:var(--s1)"></i>계획재 187 사양 재고</span><span><i class="box" style="background:var(--good)"></i>목표재고 합</span><span><i class="box" style="background:var(--warn)"></i>안전재고 합</span></div><div class="chart"><svg viewBox="0 0 ${W} ${H}" class="cv" role="img" aria-label="계획재 재고 추이">${g}</svg></div>`);
+    return card('ps-trend', '계획재 재고 추이', `${+String(O.stockMonth).slice(4)}월말 MES 재고 + 매일 생산 − 출하 · 점선 = ${mon(O.month)}말까지 예상(남은 계획 생산 − 남은 예측 판매)`, '단위: 톤',
+      head + `<div class="legend"><span><i class="box" style="background:var(--s1)"></i>계획재 ${O.n}개 사양 재고</span><span><i class="box" style="background:var(--good)"></i>목표재고 합</span><span><i class="box" style="background:var(--warn)"></i>안전재고 합</span></div><div class="chart"><svg viewBox="0 0 ${W} ${H}" class="cv" role="img" aria-label="계획재 재고 추이">${g}</svg></div>`);
   }
 
   function months() {
@@ -153,11 +153,11 @@
     const T = O.tot;
     const sh = Object.entries(O.shipHist).map(([m, v]) => `${mon(m)} ${n0(v)}t`).join(' · '), pr = Object.entries(O.prodHist).map(([m, v]) => `${mon(m)} ${n0(v)}t`).join(' · ');
     return card('ps-basis', '산출 기준 및 유의사항', '', '', `<ul class="small" style="line-height:1.8;margin:0;padding-left:20px">
-      <li><b>대상</b> 계획재 운영안(TF)의 187개 사양(컬러건재판매그룹). 사양 = '두께 폭 상도색상' — 운영안 '제품재고' 시트 정의 그대로(품명 무관). 생산 실적은 실측 두께라 ±0.03mm 안에서 가장 가까운 사양으로 봄.</li>
-      <li><b>운영안 시작 재고</b> 운영안의 '9월말 재고' ${n0(T.stock0R15)}t 는 실제로는 <b>9/14 기준</b> 재고 목록(코일별 재고일수가 MES 8월말보다 14일 많고 9월말보다 16일 적음). MES 9월말 같은 정의 재고는 <b>${n0(T.stock0Mes)}t</b>(+${n0(T.stock0Mes - T.stock0R15)}t) — 이 화면은 MES 9월말에서 시작.</li>
-      <li><b>현재 재고</b> 9월말 재고 + 이후 생산 − 이후 출하(출하 코일번호를 재고·생산 코일과 이어 사양 판정, 판매·이송 모두). 다음 월말 재고 수신 시 해당 값으로 보정.</li>
+      <li><b>대상</b> 계획재 운영안(TF) 사양 중 계획재로 정한 ${O.n}개 사양(컬러건재판매그룹, 수입 F/H·서림 GI 소재). 사양 = '두께 폭 상도색상' — 운영안 '제품재고' 시트 정의 그대로(품명 무관). 생산 실적은 실측 두께라 ±0.03mm 안에서 가장 가까운 사양으로 봄.</li>
+      <li><b>운영안 시작 재고</b> 운영안의 '9월말 재고' ${n0(T.stock0R15)}t 는 실제로는 <b>9/14 기준</b> 재고 목록(코일별 재고일수가 MES 8월말보다 14일 많고 9월말보다 16일 적음). MES 9월말 같은 정의 재고는 <b>${n0(T.stock0Mes)}t</b>(+${n0(T.stock0Mes - T.stock0R15)}t) — 이 화면은 MES ${+String(O.stockMonth).slice(4)}월말(최근 월말 재고)에서 시작.</li>
+      <li><b>현재 재고</b> MES ${+String(O.stockMonth).slice(4)}월말 재고 + 이후 생산 − 이후 출하(출하 코일번호를 재고·생산 코일과 이어 사양 판정, 판매·이송 모두). 다음 월말 재고 수신 시 해당 값으로 보정.</li>
       <li><b>판매 진도</b> 계획재 출하는 월말에 집중 — 최근 3개월(${O.paceFrom.map(mon).join('·')}) 같은 사양 출하 기준 ${md(O.asOf)}까지 통상 월 출하량의 <b>${Math.round(O.pace * 100)}%</b>가 출하됨. 일수 비례로 판정할 때 생기는 과소 판정을 보정.</li>
-      <li><b>최근 실적</b> 출하 ${sh} / 생산 ${pr} (같은 187 사양). MES 출하 기록이 속보보다 늦게 채워지는 날이 있어 이번 주 출하는 덜 잡혔을 수 있음.</li>
+      <li><b>최근 실적</b> 출하 ${sh} / 생산 ${pr} (같은 ${O.n}개 사양). MES 출하 기록이 속보보다 늦게 채워지는 날이 있어 이번 주 출하는 덜 잡혔을 수 있음.</li>
       <li><b>판정</b> 월말 결품 예상 = 예상 &lt; 0 · 안전재고 미만 = 0 ≤ 예상 &lt; 안전재고 · 생산 일정 지연 = 일정 대비 30%·5t 이상 부족 · 목표 2배 초과 = 예상 &gt; 목표×2(차이 10t 이상) · 판매 예측 초과 = 출하가 통상 진도의 1.5배+5t 초과(10일 이후).</li></ul>`);
   }
 

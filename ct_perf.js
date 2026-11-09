@@ -134,7 +134,7 @@
         + tbl(['라인', '가동시간(h)', '가용 능력(t)', '계획 부하(t)', '부하율', '실적(t)'], capL.filter((x) => !x.na).map((x) => (`<tr><td class="id">${esc(x.l.line)}</td><td class="r">${n0(x.h)}</td><td class="r">${n0(x.cap)}</td><td class="r">${n0(x.load)}</td><td class="r"><b class="${pc(x.load, x.cap) > 100 ? 'neg' : pc(x.load, x.cap) >= 90 ? 'wrn' : 'pos'}">${pc(x.load, x.cap)}%</b></td><td class="r">${x.act == null ? '-' : n0(x.act)}</td></tr>`)).concat(capL.some((x) => x.na) ? [`<tr><td class="id">${capL.filter((x) => x.na).map((x) => x.l.line).join('·')}</td><td class="r" colspan="5"><span class="sub">이번 달 계획 편성 없음</span></td></tr>`] : []))));
       G.filter((x) => x.l.pl === 'G' && x.load > x.cap).forEach((x) => why.push(['생산능력', `${x.l.line} 계획 부하가 능력의 ${pc(x.load, x.cap)}%`, 'chk', `계획 엔진 속도(제품별)와 판생 t/h ${n1(x.l.tph)} 차이 가능 — 같은 속도 기준 확인 필요`]));
       const cst = CA.stops && CA.stops.w1 && CT.inScope('C') ? Object.entries(CA.stops.w1).map(([l, v]) => [l, Object.entries(v).sort((a, b) => b[1] - a[1])[0]]).sort((a, b) => b[1][1] - a[1][1])[0] : null;
-      if (cst) why.push(['생산능력', `컬러 ${cst[0]} 지난주 휴지 하루 ${n1(cst[1][1])}h`, 'ok', `MES 휴지 기록 상위 ${cst[1][0]}`]);
+      if (cst) why.push(['생산능력', `컬러 ${cst[0]} 지난주 ${cst[1][0]} 하루 ${n1(cst[1][1])}h`, 'ok', `MES 휴지 기록 유형 1위(라인 휴지 전체 아님)`]);   // 11/10 점검: '휴지 하루 6h'가 전체 휴지(12.5h)처럼 읽힘
     }
     // ④ 주문 소재 지연 비중(도금): 필요 입고일보다 소재 입고(예정)가 늦은 미완료 주문 비중 — 입고 정시율 아님
     const G = CT.inScope('G') ? M.G.filter((o) => !o.closed && !CT.isStale(o) && o.remT > 0.5) : [];
@@ -146,7 +146,7 @@
       const wz = R.slice().sort((a, b) => b[1].lt - a[1].lt)[0];
       if (wz && wz[1].lt) why.push(['소재 지연', `${wz[0]} 지연 잔량 ${n0(wz[1].lt)}t 가장 큼`, 'ok', `F/H 입고 이력·예정일이 필요 입고일 지남(${wz[1].ln}건)`]);
       const MO = (D.mat_order && D.mat_order.groups && D.mat_order.groups.mats) || [];
-      const late = MO.filter((x) => x.st === 'late');
+      const late = (window.UI && UI.matView ? UI.matView(D.mat_order, D.portal) : MO).filter((x) => x.st === 'late' && CT.inScope(x.plant || 'G'));   // 11/10 점검: 소재 화면과 같은 공통 기준(마감 지남 4개 vs 6개)
       if (late.length) why.push(['소재 지연', `소재 발주 마감 지남 ${late.length}개`, 'rel', `${late.slice(0, 3).map((x) => x.name).join('·')} — 발주 지연이 입고 지연으로 이어질 수 있음`]);
     }
     // ⑤ 제품 재고

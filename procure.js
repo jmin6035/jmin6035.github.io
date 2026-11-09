@@ -30,7 +30,7 @@
   const plantOf = (code) => (G_CODES.includes(code) ? 'G' : 'C');
   const PERIODS = [['w1', '1주차'], ['w4', '2~4주'], ['w8', '5~8주'], ['w9', '9주 이후'], ['all', '전체']];
   const STATUS = ['판단대기', '요청', '발주됨', '보류'];
-  let D = null, S = null, tab = 'cal', period = 'w4', plantF = 'all', open = {}, onlyShort = true, justOpened = null, lastTab = null;
+  let D = null, S = null, MO = null, tab = 'cal', period = 'w4', plantF = 'all', open = {}, onlyShort = true, justOpened = null, lastTab = null;
 
   const PC = ProcCalc.make(() => ({ D, S }));
   const { defaults, load, save, units, monday, autoArr, judge } = PC;
@@ -88,7 +88,7 @@
         <td class="l dec">${decSum}</td></tr>
         ${isOpen ? `<tr class="ux" data-k="${esc(j.key)}"><td colspan="7"><div class="${j.key === justOpened ? 'drop' : ''}">
           <div class="xh">입고 필요일 <b>${md(j.needBy)}</b> <span class="muted">(첫 사용 ${md(j.first)} − 투입 여유 ${j.plant === 'C' ? S.safetyC : S.safetyG}일)</span> · ${j.left >= 0 ? `남은 <b>${j.left}일</b>` : `<b class="neg">${-j.left}일 지남</b>`} · 발주 필요 <b>${n0(j.short)}t</b></div>
-          ${j.short >= 1 ? `<table class="t sp"><thead><tr><th class="l">업체</th><th>27년 배정</th><th>리드타임</th><th>발주 마감</th><th class="l">맞출 수 있나</th><th>발주량(t)</th></tr></thead><tbody>${j.cand.map((s) => { const x = j.split.find((y) => y.s === s), ok = j.specOk(s), dl = addD(j.needBy, -s.lt), lateD = diff(S.today, dl);
+          ${j.short >= 1 ? `<table class="t sp"><thead><tr><th class="l">업체</th><th>27년 배정</th><th>리드타임</th><th>발주 마감</th><th class="l">맞출 수 있나</th><th>발주량(t)</th></tr></thead><tbody>${j.cand.map((s) => { const x = j.split.find((y) => y.s === s), ok = j.specOk(s), dl = ProcCalc.orderDay(addD(j.needBy, -s.lt), s.cls), lateD = diff(S.today, dl);
             return `<tr class="${x && x.t >= 1 && !x.late ? 'on' : ''}"><td class="l"><b>${esc(supName(s))}</b>${(s.codes || []).length > 1 ? ` <span class="muted">${s.codes.join('·')}</span>` : ''}</td><td>${Math.round((s.share || 0) * 100)}%</td><td>${s.lt}일</td><td>${md(dl)}</td>
               <td class="l">${!ok ? '<span class="muted">두께 범위 밖</span>' : lateD > 0 ? `<span class="neg">마감 ${lateD}일 지남</span>${x && x.from >= 1 ? ` <span class="muted">→ ${n0(x.from)}t 넘김</span>` : ''}` : `<span class="pos">가능</span>${x && x.moved >= 1 ? ` <span class="muted">+ 넘겨받음 ${n0(x.moved)}t</span>` : ''}`}</td>
               <td>${x ? `<input data-f="q:${esc(s.sup)}" type="number" min="0" step="10" value="${Math.round(x.t)}" aria-label="${esc(supName(s))} 발주량">` : '<span class="muted">-</span>'}</td></tr>`; }).join('')}
@@ -243,13 +243,13 @@
     const J = judge().filter((j) => UI.inScope(j.plant));
     const short = J.filter((j) => j.short >= 1 && j.kind !== 'pos');
     const P_ = short.flatMap((j) => (j.parts.length ? j.parts.map((p) => ({ ...j, short: p.t, deadline: p.dl, p })) : [{ ...j, deadline: j.deadline || j.needBy, p: null }]));
-    const past = P_.filter((j) => j.deadline < S.today);
+    const LT = UI.matLate(MO && MO.late);   // 11/10: 마감 지난 부족 = 공통 기준(소재 관제·부족·조치와 같은 값 — 업체별 계산 합은 쓰지 않음)
     const soon = P_.filter((j) => j.deadline >= S.today && diff(j.deadline, S.today) <= 14).sort((a, b) => (a.deadline < b.deadline ? -1 : 1));
     const k = (tone, l, v, unit, b) => `<div class="kpi tone-${tone}"><div class="l">${l}</div><div class="v"><b data-count="${Math.round(v)}">0</b><small>${unit}</small></div><div class="b">${b}</div></div>`;
     return `<section class="card"><h2>발주 캘린더 <small>기준일 ${S.today} · 리드타임 역산 발주 마감 · 날짜 누르면 상세</small><span class="unit">단위: 톤</span></h2>
-      <div class="kpis">${k(past.length ? 'bad' : 'good', '발주 마감 지남(미발주)', Math.round(past.reduce((a, j) => a + j.short, 0)), 't', `${past.length}건 · 기발주 반영 후 부족`)}
+      <div class="kpis">${k(!LT ? '' : LT.t >= 0.5 ? 'bad' : 'good', '마감 지난 부족', LT ? Math.round(LT.t) : 0, 't', LT ? `${LT.items.length}개 소재 · ${LT.items.map((x) => esc(x.name)).join(' · ') || '없음'}` : '소재 관제 자료 없음')}
       ${k(soon.length ? 'warn' : 'good', '2주 내 발주 마감', Math.round(soon.reduce((a, j) => a + j.short, 0)), 't', `${soon.length}건 · 최우선 ${soon[0] ? `${esc(codeNm(soon[0].code))}${soon[0].p ? ' ' + esc(supName(soon[0].p.s)) : ''} ${md(soon[0].deadline)}` : '-'}`)}
-      ${(() => { const e = new Date(S.today + 'T00:00:00'); e.setMonth(e.getMonth() + 2, 0); const end = `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, '0')}-${String(e.getDate()).padStart(2, '0')}`, near = P_.filter((j) => j.deadline <= end);   // 10/30 재검토: 27년 3월까지 합친 179천t 이 당장 부족처럼 읽힘 → 다음 달 말까지 마감만
+      ${(() => { const e = new Date(S.today + 'T00:00:00'); e.setMonth(e.getMonth() + 2, 0); const end = `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, '0')}-${String(e.getDate()).padStart(2, '0')}`, near = P_.filter((j) => j.deadline >= S.today && j.deadline <= end);   // 10/30 재검토: 27년 3월까지 합친 179천t 이 당장 부족처럼 읽힘 → 다음 달 말까지 마감만
         return k('brand', `${+end.slice(5, 7)}월 말까지 발주 마감`, Math.round(near.reduce((a, j) => a + j.short, 0)), 't', `${near.length}건 · 3월까지 전체 ${n0(short.reduce((a, j) => a + j.short, 0))}t`); })()}
       ${k(S.arr.length + autoArr().length ? 'good' : 'warn', '입고 예정(기발주)', S.arr.length + autoArr().length, '건', `MES 자동 ${n0(autoArr().reduce((s, a) => s + a.t, 0))}t${S.arr.length ? ` + 직접 ${S.arr.length}건` : ''} · 충당에 반영`)}</div>
       <div id="p-cal" style="margin-top:14px"></div></section>`;
@@ -257,10 +257,13 @@
   function calInit() {
     const J = judge().filter((j) => UI.inScope(j.plant));
     const ev = [];
+    const LT = UI.matLate(MO && MO.late);                                    // 마감 지난 부족 = 공통 기준 — 오늘 칸 맨 앞
+    for (const x of (LT ? LT.items : [])) ev.push({ d: S.today, kind: 'order', chip: `${x.name} 마감 지남 ${n0(x.t)}t`, tone: 'bad', late: x });
     for (const j of J) {
       if (j.short < 1 || j.kind === 'pos') continue;
-      for (const p of (j.parts.length ? j.parts : [null])) {                // 업체 몫마다 발주 마감
-        const dl = p ? p.dl : (j.deadline || j.needBy), tone = dl < S.today ? 'bad' : diff(dl, S.today) <= 14 ? 'warn' : '';
+      for (const p of (j.parts.length ? j.parts : [null])) {                // 업체 몫마다 발주 마감(정해진 발주일) — 마감 지난 몫은 아래 공통 기준으로 오늘 칸에
+        const dl = p ? p.dl : (j.deadline || j.needBy), tone = diff(dl, S.today) <= 14 ? 'warn' : '';
+        if (dl < S.today) continue;
         ev.push({ d: dl, kind: 'order', chip: `${codeNm(j.code)}${p ? ' ' + supName(p.s).replace(/POSCO\((.+)\)/, '$1') : ''} ${n0(p ? p.t : j.short)}t`, tone, j, dl, p });
       }
       ev.push({ d: j.needBy, kind: 'need', chip: `${codeNm(j.code)} ${n0(j.short)}t`, j, dl: j.deadline });
@@ -273,11 +276,13 @@
       return `<tr><td>${PL[j.plant]}</td><td><b>${esc(codeNm(j.code))}</b></td><td>${n0(j.t)}</td><td>${n0(j.cover)}</td><td class="${e.tone === 'bad' ? 'bad' : ''}"><b>${n0(e.p ? e.p.t : j.short)}</b></td><td>${s ? esc(supName(s)) : '<span class="tag bad">업체 없음</span>'}</td><td>${s ? s.lt + '일' : '-'}</td><td class="${e.tone === 'bad' ? 'bad' : e.tone === 'warn' ? 'warn' : ''}"><b>${md(e.dl)}</b></td><td>${md(j.needBy)}</td><td><span class="tag ${KIND[j.kind][1]}">${KIND[j.kind][0]}</span></td></tr>`; };
     const HEAD = '<thead><tr><th>공장</th><th>소재</th><th>필요</th><th>재고·입고 충당</th><th>부족</th><th>업체</th><th>리드타임</th><th>발주 마감</th><th>입고 필요일</th><th>판정</th></tr></thead>';
     UI.cal($('p-cal'), { months, kinds: CK, events: ev, today: S.today, maxChips: 5,
-      note: '입고 필요일 = 첫 사용일 − 투입 여유(컬러 7·도금 5일) · 발주 마감 = 입고 필요일 − 업체 리드타임 · 빨강 = 마감 지남 · 주황 = 2주 내',
+      note: '발주 마감 = 정해진 발주일(입고 필요일 − 업체 리드타임 이전의 P-FH 화 · 그 외 월 · 수입 10~20일 등 창구) · 입고 필요일 = 첫 사용일 − 투입 여유(컬러 7·도금 5일) · 빨강 = 마감 지난 부족(오늘 칸) · 주황 = 2주 내',
       detail: (d, evs) => {
         let h = '';
         const o = evs.filter((e) => e.kind === 'order'), n = evs.filter((e) => e.kind === 'need'), a = evs.filter((e) => e.kind === 'arr');
-        if (o.length) h += `<div class="grp" style="--kc:${CK.order.color}"><i></i>발주 마감</div><div class="scroll"><table class="t">${HEAD}<tbody>${o.map(jRow).join('')}</tbody></table></div>`;
+        const oL = o.filter((e) => e.late), oJ = o.filter((e) => !e.late);
+        if (oL.length) h += `<div class="grp" style="--kc:${CK.order.color}"><i></i>마감 지난 부족(소재 관제와 같은 값)</div><div class="scroll"><table class="t"><thead><tr><th>소재</th><th>마감 지난 부족(t)</th><th>지난 발주 마감</th><th class="l">내역</th></tr></thead><tbody>${oL.map((e) => `<tr><td><b>${esc(e.late.name)}</b></td><td class="bad"><b>${n0(e.late.t)}</b></td><td>${e.late.deadline ? md(e.late.deadline) : '-'}</td><td class="l">${e.late.by === 'spec' && e.late.sizes ? e.late.sizes.map((z) => `${esc(z[0])} ${esc(z[1])} ${n0(z[2])}t`).join(' · ') : `부족 시작 ${e.late.first ? md(e.late.first) : '-'}`}</td></tr>`).join('')}</tbody></table></div>`;
+        if (oJ.length) h += `<div class="grp" style="--kc:${CK.order.color}"><i></i>발주 마감</div><div class="scroll"><table class="t">${HEAD}<tbody>${oJ.map(jRow).join('')}</tbody></table></div>`;
         if (n.length) h += `<div class="grp" style="--kc:${CK.need.color}"><i></i>입고 기한</div><div class="scroll"><table class="t">${HEAD}<tbody>${n.map(jRow).join('')}</tbody></table></div>`;
         if (a.length) h += `<div class="grp" style="--kc:${CK.arr.color}"><i></i>입고 예정(기발주)</div><div class="scroll"><table class="t"><thead><tr><th>업체</th><th>소재</th><th>수량</th><th>발주번호</th><th>메모</th></tr></thead><tbody>${a.map((e) => `<tr><td>${esc(e.a.sup || '-')}</td><td><b>${esc(codeNm(e.a.code))}</b></td><td>${n0(e.a.t)}</td><td>${esc(e.a.po || '-')}</td><td>${esc(e.a.memo || '')}</td></tr>`).join('')}</tbody></table></div>`;
         return h + '<p class="small">업체·수량·상태 결정, 구매 요청서 → <a href="#" data-tab="board">판단 목록·구매 요청</a></p>';
@@ -393,6 +398,7 @@
     if (pw) { $('p-lockbox').hidden = true; $('p-skel').hidden = false; }
     try { D = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ }
       try { const fx = await fhxReady; if (fx) D.fhExcel = await GP.decryptJSON(fx, pw); } catch (e) { /* 엑셀 기준 없으면 MES 계산 */ }
+      try { const me = await GP.latest('mat_order.enc.json'); MO = me ? await GP.decryptJSON(me, pw) : null; } catch (e) { MO = null; }   // 마감 지난 부족 = 공통 기준(11/10)
       await UI.ready(); D.today = UI.today(D.today);   // 공통 기준일(11/8 — 계산 날짜가 아니라 자료 날짜)
       S = load(); render(); UI.onScope(() => render()); }
     catch (e) { $('p-lockbox').hidden = false; $('p-skel').hidden = true; $('p-form').hidden = false; $('p-msg').textContent = pw ? '암호가 맞지 않습니다' : ''; }

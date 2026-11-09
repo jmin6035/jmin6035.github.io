@@ -6,10 +6,10 @@
 <title>컬러 조건 분석</title>
 <meta name="description" content="컬러 1~4CCL 조건 분석 — 라인·품명 속도와 휴지를 실적으로 다시 재서 계획 조건과 비교">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="style.css?v=2611091505">
-<link rel="stylesheet" href="dashboard.css?v=2611091505">
-<link rel="stylesheet" href="ui/theme.css?v=2611091505">
-<link rel="stylesheet" href="ui/bridge.css?v=2611091505">
+<link rel="stylesheet" href="style.css?v=2611091622">
+<link rel="stylesheet" href="dashboard.css?v=2611091622">
+<link rel="stylesheet" href="ui/theme.css?v=2611091622">
+<link rel="stylesheet" href="ui/bridge.css?v=2611091622">
 </head>
 <body class="dash">
 <header id="shell" data-page="coloranal" data-crumb="컬러" data-title="컬러 조건 분석" data-sub="MES 실적으로 라인·품명별 생산속도와 휴지를 재산출해 계획 조건과 비교 (계획 담당자용)"></header>
@@ -65,7 +65,7 @@
     <section class="card" id="a-reason-card" hidden>
       <h2>휴지 사유 <small class="muted" id="a-rs-sub">— 라인별 많은 순 8개</small></h2>
       <div class="scroll"><table class="data" id="a-reasons"></table></div>
-      <p class="hint" id="a-rs-note">구분 = 휴지 메모 키워드로 분류(색상교체·청소 / 테스트·도막조정 / 폭·롤·두께 전환 / 기타).</p>
+      <p class="hint" id="a-rs-note">구분 = 휴지 메모 키워드로 분류(색상교체·청소 / 테스트·도막조정 / 폭·롤·두께 전환 / 기타) — 사유 하나에 구분 하나(시간이 가장 많은 구분).</p>
     </section>
 
   </div>
@@ -73,9 +73,9 @@
 </main>
 <footer class="wrap foot">계획 담당자용 · 원자료: MES 컬러 생산·휴지 실적</footer>
 
-<script src="ui/shell.js?v=2611091505"></script>
-<script src="engine/util.js?v=2611091505"></script>
-<script src="engine/crypto.js?v=2611091505"></script>
-<script src="color_analysis.js?v=2611091505"></script>
+<script src="ui/shell.js?v=2611091622"></script>
+<script src="engine/util.js?v=2611091622"></script>
+<script src="engine/crypto.js?v=2611091622"></script>
+<script src="color_analysis.js?v=2611091622"></script>
 </body>
 </html>
