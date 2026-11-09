@@ -32,8 +32,18 @@
 
   // ───────── 전환 휴지(분) — 도금: 학습 1년 조건표(cg_wo_sequence.pfeats·cost) / 컬러: 조건표 × 라인 보정(wo_cost.parts) + 블록 바뀜 실측
   const sk = (c) => { c = String(c || ''); return c.includes('·') ? c.split('·')[1] : c.length >= 7 ? c.slice(3, 7) : c; };
+  // 11/10 사용자: 컬러 전환 휴지 = 1년 실적 평균(라인 × 바뀜 종류, 색상교체·롤 교체·청소·더미만) — Python week_seq.cc_cat 과 같은 규칙
+  const catOf = (a, b) => { const s = [];
+    if ((a.primer || '') !== (b.primer || '')) s.push('하도');
+    if ((a.code || a.top || a.color || '') !== (b.code || b.top || b.color || '')) s.push('상도');
+    if ((a.codeBack || a.back || '') !== (b.codeBack || b.back || '')) s.push('이면');
+    if (Math.abs((a.thk || 0) - (b.thk || 0)) > 0.03 || Math.abs((a.wdt || 0) - (b.wdt || 0)) > 5) s.push('치수');
+    return s.join('+') || '사양 같음'; };
   function chgCC(a, b, l) {
     if (!a) return { m: 0, parts: [] };
+    if (a.dummy || b.dummy) return { m: 0, parts: [] };
+    if (R.trans && R.trans[l]) { const k = catOf(a, b), m = R.trans[l][k];
+      if (m != null) return { m, parts: [{ c: `${k === '사양 같음' ? '새 주문(사양 같음)' : k + ' 바뀜'} — 1년 실적 평균`, m }] }; }
     if (a.block !== b.block) { const lb = R.block[`${l}|${a.block}>${b.block}`]; if (lb) return { m: lb, parts: [{ c: `블록 전환 ${R.blockNm[a.block]}→${R.blockNm[b.block]}`, m: lb }] }; }
     const ta = a.top || a.color, tb = b.top || b.color, ct = ta && tb ? sk(ta) !== sk(tb) : true;
     const cb = !!(a.back && b.back && sk(a.back) !== sk(b.back)), cpr = !!(a.primer && b.primer && a.primer !== b.primer);
@@ -198,7 +208,7 @@
     const row = (k, h) => `<div class="wk3"><i>${k}</i><div>${h}</div></div>`;
     if (plant === 'cg') {
       const t = x.trt || {};
-      return row('사양', `<span class="cp al">${esc(x.al || x.sur)}</span><span class="cp sz">${(+x.thick).toFixed(2)} × ${n0(x.width)}</span>`
+      return row('사양', `<span class="cp al">${esc(x.al || x.sur)}</span><span class="cp sz" title="두께 × 폭 × 길이(톤 환산)">${(+x.thick).toFixed(2)} × ${n0(x.width)} × ${n0(x.t * 1e6 / (x.thick * x.width * 7.85))}m</span>`
         + (t.cot ? `<span class="cp" title="도금량">${esc(t.cot)}</span>` : '') + (x.trt ? `<span class="cp" title="후처리">${esc(t.aft || '후처리 없음')}</span>` : '')
         + (x.grade ? `<span class="cp" title="재질(열처리 등급)">${esc(GR[x.grade] || x.grade)}</span>` : '') + (x.spec ? `<span class="cp" title="주문 사양">${esc(x.spec)}</span>` : '') + (x.ge ? '<span class="cp wr" title="용도 가전">가전</span>' : ''))
         + row('주문', (x.grp && x.grp !== '미상' ? `<span class="cp" title="판매그룹">${esc(x.grp)}</span>` : '')
@@ -210,7 +220,7 @@
     const st = (at, s) => (at ? dtm(at) : s === 'F' ? '입고완료' : s ? '입고대기(일정 없음)' : '-');
     return row('사양', (x.code ? `<span class="cp cl" title="상도 풀 코드">${esc(x.code)}</span>` : `<span class="cp cl wr" title="풀 코드 없음(주문 상세 자료 대기) — 도료 종류·색상번호">${esc(x.color)}</span>`)
         + (x.codeBack ? `<span class="cp" title="이면 풀 코드">이면 ${esc(x.codeBack)}</span>` : '')
-        + `<span class="cp">${esc(x.item)}</span><span class="cp sz">${(+x.thk).toFixed(2)} × ${n0(x.wdt)}</span>` + (x.block !== 'general' ? `<span class="cp wr">${esc(R.blockNm[x.block])}</span>` : ''))
+        + `<span class="cp sz" title="두께 × 폭 × 잔량 길이">${(+x.thk).toFixed(2)} × ${n0(x.wdt)}${x.len ? ' × ' + n0(x.len) + 'm' : ''}</span>` + (x.block !== 'general' ? `<span class="cp wr">${esc(R.blockNm[x.block])}</span>` : ''))
       + row('주문', `<span class="cp" title="판매그룹">${esc(x.g)}</span><span class="cp" title="담당자 - 목적지(내수는 고객사)">${esc(x.man || '담당 미상')} - ${esc(x.dst || '목적지 미상')}</span><span class="ib"><em class="lb">입고</em><span class="cp${fut(x.paintAt) ? ' wr' : ''}" title="도료 입고(예정) 일시">도료 ${st(x.paintAt, x.paintSts)}</span>`
         + (x.pfNeed ? `<span class="cp${fut(x.pfAt) ? ' wr' : ''}" title="PF 입고(예정) 일시">PF ${st(x.pfAt, x.pfSts)}</span>` : '') + '</span>');
   }
@@ -218,14 +228,15 @@
     const x = v.x, bad = CK && CK.some((c) => c.id === x.id && c.l === l && c.lv === 'bad');
     const due = plant === 'cg' ? x.dlv : x.due;
     const tag = plant === 'cg' ? (x.issued ? '<span class="cp fx" title="이미 작업지시 나감(1030)">지시</span>' : '') : (x.fixed ? '<span class="cp fx" title="작업지시 확정 대기열(1030)">확정</span>' : '');
-    const sub = plant === 'cg' ? `${x.n > 1 ? x.n + '코일 · ' : ''}소재 ${esc(x.raws[0])}${x.n > 1 ? ' 외' : ''}${x.req ? ' · 예정 ' + md(x.req) : ''}` : `${esc(x.pdt)}${x.ready && x.ready > TODAY ? ' · <b class="wr">' + md(x.ready) + '부터 가능</b>(도료·PF 입고 뒤)' : ''}`;
+    const sub = plant === 'cg' ? `${x.n > 1 ? x.n + '코일 · ' : ''}소재 ${esc(x.raws[0])}${x.n > 1 ? ' 외' : ''}${x.req ? ' · 예정 ' + md(x.req) : ''}` : `<b title="품명(제품 코드 ${esc(x.pdt)})">${esc(x.item || x.pdt)}</b>${x.ready && x.ready > TODAY ? '<div class="wr" title="도료·PF 입고 뒤">' + md(x.ready) + '부터 가능</div>' : ''}`;
     const lsel = plant === 'cc' ? `<select data-a="line" data-i="${v.i}" title="다른 라인으로">${LINES.cc.map((y) => `<option${y === l ? ' selected' : ''}>${y}</option>`).join('')}</select>` : '';
     return `<tr class="j${x.fixed || x.issued ? ' fx' : ''}${hl === x.id ? ' hl' : bad ? ' bad' : ''}" draggable="true" data-i="${v.i}" data-id="${esc(x.id)}">`
       + `<td class="hd" title="끌어서 옮기기">⋮⋮</td><td class="no">${n}</td>`
       + `<td class="tm"><b>${hhmm(v.s)}</b>–${hhmm(v.e)}${dayOf(v.e) !== dayOf(v.s) ? '<div class="sub">끝 다음날</div>' : ''}</td>`
       + `<td><div class="cn">${esc(x.con || '계약 미연결')}</div><div class="cd">${tag}${due ? `<span class="${due < dayOf(v.e) ? 'cp bd' : 'cp'}" title="납기">납기 ${md(due)}</span>` : ''}</div><div class="sub">${sub}</div></td>`
       + `<td><div class="sp">${chips(x)}</div></td>`
-      + `<td class="nm"><b>${n1(x.t)}t</b> · ${n0(v.rm)}분<div class="sub">${n1(plant === 'cg' ? x.tph : x.tph[l])}t/h</div></td>`
+      + (plant === 'cg' ? `<td class="nm"><b>${n1(x.t)}t</b> · ${n0(v.rm)}분<div class="sub">${n1(x.tph)}t/h</div></td>`
+        : `<td class="nm" title="잔량 톤 · 시간 = 길이 ÷ L/S(26년 1월~ 실적) × 라인 보정"><b>${n1(x.t)}t</b><div class="sub">${n0(v.rm)}분${x.ls && x.ls[l] && !x.dummy ? ` · L/S ${n0(x.ls[l])}` : ''}</div></td>`)
 
       + `<td class="ac"><button data-a="up" data-i="${v.i}" title="위로">↑</button><button data-a="dn" data-i="${v.i}" title="아래로">↓</button>`
       + `<select data-a="day" data-i="${v.i}" title="다른 날로"><option value="">날</option>${days.map((d) => `<option value="${d}">${dnm(d)}</option>`).join('')}</select>`
@@ -259,14 +270,15 @@
     const dsum = {};
     ev.forEach((q) => { const d = q.s >= W1 ? 'over' : dayOf(q.s); const o = dsum[d] = dsum[d] || { n: 0, t: 0, run: 0, dn: 0, seg: [] }; if (q.k === 'j') { o.n++; o.t += q.x.t; o.run += q.rm; o.dn += q.ch.m; } else o.dn += (q.e2 || q.e) - q.s; });
     const bar = (d) => { const b0 = tms(d + ' 07:00'); const seg = (a, z, c) => { const x0 = Math.max(0, a - b0), x1 = Math.min(1440, z - b0); return x1 > x0 ? `<i class="${c}" style="left:${(x0 / 14.4).toFixed(2)}%;width:${((x1 - x0) / 14.4).toFixed(2)}%"></i>` : ''; };
-      return `<div class="dbar">${ev.map((q) => (q.k === 'j' ? seg(q.ds, q.s, 'd') + seg(q.s, q.e, 'r') : seg(q.s, q.e2 || q.e, q.k === 'p' ? 'p' : q.k === 'g' ? 'd' : 'g'))).join('')}</div>`; };
+      return `<div class="dbar">${ev.map((q) => (q.k === 'j' ? seg(q.ds, q.s, 'd') + seg(q.s, q.e, 'r') : seg(q.s, q.e2 || q.e, q.k === 'p' ? (/샘플|test|시험/i.test(q.ev) ? 'p sm' : 'p') : q.k === 'g' ? 'd' : 'g'))).join('')}</div>`; };
     const dayHead = (d) => { const o = dsum[d] || { n: 0, t: 0, run: 0, dn: 0 }; const over = o.run + o.dn > 1440.5;
       return `<tr class="dh" data-d="${d}"><td colspan="7"><div class="dhh"><b>${d === 'over' ? `주 끝(${md(iso(W1))} 07:00) 넘김` : dnm(d)}</b><span>작업 ${o.n}건 · ${n0(o.t)}t</span><span>생산 ${n0(o.run)}분 · 휴지 ${n0(o.dn)}분</span>${over && d !== 'over' ? `<em title="그날 시작한 작업·휴지 합이 1,440분 넘음">다음날로 ${n0(o.run + o.dn - 1440)}분</em>` : ''}</div>${d === 'over' ? '' : bar(d)}</td></tr>`; };
     const shown = new Set();
     ev.forEach((q) => {
       const d = q.s >= W1 ? 'over' : dayOf(q.s);
       if (d !== curD) { days.filter((x) => x > (curD || '') && x < d && !shown.has(x)).forEach((x) => { h += dayHead(x); shown.add(x); }); h += dayHead(d); shown.add(d); curD = d; }
-      if (q.k === 'p') h += `<tr class="ev"><td></td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e)}</td><td colspan="4">계획 휴지 <b>${hrs(q.e - q.s)}</b> · ${esc(q.ev)}</td></tr>`;
+      if (q.k === 'p') { const sm = /샘플|test|시험/i.test(q.ev), nm = q.ev === 'plan' ? '휴지계획' : q.ev;   // 11/10 사용자 '샘플 부분 잘 보이게'
+        h += `<tr class="ev pz${sm ? ' sm' : ''}"><td></td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e)}</td><td colspan="4"><span class="pk">${esc(nm)}</span> ${sm ? '' : '계획 휴지 '}<b>${hrs(q.e - q.s)}</b>${sm ? ' — 이 시간엔 생산 작업 안 넣음' : ''}</td></tr>`; }
       else if (q.k === 'w') h += `<tr class="ev w"><td></td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e)}</td><td colspan="4">기다림 <b>${hrs(q.e - q.s)}</b> · ${esc(q.x.con)} 도료·PF 준비 ${md(q.x.ready)} 07:00</td></tr>`;
       else if (q.k === 'g') h += `<tr class="ev g" draggable="true" data-i="${q.i}"><td class="hd">⋮⋮</td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e2)}</td><td colspan="3">직접 넣은 휴지·더미 <input type="number" min="0" max="2880" step="5" data-a="gmin" data-i="${q.i}" value="${q.e.min}">분 <input class="nt" data-a="gnote" data-i="${q.i}" placeholder="사유(롤 교체·더미 등)" value="${esc(q.e.note || '')}"></td><td class="ac"><button data-a="up" data-i="${q.i}">↑</button><button data-a="dn" data-i="${q.i}">↓</button><button class="x" data-a="del" data-i="${q.i}">✕</button></td></tr>`;
       else {
@@ -278,7 +290,7 @@
     });
     days.filter((x) => !shown.has(x)).forEach((x) => { h += dayHead(x); });
     if (!ev.length) h += `<tr><td colspan="7" class="muted">이 라인에 이번 주 작업이 없습니다${D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}. 오른쪽 빠진 작업에서 넣을 수 있습니다.</td></tr>`;
-    $('ws-tbl').innerHTML = `<colgroup><col style="width:30px"><col style="width:44px"><col style="width:118px"><col style="width:196px"><col><col style="width:104px"><col style="width:${plant === 'cc' ? 300 : 238}px"></colgroup>` + h;
+    $('ws-tbl').innerHTML = `<colgroup><col style="width:30px"><col style="width:44px"><col style="width:118px"><col style="width:196px"><col><col style="width:104px"><col style="width:${plant === 'cc' ? 176 : 150}px"></colgroup>` + h;
     drawPool(); drawCk(); bind();
   }
   function drawPool() {
@@ -291,7 +303,7 @@
     const was = $('ws-pool').querySelector('details'), op = was ? was.open : false, sub = {};
     $('ws-pool').querySelectorAll('.pl-g').forEach((d) => { sub[d.dataset.k] = d.open; });
     $('ws-pool').innerHTML = `<details${op ? ' open' : ''}><summary>${line} 이번 주에 못 넣은 작업 <span>${P.length}건 · ${n0(P.reduce((s, p) => s + p.x.t, 0))}t — 끌어다 놓거나 '넣기'</span></summary><div class="pl-cols">` + ord.filter((k) => G[k]).map((k) => `<details class="pl-g" data-k="${k}"${(k in sub ? sub[k] : k === 'out' || k === 'new' || k === 'over') ? ' open' : ''}><summary>${nm[k]} <span>${G[k].length}건 · ${n0(G[k].reduce((s, x) => s + x.t, 0))}t</span></summary><div class="pl-body">`
-      + G[k].slice(0, 300).map((x) => `<div class="pl-i" draggable="true" data-id="${esc(x.id)}"><div><span class="cn">${esc(x.con || x.id)}</span><span class="sub"> · ${n1(x.t)}t${plant === 'cg' ? (x.n > 1 ? ' · ' + x.n + '코일' : '') + (x.req ? ' · 예정 ' + md(x.req) : '') : (x.ready && x.ready > TODAY ? ' · ' + md(x.ready) + '부터 가능' : '')}${(plant === 'cg' ? x.dlv : x.due) ? ' · 납기 ' + md(plant === 'cg' ? x.dlv : x.due) : ''}</span><div class="sp">${chips(x)}</div></div><button data-a="add" data-id="${esc(x.id)}">넣기</button></div>`).join('')
+      + G[k].slice(0, 300).map((x) => `<div class="pl-i" draggable="true" data-id="${esc(x.id)}"><div><span class="cn">${esc(x.con || x.id)}</span>${plant === 'cc' && x.item ? ' <b>' + esc(x.item) + '</b>' : ''}<span class="sub"> · ${n1(x.t)}t${plant === 'cc' && x.len ? ' / ' + n0(x.len) + 'm' : ''}${plant === 'cg' ? (x.n > 1 ? ' · ' + x.n + '코일' : '') + (x.req ? ' · 예정 ' + md(x.req) : '') : (x.ready && x.ready > TODAY ? ' · ' + md(x.ready) + '부터 가능' : '')}${(plant === 'cg' ? x.dlv : x.due) ? ' · 납기 ' + md(plant === 'cg' ? x.dlv : x.due) : ''}</span><div class="sp">${chips(x)}</div></div><button data-a="add" data-id="${esc(x.id)}">넣기</button></div>`).join('')
       + (G[k].length > 300 ? `<div class="sub">외 ${G[k].length - 300}건</div>` : '') + '</div></details>').join('') + '</div></details>';
   }
   function drawCk() {
