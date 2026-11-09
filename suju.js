@@ -137,14 +137,17 @@
     if (inPl('G')) body += sec('도금공장 · 일 생산량(톤)') + ['1CGL', '2CGL'].map((l) => lineRow(l, LC[l])).join('');
     // 11/9 사용자: 그룹별 일 생산량 — 윗줄 계획(엔진 일별 계획, 지난 날 = 월초 계획) · 아랫줄 실제 생산
     const GN = Object.fromEntries((D.groups || []).map((g) => [g.key, g.name])), GC = ['건재수출', '가전수출', '가전내수', '수요개발', '주문재', '계획재'], GG = ['도금수출', '도금국내', '자동차', '자가재'];
-    const gRows = (ks) => ks.filter((g) => (D.gdaily || {})[g] && D.gdaily[g].some((r) => r[1] > 0.5 || r[2] > 0.5)).map((g) => {
-      const R = D.gdaily[g], sp = R.reduce((a, r) => a + (r[0] <= D.asOf ? r[1] : 0), 0), sa = R.reduce((a, r) => a + (r[2] || 0), 0);
-      return `<tr class="gp"><td class="lab" title="${esc(GN[g] || g)} · 1일~어제 계획 ${n0(sp)}t · 실적 ${n0(sa)}t"><b>${esc(GN[g] || g)}</b><span>계획</span></td>${R.map(([d, p]) => `<td class="pl${wcls(d)}" title="${md(d)} ${esc(GN[g] || g)} 계획 ${n0(p)}t">${p > 0.5 ? nf(p) : '·'}</td>`).join('')}</tr>`
-        + `<tr class="ga"><td class="lab"><span>실적 · 누계 ${n0(sa)}</span></td>${R.map(([d, p, a]) => `<td class="ac${wcls(d)}" title="${md(d)} ${esc(GN[g] || g)} 실적 ${a == null ? '-' : n0(a) + 't'}">${a == null ? '' : a > 0.5 ? nf(a) : '·'}</td>`).join('')}</tr>`; }).join('');
+    // 11/10 사용자: 계획을 그룹별로 먼저 다 보여 주고, 그다음 실적을 그룹별로 · 실적 옆에 계획 대비 차이(+123 / △134)
+    const dif = (v) => (Math.abs(v) < 0.5 ? '±0' : v > 0 ? `+${Math.round(v)}` : `△${Math.round(-v)}`);
+    const gk = (ks) => ks.filter((g) => (D.gdaily || {})[g] && D.gdaily[g].some((r) => r[1] > 0.5 || r[2] > 0.5));
+    const pRows = (ks) => gk(ks).map((g) => { const R = D.gdaily[g], sm = R.reduce((a, r) => a + r[1], 0);
+      return `<tr><td class="lab"><b>${esc(GN[g] || g)}</b><span>월 ${n0(sm)}t</span></td>${R.map(([d, p]) => `<td class="pl${wcls(d)}" title="${md(d)} ${esc(GN[g] || g)} 계획 ${n0(p)}t">${p > 0.5 ? nf(p) : '·'}</td>`).join('')}</tr>`; }).join('');
+    const aRows = (ks) => gk(ks).map((g) => { const R = D.gdaily[g], sp = R.reduce((a, r) => a + (r[0] <= D.asOf ? r[1] : 0), 0), sa = R.reduce((a, r) => a + (r[2] || 0), 0);
+      return `<tr class="ga"><td class="lab" title="1일~${md(D.asOf)} 계획 ${n0(sp)}t · 실적 ${n0(sa)}t"><b>${esc(GN[g] || g)}</b><span>${n0(sa)}t <em class="${sa - sp < -0.5 ? 'dn' : 'up'}">${dif(sa - sp)}</em></span></td>${R.map(([d, p, a]) => a == null ? `<td class="nd${wcls(d)}"></td>`
+        : `<td class="ac${wcls(d)}" title="${md(d)} ${esc(GN[g] || g)} 실적 ${n0(a)}t · 계획 ${n0(p)}t · ${dif(a - p)}"><b>${a > 0.5 ? nf(a) : '0'}</b><em class="${a - p < -0.5 ? 'dn' : 'up'}">${dif(a - p)}</em></td>`).join('')}</tr>`; }).join('');
     if (D.gdaily) {
-      if (inPl('C')) body += sec('컬러 그룹별 일 생산량(톤) — 윗줄 계획 · 아랫줄 실적');
-      if (inPl('C')) body += gRows(GC);
-      if (inPl('G')) body += sec('도금 그룹별 일 생산량(톤) — 윗줄 계획 · 아랫줄 실적') + gRows(GG);
+      if (inPl('C')) body += sec('컬러 그룹별 계획(톤) — 지난 날 = 월초 계획') + pRows(GC) + sec('컬러 그룹별 실적(톤) — 계획 대비 +초과 · △부족') + aRows(GC);
+      if (inPl('G')) body += sec('도금 그룹별 계획(톤) — 지난 날 = 월초 계획') + pRows(GG) + sec('도금 그룹별 실적(톤) — 계획 대비 +초과 · △부족') + aRows(GG);
     }
     const bad = new Set(D.mats.filter((x) => x.st === '경고' || x.st === '주의').map((x) => x.key)), MD = Object.entries(D.matDaily).filter(([k]) => inPl(k[0]) && bad.has(k));
     if (MD.length) {
