@@ -274,7 +274,7 @@
     return `<div class="ct-pd-h">${CT.badge(o)} ${CT.fulBadge(o.ful)} ${o.cause ? `<span class="ct-cause">${esc(CT.why(o))}</span>` : ''}</div>`
       + kv('판매그룹', esc(o.grp) + (o.grpEst ? ' <small>(추정)</small>' : '')) + kv('공정·라인', `${o.pl === 'G' ? '도금' : '컬러'} ${esc(o.line || '')}`) + kv('품목', esc(o.item)) + kv('두께×폭', esc(o.size))
       + kv('고객사', esc(o.cus || '')) + kv('담당', esc(o.man || '')) + kv('수주량', CT.n1(o.ordT) + 't') + kv('생산', CT.n1(o.prodT) + 't') + kv('잔량', CT.n1(o.remT) + 't')
-      + kv('미출하', o.unshipT == null ? '출하 실적 없음' : CT.n1(o.unshipT) + 't') + kv('생산 완료 예정', o.etaDone ? `${CT.md(o.etaDone)} <small>${esc(o.etaSrc || '')}</small>` : '') + kv('납기', CT.md(o.due)) + kv(o.pl === 'G' ? '출항·입항' : '', o.ship ? CT.md(o.ship) : '') + kv('생산 필요일', CT.md(o.needProd)) + kv('조치 마감일', o.last ? `${CT.md(o.last)} ${CT.leftTxt(o)}` : '') + kv('조치 부서', esc(o.dept || ''))
+      + kv('미출하', o.unshipT == null ? ((o.fwdT || 0) > 0.5 ? `- <small>출하 ${CT.n1(o.fwdT)}t</small>` : '출하 실적 없음') : CT.n1(o.unshipT) + 't') + kv('생산 완료 예정', o.etaDone ? `${CT.md(o.etaDone)} <small>${esc(o.etaSrc || '')}</small>` : '') + kv('납기', CT.md(o.due)) + kv(o.pl === 'G' ? '출항·입항' : '', o.ship ? CT.md(o.ship) : '') + kv('생산 필요일', CT.md(o.needProd)) + kv('조치 마감일', o.last ? `${CT.md(o.last)} ${CT.leftTxt(o)}` : '') + kv('조치 부서', esc(o.dept || ''))
       + `<h4>주문 추적</h4><ol class="ct-tl">${o.steps.map((s) => `<li class="${s.st}"><div class="t"><b>${esc(s.k)}</b><span>${s.st === 'na' && /출하/.test(s.k) ? '실적 없음' : st[s.st]}</span></div><div class="d">${s.d ? `실제·예정 ${CT.md(s.d)}` : ''}${s.plan ? ` · 필요 ${CT.md(s.plan)}` : ''}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</li>`).join('')}</ol>`;
   };
 })();

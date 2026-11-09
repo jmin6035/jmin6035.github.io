@@ -8,8 +8,10 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const n0 = (v) => (v == null || isNaN(v) ? '-' : Math.round(v).toLocaleString('ko-KR'));
   const n1 = (v) => (v == null || isNaN(v) ? '-' : (+v).toLocaleString('ko-KR', { maximumFractionDigits: 1 }));
-  const md = (s) => (s ? `${+String(s).slice(5, 7)}/${+String(s).slice(8, 10)}` : '');
-  let O = null, flt = 'nomch', q = '', ln = '', by = 'man';
+  let O = null;
+  const md = (s) => { if (!s) return ''; s = String(s); const y = O && O.asOf && s.slice(0, 4) < O.asOf.slice(0, 4);   // 기준일보다 앞 해면 YY/MM/DD(작년 발주가 올해 입고 뒤로 보이지 않게)
+    return y ? `${s.slice(2, 4)}/${s.slice(5, 7)}/${s.slice(8, 10)}` : `${+s.slice(5, 7)}/${+s.slice(8, 10)}`; };
+  let flt = 'nomch', q = '', ln = '', by = 'man';
   try { by = localStorage.getItem(BY_KEY) || 'man'; } catch (e) { /* 무시 */ }
   const act = (x) => x.st === '소재 없음' || x.lateCan || (x.lateDue && x.st !== '매치 완료');
   const F = {
@@ -36,7 +38,7 @@
       out.push(`<div class="nw">발주 <b>${esc(p.no)}</b>${p.sup ? ` · ${esc(p.sup)}` : ''}</div>`);
       if (p.t) out.push(`<div class="sub">${n1(p.t)}t${p.ordDt ? ` · 발주 ${md(p.ordDt)}` : ''}${p.dle ? ` · 인도기한 ${md(p.dle)}` : ''}</div>`);
       out.push(`<div class="sub">입고 ${n1(p.entT)}t${p.entFirst ? ` (첫 ${md(p.entFirst)})` : ''}${p.stock ? ` · 재고 ${n1(p.stock)}t` : ''}</div>`);
-    } else if (x.route === '소재발주') out.push('<div class="rem">소재 발주 연결 안 됨</div><div class="sub">다음 자동 실행부터</div>');
+    } else if (x.route === '소재발주') out.push('<div class="rem">소재 발주 연결 안 됨</div>');
     if (x.self) out.push(`<div class="nw">자가재 <b>${esc(x.self)}</b></div>${x.selfSt ? `<div class="sub">도금 ${esc(x.selfSt.st || '')}${x.selfSt.prodT ? ` · 생산 ${n1(x.selfSt.prodT)}t` : ''}${x.selfSt.sche ? ` · 예정 ${md(x.selfSt.sche)}` : ''}</div>` : ''}`);
     return out.join('');
   }
@@ -50,9 +52,9 @@
       + `<td class="num"><b>${n1(x.remT)}t</b><div class="sub">주문 ${n1(x.ordT)} · 생산 ${n1(x.prodT)}</div><div class="hb" style="--gc:var(--g3a);margin-top:4px" title="생산 ${Math.round(pct)}%"><i style="width:${pct.toFixed(1)}%"></i></div></td>`
       + `<td class="num">${x.mchT > 0.0005 ? `<b>${n1(x.mchT)}t</b>` : '<span class="sub">매치 0</span>'}${x.woT ? `<div class="sub">지시 ${n1(x.woT)}t</div>` : ''}</td>`
       + `<td>${matCell(x)}</td>`
-      + `<td class="num">${x.sche ? `<div>예정 <b>${md(x.sche)}</b></div>` : '<span class="sub">-</span>'}${x.can ? `<div class="${x.lateCan ? 'rem' : 'sub'}" title="가동가능일 = 도료·PF·잉크·라미 입고 중 가장 늦은 날">가능 ${md(x.can)}${x.canBy ? ` · ${esc(String(x.canBy).replace('입고예정일', '').replace('생산일', ''))}` : ''}</div>` : ''}</td></tr>`;
+      + `<td class="num">${x.sche ? `<div>예정 <b>${md(x.sche)}</b></div>` : '<span class="sub">-</span>'}${x.can ? (x.can <= O.asOf ? `<div class="sub" title="가동가능일(도료·PF·잉크·라미 입고 중 가장 늦은 날) ${md(x.can)} — 이미 지남">가동 가능</div>` : `<div class="${x.lateCan ? 'rem' : 'sub'}" title="가동가능일 = 도료·PF·잉크·라미 입고 중 가장 늦은 날">가능 ${md(x.can)}${x.canBy ? ` · ${esc(String(x.canBy).replace('입고예정일', '').replace('생산일', ''))}` : ''}</div>`) : ''}</td></tr>`;
   }
-  const COLS = '<colgroup>' + [8, 14, 14, 7, 11, 9, 22, 15].map((w) => `<col style="width:${w}%">`).join('') + '</colgroup>';
+  const COLS = '<colgroup>' + [8, 14, 13, 8.5, 11, 9, 21.5, 15].map((w) => `<col style="width:${w}%">`).join('') + '</colgroup>';
   const HEAD = '<thead><tr><th>상태</th><th>계약번호-행번</th><th>두께×폭 · 색</th><th>납기</th><th class="num">잔량 · 주문 · 생산</th><th class="num">매치 · 지시</th><th>소재 연결</th><th class="num">작업 예정 · 가동가능</th></tr></thead>';
   const sumOf = (L) => ({ n: L.length, rem: L.reduce((s, x) => s + x.remT, 0), late: L.filter((x) => x.lateDue).length, none: L.filter((x) => x.st === '소재 없음').length, nomch: L.filter((x) => x.st !== '매치 완료').length });
   const stat = (S) => `<span class="gs"><b>${n0(S.n)}</b>건</span><span class="gs">잔량 <b>${n0(S.rem)}</b>t</span>`
@@ -66,7 +68,7 @@
       + `<td class="gbcell"><div class="gb" title="${esc(gs(g))} 잔량 ${n0(s.rem)}t = 매치 완료 ${n0(s.m)} + 소재 있음 ${n0(s.s)} + 입고 대기 ${n0(s.w)} + 소재 없음 ${n0(s.z)}"><span class="gbr"><i class="a" style="width:${P(s.m)}"></i><i class="m" style="width:${P(s.s)}"></i><i class="w" style="width:${P(s.w)}"></i><i class="z" style="width:${P(s.z)}"></i></span><span class="gbv">${n0(s.rem)}t</span></div></td>`
       + `<td class="num">${n0(s.m)}</td><td class="num">${n0(s.s)}</td><td class="num">${n0(s.w)}</td><td class="num ${s.z ? 'bad' : ''}">${n0(s.z)}</td><td class="num ${s.late ? 'bad' : ''}">${s.late || '-'}</td></tr>`;
     return '<div class="gcard"><div class="gbl"><span><i class="a"></i>매치 완료</span><span><i class="m"></i>소재 있음(매치 전)</span><span><i class="w"></i>입고 대기</span><span><i class="z"></i>소재 없음</span><span class="sub">주문 잔량 톤</span></div>'
-      + '<div class="scroll"><table class="t gtab"><thead><tr><th>그룹</th><th>건</th><th>잔량</th><th>매치 완료</th><th>소재 있음</th><th>입고 대기</th><th>소재 없음</th><th>납기 지남</th></tr></thead>'
+      + '<div class="scroll"><table class="t gtab"><thead><tr><th>그룹</th><th>건</th><th>잔량 t</th><th>매치 완료 t</th><th>소재 있음 t</th><th>입고 대기 t</th><th>소재 없음 t</th><th>납기 지남 건</th></tr></thead>'
       + `<tbody>${R.map((x, i) => tr(x, i)).join('')}</tbody></table></div></div>`;
   }
   const ORD = { '소재 없음': 0, '입고 대기': 1, '소재 있음': 2, '매치 완료': 3 };

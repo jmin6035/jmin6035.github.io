@@ -26,9 +26,9 @@
     const wu = LINES.filter((l) => S[l].woUntil).map((l) => `${l.slice(0, 1)}라인 ~${md(S[l].woUntil)}`).join(' · ');
     const sh = LINES.filter((l) => S[l].woShortH >= 0.5).map((l) => `${l.slice(0, 1)}라인 ${n1(S[l].woShortH)}h`).join(' · ');
     return '<div class="kpis" style="margin:0 0 14px">'
-      + k('작업대기량(1030 확정)', `${n0(tk('작업대기', 0))}<small>t</small>`, `${n1(tk('작업대기', 1))}h · ${wu || '-'}`, 'brand')
+      + k('작업대기량(확정 지시)', `${n0(tk('작업대기', 0))}<small>t</small>`, `${n1(tk('작업대기', 1))}h · ${wu || '-'}`, 'brand')
       + k('작업대기 24시간 부족', sh ? `${n1(sum(LINES, (l) => S[l].woShortH || 0))}<small>h</small>` : '없음', sh || '작업대기로 하루 24시간 채움', sh ? 'bad' : 'good')
-      + k('지시대기(1020)', `${n0(tk('지시대기', 0))}<small>t</small>`, `${n1(tk('지시대기', 1))}h · 부원료 입고 뒤`, 'warn')
+      + k('지시대기(미확정 지시)', `${n0(tk('지시대기', 0))}<small>t</small>`, `${n1(tk('지시대기', 1))}h · 부원료 입고 뒤 확정`, 'warn')
       + k('부자재 입고대기', `${n0(tk('부자재 입고대기', 0))}<small>t</small>`, `${n1(tk('부자재 입고대기', 1))}h · 도료 일정 없음`, 'brand')
       + k('계획편성', `${n0(tk('계획편성', 0))}<small>t</small>`, `${n1(tk('계획편성', 1))}h · 통합 컬러 계획`, 'good')
       + '</div>';
@@ -49,10 +49,11 @@
 
   function weekTable(days) {
     const idx = (d) => O.days.indexOf(d);
-    const head = days.map((d) => { const wd = dt(d).getDay(); return `<th class="${wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}</th>`; }).join('');
-    const rows = LINES.map((ln) => `<tr><th>${ln}<small>${n0(sum(days, (d) => O.lines[ln][idx(d)].cap))}t · ${n0(sum(days, (d) => O.lines[ln][idx(d)].usedH))}h</small></th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}</tr>`).join('');
+    const pad = '<td class="pad" aria-hidden="true"></td>'.repeat(Math.max(0, 7 - days.length));   // 마지막 주가 1~6일이면 빈 칸으로 채워 한 칸이 화면 폭 전체로 늘어나지 않게
+    const head = days.map((d) => { const wd = dt(d).getDay(); return `<th class="${wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}</th>`; }).join('') + pad.replace(/td/g, 'th');
+    const rows = LINES.map((ln) => `<tr><th>${ln}<small>${n0(sum(days, (d) => O.lines[ln][idx(d)].cap))}t · ${n0(sum(days, (d) => O.lines[ln][idx(d)].usedH))}h</small></th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`).join('');
     const sd = (d) => sum(LINES, (l) => O.lines[l][idx(d)].cap);
-    const tot = `<tr class="dsum"><th>하루 합<small>${n0(sum(days, sd))}t</small></th>${days.map((d) => `<td><b>${n0(sd(d))}</b><small>t</small></td>`).join('')}</tr>`;
+    const tot = `<tr class="dsum"><th>하루 합<small>${n0(sum(days, sd))}t</small></th>${days.map((d) => `<td><b>${n0(sd(d))}</b><small>t</small></td>`).join('')}${pad}</tr>`;
     return `<table class="cg"><thead><tr><th></th>${head}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
   }
 
@@ -70,7 +71,7 @@
     const rows = ks.map((k) => `<tr><td class="nw">${md(k)} 주</td><td class="num">${n0(bw[k] || 0)}</td><td class="num">${n0(sw[k] || 0)}</td></tr>`).join('');
     return '<section class="card"><h2>소재 들어오는 양 <small>주별 · 톤</small></h2>'
       + `<div class="mt" style="margin:0 0 12px"><div><div class="s">구매 소재 재고</div><b class="v">${n0(M.buyStock)}t</b></div><div><div class="s">구매 소재 입고 예정 ~${END()}</div><b class="v">${n0(M.buySoon)}t</b></div>`
-      + `<div><div class="s">자가재 재고(도금 → 컬러)</div><b class="v">${n0(M.selfStock)}t</b></div><div><div class="s">도금 자가재 생산 ~${END()}</div><b class="v">${n0(M.selfCg)}t</b></div></div>`
+      + `<div title="컬러 소재 창고의 자사(도금) 소재 중 사용가능·작업지시대기·가공대기 재고 — 관제의 '도금 자가재 재고'(판생 속보, 도금 쪽 자가재 제품 재고 전체)와 범위가 다름"><div class="s">자가재 재고(컬러 소재 창고 · 투입 가능)</div><b class="v">${n0(M.selfStock)}t</b></div><div><div class="s">도금 자가재 생산 ~${END()}</div><b class="v">${n0(M.selfCg)}t</b></div></div>`
       + (rows ? `<table class="it" style="max-width:520px"><thead><tr><th>주</th><th class="num">구매 소재 입고 예정</th><th class="num">도금 자가재 생산</th></tr></thead><tbody>${rows}</tbody></table>` : '')
       + '</section>';
   }
