@@ -454,6 +454,7 @@ def main():
             pass
         return None
     ev = edge_ver()
+    print('설치된 Edge 버전:', ev)
     # 2026-11-03: 밤사이 Edge 자동 업데이트 → 드라이버 버전 불일치, 사내망이 드라이버 다운로드를 막아(차단 HTML 을 받음) 실행 실패.
     # 순서: ① 설치 폴더의 msedgedriver.exe(사용자가 Edge 와 같은 버전으로 넣어 둔 것) ② 자동 설치(받은 파일이 진짜 exe 일 때만) ③ PC 기본
     def drv_ver(p):
@@ -466,12 +467,21 @@ def main():
     if ev and (not os.path.isfile(mine) or (drv_ver(mine) or '').split('.')[0] != ev.split('.')[0]):
         # 11/3: Edge 와 주 버전이 다르면 Windows 로그인 자격(사내 프록시 인증)으로 같은 버전 드라이버를 받아 설치 폴더에 풂 — Python 직접 다운로드는 사내망이 막음
         zp = os.path.join(HERE, 'edgedriver_win64.zip')
+        # 11/9: 사내망이 Microsoft 드라이버 주소를 막아 11/3 이후 Edge 대신 Chrome 으로 돌았고, Chrome 이 MES 큰 화면에서 자주 멈춤(오류 39·응답 없음)
+        # → 같은 주 버전 드라이버를 사이트(github.io, 사내에서 열림)에 올려 두고 먼저 거기서 받음
+        try:
+            b_ = _fetch(DIST_URL + f"edgedriver/{ev.split('.')[0]}.zip", 120)
+            if b_[:2] == b'PK':
+                open(zp, 'wb').write(b_)
+        except Exception as e_:
+            print(f'사이트에서 Edge {ev.split(".")[0]} 드라이버 받기 실패: {str(e_)[:120]}')
         ps = (f"$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol='Tls12'; "
               f"$p=[System.Net.WebRequest]::GetSystemWebProxy(); $p.Credentials=[System.Net.CredentialCache]::DefaultCredentials; "
               f"foreach($u in @('https://msedgedriver.microsoft.com/{ev}/edgedriver_win64.zip','https://msedgedriver.azureedge.net/{ev}/edgedriver_win64.zip')){{ "
               f"try {{ $w=New-Object System.Net.WebClient; $w.Proxy=$p; $w.DownloadFile($u,'{zp}'); break }} catch {{ Write-Host $_ }} }}")
         try:
-            subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps], timeout=180, creationflags=0x08000000)
+            if not (os.path.isfile(zp) and open(zp, 'rb').read(2) == b'PK'):
+                subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps], timeout=180, creationflags=0x08000000)
             if os.path.isfile(zp) and open(zp, 'rb').read(2) == b'PK':
                 import zipfile
                 with zipfile.ZipFile(zp) as z:
