@@ -170,7 +170,7 @@
   }
 
   // ───────── 상태(편집본)
-  function fromDraft() { L = {}; LINES[plant].forEach((l) => { L[l] = ((D.lines[l] || {}).seq || []).map((id) => ({ k: 'j', id })); }); }
+  function fromDraft() { L = {}; LINES[plant].forEach((l) => { L[l] = ((D.lines[l] || {}).seq || []).map((id) => (id && id.k === 'g' ? { k: 'g', min: +id.min || 0, note: id.note || '' } : { k: 'j', id })); }); }   // 11/9: 초안에도 빈 시간(M/C 전 대기) 칸
   function fromSaved(p) {
     L = {}; const gone = [];
     LINES[plant].forEach((l) => { L[l] = ((p.lines || {})[l] || []).filter((e) => { if (e.k === 'g') return true; if (J[e.id]) return true; gone.push(e.id); return false; }).map((e) => (e.k === 'g' ? { k: 'g', min: +e.min || 0, note: e.note || '' } : { k: 'j', id: e.id })); });
