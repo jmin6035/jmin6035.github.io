@@ -697,7 +697,9 @@ def main():
                 return 0
             try:
                 n = driver.execute_script(COUNT_JS, grid_id)
-            except Exception:
+            except Exception as e:
+                if any(w in str(e).lower() for w in ('crash', 'memory', 'disconnected', 'no such window', 'invalid session')):
+                    raise                                       # 탭이 죽음(메모리 부족) — 180초 기다리지 말고 바로 브라우저 새로
                 n = None
             if n and n == last:
                 return n
@@ -823,7 +825,7 @@ def main():
         # 매일·기간 조회를 먼저, once 는 한 번 실행에 최대 ONCE_MAX 개(남은 것은 다음 2시간 실행), 끝난 조회는 바로 기록
         once_max = int(cfg.get('remote_once_max', 20)) if a.remote_only else 0   # 11/9: 아침 전체 실행은 매일 조회만(빠르게) — 한 번만 받는 옛 자료는 2시간 원격 조회가 나눠 받음
         qs = sorted(Q.get('queries', []), key=lambda q: q.get('mode', 'once') == 'once')
-        n_once, left = 0, 0
+        n_once, left, n_run = 0, 0, [0]
         sp = os.path.join(xdir, 'snap_remote_status.json')                  # 조회마다 결과(행 수·초·실패 이유)를 남겨 클라우드에서 볼 수 있게(2026-10-20 v49)
         try:
             stat = {r[0]: r for r in json.load(open(sp, encoding='utf-8'))['rows']}
@@ -861,6 +863,13 @@ def main():
                     left += 1
                     continue
                 n_once += 1
+            n_run[0] += 1
+            if n_run[0] % 25 == 0:                                   # 11/9: MES 쿼리 화면은 조회 결과를 메모리에 쌓아 두어 조회 ~100개면 Edge 'Out of memory' → 25개마다 브라우저를 새로(메모리 비움)
+                try:
+                    revive(force=True)
+                    open_query()
+                except Exception as e_:
+                    print(f'  ⚠ 브라우저 새로 띄우기 실패: {str(e_)[:120]}')
             print(f'▶ {name} (원격 조회 · {mode})')
             t0, nrows = time.time(), None
             try:
@@ -893,7 +902,7 @@ def main():
                 msg = str(e).splitlines()[0][:150] if str(e) else type(e).__name__
                 note(name, mode, nrows, t0, '실패: ' + msg)
                 print(f'  ⚠ {name}: 실패 — 건너뜀 ({msg})')
-                if 'timed out' in msg.lower() or 'Timeout' in type(e).__name__ or 'MaxRetry' in type(e).__name__:
+                if any(w in msg.lower() for w in ('timed out', 'crash', 'memory', 'disconnected', 'no such window', 'invalid session')) or 'Timeout' in type(e).__name__ or 'MaxRetry' in type(e).__name__:
                     try:                                       # 브라우저가 멈춘 경우 새로 띄워 다음 조회 계속
                         revive(force=True)
                         open_query()
