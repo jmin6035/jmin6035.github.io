@@ -62,7 +62,9 @@
       if (ta.aft && tb.aft && ta.aft !== tb.aft) fs.push(tfam(ta.aft) !== tfam(tb.aft) ? '후처리 계열 바뀜' : '후처리 바뀜(같은 계열)');
       if (ta.oil && tb.oil && ta.oil !== tb.oil) fs.push(String(ta.oil)[0] !== String(tb.oil)[0] ? '도유 종류 바뀜' : '도유 양만 바뀜');
     }
-    const pt = R.pt[l] || {}, parts = fs.map((f) => ({ c: f, m: pt[f] || 0 })).filter((p) => p.m >= 0.05);
+    // 11/10: 실적은 바뀜의 0.7~1% 에만 더미 코일(10~65분) — 1년 실적에서 더미 비율 ≥ dummyP 인 바뀜만 '들어갈 때 길이'를 넣고, 나머지는 0분 + '더미 가능 n%'
+    const pt = R.pt[l] || {}, P = R.dummyP || 50, parts = fs.map((f) => pt[f]).map((x, i) => x && (x.p >= P ? { c: `더미 ${fs[i]}(실적 ${n0(x.p)}%) · 약 ${n0(x.t)}t`, m: x.m }
+      : x.p >= 5 ? { c: `더미 가능 ${fs[i]}(실적 ${n0(x.p)}%, 들어가면 ${n0(x.m)}분)`, m: 0, may: true } : null)).filter(Boolean);
     if (a.sur !== b.sur) parts.unshift({ c: `표면사상 ${a.sur} → ${b.sur}`, m: 0 });
     return { m: parts.reduce((s, p) => s + p.m, 0), parts };
   }
@@ -269,6 +271,7 @@
       else {
         n++;
         if (q.ch.m >= 1) h += `<tr class="ch"><td colspan="7">휴지 <b>${n0(q.ch.m)}분</b> ${hhmm(q.ds)}부터${q.ch.parts.filter((p) => p.m >= 0.5 || /표면사상|블록/.test(p.c)).map((p) => ` · ${esc(p.c)}${p.m >= 0.5 ? ' ' + n0(p.m) + '분' : ''}`).join('')}</td></tr>`;
+        else if (q.ch.parts.some((p) => p.may)) h += `<tr class="ch may"><td colspan="7">${q.ch.parts.filter((p) => p.may).map((p) => esc(p.c)).join(' · ')} — 시간엔 안 넣음</td></tr>`;
         h += jobRow(line, q, days, n);
       }
     });
