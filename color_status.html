@@ -34,6 +34,26 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 .gm-t { display: flex; flex-direction: column; text-align: right; } .gm-t b { font-size: 17px; font-variant-numeric: tabular-nums; } .gm-t span { font-size: 13.5px; }
 .gm-tot { border-bottom: 0; } .gm-sum { display: flex; gap: 18px; font-size: 14px; color: var(--ink-2); }
 @media (max-width: 760px) { .gm-row { grid-template-columns: 1fr; gap: 6px; } .gm-t { text-align: left; flex-direction: row; gap: 10px; } }
+/* 월간 계획 vs 롤링 */
+.r-top { align-items: start; margin-bottom: 14px; } .r-h3 { margin: 0 0 8px; font-size: 16px; }
+.rg-leg { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13.5px; color: var(--ink-2); margin-bottom: 6px; } .rg-leg i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.rg-leg u { display: inline-block; width: 2px; height: 12px; background: var(--ink); margin-right: 5px; vertical-align: -2px; }
+.rg-row { display: grid; grid-template-columns: 112px 1fr 190px; grid-template-rows: auto auto; column-gap: 12px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--grid); }
+.rg-n { display: flex; align-items: center; gap: 7px; white-space: nowrap; font-size: 14.5px; } .rg-n i { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.rg-bar { position: relative; display: flex; height: 26px; gap: 2px; } .rg-bar u { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); border-radius: 1px; }
+.rg-bar i, .rg-leg i { font-style: normal; display: flex; align-items: center; justify-content: center; font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; border-radius: 4px; }
+.rg-bar i.a, .rg-leg i.a { background: var(--brand-2); color: #fff; } .rg-bar i.c, .rg-leg i.c { background: color-mix(in srgb, var(--brand-2) 45%, var(--surface)); color: var(--ink); } .rg-bar i.p, .rg-leg i.p { background: var(--grid); color: var(--ink); }
+.rg-t { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; } .rg-t b { font-size: 15px; font-variant-numeric: tabular-nums; } .rg-t .st { font-size: 13.5px; }
+.rg-p { grid-column: 1; grid-row: 2; font-size: 13.5px; color: var(--ink-2); padding-left: 19px; }
+.rg-tot { border-bottom: 0; } .rg-tot .rg-n b { font-size: 15px; }
+.r-alarms { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.r-alarms li { display: grid; grid-template-columns: auto auto 1fr; gap: 10px; align-items: baseline; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 14.5px; line-height: 1.5; }
+.r-alarms .st { white-space: nowrap; } .ra-k { white-space: nowrap; } .ra-t { word-break: keep-all; } .ra-t small { font-size: 13.5px; color: var(--ink-2); }
+.r-table th.win { box-shadow: inset 0 -3px 0 var(--brand-2); }
+.r-table td.k-a { color: var(--ink-2); } .r-table td.k-c { background: color-mix(in srgb, var(--brand-2) 22%, transparent); }
+.r-table td.up { box-shadow: inset 0 -3px 0 var(--good); color: var(--good); font-weight: 800; } .r-table td.dn { box-shadow: inset 0 -3px 0 var(--bad); color: var(--bad); font-weight: 800; }
+#r-sec h2 { word-break: keep-all; } #r-sec h2 small { white-space: nowrap; }
+@media (max-width: 760px) { #r-sec .head-row { flex-wrap: wrap; } #r-sec h2 { flex-basis: 100%; flex-wrap: wrap; } #r-sec h2 small { display: block; flex-basis: 100%; margin-left: 0; white-space: normal; margin-top: 2px; } .rg-row { grid-template-columns: 1fr; row-gap: 4px; } .rg-t { align-items: flex-start; flex-direction: row; gap: 10px; } .rg-p { grid-row: auto; padding-left: 0; } }
 #d-load { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 28px; } #d-load > .hint { grid-column: 1 / -1; }   /* 월별 부하: 라인 4개 나란히 */
 </style>
 </head>
@@ -56,6 +76,19 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 
   <div id="d-body" hidden>
     <section class="card replan" id="d-replan" hidden></section>
+
+    <section class="card" id="r-sec" hidden>
+      <div class="head-row">
+        <h2><span style="white-space:nowrap">월간 계획 vs 롤링</span> <small class="muted" id="r-meta"></small></h2>
+        <div class="tabs" id="r-tabs"></div>
+      </div>
+      <div class="row2 r-top">
+        <div id="r-groups"></div>
+        <div><h3 class="r-h3">알람</h3><ul class="r-alarms" id="r-alarms"></ul></div>
+      </div>
+      <div class="gtable-wrap"><table class="gtable r-table" id="r-table"></table></div>
+      <p class="hint" title="월 계획 = 3개월 통합 계획이 그 달 그룹에 잡은 양(TF 월 생산량). 남은 배치 = 내일부터 휴지 고정·휴지 집약 없이 다시 배치. 차이 ±5% 넘으면 알람">월간 계획 = 가동 현황 계획(고정) · 롤링 = 실적 + 확정 작업지시(파란 칸) + 남은 배치 · 녹색/빨강 = 월간 계획보다 30t 넘게 많음/적음 · 굵은 테두리 날짜 = 확정 창</p>
+    </section>
 
     <section class="card">
       <div class="head-row">
@@ -106,5 +139,6 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 <script src="ui/shell.js?v=2611091301"></script>
 <script src="engine/crypto.js?v=2611091301"></script>
 <script src="color_status.js?v=2611091301"></script>
+<script src="color_rolling.js?v=2611091301"></script>
 </body>
 </html>

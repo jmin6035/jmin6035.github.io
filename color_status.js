@@ -203,7 +203,7 @@
   }
   async function unlock(pw) {
     if (!env) env = await envReady;
-    try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } await overlayActual(pw); render(); }
+    try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } await overlayActual(pw); render(); document.dispatchEvent(new CustomEvent('cgl-pw', { detail: pw })); }   // 월간 계획 vs 롤링(color_rolling.js)
     catch (e) { $('d-unlock').hidden = false; $('d-unlock-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; }
   }
   $('d-unlock').addEventListener('submit', (e) => { e.preventDefault(); unlock($('d-pw').value); });

@@ -12,7 +12,7 @@
   const GP = root.GP || (root.GP = {});
 
   // timeLimit 1e7초 = 사실상 무제한: 재계획은 오래 걸려도 최적 증명까지(시간 제한에 걸리면 최적이 아닌 해가 조용히 나옴). phase2Mode 'exact' = 2단계도 전체 탐색
-  GP.REPLAN_DEFAULTS = { lockMC: true, freezeDays: 2, allowLate: true, maxLate: 14, lateW: 0.01, shortW: 1000, stabW: 0.1, stabW2: 500, timeLimit: 1e7, phase2Mode: 'exact' };
+  GP.REPLAN_DEFAULTS = { lockMC: true, freezeDays: 2, freezeTo: null, allowLate: true, maxLate: 14, lateW: 0.01, shortW: 1000, stabW: 0.1, stabW2: 500, timeLimit: 1e7, phase2Mode: 'exact' };
 
   /* 시험용 가짜 실적: 기존 계획을 t0까지 그대로 생산했다고 보고 교란을 적용.
      교란: {type:'down', line, from, to, minutes?} 설비정지(과거면 실적 감소, 미래면 가동가능시간 차감, minutes 없으면 종일)
@@ -76,7 +76,8 @@
     });
     const baseState = {};
     for (const c of R.cal) baseState[`${c.line}|${c.date}`] = c.fam;
-    const fu = O.freezeDays > 0 ? GP.addDays(act.t0, O.freezeDays) : null;
+    let fu = O.freezeDays > 0 ? GP.addDays(act.t0, O.freezeDays) : null;
+    if (O.freezeTo && O.freezeTo > (fu || act.t0)) fu = O.freezeTo;   // 11/9 옵션(기본 끔): 동결을 확정 창(이번 주 작업지시가 있는 날)까지 — cglplan/replan.py 와 같음
     for (const [l, cur] of Object.entries(act.state || {})) {          // 기준 계획 강종이 실제와 어긋난 라인은 동결 기간을 지금 강종으로(이미 나간 지시 = 지금 강종)
       if (!fu || baseState[`${l}|${act.t0}`] === cur) continue;
       for (let d = GP.addDays(act.t0, 1); d <= fu; d = GP.addDays(d, 1)) if (`${l}|${d}` in baseState) baseState[`${l}|${d}`] = cur;
@@ -92,7 +93,7 @@
         }
       }
     }
-    const MO = { t0: act.t0, init: act.state, freezeUntil: O.freezeDays > 0 ? GP.addDays(act.t0, O.freezeDays) : null, baseState, allowLate: O.allowLate, maxLate: O.maxLate, lateW: O.lateW, shortW: O.shortW, stabW: O.stabW, stabW2: O.stabW2, extraDown: XD };
+    const MO = { t0: act.t0, init: act.state, freezeUntil: fu, baseState, allowLate: O.allowLate, maxLate: O.maxLate, lateW: O.lateW, shortW: O.shortW, stabW: O.stabW, stabW2: O.stabW2, extraDown: XD };
     if (O.lockMC) MO.lock = GP.mcLock(P, H, R, act, lockNotes);
     log && log(`실적 ${GP.fmt(GP.sum(act.rows, (r) => r[4]))}t 반영(~${GP.md(act.t0)}), 남은 수요 ${GP.fmt(GP.sum(rem, (b) => b.orig))}t, 강종 동결 ~${MO.freezeUntil ? GP.md(MO.freezeUntil) : '없음'}`);
     const PS = Object.assign({}, P, { timeLimit1: O.timeLimit, timeLimit2: O.timeLimit, phase2Mode: O.phase2Mode });
