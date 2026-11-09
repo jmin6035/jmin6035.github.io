@@ -450,6 +450,17 @@ def main():
     opts.add_experimental_option('prefs', {'download.default_directory': dl, 'download.prompt_for_download': False, 'download.directory_upgrade': True})
     opts.add_experimental_option('excludeSwitches', ['enable-logging'])
     opts.add_argument('--log-level=3')
+    # 11/9 13:35: 예약 실행에서 Edge 'exited normally'·Chrome 'crashed' — 남은 브라우저가 기본 프로필을 잡고 있으면 새 창이 바로 꺼짐
+    # → 실행마다 새 프로필 폴더 + 첫 실행·기본 브라우저 묻기·GPU·시작 부스트 끔
+    prof_root = os.path.join(HERE, 'out', 'prof')
+    shutil.rmtree(prof_root, ignore_errors=True)
+    def boot_args(o, tag):
+        d_ = os.path.join(prof_root, f'{tag}_{os.getpid()}_{int(time.time())}')
+        os.makedirs(d_, exist_ok=True)
+        for x_ in (f'--user-data-dir={d_}', '--no-first-run', '--no-default-browser-check', '--disable-gpu',
+                   '--no-sandbox', '--disable-dev-shm-usage', '--disable-features=msEdgeStartupBoost,RendererCodeIntegrity'):
+            o.add_argument(x_)
+        return o
     def edge_ver():                              # 설치된 Edge 버전(레지스트리)
         try:
             import winreg
@@ -522,7 +533,8 @@ def main():
             service = Service()
     service.creation_flags = 0x08000000
     def try_edge():
-        return webdriver.Edge(service=service, options=opts)
+        import copy
+        return webdriver.Edge(service=service, options=boot_args(copy.deepcopy(opts), 'e'))
 
     def try_chrome():                                # Edge 드라이버를 못 구하면 Chrome(드라이버는 Selenium Manager 가 구글 저장소에서 받음)
         from selenium.webdriver.chrome.options import Options as COpt
@@ -531,18 +543,24 @@ def main():
         co.add_experimental_option('prefs', {'download.default_directory': dl, 'download.prompt_for_download': False, 'download.directory_upgrade': True})
         co.add_experimental_option('excludeSwitches', ['enable-logging'])
         co.add_argument('--log-level=3')
+        boot_args(co, 'c')
         cs = CSvc(); cs.creation_flags = 0x08000000
         return webdriver.Chrome(service=cs, options=co)
     driver, errs, make_driver = None, [], None
-    for name, fn in (('Edge', try_edge), ('Chrome', try_chrome)):
-        try:
-            driver = fn()
-            make_driver = fn
-            print('브라우저:', name)
+    for round_ in (1, 2):                            # 둘 다 실패하면 남은 브라우저를 끄고 한 번 더
+        for name, fn in (('Edge', try_edge), ('Chrome', try_chrome)):
+            try:
+                driver = fn()
+                make_driver = fn
+                print('브라우저:', name)
+                break
+            except Exception as e:
+                errs.append(f'{name}: {str(e).splitlines()[0][:150]}')
+                print('  ⚠', errs[-1])
+        if driver is not None or round_ == 2:
             break
-        except Exception as e:
-            errs.append(f'{name}: {str(e).splitlines()[0][:150]}')
-            print('  ⚠', errs[-1])
+        print('브라우저 시작 실패 — 남은 브라우저 종료 후 다시 시도')
+        kill_stale_browsers(); time.sleep(5)
     if driver is None and not os.environ.get('CGL_REEXEC'):
         # 11/3: 낡은 selenium·webdriver-manager 가 새 Edge 버전·바뀐 드라이버 주소를 몰라 실패 → 최신으로 올리고 이 실행을 한 번 다시 시작
         print('selenium·webdriver-manager 최신으로 갱신 후 다시 시작…')
