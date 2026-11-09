@@ -374,6 +374,8 @@ def ensure_tasks():
 
 
 def main():
+    if '--register' not in sys.argv and not acquire_lock():   # 11/9: 잠금을 실행 기록 파일을 열기 전에 — 건너뛰는 실행이 돌고 있는 실행의 기록을 지웠음
+        sys.exit(0)
     try:
         os.makedirs(os.path.join(HERE, 'out'), exist_ok=True)
         sys.stdout = sys.stderr = _Tee(sys.__stdout__, os.path.join(HERE, 'out', 'run_log.txt'))
@@ -398,14 +400,20 @@ def main():
     ap.add_argument('--remote-only', action='store_true', help='원격 조회 목록만 실행하고 추가 자료만 게시(재계획 없음, 약 10분)')
     ap.add_argument('--register', action='store_true', help='매일 07:35 자동 실행을 Windows 작업 스케줄러에 등록(.bat 없이 파이썬 직접 실행)')
     ap.add_argument('--no-update', action='store_true', help='자동 업데이트 건너뜀')
+    ap.add_argument('--auto-only', action='store_true', help='MES 내려받기 없이 이미 받은 자료로 계산·게시만(11/9)')
     a = ap.parse_args()
     if a.register:
         sys.exit(register_task())
-    if not acquire_lock():
-        sys.exit(0)
     self_update()
     ensure_tasks()
     seed_acc()
+    if a.auto_only:                                       # 이미 받은 mes/ 자료로 자동 실행기만(계산·업로드)
+        env = dict(os.environ, PYTHONUTF8='1', PYTHONUNBUFFERED='1')
+        pr = subprocess.Popen([sys.executable, '-m', 'cglplan', 'auto', '--config', os.path.join(HERE, 'auto_config.json')], cwd=HERE, env=env,
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
+        for line in pr.stdout:
+            print(line, end='')
+        sys.exit(pr.wait())
     kill_stale_browsers()
     today = datetime.date.today()
     months = []                                          # 재고현황 조회 달(⑤에서 채움)
