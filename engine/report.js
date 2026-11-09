@@ -409,7 +409,7 @@
     title(wt, r, '■ 계획 전제', F9B, 6); r++;
     const prem = [
       ['계획 기간', `${H.D0} ~ ${H.D1}`], ['첫날 강종', L.map((l) => `${l} ${P.initFamily[l] || '자유'}`).join(', ')],
-      ['주문재 생산 가능 시점', `마감 ${P.releaseDays}일 전부터 (${P.releaseExempt.join('·')}는 제한 없음)`],
+      ['주문재 생산 가능 시점', `마감 ${P.releaseDays}일 전부터` + Object.entries(Object.assign({}, P.releaseDaysCls, P.releaseDaysAlloy)).map(([k, v]) => ` · ${k} ${v}일`).join('') + ` (${P.releaseExempt.join('·')}는 제한 없음)`],
       ['첫 달 1~5일 선적분', P.firstWindowPrevMonth ? '전월 생산으로 가정(계획에서 제외)' : '계획에 포함'],
       ['정기수리', P.shutdowns.map((s) => `${s.line} ${s.start}~${s.end}`).join(', ') || '없음'],
       ['라인 생산 가능 강종', L.map((l) => `${l}: ${P.allowed[l].join(', ')}`).join(' / ')],

@@ -77,8 +77,10 @@
     if (d > b.due) return !!(O && O.allowLate) && GP.diffDays(d, b.due) <= (b.maxLate || O.maxLate || 14);
     if (P.releaseExempt.includes(b.cls) || (O && O.freezeUntil && d <= O.freezeUntil)) return true;   // 동결 기간(기준 계획 그대로)은 상한 창 검사 안 함
     const ext = (P.shutdowns || []).filter((s) => d < s.start && s.start <= b.due).reduce((a, s) => a + GP.diffDays(s.end, s.start) + 1, 0);   // 11/9 회의: 상한 15일, 단 대수리 등 정지 직전은 정지 일수만큼 더 앞서 생산 허용
-    return GP.diffDays(b.due, d) <= P.releaseDays + ext;
+    return GP.diffDays(b.due, d) <= GP.releaseDaysFor(P, b) + ext;
   }
+  // 생산 상한 일수: 강종(AL-STS 30) → 부서(자동차 45) → 기본(15) 순 — cglplan/model.py release_days 와 같게
+  GP.releaseDaysFor = (P, b) => { const a = (P.releaseDaysAlloy || {})[b.alloy], c = (P.releaseDaysCls || {})[b.cls]; return a != null ? a : c != null ? c : P.releaseDays; };
   GP.runMILP = function (highs, buckets, P, log, O = {}) {
     const H = GP.horizon(P), days = GP.planDays(P, H, O), D0 = days[0], L = P.lines, LF = P.lineFamilies, FAM = P.alloyFamily;
     const prodDays = O.t0 ? days.slice(1) : days;

@@ -137,7 +137,7 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
   const DEF = { days: { 'G수출': 15, 'G국내': 15, 'G자가재': 15, 'AL-STS': 30, '임가공': 15, '기타': 45, '건재수출': 15, '가전수출': 15, '가전내수': 30, '주문재': 15, '수요개발': 15 },
     target: { 'G국내': 15, '주문재': 15, '수요개발': 15, '건재수출': 15, '가전수출': 15 },   // 11/9 회의: 목표 = 상한(cglplan/tf_rules.json target · tfrules.TARGET_KEYS)
     stockMax: { '도금 소재(F/H)': 12600, '도금 제품(판매재)': 22300, '컬러 소재': 20940, '컬러 제품': 19320 },
-    plating: { switchDummy: { '1CGL': 614.5, '2CGL': 811 }, nonfamDummy: { '1CGL': 5.97, '2CGL': 6.48 }, equipDown: { '1CGL': 12.76, '2CGL': 21.17 }, restartFamchg: { '1CGL': 462, '2CGL': 719 }, restartSame: { '1CGL': 106, '2CGL': 295 }, releaseDays: 25 },
+    plating: { switchDummy: { '1CGL': 614.5, '2CGL': 811 }, nonfamDummy: { '1CGL': 5.97, '2CGL': 6.48 }, equipDown: { '1CGL': 12.76, '2CGL': 21.17 }, restartFamchg: { '1CGL': 462, '2CGL': 719 }, restartSame: { '1CGL': 106, '2CGL': 295 }, releaseDays: 15 },
     replan: { tradeoff: 100, freezeDays: 2 } };
   let PW = '', IG = null, APPLIED = null, LATEST = null, HIST = [], ST = {}, CUR = null;
 
@@ -172,7 +172,7 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
       : `<tr><td class="l">${sub ? '└ ' : ''}${lb}${sec === '컬러' && offC ? ' <span class="tr-off">지금 계획 미적용</span>' : ''}</td><td class="num"><b>${n0(Math.min(A.target[k] ?? A.days[k], A.days[k]))}일</b></td><td>${k in DEF.target ? inp('target', k, C.target[k], 0, 120, 1) : '<span class="tr-off">= 상한</span>'}</td><td class="num">${n0(A.days[k])}일</td><td>${inp('days', k, C.days[k], 0, 120, 1)}</td></tr>`)).join('');
     $('t-max').innerHTML = MAXK.map((k) => `<tr><td class="l">${esc(k)}</td><td class="num">${n0(A.stockMax[k])}t</td><td>${inp('stockMax', k, C.stockMax[k], 1, 100000, 100)}</td></tr>`).join('');
     $('t-pl').innerHTML = PL.map(([k, lb, u, lo, hi, ds]) => `<tr><td class="l"><b>${lb}</b> <small class="muted">${u}</small></td><td class="l small ds">${ds}</td>${['1CGL', '2CGL'].map((l) => `<td class="num">${n0(A.plating[k][l])}</td><td>${inp('plating', k, C.plating[k][l], lo, hi, 0.01, l)}</td>`).join('')}</tr>`).join('')
-      + `<tr><td class="l"><b>주문재 생산 시작</b> <small class="muted">일</small></td><td class="l small ds">납기(선적) 며칠 전부터 만들 수 있는지의 전체 한도 — 주문마다 ① 상한 일수 창이 먼저 걸림. 자가재는 제한 없음, 두 라인 같은 값</td><td class="num">${n0(A.plating.releaseDays)}일</td><td>${inp('plating', 'releaseDays', C.plating.releaseDays, 1, 90, 1)}</td><td colspan="2" class="tr-off">← 같은 값</td></tr>`;
+      + `<tr><td class="l"><b>주문재 생산 시작</b> <small class="muted">일</small></td><td class="l small ds">납기(선적) 며칠 전부터 만들 수 있는지의 전체 한도 — 주문마다 ① 상한 일수 창이 먼저 걸림. 자가재는 제한 없음, 자동차 45일·AL-STS 30일(TF)은 따로, 두 라인 같은 값</td><td class="num">${n0(A.plating.releaseDays)}일</td><td>${inp('plating', 'releaseDays', C.plating.releaseDays, 1, 90, 1)}</td><td colspan="2" class="tr-off">← 같은 값</td></tr>`;
     $('t-rp').innerHTML = RP.map(([k, lb, u, lo, hi, ds]) => `<tr><td class="l"><b>${lb}</b></td><td class="l small ds">${ds}</td><td class="num">${n0(A.replan[k])}${u === '일' ? '일' : '톤·일'}</td><td>${inp('replan', k, C.replan[k], lo, hi, 1)}</td></tr>`).join('');
     const src = A.src;
     $('t-src').textContent = src && src.id ? `'지금 계획' = 지금 게시된 계획에 쓴 값(#${src.id} ${kst(src.at)} ${src.who || ''} 적용)` : "'지금 계획' = 지금 게시된 계획(10/22)에 쓴 값";
