@@ -194,6 +194,20 @@
     return { t: items.reduce((a, x) => a + (x.t || 0), 0), items,
       tip: items.map((x) => `${x.name} ${Math.round(x.t)}t${x.by === 'spec' && x.sizes ? `(${x.sizes.map((s) => `${s[1]} ${s[2]}t`).join(', ')})` : ''}`).join(' · ') };
   };
+  /* 11/9: 소재 단위 상태·발주 마감 한 기준 — late = UI.matLate 항목만(3달 총 부족 아님, lateT = 그 몫), soon = 발주 마감 2주 안, plan = 그 뒤, ok = 부족 없음.
+     발주 마감 = 업체별 리드타임(portal procureBy.nearAll — 대시보드 '발주 마감 임박'과 같은 값) 중 가장 이른 날, 없으면 mat_order 대표 리드타임 값
+     UI.matView(MO = mat_order, P = portal) → MO.groups.mats 각각 {…m, st, lateT, deadline} */
+  UI.matView = (MO, P) => {
+    const G = (MO && MO.groups) || {}, LI = MO && MO.late && MO.late.items ? new Map(MO.late.items.map((x) => [x.key, x.t || 0])) : null;
+    const NA = Object.values((P && P.procureBy) || {}).flatMap((x) => x.nearAll || []), td = (MO && MO.today) || clockDay();
+    const soon = new Date(Date.parse(td + 'T00:00:00Z') + 14 * 864e5).toISOString().slice(0, 10);
+    return (G.mats || []).map((m) => {
+      const lt = LI ? LI.get(m.key) || 0 : m.late || 0, nd = NA.filter((x) => x.plant === m.plant && x.mat === m.name).map((x) => x.deadline).sort()[0];
+      const dl = lt < 0.5 && nd && (!m.deadline || nd < m.deadline) ? nd : m.deadline;
+      const st = lt >= 0.5 ? 'late' : !(m.short > 0.5) ? 'ok' : dl && dl <= soon ? 'soon' : 'plan';
+      return Object.assign({}, m, { st, lateT: lt, deadline: dl });
+    });
+  };
 
   /* 자료 신선도: status.json(사내 PC 자동 실행기·클라우드 게시 중 최신) → 헤더 배지(기준일 표시) + 오래되면 경고 띠 */
   async function fresh() {
