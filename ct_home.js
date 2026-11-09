@@ -78,9 +78,10 @@
     const pr = pct(act, plan);
     const lag = view === 'month' ? gl.filter((x) => x.sched && x.actual < x.sched * 0.95).map((x) => ({ line: x.line, gap: x.sched - x.actual }))
       : perLine.filter((r) => r.p && r.a < r.p * 0.95).map((r) => ({ line: r.x.line, gap: r.p - r.a }));
-    const mats = ((MO.groups || {}).mats || []).filter((m) => CT.inScope(m.plant) && m.short > 0 && (m.st === 'late' || m.st === 'soon'));
-    const mAll = ((MO.groups || {}).mats || []).filter((m) => CT.inScope(m.plant) && m.short > 0.5);
-    const mSure = mAll.filter((m) => m.first && m.first < addD(MO.today || asOf, (m.lt || 0) + (m.safe || 0))), mExp = mAll.filter((m) => !mSure.includes(m));   // 04 부족·조치와 같은 기준
+    const MV = UI.matView(MO, P);   // 11/9: 소재 상태·마감 = 공통 기준(ui/shell.js UI.matView — 마감 지남은 matLate 만, 마감일은 업체별 리드타임)
+    const mats = MV.filter((m) => CT.inScope(m.plant) && (m.st === 'late' || m.st === 'soon'));
+    const mAll = MV.filter((m) => CT.inScope(m.plant) && m.short > 0.5);
+    const mSure = mAll.filter((m) => m.st === 'late'), mExp = mAll.filter((m) => !mSure.includes(m));   // 11/9: 확정 = 발주 마감 지남(matLate) — 04 부족·조치와 같은 기준
     const mPer = mAll.filter((m) => m.first && m.first <= p1), mPerNew = mPer.filter((m) => m.first >= p0);   // 기간 안(또는 이미) 부족이 시작되는 소재
     const sT = (xs) => xs.reduce((a, m) => a + m.short, 0);
     const matOrd = open.filter((o) => o.cause === 'mat' && (o.risk === '위험' || o.risk === '주의'));
@@ -103,7 +104,7 @@
     const past = overdue;
     const K = [
       { label: '납기 지연 예상', v: n0(risk.length), unit: '건', sub: `${n0(T(risk))}t · 점검 ${warn.length}건 · 이미 지난 ${n0(overdue.length)}건 별도`, tone: risk.length ? 'bad' : 'ok', href: 'ct_orders.html#risk' },
-      { label: '소재 부족', v: n0(sT(mPerNew)), unit: 't', sub: `기간 안 부족 시작 ${mPerNew.length}종${mPerNew.length ? `(${mPerNew.slice(0, 3).map((m) => esc(m.name)).join('·')})` : ''} · 이미 부족 ${mPer.length - mPerNew.length}종 · 리드타임 안 확정 ${mSure.length}종`, tone: mPerNew.some((m) => mSure.includes(m)) ? 'bad' : mPerNew.length ? 'warn' : 'ok', href: 'ct_mat.html' },
+      { label: '소재 부족', v: n0(sT(mPerNew)), unit: 't', sub: `기간 안 부족 시작 ${mPerNew.length}종${mPerNew.length ? `(${mPerNew.slice(0, 3).map((m) => esc(m.name)).join('·')})` : ''} · 이미 부족 ${mPer.length - mPerNew.length}종 · 마감 지남 ${mSure.length}종`, tone: mPerNew.some((m) => mSure.includes(m)) ? 'bad' : mPerNew.length ? 'warn' : 'ok', href: 'ct_mat.html' },
       { label: '생산 진도율', v: pr == null ? '-' : pr, unit: pr == null ? '' : '%', sub: prSub, tone: tone(pr), href: 'ct_prod.html#perf' },
       { label: '출하 미달', v: n0(shipGap), unit: 't', sub: shipSub, tone: shipGap > 500 ? 'bad' : shipGap > 0.5 ? 'warn' : 'ok', href: 'ct_prod.html#ship' },
       { label: '생산 미달', v: view !== 'month' && !plan ? '-' : lag.length, unit: view !== 'month' && !plan ? '' : '라인', sub: lag.length ? lag.map((x) => `${x.line} −${n0(x.gap)}t`).join(' · ') : view !== 'month' && !plan ? '실적 집계 전' : '계획 대비 95% 이상', tone: lag.length ? 'warn' : 'ok', href: 'ct_prod.html#run' },
@@ -120,7 +121,7 @@
       if (o.risk === '위험') a.risk = '위험';
     }
     for (const a of by.values()) acts.push({ id: CT.issueId('ord|' + a.k), risk: a.risk, type: a.type, grp: a.grp, what: `${a.grp} ${a.os.length}건`, t: T(a.os), last: a.last, dept: a.dept, os: a.os });
-    for (const m of mats) acts.push({ id: CT.issueId('mat|' + m.key), risk: m.st === 'late' ? '위험' : '주의', type: '소재 발주', what: `${m.name} 부족 ${n0(m.short)}t · ${md(m.first)}부터`, t: m.short, last: m.deadline, dept: CT.DEPT.mat, href: 'ct_mat.html' });
+    for (const m of mats) acts.push({ id: CT.issueId('mat|' + m.key), risk: m.st === 'late' ? '위험' : '주의', type: '소재 발주', what: m.st === 'late' ? `${m.name} 마감 지남 ${n0(m.lateT)}t` : `${m.name} 부족 ${n0(m.short)}t · ${md(m.first)}부터`, t: m.st === 'late' ? m.lateT : m.short, last: m.deadline, dept: CT.DEPT.mat, href: 'ct_mat.html' });   // 11/9: 마감 지남 = matLate 몫
     for (const x of (P.exceptions || []).filter((x) => (x.lvl === 'bad' || x.lvl === 'warn') && !CT.idleSkip(D, x.text))) {   // 계획 휴지 라인 경보 제외(11/8)
       if (!CT.inScope(/도금/.test(x.area) ? 'G' : /컬러/.test(x.area) ? 'C' : 'all')) continue;
       acts.push({ id: CT.issueId('exc|' + x.text), risk: x.lvl === 'bad' ? '위험' : '주의', type: x.area, what: x.text, t: null, last: null, dept: x.who, href: x.link });
@@ -243,9 +244,9 @@
     };
     // ④-2 판매그룹별 현황(11/5 사용자 '통합관제에 그룹별로 표현해'): 관제 띠(ui/ctl.js)와 같은 값 — 생산·출하·재고·소재·납기
     const GROUP_ORD = { G수출: '도금수출', G국내: '도금국내', G자동차: '자동차강판', C수출: '컬러수출', C건재: '컬러건재', C수요: '수요개발' };
-    const CR = (window.UI && UI.ctlRows) ? (UI.ctlRows(P, MO) || []) : [];
+    const CR = (window.UI && UI.ctlRows) ? (UI.ctlRows(P, MO, W) || []) : [];   // 11/9: W = 상한일수(tfRules)
     const ndG = ndM(asOf), elapsed = Math.min(1, (+asOf.slice(8) - 1) / ndG);
-    const TFD = { G수출: 15, G국내: 20, G자동차: 30, C수출: 15, C건재: 20 };   // TF 목표 일수 = 상한(11/5 운영 개선: 계획 목표는 실측 출하 대기 — 도금국내 7·주문재 8·컬러수출 10일, 계획 규칙 화면)
+    const TFD = new Proxy({}, { get: (o, k) => UI.ctlTfd(k, W) });   // 11/9: 상한일수 = 엔진 값(integrated tfRules.days, ui/ctl.js UI.ctlTfd) — 고정표는 자료 없을 때만   // TF 목표 일수 = 상한(11/5 운영 개선: 계획 목표는 실측 출하 대기 — 도금국내 7·주문재 8·컬러수출 10일, 계획 규칙 화면)
     const SRv = (k) => { const kk = k === 'G자가재' ? '도금 제품(자가재)' : 'g:' + k; let bd = '', bv = null; for (const [d, q, v] of P.stockTrend || []) if (q === kk && d <= asOf && d >= bd) { bd = d; bv = v; } if (bv != null) return bv; const SR = P.stockRoll || {}, wi = (SR.weeks || []).findIndex((w) => w >= (SR.asOf || '')), a = (SR.v || {})[k] || []; for (let i = Math.max(0, wi); i >= 0; i--) if (a[i] != null) return a[i]; return null; };   // 11/7 점검: 주말 예상치 대신 판생 실재고
     const SLB = { bad: '조치', warn: '주의', ok: '정상', na: '–' };
     const meter = (v, max, mark, tone, aria) => `<div class="gm" role="img" aria-label="${esc(aria)}"><i class="${tone}" style="width:${max > 0 ? Math.min(100, v / max * 100).toFixed(1) : 0}%"></i>${mark != null && max > 0 ? `<em style="left:${Math.min(100, mark / max * 100).toFixed(1)}%"></em>` : ''}</div>`;

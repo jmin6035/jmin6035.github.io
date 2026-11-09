@@ -37,12 +37,12 @@
         t: L.reduce((a, o) => a + (o.remT || 0), 0), n: L.length, dept: CT.DEPT[cause], due: lastD, orders: L.sort(CT.riskSort), why: CT.CAUSE[cause], src: '주문 납기 판정' });
     }
     const MO = D.mat_order && D.mat_order.groups;
-    for (const m of (MO && MO.mats) || []) {
+    for (const m of UI.matView(D.mat_order, D.portal)) {   // 11/9: 상태·마감 = 공통 기준(마감 지남 = matLate 몫, 마감일 = 업체별 리드타임)
       if (!['late', 'soon'].includes(m.st) || !CT.inScope(m.plant)) continue;
       const gs = (MO.groups || []).filter((g) => g.mats.some((x) => x.key === m.key)).map((g) => g.group);
       const L = M.all.filter((o) => o.pl === m.plant && !o.closed && gs.some((g) => CT.grpName(g) === o.grp || g.startsWith(o.grp)) && (!m.first || !o.needProd || o.needProd >= m.first));
-      out.push({ key: 'mat|' + m.key, no: `소재-${m.name}`, act: m.st === 'late' ? '소재 즉시 발주(마감 지남) — 부족분 대체 소재 검토' : `소재 발주(마감 ${md(m.deadline)} 전)`, type: '소재', cause: 'mat', pl: m.plant, title: `${m.name} 발주 ${m.st === 'late' ? '마감 지남' : '2주 안 마감'}`, text: `부족 ${n0(m.short)}t · ${md(m.first)}부터 · 리드타임 ${m.lt}일`,
-        t: m.short, n: L.length, dept: CT.DEPT.mat, due: m.deadline, orders: L.sort(CT.riskSort), grps: gs, why: `소재 부족 ${n0(m.short)}t`, src: '소재 관제', nOrdEst: true });
+      out.push({ key: 'mat|' + m.key, no: `소재-${m.name}`, act: m.st === 'late' ? '소재 즉시 발주(마감 지남) — 부족분 대체 소재 검토' : `소재 발주(마감 ${md(m.deadline)} 전)`, type: '소재', cause: 'mat', pl: m.plant, title: `${m.name} 발주 ${m.st === 'late' ? '마감 지남' : '2주 안 마감'}`, text: `${m.st === 'late' ? `마감 지남 ${n0(m.lateT)}t · 3달 ` : ''}부족 ${n0(m.short)}t · ${md(m.first)}부터 · 리드타임 ${m.lt}일`,
+        t: m.st === 'late' ? m.lateT : m.short, n: L.length, dept: CT.DEPT.mat, due: m.deadline, orders: L.sort(CT.riskSort), grps: gs, why: m.st === 'late' ? `발주 마감 지남 ${n0(m.lateT)}t` : `소재 부족 ${n0(m.short)}t`, src: '소재 관제', nOrdEst: true });
     }
     const AREA = { 재고: '소재', 소재: '소재', 납기: '납기', 자료: '자료', 도금: '생산', 컬러: '생산', 출하: '출하' };
     for (const e of (D.portal && D.portal.exceptions) || []) {

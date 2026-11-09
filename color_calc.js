@@ -7,7 +7,7 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const n0 = (v) => (v == null || isNaN(v) ? '-' : Math.round(v).toLocaleString('ko-KR'));
   const sg = (v) => (Math.abs(v) < 0.5 ? '0' : (v > 0 ? '+' : '−') + n0(Math.abs(v)));
-  const LINES = ['1CCL', '2CCL', '3CCL', '4CCL'], MONTHS = ['2026-10', '2026-11', '2026-12'];
+  const LINES = ['1CCL', '2CCL', '3CCL', '4CCL'], MONTHS0 = ['2026-10', '2026-11', '2026-12'];   // 11/9: 달 = 결과 자료(render), 이 값은 자료 없을 때만
   const GL = (g) => (g === '주문재' ? '건재 주문재' : g);
   const fmtT = (s) => (s ? String(s).replace('T', ' ').slice(0, 16) : '-');
   let pw = '', E = {}, D = {}, worker = null, result = null, uploads = {}, names = {}, reading = 0, moves = [];
@@ -94,6 +94,7 @@
   }
   function render(r) {
     const N = stats(r.o), C = D.cur ? stats(D.cur) : null;
+    const ms_ = [...new Set(Object.keys(N.lm).concat(C ? Object.keys(C.lm) : []).map((x) => x.split('|')[1]))].filter(Boolean).sort(), MONTHS = ms_.length ? ms_ : MONTHS0;   // 11/9: 달 목록 = 자료
     const changed = C ? Object.keys({ ...N.cells, ...C.cells }).filter((k) => Math.abs((N.cells[k] || 0) - (C.cells[k] || 0)) >= 0.5).length : null;
     const k = (tone, l, v, u, b) => `<div class="kpi tone-${tone}"><div class="l">${l}</div><div class="v">${v}<small>${u}</small></div><div class="b">${b}</div></div>`;
     $('c-kpi').innerHTML = k('brand', '4분기 컬러 생산', n0(N.tot), 't', C ? `현재 게시 대비 ${sg(N.tot - C.tot)}t` : '')

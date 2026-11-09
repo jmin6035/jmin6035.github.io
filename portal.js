@@ -30,7 +30,7 @@
     const cur = (O.today || O.asOf).slice(0, 7), ms = (IG && IG.months) || O.months || [cur];
     CM = CM && ms.includes(CM) ? CM : cur;
     const tabs = `<div class="tabs ctl-tabs" role="group" aria-label="달">${ms.map((m) => `<button type="button" data-m="${m}" aria-pressed="${m === CM}">${+m.slice(5)}월${m < cur ? ' 결산' : m > cur ? ' 계획' : ' 현재'}</button>`).join('')}</div>`;
-    const html = CM === cur ? UI.ctl(O, MO) : `<h2>관제판 <small>${+CM.slice(5)}월 ${CM < cur ? '월말 결산' : '계획'}</small></h2>` + UI.ctlMonth(O, MO, Object.assign({ IG }, X), CM);
+    const html = CM === cur ? UI.ctl(O, MO, IG) : `<h2>관제판 <small>${+CM.slice(5)}월 ${CM < cur ? '월말 결산' : '계획'}</small></h2>` + UI.ctlMonth(O, MO, Object.assign({ IG }, X), CM);   // 11/9: IG 넘김 = 상한일수 엔진 값
     setTimeout(() => document.querySelectorAll('.ctl-tabs button').forEach((b) => b.onclick = () => { CM = b.dataset.m; render(lastO); }), 0);
     return html.replace('</h2>', '</h2>' + tabs);
   };

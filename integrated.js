@@ -16,10 +16,10 @@
   const CG = ['계획재', '주문재', '건재수출', '가전수출', '가전내수', '수요개발'];
   const PC = ['도금국내', '도금수출', '자동차내수', '자동차수출', '자가재'];
   const FAM = { AL: '--s1', 'AL-LG': '--s1', 'AL-STS': '--s1', AZ: '--s2', MAC: '--s3' };
-  const MONTHS = ['2026-10', '2026-11', '2026-12'];
+  let MONTHS = ['2026-10', '2026-11', '2026-12'];   // 11/9: 열 때 자료(컬러·도금 일별)의 달로 바꿈 — 이 값은 자료 없을 때만
   const VN = { V1: '확정 계획', V2: '비교안(자가재계획)', V3: '비교안(M/C 2회 추가)' };
   const GN = new Proxy({ C수출: '컬러 수출·가전' }, { get: (o, k) => o[k] || UI.grp(k) });   // 그룹 이름 = 전 화면 공통(UI.grp)
-  let O = null, V = 'V3', mon = '2026-10', sel = null;
+  let O = null, V = 'V3', mon = null, sel = null;   // 11/9: mon = 열 때 이번 달
   const inS = (p) => !window.UI || UI.inScope(p);                 // 보기 전환(전체/도금/컬러)
   const plOf = (k) => (/^(C|컬러)/.test(k) ? 'C' : /^(G|FH)/.test(k) ? 'G' : 'GC');
   const niceStep = (raw) => UI.niceStep(raw);                 // 눈금 간격 = 전 화면 공통(1·2·5 × 10^k)
@@ -387,7 +387,7 @@
     $('g-main').innerHTML = secs.map((s) => s.html).join('');
     secs.forEach((s) => s.after && s.after());
     hoverTips($('g-main'));
-    UI.sub(`${{ all: '제품·자가재', G: '도금 제품·자가재', C: '컬러 제품' }[UI.scope()]} 주말 재고 — 목표 대비 · 2026년 10~12월 · 기준 ${md(UI.today(O.asOf))}`);   // 계산 시각 대신 공통 기준일(11/8)
+    UI.sub(`${{ all: '제품·자가재', G: '도금 제품·자가재', C: '컬러 제품' }[UI.scope()]} 주말 재고 — 목표 대비 · ${MONTHS[0].slice(0, 4)}년 ${+MONTHS[0].slice(5)}~${+MONTHS[MONTHS.length - 1].slice(5)}월 · 기준 ${md(UI.today(O.asOf))}`);   // 계산 시각 대신 공통 기준일(11/8) · 11/9: 달 범위 = 자료
     UI.reveal($('g-main'));
     const seg = document.querySelector('.seg');
     const pb = seg && seg.closest('.pagebar'); if (pb) pb.hidden = true;   // 확정 계획 하나만 게시
@@ -402,7 +402,11 @@
       O = await GP.decryptJSON(env, pw);
       try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 저장 불가 무시 */ }
       V = O.rec && O.variants[O.rec] ? O.rec : vlist()[0];
-      await UI.ready(); render();
+      await UI.ready();
+      const ms = [...new Set([...(O.color || []), ...((O.variants[V] || {}).plating || [])].map((c) => String(c.d).slice(0, 7)))].filter((m) => /^\d{4}-\d{2}$/.test(m)).sort();   // 11/9: 달 목록 = 자료, 기본 = 이번 달
+      if (ms.length) MONTHS = ms;
+      const cm = UI.today(O.asOf).slice(0, 7); mon = MONTHS.includes(cm) ? cm : MONTHS[0];
+      render();
       GP.latest('portal.enc.json').then((e) => (e ? GP.decryptJSON(e, pw) : null)).then((x) => { if (x) { PT = x; rerender(); } }).catch(() => { /* 실제 재고 없으면 예측만 */ });
       UI.onScope(() => rerender());
     } catch (e) { $('g-form').hidden = false; $('g-msg').textContent = pw ? '암호가 맞지 않습니다' : ''; }
