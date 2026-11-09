@@ -1423,13 +1423,32 @@ def main():
                     yy, mm = yy - 1, mm + 12
                 months.append(f'{yy}{mm:02d}')
             months.reverse()                                            # 최신 달부터(이번 달·지난달이 가장 중요)
-            # 11/9: 마감된 옛 달은 안 바뀜 → 항상 이번 달·지난달만(옛 달은 누적본 — 없으면 seed_acc 가 서버에서 복구).
-            # 예전엔 누적본을 열어 빠진 달을 셌는데, 사내 PC 메모리가 모자라 열기에 실패하면 6개월을 다 받다가 브라우저가 멈췄음
-            months = months[:2]
-            print(f'▶ snap_stock (재고현황 SMKTF1030, 기준월 {months[-1]}~{months[0]}, 최신부터, 분석용)')
+            # 11/9: 재고현황 '기준월'은 마감된 달만 나옴(이번 달은 0행) → 이번 달은 안 받고, 지난달이 누적본에 없을 때만(한 달에 한 번) 받음.
+            # 이 화면은 한 달 1만1천 줄이라 Chrome 이 '오류 코드 39'(메모리)로 죽어 실행 전체가 멈췄음. 누적본은 열지 않고 글자만 찾음(메모리 0)
+            prev_ = months[1] if len(months) > 1 else None
+            try:
+                c_ = json.loads(open(os.path.join(HERE, 'auto_config.json'), encoding='utf-8-sig').read(), strict=False)
+                od_ = c_.get('out_dir') or 'out'
+                acc_ = os.path.join(od_ if os.path.isabs(od_) else os.path.join(HERE, od_), 'extra_acc', 'snap_stock.json')
+                has_ = False
+                if prev_ and os.path.exists(acc_):
+                    tag_, tail_ = f'["{prev_}"'.encode(), b''
+                    with open(acc_, 'rb') as fh_:
+                        while not has_:
+                            ch_ = fh_.read(1 << 20)
+                            if not ch_:
+                                break
+                            has_ = tag_ in tail_ + ch_
+                            tail_ = ch_[-16:]
+            except Exception:
+                has_ = False
+            months = [] if has_ or not prev_ else [prev_]
+            print(f'  재고현황: ' + (f'지난달 {prev_} 은 누적본에 있음 → 건너뜀(이번 달은 월 마감 전이라 자료 없음)' if not months else f'지난달 {prev_} 만 받음(누적본에 없음)'))
+            if months:
+                print(f'▶ snap_stock (재고현황 SMKTF1030, 기준월 {months[0]}, 분석용)')
             stock_diag = []
             try:
-                if frame_with("//*[@id='LBL_CAL_CLS' or @id='CAL_CLS']") is None:
+                if months and frame_with("//*[@id='LBL_CAL_CLS' or @id='CAL_CLS']") is None:
                     driver.switch_to.default_content()
                     open_by_search_popup('재고현황', 'SMKTF1030', stock_diag)
                 merged = None
