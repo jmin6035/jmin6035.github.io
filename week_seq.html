@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>주간 작업순서</title>
+<meta name="description" content="소재가 매치된 주문을 수요일 07시부터 7일 동안 어떤 순서로 돌릴지 — 초안을 고치고 저장·확정·점검">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
+<link rel="stylesheet" href="ui/theme.css?v=2611091301">
+<style>
+main.wrap { max-width: none; }
+.ws-bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 0 0 14px; }
+.ws-bar .seg button { font-size: 15px; font-weight: 700; padding: 8px 18px; }
+.ws-wk { font-size: 19px; font-weight: 800; white-space: nowrap; }
+.ws-ver { display: inline-block; border-radius: 8px; padding: 3px 10px; font-size: 14px; font-weight: 700; white-space: nowrap; background: var(--grid); color: var(--ink-2); }
+.ws-ver.sv { background: var(--tint-2); color: var(--brand-2); } .ws-ver.cf { background: var(--good-bg); color: var(--good); } .ws-ver.ed { background: var(--warn-bg); color: var(--warn); }
+.ws-act { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 14px; }
+.ws-act input, .ws-act select { font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); }
+.ws-act #ws-who { width: 110px; } .ws-act #ws-memo { width: 220px; }
+.ws-res { font-size: 14px; color: var(--ink-2); }
+.ws-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin: 0 0 16px; }
+.ws-k { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; background: var(--surface); cursor: pointer; text-align: left; font: inherit; color: var(--ink); }
+.ws-k[aria-pressed="true"] { border: 2px solid var(--brand-2); background: var(--tint-2); padding: 11px 15px; }
+.ws-k .ln { font-size: 16px; font-weight: 800; } .ws-k .v { font-size: 26px; font-weight: 800; letter-spacing: -.4px; white-space: nowrap; }
+.ws-k .v small { font-size: 14px; font-weight: 500; color: var(--ink-2); margin-left: 2px; }
+.ws-k .b { font-size: 13.5px; color: var(--ink-2); white-space: nowrap; line-height: 1.6; } .ws-k .b b { color: var(--ink); }
+.ws-k .b .w { color: var(--warn); font-weight: 700; }
+.ws-grid { display: block; }
+.ws-side > details > summary { cursor: pointer; font-size: 16px; font-weight: 800; white-space: nowrap; }
+.ws-side > details > summary span { font-size: 14px; font-weight: 500; color: var(--ink-2); margin-left: 6px; }
+.pl-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 4px 20px; margin-top: 10px; }
+.pl-body { max-height: 420px; overflow-y: auto; }
+table.ws { width: 100%; min-width: 1100px; border-collapse: collapse; font-size: 14.5px; table-layout: fixed; }
+html body table.ws td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; line-height: 1.5; text-align: left !important; white-space: normal; }
+table.ws tr.dh td { background: var(--sub); border-top: 2px solid var(--line); padding: 10px 12px; }
+.dhh { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; } .dhh b { font-size: 16px; white-space: nowrap; } .dhh span { color: var(--ink-2); font-size: 14px; white-space: nowrap; } .dhh em { font-style: normal; color: var(--warn); font-weight: 700; white-space: nowrap; }
+.dbar { position: relative; height: 12px; margin-top: 7px; background: var(--grid); border-radius: 3px; overflow: hidden; max-width: 900px; }
+.dbar i { position: absolute; top: 0; bottom: 0; } .dbar .r { background: var(--brand-2); } .dbar .d { background: var(--warn); } .dbar .p { background: var(--steel-3); } .dbar .g { background: var(--bad); }
+table.ws tr.j td { background: var(--surface); }
+table.ws tr.j.fx td:first-child { box-shadow: inset 4px 0 0 var(--brand-2); }
+table.ws tr.j.hl td { background: var(--warn-bg); }
+table.ws tr.j.bad td { background: color-mix(in srgb, var(--bad-bg) 60%, transparent); }
+table.ws tr.ch td { padding: 4px 10px 4px 52px; font-size: 13.5px; color: var(--warn); border-bottom: 1px dashed var(--line); background: color-mix(in srgb, var(--warn-bg) 35%, transparent); }
+table.ws tr.ch td b { white-space: nowrap; }
+table.ws tr.ev td { font-size: 14px; background: var(--tint-2); }
+table.ws tr.ev.w td { background: var(--bad-bg); }
+table.ws tr.ev.g td { background: var(--warn-bg); }
+table.ws tr.ev input { width: 72px; text-align: right; font: inherit; padding: 4px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+table.ws tr.ev input.nt { width: 200px; text-align: left; }
+table.ws tr.dragover td { border-top: 3px solid var(--brand-2); }
+.hd { cursor: grab; color: var(--ink-2); font-size: 18px; user-select: none; width: 22px; text-align: center; }
+html body table.ws td.no { text-align: right !important; font-weight: 800; font-size: 16px; width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+.tm { white-space: nowrap; font-variant-numeric: tabular-nums; width: 110px; } .tm b { font-size: 15px; }
+.cn { white-space: nowrap; font-weight: 700; letter-spacing: -.2px; }
+.sub { font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
+.sp { display: flex; flex-wrap: wrap; gap: 5px 6px; align-items: center; }
+.cp { display: inline-block; border-radius: 6px; padding: 1px 8px; font-size: 14px; font-weight: 700; white-space: nowrap; background: var(--tint-2); color: var(--ink); }
+.cp.al { background: var(--gt-g); color: var(--gc-g); } .cp.cl { background: var(--gt-c); color: var(--gc-c); } .cp.sz { font-size: 15px; background: none; padding: 0; font-variant-numeric: tabular-nums; }
+.cp.fx { background: var(--brand-2); color: #fff; } .cp.wr { background: var(--warn-bg); color: var(--warn); } .cp.bd { background: var(--bad-bg); color: var(--bad); }
+html body table.ws td.nm { text-align: right !important; white-space: nowrap; font-variant-numeric: tabular-nums; } .nm b { font-size: 15px; }
+html body table.ws td.ac { white-space: nowrap; text-align: right !important; }
+.ac button, .ac select { font: inherit; font-size: 13.5px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; margin-left: 2px; }
+.ac button:hover, .ac select:hover { border-color: var(--brand-2); }
+.ac button.x { color: var(--bad); }
+.ws-side h3 { font-size: 16px; margin: 0 0 8px; }
+.pl-g { margin: 0 0 12px; } .pl-g > summary { cursor: pointer; font-weight: 700; font-size: 15px; padding: 4px 0; white-space: nowrap; } .pl-g > summary span { color: var(--ink-2); font-weight: 500; font-size: 14px; }
+.pl-i { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 14px; cursor: grab; }
+.pl-i .sub { white-space: normal; }
+.pl-i button { font: inherit; font-size: 13.5px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--brand-2); cursor: pointer; white-space: nowrap; }
+.ck { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin: 0 0 16px; background: var(--surface); }
+.ck h3 { font-size: 16px; margin: 0 0 8px; }
+.ck-s { display: flex; flex-wrap: wrap; gap: 6px 10px; margin: 0 0 10px; }
+.ck-g { margin: 0 0 8px; } .ck-g > summary { cursor: pointer; font-weight: 700; font-size: 14.5px; } .ck-g ul { margin: 6px 0 0 18px; padding: 0; font-size: 14px; line-height: 1.6; }
+.ck-g li a { cursor: pointer; color: var(--brand-2); text-decoration: underline; white-space: nowrap; }
+.ck-ok { color: var(--good); font-weight: 700; }
+.miss { border-left: 4px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 6px; margin: 0 0 12px; font-size: 14px; }
+.btn[disabled] { opacity: .55; cursor: default; }
+@media (max-width: 760px) { .tm { width: auto; } .hd { display: none; } table.ws td { padding: 7px 6px; } }
+</style>
+</head>
+<body>
+<header id="shell" data-page="weekseq" data-crumb="생산계획" data-title="주간 작업순서" data-sub="소재가 매치된 주문을 수요일 07시부터 7일 동안 돌릴 순서 — 초안을 고쳐 저장·확정·점검(계획에는 아직 안 씀)"></header>
+<main class="wrap">
+  <div class="docmeta" id="ws-meta"></div>
+  <section class="card lock" id="ws-lock">
+    <div><div class="ic" aria-hidden="true">🔒</div><h2>불러오는 중…</h2>
+      <form class="unlock" id="ws-form" hidden><input type="password" id="ws-pw" placeholder="분석 암호" autocomplete="current-password" aria-label="분석 암호"><button type="submit">열기</button></form>
+      <p class="hint" id="ws-msg"></p></div>
+  </section>
+  <div id="ws-main" hidden>
+    <div class="ws-bar">
+      <div class="seg" id="ws-plant"><button type="button" data-p="cg">도금</button><button type="button" data-p="cc">컬러</button></div>
+      <span class="ws-wk" id="ws-wk"></span>
+      <span class="ws-ver" id="ws-ver"></span>
+    </div>
+    <div class="ws-act">
+      <input id="ws-who" placeholder="이름" maxlength="40" aria-label="이름">
+      <input id="ws-memo" placeholder="메모(선택)" maxlength="200" aria-label="메모">
+      <button type="button" class="btn primary" id="ws-save">저장</button>
+      <button type="button" class="btn" id="ws-conf">확정</button>
+      <button type="button" class="btn" id="ws-chk">점검</button>
+      <button type="button" class="btn" id="ws-reset">초안으로 되돌리기</button>
+      <select id="ws-vers" aria-label="저장 버전"></select>
+      <span class="ws-res" id="ws-res"></span>
+    </div>
+    <div id="ws-miss"></div>
+    <div class="ws-kpis" id="ws-kpis"></div>
+    <div id="ws-ck"></div>
+    <div class="ws-grid">
+      <section class="card ws-side" id="ws-pool"></section>
+      <section class="card" data-noexport style="padding:0;overflow-x:auto"><table class="ws" id="ws-tbl"></table></section>
+    </div>
+  </div>
+</main>
+<footer class="foot"><div class="wrap"><span>대상: 컬러 = 작업지시 편성 대상(소재 매치)·확정 대기열 · 도금 = 지시된 코일(생산 전) + 소재 들어온 작업 · 시간 = 기존 속도(t/h) · 휴지 = 전환 기준표(1년 실적)·휴지계획 · 저장 = 공유 저장소(암호화, 버전 이력)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2611091301"></script>
+<script src="engine/crypto.js?v=2611091301"></script>
+<script src="week_seq.js?v=2611091301"></script>
+</body>
+</html>
