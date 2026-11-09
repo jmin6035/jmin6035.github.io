@@ -363,8 +363,10 @@ def ensure_tasks():
         out = q.stdout or ''
         keys = ('상태', 'Status', '마지막 실행', 'Last Run', '마지막 결과', 'Last Result', '다음 실행', 'Next Run', '실행할 작업', 'Task To Run', '로그온 모드', 'Logon Mode')
         print(f'[예약 작업 {tn}] ' + (' | '.join(' '.join(l.split()) for l in out.splitlines() if l.strip().startswith(keys)) or '없음'))
-        if q.returncode or os.path.join(HERE, 'mes_download.py').lower() not in out.lower().replace('"', ''):
+        if q.returncode:                                             # 11/9: 예약 실행 안에서는 schtasks 출력 글자가 깨져(폴더 이름 '작업방') 경로 비교가 늘 실패 → 매 실행 지우고 다시 등록하던 것. 작업이 없을 때(오류 코드)만 다시 등록
             ok = False
+        elif 'mes_download.py' not in out:
+            print(f'  (예약 작업 {tn} 조회 글자 확인 불가 — 다시 등록 안 함, 코드 {q.returncode})')
     if not os.path.exists(os.path.join(HERE, 'out', 'tasks_24h')):   # 11/9: 원격 조회 24시간(2시간마다)으로 바뀜 → 한 번 다시 등록
         ok = False
     if not ok:
