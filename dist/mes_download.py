@@ -750,8 +750,6 @@ def main():
         save(merged, name, out)
         return True
 
-    nq = [0]
-
     def remote_queries(run_sql):
         """사이트의 published/queries.enc.json 에 적힌 조회문(SELECT/WITH 만)을 MES 쿼리 화면에서 실행해 mes/extra/<이름>.json 으로 저장.
         mode: once(조회문이 바뀌었을 때만) · daily(매번) · range(기간 나눠서, 조회문 안 {d0}·{d1} 을 YYYYMMDD 로 바꿈, step 일씩)
@@ -796,7 +794,7 @@ def main():
         os.makedirs(os.path.dirname(dp), exist_ok=True)
         # 2026-10-20: 1년치 once 조회 80여 개가 한 번에 몰려 3시간 넘게 돌고, 끝나기 전엔 아무것도 게시되지 않았음 →
         # 매일·기간 조회를 먼저, once 는 한 번 실행에 최대 ONCE_MAX 개(남은 것은 다음 2시간 실행), 끝난 조회는 바로 기록
-        once_max = int(cfg.get('remote_once_max', 20))
+        once_max = int(cfg.get('remote_once_max', 20)) if a.remote_only else 0   # 11/9: 아침 전체 실행은 매일 조회만(빠르게) — 한 번만 받는 옛 자료는 2시간 원격 조회가 나눠 받음
         qs = sorted(Q.get('queries', []), key=lambda q: q.get('mode', 'once') == 'once')
         n_once, left = 0, 0
         sp = os.path.join(xdir, 'snap_remote_status.json')                  # 조회마다 결과(행 수·초·실패 이유)를 남겨 클라우드에서 볼 수 있게(2026-10-20 v49)
@@ -836,16 +834,6 @@ def main():
                     left += 1
                     continue
                 n_once += 1
-            nq[0] += 1
-            if nq[0] % 50 == 0:
-                # 11/9 근본 원인: 조회 400여 개를 MES 한 화면에서 새로 고침 없이 연달아 돌려 브라우저 메모리가 계속 쌓임(표 위젯이 결과마다 칸을 새로 만들고 다 못 비움)
-                # → 다음 큰 화면(재고현황·생산실적 조회)에서 '오류 코드 39'·응답 없음. 50개마다 브라우저를 새로 띄워 메모리를 비움
-                print(f'  (조회 {nq[0]}개째 — 브라우저 메모리 비우려고 새로 띄움)')
-                try:
-                    revive(force=True)
-                    open_query()
-                except Exception as e_:
-                    print(f'  ⚠ 브라우저 새로 띄우기 실패: {str(e_)[:120]}')
             print(f'▶ {name} (원격 조회 · {mode})')
             t0, nrows = time.time(), None
             try:
@@ -1422,25 +1410,9 @@ def main():
                         break
                     except Exception as e:
                         print(f'  ⚠ {name}: {str(e).splitlines()[0][:150] if str(e) else type(e).__name__}' + (' → 다시 시도' if not k else ' → 건너뜀'))
-            # ④ 분석용 추가 자료(컬러 생산·휴지, 출하, 재고 추이) — 실패해도 도금 자동 실행에는 영향 없음
-            if not a.no_extra:
-                for name, mk, step in [('color_prod', q_color, 7), ('color_brk', q_color_brk, 7), ('ship', q_ship, 7), ('stock_trend', q_stock_trend, 100)] + STOCK_RPT:
-                    print(f'▶ {name} (분석용)')
-                    try:
-                        if run_chunks(name, 'gridQueryRslt', lambda c0, c1: run_sql(mk(c0, c1)), step, xdir) is None:
-                            print(f'  ⚠ {name}: 표 직접 읽기 실패 — 건너뜀')
-                    except Exception as e:
-                        print(f'  ⚠ {name}: 실패 — 건너뜀 ({str(e).splitlines()[0][:120]})')
-                # ④-2 원격 조회 목록(클라우드에서 조회문을 추가하면 다음 실행 때 받아 옴) — 실패해도 나머지에 영향 없음
-                try:
-                    remote_queries(run_sql)
-                except Exception as e:
-                    print(f'  ⚠ 원격 조회 목록: 실패 — 건너뜀 ({str(e).splitlines()[0][:150] if str(e) else type(e).__name__})')
-            revive()
-            # ③ 생산실적 조회(도금) 화면 — 11/9: 실패해도 실행 전체를 멈추지 않음(쿼리 코일 자료로 계산 가능).
-            # 조회 400여 개 뒤라 브라우저 메모리가 쌓여 있음 → 새 브라우저로(오늘 하루 종일 여기서 멈춘 원인)
+            # ③ 생산실적 조회(도금) 화면 — 11/9: 조회 100여 개 뒤에 열면 쌓인 브라우저 메모리로 멈춤(11/9 하루 종일) → 브라우저가 가벼운 지금(조회 전) 먼저.
+            #   실패해도 실행 전체를 멈추지 않음(쿼리 코일 자료로 계산 가능)
             try:
-                revive(force=True)
                 print('▶ screen_prod.xlsx (생산실적 조회)')
                 menu('생산실적 조회')
                 if frame_with('//*[@id="dropdownlistContentS_PLT_CLS"]') is None:
@@ -1473,6 +1445,22 @@ def main():
                     export("//div[contains(@class, 'jqx-grid-cell')]", 'screen_prod.xlsx')
             except Exception as e:
                 print(f'  ⚠ 생산실적 조회: 실패 — 건너뜀 ({str(e).splitlines()[0][:150] if str(e) else type(e).__name__})')
+            revive()
+            open_query()                                       # 다시 쿼리 화면으로(④ 조회용)
+            # ④ 분석용 추가 자료(컬러 생산·휴지, 출하, 재고 추이) — 실패해도 도금 자동 실행에는 영향 없음
+            if not a.no_extra:
+                for name, mk, step in [('color_prod', q_color, 7), ('color_brk', q_color_brk, 7), ('ship', q_ship, 7), ('stock_trend', q_stock_trend, 100)] + STOCK_RPT:
+                    print(f'▶ {name} (분석용)')
+                    try:
+                        if run_chunks(name, 'gridQueryRslt', lambda c0, c1: run_sql(mk(c0, c1)), step, xdir) is None:
+                            print(f'  ⚠ {name}: 표 직접 읽기 실패 — 건너뜀')
+                    except Exception as e:
+                        print(f'  ⚠ {name}: 실패 — 건너뜀 ({str(e).splitlines()[0][:120]})')
+                # ④-2 원격 조회 목록(클라우드에서 조회문을 추가하면 다음 실행 때 받아 옴) — 실패해도 나머지에 영향 없음
+                try:
+                    remote_queries(run_sql)
+                except Exception as e:
+                    print(f'  ⚠ 원격 조회 목록: 실패 — 건너뜀 ({str(e).splitlines()[0][:150] if str(e) else type(e).__name__})')
             revive()
         # ⑤ 재고현황 [SMKTF1030] — 조회기준 '기준월', 월별로 조회해 합침(사용자 안내 2026-10-02)
         if not a.no_extra:
