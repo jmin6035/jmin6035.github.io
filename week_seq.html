@@ -30,7 +30,7 @@ main.wrap { max-width: none; }
 .ws-side > details > summary span { font-size: 14px; font-weight: 500; color: var(--ink-2); margin-left: 6px; }
 .pl-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 4px 20px; margin-top: 10px; }
 .pl-body { max-height: 420px; overflow-y: auto; }
-table.ws { width: 100%; min-width: 1100px; border-collapse: collapse; font-size: 14.5px; table-layout: fixed; }
+table.ws { width: 100%; min-width: 1180px; border-collapse: collapse; font-size: 14.5px; table-layout: fixed; }
 html body table.ws td { padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; line-height: 1.5; text-align: left !important; white-space: normal; }
 table.ws tr.dh td { background: var(--sub); border-top: 2px solid var(--line); padding: 10px 12px; }
 .dhh { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; } .dhh b { font-size: 16px; white-space: nowrap; } .dhh span { color: var(--ink-2); font-size: 14px; white-space: nowrap; } .dhh em { font-style: normal; color: var(--warn); font-weight: 700; white-space: nowrap; }
@@ -59,6 +59,8 @@ html body table.ws td.no { text-align: right !important; font-weight: 800; font-
 .cp.al { background: var(--gt-g); color: var(--gc-g); } .cp.cl { background: var(--gt-c); color: var(--gc-c); } .cp.sz { font-size: 14px; background: none; padding: 0; font-variant-numeric: tabular-nums; }
 .cp.fx { background: var(--brand-2); color: #fff; } .cp.wr { background: var(--warn-bg); color: var(--warn); } .cp.bd { background: var(--bad-bg); color: var(--bad); }
 .sub b.wr { color: var(--warn); }
+table.ws td .cn { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } table.ws td .cd { display: flex; flex-wrap: wrap; gap: 3px 4px; margin: 2px 0; }
+table.ws tr.j select { max-width: 92px; }
 html body table.ws td.nm { text-align: right !important; white-space: nowrap; font-variant-numeric: tabular-nums; } .nm b { font-size: 15px; }
 html body table.ws td.ac { white-space: nowrap; text-align: right !important; }
 .ac button, .ac select { font: inherit; font-size: 13.5px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; margin-left: 2px; }

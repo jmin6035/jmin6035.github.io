@@ -22,7 +22,7 @@
   const hhmm = (m) => iso(m).slice(11);
   const hrs = (m) => (m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 >= 1 ? ' ' + Math.round(m % 60) + '분' : ''}` : `${Math.round(m)}분`);
   const LINES = { cg: ['1CGL', '2CGL'], cc: ['1CCL', '2CCL', '3CCL', '4CCL'] };
-  const POOLNM = { pre: '주 시작 전 생산 예정', over: '주 끝 넘어 다음 주로', later: '다음 주 이후 예정(생산예정일)', out: '직접 뺀 작업', new: '새로 들어온 작업' };
+  const POOLNM = { pre: '주 시작 전에 끝날 작업', over: '이번 주 시간이 모자라 다음 주로', later: '생산예정일이 다음 주 이후', out: '직접 뺀 작업', new: '새로 들어온 작업' };
   const GR = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E 극저', GREL: 'Gr.E 저탄', GRA: 'Gr.A', GRB: 'Gr.B' };
   const IND = { A: '508', B: '610', C: '305' };
 
@@ -204,6 +204,7 @@
         + row('주문', (x.grp && x.grp !== '미상' ? `<span class="cp" title="판매그룹">${esc(x.grp)}</span>` : '')
           + `<span class="cp" title="담당자 - 목적지(내수는 고객사)">${esc(x.man || '담당 미상')} - ${esc(x.dst || '목적지 미상')}</span><span class="ib"><em class="lb">입고</em><span class="cp${x.ent && x.ent > TODAY ? ' wr' : ''}" title="소재 입고일">소재 ${x.ent ? md(x.ent) : '-'}</span></span>`);
     }
+    if (x.dummy) return row('사양', `<span class="cp wr" title="MES 1030 더미 지시 — 시간 = MES 작업시간">더미 0.5 × 1,000</span>`);
     const dtm = (v) => (v ? String(v).slice(5, 16).replace('-', '/').replace(/ 00:00$/, '') : '');   // 시각 00:00 = 날짜만 있는 값   // 11/9: 풀 코드 8자리·담당자-목적지·도료/PF 입고 일시
     const fut = (v) => v && new Date(String(v).replace(' ', 'T')) > new Date();
     const st = (at, s) => (at ? dtm(at) : s === 'F' ? '입고완료' : s ? '입고대기(일정 없음)' : '-');
@@ -222,7 +223,7 @@
     return `<tr class="j${x.fixed || x.issued ? ' fx' : ''}${hl === x.id ? ' hl' : bad ? ' bad' : ''}" draggable="true" data-i="${v.i}" data-id="${esc(x.id)}">`
       + `<td class="hd" title="끌어서 옮기기">⋮⋮</td><td class="no">${n}</td>`
       + `<td class="tm"><b>${hhmm(v.s)}</b>–${hhmm(v.e)}${dayOf(v.e) !== dayOf(v.s) ? '<div class="sub">끝 다음날</div>' : ''}</td>`
-      + `<td><span class="cn">${esc(x.con || '계약 미연결')}</span> ${tag}${due ? ` <span class="${due < dayOf(v.e) ? 'cp bd' : 'cp'}" title="납기">납기 ${md(due)}</span>` : ''}<div class="sub">${sub}</div></td>`
+      + `<td><div class="cn">${esc(x.con || '계약 미연결')}</div><div class="cd">${tag}${due ? `<span class="${due < dayOf(v.e) ? 'cp bd' : 'cp'}" title="납기">납기 ${md(due)}</span>` : ''}</div><div class="sub">${sub}</div></td>`
       + `<td><div class="sp">${chips(x)}</div></td>`
       + `<td class="nm"><b>${n1(x.t)}t</b> · ${n0(v.rm)}분<div class="sub">${n1(plant === 'cg' ? x.tph : x.tph[l])}t/h</div></td>`
 
@@ -277,19 +278,20 @@
     });
     days.filter((x) => !shown.has(x)).forEach((x) => { h += dayHead(x); });
     if (!ev.length) h += `<tr><td colspan="7" class="muted">이 라인에 이번 주 작업이 없습니다${D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}. 오른쪽 빠진 작업에서 넣을 수 있습니다.</td></tr>`;
-    $('ws-tbl').innerHTML = `<colgroup><col style="width:30px"><col style="width:44px"><col style="width:118px"><col style="width:226px"><col><col style="width:108px"><col style="width:${plant === 'cc' ? 334 : 262}px"></colgroup>` + h;
+    $('ws-tbl').innerHTML = `<colgroup><col style="width:30px"><col style="width:44px"><col style="width:118px"><col style="width:196px"><col><col style="width:104px"><col style="width:${plant === 'cc' ? 300 : 238}px"></colgroup>` + h;
     drawPool(); drawCk(); bind();
   }
   function drawPool() {
-    const P = poolOf().filter((p) => plant === 'cc' || p.x.line === line);
+    // 11/10 사용자 '주 시작 전 생산 예정·다른 라인 작업까지 굳이 빠진 작업이라고 해야 되냐' → 이 라인 것만, 이번 주에 넣을 수 있는 것만(주 시작 전에 끝나는 작업은 뺌)
+    const P = poolOf().filter((p) => p.x.line === line && p.r !== 'pre');
     const G = {};
-    P.forEach((p) => { const k = plant === 'cc' && p.x.line !== line ? 'other' : p.r; (G[k] = G[k] || []).push(p.x); });
-    const ord = ['out', 'new', 'over', 'later', 'pre', 'other'];
-    const nm = Object.assign({}, POOLNM, { other: '다른 라인 작업' });
+    P.forEach((p) => { (G[p.r] = G[p.r] || []).push(p.x); });
+    const ord = ['out', 'new', 'over', 'later'];
+    const nm = POOLNM;
     const was = $('ws-pool').querySelector('details'), op = was ? was.open : false, sub = {};
     $('ws-pool').querySelectorAll('.pl-g').forEach((d) => { sub[d.dataset.k] = d.open; });
-    $('ws-pool').innerHTML = `<details${op ? ' open' : ''}><summary>빠진 작업 <span>${P.length}건 · ${n0(P.reduce((s, p) => s + p.x.t, 0))}t — 열어서 끌어다 놓거나 '넣기'</span></summary><div class="pl-cols">` + ord.filter((k) => G[k]).map((k) => `<details class="pl-g" data-k="${k}"${(k in sub ? sub[k] : k === 'out' || k === 'new' || k === 'over') ? ' open' : ''}><summary>${nm[k]} <span>${G[k].length}건 · ${n0(G[k].reduce((s, x) => s + x.t, 0))}t</span></summary><div class="pl-body">`
-      + G[k].slice(0, 300).map((x) => `<div class="pl-i" draggable="true" data-id="${esc(x.id)}"><div><span class="cn">${esc(x.con || x.id)}</span>${plant === 'cc' && x.line !== line ? ` <span class="cp">${x.line}</span>` : ''}<span class="sub"> · ${n1(x.t)}t${plant === 'cg' ? (x.n > 1 ? ' · ' + x.n + '코일' : '') + (x.req ? ' · 예정 ' + md(x.req) : '') : (x.ready && x.ready > TODAY ? ' · ' + md(x.ready) + '부터 가능' : '')}${(plant === 'cg' ? x.dlv : x.due) ? ' · 납기 ' + md(plant === 'cg' ? x.dlv : x.due) : ''}</span><div class="sp">${chips(x)}</div></div><button data-a="add" data-id="${esc(x.id)}">넣기</button></div>`).join('')
+    $('ws-pool').innerHTML = `<details${op ? ' open' : ''}><summary>${line} 이번 주에 못 넣은 작업 <span>${P.length}건 · ${n0(P.reduce((s, p) => s + p.x.t, 0))}t — 끌어다 놓거나 '넣기'</span></summary><div class="pl-cols">` + ord.filter((k) => G[k]).map((k) => `<details class="pl-g" data-k="${k}"${(k in sub ? sub[k] : k === 'out' || k === 'new' || k === 'over') ? ' open' : ''}><summary>${nm[k]} <span>${G[k].length}건 · ${n0(G[k].reduce((s, x) => s + x.t, 0))}t</span></summary><div class="pl-body">`
+      + G[k].slice(0, 300).map((x) => `<div class="pl-i" draggable="true" data-id="${esc(x.id)}"><div><span class="cn">${esc(x.con || x.id)}</span><span class="sub"> · ${n1(x.t)}t${plant === 'cg' ? (x.n > 1 ? ' · ' + x.n + '코일' : '') + (x.req ? ' · 예정 ' + md(x.req) : '') : (x.ready && x.ready > TODAY ? ' · ' + md(x.ready) + '부터 가능' : '')}${(plant === 'cg' ? x.dlv : x.due) ? ' · 납기 ' + md(plant === 'cg' ? x.dlv : x.due) : ''}</span><div class="sp">${chips(x)}</div></div><button data-a="add" data-id="${esc(x.id)}">넣기</button></div>`).join('')
       + (G[k].length > 300 ? `<div class="sub">외 ${G[k].length - 300}건</div>` : '') + '</div></details>').join('') + '</div></details>';
   }
   function drawCk() {
