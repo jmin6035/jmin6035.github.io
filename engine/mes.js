@@ -209,7 +209,12 @@
         const inG = new Set(groups.flat());
         for (const g of groups) {
           const s0 = g[0].s, e0 = Math.max(...g.map((x) => x.e));
-          const prev = seq.filter((c) => c.e <= s0 + 1), nxt = seq.find((c) => c.e > e0);
+          const prev = seq.filter((c) => c.s < s0);                  // 11/9: 정지 전에 시작한 코일 = 앞 강종(정지에 걸려 뒤에 끝난 코일 포함)
+          let nxt = seq.find((c) => c.s >= s0 && c.e > e0);
+          if (nxt && prev.length && nxt.fam === prev[prev.length - 1].fam) {   // 정지 뒤 같은 강종 전환 코일 몇 개 → 곧 다른 강종이면 그게 M/C(1CGL 10/21 AZ→AL 누락)
+            const alt = seq.find((c) => c.s >= nxt.s && c.fam !== nxt.fam);
+            if (alt && (alt.e - alt.run) - e0 <= R.mcGap) nxt = alt;
+          }
           const end = nxt ? nxt.e - nxt.run : e0, minutes = end - s0;
           const long = g.some((x) => x.t >= R.longStop);
           const dm = cs.filter((c) => c.dummy && c.s < end && c.e > s0 - 60);

@@ -51,7 +51,7 @@
     const C = D.cfg, td = D.today, ym = D.month, nd = D.nDays, day = +td.slice(8);
         const top = `<div class="sj-top"><span class="sj-pill">기준월 <b>${ym.slice(0, 4)}.${ym.slice(5)}</b></span>`
       + `<span class="sj-pill b">기준일 ${md(td)}(${'일월화수목금토'[new Date(td + 'T00:00:00Z').getUTCDay()]}) · 경과 ${day - 1} / ${nd}일</span>`
-      + `<span class="sj-pill s" title="주문 자료는 실적·재고와 같은 시점(${esc(String(D.dataAt.order || ''))}) 판으로 맞춤 · 최신 주문 ${esc(String(D.dataAt.orderLatest || ''))}">실적·재고 ~${md(D.asOf)} · 주문 ${esc(String(D.dataAt.order || '').slice(5, 16))}(같은 시점)</span></div>`;
+      + `<span class="sj-pill s">실적·재고 ~${md(D.asOf)} · 주문 ${(() => { const t = String(D.dataAt.orderLatest || D.dataAt.order || ''); return t ? `${md(t)} ${esc(t.slice(11, 16))}` : '-'; })()}</span></div>`;
     // 이번 주 마감 칩: 운영 일정(이번 주 안에 걸린 것) + 주문 마감(수요일)
     const chips = [];
     const nextWed = D.weeks.map((w) => w.deadline).find((d) => d >= td);
@@ -301,7 +301,8 @@
     const c1 = card(1, '소재별 월 수급표', `${+D.month.slice(5)}월 · 단위 톤 · 재고일수 최소 7일 관리`, tbl(['소재(포함 발주구분)', '공장', ['L/T(일)', 'r'], [`${md(D.asOf)} 재고`, 'r'], ['월 소요(계획)', 'r'], ['이달 입고 실적', 'r'], ['입고 예정(잔여)', 'r'], ['예상 월말 재고', 'r'], ['재고일수', 'r'], ['상태', 'c']], rows)
       + `<p class="sj-foot">${D.matsNoUse && D.matsNoUse.length ? `계획 소요가 없어 뺀 소재: ${D.matsNoUse.join('·')} · ` : ''}예상 월말 = 재고(MES ${md(D.asOf)} 마감) + 입고 예정(MES 미입고 발주) − 남은 날 계획 소요 · 재고는 MES 소재 코드 합이라 ⑤ 창고(판생속보 분류)와 수백~천 t 다름 · 월 소요 = 컬러 계획 × 품명별 소재 비중, 도금 = F/H 계획 사용 · 행은 소재 코드 단위(포함 발주구분 표시) — PDF의 소재발주구분 13종 행(${D.cfg.matClasses.map((c) => c.key).join('·')})은 MES 발주구분 코드표를 받아 공급사·용도로 나누는 다음 단계에서 바꿈</p>`);
     const S = D.matShort.filter((x) => (x.gap || 0) > 0);
-    const c2 = card(2, '결품 위험 — 규격별 부족(컬러 소재)', '발주 검토 화면 기준', S.length ? tbl(['소재', '두께×폭', ['필요', 'r'], ['부족', 'r'], '판정', '첫 부족일', '발주 권장', '입고 예상', '내용'], S.map((x) => `<tr><td class="nm">${esc(x.mat)}</td><td>${esc(x.size)}</td><td class="r">${T(x.need)}</td><td class="r"><b class="neg">${T(x.gap)}</b></td><td>${esc(x.judge || '')}</td><td>${md(x.first)}</td><td>${(x.order || []).map(md).join('~')}</td><td>${md(x.arrive)}</td><td class="wrap">${esc(x.why || '')}</td></tr>`)) : '<p class="muted">부족 없음</p>');
+    const LT = UI.matLate(D.matLate);                       // 발주 마감 지남 = 공통 기준(ui/shell.js UI.matLate, 11/8)
+    const c2 = card(2, '결품 위험 — 규격별 부족(컬러 소재)', LT ? `발주 마감 지남 ${T(LT.t)}톤(전 소재) · 규격별 = 컬러건재 계획재 소재` : '발주 검토 화면 기준', S.length ? tbl(['소재', '두께×폭', ['필요', 'r'], ['부족', 'r'], ['마감 지남', 'r'], '판정', '첫 부족일', '발주 권장', '입고 예상', '내용'], S.map((x) => `<tr><td class="nm">${esc(x.mat)}</td><td>${esc(x.size)}</td><td class="r">${T(x.need)}</td><td class="r"><b class="neg">${T(x.gap)}</b></td><td class="r">${x.late == null ? '–' : x.late >= 1 ? `<b class="neg">${T(x.late)}</b>` : '–'}</td><td>${esc(x.judge || '')}</td><td>${md(x.first)}</td><td>${(x.order || []).map(md).join('~')}</td><td>${md(x.arrive)}</td><td class="wrap">${esc(x.why || '')}</td></tr>`)) : '<p class="muted">부족 없음</p>');
     const N = D.matNear.filter((x) => inPl(x.plant));
     const c3 = card(3, '이번 주·다음 주 발주 대상', '발주 마감 = 사용일 − 리드타임 · 2주 안 마감', N.length ? tbl(['공장', '소재', '공급사', '첫 사용일', '발주 마감', ['수량', 'r'], '상태'], N.map((x) => `<tr><td>${x.plant === 'G' ? '도금' : '컬러'}</td><td class="nm">${esc(x.mat)}</td><td>${esc(x.sup)}</td><td>${md(x.first)}</td><td><b>${md(x.deadline)}</b> ${dday(x.deadline)}</td><td class="r">${T(x.t)}</td><td><span class="ct-b ${CT.diff(x.deadline, D.today) <= 3 ? 'bad' : 'warn'}">발주 대기</span></td></tr>`)) : '<p class="muted">2주 안 발주 마감 없음</p>');
     const V = evMap('val'), val = (k) => (V[k] || {}).val || '';

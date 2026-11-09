@@ -467,10 +467,11 @@ def main():
         co.add_argument('--log-level=3')
         cs = CSvc(); cs.creation_flags = 0x08000000
         return webdriver.Chrome(service=cs, options=co)
-    driver, errs = None, []
+    driver, errs, make_driver = None, [], None
     for name, fn in (('Edge', try_edge), ('Chrome', try_chrome)):
         try:
             driver = fn()
+            make_driver = fn
             print('브라우저:', name)
             break
         except Exception as e:
@@ -1229,13 +1230,32 @@ def main():
                 pass
         return None
 
-    try:
+    def login():
         driver.get(mes_url)
         print('로그인…')
         WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.XPATH, '//*[@id="username"]'))).send_keys(uid)
         driver.find_element(By.XPATH, '//*[@id="password_input"]').send_keys(pw)
         driver.find_element(By.XPATH, '//*[@id="loginsubmit"]').click()
         time.sleep(8)
+
+    def revive():
+        """11/9: 재고현황 화면에서 브라우저가 멈춰(응답 없음 120초) 판매생산속보에서 실행 전체가 죽고 업로드가 하나도 안 됐음 →
+        브라우저가 응답하지 않으면 새로 띄워 다시 로그인하고 남은 화면을 계속"""
+        nonlocal driver
+        try:
+            driver.execute_script('return 1')
+            return
+        except Exception as e:
+            print(f'  브라우저 응답 없음 → 새로 띄워 다시 로그인 ({str(e).splitlines()[0][:100] if str(e) else type(e).__name__})')
+        try:
+            driver.quit()
+        except Exception:
+            pass
+        driver = make_driver()
+        login()
+
+    try:
+        login()
         if a.remote_only:                                   # 원격 조회만: 쿼리 화면 → 조회 목록 실행 → 끝
             menu('쿼리')
             box = frame_with('//*[@id="QUERY_CONTTextArea"]')
@@ -1385,19 +1405,9 @@ def main():
                     yy, mm = yy - 1, mm + 12
                 months.append(f'{yy}{mm:02d}')
             months.reverse()                                            # 최신 달부터(이번 달·지난달이 가장 중요)
-            # 2026-10-28 사용자 "이미 받은 달을 매번 받아야 돼?": 마감된 달은 안 바뀜 → 누적본(out/extra_acc/snap_stock.json)에
-            # 앞선 달이 다 있으면 이번 달·지난달만 받음(자동 실행기가 달별로 합침). 누적본이 없거나 빠진 달이 있으면 예전처럼 전부
-            try:
-                c_ = json.loads(open(os.path.join(HERE, 'auto_config.json'), encoding='utf-8-sig').read(), strict=False)
-                od_ = c_.get('out_dir') or 'out'
-                acc_ = os.path.join(od_ if os.path.isabs(od_) else os.path.join(HERE, od_), 'extra_acc', 'snap_stock.json')
-                have_ = {r[0] for r in json.load(open(acc_, encoding='utf-8')).get('rows') or []} if os.path.exists(acc_) else set()
-                if len(months) > 2:
-                    # 11/9: 마감된 옛 달은 안 바뀜 → 항상 이번 달·지난달만(6개월 연속 조회는 Edge 메모리 부족). 옛 달은 누적본(seed_acc 로 서버에서 복구)에 있음
-                    print(f'  재고현황: 이번 달·지난달 {months[1]}·{months[0]}만 (옛 달 누적본 {len(have_)}개월)')
-                    months = months[:2]
-            except Exception as e:
-                print(f'  (재고현황 누적본 확인 실패 — 전부 받음: {e})')
+            # 11/9: 마감된 옛 달은 안 바뀜 → 항상 이번 달·지난달만(옛 달은 누적본 — 없으면 seed_acc 가 서버에서 복구).
+            # 예전엔 누적본을 열어 빠진 달을 셌는데, 사내 PC 메모리가 모자라 열기에 실패하면 6개월을 다 받다가 브라우저가 멈췄음
+            months = months[:2]
             print(f'▶ snap_stock (재고현황 SMKTF1030, 기준월 {months[-1]}~{months[0]}, 최신부터, 분석용)')
             stock_diag = []
             try:
@@ -1443,6 +1453,7 @@ def main():
                 print(f'  ⚠ 재고현황: 실패 — 건너뜀 ({str(e).splitlines()[0][:200] if str(e) else type(e).__name__})')
             finally:
                 save_diag(stock_diag)
+        revive()
         # ⑥ 컬러 소재 재고 목록(현재 시점 스냅샷, 분석용)
         if not a.no_extra:
             print('▶ snap_mat_stock_cc (소재재고List(CC), 분석용)')
@@ -1500,8 +1511,10 @@ def main():
                 }
               }
               return JSON.stringify(out);"""
-            main_win = driver.current_window_handle
+            revive()
+            main_win = None
             try:
+                main_win = driver.current_window_handle
                 driver.switch_to.default_content()
                 driver.switch_to.new_window('tab')          # 속보는 새 탭에서(같은 창에서 열면 MES 메인 메뉴가 안 돌아와 뒤 화면들이 실패함)
                 driver.get(SALES_RPT_URL)

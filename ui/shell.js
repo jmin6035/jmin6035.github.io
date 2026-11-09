@@ -165,28 +165,50 @@
     });
   }
 
-  /* 자료 신선도: status.json(사내 PC 자동 실행기·클라우드 게시 중 최신) → 헤더 배지 + 오래되면 경고 띠 */
-  const FEED = { platact: 'MES 도금 실적', coloract: '컬러 생산 실적', planstock: '컬러 생산 실적', coloranal: '컬러 생산 실적', procure: '소재재고List(컬러)' };
-  async function fresh() {
-    const h = document.getElementById('shell'); if (!h) return;
+  /* 기준일 하나(11/8 사용자 '날짜를 최신으로 통일'): 모든 화면의 '기준일·오늘' = 마지막 자료를 받은 시각(status.json runAt)이 속한 생산일(07시~).
+     실적은 그 전날까지(하루가 끝난 날만) — 표시는 '실적 ~11/4 · 자료 11/5 16:50'. 브라우저 시계·화면 계산 시각(built)은 기준일로 쓰지 않음.
+     UI.today(fb) = 기준일(status 를 못 받으면 fb → 그래도 없으면 시계 생산일) · UI.basis() = {day, at, act, txt} · UI.statusP = status 받기(화면 그리기 전에 기다림) */
+  const kstIso = (t) => { const v = Date.parse(t); return isNaN(v) ? null : new Date(v + 9 * 36e5).toISOString(); };
+  const clockDay = () => new Date(Date.now() + 2 * 36e5).toISOString().slice(0, 10);   // 한국 시각 − 7시간
+  const mdS = (s) => `${+String(s).slice(5, 7)}/${+String(s).slice(8, 10)}`;
+  UI.basis = () => {
+    const S = UI.status; const k = S && S.runAt && kstIso(S.runAt); if (!k) return null;
+    const day = new Date(Date.parse(k) - 7 * 36e5).toISOString().slice(0, 10), f = (S.feeds || []).find((x) => x.name === '도금 생산 실적(코일)');
+    const act = f && f.last && f.last < day ? f.last : (() => { const d = new Date(day + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); })();
+    return { day, at: `${mdS(k)} ${k.slice(11, 16)}`, act, txt: `실적 ~${mdS(act)} · 자료 ${mdS(k)} ${k.slice(11, 16)}` };
+  };
+  UI.today = (fb) => (UI.basis() || {}).day || (fb ? String(fb).slice(0, 10) : clockDay());
+  UI.statusP = (async () => {
     const urls = ['https://gatcqxrzaonjsixajrwd.supabase.co/storage/v1/object/public/published/status.json?v=' + Date.now(), 'published/status.json'];
     const got = (await Promise.all(urls.map((u) => fetch(u, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)))).filter(Boolean);
-    if (!got.length) return;
-    const S = got.sort((a, b) => (String(a.runAt) < String(b.runAt) ? 1 : -1))[0];
-    UI.status = S;
-    const want = FEED[h.dataset.page] || '도금 생산 실적(코일)';
-    const f = (S.feeds || []).find((x) => x.name === want) || (S.feeds || [])[0];
-    if (!f || !f.last) return;
-    const today = new Date(Date.now() - 7 * 3600e3); const d0 = new Date(f.last + 'T00:00:00');   // 생산일(07시 기준)
-    const age = Math.floor((new Date(today.getFullYear(), today.getMonth(), today.getDate()) - d0) / 864e5);
+    if (got.length) UI.status = got.sort((a, b) => (String(a.runAt) < String(b.runAt) ? 1 : -1))[0];
+    return UI.status || null;
+  })();
+  UI.ready = () => Promise.race([UI.statusP, new Promise((r) => setTimeout(r, 4000))]);   // 화면 스크립트: 그리기 전 await UI.ready()
+  /* 소재 '발주 마감 지남' 한 기준(11/8 사용자 '화면마다 87·797·4,430·5,514t'): 앞으로 3달 생산에 필요한데 재고·입고 예정으로 못 채우는 양 중
+     발주 마감(필요일 − 리드타임 − 투입 여유)이 기준일 전인 몫 — tools/mat_order_spec.py late_summary 가 계산해 mat_order.late 로 게시. 화면은 이 값만 씀
+     UI.matLate(late) → {t, items, tip} | null(아직 게시 전) */
+  UI.matLate = (L) => {
+    if (!L || !L.items) return null;
+    const items = L.items.filter((x) => UI.inScope(x.plant));
+    return { t: items.reduce((a, x) => a + (x.t || 0), 0), items,
+      tip: items.map((x) => `${x.name} ${Math.round(x.t)}t${x.by === 'spec' && x.sizes ? `(${x.sizes.map((s) => `${s[1]} ${s[2]}t`).join(', ')})` : ''}`).join(' · ') };
+  };
+
+  /* 자료 신선도: status.json(사내 PC 자동 실행기·클라우드 게시 중 최신) → 헤더 배지(기준일 표시) + 오래되면 경고 띠 */
+  async function fresh() {
+    const h = document.getElementById('shell'); if (!h) return;
+    await UI.statusP;
+    const S = UI.status, B = UI.basis(); if (!S || !B) return;
+    const age = Math.round((Date.parse(clockDay()) - Date.parse(B.day)) / 864e5);   // 기준일이 오늘 생산일보다 며칠 전인가
     const el = document.getElementById('ui-fresh');
     el.hidden = false; el.className = 'fresh ' + (age <= 1 ? 'ok' : age <= 2 ? 'warn' : 'bad');
-    el.title = `${want} 마지막 날짜 · 게시 ${String(S.runAt || '').replace('T', ' ').slice(0, 16)}`;
-    el.innerHTML = `<i></i>자료 ~${+f.last.slice(5, 7)}/${+f.last.slice(8, 10)}${age >= 1 ? ` · ${age}일 전` : ''}`;
+    el.title = `기준일 ${B.day} · 도금 실적 ~${B.act} · 자료 받은 시각 ${B.at}`;
+    el.innerHTML = `<i></i>${B.txt}`;
     const m = document.getElementById('ui-fresh-m'); if (m) { m.hidden = false; m.className = el.className; m.title = el.title; m.innerHTML = el.innerHTML; }
     if (age >= 2 && h.dataset.page !== 'health' && !document.getElementById('ui-stale')) {
       const b = document.createElement('div'); b.id = 'ui-stale'; b.className = 'wrap stale-band';
-      b.innerHTML = `<div>⚠ <b>자료가 ${age}일 전(${f.last})에서 멈춰 있습니다.</b> 수치는 해당 일자 기준입니다 — 사내 PC 자동 실행을 확인하세요. <a href="health.html">자료 상태 보기 →</a></div>`;
+      b.innerHTML = `<div>⚠ <b>자료가 ${age}일 전(${mdS(B.day)} ${B.at.slice(-5)})에서 멈춰 있습니다.</b> 모든 화면은 기준일 ${mdS(B.day)}(실적 ~${mdS(B.act)}) 기준입니다 — 사내 PC 자동 실행을 확인하세요. <a href="health.html">자료 상태 보기 →</a></div>`;
       h.after(b);
     }
   }

@@ -21,7 +21,7 @@
     const p1 = view === 'day' ? asOf : view === 'week' ? (addD(CT.wed(asOf), 6) > mEnd ? mEnd : addD(CT.wed(asOf), 6)) : mEnd;
     const pLbl = view === 'day' ? `${md(asOf)} ${wd(asOf)}` : view === 'week' ? `${md(p0)}(수)~${md(p1)}(화)` : `${+asOf.slice(5, 7)}월(${md(p0)}~${md(p1)})`;
     const until = p1, inP = (d) => d && d >= (p0 > asOf ? p0 : asOf) && d <= p1;   // 11/7 점검: 이미 지난 납기는 '기간 안'에서 빼고 아래 overdue 로
-    const open = M.all.filter((o) => !o.closed && CT.inScope(o.pl));
+    const open = M.all.filter((o) => !o.closed && !CT.isStale(o) && CT.inScope(o.pl));   // 종결 확인 필요(납기 60일+ 미종결) 제외(11/8)
     const inWin = (o) => inP(o.last || o.needProd);
     const risk = open.filter((o) => o.risk === '위험' && inWin(o)), warn = open.filter((o) => o.risk === '주의' && inWin(o)), nd = open.filter((o) => o.risk === '판정 불가');
     const overdue = open.filter((o) => (o.risk === '위험' || o.risk === '주의') && (o.last || o.needProd) && (o.last || o.needProd) < asOf);
@@ -121,7 +121,7 @@
     }
     for (const a of by.values()) acts.push({ id: CT.issueId('ord|' + a.k), risk: a.risk, type: a.type, grp: a.grp, what: `${a.grp} ${a.os.length}건`, t: T(a.os), last: a.last, dept: a.dept, os: a.os });
     for (const m of mats) acts.push({ id: CT.issueId('mat|' + m.key), risk: m.st === 'late' ? '위험' : '주의', type: '소재 발주', what: `${m.name} 부족 ${n0(m.short)}t · ${md(m.first)}부터`, t: m.short, last: m.deadline, dept: CT.DEPT.mat, href: 'ct_mat.html' });
-    for (const x of (P.exceptions || []).filter((x) => x.lvl === 'bad' || x.lvl === 'warn')) {
+    for (const x of (P.exceptions || []).filter((x) => (x.lvl === 'bad' || x.lvl === 'warn') && !CT.idleSkip(D, x.text))) {   // 계획 휴지 라인 경보 제외(11/8)
       if (!CT.inScope(/도금/.test(x.area) ? 'G' : /컬러/.test(x.area) ? 'C' : 'all')) continue;
       acts.push({ id: CT.issueId('exc|' + x.text), risk: x.lvl === 'bad' ? '위험' : '주의', type: x.area, what: x.text, t: null, last: null, dept: x.who, href: x.link });
     }
@@ -132,7 +132,7 @@
     const actTbl = top.length ? `<div class="ct-wrap"><table class="ct-t"><colgroup><col style="width:150px"><col><col style="width:84px"><col style="width:136px"><col style="width:108px"><col style="width:72px"></colgroup><thead><tr><th>무엇이 문제</th><th>대상</th><th class="r">해당 물량</th><th>조치 마감</th><th>조치 부서</th><th>진행</th></tr></thead><tbody>${top.map((a, i) => `<tr class="ck" tabindex="0" data-i="${i}"><td class="nw">${CT.badgeT(a.risk, a.type)}</td><td class="w">${esc(a.what)}</td><td class="r">${a.t == null ? '' : n0(a.t)}</td><td class="nw">${left(a.last)}</td><td class="nw">${esc(a.dept || '')}</td><td class="nw">${stCell(a)}</td></tr>`).join('')}</tbody></table></div>${acts.length > 10 ? `<p class="ct-note">상위 10건 / 전체 ${acts.length}건 · <a href="ct_issue.html#now">이슈·조정에서 전체 보기</a></p>` : ''}` : '<p class="ct-note">기간 안 조치 대상 없음</p>';
 
     // ④ 라인별 진도(11/5 사용자 '라인별 진도를 키우고 한눈에, 공장별 라인별로'): 공장 → 라인 카드(진도율 · 계획 대비 막대 · 일별 막대)
-    const ndays = ndM(asOf), mon = asOf.slice(0, 7), RUN = P.running && P.running.lines ? P.running : null;
+    const ndays = ndM(asOf), mon = asOf.slice(0, 7), RUN = P.running && P.running.lines && P.running.d === asOf ? P.running : null;   // 진행 중 = 기준일 것만(11/8 날짜 통일)
     const futG = {}; for (const r of L.rows || []) if (r[0] > (((L.replan || {}).t0) || '')) futG[`${r[1]}|${r[0]}`] = (futG[`${r[1]}|${r[0]}`] || 0) + (+r[4] || 0);
     const colP = {}, colA = {}; for (const c of W.color || []) { const t = Object.values(c.g || {}).reduce((a, v) => a + v, 0); (c.act ? colA : colP)[`${c.l}|${c.d}`] = ((c.act ? colA : colP)[`${c.l}|${c.d}`] || 0) + t; }
     const cdown = {}; for (const r of W.colorDown || []) if (r[2] !== 'test') cdown[`${r[1]}|${r[0]}`] = (cdown[`${r[1]}|${r[0]}`] || 0) + (+r[3] || 0);
@@ -323,7 +323,7 @@
         ['수주 진행', `${n0(T(op))}<small>t 잔량</small>`, `${op.length}건`],
         ['소재 확보', `${n0(op.filter((o) => o.matSt === '확보' || o.matSt === '재고 있음').length)}<small>건</small>`, `미확보 <b class="bad">${op.filter((o) => o.matSt !== '확보' && o.matSt !== '재고 있음').length}</b>건`],
         ['생산 중', `${n0(F('생산 중'))}<small>건</small>`, `생산 전 ${F('생산 전')}건`],
-        ['생산 완료', `${n0(F('출하 확인 불가') + F('부분 출하') + F('출하 완료'))}<small>건</small>`, `생산 ${n0(os.reduce((a, o) => a + Math.min(o.prodT || 0, o.ordT || 0), 0))}t`],
+        ['생산 완료', `${n0(F('출하 확인 불가') + F('부분 출하') + F('생산 완료') + F('출하 완료'))}<small>건</small>`, `생산 ${n0(os.reduce((a, o) => a + Math.min(o.prodT || 0, o.ordT || 0), 0))}t`],
         ['출하', `${n0(F('출하 완료'))}<small>건 완료</small>`, `부분 ${F('부분 출하')} · <b class="bad">출하 실적 없음 ${F('출하 확인 불가')}</b>건`],
       ];
       return `<div class="ct-flh">${nm} <small>${pl === 'G' ? `납기 −30~+90일 주문 · ${md(M.cgAt)}` : `${M.ccLines.join('·')} 작업지시대상 · ${md(M.ccAt)}`}</small></div><div class="ct-flow">${cells.map(([l, v, s]) => `<div class="ct-fs"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('')}</div>`;

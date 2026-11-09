@@ -7,7 +7,7 @@
   const { esc, n0, n1, md } = CT;
   const VIEWS = ['status', 'risk', 'track', 'cal'];
   const OPEN = ['위험', '주의', '판정 불가'];
-  const F = { grp: '', pl: '', risk: '', ful: '', q: '', done: false, by: false, sk: 'risk', dir: 1, lim: 200 };
+  const F = { grp: '', pl: '', risk: '', ful: '', q: '', done: false, by: false, stale: false, sk: 'risk', dir: 1, lim: 200 };
   const R = { cause: '', sk: 'risk', dir: 1, lim: 200 };
   const T = { id: null, q: '', tag: '' };
   let calOff = 0, D0 = null, M = null, L = [], byId = {};
@@ -50,7 +50,7 @@
 
   /* ---------- #status 수주 현황 ---------- */
   function statusRows() {
-    let A = L.filter((o) => (F.done || !o.closed) && (!F.grp || o.grp === F.grp) && (!F.pl || o.pl === F.pl) && (!F.risk || o.risk === F.risk) && (!F.ful || o.ful === F.ful));
+    let A = L.filter((o) => (F.stale ? CT.isStale(o) : !CT.isStale(o)) && (F.done || !o.closed) && (!F.grp || o.grp === F.grp) && (!F.pl || o.pl === F.pl) && (!F.risk || o.risk === F.risk) && (!F.ful || o.ful === F.ful));
     if (F.q) { const q = F.q.toUpperCase(); A = A.filter((o) => [o.id, o.item, o.size, o.cus, o.man, o.grp].join(' ').toUpperCase().includes(q)); }
     const s = sorter(F.sk, F.dir, (o) => o.remT || 0);
     return F.by ? A.sort((a, b) => (a.grp < b.grp ? -1 : a.grp > b.grp ? 1 : 0) || s(a, b)) : A.sort(s);
@@ -74,7 +74,8 @@
     const mb = $('co-more'); if (mb) mb.onclick = () => { F.lim += 200; drawStatus(); };
   }
   function viewStatus() {
-    const asOf = M.asOf, w0 = CT.wed(asOf), w1 = CT.addD(w0, 6), act = L.filter((o) => !o.closed);   // 금주 = 수요일 시작 7일(11/5 사용자)
+    const asOf = M.asOf, w0 = CT.wed(asOf), w1 = CT.addD(w0, 6), act = L.filter((o) => !o.closed && !CT.isStale(o));   // 금주 = 수요일 시작 7일(11/5 사용자) · 종결 확인 필요는 따로(11/8)
+    const stale = L.filter(CT.isStale);
     const risk = act.filter((o) => o.risk === '위험');
     const actSelf = act.filter((o) => /^자가재\(/.test(o.grp || '')), actS = act.filter((o) => !/^자가재\(/.test(o.grp || ''));   // 11/7 점검: 자가재 + 컬러 주문 = 이중 계상(docs/22)
     const inW = (d) => d && d >= w0 && d <= w1;
@@ -90,6 +91,7 @@
       { label: '금주 생산완료 필요', v: n0(sum(wP, (o) => o.remT)), unit: 't', sub: `${n0(wP.length)}건 · ${wl} 생산 필요일`, tone: wP.length ? 'warn' : 'ok' },
       ...(CT.inScope('G') ? [{ label: '금주 출하 필요(도금)', v: n0(sum(wS, (o) => o.unshipT)), unit: 't', sub: `${n0(wS.length)}건 · ${wl} 출항·납기${wNo.length ? `<br>출하 실적 없음 ${n0(wNo.length)}건 별도(생산 완료)` : ''}${wC.length ? `<br>컬러 ${n0(wC.length)}건 출하 실적 없음` : ''}`, tone: 'info' }] : [{ label: '금주 납기(컬러)', v: n0(sum(wC, (o) => o.remT)), unit: 't', sub: `${n0(wC.length)}건 · ${wl} 납기 · 컬러 주문별 출하 자료 없음` }]),
       { label: '납기 지연 예상', v: n0(risk.length), unit: '건', sub: `${n0(sum(risk, imp))}t`, tone: risk.length ? 'bad' : 'ok', href: '#risk' },
+      { label: '종결 확인 필요', v: n0(stale.length), unit: '건', sub: `${n0(sum(stale, (o) => o.remT))}t · 납기 60일 넘게 지난 미종결(잔량·지연 제외)`, tone: stale.length ? 'warn' : 'ok' },
     ]);
     const grps = [...new Set(L.map((o) => o.grp))].sort();
     const sc = CT.scope(), plLock = sc !== 'all';
@@ -99,19 +101,19 @@
       + `<div class="co-f1">${sel('co-grp', '판매그룹', F.grp, grps.map((g) => [g, g]))}${sel('co-pl', '공정', plLock ? sc : F.pl, [['G', '도금'], ['C', '컬러']])}`
       + `${sel('co-risk', '상태', F.risk, CT.RISK.map((r) => [r, CT.rl(r)]))}${sel('co-ful', '진행 단계', F.ful, CT.FUL.map((r) => [r, CT.fl(r)]))}</div>`
       + `<div class="co-f2"><input id="co-q" type="search" placeholder="주문번호·품명·고객·담당" value="${esc(F.q)}" aria-label="주문 찾기">`
-      + `<label class="nw"><input type="checkbox" id="co-done"${F.done ? ' checked' : ''}> 완료 포함</label><label class="nw"><input type="checkbox" id="co-by"${F.by ? ' checked' : ''}> 판매그룹 묶음</label><span class="cnt" id="co-cnt"></span></div>`
+      + `<label class="nw"><input type="checkbox" id="co-stale"${F.stale ? ' checked' : ''}> 종결 확인 필요만</label><label class="nw"><input type="checkbox" id="co-done"${F.done ? ' checked' : ''}> 완료 포함</label><label class="nw"><input type="checkbox" id="co-by"${F.by ? ' checked' : ''}> 판매그룹 묶음</label><span class="cnt" id="co-cnt"></span></div>`
       + '<div class="co-tw" id="co-tbl"></div>';
   }
   function bindStatus() {
     const on = (id, f) => { const e = $(id); if (e) e.onchange = (ev) => { f(ev.target); F.lim = 200; drawStatus(); }; };
     on('co-grp', (e) => { F.grp = e.value; }); on('co-pl', (e) => { F.pl = e.value; }); on('co-risk', (e) => { F.risk = e.value; }); on('co-ful', (e) => { F.ful = e.value; });
-    on('co-done', (e) => { F.done = e.checked; }); on('co-by', (e) => { F.by = e.checked; });
+    on('co-done', (e) => { F.done = e.checked; }); on('co-stale', (e) => { F.stale = e.checked; }); on('co-by', (e) => { F.by = e.checked; });
     $('co-q').oninput = (e) => { F.q = e.target.value.trim(); F.lim = 200; clearTimeout(bindStatus.t); bindStatus.t = setTimeout(drawStatus, 200); };
     drawStatus();
   }
 
   /* ---------- #risk 납기 위험 ---------- */
-  const riskAll = () => L.filter((o) => OPEN.includes(o.risk));
+  const riskAll = () => L.filter((o) => OPEN.includes(o.risk) && !CT.isStale(o));   // 종결 확인 필요(납기 60일+ 미종결)는 수주 현황에서 따로(11/8)
   function drawRisk() {
     const A = riskAll().filter((o) => !R.cause || o.cause === R.cause).sort(sorter(R.sk, R.dir, imp)), V = A.slice(0, R.lim);
     const rows = V.map((o) => `<tr class="ck" data-id="${esc(o.id)}"><td class="sk s1">${CT.badge(o)}</td>`
@@ -133,7 +135,7 @@
       { label: '납기 지연 예상', v: n0(red.length), unit: '건', sub: `점검 필요 ${n0(warn.length)}건`, tone: red.length ? 'bad' : 'ok' },
       { label: '해당 물량', v: n0(sum(red.concat(warn), imp)), unit: 't', sub: `지연 예상 ${n0(sum(red, imp))}t · 점검 필요 포함`, tone: red.length ? 'bad' : 'ok' },
       { label: '조치일 지남', v: n0(past.length), unit: '건', sub: `${n0(sum(past, imp))}t · 조치 마감일 지남`, tone: past.length ? 'bad' : 'ok' },
-      { label: '자료 확인 필요', v: n0(na.length), unit: '건', sub: '납기·주문량 없음 · 장기 미종결 · 출하 실적 없음', tone: na.length ? 'warn' : 'ok' },
+      { label: '자료 확인 필요', v: n0(na.length), unit: '건', sub: '납기·주문량 없음 · 출하 실적 없음', tone: na.length ? 'warn' : 'ok' },
     ]);
     const chips = [['', '전체', A.length], ...Object.keys(CT.CAUSE).map((c) => [c, CT.CAUSE[c], A.filter((o) => o.cause === c).length])]
       .map(([c, n, cnt]) => `<button type="button" class="co-chip" data-c="${c}" aria-pressed="${c === R.cause}"${cnt || !c ? '' : ' disabled'}>${esc(n)} <b>${n0(cnt)}</b></button>`).join('');
@@ -389,7 +391,7 @@
   /* ---------- #cal 납기 캘린더 ---------- */
   const monday = (s) => { const d = new Date(s + 'T00:00:00Z'), w = (d.getUTCDay() + 6) % 7; return CT.addD(s, -w); };
   function calDay(d) {
-    const act = L.filter((o) => !o.closed);
+    const act = L.filter((o) => !o.closed && !CT.isStale(o));
     const P = act.filter((o) => o.needProd === d && (o.ful === '생산 전' || o.ful === '생산 중'));
     const S = act.filter((o) => o.due === d);
     const rk = [...new Set(P.concat(S).filter((o) => o.risk === '위험').map((o) => o.id))].length;

@@ -137,7 +137,7 @@
       if (cst) why.push(['생산능력', `컬러 ${cst[0]} 지난주 휴지 하루 ${n1(cst[1][1])}h`, 'ok', `MES 휴지 기록 상위 ${cst[1][0]}`]);
     }
     // ④ 주문 소재 지연 비중(도금): 필요 입고일보다 소재 입고(예정)가 늦은 미완료 주문 비중 — 입고 정시율 아님
-    const G = CT.inScope('G') ? M.G.filter((o) => !o.closed && o.remT > 0.5) : [];
+    const G = CT.inScope('G') ? M.G.filter((o) => !o.closed && !CT.isStale(o) && o.remT > 0.5) : [];
     if (G.length) {
       const by = {}; G.forEach((o) => { const b = by[o.grp] = by[o.grp] || { n: 0, t: 0, ln: 0, lt: 0 }; b.n++; b.t += o.remT; if (o.src.lateIn) { b.ln++; b.lt += o.remT; } });
       const R = Object.entries(by).sort((a, b) => b[1].t - a[1].t), lt = G.filter((o) => o.src.lateIn), p = pc(lt.length, G.length);

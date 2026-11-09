@@ -584,7 +584,8 @@ html .side .scope > span { color: var(--side-ink-2); letter-spacing: .08em; font
 html .side .scope-seg { display: grid; grid-template-columns: repeat(3, 1fr); padding: 3px; border-radius: 9px; background: rgba(255,255,255,.06); border: 1px solid var(--side-line); }
 html .side .scope-seg button { font-size: 13.5px; padding: 6px 0; color: var(--side-ink); border-radius: 6px; }
 html .side .scope-seg button[aria-pressed="true"] { background: #fff; color: #0b1d38; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
-.sf-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sf-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.sf-row .fresh { white-space: nowrap; } .sf-row #ui-theme { flex: none; white-space: nowrap; margin-left: auto; }   /* 기준일 배지(실적 ~11/4 · 자료 11/5 16:50)가 길어 '자동' 단추가 세로로 찌그러지던 것 — 줄을 넘김 */
 html .side .fresh, html .topbar .fresh { color: var(--side-ink); background: rgba(255,255,255,.06); border: 1px solid var(--side-line); font-size: 13.5px; padding: 4px 10px; }
 .thm { font: inherit; font-size: 13.5px; color: var(--side-ink); background: transparent; border: 1px solid var(--side-line); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
 .thm:hover { color: #fff; border-color: rgba(255,255,255,.3); }

@@ -20,7 +20,7 @@
     const byDay = {};
     for (const e of o.events) (byDay[e.d] = byDay[e.d] || []).push(e);
     const ord = (e) => kindKeys.indexOf(e.kind);
-    const today = o.today || new Date(Date.now() - 7 * 3600e3).toLocaleDateString('sv-SE');   // 생산일(07시 기준)
+    const today = o.today || (window.UI && UI.today ? UI.today() : new Date(Date.now() - 7 * 3600e3).toLocaleDateString('sv-SE'));   // 공통 기준일(11/8)
     const cnt = (m, k) => o.events.filter((e) => e.d.slice(0, 7) === m && e.kind === k).length;
 
     function grid() {

@@ -18,7 +18,7 @@
     // 확인 = 도금 주문이 지금 소재 문제(입고 지연·미발주)이고 강종이 이 소재와 맞는 것. 추정 = 사용 판매그룹 주문 중 생산 필요일이 부족 시작 이후(그룹·시점)
     const fit = (m, o) => { const f = String((o.src && o.src.fam) || o.item || ''), t = `${o.item} ${(o.src && o.src.usgNm) || ''} ${(o.src && o.src.spec) || ''}`;
       return /AL용/.test(m.name) ? /^AL/.test(f) : /GI\/GL/.test(m.name) ? /AZ|MAC|GI/.test(f) : /SUS/.test(m.name) ? /STS|SUS/i.test(t) : false; };
-    const live = (o) => !o.closed && o.remT > 0.5;
+    const live = (o) => !o.closed && !CT.isStale(o) && o.remT > 0.5;
     const mats = (GV.mats || []).filter((m) => CT.inScope(m.plant)).map((m) => {
       const gs = (usedBy[m.key] || []).filter((x) => x.use >= 1);
       const og = new Set(gs.flatMap((x) => GMAP[x.group] || [x.group]));
@@ -35,11 +35,11 @@
     // 개수 대신 어떤 소재가 어느 판매그룹에 걸리는지(11/5 사용자 '3개 소재 말고 어떤 그룹인지') — 판매그룹은 사용량 큰 순 1개(+n)
     const gn = (m) => { const g = m.gs.slice().sort((a, b) => b.use - a.use).map((x) => x.group); return g.length ? `${g[0]}${g.length > 1 ? ` 외 ${g.length - 1}` : ''}` : (m.plant === 'G' ? '도금' : '컬러'); };
     const names = (L) => (L.length ? L.map((m) => `${esc(m.name)}<small>(${esc(gn(m))})</small>`).join(' · ') : '없음');
-    const late = sh.filter((m) => m.deadline && m.deadline < today);
+    const LT = UI.matLate(M.late);                           // 발주 마감 지남 = 공통 기준(ui/shell.js UI.matLate, 11/8)
     const kp = CT.kpis([
       { label: '부족 확정', v: tT(sure), unit: 't', tone: sure.length ? 'bad' : 'ok', sub: `${names(sure)} · 리드타임 안 부족` },
       { label: '부족 예상', v: tT(exp), unit: 't', tone: exp.length ? 'warn' : 'ok', sub: `${names(exp)} · ${md(GV.from)}~${md(GV.to)}` },
-      { label: '발주 마감 지남', v: tT(late), unit: 't', tone: late.length ? 'bad' : 'ok', sub: names(late) },
+      { label: '발주 마감 지남', v: LT ? n0(LT.t) : '-', unit: 't', tone: !LT ? '' : LT.t >= 0.5 ? 'bad' : 'ok', sub: LT ? (LT.items.length ? LT.items.map((x) => `${esc(x.name)}<small>${x.by === 'spec' ? '(규격별)' : ''} ${n0(x.t)}t</small>`).join(' · ') : '없음') : '다음 자동 실행부터' },
       { label: '해당 주문 확인 · 추정', v: `${n0(cA.size)} · ${n0(eA.size)}`, unit: '건', tone: cA.size ? 'bad' : eA.size ? 'warn' : 'ok', sub: `추정은 판매그룹·시점 기준` },
     ]);
     const L = (showAll ? mats : sh).slice().sort((a, b) => (b.sure - a.sure) || ((a.deadline || '9') < (b.deadline || '9') ? -1 : 1));
@@ -59,10 +59,23 @@
       + `<section class="card"><div class="hd"><h2>부족 소재 <small>확정 먼저 · 발주 마감 순</small></h2>${CT.tabs('mt-all', [['s', '부족만'], ['a', '전체 소재']], showAll ? 'a' : 's')}</div>`
       + `<div class="ct-wrap"><table class="ct-t mt"><thead><tr><th>상태</th><th class="r">해당 주문</th><th>소재</th><th class="r">부족(t)</th><th>필요일</th><th>사용 판매그룹</th><th class="ac">담당부서</th><th>조치기한</th><th>조치 상태</th><th>확인일</th></tr></thead>`
       + `<tbody>${L.map(tr).join('') || '<tr><td colspan="10">부족 소재 없음</td></tr>'}</tbody></table></div>`
-      + '<p class="ct-note">부족 확정 = 부족 시작이 오늘 + 리드타임 + 투입 여유 안 · 필요일 = 부족 시작 · 조치기한 = 발주 마감</p></section>';
+      + '<p class="ct-note">부족 확정 = 부족 시작이 오늘 + 리드타임 + 투입 여유 안 · 필요일 = 부족 시작 · 조치기한 = 발주 마감</p></section>'
+      + specCard(M, today);
     $('mt-all').querySelectorAll('button').forEach((b) => b.onclick = () => { showAll = b.dataset.k === 'a'; render(D); });
     document.querySelectorAll('#ct-main tr.ck').forEach((r) => r.onclick = () => panel(L[+r.dataset.i]));
     CT.keyRows(document.getElementById('ct-main'));
+  }
+  /* 규격별 부족(11/8 사용자 — 수주 관제 ④ 결품 위험 표와 같은 자료: mat_order.rows, 컬러건재 계획재 소재 사양 두께×폭) */
+  function specCard(M, today) {
+    if (!CT.inScope('C')) return '';
+    const R = (M.rows || []).filter((r) => (r.gap || 0) >= 0.5).sort((a, b) => (b.late || 0) - (a.late || 0) || String(a.first || '9').localeCompare(String(b.first || '9')));
+    const tr = (r) => { const late = r.late != null ? r.late >= 0.5 : /마감 지남/.test(r.judge || ''), n = r.order ? CT.diff(r.order[1], today) : null;
+      return `<tr><td>${late ? '<span class="ct-b bad">마감 지남</span>' : '<span class="ct-b warn">발주 필요</span>'}</td><td class="id">${esc(r.mat)}</td><td class="nw"><b>${r.thk.toFixed(2)}×${n0(r.wdt)}</b></td>`
+        + `<td class="r">${n0(r.need)}</td><td class="r">${n0((r.stock || 0) + (r.po || 0))}</td><td class="r"><b class="ct-neg">${n0(r.gap)}</b></td><td class="r">${late ? `<b class="ct-neg">${n0(r.late)}</b>` : '-'}</td>`
+        + `<td class="nw">${md(r.first)}</td><td class="nw">${r.order ? `${md(r.order[0])}~${md(r.order[1])}${n != null && n < 0 ? ` <b class="ct-neg">${-n}일 지남</b>` : n != null && n <= 14 ? ` <span class="sub-i">D-${n}</span>` : ''}` : '-'}</td><td class="nw">${md(r.arrive)}</td></tr>`; };
+    return `<section class="card"><div class="hd"><h2>규격별 부족 <small>컬러건재 계획재 소재 · 두께×폭 · 3달</small></h2></div>`
+      + (R.length ? `<div class="ct-wrap"><table class="ct-t mt"><thead><tr><th>상태</th><th>소재</th><th>두께×폭</th><th class="r">3달 필요(t)</th><th class="r" title="같은 두께·폭 사용가능 재고 + 기발주 잔량">재고·기발주(t)</th><th class="r">부족(t)</th><th class="r" title="부족 중 발주 마감이 이미 지난 몫(지금 발주해도 못 댐)">마감 지남(t)</th><th>첫 부족일</th><th>발주 기간</th><th>입고 예상</th></tr></thead><tbody>${R.map(tr).join('')}</tbody></table></div>`
+        : '<p class="ct-note">규격별 부족 없음</p>') + '</section>';
   }
   function panel(m) {
     const kv = (k, v) => `<div class="ct-kv"><span>${k}</span><b>${v}</b></div>`;

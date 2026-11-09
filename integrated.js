@@ -104,7 +104,7 @@
   // ---------- ② 재고·소재 추이 표 ----------
   let PT = null;                                                     // portal.enc.json(사내 PC 매일 게시): stockTrend = 속보 원천 표 일별 재고(그룹 g:C건재 등) → 아래 그래프·타일에 실제 값으로
   function secStock() {
-    const P0 = O.variants[V], W = O.weeks, today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+    const P0 = O.variants[V], W = O.weeks, today = UI.today(O.asOf);   // 공통 기준일(ui/shell.js, 11/8)
     // 2026-10-21 사용자: 재고 추이 = 가동 캘린더와 같은 숫자 — 제품 재고는 매일 롤링(portal.stockRoll: 어제 실제 재고 + 아침 재계획 생산 − 계획 출고), 자가재·구매 소재는 계획 그대로
     const SRL = PT && PT.stockRoll, P = SRL ? Object.assign({}, P0, { stockWeek: P0.stockWeek.map((r) => {
       const v = SRL.v && SRL.v[r.k]; if (!v) return r;
@@ -119,11 +119,13 @@
       return 'ok';
     };
     const SN = { ok: '목표 부근', warn: '목표 미만', bad: '부족 위험', over: '과잉' };
-    const ACT = {}; ((PT && PT.stockTrend) || []).forEach(([d, k, t]) => { if (k.startsWith('g:')) (ACT[k.slice(2)] = ACT[k.slice(2)] || []).push([d, t]); });   // 실제 재고(속보 원천 표) 일별
+    const ACT = {}; ((PT && PT.stockTrend) || []).forEach(([d, k, t]) => { const g = k.startsWith('g:') ? k.slice(2) : k === '도금 제품(자가재)' ? '자가재' : null; if (g) (ACT[g] = ACT[g] || []).push([d, t]); });   // 실제 재고(속보 원천 표) 일별
     const dd = (a, b) => (new Date(a + 'T00:00:00') - new Date(b + 'T00:00:00')) / 864e5;
     const rows = P.stockWeek.filter((r) => inS(plOf(r.k)) && !/^(FH|컬러 구매)/.test(r.k));   // 구매 소재는 소재 발주 화면
     const selfR = rows.filter((r) => /^자가재 /.test(r.k));             // 자가재 강종 나눔(품명 → 강종)이 실적과 달라 강종별 값이 음수로 나옴(10/30 재검토: AL −4,902t) → 합계 한 장으로
     if (selfR.length > 1) rows.splice(rows.indexOf(selfR[0]), selfR.length, { k: '자가재', v: selfR[0].v.map((_, i) => selfR.reduce((a, r) => a + (r.v[i] || 0), 0)), roll: false, title: selfR.map((r) => `${r.k} ${n0(r.v[wi])}t`).join(' · ') });
+    const sv = SRL && SRL.v && SRL.v['G자가재'], sr0 = rows.find((r) => r.k === '자가재');   // 11/8: 자가재도 출발 = 판생 속보 실제(portal.stockRoll — 실제와 계획 차이만큼 옮긴 계획 흐름)
+    if (sv && sr0) { sr0.v = W.map((d, i) => { const j = SRL.weeks.indexOf(d); return j >= 0 && sv[j] != null ? sv[j] : sr0.v[i]; }); sr0.roll = true; }
     // ② 추이 그래프(그룹별 작은 그래프, 같은 모양): 선 = 주말 재고, 점선 = 목표, 옅은 띠 = 목표의 90~130%(정상 범위), 붉은 선 = 안전재고
     const mini = (r) => {
       const Wd = 420, H = 190, L = 56, R = 22, T = 20, B = 26, PX = 14;   // 11/5 사용자 '그래프 튀어나오는데': 위 여유 + 양끝 안쪽 여백 → 값 글자가 칸 밖·축 글자 위로 안 나감
@@ -192,7 +194,7 @@
       const grp = /^자가재/.test(r.k) ? 'S' : 'P'; const sep = ri && grp !== prevGrp ? ' class="sep"' : ''; prevGrp = grp;
       return `<tr${sep}><td class="l nm">${esc(GN[r.k] || r.k)}</td>${r.v.map((v, i) => `<td class="h-${st(r, i)}" title="${md(W[i])} ${n0(v)}t${r.tgt ? ' / 목표 ' + n0(r.tgt[i]) : ''}">${k1(v)}</td>`).join('')}<td class="muted">${r.tgt ? k1(r.tgt[r.tgt.length - 1]) : '0 이상'}</td></tr>`;
     }).join('');
-    return { html: card('s-stock', '①', '제품·자가재 재고 추이', `${SRL ? `제품 = 매일 롤링(어제 ${md(SRL.asOf)} 실제 재고 + 아침 재계획) · 자가재 = ${VN[V]}` : `${VN[V]} 기준`} · 주말 재고 · ${md(W[wi])} 주부터 12월 말까지`, `
+    return { html: card('s-stock', '①', '제품·자가재 재고 추이', `${SRL ? `제품${SRL.v && SRL.v['G자가재'] ? '·자가재' : ''} = 매일 롤링(어제 ${md(SRL.asOf)} 실제 재고 + 아침 재계획)${SRL.v && SRL.v['G자가재'] ? '' : ` · 자가재 = ${VN[V]}`}` : `${VN[V]} 기준`} · 주말 재고 · ${md(W[wi])} 주부터 12월 말까지`, `
       ${plants ? `<h3 class="st-sec">공장별 전체 재고 <small>숫자 = 천t · 초록 = 실제(판매생산속보, 일별) · 파랑 = 계획(주말 예측)</small></h3><div class="dc-grid st-charts st-plant">${plants}</div>` : ''}
       <h3 class="st-sec">판매그룹별 재고 <small>숫자 = 주말 재고(천t) · 목표 = TF 목표 일수 × 다음 달 하루 판매 · 자가재 = 도금 → 컬러 소재(목표 없음, 바닥나지 않게)</small></h3>
       <div class="legend"><span><i style="background:var(--brand)"></i>주말 재고(계획)</span><span><i style="background:var(--s3)"></i>실제(속보, 일별)</span><span><i class="dash" style="background:var(--ink-2)"></i>목표</span><span><i class="box" style="background:color-mix(in srgb, var(--good) 18%, transparent)"></i>정상 범위(목표의 90~130%)</span><span><i class="dash" style="background:var(--bad)"></i>안전재고</span></div>
@@ -384,7 +386,7 @@
     $('g-main').innerHTML = secs.map((s) => s.html).join('');
     secs.forEach((s) => s.after && s.after());
     hoverTips($('g-main'));
-    UI.sub(`${{ all: '제품·자가재', G: '도금 제품·자가재', C: '컬러 제품' }[UI.scope()]} 주말 재고 — 목표 대비 · 2026년 10~12월 · 계산 ${O.built.replace('T', ' ')}`);
+    UI.sub(`${{ all: '제품·자가재', G: '도금 제품·자가재', C: '컬러 제품' }[UI.scope()]} 주말 재고 — 목표 대비 · 2026년 10~12월 · 기준 ${md(UI.today(O.asOf))}`);   // 계산 시각 대신 공통 기준일(11/8)
     UI.reveal($('g-main'));
     const seg = document.querySelector('.seg');
     const pb = seg && seg.closest('.pagebar'); if (pb) pb.hidden = true;   // 확정 계획 하나만 게시
@@ -399,7 +401,7 @@
       O = await GP.decryptJSON(env, pw);
       try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 저장 불가 무시 */ }
       V = O.rec && O.variants[O.rec] ? O.rec : vlist()[0];
-      render();
+      await UI.ready(); render();
       GP.latest('portal.enc.json').then((e) => (e ? GP.decryptJSON(e, pw) : null)).then((x) => { if (x) { PT = x; rerender(); } }).catch(() => { /* 실제 재고 없으면 예측만 */ });
       UI.onScope(() => rerender());
     } catch (e) { $('g-form').hidden = false; $('g-msg').textContent = pw ? '암호가 맞지 않습니다' : ''; }

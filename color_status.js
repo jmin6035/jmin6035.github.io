@@ -29,7 +29,7 @@
   const load = (m, l) => (cap(m, l) ? placed(m, l) / cap(m, l) : 0);
   const unT = (m) => sum(O.colorUnplaced.filter((u) => !m || u.ym === m), (u) => u.t);
   const daysOf = (m) => { const [y, mo] = m.split('-').map(Number); const n = new Date(y, mo, 0).getDate(); return Array.from({ length: n }, (_, i) => `${m}-${String(i + 1).padStart(2, '0')}`); };
-  const localToday = () => { const d = new Date(Date.now() - 7 * 3600e3); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const localToday = () => { if (window.UI && UI.basis && UI.basis()) return UI.today(); const d = new Date(Date.now() - 7 * 3600e3); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
   function render() {
     by = {}; for (const c of O.color) by[`${c.l}|${c.d}`] = c;

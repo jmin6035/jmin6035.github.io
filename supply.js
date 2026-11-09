@@ -11,7 +11,7 @@
   const WD = ['일', '월', '화', '수', '목', '금', '토'];
   const wd = (d) => new Date(d + 'T00:00:00').getDay();
   const add = (d, k) => { const x = new Date(d + 'T00:00:00'); x.setDate(x.getDate() + k); return x.toLocaleDateString('sv-SE'); };
-  const today = new Date(Date.now() - 7 * 3600e3).toLocaleDateString('sv-SE');   // 생산일 = 07시 기준(MES 일수 기준, 10/22)
+  let today = new Date(Date.now() - 7 * 3600e3).toLocaleDateString('sv-SE');   // 생산일 = 07시 기준(MES 일수 기준, 10/22) — 그리기 전에 공통 기준일(UI.today, 11/8)로 바꿈
   const diff = (a, b) => Math.round((new Date(a + 'T00:00:00') - new Date(b + 'T00:00:00')) / 864e5);
   const dayC = (d) => (d < today ? ' past' : d === today ? ' tb' : '');   // 지난 날(실적) 옅은 바탕 · 오늘 앞 파란 경계선(기울임 대신, 사용자 10/21)
   const FAM = (a) => (/^AZ/.test(a) ? 'AZ' : /^MAC/.test(a) ? 'MAC' : 'AL');
@@ -190,8 +190,8 @@
     const w0 = mondayOf(today), w1 = add(w0, 6);
     const rows = typeList().map(([pl, c]) => { const R = MP.T[c]; let t = 0, late = 0; for (const [d, L] of Object.entries(R.ord)) if (d >= w0 && d <= w1) { t += sumT(L); late += sumT(L.filter((e) => e.late)); } return { pl, c, t, late }; }).filter((r) => r.t >= 1);
     const tot = rows.reduce((x, r) => x + r.t, 0);
-    $('s-mcal').innerHTML = `<div class="wkbox"><div class="wkh">이번 주 발주 <small>${md(w0)}~${md(w1)} · 소재 유형별 합계(마감 지난 몫 포함)</small> <b>${n0(tot)}t</b></div>
-      <div class="wkl">${rows.map((r) => `<button type="button" class="wkc" data-c="${esc(r.c)}" data-d="${today}"><span>${esc(r.c)}</span><b>${n0(r.t)}t</b>${r.late >= 1 ? `<small class="neg">마감 지남 ${n0(r.late)}t</small>` : ''}</button>`).join('') || '<span class="muted">이번 주 발주할 소재 없음</span>'}</div></div>`;
+    $('s-mcal').innerHTML = `<div class="wkbox"><div class="wkh">이번 주 발주 <small>${md(w0)}~${md(w1)} · 소재 유형별 합계(늦은 발주 포함)</small> <b>${n0(tot)}t</b></div>
+      <div class="wkl">${rows.map((r) => `<button type="button" class="wkc" data-c="${esc(r.c)}" data-d="${today}"><span>${esc(r.c)}</span><b>${n0(r.t)}t</b>${r.late >= 1 ? `<small class="neg" title="이번 주 발주 제안 중 업체별 발주 기한이 지난 양(발주 일정 계산) — 소재 '마감 지남' 부족은 아래 소재 관제">늦은 발주 ${n0(r.late)}t</small>` : ''}</button>`).join('') || '<span class="muted">이번 주 발주할 소재 없음</span>'}</div></div>`;
     $('s-mcal').querySelectorAll('.wkc').forEach((b) => b.onclick = () => typeDetail(b.dataset.c, null, 'ord'));
   }
   const MK = [['ord', '발주', 'm-ord'], ['inb', '입고', 'm-inb'], ['use', '생산 투입', 'm-use']];
@@ -765,7 +765,9 @@
     if (!GV) { el.innerHTML = '<h2>소재 관제</h2><p class="small">자료가 없습니다 — 매일 아침 자동 점검 뒤 채워집니다.</p>'; return; }
     const dot = (st) => `<span class="oj-dot ${OJS[st][1]}">${OJS[st][0]}</span>`;
     const ms = GV.mats.filter((m) => UI.inScope(m.plant));
+    const LT = UI.matLate(MO.late);                       // 마감 지남 = 공통 기준(ui/shell.js UI.matLate, 11/8 — 부족·조치·수주 관제·계획재와 같은 값)
     const kpi = (st) => { const xs = ms.filter((m) => m.st === st), t = xs.reduce((a, m) => a + (m.short || 0), 0);
+      if (st === 'late') return `<div class="oj-b ${OJS[st][1]}" title="${esc(LT ? LT.tip : '')}"><div class="oj-bh">${OJS[st][0]}</div><div class="oj-n">${LT ? LT.items.length : '-'}<small>개 소재</small></div><div class="oj-bs">${LT ? `부족 ${n0(LT.t)}t` : '다음 자동 실행부터'}</div></div>`;
       return `<div class="oj-b ${OJS[st][1]}"><div class="oj-bh">${OJS[st][0]}</div><div class="oj-n">${xs.length}<small>개 소재</small></div><div class="oj-bs">${st === 'ok' ? '3달 재고·입고 예정으로 충당' : `부족 ${n0(t)}t`}</div></div>`; };
     const block = (pl, title) => {
       const gs = GV.groups.filter((g) => g.plant === pl), rows = ms.filter((m) => m.plant === pl);
@@ -798,6 +800,7 @@
   }
 
   async function render(W, pw) {
+    await UI.ready(); today = UI.today(W.asOf && add(String(W.asOf).slice(0, 10), 1));   // 기준일 = 마지막 자료 생산일(시계 날짜 아님)
     D = prep(W);
     D.live = await live(pw);
     if ($('s-det2')) { try { const fe = await GP.latest('fh_po.enc.json'); FHP = fe ? await GP.decryptJSON(fe, pw) : null; } catch (e) { FHP = null; } }   // 소재 발주 → 계약·판매그룹·목적지(tools/fh_po_detail.py)

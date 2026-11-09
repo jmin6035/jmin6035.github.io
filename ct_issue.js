@@ -15,7 +15,7 @@
   const VIEWS = ['now', 'req'];
   const FIL = [['', '전체'], ['auto', '담당 미지정'], ['open', '조치 진행 중'], ['done', '종결']];
   let fil = '', EV = null, evErr = '', bound = false, DD = null;
-  CT.boot(['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'mat_order.enc.json', 'portal.enc.json'], (D) => { DD = D; draw(); load(); });
+  CT.boot(['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'mat_order.enc.json', 'portal.enc.json', 'integrated.enc.json'], (D) => { DD = D; draw(); load(); });
 
   async function load() {
     try { EV = (await CT.store.events()).filter((e) => e && e.t === 'issue' && e.id); evErr = ''; } catch (e) { EV = []; evErr = e.message || '공유 저장소 읽기 실패'; }
@@ -46,6 +46,7 @@
     }
     const AREA = { 재고: '소재', 소재: '소재', 납기: '납기', 자료: '자료', 도금: '생산', 컬러: '생산', 출하: '출하' };
     for (const e of (D.portal && D.portal.exceptions) || []) {
+      if (CT.idleSkip(D, e.text)) continue;                   // 계획 휴지 라인 경보 제외(11/8)
       const pl = /컬러/.test(e.area + e.text) ? 'C' : /도금|CGL|F\/H/.test(e.area + e.text) ? 'G' : '';
       if (pl && !CT.inScope(pl)) continue;
       out.push({ key: 'exc|' + e.text, no: `현장-${e.area || '기타'}`, act: e.link ? '관련 화면에서 내용 확인 후 조치' : '내용 확인 후 조치', type: AREA[e.area] || '생산', pl, title: e.text.split(' — ')[0], text: e.text.split(' — ')[1] || '', t: null, n: 0, dept: ({ 구매: CT.DEPT.mat })[e.who] || e.who || '생산기획', due: null, orders: [], link: e.link, why: e.text.split(' — ')[1] || '', src: '화면 예외' });

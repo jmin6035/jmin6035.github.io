@@ -15,14 +15,15 @@
   /* 주 = 수요일 시작(11/5 사용자 '7일의 기준은 매주 수요일'). CT.wed(d) = d 가 속한 주의 수요일 */
   CT.wed = (s) => { const d = new Date(String(s).slice(0, 10) + 'T00:00:00Z'); return CT.addD(s, -((d.getUTCDay() + 4) % 7)); };
   CT.diff = (a, b) => (a && b ? Math.round((Date.parse(String(a).slice(0, 10)) - Date.parse(String(b).slice(0, 10))) / 864e5) : null);
-  CT.today = () => new Date(Date.now() + 9 * 3600e3 - 7 * 3600e3).toISOString().slice(0, 10);   // 생산일(07시 기준, 한국 시각)
+  /* 기준일 = 마지막 자료를 받은 생산일(ui/shell.js UI.today — 모든 화면 공통, 11/8). 시계 날짜를 쓰지 않음 */
+  CT.today = () => (window.UI && UI.today ? UI.today(CT.D && CT.D.cg_order_progress && CT.D.cg_order_progress.asOf) : new Date(Date.now() + 2 * 3600e3).toISOString().slice(0, 10));
 
   /* ---------- 자료 불러오기 ---------- */
   CT.boot = function (files, render, opt = {}) {
     const main = document.getElementById(opt.main || 'ct-main');
     main.innerHTML = '<section class="card lock"><div><div class="ic" aria-hidden="true">🔒</div><h2>불러오는 중…</h2>'
       + '<form class="unlock" id="ct-form" hidden><input type="password" id="ct-pw" placeholder="분석 암호" autocomplete="current-password" aria-label="분석 암호"><button type="submit">열기</button></form><p class="hint" id="ct-msg"></p></div></section>';
-    const envs = Promise.all(files.map((f) => GP.latest(f).catch(() => null)));
+    const envs = Promise.all([...files.map((f) => GP.latest(f).catch(() => null)), window.UI && UI.ready ? UI.ready() : null]).then((E) => E.slice(0, files.length));   // 기준일(status) 받은 뒤 그림
     async function unlock(pw) {
       const E = await envs, D = {};
       if (!E.some(Boolean)) { document.getElementById('ct-msg').textContent = '게시된 자료가 없습니다.'; return; }
@@ -39,6 +40,15 @@
   };
   CT.scope = () => (window.UI && UI.scope ? UI.scope() : 'all');
   CT.inScope = (pl) => { const s = CT.scope(); return s === 'all' || s === pl; };
+
+  /* 계획 휴지 중인 라인의 경보 끄기(11/8 사용자 '2CCL 계획 휴지인데 이슈'): 휴지 달력 = 통합 계획 colorDown(하루 전체 계획 정지, 판생 배포·plan_conditions 반영).
+     CT.idleSkip(D, text) = 실적 저하 경보('nCCL 지난주 …')의 라인이 기준일에 휴지이거나 지난주(월~일) 7일 중 3일 이상 휴지면 true */
+  CT.idleSkip = (D, text) => {
+    const m = /^([1-4]CCL) 지난주/.exec(String(text || '')), CD = D && D.integrated && D.integrated.colorDown; if (!m || !CD) return false;
+    const off = new Set(CD.filter((x) => x[1] === m[1] && (+x[3] || 0) >= 1440).map((x) => x[0])), td = CT.today();
+    const dow = (new Date(td + 'T00:00:00Z').getUTCDay() + 6) % 7, w0 = addD(td, -dow - 7);
+    return off.has(td) || Array.from({ length: 7 }, (_, i) => addD(w0, i)).filter((d) => off.has(d)).length >= 3;
+  };
 
   /* ---------- 주문 모델 ---------- */
   const GN = { 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차강판', 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발' };
@@ -64,7 +74,7 @@
   };
   CT.DEPT = { mat: '구매(소재)', match: '생산기획(컬러 매치)', paint: '구매(도료)', plate: '도금 생산', cap: '생산기획', ship: '물류·출하', data: '수주(자료 확인)' };
   CT.RISK = ['위험', '주의', '판정 불가', '정상'];
-  CT.FUL = ['생산 전', '생산 중', '출하 확인 불가', '부분 출하', '출하 완료'];
+  CT.FUL = ['생산 전', '생산 중', '출하 확인 불가', '부분 출하', '생산 완료', '출하 완료'];   // 생산 완료 = 자가재(출하 없음)
   const STALE = 60;   // 납기가 이만큼 지났는데 미종결이면 실제 위험보다 MES 종결 누락일 가능성이 커 '판정 불가'로 분리(11/4)
   CT.STAGE = ['수주 확정', '소재 확보', '작업 편성', '생산', '출하'];
   /* 포스코 진행 단계(11/5 사용자 '도금쪽 포스코 진행상황 어디 갔지 — 주문진도에 추가'): 예전 도금 주문진도(cg_order.js) 단계 띠와 같은 기준.
@@ -111,15 +121,16 @@
     // 이행 단계(위험 등급과 별개, 11/4 2차 진단 2.1): 생산 완료 ≠ 납기 이행. 출하 실적이 이어지지 않은 완료 주문은 '출하 확인 불가'(출하 완료로 추정하지 않음)
     const pDone = x.st === '생산 완료' || (ordT && prodT >= ordT - Math.min(0.5, ordT * 0.05));   // 11/5: 1t 미만 주문이 생산 0 인데 완료로 잡히던 것(허용 오차 0.5t 고정) → 주문량 5% 와 0.5t 중 작은 값
     const shipBase = Math.min(ordT || 0, Math.max(prodT, x.prodT || 0)) || ordT;   // 11/5: 생산 완료 처리된 주문은 '생산한 만큼' 다 나갔으면 출하 완료(주문량보다 적게 끝난 주문이 '부분 출하'로 잡히던 것)
-    o.ful = pDone ? (ordT && o.fwdT >= shipBase - Math.min(0.5, shipBase * 0.05) ? '출하 완료' : o.fwdT > 0.5 ? '부분 출하' : '출하 확인 불가') : prodT > 0.5 ? '생산 중' : '생산 전';
-    o.unshipT = pDone ? Math.max(0, shipBase - o.fwdT) : ordT - o.fwdT;       // 미출하량(출하 실적 기준) — 출하 확인 불가면 과대일 수 있음
-    o.closed = o.ful === '출하 완료';
+    const self = /^자가재\(/.test(o.grp);                                         // 11/8 사용자: 자가재(컬러 투입용 도금)는 출하가 없음 → 생산 끝나면 완료(출하 지연 경보 제외)
+    o.ful = pDone ? (self ? '생산 완료' : ordT && o.fwdT >= shipBase - Math.min(0.5, shipBase * 0.05) ? '출하 완료' : o.fwdT > 0.5 ? '부분 출하' : '출하 확인 불가') : prodT > 0.5 ? '생산 중' : '생산 전';
+    o.unshipT = self ? 0 : pDone ? Math.max(0, shipBase - o.fwdT) : ordT - o.fwdT;       // 미출하량(출하 실적 기준) — 출하 확인 불가면 과대일 수 있음
+    o.closed = o.ful === '출하 완료' || o.ful === '생산 완료';
     if (o.closed) o.risk = '정상';
     else if (pDone && x.due && x.due < asOf) { o.risk = o.fwdT > 0.5 ? '위험' : '판정 불가'; o.cause = o.fwdT > 0.5 ? 'ship' : 'data'; o.dataWhy = o.fwdT > 0.5 ? '' : '생산 완료 · 출하 실적 연결 없음'; o.last = asOf; }
     else if (pDone) o.risk = '정상';
     else if (!x.due) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = '납기 없음'; }
     else if (!ordT) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = '주문량 없음'; }
-    else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = `납기 ${STALE}일 넘게 지남 · MES 미종결(종결 처리 확인)`; }
+    else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.stale = true; o.dataWhy = `납기 ${STALE}일 넘게 지남 · MES 미종결(종결 처리 확인)`; }
     else if (x.lateIn) { o.risk = '위험'; o.cause = 'mat'; o.last = x.needIn; }
     else if (x.st === '미발주' && prodT < 0.5) { o.risk = x.needIn && CT.diff(x.needIn, asOf) <= 35 ? '위험' : '주의'; o.cause = 'mat'; o.last = x.needIn; }   // 11/5: 소재 미발주인데 '생산 지연'으로 나오던 것 — 원인은 소재
     else if (sche && needProd && sche > needProd && remT > 0.5) { o.risk = '위험'; o.cause = 'cap'; o.last = needProd; }
@@ -157,7 +168,7 @@
     else if (pDone && o.ful === '부분 출하' && x.due && x.due < asOf) { o.risk = '위험'; o.cause = 'ship'; o.last = asOf; }
     else if (pDone) { o.risk = x.due && x.due < asOf ? '판정 불가' : '정상'; if (o.risk === '판정 불가') { o.cause = 'data'; o.dataWhy = '생산 완료 · 출하 실적 연결 없음'; } }
     else if (!x.due) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = '납기 없음'; }
-    else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = `납기 ${STALE}일 넘게 지남 · MES 미종결(종결 처리 확인)`; }
+    else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.stale = true; o.dataWhy = `납기 ${STALE}일 넘게 지남 · MES 미종결(종결 처리 확인)`; }
     else if (selfG && selfG.risk === '위험' && x.st !== '매치 완료') { o.risk = '위험'; o.cause = 'plate'; o.last = selfG.last || addD(x.due, -8); }
     else if (x.lateCan) { o.risk = '위험'; o.cause = /도료/.test(x.canBy || '') ? 'paint' : 'mat'; o.last = x.can; }   // 11/5: 매치 끝났는데 도료가 늦는 주문을 '소재 입고 지연'으로 부르던 것
     else if (x.st === '소재 없음') { o.risk = x.lateDue || soon ? '위험' : '주의'; o.cause = 'mat'; o.last = addD(x.due, -7); }
@@ -171,7 +182,7 @@
   }
   CT.orders = function (D) {
     const cg = D.cg_order_progress, cc = D.cc_order_progress, CAL = D.cg_calendar && D.cg_calendar.contracts;
-    const asOf = (cg && cg.asOf) || (cc && cc.asOf) || CT.today();
+    const asOf = CT.today();   // 공통 기준일(11/8) — 주문 진도 자료일(cg.asOf)과 같음
     O_hasShip = !!(cg && cg.hasShip);
     const G = (cg ? cg.rows : []).filter((x) => /^P/.test(x.con)).map((x) => gRow(x, asOf, CAL));   // 옛 계약번호 체계(G…) 제외
     const GI = Object.fromEntries(G.map((o) => [o.id, o]));
@@ -180,6 +191,8 @@
     all.forEach((o) => { o.dept = o.cause ? CT.DEPT[o.cause] : null; o.left = o.last ? CT.diff(o.last, asOf) : null; });
     return { asOf, all, G, C, ccLines: cc ? cc.lines : [], ccMissing: cc ? cc.missing : ['1CCL', '2CCL', '3CCL', '4CCL'], cgAt: cg && cg.asOf, ccAt: cc && cc.asOf };
   };
+ /* 종결 확인 필요(11/8 사용자): 납기 60일 넘게 지난 미종결 주문 — 실제 위험보다 MES 종결 누락. 잔량·지연 집계에서 빼고 따로 목록 */
+  CT.isStale = (o) => !!(o && o.stale && !o.closed);
   CT.riskSort = (a, b) => (CT.RISK.indexOf(a.risk) - CT.RISK.indexOf(b.risk)) || ((a.left == null ? 999 : a.left) - (b.left == null ? 999 : b.left)) || (b.remT - a.remT);
 
   /* ---------- 화면 부품 ---------- */
@@ -199,8 +212,11 @@
   };
   CT.badgeT = (r, txt) => `<span class="ct-b ${RC[r] || 'na'}">${esc(txt)}</span>`;   // 등급 색 + 무엇이 문제인지 글자
   CT.leftTxt = (o) => (o.left == null ? '' : o.left < 0 ? `<b class="ct-neg">${-o.left}일 지남</b>` : o.left === 0 ? '<b class="ct-neg">오늘</b>' : `D-${o.left}`);
-  /* 기준일 띠: [{name, at, kind: 실적|확정계획|재계획|추정, ok}] */
-  CT.basis = (items) => `<div class="ct-basis">${items.filter(Boolean).filter((x) => CT.inScope(x.pl || (/^도금|CGL/.test(x.name) ? 'G' : /^컬러|CCL/.test(x.name) ? 'C' : 'all'))).map((x) => `<span class="ct-bs ${x.ok === false ? 'bad' : ''}" title="${esc(x.tip || '')}"><b>${esc(x.name)}</b> ${esc(x.at ? CT.md(x.at) + (String(x.at).length > 10 ? ' ' + String(x.at).slice(11, 16) : '') : '없음')}${x.kind ? ` <i>${esc(x.kind)}</i>` : ''}</span>`).join('')}</div>`;
+  /* 기준일 띠: [{name, at, kind: 실적|확정계획|재계획|추정, ok}]
+     11/8 날짜 통일: 기준일보다 뒤 시각(= 계산·게시 시각)은 그 계산이 쓴 자료 시각(기준일 자료)으로 보여 줌 — 계산 시각은 말풍선 */
+  CT.basis = (items) => { const B = window.UI && UI.basis && UI.basis(), td = CT.today();
+    const at = (x) => { if (!x.at) return ['없음', '']; const s = String(x.at).replace('T', ' '); if (s.slice(0, 10) > td) return [B ? B.at : CT.md(td), `계산 ${CT.md(s)} ${s.slice(11, 16)}`]; return [CT.md(s) + (s.length > 10 ? ' ' + s.slice(11, 16) : ''), '']; };
+    return `<div class="ct-basis">${items.filter(Boolean).filter((x) => CT.inScope(x.pl || (/^도금|CGL/.test(x.name) ? 'G' : /^컬러|CCL/.test(x.name) ? 'C' : 'all'))).map((x) => { const [a, tp] = at(x); return `<span class="ct-bs ${x.ok === false ? 'bad' : ''}" title="${esc([x.tip, tp].filter(Boolean).join(' · '))}"><b>${esc(x.name)}</b> ${esc(a)}${x.kind ? ` <i>${esc(x.kind)}</i>` : ''}</span>`; }).join('')}</div>`; };
   /* 핵심 지표: [{k, label, v, unit, sub, tone: bad|warn|ok, href}] */
   CT.kpis = (L) => `<div class="ct-kpis">${L.map((x) => `<${x.href ? `a href="${x.href}"` : 'div'} class="ct-kpi ${x.tone || ''}"><div class="l">${esc(x.label)}</div><div class="v">${x.v}<small>${esc(x.unit || '')}</small></div>${x.sub ? `<div class="s">${x.sub}</div>` : ''}</${x.href ? 'a' : 'div'}>`).join('')}</div>`;
   CT.tabs = (id, L, cur) => `<div class="seg ct-seg" id="${id}">${L.map(([k, n]) => `<button type="button" data-k="${k}" aria-pressed="${k === cur}">${esc(n)}</button>`).join('')}</div>`;
@@ -231,7 +247,7 @@
   /* 이슈 id·상태(06 이슈·조정과 공유): 키 'ord|cause|pl|grp' · 'mat|소재키' · 'exc|문구', 상태 이벤트 {t:'issue', id, st} */
   CT.issueId = (s) => { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return 'I-' + (h >>> 0).toString(36).toUpperCase().slice(0, 6); };
   CT.issueState = (evs) => { const m = {}; for (const e of evs || []) if (e && e.t === 'issue' && e.id && e.st) m[e.id] = e.st; return m; };
-  CT.fulBadge = (f) => `<span class="ct-f ${{ '출하 완료': 'ok', '부분 출하': 'warn', '출하 확인 불가': 'na', '생산 중': 'mid', '생산 전': 'pre' }[f] || 'na'}">${esc(CT.fl(f))}</span>`;
+  CT.fulBadge = (f) => `<span class="ct-f ${{ '출하 완료': 'ok', '생산 완료': 'ok', '부분 출하': 'warn', '출하 확인 불가': 'na', '생산 중': 'mid', '생산 전': 'pre' }[f] || 'na'}">${esc(CT.fl(f))}</span>`;
   /* 공유 저장(결정 기록과 같은 저장소 — 암호화한 이벤트 추가만): 이슈 상태·조치 이력 */
   const API = 'https://gatcqxrzaonjsixajrwd.supabase.co/rest/v1/cgl_decisions', KEY = 'sb_publishable_BlfAhxz_v3yg6iJw_nbRaA_YMFAOS7K';
   const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };

@@ -393,6 +393,7 @@
     if (pw) { $('p-lockbox').hidden = true; $('p-skel').hidden = false; }
     try { D = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ }
       try { const fx = await fhxReady; if (fx) D.fhExcel = await GP.decryptJSON(fx, pw); } catch (e) { /* 엑셀 기준 없으면 MES 계산 */ }
+      await UI.ready(); D.today = UI.today(D.today);   // 공통 기준일(11/8 — 계산 날짜가 아니라 자료 날짜)
       S = load(); render(); UI.onScope(() => render()); }
     catch (e) { $('p-lockbox').hidden = false; $('p-skel').hidden = true; $('p-form').hidden = false; $('p-msg').textContent = pw ? '암호가 맞지 않습니다' : ''; }
   }
