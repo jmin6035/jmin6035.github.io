@@ -245,18 +245,20 @@
   const catC = (r) => { const cf = (+r.cfmT || 0) > 0.05;   // 1030 확정 지시가 있으면 작업지시량(생산 캘린더 작업대기량과 같은 근거)
     if (cf) return '작업지시량';
     if (!(r.mchT > 0.0005)) return K0;
+    if (r.subWait != null) return r.subWait ? '부자재 대기' : '작업 대기';   // 11/9 사용자: 1020 = 매치, PF·도료 입고예정 날짜·시간이 지났으면 작업 대기
+    if (r.in1020 === false) return K0;                       // 매치 소재는 있지만 1020 지시가 없음(끝난 지시의 잔량) — 새 지시 필요
     if (paintWait(r)) return '부자재 대기';
     return r.can ? '작업 대기' : '부자재 대기'; };
   const catG = (o) => ((o.src && o.src.woWait) ? '작업지시량' : o.matSt !== '확보' ? K0 : '작업 대기');   // 현장 작업지시에 올랐으면 소재는 있는 것
   const CFG = {
-    C: { cat: catC, sub: MSUB, subOf: msub, tiles: ['부자재 대기', '작업 대기'], leaves: [[K0, '#d03b3b', '매치된 소재 없음 — 아래는 소재 상태'], ['부자재 대기', '#eda100', '매치 뒤 부원료(도료·PF) 입고 대기 — 부자재입고대기 · 도료 입고 예정일이 오늘 뒤 · 부자재 일정 없음'],
-      ['작업 대기', '#2a78d6', '부자재 있음(도료 입고 예정일 지남) — 작업지시 확정 전(SSCHC1020 지시대기)'], ['작업지시량', '#008300', 'SSCHC1030 생산우선순위 — 확정 지시 남은 양(DUMMY 제외)']] },
+    C: { cat: catC, sub: MSUB, subOf: msub, tiles: ['부자재 대기', '작업 대기'], leaves: [[K0, '#d03b3b', '매치된 소재 없음 — 아래는 소재 상태'], ['부자재 대기', '#eda100', '1020 소재 매치 — 도료·PF 입고예정 날짜·시간이 아직 안 지남(도료 일정 없음 포함)'],
+      ['작업 대기', '#2a78d6', '1020 소재 매치 — 도료·PF 입고예정 날짜·시간 지남, 확정(1030) 전'], ['작업지시량', '#008300', '1030 확정 지시 남은 양(DUMMY 제외, 작업예정일 2주 넘게 지난 미종결 지시 제외)']] },
     G: { cat: catG, sub: GSUB, subOf: gsub, tiles: ['작업 대기'], leaves: [[K0, '#d03b3b', '소재(F/H) 입고 전 — 아래는 소재 상태'], ['작업 대기', '#2a78d6', '소재 입고 끝 — 현장 작업지시 전'], ['작업지시량', '#008300', '현장 작업지시 목록에 오름 — 바로 생산']] },
   };
   const MATCHED = ['부자재 대기', '작업 대기'], KW = '작업지시량';
   // 작업시간(h, 24시간 기준): 컬러 = 계약별 실적 t/h(cc_order_progress tph), 작업지시량은 확정 지시 남은 양 기준 · 도금 = 라인 하루 능력 ÷ 24
   const hrsOf = (r, k) => (r.pl === 'G' || r.src ? ((r.remT || 0) / ((CAPG[r.line] || 800) / 24)) : k === KW ? (r.cfmHrs != null ? r.cfmHrs : r.hrs) || 0 : (r.hrs || 0));
-  const tonOf = (r, k) => (!r.src && r.pl !== 'G' && k === KW ? (+r.cfmT || 0) : (+r.remT || 0));
+  const tonOf = (r, k) => (!r.src && r.pl !== 'G' && k === KW ? (+r.cfmT || 0) : !r.src && r.pl !== 'G' && (k === '부자재 대기' || k === '작업 대기') && r.subT != null ? +r.subT : (+r.remT || 0));   // 11/9: 1020 단계는 지시 남은 양(MES 화면과 같은 근거)
   const byLine = (rs, k) => { const o = {}; rs.forEach((r) => { o[r.line] = (o[r.line] || 0) + hrsOf(r, k); }); return o; };
   const dayTxt = (rs, k) => { const h = byLine(rs, k), ls = Object.keys(h).sort(); if (!ls.length) return ''; if (ls.length === 1) return `<b>${(h[ls[0]] / 24).toFixed(1)}일</b>`;
     const mx = ls.reduce((a, l) => (h[l] > h[a] ? l : a), ls[0]); return `최대 <b>${(h[mx] / 24).toFixed(1)}일</b>(${mx})`; };
@@ -269,7 +271,7 @@
       const ex = cl.reduce((a, l) => { const e = (cc.excl || {})[l] || {}; return { zero: a.zero + ((e.zero || [])[0] || 0), small: a.small + ((e.small || [])[0] || 0), zT: a.zT + ((e.zero || [])[1] || 0), sT: a.sT + ((e.small || [])[1] || 0) }; }, { zero: 0, small: 0, zT: 0, sT: 0 });
       const can = R.filter((r) => r.mchT > 0.0005).reduce((a, r) => a + Math.min(+r.remT || 0, +r.mchT || 0), 0);
       const exA = (k) => cl.reduce((a, l) => { const e = (((cc.excl || {})[l] || {})[k]) || []; return a.map((v, i) => v + (+e[i] || 0)); }, [0, 0, 0, 0, 0]);
-      out.push({ pl: 'C', nm: '컬러', R, cap, can, ex: Object.assign(ex, { shut: R0.filter((r) => shut.has(r)).length, dummy: R0.filter((r) => r.dummy && !shut.has(r)).length }), cusLoaded: !!cc.cusLoaded, exZ: exA('zero'), exS: exA('small'), cats: CFG.C.leaves.map(([k, c, t]) => { const rs = R.filter((r) => catC(r) === k); return { k, c, t, n: rs.length, rem: rs.reduce((a, r) => a + (+r.remT || 0), 0), rs }; }) });
+      out.push({ pl: 'C', nm: '컬러', R, cap, can, ex: Object.assign(ex, { shut: R0.filter((r) => shut.has(r)).length, dummy: R0.filter((r) => r.dummy && !shut.has(r)).length }), cusLoaded: !!cc.cusLoaded, exZ: exA('zero'), exS: exA('small'), cats: CFG.C.leaves.map(([k, c, t]) => { const rs = R.filter((r) => catC(r) === k); return { k, c, t, n: rs.length, rem: rs.reduce((a, r) => a + tonOf(r, k), 0), rs }; }) });   // 11/9: 단계별 톤 = 그 단계의 근거(1030 확정 남은 양·1020 지시 남은 양·그 밖 주문 잔량)
     }
     if (gl.length && (D0 || {}).cg_order_progress) {
       const G = (M.G || []).filter((o) => gl.includes(o.line)), R = G.filter((o) => !o.closed && (o.remT || 0) > 0.5), cap = gl.reduce((a, l) => a + CAPG[l], 0);
@@ -286,7 +288,7 @@
     const tile = (k, v, u, sub, tone = '', ex = '') => `<div class="pt ${tone}${ex ? ' ck' : ''}"${ex ? ` data-ex="${esc(ex)}" role="button" tabindex="0" aria-expanded="${PS.open === ex}"` : ''}><div class="k">${k}</div><div class="v">${v}<small>${u}</small></div><div class="s">${sub}</div></div>`;
     const cat = (k) => d.cats.find((c) => c.k === k) || { n: 0, rem: 0, rs: [] }, F = CFG[d.pl], sumT = (rs) => rs.reduce((a, r) => a + (+r.remT || 0), 0);
     const hSum = (rs, k) => rs.reduce((a, r) => a + hrsOf(r, k), 0), xk = (k) => `${d.pl}|${k}`;
-    const m0 = cat(K0), mt = d.cats.filter((c) => MATCHED.includes(c.k)), mtR = mt.flatMap((c) => c.rs), mtT = sumT(mtR), mtN = mtR.length, w = cat(KW);
+    const m0 = cat(K0), mt = d.cats.filter((c) => MATCHED.includes(c.k)), mtR = mt.flatMap((c) => c.rs), mtT = mt.reduce((a, c) => a + c.rem, 0), mtN = mtR.length, w = cat(KW);
     const subT = (k) => sumT(m0.rs.filter((r) => F.subOf(r) === k));
     const m0s = d.pl === 'C' ? (subT('발주 없음') > 0.5 ? ` · <span class="bad">발주 없음 ${n0(subT('발주 없음'))}t</span>` : '') : [['입고 지연', subT('입고 지연')], ['미발주', subT('미발주')]].filter((x) => x[1] > 0.5).map(([k, v]) => ` · <span class="bad">${k} ${n0(v)}t</span>`).join('');
     const hd = (rs, k) => `${n0(hSum(rs, k))}h · ${dayTxt(rs, k)}`;
