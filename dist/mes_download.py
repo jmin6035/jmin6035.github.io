@@ -826,6 +826,12 @@ def main():
         once_max = int(cfg.get('remote_once_max', 20)) if a.remote_only else 0   # 11/9: 아침 전체 실행은 매일 조회만(빠르게) — 한 번만 받는 옛 자료는 2시간 원격 조회가 나눠 받음
         qs = sorted(Q.get('queries', []), key=lambda q: q.get('mode', 'once') == 'once')
         n_once, left, n_run = 0, 0, [0]
+        if not a.remote_only:                                        # 아침 실행은 앞에서 분석용 조회를 이미 돌려 메모리가 차 있음 → 원격 조회 전에 새로
+            try:
+                revive(force=True)
+                open_query()
+            except Exception as e_:
+                print(f'  ⚠ 브라우저 새로 띄우기 실패: {str(e_)[:120]}')
         sp = os.path.join(xdir, 'snap_remote_status.json')                  # 조회마다 결과(행 수·초·실패 이유)를 남겨 클라우드에서 볼 수 있게(2026-10-20 v49)
         try:
             stat = {r[0]: r for r in json.load(open(sp, encoding='utf-8'))['rows']}
