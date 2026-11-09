@@ -275,7 +275,7 @@
     const pw = $('pub-pw').value, pw2 = $('pub-pw2').value;
     if (pw.length < 6) throw new Error('암호는 6자 이상으로 정하세요');
     if (pw !== pw2) throw new Error('암호 확인이 다릅니다');
-    const label = $('pub-label').value.trim() || `${result.P.year} ${result.P.months[0]}~${result.P.months[2]}월 계획${result.replan ? ` (재계획 ${result.replan.t0})` : ''}`;
+    const label = $('pub-label').value.trim() || `${result.P.year} ${result.P.months[0]}~${result.P.months[2]}월 계획${result.replan ? ` · 재계획(실적 ~${GP.md(result.replan.t0)})` : ''}`;   // 11/9: 재계획 표기 통일
     return GP.encryptJSON(JSON.parse(packResult()), pw, label);
   }
   $('pub-file').onclick = async () => {

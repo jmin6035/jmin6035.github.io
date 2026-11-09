@@ -690,7 +690,7 @@
     const stale = Math.round((Date.now() - dt(O.asOf).getTime()) / 864e5);
     $('cc-main').innerHTML = (stale >= 2 ? `<div class="card" style="background:var(--warn-bg);color:var(--warn);font-weight:700">자료 기준 ${md(O.asOf)} — ${stale}일 전 자료</div>` : '')
       + kpis() + grpCard() + calCard() + confirmCard() + accCard() + riskCard()
-      + `<p class="msg" style="margin:4px 4px 0">자료 ${esc(O.asOf)} · ${esc(O.planSrc || '')} · 계산 ${esc(O.built || '')}</p>`;
+      + `<p class="msg" style="margin:4px 4px 0">자료 ${esc(O.asOf)} · ${O.planT0 ? `재계획(실적 ~${md(O.planT0)})` : esc(O.planSrc || '')} · 계산 ${esc(O.built || '')}</p>`;   // 11/9: 재계획 표기 통일(저장일 → 실적 기준일)
     $('cc-main').querySelectorAll('button.cell').forEach((b) => b.onclick = () => openDay(b.dataset.ln, b.dataset.d));
     $('cc-main').querySelectorAll('#cc-rk button').forEach((b) => b.onclick = () => { rk = b.dataset.rk; try { localStorage.setItem(RK_KEY, rk); } catch (e) { /* 무시 */ } render(); });
     $('cc-save').onclick = save;
@@ -700,13 +700,14 @@
     if (window.UI) UI.reveal($('cc-main'));
   }
   $('cc-dlg').addEventListener('click', (e) => { if (e.target === $('cc-dlg')) $('cc-dlg').close(); });
-  const envReady = GP.latest('cg_calendar.enc.json');
+  const envReady = GP.latest('cg_calendar.enc.json'), lpReady = GP.latest('latest.plan.enc.json').catch(() => null);   // 11/9: lp = 재계획 실적 기준일(t0)
   async function unlock(pw) {
     const env = await envReady;
     if (!env) { $('cc-msg').textContent = '아직 게시된 자료가 없습니다.'; return; }
     try { O = await GP.decryptJSON(env, pw); PW = pw; try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
     catch (e) { $('cc-form').hidden = false; $('cc-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
     O.base = JSON.parse(JSON.stringify(O.lines));
+    O.planT0 = await lpReady.then((e) => e && GP.decryptJSON(e, pw)).then((p) => (((p && p.result) || {}).replan || {}).t0 || null).catch(() => null);   // 11/9: 재계획 표기 = 실적 기준일
     CONF = await loadConfirm();
     let draft = null; try { draft = localStorage.getItem(MV_KEY()); } catch (e) { /* 무시 */ }
     const same = CONF && CONF.asOf === O.asOf;               // 같은 자료로 저장한 확정본이면 그 수정 내역을 그대로 불러와 이어서 고침(다음 날부터는 계산에 이미 고정돼 들어옴)
