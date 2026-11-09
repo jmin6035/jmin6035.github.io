@@ -75,7 +75,9 @@
     if (GP.isBlackout(P, l, d)) return false;
     if (b.rel && d < b.rel) return false;                    // 주문 소재 입고 + 투입 전에는 못 만듦(tools/order_demand, 10/30)
     if (d > b.due) return !!(O && O.allowLate) && GP.diffDays(d, b.due) <= (b.maxLate || O.maxLate || 14);
-    return P.releaseExempt.includes(b.cls) || GP.diffDays(b.due, d) <= P.releaseDays;
+    if (P.releaseExempt.includes(b.cls) || (O && O.freezeUntil && d <= O.freezeUntil)) return true;   // 동결 기간(기준 계획 그대로)은 상한 창 검사 안 함
+    const ext = (P.shutdowns || []).filter((s) => d < s.start && s.start <= b.due).reduce((a, s) => a + GP.diffDays(s.end, s.start) + 1, 0);   // 11/9 회의: 상한 15일, 단 대수리 등 정지 직전은 정지 일수만큼 더 앞서 생산 허용
+    return GP.diffDays(b.due, d) <= P.releaseDays + ext;
   }
   GP.runMILP = function (highs, buckets, P, log, O = {}) {
     const H = GP.horizon(P), days = GP.planDays(P, H, O), D0 = days[0], L = P.lines, LF = P.lineFamilies, FAM = P.alloyFamily;
