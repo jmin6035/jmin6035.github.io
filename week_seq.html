@@ -54,7 +54,7 @@ html body table.ws td.no { text-align: right !important; font-weight: 800; font-
 .tm { white-space: nowrap; font-variant-numeric: tabular-nums; width: 110px; } .tm b { font-size: 15px; }
 .cn { white-space: nowrap; font-weight: 700; letter-spacing: -.2px; }
 .sub { font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
-.sp { display: flex; flex-wrap: wrap; gap: 5px 6px; align-items: center; }
+.sp { display: block; min-width: 0; }
 .cp { display: inline-block; border-radius: 6px; padding: 1px 8px; font-size: 14px; font-weight: 700; white-space: nowrap; background: var(--tint-2); color: var(--ink); }
 .cp.al { background: var(--gt-g); color: var(--gc-g); } .cp.cl { background: var(--gt-c); color: var(--gc-c); } .cp.sz { font-size: 15px; background: none; padding: 0; font-variant-numeric: tabular-nums; }
 .cp.fx { background: var(--brand-2); color: #fff; } .cp.wr { background: var(--warn-bg); color: var(--warn); } .cp.bd { background: var(--bad-bg); color: var(--bad); }
@@ -67,6 +67,9 @@ html body table.ws td.ac { white-space: nowrap; text-align: right !important; }
 .pl-g { margin: 0 0 12px; } .pl-g > summary { cursor: pointer; font-weight: 700; font-size: 15px; padding: 4px 0; white-space: nowrap; } .pl-g > summary span { color: var(--ink-2); font-weight: 500; font-size: 14px; }
 .pl-i { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 14px; cursor: grab; }
 .pl-i .sub { white-space: normal; }
+.wk3 { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 6px; align-items: start; padding: 3px 0; } .wk3 + .wk3 { border-top: 1px dashed var(--line); }
+.wk3 > i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--ink-2); padding-top: 3px; } .wk3 > div { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.pl-i .sp { margin-top: 4px; }
 .pl-i button { font: inherit; font-size: 13.5px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--brand-2); cursor: pointer; white-space: nowrap; }
 .ck { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin: 0 0 16px; background: var(--surface); }
 .ck h3 { font-size: 16px; margin: 0 0 8px; }

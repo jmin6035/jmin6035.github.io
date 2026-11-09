@@ -16,7 +16,7 @@
     const lbl = String(env.label || '계획 결과').replace(/\(MES 실적 ~\d{4}-(\d{2})-(\d{2}),?\s*([^)]*)\)/, (_, m, d, x) => `· 재계획(실적 ~${+m}/${+d}${x ? ` · ${x}` : ''})`);   // 11/9: 재계획 표기 통일 '재계획(실적 ~M/D)' — 가동 캘린더와 같게
     $('d-pubinfo').innerHTML = `<b>${esc(lbl)}</b> · 게시 ${new Date(env.created).toLocaleString('ko-KR')}`;
     $('d-unlock').hidden = false;
-    let saved = null; try { saved = localStorage.getItem(PW_KEY); } catch (e) { saved = null; }
+    let saved = null; try { saved = localStorage.getItem(PW_KEY) || localStorage.getItem('cgl-analysis-pw'); } catch (e) { saved = null; }
     if (saved) { $('d-pw').value = saved; $('d-remember').checked = true; unlock(); }
     else $('d-pw').focus();
   }
