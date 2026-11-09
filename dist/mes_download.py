@@ -401,10 +401,11 @@ def main():
     ap.add_argument('--register', action='store_true', help='매일 07:35 자동 실행을 Windows 작업 스케줄러에 등록(.bat 없이 파이썬 직접 실행)')
     ap.add_argument('--no-update', action='store_true', help='자동 업데이트 건너뜀')
     ap.add_argument('--auto-only', action='store_true', help='MES 내려받기 없이 이미 받은 자료로 계산·게시만(11/9)')
+    if '--register' not in sys.argv:
+        self_update()                                     # 11/9: 인자 확인보다 먼저 — 옛 판이 새 옵션(--auto-only)을 몰라 업데이트 전에 멈췄음
     a = ap.parse_args()
     if a.register:
         sys.exit(register_task())
-    self_update()
     ensure_tasks()
     seed_acc()
     if a.auto_only:                                       # 이미 받은 mes/ 자료로 자동 실행기만(계산·업로드)
