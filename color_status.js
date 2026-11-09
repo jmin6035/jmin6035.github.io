@@ -47,7 +47,8 @@
     }
     lastAct = O.color.filter((c) => c.act).reduce((a, c) => (c.d > a ? c.d : a), '');
     $('d-empty').hidden = true; $('d-body').hidden = false;
-    $('d-title').textContent = `'${MONTHS[0].slice(2, 4)}.${MONTHS.map((m) => +m.slice(5)).join('·')}월 컬러 CCL 가동계획`;
+    const mL = MONTHS[MONTHS.length - 1];
+    $('d-title').textContent = `'${MONTHS[0].slice(2, 4)}.${MONTHS[0].slice(0, 4) === mL.slice(0, 4) ? MONTHS.map((m) => +m.slice(5)).join('·') : `${+MONTHS[0].slice(5)}~'${mL.slice(2, 4)}.${+mL.slice(5)}`}월 컬러 CCL 가동계획`;   // 11/9: 달 = 자료(해 넘으면 '26.10~'27.2월)
     $('d-meta').textContent = [`확정 계획(계획재 = 운영안 반영)`, `계산 ${String(O.built).replace('T', ' ')}`, lastAct && `실적 ~${md(lastAct)}`, `계획 기간 ${D0} ~ ${D1}`].filter(Boolean).join(' · ');   // 11/9: 기간 = 자료
     const kinds = new Set((O.colorDown || []).map((x) => x[2]));
     const leg = Object.keys(KN).filter((k) => kinds.has(k)).map((k) => `<span><i class="sw k-${k}"></i>${KN[k]}</span>`).join('')
@@ -167,10 +168,10 @@
     const un = {}; for (const u of O.colorUnplaced) un[u.g] = (un[u.g] || 0) + u.t;
     const rows = CG.map((g) => { const v = MONTHS.map((m) => t[`${g}|${m}`] || 0); return { g, v, s: sum(v), u: un[g] || 0 }; });
     const mx = Math.max(...rows.map((r) => r.s + r.u), 1);
-    const SH = [0.45, 0.7, 1];                                        // 10·11·12월 = 같은 그룹색의 옅음→진함
+    const SH = MONTHS.map((_, i, a) => +(0.35 + 0.65 * (a.length > 1 ? i / (a.length - 1) : 1)).toFixed(2));   // 달마다 같은 그룹색의 옅음→진함(11/9: 달 수 = 자료)
     $('d-dept').innerHTML = `<div class="gm-leg">${MONTHS.map((m, i) => `<span><i style="background:var(--ink-2);opacity:${SH[i]}"></i>${+m.slice(5)}월</span>`).join('')}<span><i class="hatch"></i>미편성</span></div>`
       + rows.map((r) => `<div class="gm-row"><div class="gm-n"><i style="background:${GVAR[r.g]}"></i>${GL(r.g)}</div>
-        <div class="gm-bar">${r.v.map((v, i) => (v > 0 ? `<i style="width:${v / mx * 100}%;background:color-mix(in srgb, ${GVAR[r.g]} ${SH[i] * 100}%, var(--surface));color:${i < 2 ? 'var(--ink)' : '#fff'};text-shadow:${i < 2 ? 'none' : ''}" title="${GL(r.g)} ${+MONTHS[i].slice(5)}월 ${fmt(v)}t">${v / mx > 0.07 ? fmt(v) : ''}</i>` : '')).join('')}${r.u > 0.5 ? `<i class="hatch" style="width:${r.u / mx * 100}%" title="미편성 ${fmt(r.u)}t">${r.u / mx > 0.07 ? fmt(r.u) : ''}</i>` : ''}</div>
+        <div class="gm-bar">${r.v.map((v, i) => (v > 0 ? `<i style="width:${v / mx * 100}%;background:color-mix(in srgb, ${GVAR[r.g]} ${SH[i] * 100}%, var(--surface));color:${SH[i] < 0.6 ? 'var(--ink)' : '#fff'};text-shadow:${SH[i] < 0.6 ? 'none' : ''}" title="${GL(r.g)} ${+MONTHS[i].slice(5)}월 ${fmt(v)}t">${v / mx > 0.07 ? fmt(v) : ''}</i>` : '')).join('')}${r.u > 0.5 ? `<i class="hatch" style="width:${r.u / mx * 100}%" title="미편성 ${fmt(r.u)}t">${r.u / mx > 0.07 ? fmt(r.u) : ''}</i>` : ''}</div>
         <div class="gm-t"><b>${fmt(r.s)}t</b>${r.u > 0.5 ? `<span class="neg">미편성 ${fmt(r.u)}t</span>` : '<span class="muted">미편성 없음</span>'}</div></div>`).join('')
       + `<div class="gm-row gm-tot"><div class="gm-n">합계</div><div class="gm-sum">${MONTHS.map((m) => `<span>${+m.slice(5)}월 <b>${fmt(monT(m))}t</b></span>`).join('')}</div><div class="gm-t"><b>${fmt(sum(MONTHS, (m) => monT(m)))}t</b><span class="neg">미편성 ${fmt(unT())}t</span></div></div>`;
   }

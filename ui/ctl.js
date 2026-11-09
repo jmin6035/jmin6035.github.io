@@ -28,7 +28,7 @@
       const st = cur(g.key), d = UI.ctlTfd(g.key), dly = S && S.month ? S.month / dim((O.today || O.asOf).slice(0, 7)) : 0, cov = st != null && dly ? st / dly : null;
       const stock = cov == null || !d ? ['na', st != null ? n0(st) : '–', ''] : [cov < d * 0.5 ? 'bad' : cov > d ? 'warn' : 'ok', `${Math.round(cov)}일`, `${n0(st)}t · 상한 ${d}일`];
       const mg = (MO && MO.groups ? MO.groups.groups : []).filter((x) => (MOG[g.key] || []).includes(x.group));
-      const ma = mg.flatMap((x) => x.mats || []).filter((x) => !(x.use < 1)).map((x) => VM.get(x.key) || x).sort((a, b) => SR_[a.st] - SR_[b.st] || String(a.deadline || '9').localeCompare(String(b.deadline || '9')))[0];   // 11/9: 그룹 상태 = 쓰는 소재 중 가장 급한 것(공통 기준)
+      const ma = mg.flatMap((x) => x.mats || []).filter((x) => !(x.use < 1)).map((x) => VM.get(x.key) || x).sort((a, b) => SR_[a.st] - SR_[b.st] || (b.lateT || 0) - (a.lateT || 0) || String(a.deadline || '9').localeCompare(String(b.deadline || '9')))[0];   // 11/9: 그룹 상태 = 쓰는 소재 중 가장 급한 것(공통 기준)
       const mat = !mg.length ? ['na', '–', ''] : !ma || ma.st === 'ok' ? ['ok', '충당', ''] : [{ late: 'bad', soon: 'warn', plan: 'ok' }[ma.st], { late: '마감 지남', soon: '2주 안 발주', plan: '발주 예정' }[ma.st], ma.st === 'late' ? `${esc(ma.name)} ${n0(ma.lateT)}t` : `${esc(ma.name)} ${md(ma.deadline)}까지`];
       const sh = SB.filter((x) => (SBN[g.key] || []).some((n) => x.startsWith(n + ' '))).map((x) => +(x.match(/([\d,]+)t$/) || [0, '0'])[1].replace(/,/g, ''));
       const due = g.pl !== 'G' ? ['na', '–', ''] : sh.length ? ['bad', `결품 ${n0(sh.reduce((a, b) => a + b, 0))}t`, `${sh.length}건`] : ['ok', '결품 0', ''];

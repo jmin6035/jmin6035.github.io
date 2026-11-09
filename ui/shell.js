@@ -203,7 +203,7 @@
     const soon = new Date(Date.parse(td + 'T00:00:00Z') + 14 * 864e5).toISOString().slice(0, 10);
     return (G.mats || []).map((m) => {
       const lt = LI ? LI.get(m.key) || 0 : m.late || 0, nd = NA.filter((x) => x.plant === m.plant && x.mat === m.name).map((x) => x.deadline).sort()[0];
-      const dl = lt < 0.5 && nd && (!m.deadline || nd < m.deadline) ? nd : m.deadline;
+      const dl = nd && (!m.deadline || nd < m.deadline) ? nd : m.deadline;
       const st = lt >= 0.5 ? 'late' : !(m.short > 0.5) ? 'ok' : dl && dl <= soon ? 'soon' : 'plan';
       return Object.assign({}, m, { st, lateT: lt, deadline: dl });
     });
