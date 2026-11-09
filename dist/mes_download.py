@@ -750,6 +750,8 @@ def main():
         save(merged, name, out)
         return True
 
+    nq = [0]
+
     def remote_queries(run_sql):
         """사이트의 published/queries.enc.json 에 적힌 조회문(SELECT/WITH 만)을 MES 쿼리 화면에서 실행해 mes/extra/<이름>.json 으로 저장.
         mode: once(조회문이 바뀌었을 때만) · daily(매번) · range(기간 나눠서, 조회문 안 {d0}·{d1} 을 YYYYMMDD 로 바꿈, step 일씩)
@@ -834,6 +836,16 @@ def main():
                     left += 1
                     continue
                 n_once += 1
+            nq[0] += 1
+            if nq[0] % 50 == 0:
+                # 11/9 근본 원인: 조회 400여 개를 MES 한 화면에서 새로 고침 없이 연달아 돌려 브라우저 메모리가 계속 쌓임(표 위젯이 결과마다 칸을 새로 만들고 다 못 비움)
+                # → 다음 큰 화면(재고현황·생산실적 조회)에서 '오류 코드 39'·응답 없음. 50개마다 브라우저를 새로 띄워 메모리를 비움
+                print(f'  (조회 {nq[0]}개째 — 브라우저 메모리 비우려고 새로 띄움)')
+                try:
+                    revive(force=True)
+                    open_query()
+                except Exception as e_:
+                    print(f'  ⚠ 브라우저 새로 띄우기 실패: {str(e_)[:120]}')
             print(f'▶ {name} (원격 조회 · {mode})')
             t0, nrows = time.time(), None
             try:
@@ -866,6 +878,12 @@ def main():
                 msg = str(e).splitlines()[0][:150] if str(e) else type(e).__name__
                 note(name, mode, nrows, t0, '실패: ' + msg)
                 print(f'  ⚠ {name}: 실패 — 건너뜀 ({msg})')
+                if 'timed out' in msg.lower() or 'Timeout' in type(e).__name__ or 'MaxRetry' in type(e).__name__:
+                    try:                                       # 브라우저가 멈춘 경우 새로 띄워 다음 조회 계속
+                        revive(force=True)
+                        open_query()
+                    except Exception:
+                        pass
         json.dump(done, open(dp, 'w', encoding='utf-8'))
         if left:
             print(f'  한 번만 받는 조회 {left}개는 다음 실행에서(한 번에 {once_max}개까지 — auto_config.json remote_once_max)')
@@ -1419,8 +1437,10 @@ def main():
                 except Exception as e:
                     print(f'  ⚠ 원격 조회 목록: 실패 — 건너뜀 ({str(e).splitlines()[0][:150] if str(e) else type(e).__name__})')
             revive()
-            # ③ 생산실적 조회(도금) 화면 — 11/9: 실패해도 실행 전체를 멈추지 않음(쿼리 코일 자료로 계산 가능)
+            # ③ 생산실적 조회(도금) 화면 — 11/9: 실패해도 실행 전체를 멈추지 않음(쿼리 코일 자료로 계산 가능).
+            # 조회 400여 개 뒤라 브라우저 메모리가 쌓여 있음 → 새 브라우저로(오늘 하루 종일 여기서 멈춘 원인)
             try:
+                revive(force=True)
                 print('▶ screen_prod.xlsx (생산실적 조회)')
                 menu('생산실적 조회')
                 if frame_with('//*[@id="dropdownlistContentS_PLT_CLS"]') is None:
