@@ -70,7 +70,7 @@
     const Lp = L.filter((x) => x.plan != null), dPlan = Lp.reduce((a, x) => a + x.plan, 0), dAct = Lp.reduce((a, x) => a + x.act, 0);
     const Lc = L.filter((x) => x.plan == null);
     const k = [
-      { label: `${+mon.slice(5)}월 생산계획`, v: n0(mPlan), unit: 't', tone: 'info', sub: '확정 계획 · 판매그룹 합' },   // 11/9: 값 = 확정(기준) 계획 월 물량(pages.py groups.prod.month) — '최신 가동계획' 아님
+      { label: `${+mon.slice(5)}월 생산계획`, v: n0(mPlan), unit: 't', tone: 'info', sub: '기준 계획 · 판매그룹 합' },   // 11/9: 값 = 확정(기준) 계획 월 물량(pages.py groups.prod.month) — '최신 가동계획' 아님
       { label: '생산실적(누계)', v: n0(mAct), unit: 't', tone: 'info', sub: `MES ~${md(asOfG)}${Lc.length && asOfC !== asOfG ? ` · 컬러 ~${md(asOfC)}` : ''}` },
       { label: '계획 대비 차이', v: Lp.length ? sgn(dAct - dPlan) : '-', unit: 't', tone: !Lp.length ? '' : dAct >= dPlan ? 'ok' : dAct >= dPlan * 0.95 ? 'warn' : 'bad', sub: Lp.length ? `일정 누계 대비 ${pc(dAct, dPlan)}%` : '라인 계획 없음' },
       { label: '이월 예상', v: n0(carry), unit: 't', tone: carry >= 1 ? 'warn' : 'ok', sub: '월 계획 − 실적 − 남은 계획' },

@@ -41,7 +41,7 @@
       ['품목별 적용라인', lr ? `${esc(lr.source || '')} · 받은 날 ${esc(lr.extracted || '')} · ${lr.rules.length}행` : '없음', '필수라인 → 우선라인1 → 2 → 3 순서로 라인 배정', lr ? 'good' : 'warn'],
       ['컬러 휴지계획', dn ? `${esc(dn.src || '')} · ${dn.items.length}건` : '없음', '계획휴지·S/D·수리 · 청소·Test·샘플', dn ? 'good' : 'warn'],
       ['MES 실적 · 재고', `자료 ${fmtT(D.mes.savedAt || E.mes.created)}`, '컬러 생산 실적 · 재고 · 출하 · 판매생산속보(사내 PC 매일 갱신)', 'good'],
-      ['현재 게시 계획', D.cur ? `계산 ${fmtT(D.cur.built)} · 실적 ~${esc(D.cur.asOf || '')}` : '없음', D.prev ? '지난 컬러 계획 자리를 먼저 씀(일정이 덜 바뀌게)' : '도금 = 확정 계획(바뀌지 않음)', D.cur ? 'good' : 'warn'],
+      ['현재 게시 계획', D.cur ? `계산 ${fmtT(D.cur.built)} · 실적 ~${esc(D.cur.asOf || '')}` : '없음', D.prev ? '지난 컬러 계획 자리를 먼저 씀(일정이 덜 바뀌게)' : '도금 = 기준 계획(바뀌지 않음)', D.cur ? 'good' : 'warn'],
     ];
     $('c-src').innerHTML = S.map(([t, a, b, st]) => `<div class="cc-src"><b>${t}</b><small>${a}</small><small>${b}</small><span class="st ${st}">${st === 'good' ? '사용' : '확인'}</span></div>`).join('');
   }
@@ -264,7 +264,7 @@
       + `<h3>납기(선적 완료기한)</h3>` + (im.newLate && im.newLate.length ? li(im.newLate, (v) => `<li class="warn">⚠ ${esc(v.line)} ${esc(v.p)} ${esc(v.dest)} ${n0(v.t)}t — 기한 ${md(v.due)} 넘김</li>`) : '<p class="hint">새로 넘기는 것 없음</p>')
       + (im.fixedLate && im.fixedLate.length ? li(im.fixedLate, (v) => `<li>✓ ${esc(v.p)} ${esc(v.dest)} ${n0(v.t)}t 기한 안으로 들어옴</li>`) : '')
       + `<h3>구매 소재</h3>` + (im.mat && im.mat.length ? li(im.mat, (v) => `<li class="${v.after > v.before ? 'warn' : ''}">${esc(v.code)} 부족 ${n0(v.before)}t → ${n0(v.after)}t${v.first ? ` (첫 부족 ${md(v.first)})` : ''}</li>`) : '<p class="hint">부족 변화 없음(입고 예정 기준, 6주 뒤는 신규 발주로 맞춤)</p>')
-      + `<h3>도금(자가재)</h3>` + (im.plating && im.plating.length ? `<p class="warn">⚠ 자가재 반순 마감이 바뀜 → 도금 확정 계획 재계산 필요(관리자, 약 30분)</p>` + li(im.plating, (v) => `<li>${esc(v.sec)} ${esc(v.alloy)} 마감 ${md(v.due)}: ${n0(v.before)}t → ${n0(v.after)}t</li>`) : '<p class="hint">영향 없음 — 자가재 필요일이 같은 반순(10·20·말일) 안</p>')
+      + `<h3>도금(자가재)</h3>` + (im.plating && im.plating.length ? `<p class="warn">⚠ 자가재 반순 마감이 바뀜 → 도금 기준 계획 재계산 필요(관리자, 약 30분)</p>` + li(im.plating, (v) => `<li>${esc(v.sec)} ${esc(v.alloy)} 마감 ${md(v.due)}: ${n0(v.before)}t → ${n0(v.after)}t</li>`) : '<p class="hint">영향 없음 — 자가재 필요일이 같은 반순(10·20·말일) 안</p>')
       + (im.spill && im.spill.length ? `<h3>계획 기간 밖으로 밀림</h3>` + li(im.spill, (v) => `<li class="warn">${esc(v.line)} ${esc(v.p)} ${n0(v.t)}t → 미편성</li>`) : '')
       + '</div>';
   }

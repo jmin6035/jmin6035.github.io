@@ -17,7 +17,7 @@
   const PC = ['도금국내', '도금수출', '자동차내수', '자동차수출', '자가재'];
   const FAM = { AL: '--s1', 'AL-LG': '--s1', 'AL-STS': '--s1', AZ: '--s2', MAC: '--s3' };
   let MONTHS = ['2026-10', '2026-11', '2026-12'];   // 11/9: 열 때 자료(컬러·도금 일별)의 달로 바꿈 — 이 값은 자료 없을 때만
-  const VN = { V1: '확정 계획', V2: '비교안(자가재계획)', V3: '비교안(M/C 2회 추가)' };
+  const VN = { V1: '기준 계획', V2: '비교안(자가재계획)', V3: '비교안(M/C 2회 추가)' };
   const GN = new Proxy({ C수출: '컬러 수출·가전' }, { get: (o, k) => o[k] || UI.grp(k) });   // 그룹 이름 = 전 화면 공통(UI.grp)
   let O = null, V = 'V3', mon = null, sel = null;   // 11/9: mon = 열 때 이번 달
   const inS = (p) => !window.UI || UI.inScope(p);                 // 보기 전환(전체/도금/컬러)
@@ -96,7 +96,7 @@
     const tb = `<div class="scroll"><table class="t cmp"><thead><tr><th></th>${vs.map((v) => `<th class="${v === rec ? 'rec' : ''}">${esc(VN[v])}${v === rec ? (O.confirmed ? ' ✔' : ' ★추천') : ''}</th>`).join('')}</tr></thead><tbody>${rows.map(([nm, f, b]) => `<tr><td class="l">${nm}</td>${vs.map((v) => `<td class="${v === rec ? 'rec' : ''} ${b && b(v) ? 'best' : ''}">${f(C[v])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     const x = O.variants[vs[0]].self.AZ.map((r) => '2026-' + r[0]);
     const col = { V1: 'var(--s1)', V2: 'var(--s2)', V3: 'var(--s3)' };
-    return { html: card('s-rec', '①', O.confirmed ? `확정 계획 ${O.confirmed}` : '결론', O.confirmed ? '2026-10-07 확정 · V2·V3 비교안은 정리함' : '', `<p class="lead">★ ${esc(O.recWhy)}</p>${tb}${vs.length > 1 ? '<p class="small">초록 = 그 지표에서 가장 좋은 안. 컬러 계획·판매·월 물량 기준은 세 안 공통이고, 다른 것은 자가재 납기(V2 월말 / V1·V3 10일 단위)와 M/C 허용 횟수뿐.</p>' : ''}
+    return { html: card('s-rec', '①', O.confirmed ? `기준 계획 ${O.confirmed}` : '결론', O.confirmed ? '2026-10-07 확정 · V2·V3 비교안은 정리함' : '', `<p class="lead">★ ${esc(O.recWhy)}</p>${tb}${vs.length > 1 ? '<p class="small">초록 = 그 지표에서 가장 좋은 안. 컬러 계획·판매·월 물량 기준은 세 안 공통이고, 다른 것은 자가재 납기(V2 월말 / V1·V3 10일 단위)와 M/C 허용 횟수뿐.</p>' : ''}
       ${vs.length > 1 ? '<h3>AZ 자가재 재고 — 0 밑 = 컬러가 소재를 못 받는 날</h3><div class="chart" id="c-az"></div>' : '<p class="small">자가재·구매 소재의 일별 흐름(생산·사용·발주·입고·재고)은 <a href="supply.html">가동 캘린더</a>에서 봅니다.</p>'}`),
       after: () => { if (vs.length > 1) lineChart($('c-az'), { x, W: 1000, H: 240, series: vs.map((v) => ({ name: v, color: col[v], v: O.variants[v].self.AZ.map((r) => r[3]), markMin: v === 'V2' })) }); } };   // 비교안이 하나뿐이면 버전 비교 그래프는 숨김
   }
@@ -331,7 +331,7 @@
       };
       daily = `<h3>매일 재계획 기록 — 그날 계획(전날 재계획) vs 실적, 도금 (t)</h3><div class="scroll"><table class="t"><thead><tr><th rowspan="2">날짜</th><th colspan="3">1CGL</th><th colspan="3">2CGL</th><th rowspan="2">누계 실적 / 계획</th><th rowspan="2">M/C 변경</th><th rowspan="2">남은 M/C</th><th rowspan="2">지연(t·일)</th><th rowspan="2">풀이</th></tr><tr><th>계획</th><th>실적</th><th>차이</th><th>계획</th><th>실적</th><th>차이</th></tr></thead><tbody>${rs.map(row).join('')}</tbody></table></div>
         ${(() => { const dif = (l) => rs.map((r) => { const x = r.vsPlan.find((z) => z[0] === r.asOf && z[1] === l); return x ? x[3] - x[2] : 0; }); const a = dif('1CGL'), b = dif('2CGL'); const same = (v) => v.every((x) => x > 0) || v.every((x) => x < 0); return same(a) || same(b) ? `<div class="issue"><b>매일 같은 방향으로 어긋남</b> — 1CGL 은 ${a.every((x) => x > 0) ? '매일 계획보다 많이' : '들쭉날쭉'}(평균 ${a.reduce((s, x) => s + x, 0) / a.length > 0 ? '+' : ''}${n0(a.reduce((s, x) => s + x, 0) / a.length)}t), 2CGL 은 ${b.every((x) => x < 0) ? '거의 매일 적게' : '들쭉날쭉'}(평균 ${n0(b.reduce((s, x) => s + x, 0) / b.length)}t). 우연한 흔들림이 아니라 계획 기준(라인 속도·강종 순서)이 현장과 다르다는 신호 → 재계획을 자주 하는 것으로는 안 고쳐지고, 속도 조건을 실적으로 보정해야 함(분석 화면의 '반영권장' 후보).</div>` : ''; })()}
-        <p class="small">10/1 계획은 10/1부터 새로 짠 확정 계획. 실제 현장은 1CGL을 이미 AZ로 돌리고 있어(계획은 10/7 전환) 첫날 차이가 큼 → 매일 재계획이 실제 강종에서 다시 출발.</p>`;
+        <p class="small">10/1 계획은 10/1부터 새로 짠 기준 계획. 실제 현장은 1CGL을 이미 AZ로 돌리고 있어(계획은 10/7 전환) 첫날 차이가 큼 → 매일 재계획이 실제 강종에서 다시 출발.</p>`;
     }
     if (rs.length) {
       const r = rs[rs.length - 1];
@@ -390,7 +390,7 @@
     UI.sub(`${{ all: '제품·자가재', G: '도금 제품·자가재', C: '컬러 제품' }[UI.scope()]} 주말 재고 — 목표 대비 · ${MONTHS[0].slice(0, 4)}년 ${+MONTHS[0].slice(5)}~${+MONTHS[MONTHS.length - 1].slice(5)}월 · 기준 ${md(UI.today(O.asOf))}`);   // 계산 시각 대신 공통 기준일(11/8) · 11/9: 달 범위 = 자료
     UI.reveal($('g-main'));
     const seg = document.querySelector('.seg');
-    const pb = seg && seg.closest('.pagebar'); if (pb) pb.hidden = true;   // 확정 계획 하나만 게시
+    const pb = seg && seg.closest('.pagebar'); if (pb) pb.hidden = true;   // 기준 계획 하나만 게시
     seg.innerHTML = vlist().map((v) => `<button type="button" data-v="${v}" aria-pressed="${v === V}">${esc(VN[v])}${v === O.rec ? ' ★' : ''}</button>`).join('');
     seg.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { V = b.dataset.v; rerender(); }));
   }

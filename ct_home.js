@@ -34,7 +34,7 @@
       { name: '도금 실적', at: P.asOf, kind: '실적' },
       { name: '컬러 실적', at: (P.groups || []).find((g) => g.pl === 'C' && g.prod)?.prod?.asOf, kind: '실적' },
       { name: '도금 계획', at: rp.t0 || (D['latest.plan'] || {}).savedAt, kind: '재계획' },
-      { name: '컬러 계획', at: W.built, kind: '확정 계획' },
+      { name: '컬러 계획', at: W.built, kind: '기준 계획' },
       { name: '판생속보', at: (P.sr || {}).asOf, kind: '실적·계획' },
       { name: '도금 주문', at: M.cgAt, kind: '실적' },
       { name: '컬러 주문', at: M.ccAt, kind: M.ccMissing.length ? `${M.ccLines.join('·')}만` : '실적', ok: !M.ccMissing.length, tip: M.ccMissing.length ? `${M.ccMissing.join('·')} 자료 없음` : '' },

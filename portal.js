@@ -87,7 +87,7 @@
     return `<h2>마케팅 그룹별 이번 달 <small>${g0 ? `도금 ~${md(g0.prod.asOf)}` : ''}${c0 ? ` · 컬러 ~${md(c0.prod.asOf)}` : ''}${s0 ? ` · 출하 ${esc(String(s0.asOf).slice(5, 10).replace('-', '/'))} 속보` : ''}</small><span class="unit">톤</span></h2>
       <div class="scroll"><table class="gt"><thead><tr><th class="l">그룹</th><th class="l">생산 진도 <span style="font-weight:400">(줄무늬 = 남은 계획, 선 = 월 계획)</span></th><th>실적 / 생산계획</th><th class="hide-m">잔여 생산량</th><th class="hide-m">하루 필요</th><th>월말 예상</th><th>출하 / 월차</th><th class="hide-m">출하 일정 대비</th></tr></thead>
       <tbody>${sec('G', '도금')}${sec('C', '컬러')}</tbody></table></div>
-      <p class="small" style="margin:6px 0 0">생산계획 = 확정 계획(계획 엔진)의 이번 달 그룹 생산량(판매계획 아님 — 판매계획은 아래 표) · 잔여 생산량 = 생산계획 − 실적 · 월말 예상 = (실적 + 남은 날 재계획 생산) ÷ 생산계획 · 출하 일정 대비 = 출하 실적 − 판매생산속보 출하 일정누계(오늘까지 나갔어야 할 양). 도금 계에는 컬러 소재로 가는 자가재가 들어 있어 도금 + 컬러 생산을 더하면 이중 계상</p>`;
+      <p class="small" style="margin:6px 0 0">생산계획 = 기준 계획(계획 엔진)의 이번 달 그룹 생산량(판매계획 아님 — 판매계획은 아래 표) · 잔여 생산량 = 생산계획 − 실적 · 월말 예상 = (실적 + 남은 날 재계획 생산) ÷ 생산계획 · 출하 일정 대비 = 출하 실적 − 판매생산속보 출하 일정누계(오늘까지 나갔어야 할 양). 도금 계에는 컬러 소재로 가는 자가재가 들어 있어 도금 + 컬러 생산을 더하면 이중 계상</p>`;
   }
 
   // ---------- 그룹별 판매계획 → 필요 생산 → 진도(10/22 사용자: 판매계획·필요생산량(월차)·진도율 그룹별, 도금·컬러) ----------
@@ -194,7 +194,7 @@
     const M = O.months || [], pm = O.planMonth, pl = O.plating || {}, cl = (IG && IG.colorLines) || (O.color || {}).lines || {};   // 11/7 점검: 포털 기준 파일(11/2)의 컬러 월차는 0 → 지금 통합 계획 값
     const ends = M.map((m) => `${m}-${String(dim(m)).padStart(2, '0')}`);
     const prod = [], CM = M.indexOf(String(O.asOf).slice(0, 7));   // 이번 달 칸(예전엔 첫 달 고정 → 11월에도 '10월' 줄에 이번 달 전망이 들어가던 것 고침)
-    if (pm && UI.inScope('G')) prod.push(['도금', 'G', M.map((m, i) => (i === CM && FC.G ? [FC.G.fc, FC.G.m, '속보 월차'] : [pm.g1[i] + pm.g2[i], (pl.g1 || [])[i] + (pl.g2 || [])[i], '확정 계획']))]);
+    if (pm && UI.inScope('G')) prod.push(['도금', 'G', M.map((m, i) => (i === CM && FC.G ? [FC.G.fc, FC.G.m, '속보 월차'] : [pm.g1[i] + pm.g2[i], (pl.g1 || [])[i] + (pl.g2 || [])[i], '기준 계획']))]);
     if (UI.inScope('C') && Object.keys(cl).length) { const tot = (m, k) => Object.values(cl[m] || {}).reduce((a, x) => a + (x[k] || 0), 0);
       prod.push(['컬러', 'C', M.map((m, i) => (i === CM && FC.C ? [FC.C.fc, FC.C.m, '속보 월차'] : [tot(m, 'placed'), tot(m, 'plan'), '월차']))]); }
     const pbar = ([nm, pl_, R]) => `<div class="fp-g"><div class="fp-gh">${nm} 생산 <small>${FC[pl_] && CM >= 0 ? `${+M[CM].slice(5)}월 실적 <b>${n0(FC[pl_].a)}t</b> · 오늘까지 일정 대비 <b class="${toneP(FC[pl_].a / FC[pl_].sc)}">${Math.round(FC[pl_].a / FC[pl_].sc * 100)}%</b> · ` : ''}4분기 ${n0(R.reduce((a, r) => a + r[0], 0))}t / 계획 ${n0(R.reduce((a, r) => a + (r[1] || 0), 0))}t${R.some((r) => !r[1]) ? '(계획 없는 달 있음)' : ''}</small></div>`
@@ -240,7 +240,7 @@
     const now = (O.plating || {}).now || {};
     return `<summary>산출 기준 · 알림</summary><ul>
       <li>생산·출하 누계, 월차, 일정 = 판매생산속보(공식). 월차 = 이번 달 전체 계획, 일정 = 1일~어제 계획 누계. 원형 % = 진도(누계 ÷ 월차), 점 색·라인 타일 % = 일정 대비(누계 ÷ 일정, 98%↑ 초록 · 90%↑ 노랑). 라인 이번 달 일별 추이 = MES 코일(도금 더미 제외, 1일부터).</li>
-      <li>그룹 실적 = MES 판매그룹. 계획 = 도금 확정 계획 일별 합 · 컬러 편성. 월말 예상 = 실적 + 남은 계획(도금 매일 재계획).</li>
+      <li>그룹 실적 = MES 판매그룹. 계획 = 도금 기준 계획 일별 합 · 컬러 편성. 월말 예상 = 실적 + 남은 계획(도금 매일 재계획).</li>
       <li>그룹별 날짜 계획 누계는 비교하지 않음(부서 배정일은 계획 모델상 정해지지 않음). 컬러 그룹 합은 MES 코일 합이라 속보 누계와 다를 수 있음.</li>
       ${(now.lockNotes || []).map((n) => `<li>재계획: ${esc(n)}</li>`).join('')}${(now.shortBy || []).length ? `<li>결품 예상: ${now.shortBy.map(esc).join(', ')}</li>` : ''}</ul>`;
   }
@@ -278,7 +278,7 @@
   }
   function render(O) {
     lastO = O;
-    $('h-meta').innerHTML = `실적 <b>~${md(O.asOf)}</b> · 계획 <b>확정 계획 · 도금은 매일 실적 반영 재계산</b> · 계산 ${esc(String(O.built).replace('T', ' ').slice(5, 16))}`;
+    $('h-meta').innerHTML = `실적 <b>~${md(O.asOf)}</b> · 계획 <b>기준 계획 · 도금은 매일 실적 반영 재계산</b> · 계산 ${esc(String(O.built).replace('T', ' ').slice(5, 16))}`;
     const ct = ctl(O); $('h-ctl').innerHTML = ct; $('h-ctl').hidden = !ct;
     const ow = owner(O); $('h-own').innerHTML = ow; $('h-own').hidden = !ow;
     const fc = fcCard(O); $('h-fc').innerHTML = fc; $('h-fc').hidden = !fc;

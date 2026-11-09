@@ -60,7 +60,7 @@
           top ? `지금 같은 그룹 지연 예상 주문의 주원인 ${CT.CAUSE[top[0]]} ${n0(top[1])}t — 지금 상태 기준이라 지난 미준수의 직접 원인은 아님` : '같은 그룹 지연 예상 주문 없음 — 미준수 주문별 지연 사유 자료 없음']);
       }
     }
-    // ② 생산계획 정확도: 월별(11/5 사용자 '누계 말고 10월·11월') — 지난 달 = 확정 계획 월 생산 vs 실적, 이번 달 = 오늘까지 일정 vs 실적
+    // ② 생산계획 정확도: 월별(11/5 사용자 '누계 말고 10월·11월') — 지난 달 = 기준 계획 월 생산 vs 실적, 이번 달 = 오늘까지 일정 vs 실적
     const acc = Object.entries(P.acc || {}).filter(([l]) => CT.inScope(/CGL/.test(l) ? 'G' : 'C'));
     const MP = P.monthPlan || {}, cm2 = String(P.asOf || '').slice(0, 7);
     const mSum = (m, pl) => Object.entries(MP[m] || {}).filter(([g]) => g[0] === pl).reduce((a, [, x]) => a + (x.prod || 0), 0);
@@ -71,7 +71,7 @@
       for (const pl of ['G', 'C']) {
         if (!CT.inScope(pl)) continue;
         let plan, act, how;
-        if (m < cm2) { plan = mSum(m, pl); act = actM(pl === 'G' ? GA : CA, m); how = '확정 계획 월 생산'; }
+        if (m < cm2) { plan = mSum(m, pl); act = actM(pl === 'G' ? GA : CA, m); how = '기준 계획 월 생산'; }
         else if (pl === 'G') { plan = gl.reduce((a, l) => a + (l.sched || 0), 0); act = gl.reduce((a, l) => a + (l.actual || 0), 0); how = `판생속보 일정(~${md(P.asOf)})`; }
         else { plan = cgp.reduce((a, g) => a + Math.max(0, (g.prod.month || 0) - (g.prod.after || 0)), 0); act = cgp.reduce((a, g) => a + (g.prod.actual || 0), 0); how = `그룹 계획(~${md(cgp[0] && cgp[0].prod.asOf || P.asOf)})`; }
         if (!plan && !act) continue;

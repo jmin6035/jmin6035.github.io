@@ -1,5 +1,5 @@
 /* 가동 캘린더(supply.html) · 소재 캘린더(matcal.html): published/integrated.enc.json(확정 통합 계획 V1) — 일별 가동·자가재·구매 소재(발주·입고·재고)·제품 재고 + 날짜 상세
-   매일 바뀌는 부분(2026-10-15): 도금 = 사내 PC 아침 재계획(latest.plan — 지난 날 = MES 실적, 이후 = 재계획), 컬러 지난 날 = MES 실적(color_actual), 제품 재고 = 매일 롤링(portal.stockRoll). 자가재·구매 소재는 확정 계획 */
+   매일 바뀌는 부분(2026-10-15): 도금 = 사내 PC 아침 재계획(latest.plan — 지난 날 = MES 실적, 이후 = 재계획), 컬러 지난 날 = MES 실적(color_actual), 제품 재고 = 매일 롤링(portal.stockRoll). 자가재·구매 소재는 기준 계획 */
 (function () {
   'use strict';
   const NOEL = document.createElement('div');                      // 가동 캘린더(supply.html)·소재 캘린더(matcal.html)가 같은 코드 — 없는 칸은 빈 자리로
@@ -53,7 +53,7 @@
     const [LP, CA, PO] = await Promise.all([get('latest.plan.enc.json'), get('color_actual.enc.json'), get('portal.enc.json')]);
     const inQ = (d) => d >= D.days[0] && d <= D.days[D.days.length - 1], info = {};
     const R = LP && (LP.result || LP);
-    if (R && R.rows && R.cal) {                                          // 도금: 확정 계획 화면과 같은 칸 구성(tools/integrated_web.plating_view)
+    if (R && R.rows && R.cal) {                                          // 도금: 기준 계획 화면과 같은 칸 구성(tools/integrated_web.plating_view)
       const t0 = (R.replan || {}).t0 || '', cells = {}, ev = {}, runs = {};
       const cell = (l, d) => (cells[`${l}|${d}`] = cells[`${l}|${d}`] || { cls: {}, alloy: {}, items: [] });
       for (const [d, l, a, c, t] of R.rows) { const x = cell(l, d); x.cls[c] = (x.cls[c] || 0) + t; x.alloy[a] = (x.alloy[a] || 0) + t; }
@@ -85,7 +85,7 @@
     }
     D.downAct = (CA && CA.downAct) || null;
     const BD = CA && CA.byGroup && CA.byGroup.days;
-    if (BD) {                                                            // 컬러: 지난 날은 MES 실적으로 덮음(확정 계획 계산 뒤의 실적일)
+    if (BD) {                                                            // 컬러: 지난 날은 MES 실적으로 덮음(기준 계획 계산 뒤의 실적일)
       const last = CA.byGroup.asOf;
       for (const d of D.days) {
         if (d > last) break;
@@ -808,7 +808,7 @@
     try { const pe = await GP.latest('procure.enc.json'); const P = pe ? await GP.decryptJSON(pe, pw) : null; PM = P ? prepMat(P) : null; MP = P ? matPlan(P) : null; } catch (e) { PM = null; MP = null; }
     mon = D.months.includes(today.slice(0, 7)) ? today.slice(0, 7) : D.months[0];
     const LV = D.live || {};
-    $('s-meta').innerHTML = LV.pl ? `실적 ~${md(LV.pl.t0)} · 재계획 ${esc(LV.pl.at.slice(5))}` : `기준 <b>확정 계획</b> · 계산 ${esc(String(W.built).replace('T', ' '))} · 실적 ~${esc(W.asOf)}`;
+    $('s-meta').innerHTML = LV.pl ? `실적 ~${md(LV.pl.t0)} · 재계획 ${esc(LV.pl.at.slice(5))}` : `기준 <b>기준 계획</b> · 계산 ${esc(String(W.built).replace('T', ' '))} · 실적 ~${esc(W.asOf)}`;
     $('main').hidden = false; $('lock').hidden = true;
     tabs(); weekBox(); progress(); monthSum(); cal(); UI.reveal(document);
   }
