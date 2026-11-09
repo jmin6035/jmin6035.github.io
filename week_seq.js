@@ -202,24 +202,22 @@
         + (t.cot ? `<span class="cp" title="도금량">${esc(t.cot)}</span>` : '') + (x.trt ? `<span class="cp" title="후처리">${esc(t.aft || '후처리 없음')}</span>` : '')
         + (x.grade ? `<span class="cp" title="재질(열처리 등급)">${esc(GR[x.grade] || x.grade)}</span>` : '') + (x.spec ? `<span class="cp" title="주문 사양">${esc(x.spec)}</span>` : '') + (x.ge ? '<span class="cp wr" title="용도 가전">가전</span>' : ''))
         + row('주문', (x.grp && x.grp !== '미상' ? `<span class="cp" title="판매그룹">${esc(x.grp)}</span>` : '')
-          + `<span class="cp" title="담당자 - 목적지(내수는 고객사)">${esc(x.man || '담당 미상')} - ${esc(x.dst || '목적지 미상')}</span>`)
-        + row('입고', `<span class="cp${x.ent && x.ent > TODAY ? ' wr' : ''}" title="소재 입고일">소재 ${x.ent ? md(x.ent) : '-'}</span>`);
+          + `<span class="cp" title="담당자 - 목적지(내수는 고객사)">${esc(x.man || '담당 미상')} - ${esc(x.dst || '목적지 미상')}</span><span class="ib"><em class="lb">입고</em><span class="cp${x.ent && x.ent > TODAY ? ' wr' : ''}" title="소재 입고일">소재 ${x.ent ? md(x.ent) : '-'}</span></span>`);
     }
-    const dtm = (v) => (v ? String(v).slice(5, 16).replace('-', '/') : '');   // 11/9: 풀 코드 8자리·담당자-목적지·도료/PF 입고 일시
+    const dtm = (v) => (v ? String(v).slice(5, 16).replace('-', '/').replace(/ 00:00$/, '') : '');   // 시각 00:00 = 날짜만 있는 값   // 11/9: 풀 코드 8자리·담당자-목적지·도료/PF 입고 일시
     const fut = (v) => v && new Date(String(v).replace(' ', 'T')) > new Date();
     const st = (at, s) => (at ? dtm(at) : s === 'F' ? '입고완료' : s ? '입고대기(일정 없음)' : '-');
     return row('사양', (x.code ? `<span class="cp cl" title="상도 풀 코드">${esc(x.code)}</span>` : `<span class="cp cl wr" title="풀 코드 없음(주문 상세 자료 대기) — 도료 종류·색상번호">${esc(x.color)}</span>`)
         + (x.codeBack ? `<span class="cp" title="이면 풀 코드">이면 ${esc(x.codeBack)}</span>` : '')
         + `<span class="cp">${esc(x.item)}</span><span class="cp sz">${(+x.thk).toFixed(2)} × ${n0(x.wdt)}</span>` + (x.block !== 'general' ? `<span class="cp wr">${esc(R.blockNm[x.block])}</span>` : ''))
-      + row('주문', `<span class="cp" title="판매그룹">${esc(x.g)}</span><span class="cp" title="담당자 - 목적지(내수는 고객사)">${esc(x.man || '담당 미상')} - ${esc(x.dst || '목적지 미상')}</span>`)
-      + row('입고', `<span class="cp${fut(x.paintAt) ? ' wr' : ''}" title="도료 입고(예정) 일시">도료 ${st(x.paintAt, x.paintSts)}</span>`
-        + (x.pfNeed ? `<span class="cp${fut(x.pfAt) ? ' wr' : ''}" title="PF 입고(예정) 일시">PF ${st(x.pfAt, x.pfSts)}</span>` : ''));
+      + row('주문', `<span class="cp" title="판매그룹">${esc(x.g)}</span><span class="cp" title="담당자 - 목적지(내수는 고객사)">${esc(x.man || '담당 미상')} - ${esc(x.dst || '목적지 미상')}</span><span class="ib"><em class="lb">입고</em><span class="cp${fut(x.paintAt) ? ' wr' : ''}" title="도료 입고(예정) 일시">도료 ${st(x.paintAt, x.paintSts)}</span>`
+        + (x.pfNeed ? `<span class="cp${fut(x.pfAt) ? ' wr' : ''}" title="PF 입고(예정) 일시">PF ${st(x.pfAt, x.pfSts)}</span>` : '') + '</span>');
   }
   function jobRow(l, v, days, n) {
     const x = v.x, bad = CK && CK.some((c) => c.id === x.id && c.l === l && c.lv === 'bad');
     const due = plant === 'cg' ? x.dlv : x.due;
     const tag = plant === 'cg' ? (x.issued ? '<span class="cp fx" title="이미 작업지시 나감(1030)">지시</span>' : '') : (x.fixed ? '<span class="cp fx" title="작업지시 확정 대기열(1030)">확정</span>' : '');
-    const sub = plant === 'cg' ? `${x.n > 1 ? x.n + '코일 · ' : ''}소재 ${esc(x.raws[0])}${x.n > 1 ? ' 외' : ''}${x.req ? ' · 예정 ' + md(x.req) : ''}` : `${esc(x.pdt)}${x.ready ? ' · 준비 ' + md(x.ready) : ''}`;
+    const sub = plant === 'cg' ? `${x.n > 1 ? x.n + '코일 · ' : ''}소재 ${esc(x.raws[0])}${x.n > 1 ? ' 외' : ''}${x.req ? ' · 예정 ' + md(x.req) : ''}` : `${esc(x.pdt)}${x.ready && x.ready > TODAY ? ' · <b class="wr">' + md(x.ready) + '부터 가능</b>(도료·PF 입고 뒤)' : ''}`;
     const lsel = plant === 'cc' ? `<select data-a="line" data-i="${v.i}" title="다른 라인으로">${LINES.cc.map((y) => `<option${y === l ? ' selected' : ''}>${y}</option>`).join('')}</select>` : '';
     return `<tr class="j${x.fixed || x.issued ? ' fx' : ''}${hl === x.id ? ' hl' : bad ? ' bad' : ''}" draggable="true" data-i="${v.i}" data-id="${esc(x.id)}">`
       + `<td class="hd" title="끌어서 옮기기">⋮⋮</td><td class="no">${n}</td>`
@@ -291,7 +289,7 @@
     const was = $('ws-pool').querySelector('details'), op = was ? was.open : false, sub = {};
     $('ws-pool').querySelectorAll('.pl-g').forEach((d) => { sub[d.dataset.k] = d.open; });
     $('ws-pool').innerHTML = `<details${op ? ' open' : ''}><summary>빠진 작업 <span>${P.length}건 · ${n0(P.reduce((s, p) => s + p.x.t, 0))}t — 열어서 끌어다 놓거나 '넣기'</span></summary><div class="pl-cols">` + ord.filter((k) => G[k]).map((k) => `<details class="pl-g" data-k="${k}"${(k in sub ? sub[k] : k === 'out' || k === 'new' || k === 'over') ? ' open' : ''}><summary>${nm[k]} <span>${G[k].length}건 · ${n0(G[k].reduce((s, x) => s + x.t, 0))}t</span></summary><div class="pl-body">`
-      + G[k].slice(0, 300).map((x) => `<div class="pl-i" draggable="true" data-id="${esc(x.id)}"><div><span class="cn">${esc(x.con || x.id)}</span>${plant === 'cc' && x.line !== line ? ` <span class="cp">${x.line}</span>` : ''}<span class="sub"> · ${n1(x.t)}t${plant === 'cg' ? (x.n > 1 ? ' · ' + x.n + '코일' : '') + (x.req ? ' · 예정 ' + md(x.req) : '') : (x.ready ? ' · 준비 ' + md(x.ready) : '')}${(plant === 'cg' ? x.dlv : x.due) ? ' · 납기 ' + md(plant === 'cg' ? x.dlv : x.due) : ''}</span><div class="sp">${chips(x)}</div></div><button data-a="add" data-id="${esc(x.id)}">넣기</button></div>`).join('')
+      + G[k].slice(0, 300).map((x) => `<div class="pl-i" draggable="true" data-id="${esc(x.id)}"><div><span class="cn">${esc(x.con || x.id)}</span>${plant === 'cc' && x.line !== line ? ` <span class="cp">${x.line}</span>` : ''}<span class="sub"> · ${n1(x.t)}t${plant === 'cg' ? (x.n > 1 ? ' · ' + x.n + '코일' : '') + (x.req ? ' · 예정 ' + md(x.req) : '') : (x.ready && x.ready > TODAY ? ' · ' + md(x.ready) + '부터 가능' : '')}${(plant === 'cg' ? x.dlv : x.due) ? ' · 납기 ' + md(plant === 'cg' ? x.dlv : x.due) : ''}</span><div class="sp">${chips(x)}</div></div><button data-a="add" data-id="${esc(x.id)}">넣기</button></div>`).join('')
       + (G[k].length > 300 ? `<div class="sub">외 ${G[k].length - 300}건</div>` : '') + '</div></details>').join('') + '</div></details>';
   }
   function drawCk() {
