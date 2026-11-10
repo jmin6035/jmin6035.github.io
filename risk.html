@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>납기 위험</title>
+<meta name="description" content="미결 주문 전체의 납기 위험 — 전체, 판매그룹별, 원인별">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
+<link rel="stylesheet" href="ui/theme.css?v=2611100539">
+<style>
+.rk { --c-ok: var(--good); --c-warn: #c9a227; --c-will: #e07b39; --c-past: var(--bad); --c-stale: #9aa5b1; }
+.rk-top { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.rk-big { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin: 2px 0 14px; }
+.rk-big b { font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; } .rk-big b small { font-size: 20px; font-weight: 700; margin-left: 2px; }
+.rk-big span { color: var(--ink-2); font-size: 15px; }
+.rk-st { display: flex; height: 34px; border-radius: 8px; overflow: hidden; background: var(--grid); }
+.rk-st i { display: block; height: 100%; min-width: 2px; }
+.rk-st i.ok { background: var(--c-ok); } .rk-st i.warn { background: var(--c-warn); } .rk-st i.will { background: var(--c-will); } .rk-st i.past { background: var(--c-past); } .rk-st i.stale { background: var(--c-stale); }
+.rk-leg { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+.rk-leg div { border-left: 4px solid var(--grid); padding: 2px 0 2px 10px; } .rk-leg div.ok { border-color: var(--c-ok); } .rk-leg div.warn { border-color: var(--c-warn); } .rk-leg div.will { border-color: var(--c-will); } .rk-leg div.past { border-color: var(--c-past); } .rk-leg div.stale { border-color: var(--c-stale); }
+.rk-leg small { display: block; color: var(--ink-2); font-size: 13.5px; white-space: nowrap; } .rk-leg b { font-size: 19px; font-variant-numeric: tabular-nums; white-space: nowrap; } .rk-leg em { font-style: normal; color: var(--ink-2); font-size: 13.5px; margin-left: 5px; }
+.rk-h3 { font-size: 15px; font-weight: 700; margin: 0 0 10px; } .rk-h3 small { font-weight: 400; color: var(--ink-2); font-size: 13.5px; margin-left: 6px; }
+.rk-cz { display: grid; grid-template-columns: max-content minmax(60px, 1fr) max-content max-content; gap: 9px 12px; align-items: center; font-size: 14.5px; }
+.rk-cz .bar { height: 14px; border-radius: 7px; background: var(--grid); overflow: hidden; } .rk-cz .bar i { display: block; height: 100%; border-radius: 7px; background: var(--brand-2); }
+.rk-cz b { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; } .rk-cz span.d { color: var(--ink-2); font-size: 13.5px; white-space: nowrap; } .rk-cz span.n { white-space: nowrap; font-weight: 600; }
+main.rk table.rk-g { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+main.rk table.rk-g th { text-align: right; font-weight: 600; color: var(--ink-2); font-size: 13.5px; padding: 8px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; } main.rk table.rk-g th.l { text-align: left; }
+main.rk table.rk-g td { padding: 12px; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; vertical-align: middle; } main.rk table.rk-g td.l { text-align: left; } main.rk table.rk-g td.w { white-space: normal; text-align: left; min-width: 260px; }
+table.rk-g tr.g { cursor: pointer; } table.rk-g tr.g:hover td { background: color-mix(in srgb, var(--brand-2) 6%, transparent); } table.rk-g tr.g.on td { background: color-mix(in srgb, var(--brand-2) 9%, transparent); border-bottom-color: transparent; }
+table.rk-g td.nm b { font-size: 16px; } table.rk-g td.nm small { display: block; color: var(--ink-2); font-size: 13.5px; font-weight: 400; }
+table.rk-g td.nm i.ch { display: inline-block; width: 14px; color: var(--brand-2); font-style: normal; transition: transform .15s; } table.rk-g tr.g.on td.nm i.ch { transform: rotate(90deg); }
+main.rk table.rk-g tr.hd td { background: var(--surface-2, color-mix(in srgb, var(--ink) 4%, transparent)); font-weight: 700; text-align: left; padding: 7px 12px; font-size: 13.5px; color: var(--ink-2); }
+.rk-st.sm { height: 16px; min-width: 200px; border-radius: 5px; }
+.rk-pct { font-weight: 700; } .rk-pct.b { color: var(--bad); } .rk-pct.w { color: var(--warn); } .rk-pct.g { color: var(--good); }
+.rk-chip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 13.5px; font-weight: 600; white-space: nowrap; background: color-mix(in srgb, var(--ink) 8%, transparent); margin: 1px 4px 1px 0; }
+.rk-chip.past { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); } .rk-chip.will { background: color-mix(in srgb, #e07b39 20%, transparent); color: #a3501a; } .rk-chip.warn { background: color-mix(in srgb, #c9a227 22%, transparent); color: #7a6208; } .rk-chip.stale { color: var(--ink-2); }
+:root[data-theme="dark"] .rk-chip.will { color: #f0a877; } :root[data-theme="dark"] .rk-chip.warn { color: #e3c65a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .rk-chip.will { color: #f0a877; } :root:not([data-theme="light"]) .rk-chip.warn { color: #e3c65a; } }
+tr.rk-d > td { padding: 4px 12px 22px 26px !important; text-align: left !important; white-space: normal !important; background: color-mix(in srgb, var(--brand-2) 4%, transparent); }
+.rk-dg { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 30px; align-items: start; } .rk-dg > div { min-width: 0; overflow-x: auto; }
+@media (max-width: 1500px) { .rk-dg { grid-template-columns: 1fr; gap: 18px; } }
+table.rk-s { border-collapse: collapse; font-size: 14.5px; width: 100%; } main.rk table.rk-s th, main.rk table.rk-s td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+table.rk-s th { color: var(--ink-2); font-weight: 600; font-size: 13.5px; } main.rk table.rk-s th.l, main.rk table.rk-s td.l { text-align: left; } main.rk table.rk-s td.w { white-space: normal; text-align: left; }
+table.rk-s td.hm { min-width: 92px; } table.rk-s td.hm b { display: block; } table.rk-s td.hm small { color: var(--ink-2); font-size: 13.5px; }
+table.rk-s td.z { color: var(--ink-3); }
+.rk-dg table.rk-s { min-width: 100%; }
+.rk-w { white-space: normal; word-break: keep-all; text-align: left; min-width: 240px; line-height: 1.5; }
+.rk-more { margin-top: 14px; } .rk-more summary { cursor: pointer; font-weight: 600; font-size: 14.5px; }
+.rk-m { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(92px, 1fr); gap: 14px; align-items: end; overflow-x: auto; padding-top: 6px; }
+.rk-m .col { text-align: center; } .rk-m .bx { height: 150px; display: flex; flex-direction: column; justify-content: flex-end; border-radius: 6px 6px 0 0; overflow: hidden; }
+.rk-m .bx i { display: block; } .rk-m .bx i.r { background: var(--c-past); } .rk-m .bx i.o { background: var(--c-ok); opacity: .55; }
+.rk-m b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; margin-top: 6px; } .rk-m small { color: var(--ink-2); font-size: 13.5px; display: block; white-space: nowrap; } .rk-m em { font-style: normal; color: var(--bad); font-weight: 700; font-size: 13.5px; white-space: nowrap; }
+.rk-rule { color: var(--ink-2); font-size: 13.5px; margin: 10px 0 0; }
+@media (max-width: 900px) { .rk-top, .rk-dg { grid-template-columns: 1fr; } .rk-leg { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rk-big b { font-size: 32px; } main.rk table.rk-g td.w { min-width: 220px; } }
+</style>
+</head>
+<body>
+<header id="shell" data-page="risk" data-title="납기 위험" data-sub="미결 주문 전체 · 판매그룹별 문제 · 원인"></header>
+<main class="wrap rk">
+  <div class="docmeta" id="rk-meta"></div>
+  <div id="rk-main" style="margin-top:12px">
+    <section class="card lock"><div><div class="ic" aria-hidden="true">🔒</div><h2 id="rk-h">불러오는 중…</h2>
+      <form class="unlock" id="rk-form" hidden><input type="password" id="rk-pw" placeholder="분석 암호" autocomplete="current-password" aria-label="분석 암호"><button type="submit">열기</button></form>
+      <p class="hint" id="rk-msg"></p></div></section>
+  </div>
+</main>
+<footer class="foot"><div class="wrap"><span>원자료: MES 주문·소재 입고·생산 실적·작업예정, 판생 M/C 일정</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2611100539"></script>
+<script src="engine/crypto.js?v=2611100539"></script>
+<script src="risk.js?v=2611100539"></script>
+</body>
+</html>
