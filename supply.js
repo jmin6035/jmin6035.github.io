@@ -736,20 +736,20 @@
   function shipSummary(GG, CC, NM) {
     const el = document.getElementById('s-shipsum'), S = D.shipSum; if (!el) return; if (!S || S.m !== mon) { el.innerHTML = ''; return; }
     const sd = S.kind === 'cur' ? S.aTo : S.end, pace = S.kind === 'cur' ? S.pace : S.kind === 'past' ? 100 : null;
-    const one = (gs) => { let a = 0, p = 0, v = 0, t = 0, has = false; for (const g of gs) { const x = S.v[g] || [0, 0, 0], w = D.sw[`${g}|${sd}`]; a += x[0]; p += x[2]; if (w) { has = true; v += w.v; t += w.tgt || 0; } }
-      const pc = p ? Math.round(a / p * 100) : null, dp = pc != null && pace != null ? pc - pace : null, sr = has && t ? Math.round(v / t * 100) : null;
+    const one = (gs) => { let a = 0, p = 0, v = 0, t = 0, e = 0, has = false; for (const g of gs) { const x = S.v[g] || [0, 0, 0], w = D.sw[`${g}|${sd}`]; a += x[0]; p += x[2]; e += (S.due || {})[g] || 0; if (w) { has = true; v += w.v; t += w.tgt || 0; } }
+      const pc = p ? Math.round(a / p * 100) : null, bp = pace == null || !p ? null : Math.round(e / p * 100), dp = pc != null && bp != null ? pc - bp : null, sr = has && t ? Math.round(v / t * 100) : null;
       const sh = dp == null ? 0 : dp < -15 ? 2 : dp < -5 ? 1 : 0, st = sr == null ? 0 : sr > 130 ? 2 : sr > 100 ? 1 : 0;
-      return { a, p, v, t, has, pc, dp, sr, lv: Math.max(sh, st), msg: sh && st ? '출하 미달 · 재고 초과' : sh ? '출하 계획 대비 미달' : st ? '재고 목표 초과' : '정상' }; };
+      return { a, p, v, t, e, has, pc, bp, dp, sr, lv: Math.max(sh, st), msg: sh && st ? '출하 미달 · 재고 초과' : sh ? '출하 예정 대비 미달' : st ? '재고 목표 초과' : '정상' }; };
     const LV = ['ok', 'warn', 'bad'];
     const line = (nm, x, cls) => { const sx = Math.max(100, x.sr || 0, 130) * 1.08;
       return `<div class="sg-r ${cls}"><div class="sg-n">${nm}</div>`
-        + `<div class="sg-s"><div class="sg-t"><b>${n0(x.a)}</b> / ${n0(x.p)}t${x.pc != null && S.kind !== 'fut' ? `<em>${x.pc}%</em>` : ''}</div><div class="sg-bar" title="${esc(`출하 실적 ${n0(x.a)}t / 월 계획 ${n0(x.p)}t${S.kind === 'cur' ? ` · 경과일 기준 ${pace}%` : ''}`)}"><i class="${x.dp != null && x.dp < -15 ? 'bad' : x.dp != null && x.dp < -5 ? 'warn' : 'ok'}" style="width:${Math.min(100, x.pc || 0)}%"></i>${S.kind === 'cur' ? `<u style="left:${pace}%"></u>` : ''}</div></div>`
+        + `<div class="sg-s"><div class="sg-t"><b>${n0(x.a)}</b> / ${n0(x.p)}t${x.pc != null && S.kind !== 'fut' ? `<em>${x.pc}%</em>` : ''}</div><div class="sg-bar" title="${esc(`출하 실적 ${n0(x.a)}t / 월 계획 ${n0(x.p)}t${S.kind === 'cur' && x.bp != null ? ` · 출하 예정 ${n0(x.e)}t(${x.bp}%) · 차이 ${x.dp >= 0 ? '+' : '−'}${Math.abs(x.dp)}%p` : ''}`)}"><i class="${x.dp != null && x.dp < -15 ? 'bad' : x.dp != null && x.dp < -5 ? 'warn' : 'ok'}" style="width:${Math.min(100, x.pc || 0)}%"></i>${S.kind === 'cur' && x.bp != null ? `<u style="left:${Math.min(100, x.bp)}%"></u>` : ''}</div></div>`
         + (x.has ? `<div class="sg-k"><div class="sg-t"><b>${n0(x.v)}</b>t${x.sr != null ? ` / 목표 ${n0(x.t)}t<em class="${x.sr > 130 ? 'bad' : x.sr > 100 ? 'warn' : ''}">${x.sr}%</em>` : ''}</div>${x.sr != null ? `<div class="sg-bar" title="${esc(`재고 ${n0(x.v)}t / 목표 ${n0(x.t)}t`)}"><i class="${x.sr > 130 ? 'bad' : x.sr > 100 ? 'warn' : 'ok'}" style="width:${Math.min(100, x.sr / sx * 100)}%"></i><u style="left:${100 / sx * 100}%"></u></div>` : ''}</div>` : '<div class="sg-k"></div>')
         + `<div class="sg-st"><span class="sg-c ${LV[x.lv]}">${x.msg}</span></div></div>`; };
     const blk = (pl, lab, gs) => { if (!UI.inScope(pl)) return ''; const rows = gs.map((g) => [g, one([g])]).sort((p, q) => q[1].lv - p[1].lv || (p[1].dp || 0) - (q[1].dp || 0));
       return line(`${lab}`, one(gs), `sg-p ${pl}`) + rows.map(([g, x]) => line(NM[g].replace(/\(.*/, ''), x, 'sg-g')).join(''); };
     const all = [...(UI.inScope('G') ? GG : []), ...(UI.inScope('C') ? CC : [])];
-    el.innerHTML = `<div class="sg-r sg-hd"><div>${S.kind === 'cur' ? `~${md(S.aTo)}` : S.kind === 'past' ? '월말 결산' : '계획'}</div><div>출하 <small>실적 / 월 계획${S.kind === 'cur' ? ` · 선 = 경과일 기준 ${pace}%` : ''}</small></div><div>${S.kind === 'cur' ? '재고' : '월말 재고'} <small>목표 대비 · 선 = 목표</small></div><div>상태</div></div>`
+    el.innerHTML = `<div class="sg-r sg-hd"><div>${S.kind === 'cur' ? `~${md(S.aTo)}` : S.kind === 'past' ? '월말 결산' : '계획'}</div><div>출하 <small>실적 / 월 계획${S.kind === 'cur' ? ' · 선 = 출하 예정(수출 = 배 출항일)' : ''}</small></div><div>${S.kind === 'cur' ? '재고' : '월말 재고'} <small>목표 대비 · 선 = 목표</small></div><div>상태</div></div>`
       + (UI.inScope('G') && UI.inScope('C') ? line('전체', one(all), 'sg-all') : '') + blk('G', '도금', GG) + blk('C', '컬러', CC);
   }
 
@@ -788,25 +788,29 @@
     const aTo = (PO.groupDaily || {}).asOf || (Object.values(GR).find((g) => g.prod && g.prod.asOf) || { prod: {} }).prod.asOf || add(today, -1);
     const pace = kind === 'cur' && end ? Math.round(Math.min(+end.slice(8), Math.max(0, +aTo.slice(8) * (aTo.slice(0, 7) === m))) / +end.slice(8) * 100) : null;
     const sg = (v, u) => `${v >= 0 ? '+' : '−'}${n0(Math.abs(v))}${u}`;
+    // 11/10 사용자 '단순 출하 기준': 출하 진도 기준선 = 그날까지 출하 예정 누계(pages.ship_due — 수출분 = 배 출항 예정, 내수분 = 경과일). 없으면 경과일
+    const due = (g) => { const [, , p] = val(g, 'ship'), x = kind === 'cur' && GR[g] && GR[g].ship; return x && x.due != null ? x.due : p * (kind === 'past' ? 100 : pace || 0) / 100; };
     const kpi = (pl, k) => { const [a, b, p] = tot(pl, k), big = kind === 'fut' ? b : a, pc = p ? Math.round((kind === 'fut' ? b : a) / p * 100) : null;
       const pn = k === 'prod' ? (tfPlan ? '판매 기준 월 계획' : '월 계획') : `${/속보/.test(shipSrc) ? '판생속보' : '판매'} 월 계획`;
       let l2 = '', l3 = '';
       if (kind === 'cur' && k === 'prod') { const e = a + b, df = e - p, big5 = p && Math.abs(df) > p * 0.05;
         l2 = `월말 전망(현 계획) <b>${n0(e)}</b>t`; l3 = `<span class="pk-d ${big5 ? (df > 0 ? 'warn' : 'neg') : ''}">${sg(df, 't')} ${big5 ? (df > 0 ? '초과 예상' : '미달 예상') : '· 계획 수준'}</span>`; }
-      else if (kind === 'cur') { const dp = pc != null && pace != null ? pc - pace : null;
-        l2 = `잔여 <b>${n0(b)}</b>t`; l3 = dp == null ? '' : `<span class="pk-d ${dp < -5 ? 'neg' : ''}">경과일 기준 ${pace}% 대비 ${sg(dp, '%p')}</span>`; }
+      else if (kind === 'cur') { const du = keys(pl, k).reduce((s, g) => s + due(g), 0), bp = p ? Math.round(du / p * 100) : null, dp = pc != null && bp != null ? pc - bp : null;
+        l2 = `잔여 <b>${n0(b)}</b>t`; l3 = dp == null ? '' : `<span class="pk-d ${dp < -5 ? 'neg' : ''}" title="${esc(`출하 예정 누계 ${n0(du)}t(${bp}%) — 수출 = 배 출항 예정일, 내수 = 경과일 비례`)}">출하 예정 대비 ${sg(dp, '%p')}</span>`; }
       else if (kind === 'past') { const df = a - p, big5 = p && Math.abs(df) > p * 0.05;
         l3 = `<span class="pk-d ${big5 ? (df > 0 ? 'warn' : 'neg') : ''}">${sg(df, 't')} ${big5 ? (df > 0 ? '초과' : '미달') : '· 계획 수준'}</span>`; }
       return `<div class="pk" data-dom="${pl}"><div class="pk-h">${pl === 'G' ? '도금' : '컬러'} ${W(k)}</div><div class="pk-v">${n0(big)}<small>t</small>${kind !== 'fut' && pc != null ? `<em>${pc}%</em>` : ''}</div>`
         + `<div class="pk-s">${pn} <b>${n0(p)}</b>t</div>${l2 ? `<div class="pk-s">${l2}</div>` : ''}${l3 ? `<div class="pk-s">${l3}</div>` : ''}</div>`; };
-    // 가장 뒤처진 그룹(생산·출하 하나씩): 이번 달 = 경과일 기준보다 모자란 톤이 가장 큰 그룹, 지난 달 = 월 계획에 가장 못 미친 그룹
-    const lagOf = (k) => ['G', 'C'].flatMap((pl) => keys(pl, k)).map((g) => { const [a, , p] = val(g, k); return { g, a, p, pc: p ? Math.round(a / p * 100) : null, gap: kind === 'cur' ? p * pace / 100 - a : p - a }; })
-      .filter((x) => x.p > 0 && (kind === 'cur' ? x.pc - pace < 0 && x.gap >= 0.5 : x.gap > x.p * 0.05)).sort((x, y) => y.gap - x.gap)[0];
+    // 가장 뒤처진 그룹(생산·출하 하나씩): 이번 달 = 기준(생산 경과일 · 출하 예정 누계)보다 모자란 톤이 가장 큰 그룹, 지난 달 = 월 계획에 가장 못 미친 그룹
+    const lagOf = (k) => ['G', 'C'].flatMap((pl) => keys(pl, k)).map((g) => { const [a, , p] = val(g, k), e = k === 'ship' ? due(g) : p * pace / 100;
+      return { g, a, p, pc: p ? Math.round(a / p * 100) : null, bp: p ? Math.round(e / p * 100) : null, gap: kind === 'cur' ? e - a : p - a }; })
+      .filter((x) => x.p > 0 && (kind === 'cur' ? x.pc - x.bp < 0 && x.gap >= 0.5 : x.gap > x.p * 0.05)).sort((x, y) => y.gap - x.gap)[0];
     const lagG = {};
-    const lagLine = kind === 'fut' || (kind === 'cur' && pace == null) ? '' : `<div class="pk-lag">${kind === 'cur' ? `<span class="pk-lh">계획 대비 미달 최대 그룹 <small>경과일 기준 ${pace}%(~${md(aTo)})</small></span>` : '<span class="pk-lh">계획 대비 미달 최대 그룹</span>'}`
+    const lagLine = kind === 'fut' || (kind === 'cur' && pace == null) ? '' : `<div class="pk-lag">${kind === 'cur' ? `<span class="pk-lh">계획 대비 미달 최대 그룹 <small>~${md(aTo)} · 생산 = 경과일 ${pace}% · 출하 = 출하 예정</small></span>` : '<span class="pk-lh">계획 대비 미달 최대 그룹</span>'}`
       + ['prod', 'ship'].map((k) => { const x = lagOf(k); if (x) lagG[`${x.g}|${k}`] = 1;
-        return `<span class="pk-li"><i>${W(k)}</i>${x ? `<b class="neg">${GNM[x.g]} ${x.pc}%</b> <span>${kind === 'cur' ? `${sg(x.pc - pace, '%p')} · ${n0(x.gap)}t 미달` : `${sg(x.a - x.p, 't')}`}</span>` : `<b class="pos">${kind === 'cur' ? '전 그룹 기준 이상' : '전 그룹 계획 수준'}</b>`}</span>`; }).join('') + '</div>';
-    D.shipSum = { m, kind, pace, aTo, end, v: Object.fromEntries(['G', 'C'].flatMap((pl) => keys(pl, 'ship')).map((g) => [g, val(g, 'ship')])) };
+        return `<span class="pk-li"><i>${W(k)}</i>${x ? `<b class="neg">${GNM[x.g]} ${x.pc}%</b> <span>${kind === 'cur' ? `${sg(x.pc - x.bp, '%p')} · ${n0(x.gap)}t 미달` : `${sg(x.a - x.p, 't')}`}</span>` : `<b class="pos">${kind === 'cur' ? '전 그룹 기준 이상' : '전 그룹 계획 수준'}</b>`}</span>`; }).join('') + '</div>';
+    D.shipSum = { m, kind, pace, aTo, end, v: Object.fromEntries(['G', 'C'].flatMap((pl) => keys(pl, 'ship')).map((g) => [g, val(g, 'ship')])),
+      due: Object.fromEntries(['G', 'C'].flatMap((pl) => keys(pl, 'ship')).map((g) => [g, kind === 'fut' ? null : due(g)])) };
     const LB = kind === 'past' ? ['실적', '월 계획', '차이'] : kind === 'cur' ? ['실적', '월 계획', '잔여'] : ['계획', '월 계획'];
     const chart = (pl, k) => { const ks = keys(pl, k); if (!ks.length) return '';
       return `<div class="pgv" data-dom="${pl}"><h3>${pl === 'G' ? '도금' : '컬러'} ${W(k)}</h3>` + colChart(ks.map((g) => { const [a, b, p] = val(g, k);
