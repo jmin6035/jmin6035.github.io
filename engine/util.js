@@ -39,7 +39,8 @@
     }
     return out;
   };
-  GP.rateFor = (P, line, alloy, cls) => {
+  GP.rateFor = (P, line, alloy, cls, b) => {
+    if (b && b.rate && b.rate[line]) return b.rate[line];   // 11/10: 묶음별 속도(주문 두께·폭) — 서버 엔진 util.rate_for 와 같음
     const k1 = `${line}|${alloy}|${cls}`, k2 = `${line}|${P.alloyFamily[alloy]}|${cls}`;
     if (P.rateDept[k1] != null) return P.rateDept[k1];
     if (P.rateDept[k2] != null) return P.rateDept[k2];

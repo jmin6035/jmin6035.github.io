@@ -131,7 +131,7 @@
     }
     const byLD = new Map();
     for (const e of x) { const k = `${e.l}|${e.d}`; if (!byLD.has(k)) byLD.set(k, []); byLD.get(k).push(e); }
-    const rate = (e) => GP.rateFor(P, e.l, e.b.alloy, e.b.cls);
+    const rate = (e) => GP.rateFor(P, e.l, e.b.alloy, e.b.cls, e.b);
     for (const [k, lst] of byLD) {
       const [l, d] = k.split('|');
       const t = lst.map((e) => [1 / rate(e), e.v]), xd = Math.min(XD[k] || 0, 1440 - EQ[l] - ND[l]);
@@ -278,7 +278,7 @@
       lp.con(t, '=', b.orig);
     }
     const used = new Map();
-    for (const e of x) { const k = `${e.l}|${e.d}`; if (!used.has(k)) used.set(k, []); used.get(k).push([1 / GP.rateFor(P, e.l, e.b.alloy, e.b.cls), e.v]); }
+    for (const e of x) { const k = `${e.l}|${e.d}`; if (!used.has(k)) used.set(k, []); used.get(k).push([1 / GP.rateFor(P, e.l, e.b.alloy, e.b.cls, e.b), e.v]); }
     const U = Object.fromEntries(L.map((l) => [l, lp.v('U')]));
     for (const l of L) for (const d of prodDays) {
       if (GP.isBlackout(P, l, d)) continue;
