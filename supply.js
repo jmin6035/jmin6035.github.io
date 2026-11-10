@@ -347,7 +347,7 @@
       if (kk === 'idle') return `<td class="sdblock sk-idle${n === 1 ? ' one' : ''}" colspan="${n}" rowspan="${ls.length}" title="${esc(`계획 물량 없음 ${md(ds[run[0]])}${n > 1 ? '~' + md(ds[run[1]]) : ''} · ${ls.join('·')} — 정지 계획은 없고, 이 라인에 배정할 생산 물량이 없음(휴지 집약으로 모인 쉬는 날)`)}" data-d="${d}">${n === 1 ? '없음' : n === 2 ? '물량 없음' : '계획 물량 없음'}</td>`;
       SDK.add(kk);
       const SH = { plan: '휴지', sd: 'S/D', repair: '수리', jr: '정기수리' }, nm = n === 1 ? (SH[kk] || KN[kk]) : n === 2 && KN[kk].length > 3 ? SH[kk] || KN[kk] : KN[kk];
-      return `<td class="sdblock sk-${kk}${n === 1 ? ' one' : ''}" colspan="${n}" rowspan="${ls.length}" title="${esc(`${KN[kk]} ${md(ds[run[0]])}${n > 1 ? '~' + md(ds[run[1]]) : ''} · ${ls.map((l) => `${l} ${dTxt(l, d) || '생산 실적 없음(MES 휴지 사유 기록 없음)'}`).join(' / ')}`)}" data-d="${d}">${nm}</td>`; };
+      return `<td class="sdblock sk-${kk}${n === 1 ? ' one' : ''}" colspan="${n}" rowspan="${ls.length}" title="${esc(`${KN[kk]} ${md(ds[run[0]])}${n > 1 ? '~' + md(ds[run[1]]) : ''} · ${ls.map((l) => `${l} ${dTxt(l, d) || '생산 실적 없음(MES 휴지 사유 기록 없음)'}`).join(' / ')}`)}" data-d="${d}"><span class="sdp">${nm}${n >= 3 ? `<small>${md(ds[run[0]])}~${md(ds[run[1]])}</small>` : ''}</span></td>`; };
     const isMC = (x) => x && /M\/C/.test(x.ev || '');
     const CGM = { 가전수출: 'C수출', 가전내수: 'C수출', 건재수출: 'C수출', 계획재: 'C건재', 주문재: 'C건재', 수요개발: 'C수요' }, CGN = { C수출: '컬러수출', C건재: '컬러건재', C수요: '수요개발' }, CGS = { C수출: '수출', C건재: '건재', C수요: '수요' };
     const cTop = (x) => { const a = {}; for (const [g, t] of Object.entries(x.g || {})) { const k = CGM[g] || (/^C/.test(g) ? g : 'C건재'); a[k] = (a[k] || 0) + t; } return Object.entries(a).sort((p, q) => q[1] - p[1])[0][0]; };
@@ -385,7 +385,7 @@
     const sw = (c, t) => `<span><i class="sw ${c}"></i>${t}</span>`, sep = '<i class="gsep"></i>';
     $('s-calleg').innerHTML = (UI.inScope('G') ? '<span class="muted">도금 강종</span>' + sw('f-AL', 'AL') + sw('f-AZ', 'AZ') + sw('f-MAC', 'MAC') + sw('mcsw', 'M/C(강종 전환)') + sep : '')
       + (UI.inScope('C') ? '<span class="muted">컬러 판매그룹</span>' + sw('f-C수출', '컬러수출') + sw('f-C건재', '컬러건재') + sw('f-C수요', '수요개발') + sep : '')
-      + ['plan', 'repair', 'sd', 'jr'].filter((k) => SDK.has(k)).map((k) => sw(`sk-${k}`, `${KN[k]}(종일)`)).join('') + sw("idsw", "계획 물량 없음") + sep + sw('tbsw', '오늘') + sw('wesw', '주말') + '<span class="muted">진한 색 = 실적 · 옅은 색 = 계획</span>';
+      + ['plan', 'repair', 'sd', 'jr'].filter((k) => SDK.has(k)).map((k) => sw(`sk-${k}`, `${KN[k]}(종일)`)).join('') + sw("idsw", "계획 물량 없음") + sep + sw('tbsw', '오늘') + sw('wesw', '주말') + '<span class="muted">굵은 숫자 = 실적 · 옅은 숫자 = 계획 · 단위 t</span>';
     $('s-shipleg').innerHTML = '<span class="muted">재고 칸 색 = 목표 대비</span>' + sw('hiw', '100~130%') + sw('hi2w', '130% 초과') + sep + sw('tbsw', '오늘') + '<span class="muted">전일까지 실적</span>';
     // 판매그룹 출하·재고(라인 구분 없는 자료 — 사용자 10/21: 밑으로 따로 하나 더)
     let S2 = headG('판매그룹');

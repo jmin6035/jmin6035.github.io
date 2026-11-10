@@ -6,7 +6,7 @@
 <title>납기 위험</title>
 <meta name="description" content="미결 주문 전체의 납기 위험 — 전체, 판매그룹별, 원인별">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611100752">
+<link rel="stylesheet" href="ui/theme.css?v=2611100815">
 <style>
 .rk { --c-ok: var(--good); --c-warn: #c9a227; --c-will: #e07b39; --c-past: var(--bad); --c-stale: #9aa5b1; }
 .rk-top { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 28px; align-items: start; }
@@ -54,6 +54,14 @@ table.rk-s td.z { color: var(--ink-3); }
 .rk-m b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; margin-top: 6px; } .rk-m small { color: var(--ink-2); font-size: 13.5px; display: block; white-space: nowrap; } .rk-m em { font-style: normal; color: var(--bad); font-weight: 700; font-size: 13.5px; white-space: nowrap; }
 .rk-rule { color: var(--ink-2); font-size: 13.5px; margin: 10px 0 0; }
 @media (max-width: 900px) { .rk-top, .rk-dg { grid-template-columns: 1fr; } .rk-leg { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rk-big b { font-size: 22px; } main.rk table.rk-g td.w { min-width: 220px; } }
+
+/* 납기월별 미결 = 가로 막대 표(11/10 사용자 '이대로 보고하면 되냐') — 막대 길이 = 미결 톤, 빨강 = 위험 */
+.rk table.rk-mt { width: 100%; border-collapse: collapse; font-size: 14.5px; } .rk table.rk-mt th { font-size: 13.5px; font-weight: 600; color: var(--ink-2); padding: 8px 12px; border-bottom: 2px solid var(--line); white-space: nowrap; }
+.rk table.rk-mt td { padding: 13px 12px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; white-space: nowrap; vertical-align: middle; } .rk table.rk-mt td:nth-child(3) { width: 46%; min-width: 260px; }
+html body .rk table.rk-mt th, html body .rk table.rk-mt td { text-align: right !important; } html body .rk table.rk-mt .l { text-align: left !important; }
+.rk-mb { display: flex; height: 24px; border-radius: 6px; overflow: hidden; min-width: 8px; } .rk-mb i { display: block; height: 100%; font-style: normal; color: #fff; font-size: 13.5px; font-weight: 700; line-height: 24px; text-align: center; overflow: hidden; }
+.rk-mb i.r, .rk-key i.r { background: var(--c-past, #b3342c); } .rk-mb i.s, .rk-key i.s { background: var(--c-stale, #9aa3af); } .rk-mb i.o, .rk-key i.o { background: var(--c-ok, #7fb59a); }
+.rk-bad { color: var(--bad); } .rk-key { display: inline-flex; align-items: center; gap: 6px; margin-right: 16px; white-space: nowrap; } .rk-key i { display: inline-block; width: 14px; height: 12px; border-radius: 3px; }
 </style>
 </head>
 <body>
@@ -67,8 +75,8 @@ table.rk-s td.z { color: var(--ink-3); }
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>원자료: MES 주문·소재 입고·생산 실적·작업예정, 판생 M/C 일정</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611100752"></script>
-<script src="engine/crypto.js?v=2611100752"></script>
-<script src="risk.js?v=2611100752"></script>
+<script src="ui/shell.js?v=2611100815"></script>
+<script src="engine/crypto.js?v=2611100815"></script>
+<script src="risk.js?v=2611100815"></script>
 </body>
 </html>

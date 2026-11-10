@@ -234,7 +234,8 @@
       <details class="rk-more"><summary>해당 계약 ${n0(rows.length)}건</summary><div class="scroll" style="margin-top:8px"><table class="rk-s">${conHead}<tbody>${rows.slice(0, 300).map(conRow).join('')}</tbody></table></div>${rows.length > 300 ? `<p class="rk-rule">지연·물량순 300건 표시 · 전체 ${n0(rows.length)}건</p>` : ''}</details>`;
   }
   function drawTrack() {
-    const A = trackAll(), stale = L.filter(CT.isStale), pls = ['G', 'C'].filter((p) => CT.inScope(p));
+    const LN = PS.line || '', inLn = (o) => !LN || o.line === LN;      // 위 라인 탭(1CCL 등)을 고르면 아래 판매그룹·조회도 그 라인만(11/10 사용자 '1CCL 눌렀는데 도금이 같이 나온다')
+    const A = trackAll().filter(inLn), stale = L.filter(CT.isStale).filter(inLn), pls = ['G', 'C'].filter((p) => CT.inScope(p) && (!LN || (/CGL/.test(LN) ? 'G' : 'C') === p));
     const GM = new Map(); A.forEach((o) => { const k = o.pl + '|' + o.grp; if (!GM.has(k)) GM.set(k, []); GM.get(k).push(o); });
     const G = [...GM].map(([key, X]) => ({ key, pl: X[0].pl, g: X[0].grp, X, a: agg(X) })).sort((x, y) => (x.pl === y.pl ? y.a.t - x.a.t : x.pl === 'G' ? -1 : 1));
     let last = null;
@@ -242,7 +243,7 @@
       return `<b>${SGN[a.top]}</b> ${n0(s.t)}t(${pct(s.t, a.t)}%)${x ? ` · ${x}` : ''}`; };
     $('ot').innerHTML = `
       <div id="co-ps"></div>
-      <section class="card" id="ot-s2"><h2>판매그룹별 <small>선택 시 단계 × 강종(품명) · 납기월 표시</small></h2>
+      <section class="card" id="ot-s2"><h2>판매그룹별${LN ? ` · ${LN}` : ''} <small>선택 시 단계 × 강종(품명) · 납기월 표시</small></h2>
         <div class="ot-sum">${pls.map((p) => { const a = agg(A.filter((o) => o.pl === p)), lt = a.will + a.past; return `<div><em class="ot-pl">${p === 'G' ? '도금' : '컬러'}</em><b>${n0(a.t)}t</b><span>미결 ${n0(a.n)}건</span><span>지연 예상 <strong class="ot-bad">${n0(a.will)}t</strong></span><span>납기 경과 <strong class="ot-bad">${n0(a.past)}t</strong></span><span>합계 <strong class="ot-bad">${n0(lt)}t (${pct(lt, a.t)}%)</strong></span></div>`; }).join('')}${stale.length ? `<span class="ot-z">종결 확인 ${n0(stale.length)}건 ${n0(sum(stale, (o) => o.remT))}t 제외</span>` : ''}</div>
         <div class="scroll"><table class="rk-g"><thead><tr><th class="l">그룹</th><th>미결</th><th class="l otb">단계</th><th>지연 예상</th><th>납기 경과</th><th class="l">최대 정체 단계</th></tr></thead><tbody>
         ${G.map((g) => { const on = TK.open === g.key, a = g.a, h = pls.length > 1 && last !== g.pl ? `<tr class="hd"><td colspan="6">${g.pl === 'G' ? '도금' : '컬러'}</td></tr>` : ''; last = g.pl;
@@ -251,19 +252,20 @@
         </tbody></table></div>
         <p class="rk-rule ot-key">${FLOW.map((k) => `<span><i class="${k}"></i>${SGN[k]}</span>`).join('')}</p></section>
       <section class="card" id="ot-s3"><h2>계약 조회</h2>
-        <input id="ot-q" class="ot-q" type="search" placeholder="계약번호·품명·고객·담당" value="${esc(TK.q)}" aria-label="계약 조회"><div id="ot-qr"></div></section>`;
+        <form id="ot-qf" class="ot-qf"><input id="ot-q" class="ot-q" type="search" placeholder="계약번호 · 품명 · 고객사 · 담당자 입력" value="${esc(TK.q)}" aria-label="계약 조회"><button type="submit" class="ot-qb">조회</button><span class="ot-z">2자 이상 입력 · 미결 주문 ${n0(L.filter(inLn).length)}건 대상</span></form><div id="ot-qr"></div></section>`;
     $('ot').querySelectorAll('tr.g').forEach((tr) => { const f = () => { TK.open = TK.open === tr.dataset.k ? null : tr.dataset.k; drawTrack(); const t = [...document.querySelectorAll('tr.g')].find((x) => x.dataset.k === TK.open); if (t) t.scrollIntoView({ block: 'nearest' }); };
       tr.onclick = f; tr.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f(); } }; });
     const rowsOn = (root) => { root.querySelectorAll('tr.ck').forEach((tr) => { tr.onclick = () => { const o = byId[tr.dataset.id]; if (o) open(o); }; }); CT.keyRows(root); };
     $('ot').querySelectorAll('tr.rk-d').forEach(rowsOn);
-    const find = () => { const q = TK.q.toUpperCase(), R = q.length < 2 ? [] : L.filter((o) => [o.id, o.item, o.cus, o.man].join(' ').toUpperCase().includes(q)).sort(conSort);
+    const find = () => { const q = TK.q.toUpperCase(), R = q.length < 2 ? [] : L.filter(inLn).filter((o) => [o.id, o.item, o.cus, o.man, o.dst, o.grp, o.line, (o.src || {}).pdt, (o.src || {}).fam].join(' ').toUpperCase().includes(q)).sort(conSort);
       $('ot-qr').innerHTML = q.length < 2 ? '' : R.length ? `<div class="scroll" style="margin-top:10px"><table class="rk-s">${conHead}<tbody>${R.slice(0, 100).map(conRow).join('')}</tbody></table></div>${R.length > 100 ? `<p class="rk-rule">100건 표시 · 전체 ${n0(R.length)}건</p>` : ''}` : '<p class="rk-rule">해당 계약 없음</p>';
       rowsOn($('ot-qr')); };
+    $('ot-qf').onsubmit = (e) => { e.preventDefault(); TK.q = $('ot-q').value.trim(); find(); };
     $('ot-q').oninput = (e) => { TK.q = e.target.value.trim(); clearTimeout(drawTrack.t); drawTrack.t = setTimeout(find, 200); };
     find();
     const bindPS = () => {
       const re = () => { const y = scrollY; $('co-ps').innerHTML = progSum(); bindPS(); scrollTo(0, y); };
-      document.querySelectorAll('.ps-seg button, .pm').forEach((bt) => (bt.onclick = () => { PS.line = bt.dataset.l; PS.open = ''; re(); }));
+      document.querySelectorAll('.ps-seg button, .pm').forEach((bt) => (bt.onclick = () => { const y = scrollY; PS.line = bt.dataset.l; PS.open = ''; TK.open = null; drawTrack(); scrollTo(0, y); }));
       document.querySelectorAll('#co-ps [data-ex]').forEach((el) => { const go = () => { PS.open = PS.open === el.dataset.ex ? '' : el.dataset.ex; re(); const e = document.querySelector('.ps-exp'); if (e && PS.open) e.scrollIntoView({ block: 'nearest' }); };
         el.onclick = go; el.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } }; });
       document.querySelectorAll('#co-ps th[data-xs] button').forEach((b) => (b.onclick = () => { const x = b.parentNode.dataset.xs; if (PS.sk === x) PS.dir = -PS.dir; else { PS.sk = x; PS.dir = x === 'due' ? 1 : -1; } re(); }));
