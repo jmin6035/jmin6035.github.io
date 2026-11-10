@@ -6,7 +6,7 @@
 <title>결정 기록</title>
 <meta name="description" content="가동계획·소재·재고 관련 결정과 할 일을 남기고 진행을 추적">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611100729">
+<link rel="stylesheet" href="ui/theme.css?v=2611100742">
 <style>
 .form { display: grid; grid-template-columns: 110px minmax(0, 1.4fr) minmax(0, 1fr) 130px 160px 120px auto; gap: 10px; align-items: end; }
 .form label { display: flex; flex-direction: column; gap: 5px; font-size: 14px; font-weight: 700; color: var(--ink-2); }
@@ -45,9 +45,9 @@ html body main td.dt { white-space: normal !important; min-width: 280px; text-al
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>저장: 공유 저장소(분석 암호로 암호화, 추가만 가능 — 지우거나 고칠 수 없음)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611100729"></script>
-<script src="engine/util.js?v=2611100729"></script>
-<script src="engine/crypto.js?v=2611100729"></script>
+<script src="ui/shell.js?v=2611100742"></script>
+<script src="engine/util.js?v=2611100742"></script>
+<script src="engine/crypto.js?v=2611100742"></script>
 <script>
 (function () {
   const $ = (id) => document.getElementById(id);
@@ -122,12 +122,12 @@ html body main td.dt { white-space: normal !important; min-width: 280px; text-al
     $('d-body').innerHTML = L.map((r) => `<tr data-id="${esc(r.id)}"><td>${r.at ? esc(UI.fmtDate(String(r.at).slice(0, 10))) : ''}</td><td class="c"><b>${esc(r.area)}</b></td><td class="l dt"><b>${esc(r.title)}</b>${r.detail ? `<br><span class="small">${esc(r.detail)}</span>` : ''}</td><td>${esc(r.owner || '')}</td>
       <td class="${r.due && r.due < today && !['완료', '보류', '결정'].includes(r.status) ? 'overdue' : ''}">${r.due ? esc(UI.fmtDate(r.due)) : ''}</td><td><select data-st>${ST.map((s) => `<option ${s === r.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td><td class="muted">${esc(r.by || '')}</td></tr>`).join('') || '<tr><td colspan="7" class="c muted">없음</td></tr>';
     $('d-filter').querySelectorAll('button').forEach((b) => b.onclick = () => { filt = b.dataset.f; draw(); });
-    $('d-body').querySelectorAll('select[data-st]').forEach((s) => s.onchange = async () => { try { await push({ t: 'set', uid: s.closest('tr').dataset.id, status: s.value }); UI.toast('상태 바꿈'); } catch (e) { UI.toast('⚠ 저장 안 됨 — 다시 시도하세요'); } load(); });
+    $('d-body').querySelectorAll('select[data-st]').forEach((s) => s.onchange = async () => { try { await push({ t: 'set', uid: s.closest('tr').dataset.id, status: s.value }); UI.toast('상태 변경'); } catch (e) { UI.toast('⚠ 저장 실패 — 재시도 바랍니다'); } load(); });
   }
   $('d-form').onsubmit = async (e) => {
     e.preventDefault();
-    if (!PW) { UI.toast('먼저 분석 암호로 여세요'); return; }
-    try { await push({ t: 'add', uid: uid(), area: $('f-area').value, title: $('f-title').value.trim(), detail: $('f-detail').value.trim(), owner: $('f-owner').value.trim(), due: $('f-due').value || null, status: $('f-status').value }); } catch (err) { UI.toast('⚠ 저장 안 됨 — 다시 시도하세요'); return; }
+    if (!PW) { UI.toast('분석 암호 입력 필요'); return; }
+    try { await push({ t: 'add', uid: uid(), area: $('f-area').value, title: $('f-title').value.trim(), detail: $('f-detail').value.trim(), owner: $('f-owner').value.trim(), due: $('f-due').value || null, status: $('f-status').value }); } catch (err) { UI.toast('⚠ 저장 실패 — 재시도 바랍니다'); return; }
     e.target.reset(); UI.toast('남김'); load();
   };
   $('d-me').value = me();

@@ -195,7 +195,7 @@
     a.blk = FLOW.reduce((m, k) => (a.st[k].will + a.st[k].past > (m ? a.st[m].will + a.st[m].past : 0.5) ? k : m), '');
     return a;
   }
-  const sbar = (a, cls) => `<div class="rk-st ${cls || ''}">${FLOW.map((k) => (a.st[k].t > 0 ? `<i class="${k}" style="flex:${a.st[k].t}" title="${SGN[k]} ${n0(a.st[k].t)}t"></i>` : '')).join('')}</div>`;
+  const sbar = (a, cls) => `<div class="rk-st ${cls || ''}">${FLOW.map((k) => (a.st[k].t > 0 ? `<i class="${k}" style="flex:${a.st[k].t}" title="${SGN[k]} ${n0(a.st[k].t)}t">${pct(a.st[k].t, a.t) >= 12 ? pct(a.st[k].t, a.t) + '%' : ''}</i>` : '')).join('')}</div>`;
   const lateTxt = (s, un) => [s.will >= 0.5 ? `지연 예상 ${n0(s.will)}t` : '', s.past >= 0.5 ? `납기 경과 ${n0(s.past)}t` : '', un && s.un >= 0.5 ? `미편성 ${n0(s.un)}t` : ''].filter(Boolean).join(' · ');
   const TK = { open: null, q: '' };
   function flowCard(pl, X) {
@@ -215,7 +215,7 @@
     R.sort(sortF ? (x, y) => (x.s < y.s ? -1 : 1) : (x, y) => y.a.t - x.a.t);
     const rest = cap && R.length > cap ? R.slice(cap) : []; if (rest.length) R = R.slice(0, cap);
     const mx = Math.max(1, ...R.flatMap((r) => FLOW.map((k) => r.a.st[k].t)));
-    const cell = (v) => (v < 0.5 ? '<td class="hm z">-</td>' : `<td class="hm" style="background:color-mix(in srgb, var(--brand-2) ${Math.round(v / mx * 26)}%, transparent)"><b>${n0(v)}</b></td>`);
+    const cell = (v) => (v < 0.5 ? '<td class="hm z">-</td>' : `<td class="hm" style="background:color-mix(in srgb, var(--hc) ${8 + Math.round(v / mx * 30)}%, transparent)"><b>${n0(v)}</b></td>`);
     const bad = (v) => (v < 0.5 ? '<td class="z">-</td>' : `<td><b class="ot-bad">${n0(v)}</b></td>`);
     const all = agg(X.filter((o) => stg(o) !== 'ship'));
     const line = (k, a, c) => `<tr${c ? ` class="${c}"` : ''}><td class="l"><b>${esc(k)}</b></td>${c ? FLOW.map((f) => `<td><b>${a.st[f].t >= 0.5 ? n0(a.st[f].t) : '-'}</b></td>`).join('') : FLOW.map((f) => cell(a.st[f].t)).join('')}<td><b>${n0(a.t)}</b></td>${bad(a.will)}${bad(a.past)}</tr>`;
@@ -241,18 +241,17 @@
     const msg = (a) => { if (a.t < 0.5) return `생산 잔량 없음 · 출하 대기 ${n0(a.st.ship.t)}t`; const s = a.st[a.top], x = lateTxt(s, a.top === 'plan');
       return `<b>${SGN[a.top]}</b> ${n0(s.t)}t(${pct(s.t, a.t)}%)${x ? ` · ${x}` : ''}`; };
     $('ot').innerHTML = `
-      <section class="card" id="ot-s1"><h2>전체 <small>미결 주문 · 수주 확정 → 소재 확보 → 작업 편성 → 생산 → 출하</small></h2>
-        <div class="rk-top"${pls.length < 2 ? ' style="grid-template-columns:minmax(0,1fr)"' : ''}>${pls.map((p) => flowCard(p, A.filter((o) => o.pl === p))).join('')}</div>${stale.length ? `<p class="rk-rule">종결 확인 ${n0(stale.length)}건 ${n0(sum(stale, (o) => o.remT))}t 제외</p>` : ''}</section>
+      <div id="co-ps"></div>
       <section class="card" id="ot-s2"><h2>판매그룹별 <small>선택 시 단계 × 강종(품명) · 납기월 표시</small></h2>
-        <div class="scroll"><table class="rk-g"><thead><tr><th class="l">그룹</th><th>미결</th><th class="l" style="min-width:220px">단계</th><th>지연 예상</th><th>납기 경과</th><th class="l">최대 정체 단계</th></tr></thead><tbody>
+        <div class="ot-sum">${pls.map((p) => { const a = agg(A.filter((o) => o.pl === p)), lt = a.will + a.past; return `<div><em class="ot-pl">${p === 'G' ? '도금' : '컬러'}</em><b>${n0(a.t)}t</b><span>미결 ${n0(a.n)}건</span><span>지연 예상 <strong class="ot-bad">${n0(a.will)}t</strong></span><span>납기 경과 <strong class="ot-bad">${n0(a.past)}t</strong></span><span>합계 <strong class="ot-bad">${n0(lt)}t (${pct(lt, a.t)}%)</strong></span></div>`; }).join('')}${stale.length ? `<span class="ot-z">종결 확인 ${n0(stale.length)}건 ${n0(sum(stale, (o) => o.remT))}t 제외</span>` : ''}</div>
+        <div class="scroll"><table class="rk-g"><thead><tr><th class="l">그룹</th><th>미결</th><th class="l otb">단계</th><th>지연 예상</th><th>납기 경과</th><th class="l">최대 정체 단계</th></tr></thead><tbody>
         ${G.map((g) => { const on = TK.open === g.key, a = g.a, h = pls.length > 1 && last !== g.pl ? `<tr class="hd"><td colspan="6">${g.pl === 'G' ? '도금' : '컬러'}</td></tr>` : ''; last = g.pl;
           const num = (v) => (v >= 0.5 ? `<b class="ot-bad">${n0(v)}t</b>` : '<span class="ot-z">-</span>');
-          return `${h}<tr class="g${on ? ' on' : ''}" data-k="${esc(g.key)}" tabindex="0" role="button" aria-expanded="${on}"><td class="l nm"><b><i class="ch">▸</i>${esc(g.g)}</b><small>${n0(a.n)}건</small></td><td><b>${n0(a.t)}t</b></td><td class="l">${sbar(a, 'sm')}</td><td>${num(a.will)}</td><td>${num(a.past)}</td><td class="w"><div class="rk-w">${msg(a)}</div></td></tr>${on ? `<tr class="rk-d"><td colspan="6">${grpDetail(g)}</td></tr>` : ''}`; }).join('')}
+          return `${h}<tr class="g${on ? ' on' : ''}" data-k="${esc(g.key)}" tabindex="0" role="button" aria-expanded="${on}"><td class="l nm"><b><i class="ch">▸</i>${esc(g.g)}</b><small>${n0(a.n)}건</small></td><td><b>${n0(a.t)}t</b></td><td class="l otb">${sbar(a, 'sm')}</td><td>${num(a.will)}</td><td>${num(a.past)}</td><td class="w"><div class="rk-w">${msg(a)}</div></td></tr>${on ? `<tr class="rk-d"><td colspan="6">${grpDetail(g)}</td></tr>` : ''}`; }).join('')}
         </tbody></table></div>
         <p class="rk-rule ot-key">${FLOW.map((k) => `<span><i class="${k}"></i>${SGN[k]}</span>`).join('')}</p></section>
       <section class="card" id="ot-s3"><h2>계약 조회</h2>
-        <input id="ot-q" class="ot-q" type="search" placeholder="계약번호·품명·고객·담당" value="${esc(TK.q)}" aria-label="계약 조회"><div id="ot-qr"></div>
-        <details class="rk-more" id="ot-psd"><summary>라인별 작업지시 현황</summary><div id="co-ps" style="margin-top:10px"></div></details></section>`;
+        <input id="ot-q" class="ot-q" type="search" placeholder="계약번호·품명·고객·담당" value="${esc(TK.q)}" aria-label="계약 조회"><div id="ot-qr"></div></section>`;
     $('ot').querySelectorAll('tr.g').forEach((tr) => { const f = () => { TK.open = TK.open === tr.dataset.k ? null : tr.dataset.k; drawTrack(); const t = [...document.querySelectorAll('tr.g')].find((x) => x.dataset.k === TK.open); if (t) t.scrollIntoView({ block: 'nearest' }); };
       tr.onclick = f; tr.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f(); } }; });
     const rowsOn = (root) => { root.querySelectorAll('tr.ck').forEach((tr) => { tr.onclick = () => { const o = byId[tr.dataset.id]; if (o) open(o); }; }); CT.keyRows(root); };
@@ -269,7 +268,7 @@
         el.onclick = go; el.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } }; });
       document.querySelectorAll('#co-ps th[data-xs] button').forEach((b) => (b.onclick = () => { const x = b.parentNode.dataset.xs; if (PS.sk === x) PS.dir = -PS.dir; else { PS.sk = x; PS.dir = x === 'due' ? 1 : -1; } re(); }));
     };
-    $('ot-psd').ontoggle = () => { if ($('ot-psd').open && !$('co-ps').innerHTML) { $('co-ps').innerHTML = progSum(); bindPS(); } };
+    $('co-ps').innerHTML = progSum(); bindPS();
   }
 
   /* ---------- #cal 납기 캘린더 ---------- */

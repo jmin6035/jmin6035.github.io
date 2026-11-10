@@ -22,7 +22,7 @@
   const hhmm = (m) => iso(m).slice(11);
   const hrs = (m) => (m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 >= 1 ? ' ' + Math.round(m % 60) + '분' : ''}` : `${Math.round(m)}분`);
   const LINES = { cg: ['1CGL', '2CGL'], cc: ['1CCL', '2CCL', '3CCL', '4CCL'] };
-  const POOLNM = { pre: '기간 시작 전에 끝날 작업', over: '기간 안에 시간이 모자람(뒤로 밀림)', later: '생산예정일이 기간 뒤', out: '직접 뺀 작업', new: '새로 들어온 작업' };
+  const POOLNM = { pre: '기간 시작 전에 끝날 작업', over: '기간 내 시간 부족(순연)', later: '생산예정일이 기간 뒤', out: '직접 제외 작업', new: '신규 작업' };
   const GR = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E 극저', GREL: 'Gr.E 저탄', GRA: 'Gr.A', GRB: 'Gr.B' };
   const IND = { A: '508', B: '610', C: '305' };
 
@@ -112,12 +112,12 @@
       const load = {};
       ev.forEach((v) => { if (v.k === 'w') return; const d = dayOf(v.s); const m = v.k === 'j' ? v.e - v.ds : (v.e2 || v.e) - v.s; load[d] = (load[d] || 0) + m; });   // 그날 시작한 작업·휴지 합(기다림 제외)
       Object.entries(load).forEach(([d, m]) => { if (m > 1440.5 && tms(d + ' 07:00') < W1) add('warn', '하루 1,440분 초과', l, null, `${l} ${dnm(d)} 그날 시작한 작업·휴지 ${n0(m)}분 — 다음날로 ${n0(m - 1440)}분 넘어감`); });
-      js.forEach((v) => { if (v.e > W1) add('warn', '기간 끝 넘김', l, v.x, `${l} ${conOf(v.x)} 끝 ${md(iso(v.e))} ${hhmm(v.e)} — 기간 끝 ${md(iso(W1))} 07:00 넘김`); });
+      js.forEach((v) => { if (v.e > W1) add('warn', '기간 초과', l, v.x, `${l} ${conOf(v.x)} 끝 ${md(iso(v.e))} ${hhmm(v.e)} — 기간 끝 ${md(iso(W1))} 07:00 초과`); });
       js.forEach((v) => {
         const x = v.x, end = dayOf(v.e), due = plant === 'cg' ? x.dlv : x.due;
         if (due && due < end) {
-          if (due >= dayOf(tms(D.w0))) add('bad', '납기 넘김', l, x, `${l} ${conOf(x)} 납기 ${md(due)} → 끝 ${dnm(end)}`);
-          else add('info', '납기 이미 지남', l, x, `${l} ${conOf(x)} 납기 ${md(due)}(오늘 전) — 끝 ${dnm(end)}`);
+          if (due >= dayOf(tms(D.w0))) add('bad', '지연 예상', l, x, `${l} ${conOf(x)} 납기 ${md(due)} → 끝 ${dnm(end)}`);
+          else add('info', '납기 경과', l, x, `${l} ${conOf(x)} 납기 ${md(due)}(오늘 전) — 끝 ${dnm(end)}`);
         }
       });
       if (plant === 'cg') checkCG(l, js, add); else checkCC(l, js, ev, add);
@@ -136,7 +136,7 @@
     const ga = a.grade, gb = b.grade;
     if (ga && gb && ga !== gb && ((R.matNo || {})[b.al] || []).some((p) => p.includes(ga) && p.includes(gb) && ga !== gb)) {
       const br = (R.matBridge || {})[[ga, gb].sort().join('|')];
-      o.push(['bad', '재질 못 잇는 짝', `재질 ${GR[ga] || ga} → ${GR[gb] || gb} 바로 못 이음${br ? ' — 사이에 ' + br : ''}`]);
+      o.push(['bad', '재질 연속 불가', `재질 ${GR[ga] || ga} → ${GR[gb] || gb} 연속 불가${br ? ' — 사이에 ' + br : ''}`]);
     }
     if (a.ind && b.ind && a.ind !== b.ind && Math.min(a.thick, b.thick) < R.indThin) o.push(['bad', '내경', `내경 ${IND[a.ind] || a.ind} → ${IND[b.ind] || b.ind}(0.6t 미만)`]);
     const ta = (a.trt || {}).aft, tb = (b.trt || {}).aft, g = tgrp(ta);
@@ -229,7 +229,7 @@
   function jobRow(l, v, days, n) {
     const x = v.x, bad = CK && CK.some((c) => c.id === x.id && c.l === l && c.lv === 'bad');
     const due = plant === 'cg' ? x.dlv : x.due;
-    const tag = plant === 'cg' ? (x.issued ? '<span class="cp fx" title="이미 작업지시 나감(1030)">지시</span>' : '') : '';   // 11/10 사용자 '1030 #순번 · 1020 미확정 표시 지워라'
+    const tag = plant === 'cg' ? (x.issued ? '<span class="cp fx" title="작업지시 완료(1030)">지시</span>' : '') : '';   // 11/10 사용자 '1030 #순번 · 1020 미확정 표시 지워라'
     const sub = plant === 'cg' ? `${x.n > 1 ? x.n + '코일 · ' : ''}소재 ${esc(x.raws[0])}${x.n > 1 ? ' 외' : ''}${x.req ? ' · 예정 ' + md(x.req) : ''}` : `<b title="품명(제품 코드 ${esc(x.pdt)})">${esc(x.item || x.pdt)}</b>${x.ready && x.ready > TODAY ? '<div class="wr" title="도료·PF 입고 뒤">' + md(x.ready) + '부터 가능</div>' : ''}`;
     const lsel = plant === 'cc' ? `<select data-a="line" data-i="${v.i}" title="다른 라인으로">${LINES.cc.map((y) => `<option${y === l ? ' selected' : ''}>${y}</option>`).join('')}</select>` : '';
     return `<tr class="j${x.fixed || x.issued ? ' fx' : ''}${hl === x.id ? ' hl' : bad ? ' bad' : ''}" draggable="true" data-i="${v.i}" data-id="${esc(x.id)}">`
@@ -249,7 +249,7 @@
     $('ws-wk').textContent = `${dnm(days[0])} ~ ${dnm(days[days.length - 1])}`;
     $('ws-wk').title = `${iso(W0)} ~ ${iso(W1)} (하루 = 07시 ~ 다음날 07시)`;
     const v = $('ws-ver');
-    if (dirty) { v.className = 'ws-ver ed'; v.textContent = '고침 · 저장 전'; }
+    if (dirty) { v.className = 'ws-ver ed'; v.textContent = '수정 · 저장 전'; }
     else if (cur && cur.state !== 'reset') { v.className = 'ws-ver ' + (cur.state === 'confirm' ? 'cf' : 'sv'); v.textContent = `${cur.state === 'confirm' ? '확정' : '저장'} v${cur.v} · ${cur.who} · ${kst(cur.at)}`; }
     else { v.className = 'ws-ver'; v.textContent = `초안 · ${UI.fmtDateTime(D.built)} 자료`; }
     $('ws-plant').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.p === plant)));
@@ -274,7 +274,7 @@
     const bar = (d) => { const b0 = tms(d + ' 07:00'); const seg = (a, z, c) => { const x0 = Math.max(0, a - b0), x1 = Math.min(1440, z - b0); return x1 > x0 ? `<i class="${c}" style="left:${(x0 / 14.4).toFixed(2)}%;width:${((x1 - x0) / 14.4).toFixed(2)}%"></i>` : ''; };
       return `<div class="dbar">${ev.map((q) => (q.k === 'j' ? seg(q.ds, q.s, 'd') + seg(q.s, q.e, 'r') : seg(q.s, q.e2 || q.e, q.k === 'p' ? (/샘플|test|시험/i.test(q.ev) ? 'p sm' : 'p') : q.k === 'g' ? (q.e.sm ? 'p sm' : 'd') : 'g'))).join('')}</div>`; };
     const dayHead = (d) => { const o = dsum[d] || { n: 0, t: 0, run: 0, dn: 0 }; const over = o.run + o.dn > 1440.5;
-      return `<tr class="dh" data-d="${d}"><td colspan="7"><div class="dhh"><b>${d === 'over' ? `기간 끝(${md(iso(W1))} 07:00) 넘김` : dnm(d)}</b><span>작업 ${o.n}건 · ${n0(o.t)}t</span><span>생산 ${n0(o.run)}분 · 휴지 ${n0(o.dn)}분</span>${over && d !== 'over' ? `<em title="그날 시작한 작업·휴지 합이 1,440분 넘음">다음날로 ${n0(o.run + o.dn - 1440)}분</em>` : ''}</div>${d === 'over' ? '' : bar(d)}</td></tr>`; };
+      return `<tr class="dh" data-d="${d}"><td colspan="7"><div class="dhh"><b>${d === 'over' ? `기간 끝(${md(iso(W1))} 07:00) 초과` : dnm(d)}</b><span>작업 ${o.n}건 · ${n0(o.t)}t</span><span>생산 ${n0(o.run)}분 · 휴지 ${n0(o.dn)}분</span>${over && d !== 'over' ? `<em title="그날 시작한 작업·휴지 합이 1,440분 초과">다음날로 ${n0(o.run + o.dn - 1440)}분</em>` : ''}</div>${d === 'over' ? '' : bar(d)}</td></tr>`; };
     const shown = new Set();
     ev.forEach((q) => {
       const d = q.s >= W1 ? 'over' : dayOf(q.s);
@@ -331,12 +331,12 @@
       const alt = (x.allow || LINES.cc).filter((l) => l !== line && left[l] > runMin(x, l) + 60);
       if (alt.length) out.push(`→ ${alt.map((l) => `${l}(남는 ${hrs(left[l])})`).join(' · ')} 에 넣을 수 있음`);
       else if (x.allow && x.allow.length === 1) out.push(`→ ${x.allow[0]} 전용${/^PP[GKHF]/.test(x.item) ? '(프린트)' : ''} — 다른 라인 불가${x.allow[0] !== line && stopD[x.allow[0]] ? `, ${x.allow[0]} ${stopD[x.allow[0]]} 정지` : ''}`);
-      if (x.due && x.due < TODAY) out.push(`<b class="wr">납기 ${md(x.due)} 이미 지남</b>`); else if (x.due && x.due < dayOf(W1)) out.push(`<b class="wr">납기 ${md(x.due)}</b> 기간 안에 못 하면 지연`);
+      if (x.due && x.due < TODAY) out.push(`<b class="wr">납기 ${md(x.due)} 경과</b>`); else if (x.due && x.due < dayOf(W1)) out.push(`<b class="wr">납기 ${md(x.due)}</b> 기간 내 미생산 시 지연`);
       return `<div class="why">${out.join(' · ')}</div>`;
     };
     const was = $('ws-pool').querySelector('details'), op = was ? was.open : false, sub = {};
     $('ws-pool').querySelectorAll('.pl-g').forEach((d) => { sub[d.dataset.k] = d.open; });
-    $('ws-pool').innerHTML = `<details${op ? ' open' : ''}><summary>${line} 기간 안에 못 넣은 작업 <span>${P.length}건 · ${n0(P.reduce((s, p) => s + p.x.t, 0))}t — 끌어다 놓거나 '넣기'</span></summary><div class="pl-cols">` + ord.filter((k) => G[k]).map((k) => `<details class="pl-g" data-k="${k}"${(k in sub ? sub[k] : k === 'out' || k === 'new' || k === 'over') ? ' open' : ''}><summary>${nm[k]} <span>${G[k].length}건 · ${n0(G[k].reduce((s, x) => s + x.t, 0))}t</span></summary><div class="pl-body">`
+    $('ws-pool').innerHTML = `<details${op ? ' open' : ''}><summary>${line} 기간 내 미편성 작업 <span>${P.length}건 · ${n0(P.reduce((s, p) => s + p.x.t, 0))}t — 끌어다 놓거나 '넣기'</span></summary><div class="pl-cols">` + ord.filter((k) => G[k]).map((k) => `<details class="pl-g" data-k="${k}"${(k in sub ? sub[k] : k === 'out' || k === 'new' || k === 'over') ? ' open' : ''}><summary>${nm[k]} <span>${G[k].length}건 · ${n0(G[k].reduce((s, x) => s + x.t, 0))}t</span></summary><div class="pl-body">`
       + G[k].slice(0, 300).map((x) => `<div class="pl-i" draggable="true" data-id="${esc(x.id)}"><div><span class="cn">${esc(x.con || x.id)}</span>${plant === 'cc' && x.item ? ' <b>' + esc(x.item) + '</b>' : ''}<span class="sub"> · ${n1(x.t)}t${plant === 'cc' && x.len ? ' / ' + n0(x.len) + 'm' : ''}${plant === 'cg' ? (x.n > 1 ? ' · ' + x.n + '코일' : '') + (x.req ? ' · 예정 ' + md(x.req) : '') : (x.ready && x.ready > TODAY ? ' · ' + md(x.ready) + '부터 가능' : '')}${(plant === 'cg' ? x.dlv : x.due) ? ' · 납기 ' + md(plant === 'cg' ? x.dlv : x.due) : ''}</span>${why(x, k)}<div class="sp">${chips(x)}</div></div><button data-a="add" data-id="${esc(x.id)}">넣기</button></div>`).join('')
       + (G[k].length > 300 ? `<div class="sub">외 ${G[k].length - 300}건</div>` : '') + '</div></details>').join('') + '</div></details>';
   }
@@ -450,11 +450,11 @@
     let nSm = 0; smNew.forEach(([l, e, d]) => { if (!L[l].some((q) => q.k === 'g' && q.sm && q.note === e.note)) { insertAtDay(l, e, d); nSm++; } });
     const known = new Set(x.p.known || []), P = placed(), nNew = D.jobs.filter((j) => j.why === 'week' && !P.has(j.id) && !known.has(j.id)).length;
     $('ws-res').textContent = (msg || '') + (gone.length ? ` · 저장본 ${gone.length}건은 최신 자료에 없음(생산·취소)` : '')
-      + (nNew ? ` · 저장 뒤 새로 들어온 작업 ${nNew}건 — 아래 목록에서 넣으세요` : '') + (nSm ? ` · 새 샘플·테스트 일정 ${nSm}건 넣음` : '');
+      + (nNew ? ` · 저장 후 신규 작업 ${nNew}건 — 아래 목록에서 추가` : '') + (nSm ? ` · 새 샘플·테스트 일정 ${nSm}건 반영` : '');
   }
   async function save(state) {
     const who = $('ws-who').value.trim();
-    if (!who) { $('ws-res').textContent = '이름을 적어 주세요'; $('ws-who').focus(); return; }
+    if (!who) { $('ws-res').textContent = '이름 입력 필요'; $('ws-who').focus(); return; }
     const p = { v: 1, plant, week: D.week, draftBuilt: D.built, memo: $('ws-memo').value.trim().slice(0, 200), lines: {}, known: D.jobs.filter((x) => x.why === 'week').map((x) => x.id).concat((cur && cur.p && cur.p.known) || []) };
     p.known = [...new Set(p.known)];
     if (state !== 'reset') LINES[plant].forEach((l) => { p.lines[l] = L[l].map((e) => (e.k === 'g' ? { k: 'g', min: e.min, note: e.note, sm: !!e.sm } : { k: 'j', id: e.id })); });
@@ -502,16 +502,20 @@
       try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ }
     } catch (e) {
       $('ws-main').hidden = true; $('ws-lock').hidden = false; $('ws-form').hidden = false;
-      $('ws-msg').textContent = pw ? (/자료 없음/.test(e.message) ? '게시 자료가 아직 없습니다(다음 포털 갱신 때 생김)' : '암호가 맞지 않습니다') : '';
+      $('ws-msg').textContent = pw ? (/자료 없음/.test(e.message) ? '게시 자료가 없습니다(다음 포털 갱신 시 생성)' : '암호가 맞지 않습니다') : '';
       document.querySelector('#ws-lock h2').textContent = '분석 암호';
     }
   }
   async function go(p) {
     if (!PW || p === plant) return;
-    if (dirty && !confirm('저장하지 않은 고침이 있습니다. 바꾸면 사라집니다.')) { history.replaceState(null, '', '#' + plant); return; }
-    try { await open(p); } catch (e) { $('ws-res').textContent = '자료를 못 읽었습니다: ' + e.message; }
+    if (dirty && !confirm('저장하지 않은 수정이 있습니다. 바꾸면 사라집니다.')) { history.replaceState(null, '', '#' + plant); return; }
+    try { await open(p); } catch (e) { $('ws-res').textContent = '자료 읽기 실패: ' + e.message; }
   }
   $('ws-plant').querySelectorAll('button').forEach((b) => (b.onclick = () => { if (b.dataset.p !== plant) location.hash = b.dataset.p; }));
+  /* 위 보기(전체·도금·컬러)와 맞춤 — 컬러를 골랐는데 도금이 나오던 문제(11/10 사용자) */
+  const scopeGo = () => { const sc = window.UI && UI.scope ? UI.scope() : 'all', want = sc === 'C' ? 'cc' : sc === 'G' ? 'cg' : null; if (want && want !== plant) location.hash = want; };
+  if (window.UI && UI.onScope) UI.onScope(scopeGo);
+  if (!location.hash) scopeGo();
   addEventListener('hashchange', () => go(/cc/.test(location.hash) ? 'cc' : 'cg'));
   $('ws-save').onclick = () => save('save');
   $('ws-conf').onclick = () => save('confirm');
@@ -519,7 +523,7 @@
   $('ws-chk').onclick = () => { CK = checks(); hl = null; draw(); $('ws-ck').scrollIntoView({ block: 'start', behavior: 'smooth' }); };
   $('ws-vers').onchange = () => {
     const v = $('ws-vers').value; if (!v) return;
-    if (dirty && !confirm('저장하지 않은 고침이 있습니다. 불러오면 사라집니다.')) { $('ws-vers').value = ''; return; }
+    if (dirty && !confirm('저장하지 않은 수정이 있습니다. 불러오면 사라집니다.')) { $('ws-vers').value = ''; return; }
     useVer(v === 'draft' ? null : VERS.find((x) => String(x.id) === v), v === 'draft' ? '초안을 불러왔습니다(저장 전)' : '불러왔습니다');
     if (v === 'draft') dirty = true;
     $('ws-vers').value = ''; draw();

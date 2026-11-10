@@ -77,7 +77,7 @@
         : j.kind === 'nosup' ? '등록된 업체 없음 → 업체 기준정보에 추가'
           : j.kind === 'check' ? `${minLT == null ? '두께 범위에 맞는 등록 업체 없음' : `남은 ${j.left}일 < 리드타임(최단 ${minLT}일)`} → 이미 발주돼 있어야 할 양(입고예정에 기발주 입력)${specNote}`
           : j.kind === 'adjust' ? `${minLT == null ? '두께 범위에 맞는 등록 업체 없음' : `남은 ${j.left}일 < 최단 LT ${minLT}일`} → 재고 전환·투입 순서 변경·자가재 대체 검토${specNote}`
-            : `${j.parts.map((p) => `${esc(supName(p.s))} <b>${n0(p.t)}t</b> · 마감 ${md(p.dl)}`).join(' / ')}${j.kind === 'alt' ? ` <span class="muted">(${j.split.filter((x) => x.late && x.from >= 1).map((x) => `${esc(supName(x.s))} LT ${x.s.lt}일 > 남은 ${j.left}일 → ${n0(x.from)}t 넘김`).join(', ')})</span>` : ''}`;
+            : `${j.parts.map((p) => `${esc(supName(p.s))} <b>${n0(p.t)}t</b> · 마감 ${md(p.dl)}`).join(' / ')}${j.kind === 'alt' ? ` <span class="muted">(${j.split.filter((x) => x.late && x.from >= 1).map((x) => `${esc(supName(x.s))} LT ${x.s.lt}일 > 남은 ${j.left}일 → ${n0(x.from)}t 이관`).join(', ')})</span>` : ''}`;
       const isOpen = open[j.key], g = gi(j), gh = g !== lastG ? `<tr class="grp-h g${g}"><td colspan="7">${GH[g]} <span class="muted">${VR.filter((x) => gi(x) === g).length}건 · ${n0(VR.filter((x) => gi(x) === g).reduce((a, x) => a + x.short, 0))}t</span></td></tr>` : ''; lastG = g;
       const decSum = j.short >= 1 ? `<button type="button" class="tg dsum" aria-expanded="${!!isOpen}"><span class="ds ${d.status && d.status !== '판단대기' ? 'set' : ''}">${esc(d.status || '판단대기')}</span>${j.parts.length ? ` <span class="muted">${j.parts.length}개 업체 · ${n0(j.parts.reduce((a, p) => a + p.t, 0))}t</span>` : ''}${d.memo ? ' <span class="muted">· 메모</span>' : ''} <b class="go">${isOpen ? '닫기 ▴' : '결정 입력 ▾'}</b></button>` : '<span class="muted">발주 불필요</span>';
       return gh + `<tr class="u ${isOpen ? 'on' : ''}" data-k="${esc(j.key)}">
@@ -90,7 +90,7 @@
           <div class="xh">입고 필요일 <b>${md(j.needBy)}</b> <span class="muted">(첫 사용 ${md(j.first)} − 투입 여유 ${j.plant === 'C' ? S.safetyC : S.safetyG}일)</span> · ${j.left >= 0 ? `남은 <b>${j.left}일</b>` : `<b class="neg">${-j.left}일 지남</b>`} · 발주 필요 <b>${n0(j.short)}t</b></div>
           ${j.short >= 1 ? `<table class="t sp"><thead><tr><th class="l">업체</th><th>27년 배정</th><th>리드타임</th><th>발주 마감</th><th class="l">맞출 수 있나</th><th>발주량(t)</th></tr></thead><tbody>${j.cand.map((s) => { const x = j.split.find((y) => y.s === s), ok = j.specOk(s), dl = ProcCalc.orderDay(addD(j.needBy, -s.lt), s.cls), lateD = diff(S.today, dl);
             return `<tr class="${x && x.t >= 1 && !x.late ? 'on' : ''}"><td class="l"><b>${esc(supName(s))}</b>${(s.codes || []).length > 1 ? ` <span class="muted">${s.codes.join('·')}</span>` : ''}</td><td>${Math.round((s.share || 0) * 100)}%</td><td>${s.lt}일</td><td>${md(dl)}</td>
-              <td class="l">${!ok ? '<span class="muted">두께 범위 밖</span>' : lateD > 0 ? `<span class="neg">마감 ${lateD}일 지남</span>${x && x.from >= 1 ? ` <span class="muted">→ ${n0(x.from)}t 넘김</span>` : ''}` : `<span class="pos">가능</span>${x && x.moved >= 1 ? ` <span class="muted">+ 넘겨받음 ${n0(x.moved)}t</span>` : ''}`}</td>
+              <td class="l">${!ok ? '<span class="muted">두께 범위 밖</span>' : lateD > 0 ? `<span class="neg">마감 ${lateD}일 지남</span>${x && x.from >= 1 ? ` <span class="muted">→ ${n0(x.from)}t 이관</span>` : ''}` : `<span class="pos">가능</span>${x && x.moved >= 1 ? ` <span class="muted">+ 이관분 ${n0(x.moved)}t</span>` : ''}`}</td>
               <td>${x ? `<input data-f="q:${esc(s.sup)}" type="number" min="0" step="10" value="${Math.round(x.t)}" aria-label="${esc(supName(s))} 발주량">` : '<span class="muted">-</span>'}</td></tr>`; }).join('')}
             <tr class="tot"><td class="l">합계</td><td></td><td></td><td></td><td></td><td><b>${n0(j.split.reduce((a, x) => a + x.t, 0))}</b></td></tr></tbody></table>
           ${!j.parts.length ? '<p class="small neg">전 업체 리드타임 초과 — 위 수량은 참고값 · 재고 전환·투입 순서·자가재 대체 우선 검토</p>' : ''}
@@ -133,7 +133,7 @@
   function orders() {
     const cut = S.orders.length ? S.orders.map((o) => o.need).sort().pop() : null;
     const rows = S.orders.map((o, i) => `<tr><td class="l">${esc(o.con || '')}</td><td class="l">${esc(o.prod)}</td><td class="l">${esc(o.cust || '')}</td><td>${o.thk || '-'}</td><td>${o.wid || '-'}</td><td>${esc(codeNm(o.code))}</td><td>${n0(o.qty)}</td><td>${md(o.due)}</td><td>${md(o.need)}</td><td>${n0(o.mat)}</td><td><button type="button" class="x" data-del="orders" data-i="${i}" aria-label="삭제">✕</button></td></tr>`).join('');
-    return card('p-ord', '주문재 목록 (마케팅)', S.orders.length ? `${S.orders.length}건 · ${md(cut)} 소요분까지 추정치 대신 사용` : '아직 없음 — 판단 보드의 주문재는 추정치', `
+    return card('p-ord', '주문재 목록 (마케팅)', S.orders.length ? `${S.orders.length}건 · ${md(cut)} 소요분까지 추정치 대신 사용` : '자료 없음 — 판단 보드의 주문재는 추정치', `
       <p class="lead">마케팅 목록 업로드 시 마지막 필요일까지 추정치 대신 목록 수량 사용</p>
       <div class="bar"><label class="btn">엑셀 업로드<input type="file" accept=".xlsx" data-up="orders" hidden></label>${S.orders.length ? '<button type="button" class="btn" data-clear="orders">목록 비우기</button>' : ''}
         <label class="small">납기 → 컬러 투입 <input type="number" id="p-duelead" value="${S.dueLead}" min="0" max="60" style="width:56px">일 전</label>
@@ -225,13 +225,13 @@
       : `<p class="small">인도납기 변경: ${K ? `${md(K.start)}부터 비교 · 변경 없음` : '사내 PC 실행 후 표시'}</p>`;
     return card('p-due', 'F/H 납기 비교 — 발주 후 입고까지', `발주 ${md(F.from)}~${md(F.to)}${XL ? ' · 엑셀 기준' : ''}`,
       `<p class="du-lead">${lead}</p>
-      ${XL ? `<div class="ft-lg"><span><i class="ar"></i>평균 입고</span><span><i class="p9"></i>95% 입고</span><span><i class="tf"></i>TF(발주 + 5주)</span><span><i class="du"></i>인도납기 평균</span><small>엑셀 「${esc(XL.file || '')}」 · 발주 → 실입고(첫 코일) 일수 · 발주 후 60일 지난 건 · 미입고 = 늦음 처리 · 취소 추정 ${n0(XL.nCancel)}줄 제외</small></div>` : `<div class="ft-lg"><span><i class="ar"></i>평균 입고(코일마다 발주 → 실입고 일수, 입고량 기준)</span><span><i class="p9"></i>95% 입고(실제로 센 값: 발주한 양의 95%가 이 안에 입고)</span><span><i class="tf"></i>TF 기준(팀 리드타임 표: 발주 + 5주)</span><span><i class="du"></i>인도납기 평균(발주일 → MES 인도납기일 일수)</span><small>POSCO F/H(AL용 · AZ·MAC용 · Ti 첨가, 수입 FH 뺌) · 모두 발주일부터 센 일수. 입고 = 발주 코일마다 실입고일(MES 실입고일, 없으면 입고일)까지 일수를 입고량(톤)으로 가중 — 판정 대상(발주 후 60일 지난 건, ${md(F.asOf)} 기준 ${md(F.to)}까지 발주) 중 아직 안 들어온 양은 '늦음'으로 셈(평균 ± 표준편차는 들어온 양만). 완납 = 발주 종료(MES 발주 끝남)된 발주의 마지막 코일 입고일. TF·인도납기 안 = 그 날짜까지 들어온 양 비율</small></div>`}
+      ${XL ? `<div class="ft-lg"><span><i class="ar"></i>평균 입고</span><span><i class="p9"></i>95% 입고</span><span><i class="tf"></i>TF(발주 + 5주)</span><span><i class="du"></i>인도납기 평균</span><small>엑셀 「${esc(XL.file || '')}」 · 발주 → 실입고(첫 코일) 일수 · 발주 후 60일 지난 건 · 미입고 = 지연 처리 · 취소 추정 ${n0(XL.nCancel)}줄 제외</small></div>` : `<div class="ft-lg"><span><i class="ar"></i>평균 입고(코일마다 발주 → 실입고 일수, 입고량 기준)</span><span><i class="p9"></i>95% 입고(실제로 센 값: 발주한 양의 95%가 이 안에 입고)</span><span><i class="tf"></i>TF 기준(팀 리드타임 표: 발주 + 5주)</span><span><i class="du"></i>인도납기 평균(발주일 → MES 인도납기일 일수)</span><small>POSCO F/H(AL용 · AZ·MAC용 · Ti 첨가, 수입 FH 뺌) · 모두 발주일부터 센 일수. 입고 = 발주 코일마다 실입고일(MES 실입고일, 없으면 입고일)까지 일수를 입고량(톤)으로 가중 — 판정 대상(발주 후 60일 지난 건, ${md(F.asOf)} 기준 ${md(F.to)}까지 발주) 중 미입고량은 '지연'으로 산정(평균 ± 표준편차는 입고분만). 완납 = 발주 종료(MES 발주 끝남)된 발주의 마지막 코일 입고일. TF·인도납기 안 = 그 날짜까지 들어온 양 비율</small></div>`}
       <div class="ft-ks">${PK.map(big).join('')}</div>
       ${trend}
       ${specHtml}
       ${PK.map((r) => tbl(r.kind)).join('')}
       <h3 class="fd-h">남은 발주 — 예상 입고 <small>TF·인도납기 1주 넘게 차이 · 실적 예상 = 발주일 + 평균 입고</small></h3>${otbl}
-      <p class="small">수입 FH 제외(MES 발주 등록이 늦음) — TF 기준 그대로</p>
+      <p class="small">수입 FH 제외(MES 발주 등록 지연) — TF 기준 그대로</p>
       ${ch}`);
   }
 
@@ -349,7 +349,7 @@
     let n = 0;
     Object.keys(bySup).sort().forEach((sup) => bySup[sup].forEach(([j, p]) => {
       const s = p.s;
-      const reason = !s ? '업체 미정(리드타임 안 업체 없음)' : `27년 배정 ${Math.round((s.share || 0) * 100)}%대로 나눔${p.moved >= 1 ? ` + 늦는 업체 몫 ${Math.round(p.moved)}t 넘겨받음` : ''} · 리드타임 ${s.lt}일 ≤ 남은 ${j.left}일`;
+      const reason = !s ? '업체 미정(리드타임 안 업체 없음)' : `27년 배정 ${Math.round((s.share || 0) * 100)}%대로 나눔${p.moved >= 1 ? ` + 지연 업체 몫 ${Math.round(p.moved)}t 이관` : ''} · 리드타임 ${s.lt}일 ≤ 남은 ${j.left}일`;
       ws.addRow([`R${S.today.replace(/-/g, '').slice(2)}-${String(++n).padStart(3, '0')}`, s ? supName(s) : sup, sup, PL[j.plant], codeNm(j.code), j.thk ? `${j.thk[0]}~${j.thk[1]}` : '', Math.round(p.t), j.needBy, j.first, s ? +s.lt : '', reason,
         j.use.slice().sort((a, b) => b[3] - a[3]).slice(0, 3).map((r) => `${r[1]} ${r[2]} ${Math.round(r[3])}t`).join(', '), j.dec.memo || '', '', '', '']);
     }));
@@ -405,7 +405,7 @@
   }
   $('p-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('p-pw').value); });
   envReady.then((e) => { if (!e) throw new Error();
-    env = e; $('p-lock').querySelector('h2').textContent = '발주 — 암호를 입력하세요';
+    env = e; $('p-lock').querySelector('h2').textContent = '발주 — 암호 입력 필요';
     let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ }
     if (s) unlock(s); else $('p-form').hidden = false;
   }).catch(() => { $('p-msg').textContent = '자료를 찾을 수 없습니다'; });

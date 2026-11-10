@@ -130,7 +130,7 @@
     const nav = `<div class="nav"><button type="button" data-n="-1" aria-label="이전">◀ ${span === 'm' ? '이전 달' : '이전 주'}</button><button type="button" data-n="0">오늘</button><button type="button" data-n="1" aria-label="다음">${span === 'm' ? '다음 달' : '다음 주'} ▶</button><b>${lbl}</b></div>`;
     const kp = CT.kpis([
       { label: '계획 생산량', v: n0(sumT), unit: 't', tone: 'info', sub: lbl },
-      { label: '가용 능력(오늘 이후)', v: sumCap > 0 ? n0(sumCap) : '자료 없음', unit: sumCap > 0 ? 't' : '', tone: 'info', sub: capMiss ? `능력 계산 못 한 라인·일 ${capMiss}` : '' },
+      { label: '가용 능력(오늘 이후)', v: sumCap > 0 ? n0(sumCap) : '자료 없음', unit: sumCap > 0 ? 't' : '', tone: 'info', sub: capMiss ? `능력 미산출 라인·일 ${capMiss}` : '' },
       { label: '휴지', v: idle, unit: '라인·일', tone: idle ? 'warn' : 'ok', sub: '계획 휴지 + 물량 없음 + 비계획' },
       { label: '지연 예상 주문', v: risk.size, unit: '건', tone: risk.size ? 'bad' : 'ok', sub: '오늘 이후 생산 필요일 · 지난 날은 납기 화면' },
     ]);
@@ -182,11 +182,11 @@
       });
       allR.push(...R);
       const mm = `${+m.slice(5)}월`, rng = `${md(m === m0 ? X.today : s0)}~${md(e)}`;
-      const sumT = `<div class="ct-wrap"><table class="ct-t ls"><thead><tr><th>라인</th><th class="r">필요 생산량</th><th class="r">가용 능력</th><th class="r">부하율</th><th class="r" title="주마다 능력을 넘는 양의 합 — 월 부하율이 100% 아래여도 특정 주가 넘으면 생김">주별 초과 합</th><th class="r">해당 주문</th></tr></thead><tbody>`
-        + R.map((x) => { const r = x.cap ? x.need / x.cap : null; return x.out ? `<tr><td class="id">${x.l}</td><td class="r" colspan="5"><span class="sub">계획 범위 밖 — ${LG.includes(x.l) ? '도금 재계획' : '컬러 계획'}은 ${md(X.hz[LG.includes(x.l) ? 'G' : 'C'])}까지</span></td></tr>` : `<tr class="ck" data-l="${x.l}" data-m="${m}"><td class="id">${x.l}</td><td class="r">${n0(x.need)}t</td><td class="r">${x.cap ? n0(x.cap) + 't' : (x.need < 0.5 ? '<span class="sub">-</span>' : '<span class="sub">계산 못 함</span>')}</td>`
+      const sumT = `<div class="ct-wrap"><table class="ct-t ls"><thead><tr><th>라인</th><th class="r">필요 생산량</th><th class="r">가용 능력</th><th class="r">부하율</th><th class="r" title="주별 능력 초과량의 합 — 월 부하율 100% 미만이어도 특정 주 초과 시 발생">주별 초과 합</th><th class="r">해당 주문</th></tr></thead><tbody>`
+        + R.map((x) => { const r = x.cap ? x.need / x.cap : null; return x.out ? `<tr><td class="id">${x.l}</td><td class="r" colspan="5"><span class="sub">계획 범위 밖 — ${LG.includes(x.l) ? '도금 재계획' : '컬러 계획'}은 ${md(X.hz[LG.includes(x.l) ? 'G' : 'C'])}까지</span></td></tr>` : `<tr class="ck" data-l="${x.l}" data-m="${m}"><td class="id">${x.l}</td><td class="r">${n0(x.need)}t</td><td class="r">${x.cap ? n0(x.cap) + 't' : (x.need < 0.5 ? '<span class="sub">-</span>' : '<span class="sub">산출 불가</span>')}</td>`
           + `<td class="r">${r == null ? '<span class="sub">-</span>' : `<b class="${tone(r)}">${Math.round(r * 100)}%</b>`}</td><td class="r">${x.over >= 1 ? `<b class="bad">${n0(x.over)}t</b>` : '0'}</td><td class="r">${x.aff.length ? `<b class="bad">${x.aff.length}</b>건` : '0'}</td></tr>`; }).join('')
         + '</tbody></table></div>';
-      const bar = (w) => (w.out ? '<span class="sub">계획 범위 밖</span>' : w.idle ? '<span class="sub">정비·휴지</span>' : (w.r == null || w.r < 0.005) ? (w.need < 0.5 ? '<span class="sub">계획 물량 없음</span>' : '<span class="sub">계산 못 함</span>') : `<div class="lb ${tone(w.r)}" title="계획 ${n0(w.need)}t / 능력 ${n0(w.cap)}t"><i style="width:${Math.min(100, w.r * 100).toFixed(1)}%"></i></div><b class="${tone(w.r)}">${Math.round(w.r * 100)}%</b>`);
+      const bar = (w) => (w.out ? '<span class="sub">계획 범위 밖</span>' : w.idle ? '<span class="sub">정비·휴지</span>' : (w.r == null || w.r < 0.005) ? (w.need < 0.5 ? '<span class="sub">계획 물량 없음</span>' : '<span class="sub">산출 불가</span>') : `<div class="lb ${tone(w.r)}" title="계획 ${n0(w.need)}t / 능력 ${n0(w.cap)}t"><i style="width:${Math.min(100, w.r * 100).toFixed(1)}%"></i></div><b class="${tone(w.r)}">${Math.round(w.r * 100)}%</b>`);
       const heat = `<div class="ct-wrap"><table class="ct-t ld"><thead><tr><th>라인</th>${wk.map(([a, b]) => `<th>${a === b ? md(a) : `${md(a)}~${md(b)}`}</th>`).join('')}</tr></thead><tbody>`
         + R.map((x) => `<tr><td class="id">${x.l}</td>${x.w.map((w) => `<td class="lc">${bar(w)}<small>${w.idle || w.out || w.need < 0.5 ? '' : `${n0(w.need)}t`}</small></td>`).join('')}</tr>`).join('')
         + '</tbody></table></div>';
@@ -231,14 +231,14 @@
     }
     mv.sort((p, q) => (p.dd == null) - (q.dd == null) || (q.dd ?? 0) - (p.dd ?? 0));
     const late = (m) => m.y && m.due && m.y > m.due;
-    const mvT = mv.length ? `<div class="ct-wrap"><table class="ct-t mv"><thead><tr><th>판매그룹</th><th>강종</th><th>마감</th><th>직전 완료</th><th>지금 완료</th><th class="r">변동</th><th>상태</th></tr></thead><tbody>${(mvAll ? mv : mv.slice(0, 30)).map((m) => `<tr><td>${esc(m.g)}</td><td>${esc(m.fam)}</td><td>${md(m.due)}</td><td>${m.x ? md(m.x) : '없음'}</td><td>${m.y ? md(m.y) : '빠짐'}</td>`
-      + `<td class="r">${m.dd == null ? '-' : `<b class="${m.dd > 0 ? 'up' : 'dn'}">${m.dd > 0 ? '+' : ''}${m.dd}일</b>`}</td><td>${m.dd == null ? `<span class="ct-b na">${m.y ? '새로 생김' : '계획에서 빠짐'}</span>` : late(m) ? '<span class="ct-b bad">지연</span>' : m.dd > 0 ? '<span class="ct-b warn">늦어짐</span>' : '<span class="ct-b ok">당겨짐</span>'}</td></tr>`).join('')}</tbody></table></div>${mv.length > 30 ? `<button type="button" class="more" id="mv-more">${mvAll ? '30개만' : `전체 ${mv.length}개`}</button>` : ''}` : '<p class="ct-note">완료일이 바뀐 묶음 없음</p>';
+    const mvT = mv.length ? `<div class="ct-wrap"><table class="ct-t mv"><thead><tr><th>판매그룹</th><th>강종</th><th>마감</th><th>직전 완료</th><th>지금 완료</th><th class="r">변동</th><th>상태</th></tr></thead><tbody>${(mvAll ? mv : mv.slice(0, 30)).map((m) => `<tr><td>${esc(m.g)}</td><td>${esc(m.fam)}</td><td>${md(m.due)}</td><td>${m.x ? md(m.x) : '없음'}</td><td>${m.y ? md(m.y) : '제외'}</td>`
+      + `<td class="r">${m.dd == null ? '-' : `<b class="${m.dd > 0 ? 'up' : 'dn'}">${m.dd > 0 ? '+' : ''}${m.dd}일</b>`}</td><td>${m.dd == null ? `<span class="ct-b na">${m.y ? '신규' : '계획 제외'}</span>` : late(m) ? '<span class="ct-b bad">지연</span>' : m.dd > 0 ? '<span class="ct-b warn">순연</span>' : '<span class="ct-b ok">앞당김</span>'}</td></tr>`).join('')}</tbody></table></div>${mv.length > 30 ? `<button type="button" class="more" id="mv-more">${mvAll ? '30개만' : `전체 ${mv.length}개`}</button>` : ''}` : '<p class="ct-note">완료일이 바뀐 묶음 없음</p>';
     const at = (s) => { if (!s) return '-'; const z = /Z$|[+-]\d\d:?\d\d$/.test(String(s)) ? new Date(new Date(s).getTime() + 9 * 3600e3).toISOString() : String(s); return `${md(z.slice(0, 10))} ${z.slice(11, 16)}`; };   // 11/7 점검: UTC → 한국 시각
     const hd = `<div class="cmp-h"><span><small>직전</small><b>${at(A.savedAt)}</b><small>재계획 ${md(ta)}</small></span><span class="ar">→</span><span><small>지금</small><b>${at(B.savedAt)}</b><small>재계획 ${md(tb)}</small></span><span class="ct-b na">비교만 — 계획에 반영하지 않음</span></div>`;
     return `<section class="card"><h2>도금 계획 변경 <small>${md(t0)}~${md(tE)}${eA !== eB ? ` (직전 판 끝 ${md(eA)} · 지금 판 끝 ${md(eB)} — 같은 기간만 비교, 위 결품·지연·M/C 회수는 각 판 전체 기간)` : ''}</small></h2>${hd}</section>` + kp
       + `<section class="card"><h2>도금 라인 × 주 생산량 <small>t · 수요일 시작</small></h2>${wkT}</section>`
       + `<section class="card"><h2>M/C 일정 <small>${mcSame ? '변동 없음' : '빨강 = 새 일정'}</small></h2>${mcT}</section>`
-      + `<section class="card"><h2>완료일이 바뀐 묶음 <small>${mv.length}개 · 늦어진 것 먼저 · 마감 넘김 ${mv.filter((m) => m.dd != null && late(m)).length}개</small></h2>${mvT}</section>`;
+      + `<section class="card"><h2>완료일이 바뀐 묶음 <small>${mv.length}개 · 순연 건 우선 · 마감 초과 ${mv.filter((m) => m.dd != null && late(m)).length}개</small></h2>${mvT}</section>`;
   }
 
   /* 컬러 계획 변경(11/5 사용자 '계획변경비교에 컬러는 왜 없노'): 직전 = integrated_prev(오늘 이후 컬러 편성이 지금과 다른 가장 최근 판, tools/plan_prev.py) */

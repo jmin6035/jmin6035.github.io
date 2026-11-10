@@ -100,5 +100,5 @@
   envReady.then((e) => { if (!e) throw new Error();
     env = e; let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ }
     if (s) unlock(s); else { $('a-unlock').hidden = false; $('a-empty-title').textContent = '분석 결과 열기'; }
-  }).catch(() => { $('a-empty-title').textContent = '아직 분석 결과가 없습니다'; });
+  }).catch(() => { $('a-empty-title').textContent = '분석 결과가 없습니다'; });
 })();

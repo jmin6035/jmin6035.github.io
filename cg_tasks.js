@@ -85,7 +85,7 @@
       + `<div class="band"><span class="bl">매일</span><div><span class="bh">오전</span>${daily('am')}</div><div><span class="bh">오후</span>${daily('pm')}</div></div>`
       + g.html
       + `<div class="band"><span class="bl">수시</span><div>${O.tasks.filter((t) => t.when[0] === 'C').map((t) => chip(t)).join('')}</div></div>`
-      + '<p class="note">날짜가 주말이면 다음 영업일 · 공휴일은 반영 안 함</p></section>';
+      + '<p class="note">날짜가 주말이면 다음 영업일 · 공휴일 미반영</p></section>';
   }
   function linkify(s) {                                                    // '포털: 주문진도 · 실적' · '포털 [주문진도]' → 해당 화면 링크
     const L = O.links || {};
@@ -121,7 +121,7 @@
   const envReady = GP.latest('cg_tasks.enc.json');
   async function unlock(pw) {
     const env = await envReady;
-    if (!env) { $('tk-msg').textContent = '아직 게시된 자료가 없습니다.'; return; }
+    if (!env) { $('tk-msg').textContent = '게시된 자료가 없습니다.'; return; }
     try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
     catch (e) { $('tk-form').hidden = false; $('tk-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
     const n = new Date(); Y = n.getFullYear(); M = n.getMonth(); DAY = n.getDate();

@@ -73,7 +73,7 @@
   let baseInfo = null;
   const b64buf = (b) => { const s_ = atob(b), u = new Uint8Array(s_.length); for (let i = 0; i < s_.length; i++) u[i] = s_.charCodeAt(i); return u.buffer; };
   function srcTiles() {
-    const t = (k) => { const u = upl[k], b = base[k]; return `<div class="cc-src"><b>${SRC[k][0]}</b><small>${u ? `올린 파일: ${esc(u.name)}` : b ? `기준: ${esc(BASE[k].split('/').pop())} (세부판매계획 — 11월 판생 결과 '26.10.25 반영)` : '기준 자료 없음 — 파일을 올려 주세요'} · ${SRC[k][1]}</small><span class="st ${u || b ? 'ok' : 'warn'}">${u ? '올린 파일 사용' : b ? '사용' : '없음'}</span></div>`; };
+    const t = (k) => { const u = upl[k], b = base[k]; return `<div class="cc-src"><b>${SRC[k][0]}</b><small>${u ? `올린 파일: ${esc(u.name)}` : b ? `기준: ${esc(BASE[k].split('/').pop())} (세부판매계획 — 11월 판생 결과 '26.10.25 반영)` : '기준 자료 없음 — 파일 업로드 필요'} · ${SRC[k][1]}</small><span class="st ${u || b ? 'ok' : 'warn'}">${u ? '올린 파일 사용' : b ? '사용' : '없음'}</span></div>`; };
     $('g-src').innerHTML = t('sales') + t('sail') + `<div class="cc-src"><b>계획 조건</b><small>속도·시간손실·첫날 강종·정기수리 — ③에서 확인·변경${baseInfo ? '' : ''}</small><span class="st ok">${JSON.stringify(P) === JSON.stringify(GP.DEFAULT_PARAMS) ? '기본값 = 게시 계획과 같음' : '바꾼 값'}</span></div>`;
     ['sales', 'sail'].forEach((k) => { const L = $('u-' + k); if (L) { L.classList.toggle('on', !!upl[k]); L.querySelector('em').textContent = upl[k] ? `✓ ${upl[k].name}` : ''; } });
   }
@@ -84,7 +84,7 @@
   document.querySelectorAll('#sec-up .dl-tpl').forEach((b) => b.onclick = (e) => {
     e.preventDefault(); e.stopPropagation();
     const k = b.dataset.dl, x = base[k];
-    if (!x) { alert('기준 자료가 아직 열리지 않았습니다(①의 분석 암호 입력).'); return; }
+    if (!x) { alert('기준 자료가 열리지 않았습니다(①의 분석 암호 입력).'); return; }
     download(new Blob([x.buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), x.name);
   });
   async function openBase(pw) {
@@ -118,7 +118,7 @@
     const H = GP.horizon(P);
     $('check-summary').innerHTML = m.summary
       ? `<p>판매계획 기준 <b>${esc(m.asOf || '-')}</b> · 계획 기간 <b>${H.D0} ~ ${H.D1}</b> · 계획 대상 <b>${GP.fmt(m.summary.demand)}t</b> (버킷 ${m.summary.nBuckets}개)${P.firstWindowPrevMonth ? ` · 첫 달 1~5일 선적분 ${GP.fmt(m.summary.sept)}t는 전월 생산 가정` : ''}. 경고 ${warns.length}건.</p>`
-      : '<p class="muted">입력 오류를 먼저 해결하세요.</p>';
+      : '<p class="muted">입력 오류부터 해결 필요.</p>';
     // 부서×월 수요표
     const t = {};
     for (const it of m.items) { const k = `${it.cls}|${it.mi}`; t[k] = (t[k] || 0) + it.tons; }
@@ -245,7 +245,7 @@
   const packResult = () => JSON.stringify({ app: 'cgl-plan', version: 1, savedAt: result.savedAt || new Date().toISOString(), result, meta });
   $('dl-json').onclick = () => download(new Blob([packResult()], { type: 'application/json' }), baseName() + '_결과.json');
   $('to-dash').onclick = () => {
-    try { sessionStorage.setItem('cgl-dash-handoff', packResult()); } catch (e) { alert('브라우저 저장공간이 부족합니다. 결과 저장(.json) 후 대시보드에서 여세요.'); return; }
+    try { sessionStorage.setItem('cgl-dash-handoff', packResult()); } catch (e) { alert('브라우저 저장공간이 부족합니다. 결과 저장(.json) 후 대시보드에서 엽니다.'); return; }
     window.open('status.html', '_blank');
   };
   $('result-file').onchange = async (ev) => {
@@ -273,7 +273,7 @@
   // ---------------- 게시(암호화) ----------------
   async function makeEnvelope() {
     const pw = $('pub-pw').value, pw2 = $('pub-pw2').value;
-    if (pw.length < 6) throw new Error('암호는 6자 이상으로 정하세요');
+    if (pw.length < 6) throw new Error('암호는 6자 이상 필요');
     if (pw !== pw2) throw new Error('암호 확인이 다릅니다');
     const label = $('pub-label').value.trim() || `${result.P.year} ${result.P.months[0]}~${result.P.months[2]}월 계획${result.replan ? ` · 재계획(실적 ~${GP.md(result.replan.t0)})` : ''}`;   // 11/9: 재계획 표기 통일
     return GP.encryptJSON(JSON.parse(packResult()), pw, label);
@@ -301,7 +301,7 @@
   $('pub-go').onclick = async () => {
     savePub();
     const tok = $('pub-token').value.trim();
-    if (!tok) { $('pub-msg').textContent = '⚠ 아래 "GitHub에 바로 게시"를 펼쳐 토큰을 넣거나, "게시용 파일 받기"를 쓰세요.'; document.querySelector('.publish details').open = true; return; }
+    if (!tok) { $('pub-msg').textContent = '⚠ 아래 "GitHub에 바로 게시"를 펼쳐 토큰을 넣거나, "게시용 파일 받기" 이용.'; document.querySelector('.publish details').open = true; return; }
     const btn = $('pub-go'); btn.disabled = true; $('pub-msg').textContent = '암호화·게시 중…';
     try {
       const env = await makeEnvelope();

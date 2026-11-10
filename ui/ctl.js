@@ -48,7 +48,7 @@
     const c = (t) => worst.filter((x) => x === t).length;
     return `<h2>관제판 <small>실적 ~${md(O.asOf)} · 칸을 누르면 해당 화면</small></h2>
       <div class="csum"><span><i class="cdot bad"></i>조치 <b>${c('bad')}</b></span><span><i class="cdot warn"></i>주의 <b>${c('warn')}</b></span><span><i class="cdot ok"></i>정상 <b>${c('ok')}</b></span></div>
-      <table class="ctl"><colgroup><col style="width:16%"><col><col><col><col><col></colgroup><thead><tr><th>판매그룹</th><th title="월말 예상 = 실적 + 남은 기간 계획 ÷ 월 계획">생산 (월말 예상)</th><th title="이번 달 출하 실적 ÷ 오늘까지 계획">출하 (이번 달)</th><th title="지금 재고 ÷ 하루 판매 = 며칠분, 상한 일수(TF) 넘으면 과잉">재고 (며칠분)</th><th title="3달 소재 — 가장 급한 소재 상태">소재</th><th title="오늘 재계획 결품">납기</th></tr></thead><tbody>${body}</tbody></table>`;
+      <table class="ctl"><colgroup><col style="width:16%"><col><col><col><col><col></colgroup><thead><tr><th>판매그룹</th><th title="월말 예상 = 실적 + 남은 기간 계획 ÷ 월 계획">생산 (월말 예상)</th><th title="이번 달 출하 실적 ÷ 오늘까지 계획">출하 (이번 달)</th><th title="지금 재고 ÷ 하루 판매 = 며칠분, 상한 일수(TF) 초과 시 과잉">재고 (며칠분)</th><th title="3달 소재 — 최우선 소재 상태">소재</th><th title="오늘 재계획 결품">납기</th></tr></thead><tbody>${body}</tbody></table>`;
   }
 
 

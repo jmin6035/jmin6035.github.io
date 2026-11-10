@@ -76,7 +76,7 @@
     const pick = [...document.querySelectorAll('[data-cand]')].filter((e) => e.checked).map((e) => A.cands[+e.dataset.cand]).filter((c) => c.path && c.act != null);
     if (!pick.length) { $('a-msg').textContent = '선택한 항목이 없습니다.'; return; }
     try { localStorage.setItem(P_KEY, JSON.stringify(GP.mesApply(planParams(), pick))); } catch (e) { $('a-msg').textContent = '⚠ 이 브라우저에 저장할 수 없습니다.'; return; }
-    $('a-msg').innerHTML = `${pick.length}개 항목을 반영했습니다. <a href="rolling.html">롤링 화면</a>의 계획 조건(고급)에서 확인하고 계산을 다시 돌리세요.`;
+    $('a-msg').innerHTML = `${pick.length}개 항목을 반영했습니다. <a href="rolling.html">롤링 화면</a>의 계획 조건(고급)에서 확인하고 재계산 바랍니다.`;
   };
 
   // ---- 주간 분석 보고서(Claude, 공개 사이트 published/weekly_report.enc.json, 분석 암호) ----
@@ -122,7 +122,7 @@
   $('a-unlock').onsubmit = (ev) => { ev.preventDefault(); unlock(); };
   const src = new URLSearchParams(location.search).get('src');
   GP.fetchPublished(src ? [src] : SRC).then((e) => {
-    if (!e) { $('a-empty-title').textContent = '아직 자동 분석 결과가 없습니다'; $('a-empty-text').textContent = '사내 PC 자동 실행 후 표시됩니다. 아래 “엑셀로 직접 분석”으로 바로 볼 수도 있습니다.'; return; }
+    if (!e) { $('a-empty-title').textContent = '자동 분석 결과가 없습니다'; $('a-empty-text').textContent = '사내 PC 자동 실행 후 표시됩니다. 아래 “엑셀로 직접 분석”으로 바로 볼 수도 있습니다.'; return; }
     if (e.app === 'cgl-analysis') { render(e, '분석 결과'); return; }
     env = e;
     $('a-empty-title').textContent = '자동 분석 결과';

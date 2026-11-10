@@ -6,7 +6,7 @@
 <title>주문·납기</title>
 <meta name="description" content="도금·컬러 미결 주문 단계별 현황 · 납기 캘린더">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611100729">
+<link rel="stylesheet" href="ui/theme.css?v=2611100742">
 <style>
 main.wrap { max-width: none; }
 section.card.co-card { padding: 54px 16px 14px !important; }
@@ -198,7 +198,16 @@ table.rk-s td.z { color: var(--ink-3); }
 .rk-m .col { text-align: center; } .rk-m .bx { height: 150px; display: flex; flex-direction: column; justify-content: flex-end; border-radius: 6px 6px 0 0; overflow: hidden; }
 .rk-m .bx i { display: block; } .rk-m .bx i.r { background: var(--c-past); } .rk-m .bx i.o { background: var(--c-ok); opacity: .55; } .rk-m .bx i.s { background: var(--c-stale); }
 .rk-m b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; margin-top: 6px; } .rk-m small { color: var(--ink-2); font-size: 13.5px; display: block; white-space: nowrap; } .rk-m em { font-style: normal; color: var(--bad); font-weight: 700; font-size: 13.5px; white-space: nowrap; }
-.rk { --s-mat: #9db4cc; --s-plan: #5b8fc4; --s-prod: #1f5fae; --s-ship: #0f8b8d; }
+.rk { --s-mat: #d13b3b; --s-plan: #2b78d6; --s-prod: #0a8a0a; --s-ship: #0f8b8d; --hc: var(--brand-2); }
+.rk-st.sm { height: 22px !important; min-width: 0 !important; width: 100%; } .rk-st i { color: #fff; font-style: normal; font-size: 13.5px; font-weight: 700; line-height: 22px; text-align: center; overflow: hidden; }
+.rk table.rk-g { table-layout: auto; } .rk table.rk-g th.otb, .rk table.rk-g td.otb { width: 36%; min-width: 240px; }
+.rk table.rk-g tr.g td { padding: 14px 12px; } .rk table.rk-g tr.g td.nm { box-shadow: inset 4px 0 0 var(--brand-2); padding-left: 16px; }
+.rk table.rk-g tr.hd td { background: var(--brand-2) !important; color: #fff !important; font-size: 14.5px; letter-spacing: .02em; }
+.rk table.rk-g thead th { background: var(--th, var(--surface-2)); border-bottom: 2px solid var(--line); }
+.rk table.rk-s thead th { background: var(--th, var(--surface-2)); border-bottom: 2px solid var(--line); } .rk table.rk-s td:nth-child(2) { --hc: var(--s-mat); } .rk table.rk-s td:nth-child(3) { --hc: var(--s-plan); } .rk table.rk-s td:nth-child(4) { --hc: var(--s-prod); }
+.rk table.rk-s td:nth-child(5) { border-left: 2px solid var(--line); background: color-mix(in srgb, var(--ink) 3%, transparent); } .rk table.rk-s tr.tot td { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.rk-dg > div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.ot-sum { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 0 0 14px; } .ot-sum > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding: 10px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2, transparent); flex: 1 1 420px; } .ot-sum > div b { font-size: 20px; font-variant-numeric: tabular-nums; } .ot-sum span { color: var(--ink-2); font-size: 14.5px; white-space: nowrap; }
 .rk-st i.mat { background: var(--s-mat); } .rk-st i.plan { background: var(--s-plan); } .rk-st i.prod { background: var(--s-prod); }
 .rk-leg.ot-leg { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 18px; }
 .ot-leg > div { position: relative; } .ot-leg > div.mat { border-color: var(--s-mat); } .ot-leg > div.plan { border-color: var(--s-plan); } .ot-leg > div.prod { border-color: var(--s-prod); } .ot-leg > div.ship { border-left-style: dashed; border-color: var(--s-ship); }
@@ -221,9 +230,9 @@ html body .rk table.rk-g th, html body .rk table.rk-g td, html body .rk table.rk
 <header id="shell" data-page="orders" data-title-auto data-title="주문·납기" data-sub="미결 주문 단계별 현황 · 납기 일정"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611100729"></script>
-<script src="engine/crypto.js?v=2611100729"></script>
-<script src="ui/ct.js?v=2611100729"></script>
-<script src="ct_orders.js?v=2611100729"></script>
+<script src="ui/shell.js?v=2611100742"></script>
+<script src="engine/crypto.js?v=2611100742"></script>
+<script src="ui/ct.js?v=2611100742"></script>
+<script src="ct_orders.js?v=2611100742"></script>
 </body>
 </html>

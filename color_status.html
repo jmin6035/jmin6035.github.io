@@ -6,10 +6,10 @@
 <title>컬러 가동 현황</title>
 <meta name="description" content="컬러 1~4CCL 가동계획 조회 — 도금 가동 현황과 같은 양식">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="style.css?v=2611100729">
-<link rel="stylesheet" href="dashboard.css?v=2611100729">
-<link rel="stylesheet" href="ui/theme.css?v=2611100729">
-<link rel="stylesheet" href="ui/bridge.css?v=2611100729">
+<link rel="stylesheet" href="style.css?v=2611100742">
+<link rel="stylesheet" href="dashboard.css?v=2611100742">
+<link rel="stylesheet" href="ui/theme.css?v=2611100742">
+<link rel="stylesheet" href="ui/bridge.css?v=2611100742">
 <style>/* 11/10 점검: 한 달(31일)이 한 화면에 — 26일에서 잘리던 것 */ html body main.wrap table.gtable { min-width: 1150px !important; width: 100%; } html body main.wrap .gtable th, html body main.wrap .gtable td { min-width: 0 !important; padding: 6px 1px; } .load-row .n.neg { color: var(--bad); font-weight: 800; }
 .gtable td.idle { background: color-mix(in srgb, var(--sd) 55%, transparent); } .gtable td[data-d] { cursor: pointer; } .gtable tr.r-fam td { font-weight: 800; }/* 기준일 라인 현황 카드 */
 .ln-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
@@ -89,7 +89,7 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
         <div><h3 class="r-h3">알람</h3><ul class="r-alarms" id="r-alarms"></ul></div>
       </div>
       <div class="gtable-wrap"><table class="gtable r-table" id="r-table"></table></div>
-      <p class="hint" title="월 계획 = 3개월 통합 계획이 그 달 그룹에 잡은 양(TF 월 생산량). 남은 배치 = 내일부터 휴지 고정·휴지 집약 없이 다시 배치. 차이 ±5% 넘으면 알람">월간 계획 = 가동 현황 계획(고정) · 롤링 = 실적 + 확정 작업지시(파란 칸) + 남은 배치 · 녹색/빨강 = 월간 계획보다 30t 넘게 많음/적음 · 굵은 테두리 날짜 = 확정 창</p>
+      <p class="hint" title="월 계획 = 3개월 통합 계획이 그 달 그룹에 잡은 양(TF 월 생산량). 남은 배치 = 내일부터 휴지 고정·휴지 집약 없이 다시 배치. 차이 ±5% 초과 시 알람">월간 계획 = 가동 현황 계획(고정) · 롤링 = 실적 + 확정 작업지시(파란 칸) + 남은 배치 · 녹색/빨강 = 월간 계획보다 30t 넘게 많음/적음 · 굵은 테두리 날짜 = 확정 창</p>
     </section>
 
     <section class="card">
@@ -118,7 +118,7 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 
     <details class="card more">
       <summary><h2>상세: 미편성 목록 · 일별 품목</h2></summary>
-      <h3>미편성 — 판매계획에 있지만 만들 수 있는 라인이 그 달 한도(MES 월차)·가동시간을 다 써서 일정에 못 넣은 물량. 이대로면 그 달 판매계획 미달</h3>
+      <h3>미편성 — 판매계획에 있지만 만들 수 있는 라인이 그 달 한도(MES 월차)·가동시간 소진으로 일정 미반영 물량. 현 상태면 그 달 판매계획 미달</h3>
       <div class="scroll"><table class="data" id="d-early"></table></div>
       <p class="hint">일별 품목과 배치 사유는 <a href="supply.html">월간 가동</a>에서 날짜 선택 시 확인.</p>
     </details>
@@ -126,7 +126,7 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
       <section class="card">
         <h2>라인별 편성 / MES 월차 한도</h2>
         <table class="data evt" id="d-events"></table>
-        <p class="hint">편성 = 일정에 넣은 물량(지난 날은 실적), 한도 = MES 월차(라인별 월 생산 목표 톤). "남음" = 한도까지 덜 채운 양 — <b>배정할 물량 없음</b>: 이 라인에서 만들 수 있는 판매계획을 다 넣었음, <b>가동시간 부족</b>: 수리·정지로 시간이 모자라 이 라인 품목 일부가 미편성.</p>
+        <p class="hint">편성 = 일정에 넣은 물량(지난 날은 실적), 한도 = MES 월차(라인별 월 생산 목표 톤). "잔여" = 한도 대비 미편성량 — <b>배정할 물량 없음</b>: 이 라인 생산 가능 판매계획 전량 편성, <b>가동시간 부족</b>: 수리·정지로 시간 부족 — 이 라인 품목 일부 미편성.</p>
       </section>
       <section class="card">
         <h2>월별 부하</h2>
@@ -138,9 +138,9 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <footer class="wrap foot">조회 전용 · 원자료: 통합 가동계획(컬러 판매계획·계획재 운영안·MES 월차·실적)</footer>
 
-<script src="ui/shell.js?v=2611100729"></script>
-<script src="engine/crypto.js?v=2611100729"></script>
-<script src="color_status.js?v=2611100729"></script>
-<script src="color_rolling.js?v=2611100729"></script>
+<script src="ui/shell.js?v=2611100742"></script>
+<script src="engine/crypto.js?v=2611100742"></script>
+<script src="color_status.js?v=2611100742"></script>
+<script src="color_rolling.js?v=2611100742"></script>
 </body>
 </html>

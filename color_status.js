@@ -121,7 +121,7 @@
   const shortWhy = (m, l) => (O.colorUnplaced || []).some((x) => x.ym === m && String(x.lines).split('·').includes(l)) ? '가동시간 부족' : '배정할 물량 없음';
   function renderEvents() {                                      // 도금 '강종 전환 일정' 자리: 라인별 편성 / MES 월차 한도
     $('d-events').innerHTML = `<tr><th>라인</th>${MONTHS.map((m) => `<th>${+m.slice(5)}월 편성 / 한도</th>`).join('')}</tr>`
-      + LINES.map((l) => `<tr class="evrow"><td>${l}</td>${MONTHS.map((m) => { const c = cap(m, l), g = c - placed(m, l); return `<td>${fmt(placed(m, l))} / ${c ? fmt(c) : '<span class="muted" title="MES 월차는 이번 달만 있음">-</span>'}${c && g > 50 ? ` <span class="pill warn" title="MES 월차까지 ${fmt(g)}t 남음 — ${shortWhy(m, l)}">${fmt(g)}t 남음 · ${shortWhy(m, l)}</span>` : c && g < -50 ? ` <span class="pill down" title="편성이 MES 월차보다 ${fmt(-g)}t 많음">${fmt(-g)}t 초과</span>` : ''}</td>`; }).join('')}</tr>`).join('')
+      + LINES.map((l) => `<tr class="evrow"><td>${l}</td>${MONTHS.map((m) => { const c = cap(m, l), g = c - placed(m, l); return `<td>${fmt(placed(m, l))} / ${c ? fmt(c) : '<span class="muted" title="MES 월차는 이번 달만 있음">-</span>'}${c && g > 50 ? ` <span class="pill warn" title="MES 월차까지 ${fmt(g)}t 잔여 — ${shortWhy(m, l)}">${fmt(g)}t 잔여 · ${shortWhy(m, l)}</span>` : c && g < -50 ? ` <span class="pill down" title="편성이 MES 월차보다 ${fmt(-g)}t 많음">${fmt(-g)}t 초과</span>` : ''}</td>`; }).join('')}</tr>`).join('')
       + `<tr class="evrow"><td><b>계</b></td>${MONTHS.map((m) => { const c = sum(LINES, (l) => cap(m, l)); return `<td><b>${fmt(sum(LINES, (l) => placed(m, l)))}</b> / ${c ? fmt(c) : '-'}</td>`; }).join('')}</tr>`;   // 11/10 점검: 월차 없는 달 '0' → '-', 한도 초과(2CCL 118%·3CCL 102%) 경고
   }
   function renderLoad() {

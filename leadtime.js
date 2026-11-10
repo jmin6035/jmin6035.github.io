@@ -8,11 +8,11 @@
   const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
   const num = (k, v) => `<input type="number" min="0" max="365" step="1" data-k="${esc(k)}" data-o="${v}" value="${v}" aria-label="${esc(k)} 일수">`;
   function changed() { return [...document.querySelectorAll('#lt-main input[data-k]')].filter((i) => i.value !== '' && +i.value !== +i.dataset.o); }
-  function mark() { const n = changed().length; document.querySelectorAll('#lt-main input[data-k]').forEach((i) => i.classList.toggle('chg', i.value !== '' && +i.value !== +i.dataset.o)); $('lt-apply').disabled = !n; $('lt-n').textContent = n ? `${n}개 바꿈` : ''; }
+  function mark() { const n = changed().length; document.querySelectorAll('#lt-main input[data-k]').forEach((i) => i.classList.toggle('chg', i.value !== '' && +i.value !== +i.dataset.o)); $('lt-apply').disabled = !n; $('lt-n').textContent = n ? `${n}개 변경` : ''; }
   async function apply() {
     const C = changed(); if (!C.length) return;
-    const who = $('lt-who').value.trim(); if (!who) { $('lt-res').textContent = '이름을 적어 주세요'; $('lt-who').focus(); return; }
-    if (C.some((i) => !(+i.value >= 0 && +i.value <= 365))) { $('lt-res').textContent = '0~365일 사이로 적어 주세요'; return; }
+    const who = $('lt-who').value.trim(); if (!who) { $('lt-res').textContent = '이름 입력 필요'; $('lt-who').focus(); return; }
+    if (C.some((i) => !(+i.value >= 0 && +i.value <= 365))) { $('lt-res').textContent = '0~365일 범위로 입력'; return; }
     const rules = { safety: {}, types: {} };
     C.forEach((i) => { const k = i.dataset.k, v = Math.round(+i.value); if (k === 'selfLead' || k === 'selfLeadMin' || k === 'newOrderLT') rules[k] = v; else if (k.startsWith('safety.')) rules.safety[k.slice(7)] = v; else rules.types[k.slice(2)] = v; });
     if (!confirm(`리드타임 ${C.length}개를 바꿉니다. 다음 갱신(2시간 안)부터 발주·소재·계획 화면이 새 값으로 다시 계산됩니다.`)) return;
@@ -24,8 +24,8 @@
       try { localStorage.setItem('cgl-me', who); } catch (e) { /* 무시 */ }
       C.forEach((i) => { i.dataset.o = String(Math.round(+i.value)); }); mark();
       $('lt-res').textContent = '접수했습니다 — 다음 갱신(2시간 안)에 전 화면 반영';
-      if (window.UI && UI.toast) UI.toast('리드타임 고침 접수');
-    } catch (e) { $('lt-res').textContent = '⚠ ' + e.message + ' — 다시 시도하세요'; $('lt-apply').disabled = false; }
+      if (window.UI && UI.toast) UI.toast('리드타임 수정 접수');
+    } catch (e) { $('lt-res').textContent = '⚠ ' + e.message + ' — 재시도 바랍니다'; $('lt-apply').disabled = false; }
   }
   function draw() {
     const mx = Math.max(...D.types.map((t) => t[1]));
@@ -37,7 +37,7 @@
     $('lt-main').innerHTML = `
       <section class="card"><h2>입고 뒤 계획이 쓰는 일수</h2>
         <div class="lt-k">${D.fixed.map((f) => `<div><small>${esc(f[1])}</small><b>${num(f[0], f[2])}<i>일</i></b><span>${esc(f[3])}</span><em>${esc(f[4])}</em></div>`).join('')}
-          <div><small>도금 선생산 허용</small><b class="ro">${esc(D.release.split(' · ')[0])}</b><span>${esc(D.release.split(' · ').slice(1).join(' · '))}</span><em>도금 계획 엔진 — <a href="rules.html">계획 규칙</a>에서 고침</em></div></div></section>
+          <div><small>도금 선생산 허용</small><b class="ro">${esc(D.release.split(' · ')[0])}</b><span>${esc(D.release.split(' · ').slice(1).join(' · '))}</span><em>도금 계획 엔진 — <a href="rules.html">계획 규칙</a>에서 수정</em></div></div></section>
       <section class="card"><h2>소재 유형별 발주 → 입고 <small>발주 창이 있는 유형은 창 첫날 발주 기준(가장 긴 경우)</small></h2>
         <div class="scroll"><table class="t"><thead><tr><th class="l">소재 유형</th><th>리드타임</th><th class="l" style="min-width:260px"></th><th class="l">발주 방식</th></tr></thead><tbody>
         ${D.types.map((t) => `<tr><td class="l"><b>${esc(t[0])}</b></td><td class="d">${num('t:' + t[0], t[1])} 일</td><td class="l"><i class="lt-bar" style="width:${Math.max(4, t[1] / mx * 240)}px"></i></td><td class="l">${esc(t[2])}</td></tr>`).join('')}
@@ -70,7 +70,7 @@
       draw();
     } catch (e) {
       $('lt-h').textContent = '분석 암호'; $('lt-form').hidden = false;
-      $('lt-msg').textContent = pw ? (/자료 없음/.test(e.message) ? '게시 자료가 아직 없습니다' : '암호가 맞지 않습니다') : '';
+      $('lt-msg').textContent = pw ? (/자료 없음/.test(e.message) ? '게시 자료가 없습니다' : '암호가 맞지 않습니다') : '';
     }
   }
   $('lt-form').onsubmit = (e) => { e.preventDefault(); open($('lt-pw').value); };

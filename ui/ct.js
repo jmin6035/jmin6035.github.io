@@ -52,7 +52,7 @@
 
   /* ---------- 주문 모델 ---------- */
   const GN = { 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차강판', 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발' };
-  CT.grpName = (g) => GN[g] || g || '판매그룹 모름';
+  CT.grpName = (g) => GN[g] || g || '판매그룹 미확인';
   CT.CAUSE = { mat: '소재 입고 지연', match: '소재 매치 지연', paint: '도료 입고 지연', plate: '자가재(도금) 지연', cap: '생산 지연', ship: '출하 지연', data: '자료 확인' };
   /* 화면 표시 말(11/4 사용자 '원래 우리가 쓰는 말투로 · 위험이 뭐가 위험하다는 거냐') — 내부 값(o.risk·o.ful)은 그대로, 보이는 글자만 바꿈 */
   CT.RL = { 위험: '납기 지연 예상', 주의: '점검 필요', '판정 불가': '자료 확인 필요', 정상: '정상', 완료: '완료' };
@@ -130,7 +130,7 @@
     else if (pDone) o.risk = '정상';
     else if (!x.due) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = '납기 없음'; }
     else if (!ordT) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = '주문량 없음'; }
-    else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.stale = true; o.dataWhy = `납기 ${STALE}일 넘게 지남 · MES 미종결(종결 처리 확인)`; }
+    else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.stale = true; o.dataWhy = `납기 ${STALE}일 이상 경과 · MES 미종결(종결 처리 확인)`; }
     else if (x.lateIn) { o.risk = '위험'; o.cause = 'mat'; o.last = x.needIn; }
     else if (x.st === '미발주' && prodT < 0.5) { o.risk = x.needIn && CT.diff(x.needIn, asOf) <= 35 ? '위험' : '주의'; o.cause = 'mat'; o.last = x.needIn; }   // 11/5: 소재 미발주인데 '생산 지연'으로 나오던 것 — 원인은 소재
     else if (sche && needProd && sche > needProd && remT > 0.5) { o.risk = '위험'; o.cause = 'cap'; o.last = needProd; }
@@ -168,7 +168,7 @@
     else if (pDone && o.ful === '부분 출하' && x.due && x.due < asOf) { o.risk = '위험'; o.cause = 'ship'; o.last = asOf; }
     else if (pDone) { o.risk = x.due && x.due < asOf ? '판정 불가' : '정상'; if (o.risk === '판정 불가') { o.cause = 'data'; o.dataWhy = '생산 완료 · 출하 실적 연결 없음'; } }
     else if (!x.due) { o.risk = '판정 불가'; o.cause = 'data'; o.dataWhy = '납기 없음'; }
-    else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.stale = true; o.dataWhy = `납기 ${STALE}일 넘게 지남 · MES 미종결(종결 처리 확인)`; }
+    else if (CT.diff(x.due, asOf) < -STALE) { o.risk = '판정 불가'; o.cause = 'data'; o.stale = true; o.dataWhy = `납기 ${STALE}일 이상 경과 · MES 미종결(종결 처리 확인)`; }
     else if (selfG && selfG.risk === '위험' && x.st !== '매치 완료') { o.risk = '위험'; o.cause = 'plate'; o.last = selfG.last || addD(x.due, -8); }
     else if (x.lateCan) { o.risk = '위험'; o.cause = /도료/.test(x.canBy || '') ? 'paint' : 'mat'; o.last = x.can; }   // 11/5: 매치 끝났는데 도료가 늦는 주문을 '소재 입고 지연'으로 부르던 것
     else if (x.st === '소재 없음') { o.risk = x.lateDue || soon ? '위험' : '주의'; o.cause = 'mat'; o.last = addD(x.due, -7); }
@@ -205,9 +205,9 @@
     if (o.cause === 'mat') return o.pl === 'G' ? `입고 필요 ${d(o.needIn || o.last) || '-'} · ${o.matSt}` : `소재 ${o.matSt} · 납기 ${d(o.due)}`;
     if (o.cause === 'cap') return `편성 ${d(o.sche) || '-'} > 생산 필요 ${d(o.needProd) || '-'}`;
     if (o.cause === 'plate') return `자가재 ${o.self || ''} 진행 지연`;
-    if (o.cause === 'match') return `규격 재고 있음 · 매치 안 됨 · 납기 ${d(o.due)}`;
+    if (o.cause === 'match') return `규격 재고 있음 · 미매치 · 납기 ${d(o.due)}`;
     if (o.cause === 'paint') return `도료 입고 ${d(o.src.can)} > 납기 ${d(o.due)}`;
-    if (o.cause === 'ship') return `납기 ${d(o.due)} 지남 · 미출하 ${CT.n1(o.unshipT || 0)}t`;
+    if (o.cause === 'ship') return `납기 ${d(o.due)} 경과 · 미출하 ${CT.n1(o.unshipT || 0)}t`;
     return '';
   };
   CT.badgeT = (r, txt) => `<span class="ct-b ${RC[r] || 'na'}">${esc(txt)}</span>`;   // 등급 색 + 무엇이 문제인지 글자

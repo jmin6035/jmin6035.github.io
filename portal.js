@@ -63,7 +63,7 @@
     let i = 0;
     const curM = String(O.asOf || '').slice(0, 7), old = (g) => String(g.prod.asOf || '').slice(0, 7) !== curM;   // 실적 자료가 지난달에서 멈춘 그룹(11/2 컬러 10/29)
     const row = (g) => {
-      if (old(g)) { const S = g.ship; return `<tr data-dom="${g.pl}"><td class="nm"><i class="warn"></i>${esc(g.name.replace('(컬러 소재)', ''))}</td><td colspan="5" class="l mu">실적 자료가 ${md(g.prod.asOf)}에서 멈춤 — 이번 달 생산 실적 없음</td><td>${S ? `<b>${n0(S.actual)}</b><span class="mu"> / ${n0(S.month)}</span>` : '<span class="mu">-</span>'}</td><td class="hide-m">${S ? sg(S.actual - S.sched) : ''}</td></tr>`; }
+      if (old(g)) { const S = g.ship; return `<tr data-dom="${g.pl}"><td class="nm"><i class="warn"></i>${esc(g.name.replace('(컬러 소재)', ''))}</td><td colspan="5" class="l mu">실적 자료가 ${md(g.prod.asOf)}에서 중단 — 이번 달 생산 실적 없음</td><td>${S ? `<b>${n0(S.actual)}</b><span class="mu"> / ${n0(S.month)}</span>` : '<span class="mu">-</span>'}</td><td class="hide-m">${S ? sg(S.actual - S.sched) : ''}</td></tr>`; }
       const P = g.prod, D = dim(P.asOf.slice(0, 7)), el = +P.asOf.slice(8, 10), rem = D - el, left = Math.max(0, P.month - P.actual);
       const proj = P.actual + (P.after || 0), r = P.month ? proj / P.month : 1, st = left <= 0 || r >= 0.98 ? '' : r >= 0.9 ? 'warn' : 'bad';
       const w = Math.max(P.month, proj, 1) * 1.02, S = g.ship;
@@ -136,7 +136,7 @@
     return `<h2>그룹별 판매계획 → 필요 생산 → 진도 <small>필요 생산 = 판매계획 + 월말 목표 재고 − 월초 재고(계획 엔진 월 물량) · 진도율 = 이번 달 생산 실적 ÷ 필요 생산</small><span class="unit">톤</span></h2>
       <div class="scroll"><table class="gt nd"><thead><tr><th class="l" rowspan="2">그룹</th>${hd}</tr><tr>${hd2}</tr></thead>
       <tbody>${sec('G', '도금', ['G국내', 'G수출', 'G자동차', 'G자가재'])}${sec('C', '컬러', ['C건재', 'C수출', 'C수요'])}</tbody></table></div>
-      <p class="small" style="margin:6px 0 0">진도율 색: 경과율(${Math.round(er * 100)}%) 이상 초록 · 10%p 안쪽 노랑 · 그보다 낮으면 빨강. 재고 = 판매생산속보 원천 표 실제 재고(자가재 = 도금 제품 자가재 전체, 도금 계는 자가재 빼고 판매재만), 월말 예상 = 재고 추이와 같은 매일 롤링(어제 실제 + 남은 생산 − 남은 출하), 월말 재고 일수 = 월말 예상 ÷ 다음 달 하루 판매 — 목표 일수 대비 70% 미만 빨강 · 130% 넘으면 노랑. 목표 재고: TF 목표 일수(도금 자동차 약 30·수출 15·국내 20일, 컬러 수출 약 20일, 건재 = 계획재 EOQ + 주문재 20일). 도금 자가재 판매계획 = 컬러 공장이 쓸 자가재 소재${Object.keys(stale).length ? ` · <b class="warn">${Object.entries(stale).map(([p_, d]) => `${p_ === 'C' ? '컬러' : '도금'} 실적 자료가 ${+d.slice(5, 7)}/${+d.slice(8, 10)}에 멈춰 이번 달 실적 칸을 비움`).join(' · ')}</b>` : ''}</p>`;
+      <p class="small" style="margin:6px 0 0">진도율 색: 경과율(${Math.round(er * 100)}%) 이상 초록 · 10%p 안쪽 노랑 · 그보다 낮으면 빨강. 재고 = 판매생산속보 원천 표 실제 재고(자가재 = 도금 제품 자가재 전체, 도금 계는 자가재 빼고 판매재만), 월말 예상 = 재고 추이와 같은 매일 롤링(어제 실제 + 남은 생산 − 남은 출하), 월말 재고 일수 = 월말 예상 ÷ 다음 달 하루 판매 — 목표 일수 대비 70% 미만 빨강 · 130% 초과 노랑. 목표 재고: TF 목표 일수(도금 자동차 약 30·수출 15·국내 20일, 컬러 수출 약 20일, 건재 = 계획재 EOQ + 주문재 20일). 도금 자가재 판매계획 = 컬러 공장이 쓸 자가재 소재${Object.keys(stale).length ? ` · <b class="warn">${Object.entries(stale).map(([p_, d]) => `${p_ === 'C' ? '컬러' : '도금'} 실적 자료가 ${+d.slice(5, 7)}/${+d.slice(8, 10)}에 멈춰 이번 달 실적 칸을 비움`).join(' · ')}</b>` : ''}</p>`;
   }
 
   // ---------- 오너 한눈에: 상태 4칸 — 주간보고(report.html)와 같은 숫자·기준(생산 98/90 · 출하 95/80 · 재고 110/130%) ----------
@@ -215,7 +215,7 @@
     }
     const now = pl.now || {};
     const due = !UI.inScope('G') ? '' : now.fillShort != null
-      ? `<p class="fp-due ${now.orderShort ? 'bad' : now.orderLateT ? 'warn' : 'good'}" title="${esc((now.shortBy || []).join(', '))}">도금 납기 — 주문 결품 <b>${n0(now.orderShort)}t</b> · 늦는 주문 <b>${n0(now.orderLateT)}t</b> · 판매계획 보충 미편성 ${n0(now.fillShort)}t</p>`
+      ? `<p class="fp-due ${now.orderShort ? 'bad' : now.orderLateT ? 'warn' : 'good'}" title="${esc((now.shortBy || []).join(', '))}">도금 납기 — 주문 결품 <b>${n0(now.orderShort)}t</b> · 지연 주문 <b>${n0(now.orderLateT)}t</b> · 판매계획 보충 미편성 ${n0(now.fillShort)}t</p>`
       : `<p class="fp-due ${now.short ? 'bad' : now.late ? 'warn' : 'good'}" title="${esc((now.shortBy || []).join(', '))}">도금 납기 — 결품 <b>${n0(now.short || 0)}t</b> · 지연 <b>${n0(now.late || 0)}톤·일</b></p>`;
     if (!prod.length && !stk.length) return '';
     return `<h2>월말·4분기 전망 <small>생산 = 이번 달 실적 + 남은 계획(막대 = 예상, 세로선 = 계획) · 재고 = 어제 실제에서 계획대로 굴린 월말 값</small></h2>
@@ -259,7 +259,7 @@
     const cl = C && UI.inScope('C') ? `<table class="gt wo-c"><thead><tr><th class="l">컬러 예정(t)</th>${C.days.map((d, i) => `<th>${md(d)}</th>`).join('')}<th>확정</th><th>예정 끝</th></tr></thead><tbody>${C.lines.map((x) => `<tr><td class="l">${x.line}</td>${x.days.map((v) => `<td>${v ? n0(v) : '·'}</td>`).join('')}<td>${x.confRate == null ? '-' : Math.round(x.confRate * 100) + '%'}</td><td>${x.until ? md(x.until) : '-'}</td></tr>`).join('')}</tbody></table>` : '';
     if (!gl && !cl) return '';
     return `<h2>현장 작업지시 vs 계획 <small>MES 작업지시 ${ymd((W.plating || {}).asOf)} 기준</small></h2><div class="wo-g">${gl}</div>${cl}
-      <p class="small">도금: 미완료 지시 코일의 강종(생산번호로 판별, 톤은 최근 코일 평균으로 추정)이 계획의 향후 3일 강종 안에 있으면 '맞음'. 도금 지시는 보통 1~2일치만 나옴. 컬러 = 작업 예정일별 지시 예정 중량 — 첫날 값이 하루 능력보다 큰 것(예: 1CCL)은 밀린 지시가 그날로 잡힌 것으로 보여 확인 중.</p>`;
+      <p class="small">도금: 미완료 지시 코일의 강종(생산번호로 판별, 톤은 최근 코일 평균으로 추정)이 계획의 향후 3일 강종 안에 있으면 '맞음'. 도금 지시는 보통 1~2일치만 나옴. 컬러 = 작업 예정일별 지시 예정 중량 — 첫날 값이 하루 능력보다 큰 것(예: 1CCL)은 지연 지시가 그날로 집계된 것으로 보여 확인 중.</p>`;
   }
 
   // ---------- 2주 일정: 이번 주 월요일부터 14일, 날짜마다 할 일(도금 M/C·정지 / 컬러 S/D·수리 / 소재 발주 / 계획재 발주) ----------

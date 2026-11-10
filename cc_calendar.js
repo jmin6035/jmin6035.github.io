@@ -60,7 +60,7 @@
   function calCard() {
     return `<section class="card"><h2>라인별 ~${END()} <small title="라인 하루 24시간(계획 휴지 뺌)">칸을 누르면 그날 계약 목록</small></h2>`
       + `<div class="lg">${KD.map(([, nm, cl, t]) => `<span title="${esc(t)}"><i class="${cl}"></i>${nm}</span>`).join('')}<span><i style="background:var(--bad-bg);box-shadow:inset 3px 0 0 var(--bad)"></i>작업대기 24시간 부족·빈 시간</span><span><i style="background:var(--tint-2);box-shadow:inset 0 0 0 1px var(--line)"></i>정지(휴지·수리)</span></div>`
-      + (O.cus ? '' : '<p class="msg" style="margin:0 0 10px">DUMMY 고객 제외: 컬러 계약 고객사 자료(snap_cc_cus_names)가 사내 PC 다음 실행부터 들어옴 — 지금은 DUMMY 포함</p>')
+      + (O.cus ? '' : '<p class="msg" style="margin:0 0 10px">DUMMY 고객 제외: 컬러 계약 고객사 자료(snap_cc_cus_names)가 사내 PC 다음 실행부터 반영 — 현재는 DUMMY 포함</p>')
       + Array.from({ length: Math.ceil(O.days.length / 7) }, (_, w) => `<div class="wk">${weekTable(O.days.slice(w * 7, w * 7 + 7))}</div>`).join('') + '</section>';
   }
 
@@ -108,7 +108,7 @@
   const envReady = GP.latest('cc_calendar.enc.json');
   async function unlock(pw) {
     const env = await envReady;
-    if (!env) { $('cc-msg').textContent = '아직 게시된 자료가 없습니다.'; return; }
+    if (!env) { $('cc-msg').textContent = '게시된 자료가 없습니다.'; return; }
     try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
     catch (e) { $('cc-form').hidden = false; $('cc-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
     render();

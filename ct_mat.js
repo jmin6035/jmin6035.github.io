@@ -56,7 +56,7 @@
     $('ct-main').innerHTML = CT.basis([{ name: '소재 관제', at: M.savedAt || M.today, kind: '재계획' }, { name: '주문', at: OM.cgAt, kind: '실적' }, { name: '컬러 주문', at: OM.ccAt, kind: OM.ccMissing.length ? `${OM.ccMissing.join('·')} 없음` : '' }])
       + kp
       + `<section class="card"><div class="hd"><h2>부족 소재 <small>마감 지남 먼저 · 발주 마감 순</small></h2>${CT.tabs('mt-all', [['s', '부족만'], ['a', '전체 소재']], showAll ? 'a' : 's')}</div>`
-      + `<div class="ct-wrap"><table class="ct-t mt"><thead><tr><th>상태</th><th class="r">해당 주문</th><th>소재</th><th class="r" title="발주 마감이 지나 지금 발주해도 못 대는 부족 · 아래 = 3달 발주 필요(경고 아님)">마감 지난 부족(t)</th><th>필요일</th><th>사용 판매그룹</th><th class="ac">담당부서</th><th>조치기한</th><th>조치 상태</th></tr></thead>`
+      + `<div class="ct-wrap"><table class="ct-t mt"><thead><tr><th>상태</th><th class="r">해당 주문</th><th>소재</th><th class="r" title="발주 마감이 지나 지금 발주해도 미해소 부족 · 아래 = 3달 발주 필요(경고 아님)">마감 지난 부족(t)</th><th>필요일</th><th>사용 판매그룹</th><th class="ac">담당부서</th><th>조치기한</th><th>조치 상태</th></tr></thead>`
       + `<tbody>${L.map(tr).join('') || '<tr><td colspan="9">부족 소재 없음</td></tr>'}</tbody></table></div>`
       + '<p class="ct-note">조치기한 = 정해진 발주일(P-FH 화 · 그 외 월 · 수입 10~20일) · 필요일 = 부족 시작</p></section>'
       + specCard(M, today);
@@ -73,7 +73,7 @@
         + `<td class="r">${n0(r.need)}</td><td class="r">${n0((r.stock || 0) + (r.po || 0))}</td><td class="r">${n0(r.gap)}</td><td class="r">${late ? `<b class="ct-neg">${n0(r.late)}</b>` : '-'}</td>`
         + `<td class="nw">${md(r.first)}</td><td class="nw">${r.order ? `${r.order[0] === r.order[1] ? md(r.order[0]) : `${md(r.order[0])}~${md(r.order[1])}`}${n != null && n < 0 ? ` <b class="ct-neg">${-n}일 지남</b>` : n != null && n <= 14 ? ` <span class="sub-i">D-${n}</span>` : ''}` : '-'}</td><td class="nw">${md(r.arrive)}</td></tr>`; };
     return `<section class="card"><div class="hd"><h2>규격별 부족 <small>컬러건재 계획재 소재 · 두께×폭 · 3달</small></h2></div>`
-      + (R.length ? `<div class="ct-wrap"><table class="ct-t mt"><thead><tr><th>상태</th><th>소재</th><th>두께×폭</th><th class="r">3달 필요(t)</th><th class="r" title="같은 두께·폭 사용가능 재고 + 기발주 잔량">재고·기발주(t)</th><th class="r">3달 발주 필요(t)</th><th class="r" title="부족 중 발주 마감이 이미 지난 몫(지금 발주해도 못 댐)">마감 지난 부족(t)</th><th>첫 부족일</th><th>발주 기간</th><th>입고 예상</th></tr></thead><tbody>${R.map(tr).join('')}</tbody></table></div>`
+      + (R.length ? `<div class="ct-wrap"><table class="ct-t mt"><thead><tr><th>상태</th><th>소재</th><th>두께×폭</th><th class="r">3달 필요(t)</th><th class="r" title="같은 두께·폭 사용가능 재고 + 기발주 잔량">재고·기발주(t)</th><th class="r">3달 발주 필요(t)</th><th class="r" title="부족 중 발주 마감이 이미 지난 몫(지금 발주해도 미해소)">마감 지난 부족(t)</th><th>첫 부족일</th><th>발주 기간</th><th>입고 예상</th></tr></thead><tbody>${R.map(tr).join('')}</tbody></table></div>`
         : '<p class="ct-note">규격별 부족 없음</p>') + '</section>';
   }
   function panel(m) {

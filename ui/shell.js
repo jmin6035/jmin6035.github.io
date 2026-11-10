@@ -84,7 +84,7 @@
     const show = only && scope !== 'all' && scope !== only;
     if (!show) { if (el) el.remove(); return; }
     if (!el) { el = document.createElement('div'); el.id = 'ui-scope-note'; el.className = 'wrap scope-note'; h.after(el); }
-    el.innerHTML = `<div><b>이 화면은 ${SCN[only]} 자료만 있습니다.</b> 현재 '${SCN[scope]}' 보기라 내용이 없습니다 — <button type="button" data-sc="${only}">${SCN[only]} 보기로</button> 또는 <a href="index.html">홈</a>에서 ${SCN[scope]} 화면을 고르세요.</div>`;
+    el.innerHTML = `<div><b>이 화면은 ${SCN[only]} 자료만 있습니다.</b> 현재 '${SCN[scope]}' 보기라 내용이 없습니다 — <button type="button" data-sc="${only}">${SCN[only]} 보기로</button> 또는 <a href="index.html">홈</a>에서 ${SCN[scope]} 화면 선택.</div>`;
     el.querySelector('button').onclick = () => setScope(only);
   }
   /* 메뉴 아이콘(선 아이콘, 24 격자) */
@@ -285,7 +285,7 @@
     const m = document.getElementById('ui-fresh-m'); if (m) { m.hidden = false; m.className = el.className; m.title = el.title; m.innerHTML = el.innerHTML; }
     if (age >= 2 && h.dataset.page !== 'health' && !document.getElementById('ui-stale')) {
       const b = document.createElement('div'); b.id = 'ui-stale'; b.className = 'wrap stale-band';
-      b.innerHTML = `<div>⚠ <b>자료가 ${age}일 전(${mdS(B.day)} ${B.at.slice(-5)})에서 멈춰 있습니다.</b> 모든 화면은 기준일 ${mdS(B.day)}(실적 ~${mdS(B.act)}) 기준입니다 — 사내 PC 자동 실행을 확인하세요. <a href="health.html">자료 상태 보기 →</a></div>`;
+      b.innerHTML = `<div>⚠ <b>자료가 ${age}일 전(${mdS(B.day)} ${B.at.slice(-5)})에서 멈춰 있습니다.</b> 모든 화면은 기준일 ${mdS(B.day)}(실적 ~${mdS(B.act)}) 기준입니다 — 사내 PC 자동 실행 확인 필요. <a href="health.html">자료 상태 보기 →</a></div>`;
       h.after(b);
     }
   }
@@ -300,9 +300,9 @@
     analysis: '(계획 담당자용) MES 도금 실적으로 속도·M/C 손실·정지를 재산출해 계획 조건과 비교 — 반영권장 값은 계획 계산에 넣을 후보',
     platact: '도금 2라인 이번 달 진도, 일별·주별 생산, 속도, 제품·강종, 휴지, 강종 전환. 컬러 실적과 같은 양식',
     coloract: '컬러 4라인 이번 달 진도, 일별·주별 생산, 속도, 품명, 휴지. 지난주가 12주 평균과 얼마나 다른지',
-    colorstat: '컬러 1~4CCL 4분기 계획의 월별 간트(지난 날 = 실적), 라인 한도 대비 편성, 그룹별 물량, 못 넣은 물량. 도금 가동 현황과 같은 역할',
+    colorstat: '컬러 1~4CCL 4분기 계획의 월별 간트(지난 날 = 실적), 라인 한도 대비 편성, 그룹별 물량, 미편성 물량. 도금 가동 현황과 같은 역할',
     colorcalc: '(계획 담당자용) 판매계획·계획재 운영안·휴지계획 엑셀을 올려 컬러 4분기 일별 계획을 다시 계산하고, 현재 게시 계획과 비교한 뒤 게시. 서버와 같은 계산식(브라우저 안에서 실행), 도금은 기준 계획 유지',
-    coloranal: '(계획 담당자용) MES 컬러 실적으로 라인·품명 t/hr 를 재산출해 계획 조건과 비교 — 라인 속도 차이가 ±5%를 넘으면 계획 조건 조정 검토',
+    coloranal: '(계획 담당자용) MES 컬러 실적으로 라인·품명 t/hr 를 재산출해 계획 조건과 비교 — 라인 속도 차이가 ±5% 초과 시 계획 조건 조정 검토',
     planstock: '계획재 운영안(TF) 187개 사양의 재고·생산·판매 진도와 월말 재고 예측. \'조치 필요\'부터 보고 담당자별로 확인',
     cgcal: '라인별 월말까지 생산 캘린더 — 현장 작업지시(확정)·소재 있는 주문(편성)·입고 예정(예상), 수요일 확정·준수율',
     cccal: '컬러 1~4CCL 라인별 월말까지 생산 캘린더 — MES 작업지시 · 컬러 계획 편성 · 소재 현황',
@@ -441,7 +441,7 @@
       const cnt = [];
       [...t.tBodies[0].rows].slice(0, 40).forEach((r) => { let ci = 0; [...r.cells].forEach((c) => { if (c.colSpan === 1) { const a = getComputedStyle(c).textAlign.replace('start', 'left'); (cnt[ci] = cnt[ci] || {})[a] = ((cnt[ci] || {})[a] || 0) + 1; } ci += c.colSpan; }); });
       if (t.tHead) [...t.tHead.rows].forEach((r) => { if (r !== t.tHead.rows[t.tHead.rows.length - 1]) return; let ci = 0; [...r.cells].forEach((c) => { if (c.colSpan === 1 && cnt[ci]) { const m = Object.entries(cnt[ci]).sort((a, b) => b[1] - a[1])[0][0]; if (getComputedStyle(c).textAlign.replace('start', 'left') !== m) c.style.setProperty('text-align', m, 'important'); } ci += c.colSpan; }); });
-      const box = t.parentElement; if (!box || t.closest('.ch, .ln-c')) return;
+      const box = t.parentElement; if (!box || t.closest('.ch, .ln-c, .rk')) return;
       const full = box.clientWidth; if (full < 500) return;
       if (getComputedStyle(t).tableLayout === 'fixed') return;   // 칸 폭 고정 표(가동 캘린더 등)는 내용 폭이 의미 없음 — 넓은 화면에서 좁게 뭉치던 원인
       const old = t.style.width; t.style.setProperty('width', 'auto', 'important');

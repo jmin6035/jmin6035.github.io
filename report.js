@@ -321,7 +321,7 @@
     $('r-msg').textContent = '여는 중…';
     try {
       const o = await GP.decryptJSON(env, pw);
-      if (o.version !== 2) { $('r-msg').innerHTML = '이 보고서는 이전 형식입니다. <a href="analysis.html">분석 화면</a>에서 보세요.'; return; }
+      if (o.version !== 2) { $('r-msg').innerHTML = '이 보고서는 이전 형식입니다. <a href="analysis.html">분석 화면</a>에서 확인.'; return; }
       try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 저장 불가 */ }
       render(o);
       UI.onScope(() => { const y = scrollY; render(lastO); scrollTo(0, y); });
@@ -331,9 +331,9 @@
   const src = new URLSearchParams(location.search).get('src') || 'published/weekly_report.enc.json';
   fetch(src, { cache: 'no-store' }).then((r) => { if (!r.ok) throw new Error('보고서 파일 없음'); return r.json(); }).then((e) => {
     env = e;
-    document.querySelector('#r-lock h2').textContent = '주간 보고서 — 분석 암호를 입력하세요';
+    document.querySelector('#r-lock h2').textContent = '주간 보고서 — 분석 암호 입력 필요';
     $('r-form').hidden = false;
     let saved = null; try { saved = localStorage.getItem(PW_KEY); } catch (x) { saved = null; }
     if (saved) open(saved);
-  }).catch((e) => { document.querySelector('#r-lock h2').textContent = '아직 게시된 주간 보고서가 없습니다'; $('r-msg').textContent = e.message; });
+  }).catch((e) => { document.querySelector('#r-lock h2').textContent = '게시된 주간 보고서가 없습니다'; $('r-msg').textContent = e.message; });
 })();

@@ -18,7 +18,7 @@
   function lockMsg(t, m) { $('c-lock-t').textContent = t; $('c-lock-msg').textContent = m || ''; }
   async function unlock(p) {
     await envs;
-    if (!E.files || !E.mes) { lockMsg('계산 기준 자료가 아직 게시되지 않았습니다', '사내 PC 자동 실행 또는 관리자 게시 후 다시 여세요.'); return; }
+    if (!E.files || !E.mes) { lockMsg('계산 기준 자료가 게시되지 않았습니다', '사내 PC 자동 실행 또는 관리자 게시 후 이용 가능.'); return; }
     try {
       [D.files, D.mes, D.cur] = await Promise.all([GP.decryptJSON(E.files, p), GP.decryptJSON(E.mes, p), E.cur ? GP.decryptJSON(E.cur, p) : null]);
       D.prev = E.prev && String(E.prev.created) > String(E.files.created) ? await GP.decryptJSON(E.prev, p).catch(() => null) : null;
@@ -49,7 +49,7 @@
   document.querySelectorAll('.up .dl-tpl').forEach((btn) => btn.addEventListener('click', (e) => {   // 지금 쓰는 기준 파일 받기(양식 겸 예시)
     e.preventDefault(); e.stopPropagation();
     const path = D && D.files && (D.files.upload || {})[btn.dataset.dl], b = path && D.files.files[path];
-    if (!b) { alert('기준 자료가 아직 열리지 않았습니다.'); return; }
+    if (!b) { alert('기준 자료가 열리지 않았습니다.'); return; }
     const bin = atob(b), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([u], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })); a.download = path.split('/').pop();
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
@@ -78,7 +78,7 @@
     const m = ev.data;
     if (m.type === 'step') { const w = /확인:/.test(m.msg); $('c-steps').insertAdjacentHTML('beforeend', `<div${w ? ' class="warn"' : ''}>${esc(m.msg.trim())}</div>`); log('· ' + m.msg); }
     else if (m.type === 'log') { if (m.msg.trim()) log(m.msg, m.err); }
-    else if (m.type === 'error') { stop(); $('c-msg').textContent = '⚠ 계산 실패 — 아래 기록을 확인하세요(올린 파일 양식이 다를 수 있음)'; log(m.msg, true); $('c-steps').insertAdjacentHTML('beforeend', `<div class="err">${esc(m.msg.split('\n').slice(-1)[0])}</div>`); }
+    else if (m.type === 'error') { stop(); $('c-msg').textContent = '⚠ 계산 실패 — 아래 기록 확인 필요(올린 파일 양식이 다를 수 있음)'; log(m.msg, true); $('c-steps').insertAdjacentHTML('beforeend', `<div class="err">${esc(m.msg.split('\n').slice(-1)[0])}</div>`); }
     else if (m.type === 'done') { stop(); const r = JSON.parse(m.json); result = r; window.CC_LAST = r; /* 검증 스크립트가 서버 결과와 비교할 때 씀 */ $('c-msg').textContent = `계산 완료(${m.sec}초)`; render(r); }
   }
   function stop() { clearInterval(tick); $('c-run').disabled = false; $('c-prog').hidden = true; }
@@ -135,7 +135,7 @@
     if (!result) return;
     const tok = $('p-token').value.trim();
     try { if ($('p-save').checked) localStorage.setItem(PUB_KEY, JSON.stringify(Object.assign(ps, { token: tok }))); } catch (e) { /* 무시 */ }
-    if (!tok) { $('p-msg').textContent = '⚠ "게시 설정"에 토큰을 넣거나 "게시용 파일 받기"를 쓰세요.'; document.querySelector('#c-pub details').open = true; return; }
+    if (!tok) { $('p-msg').textContent = '⚠ "게시 설정"에 토큰을 넣거나 "게시용 파일 받기" 이용.'; document.querySelector('#c-pub details').open = true; return; }
     if (!confirm('이 결과로 컬러 계획을 게시합니다. 컬러 가동 현황 · 가동 캘린더 · 재고 추이가 바뀝니다. 진행할까요?')) return;
     $('p-go').disabled = true; $('p-msg').textContent = '암호화·게시 중…';
     try {
@@ -176,7 +176,7 @@
     $('dv-mon').innerHTML = months.map((m) => `<button type="button" data-m="${m}" aria-pressed="${m === cv.mon}">${+m.slice(5)}월</button>`).join('');
     $('dv-line').querySelectorAll('button').forEach((b) => b.onclick = () => { cv.line = b.dataset.l; calRender(); });
     $('dv-mon').querySelectorAll('button').forEach((b) => b.onclick = () => { cv.mon = b.dataset.m; calRender(); });
-    $('dv-src').textContent = result ? '새 계산 결과(아직 게시 전)' : `현재 게시 계획 · 실적 ~${md(act || '2026-10-01')}`;
+    $('dv-src').textContent = result ? '새 계산 결과(게시 전)' : `현재 게시 계획 · 실적 ~${md(act || '2026-10-01')}`;
     const by = {}; for (const c of o.color) if (c.l === cv.line && c.d.slice(0, 7) === cv.mon) by[c.d] = c;
     const [y, m] = cv.mon.split('-').map(Number), nd = new Date(Date.UTC(y, m, 0)).getUTCDate(), lead = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
     const pend = moves.filter((v) => v.line === cv.line);
@@ -204,7 +204,7 @@
     $('dv-moves').innerHTML = moves.length
       ? `<b>${result && JSON.stringify(((result.o.moves || {}).items) || []) === JSON.stringify(moves) ? `계산에 반영한 옮기기 ${moves.length}건 — 아래 결과 확인 후 게시하면 확정` : `옮길 일정 ${moves.length}건`}</b>` + moves.map((v, i) => `<span class="mv">${esc(v.line)} ${esc(v.p)}${v.dest ? ' · ' + esc(v.dest) : ''} <b>${n0(v.t)}t</b> ${md(v.from)} → ${md(v.to)}<button type="button" data-i="${i}" aria-label="취소">✕</button></span>`).join('')
         + '<button type="button" class="btn primary" id="dv-go">옮기기 반영해서 계산</button><button type="button" class="btn" id="dv-clear">모두 취소</button>'
-      : '<span class="hint">옮긴 일정 없음 — 사양 칸을 끌어 다른 날에 놓으세요(휴대폰은 칸을 누른 채 끌기).</span>';
+      : '<span class="hint">옮긴 일정 없음 — 사양 칸을 끌어 다른 날에 놓습니다(휴대폰은 칸을 누른 채 끌기).</span>';
     $('dv-moves').querySelectorAll('.mv button').forEach((b) => b.onclick = () => { moves.splice(+b.dataset.i, 1); calRender(); });
     if ($('dv-go')) $('dv-go').onclick = () => { $('c-run').click(); $('c-prog').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
     if ($('dv-clear')) $('dv-clear').onclick = () => { if (confirm('옮긴 일정을 모두 취소할까요? (계산 시작을 눌러야 계획에 반영)')) { moves = []; calRender(); } };
@@ -258,14 +258,14 @@
     const im = mv.impact || {}, li = (a, f) => (a && a.length ? `<ul>${a.map(f).join('')}</ul>` : '<p class="hint">없음</p>');
     box.innerHTML = `<div class="mv-imp"><h3>옮긴 일정과 영향</h3>`
       + li(mv.applied, (v) => `<li>✓ ${esc(v.line)} ${esc(v.p)}${v.dest ? ' · ' + esc(v.dest) : ''} <b>${n0(v.t)}t</b> ${md(v.from)} → ${md(v.to)}${v.fromActual ? ` <small class="hint">(다시 계산한 계획에선 그 사양이 ${md(v.fromActual)}에 있어 거기서 옮김)</small>` : ''}</li>`)
-      + (mv.skipped && mv.skipped.length ? `<ul>${mv.skipped.map((v) => `<li class="warn">⚠ 못 옮김: ${esc(v.move.line)} ${esc(v.move.p)} ${md(v.move.from)} → ${md(v.move.to)} — ${esc(v.why)}</li>`).join('')}</ul>` : '')
+      + (mv.skipped && mv.skipped.length ? `<ul>${mv.skipped.map((v) => `<li class="warn">⚠ 이동 불가: ${esc(v.move.line)} ${esc(v.move.p)} ${md(v.move.from)} → ${md(v.move.to)} — ${esc(v.why)}</li>`).join('')}</ul>` : '')
       + `<h3>같이 날짜가 바뀐 사양 <small>${n0(im.shiftT || 0)}t${im.shiftLast ? ` · ${md(im.shiftLast)}까지 영향` : ''}</small></h3>`
-      + li(im.shifts, (v) => `<li>${esc(v.line)} ${esc(v.p)}${v.dest ? ' · ' + esc(v.dest) : ''} ${n0(v.t)}t ${md(v.from)} → ${md(v.to)} ${v.to > v.from ? '(밀림)' : '(당겨짐)'}</li>`)
-      + `<h3>납기(선적 완료기한)</h3>` + (im.newLate && im.newLate.length ? li(im.newLate, (v) => `<li class="warn">⚠ ${esc(v.line)} ${esc(v.p)} ${esc(v.dest)} ${n0(v.t)}t — 기한 ${md(v.due)} 넘김</li>`) : '<p class="hint">새로 넘기는 것 없음</p>')
-      + (im.fixedLate && im.fixedLate.length ? li(im.fixedLate, (v) => `<li>✓ ${esc(v.p)} ${esc(v.dest)} ${n0(v.t)}t 기한 안으로 들어옴</li>`) : '')
+      + li(im.shifts, (v) => `<li>${esc(v.line)} ${esc(v.p)}${v.dest ? ' · ' + esc(v.dest) : ''} ${n0(v.t)}t ${md(v.from)} → ${md(v.to)} ${v.to > v.from ? '(순연)' : '(당겨짐)'}</li>`)
+      + `<h3>납기(선적 완료기한)</h3>` + (im.newLate && im.newLate.length ? li(im.newLate, (v) => `<li class="warn">⚠ ${esc(v.line)} ${esc(v.p)} ${esc(v.dest)} ${n0(v.t)}t — 기한 ${md(v.due)} 초과</li>`) : '<p class="hint">신규 기한 초과 없음</p>')
+      + (im.fixedLate && im.fixedLate.length ? li(im.fixedLate, (v) => `<li>✓ ${esc(v.p)} ${esc(v.dest)} ${n0(v.t)}t 기한 내 복귀</li>`) : '')
       + `<h3>구매 소재</h3>` + (im.mat && im.mat.length ? li(im.mat, (v) => `<li class="${v.after > v.before ? 'warn' : ''}">${esc(v.code)} 부족 ${n0(v.before)}t → ${n0(v.after)}t${v.first ? ` (첫 부족 ${md(v.first)})` : ''}</li>`) : '<p class="hint">부족 변화 없음(입고 예정 기준, 6주 뒤는 신규 발주로 맞춤)</p>')
       + `<h3>도금(자가재)</h3>` + (im.plating && im.plating.length ? `<p class="warn">⚠ 자가재 반순 마감이 바뀜 → 도금 기준 계획 재계산 필요(관리자, 약 30분)</p>` + li(im.plating, (v) => `<li>${esc(v.sec)} ${esc(v.alloy)} 마감 ${md(v.due)}: ${n0(v.before)}t → ${n0(v.after)}t</li>`) : '<p class="hint">영향 없음 — 자가재 필요일이 같은 반순(10·20·말일) 안</p>')
-      + (im.spill && im.spill.length ? `<h3>계획 기간 밖으로 밀림</h3>` + li(im.spill, (v) => `<li class="warn">${esc(v.line)} ${esc(v.p)} ${n0(v.t)}t → 미편성</li>`) : '')
+      + (im.spill && im.spill.length ? `<h3>계획 기간 밖 순연</h3>` + li(im.spill, (v) => `<li class="warn">${esc(v.line)} ${esc(v.p)} ${n0(v.t)}t → 미편성</li>`) : '')
       + '</div>';
   }
 

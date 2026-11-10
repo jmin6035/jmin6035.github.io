@@ -141,7 +141,7 @@
     if (G.length) {
       const by = {}; G.forEach((o) => { const b = by[o.grp] = by[o.grp] || { n: 0, t: 0, ln: 0, lt: 0 }; b.n++; b.t += o.remT; if (o.src.lateIn) { b.ln++; b.lt += o.remT; } });
       const R = Object.entries(by).sort((a, b) => b[1].t - a[1].t), lt = G.filter((o) => o.src.lateIn), p = pc(lt.length, G.length);
-      cards.push(card('주문 소재 지연 비중', '도금 미완료 주문 중 소재가 필요 입고일보다 늦은 비중 · 입고 정시율 아님', big(p, p <= 5 ? 'pos' : p <= 15 ? 'wrn' : 'neg', `지연 ${n0(lt.length)} / ${n0(G.length)}건 · ${n0(lt.reduce((a, o) => a + o.remT, 0))}t`)
+      cards.push(card('주문 소재 지연 비중', '도금 미완료 주문 중 필요 입고일 대비 소재 지연 비중 · 입고 정시율 아님', big(p, p <= 5 ? 'pos' : p <= 15 ? 'wrn' : 'neg', `지연 ${n0(lt.length)} / ${n0(G.length)}건 · ${n0(lt.reduce((a, o) => a + o.remT, 0))}t`)
         + tbl(['판매그룹', '주문', '소재 지연', '지연 잔량(t)', '지연 비중'], R.map(([g, x]) => { const q = pc(x.ln, x.n); return `<tr><td class="id">${esc(g)}</td><td class="r">${n0(x.n)}</td><td class="r">${n0(x.ln)}</td><td class="r">${n0(x.lt)}</td><td class="r"><b class="${q <= 5 ? 'pos' : q <= 15 ? 'wrn' : 'neg'}">${q}%</b></td></tr>`; }))));
       const wz = R.slice().sort((a, b) => b[1].lt - a[1].lt)[0];
       if (wz && wz[1].lt) why.push(['소재 지연', `${wz[0]} 지연 잔량 ${n0(wz[1].lt)}t 가장 큼`, 'ok', `F/H 입고 이력·예정일이 필요 입고일 지남(${wz[1].ln}건)`]);

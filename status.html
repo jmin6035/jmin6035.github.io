@@ -6,10 +6,10 @@
 <title>도금 가동 현황</title>
 <meta name="description" content="도금 1·2CGL 가동계획 조회 전용 대시보드">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="style.css?v=2611100729">
-<link rel="stylesheet" href="dashboard.css?v=2611100729">
-<link rel="stylesheet" href="ui/theme.css?v=2611100729">
-<link rel="stylesheet" href="ui/bridge.css?v=2611100729">
+<link rel="stylesheet" href="style.css?v=2611100742">
+<link rel="stylesheet" href="dashboard.css?v=2611100742">
+<link rel="stylesheet" href="ui/theme.css?v=2611100742">
+<link rel="stylesheet" href="ui/bridge.css?v=2611100742">
 <style>
 /* 기준일 라인 현황 카드 */
 .ln-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
@@ -38,8 +38,8 @@ html body main table.vs3 { min-width: 760px; } table.vs3 b.r-ok { color: var(--g
 
 <main class="wrap">
   <section class="card empty" id="d-empty">
-    <h2 id="d-empty-title">계획 결과를 여세요</h2>
-    <p id="d-empty-text">계획 계산 화면에서 받은 <b>결과 파일(.json)</b>을 위 버튼으로 열거나 이 창에 끌어다 놓으세요. 파일은 서버로 전송되지 않습니다.</p>
+    <h2 id="d-empty-title">계획 결과 열기</h2>
+    <p id="d-empty-text">계획 계산 화면에서 받은 <b>결과 파일(.json)</b>을 위 버튼으로 열거나 이 창에 끌어다 놓습니다. 파일은 서버로 전송되지 않습니다.</p>
     <form id="d-unlock" class="unlock" hidden>
       <p id="d-pubinfo"></p>
       <div class="row">
@@ -106,13 +106,13 @@ html body main table.vs3 { min-width: 760px; } table.vs3 b.r-ok { color: var(--g
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <footer class="wrap foot">조회 전용.</footer>
 
-<script src="ui/shell.js?v=2611100729"></script>
-<script src="engine/params.js?v=2611100729"></script>
-<script src="engine/util.js?v=2611100729"></script>
-<script src="engine/replan.js?v=2611100729"></script>
-<script src="engine/report.js?v=2611100729"></script>
-<script src="engine/gantt.js?v=2611100729"></script>
-<script src="engine/crypto.js?v=2611100729"></script>
-<script src="dashboard.js?v=2611100729"></script>
+<script src="ui/shell.js?v=2611100742"></script>
+<script src="engine/params.js?v=2611100742"></script>
+<script src="engine/util.js?v=2611100742"></script>
+<script src="engine/replan.js?v=2611100742"></script>
+<script src="engine/report.js?v=2611100742"></script>
+<script src="engine/gantt.js?v=2611100742"></script>
+<script src="engine/crypto.js?v=2611100742"></script>
+<script src="dashboard.js?v=2611100742"></script>
 </body>
 </html>

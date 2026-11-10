@@ -323,7 +323,7 @@
   else GP.fetchPublished().then((env) => {
     if (env && env.app === 'cgl-plan') { shownCreated = env.savedAt || 'plain'; load(env); }   // 사내 서버: 평문 결과 → 바로 표시
     else if (env) askPassword(env);
-    else { $('d-empty-title').textContent = '아직 게시된 계획이 없습니다'; $('d-empty-text').textContent = '계획이 게시되면 여기에 자동으로 표시됩니다. 결과 파일(.json)이 있으면 위 “결과 파일 열기”로 볼 수도 있습니다.'; }
+    else { $('d-empty-title').textContent = '게시된 계획이 없습니다'; $('d-empty-text').textContent = '계획이 게시되면 여기에 자동으로 표시됩니다. 결과 파일(.json)이 있으면 위 “결과 파일 열기”로 볼 수도 있습니다.'; }
   }).catch(() => { /* 게시본 없음 */ });
   // 상시 화면용: 5분마다 새 게시본이 있으면 자동으로 바꿔 보여줌(암호를 기억한 기기)
   setInterval(async () => {

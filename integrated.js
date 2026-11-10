@@ -97,7 +97,7 @@
     const x = O.variants[vs[0]].self.AZ.map((r) => '2026-' + r[0]);
     const col = { V1: 'var(--s1)', V2: 'var(--s2)', V3: 'var(--s3)' };
     return { html: card('s-rec', '①', O.confirmed ? `기준 계획 ${O.confirmed}` : '결론', O.confirmed ? '2026-10-07 확정 · V2·V3 비교안은 정리함' : '', `<p class="lead">★ ${esc(O.recWhy)}</p>${tb}${vs.length > 1 ? '<p class="small">초록 = 그 지표에서 가장 좋은 안. 컬러 계획·판매·월 물량 기준은 세 안 공통이고, 다른 것은 자가재 납기(V2 월말 / V1·V3 10일 단위)와 M/C 허용 횟수뿐.</p>' : ''}
-      ${vs.length > 1 ? '<h3>AZ 자가재 재고 — 0 밑 = 컬러가 소재를 못 받는 날</h3><div class="chart" id="c-az"></div>' : '<p class="small">자가재·구매 소재의 일별 흐름(생산·사용·발주·입고·재고)은 <a href="supply.html">가동 캘린더</a>에서 봅니다.</p>'}`),
+      ${vs.length > 1 ? '<h3>AZ 자가재 재고 — 0 미만 = 컬러 소재 공급 불가일</h3><div class="chart" id="c-az"></div>' : '<p class="small">자가재·구매 소재의 일별 흐름(생산·사용·발주·입고·재고)은 <a href="supply.html">가동 캘린더</a>에서 봅니다.</p>'}`),
       after: () => { if (vs.length > 1) lineChart($('c-az'), { x, W: 1000, H: 240, series: vs.map((v) => ({ name: v, color: col[v], v: O.variants[v].self.AZ.map((r) => r[3]), markMin: v === 'V2' })) }); } };   // 비교안이 하나뿐이면 버전 비교 그래프는 숨김
   }
 
@@ -320,7 +320,7 @@
   // ---------- ⑤ 매일 감시·재계획 ----------
   function secRoll() {
     const rs = (O.rolls || []).slice().sort((a, b) => (a.asOf < b.asOf ? -1 : 1));
-    const fl = `<div class="flow">${['매일 아침 MES 실적·출하 자동 수집', '계획 대비 점검(밀린 양·강종·재고)', '기준 넘으면 → 즉시 재계획(앞 2일 고정)', '아니면 → 월요일 정기 재계획', '월초 → 월 물량 다시 계산'].map((x, i) => `<span>${i + 1}. ${x}</span>`).join('<i>→</i>')}</div>`;
+    const fl = `<div class="flow">${['매일 아침 MES 실적·출하 자동 수집', '계획 대비 점검(지연량·강종·재고)', '기준 초과 시 → 즉시 재계획(앞 2일 고정)', '아니면 → 월요일 정기 재계획', '월초 → 월 물량 다시 계산'].map((x, i) => `<span>${i + 1}. ${x}</span>`).join('<i>→</i>')}</div>`;
     // 매일 기록: 그날 계획(전날 재계획 기준) vs 실적
     let daily = '';
     if (rs.length && inS('G')) {
@@ -341,20 +341,20 @@
     // 재계획 주기 비교(시뮬레이션)
     let sim = '';
     if (O.sim) {
-      const P = ['fixed', 'daily', 'weekly', 'event'], PN = { fixed: '고정(안 바꿈)', daily: '매일 재계획', weekly: '주 1회(월)', event: '매일 감시 + 기준 시' };
+      const P = ['fixed', 'daily', 'weekly', 'event'], PN = { fixed: '고정(변경 없음)', daily: '매일 재계획', weekly: '주 1회(월)', event: '매일 감시 + 기준 시' };
       const rowsS = Object.entries(O.sim.lines).filter(([l]) => inS(/CCL/.test(l) ? 'C' : 'G')).map(([l, x]) => {
         const lates = P.map((p) => x.pol[p].late), best = Math.min(...lates.slice(1));
         return `<tr><td class="l nm">${l}</td><td>${n1(x.cv * 100)}%</td>${P.map((p) => `<td class="${x.pol[p].late === best ? 'best' : ''}">${n0(x.pol[p].late)}</td>`).join('')}${['daily', 'weekly', 'event'].map((p) => `<td class="muted">${n0(x.pol[p].nerv)} · ${n0(x.pol[p].nre)}회</td>`).join('')}</tr>`;
       }).join('');
       sim = `<h3>재계획 주기 비교 — 13주 실적의 흔들림으로 4분기를 ${O.sim.n}번 모의 운영</h3><div class="scroll"><table class="t cmp"><thead><tr><th rowspan="2">라인</th><th rowspan="2">일 생산 흔들림</th><th colspan="4">납기 지연 (t·일, 작을수록 좋음)</th><th colspan="3">앞 7일 계획 흔들림 (t) · 재계획 횟수</th></tr><tr>${P.map((p) => `<th>${PN[p]}</th>`).join('')}<th>매일</th><th>주 1회</th><th>기준 시</th></tr></thead><tbody>${rowsS}</tbody></table></div>
-        <p class="small">'기준 시' = 밀린 양이 하루 생산을 넘으면 그날 재계획, 아니면 월요일. 흔들림 = 재계획 때마다 앞 7일 계획이 바뀐 톤의 합(현장 혼란). 3CCL 은 월차 한도가 꽉 차 여유가 없어 어떤 주기로도 못 따라잡음(월차 조정 필요).</p>`;
+        <p class="small">'기준 시' = 지연량이 하루 생산 초과 시 당일 재계획, 그 외 월요일. 흔들림 = 재계획 때마다 앞 7일 계획이 바뀐 톤의 합(현장 혼란). 3CCL 은 월차 한도가 꽉 차 여유가 없어 어떤 주기로도 못 따라잡음(월차 조정 필요).</p>`;
     }
     const verdict = `<table class="t sum"><thead><tr><th>공장</th><th>권장</th><th>근거</th></tr></thead><tbody>
       <tr data-pl="G"><td class="nm l">도금</td><td class="l"><b>매일 감시, 재계획은 주 1회 + 기준 시</b></td><td class="l wrap">일 생산 흔들림 20~27%로 작음. 주 1회 재계획이 매일 재계획과 지연이 같거나 더 적고(1CGL 76 vs 129 t·일), 계획 흔들림은 절반. 매일 바꾸면 우연한 흔들림까지 쫓아가 오히려 손해</td></tr>
-      <tr data-pl="C"><td class="nm l">컬러</td><td class="l"><b>매일 감시 + 밀린 양 ½~1일분 넘으면 그날 재계획</b>(주 2회꼴)</td><td class="l wrap">흔들림 28~55%로 큼. 주 1회면 지연이 매일의 2배(1CCL 625 vs 323), 기준 시 재계획은 지연을 크게 줄이면서 흔들림은 매일의 절반</td></tr>
+      <tr data-pl="C"><td class="nm l">컬러</td><td class="l"><b>매일 감시 + 지연량 ½~1일분 초과 시 당일 재계획</b>(주 2회꼴)</td><td class="l wrap">흔들림 28~55%로 큼. 주 1회면 지연이 매일의 2배(1CCL 625 vs 323), 기준 시 재계획은 지연을 크게 줄이면서 흔들림은 매일의 절반</td></tr>
       <tr><td class="nm l">월 물량</td><td class="l"><b>월 1회</b>(월말 재고 확정 후) + 재고가 목표 70% 미만·150% 초과면 월중 1회</td><td class="l wrap">판매·재고 변화는 주 단위로 느리게 움직임</td></tr></tbody></table>`;
     const play = [
-      ['설비 정지·속도 저하', '밀린 양 > 하루 생산(도금 약 800t, 컬러 라인별 1일분) 또는 정지 ½일 이상', '그날 재계획: 동결 2일 뒤 여유일에 다시 넣고, 모자라면 납기 늦은 품목부터 미룸'],
+      ['설비 정지·속도 저하', '지연량 > 하루 생산(도금 약 800t, 컬러 라인별 1일분) 또는 정지 ½일 이상', '그날 재계획: 동결 2일 뒤 여유일에 다시 넣고, 부족 시 납기가 먼 품목부터 순연'],
       ['현장 강종·순서 변경', '실제 강종 ≠ 계획 강종(10/1 1CGL AZ 사례)', '그날 재계획: 실제 강종에서 출발해 캠페인 다시 정함', 'G'],
       ['선적·주문 변경', '배선 일정·긴급 주문이 3일 안 납기에 걸림', '그날 재계획, 그 밖은 월요일'],
       ['재고 이탈', '그룹 재고 < 목표 70% 또는 > 150%', '월 물량 다시 계산(그 그룹 보충·감산)'],
@@ -382,7 +382,7 @@
   function rerender() { const y = window.scrollY; render(); window.scrollTo(0, y); }
   function render() {
     const r1 = secRule(), r2 = secNeed(), strip = (h) => h.replace(/^<section class="card" id="[^"]+">/, '').replace(/<\/section>$/, '');
-    const refs = { html: `<details class="card more" id="s-refs"><summary><h2>계획 기준 · 추가 필요 자료 <small>배치 규칙과 아직 받지 못한 자료</small></h2></summary>${strip(r1.html)}${strip(r2.html)}</details>` };
+    const refs = { html: `<details class="card more" id="s-refs"><summary><h2>계획 기준 · 추가 필요 자료 <small>배치 규칙과 미수령 자료</small></h2></summary>${strip(r1.html)}${strip(r2.html)}</details>` };
     const secs = [secStock(), refs];   // 일별 가동 = 가동 캘린더·가동 현황, 매일 감시 = 자료 상태·가동 현황(겹쳐서 뺌)
     $('g-main').innerHTML = secs.map((s) => s.html).join('');
     secs.forEach((s) => s.after && s.after());
@@ -413,7 +413,7 @@
   }
   $('g-form').addEventListener('submit', (e) => { e.preventDefault(); open($('g-pw').value); });
   fetch('published/integrated.enc.json', { cache: 'no-store' }).then((r) => { if (!r.ok) throw new Error(); return r.json(); }).then((e) => {
-    env = e; $('g-lock').querySelector('h2').textContent = '4분기 통합 가동계획 — 암호를 입력하세요';
+    env = e; $('g-lock').querySelector('h2').textContent = '4분기 통합 가동계획 — 암호 입력 필요';
     let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ }
     if (s) open(s); else $('g-form').hidden = false;
   }).catch(() => { $('g-msg').textContent = '계획 파일을 찾을 수 없습니다'; });

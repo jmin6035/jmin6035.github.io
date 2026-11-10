@@ -33,7 +33,7 @@
     }
     for (const [k, L] of by) {
       const [cause, pl, grp] = k.split('|'), lastD = L.map((o) => o.last).filter(Boolean).sort()[0] || null, past = L.filter((o) => o.due && o.due < asOf).length;
-      out.push({ key: 'ord|' + k, no: `납기-${pl === 'G' && /^(컬러|수요)/.test(grp) ? '자가재·' : ''}${grp}-${CSH[cause] || cause}`, act: ACT[cause] || '확인', type: TYPE[cause] || '납기', cause, pl, title: `${grp} · ${CT.CAUSE[cause]}`, text: `지연 예상 주문 ${L.length}건${past ? ` · 납기 지남 ${past}건` : ''}`,
+      out.push({ key: 'ord|' + k, no: `납기-${pl === 'G' && /^(컬러|수요)/.test(grp) ? '자가재·' : ''}${grp}-${CSH[cause] || cause}`, act: ACT[cause] || '확인', type: TYPE[cause] || '납기', cause, pl, title: `${grp} · ${CT.CAUSE[cause]}`, text: `지연 예상 주문 ${L.length}건${past ? ` · 납기 경과 ${past}건` : ''}`,
         t: L.reduce((a, o) => a + (o.remT || 0), 0), n: L.length, dept: CT.DEPT[cause], due: lastD, orders: L.sort(CT.riskSort), why: CT.CAUSE[cause], src: '주문 납기 판정' });
     }
     const MO = D.mat_order && D.mat_order.groups;
@@ -70,14 +70,14 @@
     out.forEach((x) => { const b = x.no || x.id; seen[b] = (seen[b] || 0) + 1; x.no = seen[b] > 1 ? `${b}-${seen[b]}` : b; });
     // 후보에서 사라졌지만 기록이 남은 이슈(자료가 바뀌어 탐지 안 됨)
     const have = new Set(out.map((x) => x.id));
-    for (const [id, H] of Object.entries(E)) if (!have.has(id)) { const l = H[H.length - 1]; out.push(fold({ key: '', id, no: `기록-${l.title || id}`, act: '지금 자료로 다시 확인', type: '기록', pl: '', title: l.title || id, text: '지금 자료에서는 탐지 안 됨', t: null, n: 0, dept: l.owner || '-', due: null, orders: [], why: '', src: '조치 기록' })); }
+    for (const [id, H] of Object.entries(E)) if (!have.has(id)) { const l = H[H.length - 1]; out.push(fold({ key: '', id, no: `기록-${l.title || id}`, act: '지금 자료로 다시 확인', type: '기록', pl: '', title: l.title || id, text: '현재 자료에서 미탐지', t: null, n: 0, dept: l.owner || '-', due: null, orders: [], why: '', src: '조치 기록' })); }
     return { asOf, list: out };
   }
 
   function draw() {
     if (!DD) return;
     const m = document.getElementById('ct-main'), v = CT.view('now', VIEWS), B = build(DD);
-    const err = EV == null ? '<p class="is-err">조치 상태 불러오는 중…</p>' : evErr ? `<p class="is-err bad">⚠ 조치 상태를 못 읽었습니다(${esc(evErr)}) — 후보만 표시, 상태 변경 불가</p>` : '';
+    const err = EV == null ? '<p class="is-err">조치 상태 불러오는 중…</p>' : evErr ? `<p class="is-err bad">⚠ 조치 상태 읽기 실패(${esc(evErr)}) — 후보만 표시, 상태 변경 불가</p>` : '';
     m.innerHTML = CT.basis([{ name: '주문 납기', at: B.asOf, kind: '실적+재계획' }, { name: '소재 관제', at: DD.mat_order && DD.mat_order.today, kind: '재계획' }, { name: '화면 예외', at: DD.portal && DD.portal.built, kind: '자동 점검' }]) + err + (v === 'req' ? req(B) : now(B));
     m.querySelectorAll('#is-fil button').forEach((b) => b.onclick = () => { fil = b.dataset.k; draw(); });
     m.querySelectorAll('[data-i]').forEach((t) => t.onclick = (e) => { if (e.target.closest('a')) return; openIssue(B.list.find((x) => x.id === t.dataset.i), B.asOf); });
@@ -93,7 +93,7 @@
     const { asOf, list } = B;
     const isOpen = (x) => ['접수', '조치 중', '보류'].includes(x.st);
     const cnt = { 신규: list.filter((x) => x.st === '신규').length, open: list.filter((x) => x.st === '접수' || x.st === '조치 중').length, over: list.filter((x) => x.over).length, done: list.filter((x) => x.st === '완료').length, hold: list.filter((x) => x.st === '보류').length };
-    const k = [{ label: '담당 미지정', v: n0(cnt.신규), unit: '건', tone: cnt.신규 ? 'warn' : 'ok', sub: '아직 접수 전' }, { label: '조치 진행 중', v: n0(cnt.open), unit: '건', tone: 'info', sub: `접수 · 조치 중${cnt.hold ? ` · 보류 ${cnt.hold}` : ''}` },
+    const k = [{ label: '담당 미지정', v: n0(cnt.신규), unit: '건', tone: cnt.신규 ? 'warn' : 'ok', sub: '접수 전' }, { label: '조치 진행 중', v: n0(cnt.open), unit: '건', tone: 'info', sub: `접수 · 조치 중${cnt.hold ? ` · 보류 ${cnt.hold}` : ''}` },
       { label: '조치일 지남', v: n0(cnt.over), unit: '건', tone: cnt.over ? 'bad' : 'ok', sub: `기한 ${md(asOf)} 전 · 종결 제외` }, { label: '종결', v: n0(cnt.done), unit: '건', tone: 'ok', sub: '조치 완료' }];
     const L = list.filter((x) => (fil === 'auto' ? x.st === '신규' : fil === 'open' ? isOpen(x) : fil === 'done' ? x.st === '완료' : true));
     const chips = `<div class="seg ct-seg" id="is-fil">${FIL.map(([k_, n]) => `<button type="button" data-k="${k_}" aria-pressed="${k_ === fil}">${n} <b>${n0(list.filter((x) => (k_ === 'auto' ? x.st === '신규' : k_ === 'open' ? isOpen(x) : k_ === 'done' ? x.st === '완료' : true)).length)}</b></button>`).join('')}</div>`;
@@ -126,7 +126,7 @@
     const dis = EV == null || evErr ? ' disabled' : '';
     const form = `<form class="is-f" id="is-f"><label>진행상태<select name="st"${dis}>${ST.map((s) => `<option value="${s}"${s === x.st ? ' selected' : ''}>${esc(STN[s])}</option>`).join('')}</select></label>`
       + `<label>담당<input name="owner" value="${esc(x.owner || '')}" placeholder="${esc(x.dept)}"${dis}></label><label>조치 기한<input type="date" name="due" value="${esc(x.dueSet || x.due || '')}"${dis}></label>`
-      + `<label class="w">메모<textarea name="note" rows="2" placeholder="요청사항·조치 내용"${dis}></textarea></label><button type="submit"${dis}>저장</button><p class="is-msg" id="is-msg">${evErr ? '조치 상태를 못 읽어 저장할 수 없습니다' : ''}</p></form>`;
+      + `<label class="w">메모<textarea name="note" rows="2" placeholder="요청사항·조치 내용"${dis}></textarea></label><button type="submit"${dis}>저장</button><p class="is-msg" id="is-msg">${evErr ? '조치 상태 미확인으로 저장할 수 없습니다' : ''}</p></form>`;
     CT.panel(`<div class="ct-pd-h">${stB(x.st)} <span class="is-t">${esc(x.type)}</span></div>` + kv('이슈번호', esc(x.no)) + kv('내용', esc(x.title)) + (x.text ? kv('', esc(x.text)) : '') + kv('해야 할 조치', `<b>${esc(x.act || '-')}</b>`) + kv('출처', esc(x.src)) + kv('담당 부서', esc(x.dept)) + kv('조치 기한', x.dueEff ? `${md(x.dueEff)}${x.over ? ' (지남)' : ''}` : '즉시 확인')
       + (x.t != null ? kv('해당 물량', n0(x.t) + 't') : '') + (x.grps ? kv('쓰는 판매그룹', esc(x.grps.map(CT.grpName).join('·'))) : '') + (x.link ? kv('관련 화면', `<a href="${esc(x.link)}">열기 →</a>`) : '')
       + `<h4>상태 변경</h4>${form}<h4>조치 이력</h4>${hist}`

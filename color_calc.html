@@ -6,7 +6,7 @@
 <title>컬러 계획 계산</title>
 <meta name="description" content="판매계획·계획재 운영안·휴지계획으로 컬러 1~4CCL 4분기 일별 계획을 다시 계산하고 게시(서버와 같은 계산)">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611100729">
+<link rel="stylesheet" href="ui/theme.css?v=2611100742">
 <style>
 .runbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 16px; }
 .log { margin-top: 12px; max-height: 220px; overflow: auto; background: var(--zebra); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: 13.5px/1.6 ui-monospace, Consolas, monospace; color: var(--ink-2); white-space: pre-wrap; }
@@ -69,7 +69,7 @@ td.up1 { color: var(--good); font-weight: 700; } td.dn1 { color: var(--bad); fon
 
     <section class="card" id="c-cal">
       <h2>캘린더에서 일정 옮기기 <small>사양 칸을 끌어 다른 날에 놓으면 그 사양·톤이 옮겨짐 → 계산 시작</small></h2>
-      <p class="hint">옮긴 몫은 그 날에 고정하고, 나머지는 연속 공정대로 다시 채웁니다(넘친 일은 뒷날로, 빈 시간은 바로 뒤 일을 당겨 채움 · 휴지 덩어리는 그대로). 시간은 사양별 속도로 다시 셈 — 예) 1CCL PES 11t/h · PGS 20t/h 라 같은 100t 이라도 시간이 다릅니다. 실적이 나온 날은 못 옮깁니다.</p>
+      <p class="hint">옮긴 몫은 그 날에 고정하고, 나머지는 연속 공정대로 다시 채웁니다(넘친 일은 뒷날로, 빈 시간은 바로 뒤 일을 당겨 채움 · 휴지 덩어리는 그대로). 시간은 사양별 속도로 다시 셈 — 예) 1CCL PES 11t/h · PGS 20t/h 라 같은 100t 이라도 시간이 다릅니다. 실적이 있는 날은 이동 불가.</p>
       <div class="dv-bar"><div class="seg" id="dv-line"></div><div class="seg" id="dv-mon"></div><span class="hint" id="dv-src"></span></div>
       <div id="dv-grid" class="dv-grid" aria-label="컬러 일별 계획 캘린더"></div>
       <div class="dv-moves" id="dv-moves"></div>
@@ -86,7 +86,7 @@ td.up1 { color: var(--good); font-weight: 700; } td.dn1 { color: var(--bad); fon
       <label class="idle-box" for="c-idle"><b>휴지일 지정(선택)</b><span>비워 두면 자동: 쉬는 시간을 최대한 며칠짜리 덩어리로 모음(앞날부터 꽉 채움, 최대 30일 앞당김). 날짜를 적으면 그 날 라인을 비우고 나머지 날을 채움. 줄마다 라인 하나 — 예) <code>1CCL 10/30, 10/31</code> · <code>2CCL 12/24~12/26</code></span>
         <textarea id="c-idle" rows="3" placeholder="1CCL 10/30, 10/31&#10;2CCL 12/24~12/26" style="width:100%;font:inherit;margin-top:6px"></textarea></label>
       <p class="hint">판매계획·계획재 운영안은 '지금 쓰는 파일 받기'로 받은 엑셀의 숫자만 바꿔 올리면 됩니다(계산에 쓰는 시트만 들어 있음, 시트 이름·제목 줄은 그대로).</p>
-      <div class="runbar"><button type="button" class="btn primary" id="c-run">계산 시작</button><div class="prog" id="c-prog" hidden><i></i></div><span class="hint" id="c-msg">처음 계산은 엔진을 불러오느라 1~2분 걸립니다. 계산 중에는 이 탭을 닫지 마세요.</span></div>
+      <div class="runbar"><button type="button" class="btn primary" id="c-run">계산 시작</button><div class="prog" id="c-prog" hidden><i></i></div><span class="hint" id="c-msg">처음 계산은 엔진을 불러오느라 1~2분 걸립니다. 계산 중 이 탭을 닫지 마십시오.</span></div>
       <div class="steps" id="c-steps"></div>
       <details class="cp-more"><summary>계산 기록(담당자 확인용)</summary><div class="log" id="c-log"></div></details>
     </section>
@@ -118,8 +118,8 @@ td.up1 { color: var(--good); font-weight: 700; } td.dn1 { color: var(--bad); fon
   <div class="bar"><button value="ok" class="btn primary" id="dv-dlg-ok">옮기기</button><button value="cancel" class="btn" formnovalidate>취소</button></div>
 </form></dialog>
 <footer class="foot"><div class="wrap"><span>계산 코드 = 서버 cglplan · tools/color_calc.py 그대로(Pyodide) · 결과는 서버 계산과 같음을 확인(2026-10-12)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611100729"></script>
-<script src="engine/crypto.js?v=2611100729"></script>
-<script src="color_calc.js?v=2611100729"></script>
+<script src="ui/shell.js?v=2611100742"></script>
+<script src="engine/crypto.js?v=2611100742"></script>
+<script src="color_calc.js?v=2611100742"></script>
 </body>
 </html>
