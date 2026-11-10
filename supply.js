@@ -813,7 +813,7 @@
         return { name: GNM[g].replace(/^(도금|컬러)(?=수출|국내|건재)/, '').replace('자동차강판', '자동차'), a, b, plan: p, pc: kind === 'fut' ? null : (p ? Math.round(a / p * 100) : null), neg: kind === 'past' && a < p - 0.5, lag: !!lagG[`${g}|${k}`],
           vals: kind === 'past' ? [a, p, a - p] : kind === 'cur' ? [a, p, b] : [b, p],
           cap: k === 'prod' && !p && a + b > 0 ? '계획 0' : '',
-          tip: `${GNM[g]} ${+m.slice(5)}월 ${W(k)}: 실적 ${n0(a)}t · ${kind === 'cur' ? `잔여 계획 ${n0(b)}t · ` : ''}월 계획 ${n0(p)}t${k === 'prod' && !p ? ` · ${(kind === 'cur' && GR[g] && GR[g].prod && GR[g].prod.note) || (MPn[g] || {}).prodNote || ''}` : ''}` }; }), 110, LB) + '</div>'; };
+          tip: `${GNM[g]} ${+m.slice(5)}월 ${W(k)}: 실적 ${n0(a)}t · ${kind === 'cur' ? `잔여 계획 ${n0(b)}t · ` : ''}월 계획 ${n0(p)}t${k === 'prod' && ((kind === 'cur' && GR[g] && GR[g].prod && GR[g].prod.note) || (MPn[g] || {}).prodNote) ? ` · ${(kind === 'cur' && GR[g] && GR[g].prod && GR[g].prod.note) || (MPn[g] || {}).prodNote}` : ''}` }; }), 110, LB) + '</div>'; };
     const sub = kind === 'past' ? `${md(end)} 월말 기준` : kind === 'cur' ? `${md(today)} 현재` : '실적 없음 · 계획만';
     const L = kind === 'past' ? [['a', '실적'], ['p', '월 계획']] : kind === 'cur' ? [['a', '실적'], ['b', '잔여 계획'], ['p', '월 계획']] : [['b', '계획'], ['p', '월 계획']];
     $('s-prog').innerHTML = `<h2>${+m.slice(5)}월 ${kind === 'past' ? '결산' : kind === 'cur' ? '진행' : '계획'} <small>${sub}</small><span class="unit">톤</span></h2>`
