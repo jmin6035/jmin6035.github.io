@@ -301,10 +301,26 @@
     P.forEach((p) => { (G[p.r] = G[p.r] || []).push(p.x); });
     const ord = ['out', 'new', 'over', 'later'];
     const nm = POOLNM;
+    // 11/10 사용자 '왜 못 들어가냐 — 납기·부원료·규칙 뭐냐' → 작업마다 이유: 부원료 입고 · 라인 규칙 · 시간 부족(라인 정지·꽉 참) + 넣을 수 있는 다른 라인
+    const W1 = tms(D.w1), left = {}, stopD = {};
+    LINES[plant].forEach((l) => { const ev = sim(l); const end = ev.length ? Math.max(...ev.map((q) => q.e2 || q.e)) : tms(D.lines[l].from); left[l] = W1 - Math.max(end, tms(D.lines[l].from));
+      const dd = Object.entries((R.down || {})[l] || {}).filter(([, v]) => (v.min || v) >= 1440); stopD[l] = dd.length ? `${md(dd[0][0])}~${md(dd[dd.length - 1][0])} ${[...new Set(dd.flatMap(([, v]) => (v.ev === 'plan' ? '휴지계획' : String(v.ev)).split('·')))].join('·')} ${dd.length}일` : ''; });
+    const why = (x, r) => {
+      if (plant !== 'cc' || r !== 'over') return '';
+      const out = [];
+      if (x.ready && x.ready >= dayOf(W1)) out.push(`<b class="wr">부원료 대기</b> 도료·PF ${md(x.ready)} 입고`);
+      else if (x.allow && !x.allow.includes(line)) out.push(`<b class="wr">라인 규칙</b> ${x.allow.join('·')}만 가능(MES 는 ${line} 배정)`);
+      else out.push(`<b>시간 부족</b> ${stopD[line] ? line + ' ' + stopD[line] + ' 정지 → ' : ''}기간 안 ${line} 시간을 앞 작업이 다 씀`);
+      const alt = (x.allow || LINES.cc).filter((l) => l !== line && left[l] > runMin(x, l) + 60);
+      if (alt.length) out.push(`→ ${alt.map((l) => `${l}(남는 ${hrs(left[l])})`).join(' · ')} 에 넣을 수 있음`);
+      else if (x.allow && x.allow.length === 1) out.push(`→ ${x.allow[0]} 전용${/^PP[GKHF]/.test(x.item) ? '(프린트)' : ''} — 다른 라인 불가${x.allow[0] !== line && stopD[x.allow[0]] ? `, ${x.allow[0]} ${stopD[x.allow[0]]} 정지` : ''}`);
+      if (x.due && x.due < TODAY) out.push(`<b class="wr">납기 ${md(x.due)} 이미 지남</b>`); else if (x.due && x.due < dayOf(W1)) out.push(`<b class="wr">납기 ${md(x.due)}</b> 기간 안에 못 하면 지연`);
+      return `<div class="why">${out.join(' · ')}</div>`;
+    };
     const was = $('ws-pool').querySelector('details'), op = was ? was.open : false, sub = {};
     $('ws-pool').querySelectorAll('.pl-g').forEach((d) => { sub[d.dataset.k] = d.open; });
     $('ws-pool').innerHTML = `<details${op ? ' open' : ''}><summary>${line} 기간 안에 못 넣은 작업 <span>${P.length}건 · ${n0(P.reduce((s, p) => s + p.x.t, 0))}t — 끌어다 놓거나 '넣기'</span></summary><div class="pl-cols">` + ord.filter((k) => G[k]).map((k) => `<details class="pl-g" data-k="${k}"${(k in sub ? sub[k] : k === 'out' || k === 'new' || k === 'over') ? ' open' : ''}><summary>${nm[k]} <span>${G[k].length}건 · ${n0(G[k].reduce((s, x) => s + x.t, 0))}t</span></summary><div class="pl-body">`
-      + G[k].slice(0, 300).map((x) => `<div class="pl-i" draggable="true" data-id="${esc(x.id)}"><div><span class="cn">${esc(x.con || x.id)}</span>${plant === 'cc' && x.item ? ' <b>' + esc(x.item) + '</b>' : ''}<span class="sub"> · ${n1(x.t)}t${plant === 'cc' && x.len ? ' / ' + n0(x.len) + 'm' : ''}${plant === 'cg' ? (x.n > 1 ? ' · ' + x.n + '코일' : '') + (x.req ? ' · 예정 ' + md(x.req) : '') : (x.ready && x.ready > TODAY ? ' · ' + md(x.ready) + '부터 가능' : '')}${(plant === 'cg' ? x.dlv : x.due) ? ' · 납기 ' + md(plant === 'cg' ? x.dlv : x.due) : ''}</span><div class="sp">${chips(x)}</div></div><button data-a="add" data-id="${esc(x.id)}">넣기</button></div>`).join('')
+      + G[k].slice(0, 300).map((x) => `<div class="pl-i" draggable="true" data-id="${esc(x.id)}"><div><span class="cn">${esc(x.con || x.id)}</span>${plant === 'cc' && x.item ? ' <b>' + esc(x.item) + '</b>' : ''}<span class="sub"> · ${n1(x.t)}t${plant === 'cc' && x.len ? ' / ' + n0(x.len) + 'm' : ''}${plant === 'cg' ? (x.n > 1 ? ' · ' + x.n + '코일' : '') + (x.req ? ' · 예정 ' + md(x.req) : '') : (x.ready && x.ready > TODAY ? ' · ' + md(x.ready) + '부터 가능' : '')}${(plant === 'cg' ? x.dlv : x.due) ? ' · 납기 ' + md(plant === 'cg' ? x.dlv : x.due) : ''}</span>${why(x, k)}<div class="sp">${chips(x)}</div></div><button data-a="add" data-id="${esc(x.id)}">넣기</button></div>`).join('')
       + (G[k].length > 300 ? `<div class="sub">외 ${G[k].length - 300}건</div>` : '') + '</div></details>').join('') + '</div></details>';
   }
   function drawCk() {
