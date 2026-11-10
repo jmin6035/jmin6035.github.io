@@ -135,7 +135,7 @@
     for (const [k, lst] of byLD) {
       const [l, d] = k.split('|');
       const t = lst.map((e) => [1 / rate(e), e.v]), xd = Math.min(XD[k] || 0, 1440 - EQ[l] - ND[l]);
-      if (sr[k]) lp.con(t.concat([[RSF[l] - RSS[l], sr[k]]]), '<=', 1440 - EQ[l] - RSS[l] - xd);
+      if (sr[k]) { const c0 = Math.max(0, 1440 - EQ[l] - RSS[l] - xd); lp.con(t.concat([[Math.min(RSF[l] - RSS[l], c0), sr[k]]]), '<=', c0); }   // 11/10: 재가동일 추가 정지가 길면 해 없음 → 남은 시간 안에서(Python 엔진과 같음)
       else if (d === D0) lp.con(t, '<=', 1440 - EQ[l] - ND[l] - xd);
       else lp.con(t.concat([[FS[l] - ND[l], s[k]]]), '<=', 1440 - EQ[l] - ND[l] - xd);
       for (const f of LF[l]) {
