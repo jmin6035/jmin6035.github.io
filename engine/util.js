@@ -44,9 +44,9 @@
     const k1 = `${line}|${alloy}|${cls}`, k2 = `${line}|${P.alloyFamily[alloy]}|${cls}`;
     if (P.rateDept[k1] != null) return P.rateDept[k1];
     if (P.rateDept[k2] != null) return P.rateDept[k2];
-    const b = P.rateBase[`${line}|${alloy}`];
-    if (b == null) throw new Error(`속도 없음: ${line} ${alloy} ${cls}`);
-    return b;
+    const r0 = P.rateBase[`${line}|${alloy}`];
+    if (r0 == null) throw new Error(`속도 없음: ${line} ${alloy} ${cls}`);
+    return r0;
   };
   if (typeof module !== 'undefined') module.exports = GP;
 })(typeof self !== 'undefined' ? self : globalThis);
