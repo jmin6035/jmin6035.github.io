@@ -6,7 +6,7 @@
 <title>월간 가동</title>
 <meta name="description" content="일별 가동 · 자가재 · 구매 소재(발주·입고·재고) · 제품 재고를 한 달력에서">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611101510">
+<link rel="stylesheet" href="ui/theme.css?v=2611101543">
 <style>
 .sbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 10px; font-size: 13.5px; color: var(--ink-2); }
 .sbar b { color: var(--ink); }
@@ -318,6 +318,13 @@ html body #s-ship th.line { text-align: left !important; vertical-align: middle;
 #s-ship thead th.me { background: color-mix(in srgb, var(--ink) 14%, var(--th)) !important; color: var(--ink) !important; }
 #s-ship tbody td.me { font-weight: 800 !important; color: var(--ink); box-shadow: inset 2px 0 0 var(--ink-3), inset -2px 0 0 var(--ink-3) !important; }
 #s-ship tbody tr.r-k td.me { font-size: 14.5px !important; }
+
+/* 11/11: 날짜 칸 숫자 쉼표 — 칸 사이 옅은 세로선으로 1,418 · 1,031 이 붙어 보이지 않게 */
+html body main :is(#s-cal, #s-ship) tbody td:not(.sdblock) { border-right: 1px solid color-mix(in srgb, var(--grid) 70%, transparent) !important; }
+html body main :is(#s-cal, #s-ship) td.w5, html body main :is(#s-cal, #s-ship) tr.grp td.w5 { letter-spacing: -0.6px !important; font-weight: 600 !important; }
+
+/* 11/11: 쉼표 다섯 자리(12,170)가 들어가게 날짜 칸 최소 42px — 좁은 화면은 가로 스크롤(왼쪽 이름 칸 고정) */
+html body main table#s-cal, html body main table#s-ship { min-width: 1570px !important; }
 </style>
 </head>
 <body>
@@ -353,10 +360,10 @@ html body #s-ship th.line { text-align: left !important; vertical-align: middle;
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2611101510"></script>
-<script src="engine/crypto.js?v=2611101510"></script>
-<script src="ui/cal.js?v=2611101510"></script>
-<script src="ui/proccalc.js?v=2611101510"></script>
-<script src="supply.js?v=2611101510"></script>
+<script src="ui/shell.js?v=2611101543"></script>
+<script src="engine/crypto.js?v=2611101543"></script>
+<script src="ui/cal.js?v=2611101543"></script>
+<script src="ui/proccalc.js?v=2611101543"></script>
+<script src="supply.js?v=2611101543"></script>
 </body>
 </html>

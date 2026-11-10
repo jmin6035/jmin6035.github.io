@@ -7,7 +7,7 @@
   const PAGE = (document.getElementById('shell') || {}).dataset ? document.getElementById('shell').dataset.page : 'supply';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const n0 = (v) => Math.round(v || 0).toLocaleString('ko-KR');
-  const dayN = (v) => { const r = Math.round(v || 0); return r >= 10000 ? `${(r / 1000).toFixed(1)}k` : String(r); };   // 11/10 점검: 날짜 칸은 쉼표 없이(1,418·1,031 이 붙어 '1,4181,031' 로 보이던 것), 1만 이상은 k
+  const dayN = (v) => Math.round(v || 0).toLocaleString('en-US');   // 11/11 사용자 '네 자리 이상 쉼표, 12.2k 안 됨' — 칸 사이 구분선으로 붙어 보이지 않게   // 11/10 점검: 날짜 칸은 쉼표 없이(1,418·1,031 이 붙어 '1,4181,031' 로 보이던 것), 1만 이상은 k
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8, 10)}`;
   const WD = ['일', '월', '화', '수', '목', '금', '토'];
   const wd = (d) => new Date(d + 'T00:00:00').getDay();
@@ -379,7 +379,7 @@
     };
     const grpRow = (pl, lines) => { const src = pl === 'G' ? D.pl : D.co; let T = 0;                     // 공장 띠 = 일별 공장 생산 합(사용자 10/21)
       G2 += `<tr class="grp ${pl}"><th class="c0 gh" colspan="2">${pl === 'G' ? '도금' : '컬러'}<small>합계</small></th>` + ds.map((d) => { const t = lines.reduce((a, l) => a + ((src[`${l}|${d}`] || {}).t || 0), 0); T += t;
-        return `<td class="${t >= 999.5 ? 'w5' : ''}${d === today ? ' tb' : ''}${wkC(d)}${d < today ? ' pa' : ' fu'}" data-d="${d}" title="${md(d)} ${pl === 'G' ? '도금' : '컬러'} 생산 합 ${n0(t)}t">${t >= 0.5 ? (t >= 999.5 ? String(Math.round(t)) : n0(t)) : ''}</td>`; }).join('') + `<td class="tot gt">${n0(T)}</td></tr>`; };
+        return `<td class="${t >= 999.5 ? 'w5' : ''}${d === today ? ' tb' : ''}${wkC(d)}${d < today ? ' pa' : ' fu'}" data-d="${d}" title="${md(d)} ${pl === 'G' ? '도금' : '컬러'} 생산 합 ${n0(t)}t">${t >= 0.5 ? dayN(t) : ''}</td>`; }).join('') + `<td class="tot gt">${n0(T)}</td></tr>`; };
     if (UI.inScope('G')) { grpRow('G', ['1CGL', '2CGL']); for (const l of ['1CGL', '2CGL']) lineBlock('G', l); }
     if (UI.inScope('C')) { if (UI.inScope('G')) G2 += `<tr class="gap"><td colspan="${ds.length + 3}"></td></tr>`; grpRow('C', ['1CCL', '2CCL', '3CCL', '4CCL']); for (const l of ['1CCL', '2CCL', '3CCL', '4CCL']) lineBlock('C', l); }
     const sw = (c, t) => `<span><i class="sw ${c}"></i>${t}</span>`, sep = '<i class="gsep"></i>';
