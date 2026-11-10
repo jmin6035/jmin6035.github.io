@@ -183,10 +183,10 @@
   }
 
   // ───────── 상태(편집본)
-  function fromDraft() { L = {}; LINES[plant].forEach((l) => { L[l] = ((D.lines[l] || {}).seq || []).map((id) => (id && id.k === 'g' ? { k: 'g', min: +id.min || 0, note: id.note || '' } : { k: 'j', id })); }); }   // 11/9: 초안에도 빈 시간(M/C 전 대기) 칸
+  function fromDraft() { L = {}; LINES[plant].forEach((l) => { L[l] = ((D.lines[l] || {}).seq || []).map((id) => (id && id.k === 'g' ? { k: 'g', min: +id.min || 0, note: id.note || '', sm: !!id.sm } : { k: 'j', id })); }); }   // 11/9: 초안에도 빈 시간(M/C 전 대기) 칸
   function fromSaved(p) {
     L = {}; const gone = [];
-    LINES[plant].forEach((l) => { L[l] = ((p.lines || {})[l] || []).filter((e) => { if (e.k === 'g') return true; if (J[e.id]) return true; gone.push(e.id); return false; }).map((e) => (e.k === 'g' ? { k: 'g', min: +e.min || 0, note: e.note || '' } : { k: 'j', id: e.id })); });
+    LINES[plant].forEach((l) => { L[l] = ((p.lines || {})[l] || []).filter((e) => { if (e.k === 'g') return true; if (J[e.id]) return true; gone.push(e.id); return false; }).map((e) => (e.k === 'g' ? { k: 'g', min: +e.min || 0, note: e.note || '', sm: !!e.sm } : { k: 'j', id: e.id })); });
     return gone;
   }
   const placed = () => { const s = new Set(); LINES[plant].forEach((l) => L[l].forEach((e) => e.k === 'j' && s.add(e.id))); return s; };
@@ -227,7 +227,7 @@
   function jobRow(l, v, days, n) {
     const x = v.x, bad = CK && CK.some((c) => c.id === x.id && c.l === l && c.lv === 'bad');
     const due = plant === 'cg' ? x.dlv : x.due;
-    const tag = plant === 'cg' ? (x.issued ? '<span class="cp fx" title="이미 작업지시 나감(1030)">지시</span>' : '') : (x.fixed ? `<span class="cp fx" title="MES 1030 확정 · 지시순번(WRK_DRT_SEQ) — 1030 화면과 대조용">1030 #${x.drtSeq != null ? Math.floor(x.drtSeq) : '-'}</span>` : '<span class="cp" title="1020 소재 매치 · 아직 확정 안 됨">1020 미확정</span>');
+    const tag = plant === 'cg' ? (x.issued ? '<span class="cp fx" title="이미 작업지시 나감(1030)">지시</span>' : '') : '';   // 11/10 사용자 '1030 #순번 · 1020 미확정 표시 지워라'
     const sub = plant === 'cg' ? `${x.n > 1 ? x.n + '코일 · ' : ''}소재 ${esc(x.raws[0])}${x.n > 1 ? ' 외' : ''}${x.req ? ' · 예정 ' + md(x.req) : ''}` : `<b title="품명(제품 코드 ${esc(x.pdt)})">${esc(x.item || x.pdt)}</b>${x.ready && x.ready > TODAY ? '<div class="wr" title="도료·PF 입고 뒤">' + md(x.ready) + '부터 가능</div>' : ''}`;
     const lsel = plant === 'cc' ? `<select data-a="line" data-i="${v.i}" title="다른 라인으로">${LINES.cc.map((y) => `<option${y === l ? ' selected' : ''}>${y}</option>`).join('')}</select>` : '';
     return `<tr class="j${x.fixed || x.issued ? ' fx' : ''}${hl === x.id ? ' hl' : bad ? ' bad' : ''}" draggable="true" data-i="${v.i}" data-id="${esc(x.id)}">`
@@ -270,7 +270,7 @@
     const dsum = {};
     ev.forEach((q) => { const d = q.s >= W1 ? 'over' : dayOf(q.s); const o = dsum[d] = dsum[d] || { n: 0, t: 0, run: 0, dn: 0, seg: [] }; if (q.k === 'j') { o.n++; o.t += q.x.t; o.run += q.rm; o.dn += q.ch.m; } else o.dn += (q.e2 || q.e) - q.s; });
     const bar = (d) => { const b0 = tms(d + ' 07:00'); const seg = (a, z, c) => { const x0 = Math.max(0, a - b0), x1 = Math.min(1440, z - b0); return x1 > x0 ? `<i class="${c}" style="left:${(x0 / 14.4).toFixed(2)}%;width:${((x1 - x0) / 14.4).toFixed(2)}%"></i>` : ''; };
-      return `<div class="dbar">${ev.map((q) => (q.k === 'j' ? seg(q.ds, q.s, 'd') + seg(q.s, q.e, 'r') : seg(q.s, q.e2 || q.e, q.k === 'p' ? (/샘플|test|시험/i.test(q.ev) ? 'p sm' : 'p') : q.k === 'g' ? 'd' : 'g'))).join('')}</div>`; };
+      return `<div class="dbar">${ev.map((q) => (q.k === 'j' ? seg(q.ds, q.s, 'd') + seg(q.s, q.e, 'r') : seg(q.s, q.e2 || q.e, q.k === 'p' ? (/샘플|test|시험/i.test(q.ev) ? 'p sm' : 'p') : q.k === 'g' ? (q.e.sm ? 'p sm' : 'd') : 'g'))).join('')}</div>`; };
     const dayHead = (d) => { const o = dsum[d] || { n: 0, t: 0, run: 0, dn: 0 }; const over = o.run + o.dn > 1440.5;
       return `<tr class="dh" data-d="${d}"><td colspan="7"><div class="dhh"><b>${d === 'over' ? `기간 끝(${md(iso(W1))} 07:00) 넘김` : dnm(d)}</b><span>작업 ${o.n}건 · ${n0(o.t)}t</span><span>생산 ${n0(o.run)}분 · 휴지 ${n0(o.dn)}분</span>${over && d !== 'over' ? `<em title="그날 시작한 작업·휴지 합이 1,440분 넘음">다음날로 ${n0(o.run + o.dn - 1440)}분</em>` : ''}</div>${d === 'over' ? '' : bar(d)}</td></tr>`; };
     const shown = new Set();
@@ -280,6 +280,7 @@
       if (q.k === 'p') { const sm = /샘플|test|시험/i.test(q.ev), nm = q.ev === 'plan' ? '휴지계획' : q.ev;   // 11/10 사용자 '샘플 부분 잘 보이게'
         h += `<tr class="ev pz${sm ? ' sm' : ''}"><td></td><td></td><td class="tm">${q.e - q.s >= 1440 ? '<b>종일</b>' : `<b>${hhmm(q.s)}</b>–${hhmm(q.e)}`}</td><td colspan="4"><span class="pk">${esc(nm)}</span> ${sm ? '' : '계획 휴지 '}<b>${hrs(q.e - q.s)}</b>${sm ? ' — 이 시간엔 생산 작업 안 넣음' : ''}</td></tr>`; }
       else if (q.k === 'w') h += `<tr class="ev w"><td></td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e)}</td><td colspan="4">기다림 <b>${hrs(q.e - q.s)}</b> · ${esc(q.x.con)} 도료·PF 준비 ${md(q.x.ready)} 07:00</td></tr>`;
+      else if (q.k === 'g' && q.e.sm) h += `<tr class="ev g sm" draggable="true" data-i="${q.i}"><td class="hd" title="끌어서 옮기기">⋮⋮</td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e2)}</td><td colspan="3"><span class="pk">${esc(q.e.note || '샘플')}</span> <input type="number" min="0" max="2880" step="10" data-a="gmin" data-i="${q.i}" value="${q.e.min}" title="시간(분) 바꾸기">분 <span class="hint">— 끌거나 ↑↓로 시각을 옮기고, 분을 바꿀 수 있음 · 이 시간엔 생산 안 넣음</span></td><td class="ac"><button data-a="up" data-i="${q.i}" title="앞으로">↑</button><button data-a="dn" data-i="${q.i}" title="뒤로">↓</button><select data-a="day" data-i="${q.i}" title="다른 날로"><option value="">날</option>${days.map((d) => `<option value="${d}">${dnm(d)}</option>`).join('')}</select><button class="x" data-a="del" data-i="${q.i}" title="빼기">✕</button></td></tr>`;
       else if (q.k === 'g') h += `<tr class="ev g" draggable="true" data-i="${q.i}"><td class="hd">⋮⋮</td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e2)}</td><td colspan="3">직접 넣은 휴지·더미 <input type="number" min="0" max="2880" step="5" data-a="gmin" data-i="${q.i}" value="${q.e.min}">분 <input class="nt" data-a="gnote" data-i="${q.i}" placeholder="사유(롤 교체·더미 등)" value="${esc(q.e.note || '')}"></td><td class="ac"><button data-a="up" data-i="${q.i}">↑</button><button data-a="dn" data-i="${q.i}">↓</button><button class="x" data-a="del" data-i="${q.i}">✕</button></td></tr>`;
       else {
         n++;
@@ -383,7 +384,7 @@
     if (!who) { $('ws-res').textContent = '이름을 적어 주세요'; $('ws-who').focus(); return; }
     const p = { v: 1, plant, week: D.week, draftBuilt: D.built, memo: $('ws-memo').value.trim().slice(0, 200), lines: {}, known: D.jobs.filter((x) => x.why === 'week').map((x) => x.id).concat((cur && cur.p && cur.p.known) || []) };
     p.known = [...new Set(p.known)];
-    if (state !== 'reset') LINES[plant].forEach((l) => { p.lines[l] = L[l].map((e) => (e.k === 'g' ? { k: 'g', min: e.min, note: e.note } : { k: 'j', id: e.id })); });
+    if (state !== 'reset') LINES[plant].forEach((l) => { p.lines[l] = L[l].map((e) => (e.k === 'g' ? { k: 'g', min: e.min, note: e.note, sm: !!e.sm } : { k: 'j', id: e.id })); });
     ['ws-save', 'ws-conf', 'ws-reset'].forEach((id) => ($(id).disabled = true)); $('ws-res').textContent = '저장 중…';
     try {
       const env = await GP.encryptJSON(p, PW, 'week_seq');

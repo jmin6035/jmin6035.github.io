@@ -6,7 +6,7 @@
 <title>주간 작업순서</title>
 <meta name="description" content="1030 확정 지시와 소재 매치된 주문을 오늘부터 어떤 순서로 돌릴지 — 초안을 고치고 저장·확정·점검">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611092355">
+<link rel="stylesheet" href="ui/theme.css?v=2611100001">
 <style>
 main.wrap { max-width: none; }
 .ws-bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 0 0 14px; }
@@ -56,9 +56,14 @@ html body table.ws td.no { text-align: right !important; font-weight: 800; font-
 .sub { font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
 .sp { display: block; min-width: 0; }
 table.ws tr.ev.pz td { background: var(--tint-2); font-weight: 600; } table.ws tr.ev.pz .pk { display: inline-block; border-radius: 5px; padding: 1px 8px; font-weight: 800; background: var(--ink-2); color: var(--surface); }
-table.ws tr.ev.sm td { background: #f3e8ff; color: #5b21b6; border-top: 2px solid #8b5cf6; border-bottom: 2px solid #8b5cf6; font-size: 15px; } table.ws tr.ev.sm .pk { background: #7c3aed; color: #fff; } .dbar i.p.sm { background: #7c3aed !important; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) table.ws tr.ev.sm td { background: #2e1065; color: #ddd6fe; } }
-:root[data-theme="dark"] table.ws tr.ev.sm td { background: #2e1065; color: #ddd6fe; } table.ws td .sub { white-space: normal; }
+table.ws tr.ev.sm td { background: #effaf8; color: #134e4a; padding-top: 14px; padding-bottom: 14px; font-size: 15px; font-weight: 600; border-top: 1px solid #99d5cc; border-bottom: 1px solid #99d5cc; }
+table.ws tr.ev.sm td:first-child { box-shadow: inset 4px 0 0 #0f766e; }
+table.ws tr.ev.sm .pk { display: inline-block; border-radius: 6px; padding: 3px 12px; font-weight: 800; font-size: 14.5px; background: #0f766e; color: #fff; letter-spacing: .2px; }
+table.ws tr.ev.sm input[type=number] { width: 78px; font: inherit; font-weight: 800; padding: 3px 6px; border: 1px solid #5eb8ab; border-radius: 6px; background: #fff; color: #134e4a; }
+table.ws tr.ev.sm .hint { color: #4b7d77; font-weight: 500; font-size: 13.5px; }
+.dbar i.p.sm { background: #0f766e !important; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) table.ws tr.ev.sm td { background: #0d2b29; color: #ccefe9; border-color: #1f5e57; } :root:not([data-theme="light"]) table.ws tr.ev.sm .hint { color: #8fc7bf; } :root:not([data-theme="light"]) table.ws tr.ev.sm input[type=number] { background: #12302d; color: #ccefe9; } }
+:root[data-theme="dark"] table.ws tr.ev.sm td { background: #0d2b29; color: #ccefe9; border-color: #1f5e57; } :root[data-theme="dark"] table.ws tr.ev.sm .hint { color: #8fc7bf; } :root[data-theme="dark"] table.ws tr.ev.sm input[type=number] { background: #12302d; color: #ccefe9; } table.ws td .sub { white-space: normal; }
 .cp { display: inline-block; border-radius: 5px; padding: 0 6px; font-size: 13.5px; font-weight: 700; white-space: nowrap; background: var(--tint-2); color: var(--ink); }
 .cp.al { background: var(--gt-g); color: var(--gc-g); } .cp.cl { background: var(--gt-c); color: var(--gc-c); } .cp.sz { font-size: 14px; background: none; padding: 0; font-variant-numeric: tabular-nums; }
 .cp.fx { background: var(--brand-2); color: #fff; } .cp.wr { background: var(--warn-bg); color: var(--warn); } .cp.bd { background: var(--bad-bg); color: var(--bad); }
@@ -124,8 +129,8 @@ html body table.ws td.ac { text-align: right !important; line-height: 2; white-s
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>대상: 컬러 = 작업지시 편성 대상(소재 매치)·확정 대기열 · 도금 = 지시된 코일(생산 전) + 소재 들어온 작업 · 시간 = 기존 속도(t/h) · 휴지 = 전환 기준표(1년 실적)·휴지계획 · 저장 = 공유 저장소(암호화, 버전 이력)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611092355"></script>
-<script src="engine/crypto.js?v=2611092355"></script>
-<script src="week_seq.js?v=2611092355"></script>
+<script src="ui/shell.js?v=2611100001"></script>
+<script src="engine/crypto.js?v=2611100001"></script>
+<script src="week_seq.js?v=2611100001"></script>
 </body>
 </html>
