@@ -255,10 +255,15 @@
   CT.me = () => { try { return localStorage.getItem('cgl-me') || ''; } catch (e) { return ''; } };
   CT.store = {
     async events() {
-      const r = await fetch(API + '?select=id,payload&order=id.asc&limit=5000', { headers: H });
-      if (!r.ok) throw new Error('공유 저장소 읽기 실패 ' + r.status);
+      const all = [];
+      for (let off = 0; ; off += 1000) {                       // 1,000줄씩 끝까지(한 번에 받는 줄 수 제한)
+        const r = await fetch(API + `?select=id,payload&order=id.asc&limit=1000&offset=${off}`, { headers: H });
+        if (!r.ok) throw new Error('공유 저장소 읽기 실패 ' + r.status);
+        const part = await r.json(); all.push(...part);
+        if (part.length < 1000) break;
+      }
       const out = [], pw = PW();
-      for (const x of await r.json()) { try { out.push(await GP.decryptJSON(JSON.parse(x.payload), pw)); } catch (e) { /* 다른 암호 */ } }
+      for (const x of all) { try { out.push(await GP.decryptJSON(JSON.parse(x.payload), pw)); } catch (e) { /* 다른 암호 */ } }
       return out;
     },
     async push(ev) {

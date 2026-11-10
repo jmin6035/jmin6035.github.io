@@ -6,7 +6,7 @@
 <title>수주 관제</title>
 <meta name="description" content="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준) — 수주팀 화면 양식">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611100149">
+<link rel="stylesheet" href="ui/theme.css?v=2611100306">
 <style>
 main.wrap { max-width: none; }
 #ui-ctl { display: none !important; }   /* 포털 공통 그룹 상태 띠 — ① 그룹 매트릭스와 같은 내용이라 이 탭에서만 숨김 */
@@ -25,27 +25,27 @@ main.wrap { max-width: none; }
 .sj-sch { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px 6px; margin: 0 0 18px; }
 .sj-sch .cap { display: flex; justify-content: space-between; font-size: 13.5px; color: var(--ink-2); margin: 0 0 6px; font-weight: 700; }
 .sj-gr { display: grid; grid-template-columns: 380px minmax(0, 1fr); align-items: center; gap: 12px; min-height: 26px; }
-.sj-gr .nm { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .sj-gr .nm .ct-b { font-size: 12.5px; padding: 1px 8px; margin-right: 4px; }
-.sj-gr .tl { position: relative; height: 20px; background: var(--sub); border-radius: 4px; }
-.sj-gr .tl .sb { position: absolute; top: 2px; bottom: 2px; border-radius: 3px; color: #fff; font-size: 12px; line-height: 16px; padding-left: 4px; overflow: hidden; white-space: nowrap; }
+.sj-gr .nm { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .sj-gr .nm .ct-b { font-size: 13.5px; padding: 1px 8px; margin-right: 4px; }
+.sj-gr .tl { position: relative; height: 24px; background: var(--sub); border-radius: 4px; }
+.sj-gr .tl .sb { position: absolute; top: 2px; bottom: 2px; border-radius: 3px; color: #fff; font-size: 13.5px; line-height: 20px; padding-left: 4px; overflow: hidden; white-space: nowrap; }
 .sj-gr .tl .now { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--bad); }
-.sj-gr .tl.ax { background: none; height: 18px; font-size: 12.5px; color: var(--ink-2); } .sj-gr .tl.ax span { position: absolute; transform: translateX(-50%); }
+.sj-gr .tl.ax { background: none; height: 22px; font-size: 13.5px; color: var(--ink-2); } .sj-gr .tl.ax span { position: absolute; transform: translateX(-50%); white-space: nowrap; } .sj-gr .tl.ax span:last-child { transform: translateX(-100%); }
 .sj-h { margin: 4px 0 14px; } .sj-h h2 { font-size: 22px; margin: 0; } .sj-h p { margin: 4px 0 0; color: var(--ink-2); font-size: 13.5px; }
 /* KPI 칸 수 */
 .ct-kpis.sj-k4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .ct-kpis.sj-lc { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 @media (max-width: 1300px) { .ct-kpis.sj-k4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ct-kpis.sj-lc { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-.ct-kpi .l .ct-b { margin-left: 6px; font-size: 12.5px; padding: 1px 8px; }
+.ct-kpi .l .ct-b { margin-left: 6px; font-size: 13.5px; padding: 1px 8px; }
 .ct-kpi .s { line-height: 1.55; }
 .sj-kv { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; padding: 2px 0; } .sj-kv span { color: var(--ink-2); white-space: nowrap; } .sj-kv b { text-align: right; }
-.sj-pv td { vertical-align: top !important; } .sj-pv .it { display: block; white-space: nowrap; font-size: 13px; line-height: 1.6; text-align: left; }
+.sj-pv td { vertical-align: top !important; } .sj-pv .it { display: block; white-space: nowrap; font-size: 13.5px; line-height: 1.6; text-align: left; }
 .sj-lg span { white-space: nowrap; margin-right: 14px; display: inline-block; } .sj-kv b { font-variant-numeric: tabular-nums; }
-.sj-tag { display: inline-block; background: var(--sub); border-radius: 4px; padding: 1px 6px; font-size: 13px; color: var(--ink-2); white-space: nowrap; margin: 1px 2px; }
+.sj-tag { display: inline-block; background: var(--sub); border-radius: 4px; padding: 1px 6px; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; margin: 1px 2px; }
 .sj-foot { font-size: 13.5px; color: var(--ink-2); margin: 10px 0 0; line-height: 1.6; }
 .sj-g2 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; } .sj-g2 > .card, .sj-g2 > div > .card { margin: 0 0 18px; }
 .sj-g2e { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; } .sj-g2e > .card { margin: 0 0 18px; }
 @media (max-width: 1100px) { .sj-g2, .sj-g2e { grid-template-columns: 1fr; } }
-.sj-svg { display: block; max-width: 100%; height: auto; } .sj-svg text { font-size: 12.5px; fill: var(--ink-2); }
+.sj-svg { display: block; max-width: 100%; height: auto; } .sj-svg text { font-size: 13.5px; fill: var(--ink-2); }
 /* 진도 막대 */
 .sj-bar { position: relative; height: 10px; background: var(--sub); border-radius: 5px; margin: 6px 0 2px; }
 .sj-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; }
@@ -53,40 +53,40 @@ main.wrap { max-width: none; }
 .sj-gb { margin: 0 0 14px; font-size: 13.5px; } .sj-gb .h { display: flex; justify-content: space-between; gap: 8px; } .sj-gb .h span { font-weight: 700; }
 td .sj-bar { min-width: 150px; }
 /* 일별 계획 캘린더 — 칸 글자 한 크기, 가동(초록·노랑·빨강) / 생산주(파랑) / 소재(같은 3색, 숫자 진하게) 구분 */
-.sj-clg { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--ink-2); margin: 0 0 10px; }
+.sj-clg { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; color: var(--ink-2); margin: 0 0 10px; }
 .sj-clg span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; } .sj-clg .gap { margin-left: 10px; }
 .sj-clg i { display: inline-block; width: 16px; height: 12px; border-radius: 3px; border: 1px solid var(--line); }
 .sj-clg i.nowk { border: 2px solid var(--bad); background: none; }
-html body main table.sj-cal { border-collapse: collapse; table-layout: fixed; width: 100%; min-width: 1180px; font-variant-numeric: tabular-nums; }
-html body main table.sj-cal th, html body main table.sj-cal td { border: 1px solid var(--line); padding: 0 1px; height: 30px; font-size: 12.5px !important; line-height: 1.2; overflow: hidden; }
-html body main table.sj-cal thead th { background: var(--th, var(--sub)); color: var(--ink-2); height: 38px; }
-.sj-cal thead th b { display: block; font-size: 13px; color: var(--ink); } .sj-cal thead th span { display: block; font-size: 11.5px; font-weight: 500; }
+html body main table.sj-cal { border-collapse: collapse; table-layout: fixed; width: 100%; min-width: 1540px; font-variant-numeric: tabular-nums; }
+html body main table.sj-cal th, html body main table.sj-cal td { border: 1px solid var(--line); padding: 0 1px; height: 32px; font-size: 13.5px !important; line-height: 1.2; overflow: hidden; }
+html body main table.sj-cal thead th { background: var(--th, var(--sub)); color: var(--ink-2); height: 42px; }
+.sj-cal thead th b { display: block; font-size: 14px; color: var(--ink); } .sj-cal thead th span { display: block; font-size: 13.5px; font-weight: 500; }
 .sj-cal thead th.we b, .sj-cal thead th.we span { color: var(--bad); }
-html body main table.sj-cal .lab { width: 112px; text-align: left !important; padding: 0 10px; background: var(--surface); position: sticky; left: 0; z-index: 1; }
-.sj-cal td.lab b { display: block; font-size: 13px; color: var(--ink); } .sj-cal td.lab span { display: block; font-size: 11.5px; color: var(--ink-2); font-weight: 500; }
+html body main table.sj-cal .lab { width: 136px; text-align: left !important; padding: 3px 10px; background: var(--surface); position: sticky; left: 0; z-index: 1; }
+.sj-cal td.lab b { display: block; font-size: 14px; color: var(--ink); } .sj-cal td.lab span { display: block; white-space: nowrap; font-size: 13.5px; color: var(--ink-2); font-weight: 500; }
 html body main table.sj-cal .wst { border-left: 2px solid var(--ink-2) !important; }
 html body main table.sj-cal td.gsep:not(.wst), html body main table.sj-cal th.gsep:not(.wst) { border-left: 1px solid var(--line) !important; }   /* 공통 월 구분선이 요일 '월'을 달로 읽어 생기던 굵은 선 지움 */
 html body main table.sj-cal .now { box-shadow: inset 0 0 0 2px var(--bad); }
 /* 가동 칸 */
 .sj-cal td.ac { font-weight: 700; color: var(--ink); }
 .sj-clg i.ac { background: var(--surface); box-shadow: inset 0 0 0 1px var(--ink-2); }
-html body main table.sj-cal tr.ga td { height: 40px; } .sj-cal tr.ga td.ac b { display: block; color: #1f4f9c; } .sj-cal tr.ga em { display: block; font-style: normal; font-size: 11px; font-weight: 600; }
+html body main table.sj-cal tr.ga td { height: 44px; } .sj-cal tr.ga td.ac b { display: block; color: #1f4f9c; } .sj-cal tr.ga em { display: block; font-style: normal; font-size: 13.5px; font-weight: 600; }
 .sj-cal tr.ga td.lab em { display: inline; } .sj-cal em.up { color: var(--ink-2); } .sj-cal em.dn { color: var(--bad); }
 .sj-cal td.pl, .sj-clg i.pl { background: var(--surface); color: var(--ink-2); font-weight: 500; }
 .sj-cal td.id, .sj-clg i.id { background: repeating-linear-gradient(135deg, var(--sub) 0 4px, transparent 4px 8px); color: var(--ink-3, var(--ink-2)); }
 .sj-cal td.nd { color: var(--ink-3, var(--ink-2)); }
 /* 생산주 줄(파랑 계열) */
-.sj-cal tr.wk td { font-size: 12px !important; font-weight: 700; }
+.sj-cal tr.wk td { font-size: 13.5px !important; font-weight: 700; }
 .sj-cal td.w0 { background: var(--sub); color: var(--ink-2); }
 .sj-cal td.w1, .sj-clg i.w1 { background: #dbe7fb; color: #1f4f9c; }
 .sj-cal td.w2, .sj-clg i.w2 { background: #fff; color: #1f4f9c; box-shadow: inset 0 0 0 2px #5b8de0; }
 .sj-cal td.w3, .sj-clg i.w3 { background: #fff; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
 .sj-clg i.w2 { border: 2px solid #5b8de0; } .sj-clg i.w1 { border-color: #b7cdf3; }
 /* 구역 머리 */
-html body main table.sj-cal tr.sec td { text-align: left !important; background: var(--ink); color: var(--surface); font-weight: 700; font-size: 13px !important; padding: 0 10px; height: 28px; }
+html body main table.sj-cal tr.sec td { text-align: left !important; background: var(--ink); color: var(--surface); font-weight: 700; font-size: 14px !important; padding: 0 10px; height: 30px; }
 /* 소재 칸 */
 .sj-cal td.m1, .sj-cal td.m2, .sj-cal td.m3 { font-weight: 700; } .sj-cal td.m1 { background: #dcefe3; } .sj-cal td.m2 { background: #fbecc8; } .sj-cal td.m3 { background: #f8d4d4; color: #9b1c1c; }
-.sj-cal td i { font-style: normal; font-size: 10px; color: #1f4f9c; margin-left: 1px; }
+.sj-cal td i { font-style: normal; font-size: 13.5px; color: #1f4f9c; margin-left: 1px; }
 .sj-cbt td.sj-cb { width: 38%; min-width: 260px; }
 .sj-cb .tr { position: relative; height: 16px; border-radius: 4px; overflow: hidden; }
 .sj-cb .tr i { position: absolute; top: 0; bottom: 0; left: 0; } .sj-cb .tr i.s { background: var(--sub); } .sj-cb .tr i.o { border-radius: 4px 0 0 4px; }
@@ -98,18 +98,33 @@ html body main table.sj-cal tr.sec td { text-align: left !important; background:
 .sj-cv .sd { border-left: 1px solid var(--line); padding-left: 16px; } .sj-cv .sd .sj-kv { font-size: 14px; padding: 4px 0; } .sj-cv .sd .sj-kv b { font-size: 15px; }
 @media (max-width: 1100px) { .sj-cv { grid-template-columns: 1fr; } .sj-cv .sd { border: 0; padding: 0; } }
 .sj-mts { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
-.sj-mt .ft { display: flex; justify-content: space-between; gap: 6px; font-size: 12.5px; color: var(--ink-2); padding: 2px 4px 6px; white-space: nowrap; }
+.sj-mt .ft { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 8px; font-size: 13.5px; color: var(--ink-2); padding: 2px 4px 6px; } .sj-mt .ft span { white-space: nowrap; }
 .sj-mt { padding: 10px 8px 4px !important; }
 .sj-mt { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 4px; background: var(--surface); }
-.sj-mt .h { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 13.5px; white-space: nowrap; } .sj-mt .h .ct-b { font-size: 12px; padding: 1px 7px; } .sj-mt .sj-svg { margin: 0 auto; }
+.sj-mt .h { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 13.5px; white-space: nowrap; } .sj-mt .h .ct-b { font-size: 13.5px; padding: 1px 7px; } .sj-mt .sj-svg { margin: 0 auto; }
 .sj-gr .nm .dt { display: inline-block; min-width: 78px; color: var(--ink); }
 .sj-sch .cap { flex-wrap: wrap; gap: 4px 16px; } .sj-sch .cap span:last-child { font-weight: 500; }
 html body main .ct-t.sj-mx th, html body main .ct-t.sj-mx td { padding-left: 5px !important; padding-right: 5px !important; }   /* 11/10 점검: 13칸이 한 화면에 — '재고 예상 월말' 열 잘림 */
-.ct-t.sj-mx th small { display: block; font-size: 11.5px; font-weight: 500; color: var(--ink-3, var(--ink-2)); margin-top: 1px; }
 .sj-def { display: grid; gap: 4px; margin: 12px 0 0; padding: 10px 12px; background: var(--tint); border-radius: 8px; font-size: 13.5px; line-height: 1.55; }
 .sj-def b { display: inline-block; min-width: 92px; color: var(--brand-2); }
 .sj-in { font: inherit; font-size: 13.5px; border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; background: var(--surface); color: var(--ink); width: 110px; }
-select.sj-in { width: auto; }
+select.sj-in { width: auto; } .sj-in, #sj-grp { min-height: 34px; box-sizing: border-box; }
+.sj-gs { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; margin-left: auto; } .sj-gs span { font-weight: 700; color: var(--ink-2); }
+.sj-gs select { font: inherit; font-size: 13.5px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+/* 접어 두는 칸(월간 운영 일정 · 용어·산식) */
+.sj-dt { margin: 0 0 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.sj-dt > summary { cursor: pointer; padding: 10px 14px; font-size: 14.5px; font-weight: 700; line-height: 1.5; } .sj-dt > summary small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 10px; }
+.sj-dt .sj-sch { border: 0; margin: 0; padding: 0 14px 8px; } .sj-dt.in { margin: 12px 0 0; background: none; } .sj-dt.in .sj-def { margin: 0 12px; } .sj-dt.in .sj-foot { margin: 10px 14px 12px; }
+.ct-kpi .v small { white-space: nowrap; }
+.ct-t.sj-mx sup { font-size: 13.5px; vertical-align: 1px; line-height: 1; margin-left: 2px; color: var(--ink-2); }
+.ct-b.ov { background: var(--warn-bg); color: var(--warn); box-shadow: inset 0 0 0 1.5px var(--warn); }   /* 계획 초과(경고 수준) — 빨강 아님 */
+@media (max-width: 700px) {
+  .sj-gr { grid-template-columns: minmax(0, 1fr); gap: 2px; margin: 0 0 8px; } .sj-gr .nm { white-space: normal; } .sj-gr .nm:empty { display: none; }
+  .sj-chip { white-space: normal; border-radius: 12px; } .sj-pill { white-space: normal; } .sj-gs { margin-left: 0; }
+  .ct-kpis.sj-k4 .ct-kpi .v { font-size: 24px; } .ct-kpis.sj-k4 .ct-kpi { padding: 10px 11px; }
+  .sj-in, #sj-grp { min-height: 40px; } .sj-dt > summary { padding: 12px 14px; } .sj-dt > summary small { display: block; margin: 0; }
+  .sj-def b { display: block; }
+}
 .pos { color: var(--good); } .neg { color: var(--bad); } .wrn { color: var(--warn); }
 </style>
 </head>
@@ -117,9 +132,9 @@ select.sj-in { width: auto; }
 <header id="shell" data-page="suju" data-title="수주 관제" data-sub="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준)"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보·통합 계획 → 사내 PC 자동 실행 → 암호화 게시 · 화면 양식 = 수주팀 개발 요청(r1)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611100149"></script>
-<script src="engine/crypto.js?v=2611100149"></script>
-<script src="ui/ct.js?v=2611100149"></script>
-<script src="suju.js?v=2611100149"></script>
+<script src="ui/shell.js?v=2611100306"></script>
+<script src="engine/crypto.js?v=2611100306"></script>
+<script src="ui/ct.js?v=2611100306"></script>
+<script src="suju.js?v=2611100306"></script>
 </body>
 </html>

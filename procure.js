@@ -405,7 +405,7 @@
   }
   $('p-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('p-pw').value); });
   envReady.then((e) => { if (!e) throw new Error();
-    env = e; $('p-lock').querySelector('h2').textContent = '소재 발주 — 암호를 입력하세요';
+    env = e; $('p-lock').querySelector('h2').textContent = '발주 — 암호를 입력하세요';
     let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ }
     if (s) unlock(s); else $('p-form').hidden = false;
   }).catch(() => { $('p-msg').textContent = '자료를 찾을 수 없습니다'; });

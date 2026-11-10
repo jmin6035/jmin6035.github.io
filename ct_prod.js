@@ -165,7 +165,7 @@
     ];
     const row = (s) => { const d = s.a - s.sched;
       return `<tr><td class="id">${esc(s.name)}</td><td class="r">${n0(s.month)}</td><td class="r">${n0(s.sched)}</td><td class="r"><b>${n0(s.a)}</b></td><td class="r ${d >= 0 ? 'pos' : 'neg'}">${sgn(d)}</td>`
-        + `<td class="r">${pc(s.a, s.month)}%</td><td class="r">${s.sched ? `<b class="${s.a >= s.sched ? 'pos' : s.a >= s.sched * 0.9 ? 'wrn' : 'neg'}">${pc(s.a, s.sched)}%</b>` : '<span class="sub">일정 0</span>'}</td><td class="pp-bar"><i style="width:${Math.min(100, s.month ? s.a / s.month * 100 : 0).toFixed(1)}%"></i></td></tr>`; };
+        + `<td class="r">${pc(s.a, s.month)}%</td><td class="r">${s.sched ? `<b class="${{ ok: 'pos', warn: 'wrn', bad: 'neg' }[UI.rate(s.a / s.sched * 100)]}">${pc(s.a, s.sched)}%</b>` : '<span class="sub">일정 0</span>'}</td><td class="pp-bar"><i style="width:${Math.min(100, s.month ? s.a / s.month * 100 : 0).toFixed(1)}%"></i></td></tr>`; };
     const tbl = t([th('판매그룹'), th('월 출하계획', 1), th('일정 누계', 1, '판생속보 오늘까지 출하 일정'), th('출하 실적', 1), th('일정 대비', 1), th('월간 진도율', 1, '실적 ÷ 월 계획'), th('일정 누계 달성률', 1, '실적 ÷ 일정 누계'), th('')], S.map(row));
     // 일별 출하(이번 달) — 일별 계획 자료 없음
     const SD = (P.shipDay && P.shipDay.g) || {}, ds = [...new Set(S.flatMap((s) => Object.keys(SD[s.key] || {})))].filter((d) => d.slice(0, 7) === mon).sort().reverse();
@@ -211,7 +211,7 @@
       return `<tr><td class="id">${esc(name)}</td><td class="r"><b>${n0(cur)}</b></td><td class="r">${b == null ? '-' : `<span class="${cur - b > 0 ? 'wrn' : ''}">${sgn(cur - b)}</span>`}</td><td class="r">${e == null ? '-' : n0(e)}</td>`
         + `<td class="w">${w.length ? w.map((x) => `<span class="pp-c">${esc(x)}</span>`).join('') : '<span class="sub">-</span>'}</td></tr>`; };
     return CT.basis([{ name: '판생속보 재고', at: P.sr && P.sr.asOf, kind: '실적' }, { name: '그룹 재고', at: last, kind: '실적' }, { name: '재고 전망', at: SR.asOf, kind: '재계획' }])
-      + card(`제품 재고 <small>실재고 vs 월말 목표 · 소재 재고는 <a href="matcal.html">소재 수급</a></small><span class="unit">톤</span>`,
+      + card(`제품 재고 <small>실재고 vs 월말 목표 · 소재 재고는 <a href="matcal.html">소재 관제</a></small><span class="unit">톤</span>`,
         t([th('제품'), th('실재고', 1), th('목표', 1, '판생 월말 목표'), th('목표 대비', 1), th('차이', 1), th('초과 근거(같은 판매그룹)')], cats.map(crow)))
       + card(`판매그룹별 제품 재고 <small>판매그룹 목표 없음 · ${md(last)} 기준</small><span class="unit">톤</span>`,
         t([th('판매그룹'), th('실재고', 1), th(`${first ? md(first) : '월초'} 대비`, 1), th('월말 전망', 1, '최신 재계획 재고 전망'), th('관련 근거')], keysIn.map(grow)));

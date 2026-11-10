@@ -51,7 +51,7 @@
     const cgP = gl.reduce((a, x) => a + (x.sched || 0), 0), cgA = gl.reduce((a, x) => a + (x.actual || 0), 0);
     const ccP = cg.reduce((a, g) => a + Math.max(0, (g.prod.month || 0) - (g.prod.after || 0)), 0), ccA = cg.reduce((a, g) => a + (g.prod.actual || 0), 0);
     const pct = (a, p) => (p ? Math.round(a / p * 100) : null);
-    const tone = (v) => (v == null ? '' : v >= 98 ? 'ok' : v >= 90 ? 'warn' : 'bad');
+    const tone = UI.rate;   // 달성률 색 = 공통 기준(ui/shell.js UI.rate: 98% 이상 ok · 90% 이상 warn · 그 아래 bad)
     // 기간 생산 진도: 실적 = 라인 일 실적(MES, 어제까지) · 계획 = 그날 아침 도금 계획(최신 재계획 → 직전 재계획 → 그날 아침 계획 기록). 컬러는 지난 날 일 계획 기록이 없어 월간만
     const accPlan = {}; for (const l of Object.keys(P.acc || {})) for (const r of (P.acc[l].last || [])) accPlan[`${r[1]}|${r[0]}`] = r[2];
     const sumRows = (rows, from) => { const m = {}; for (const r of rows || []) if (r[0] > from) m[`${r[1]}|${r[0]}`] = (m[`${r[1]}|${r[0]}`] || 0) + (+r[4] || 0); return m; };
@@ -225,9 +225,10 @@
         return `<div class="ch-c${z.d === asOf ? ' today' : ''}${z.past ? '' : ' fut'}${inP && view !== 'month' ? ' sel' : ''}${off ? ' off' : ''}" title="${esc(tip)}"><div class="ch-v${lo ? ' lo' : ''}">${many ? '' : val}</div><div class="ch-b">${body}</div>`
           + `<div class="ch-x">${showD ? `${+z.d.slice(5, 7)}/${+z.d.slice(8)}<small>${z.d === asOf ? '오늘' : wd(z.d)}</small>` : ''}</div></div>`;
       }).join('');
-      const leg = `<div class="ch-leg"><span><b class="k a"></b>실적</span><span><b class="k lo"></b>계획 95% 미만</span><span><b class="k p"></b>그날 계획</span><span><b class="k f"></b>앞으로 계획</span>${RUN ? '<span><b class="k r"></b>오늘 진행 중</span>' : ''}<span><b class="k o"></b>휴지·정비</span><span class="u">단위 t</span></div>`;
-      return `${leg}<div class="ch${many ? ' many' : ''}"><div class="ch-in">${grid}<div class="ch-cols" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${cols}</div></div></div>`;
+      return `<div class="ch${many ? ' many' : ''}"><div class="ch-in">${grid}<div class="ch-cols" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${cols}</div></div></div>`;
     };
+    // 11/10: 범례는 라인 카드마다(6번) 말고 '라인별 진도' 머리 아래 한 번
+    const leg = `<div class="ch-leg"><span><b class="k a"></b>실적</span><span><b class="k lo"></b>계획 95% 미만</span><span><b class="k p"></b>그날 계획</span><span><b class="k f"></b>앞으로 계획</span>${RUN ? '<span><b class="k r"></b>오늘 진행 중</span>' : ''}<span><b class="k o"></b>휴지·정비</span><span class="u">단위 t</span></div>`;
     const runLine = (r) => {                                                                      // 오늘 진행분(07시~ 마감 전) — 진도율에는 안 넣고 참고로(11/5 사용자 '화면에 보여줘')
       if (!RUN || RUN.d <= lastFull(r.x)) return '';
       const t = +(RUN.lines || {})[r.x.line] || 0, p = futPlan(r.x, RUN.d);
@@ -270,7 +271,7 @@
     };
     const gsec = (pl, nm) => { const gs = (P.groups || []).filter((g) => g.pl === pl && CT.inScope(pl)); return gs.length ? `<div class="gp"><div class="ln-ph"><b>${nm}</b><span>${gs.length}개 판매그룹</span></div><div class="gg">${gs.map(gcard).join('')}</div></div>` : ''; };
     const grpSec = `<section class="card g-sec"><h2>판매그룹별 현황 <small>${view === 'month' ? '' : '이번 달 누계 · '}생산·출하 = 실적 / 월 계획(▼ ${view === 'month' ? '경과일 기준 예상 위치 · 출하는 일정 누계' : '경과일·일정 누계'}) · 재고 = 하루 출하 기준 일수(▼ 상한) · 카드 색 = 가장 나쁜 신호</small></h2>${gsec('G', '도금')}${gsec('C', '컬러')}</section>`;
-    const lineSec = `<section class="card ln-sec"><h2>라인별 진도 <small>${pLbl} · 공장 → 라인 · 막대 = 기간 실적(▼ 계획), 아래 = 일별 실적과 계획</small></h2>${plant('G', '도금 공장')}${plant('C', '컬러 공장')}</section>`;
+    const lineSec = `<section class="card ln-sec"><h2>라인별 진도 <small>${pLbl} · 공장 → 라인 · 막대 = 기간 실적(▼ 계획), 아래 = 일별 실적과 계획</small></h2>${leg}${plant('G', '도금 공장')}${plant('C', '컬러 공장')}</section>`;
 
     // ⑤-1 오늘·내일 라인별 생산 계약(11/5 사용자 '오늘 내일 생산계획도 실 계약을 보여줘야'): 도금 = 생산 캘린더(확정·편성·예상), 컬러 = 생산 캘린더(작업지시·계획 편성)
     const CG = D.cg_calendar || {}, CC = D.cc_calendar || {};
@@ -293,7 +294,7 @@
         + `<td class="nw">${esc(x.grp || '')}</td><td class="w">${esc([x.cus, x.dst].filter(Boolean).join(' · ') || (pl === 'C' && !x.con ? '판매그룹 편성 물량(주문 연결 전)' : ''))}</td>`
         + `<td class="nw">${esc(pl === 'G' ? [x.fam, x.grade].filter(Boolean).join(' ') : [x.item, x.color].filter(Boolean).join(' · '))}</td>`
         + `<td class="r nw">${x.thk != null ? `${(+x.thk).toFixed(2)}×${n0(x.wdt)}` : ''}</td><td class="r"><b>${n1(x.t)}</b></td>`
-        + `<td class="nw">${x.due ? `납기 ${md(x.due)}` : ''}${x.need ? ` · 필요 ${md(x.need)}` : ''}</td><td class="nw">${esc(x.start || '')}</td></tr>`).join('');
+        + `<td class="nw">${x.due ? `납기 ${md(x.due)}` : ''}${x.need ? ` · 필요 ${md(x.need)}` : ''}</td><td class="nw">${x.start ? esc(UI.fmtDateTime(x.start)) : ''}</td></tr>`).join('');
     }).join('');
     const conSec = view === 'day' ? (() => {
       const d0 = asOf, d1 = addD(asOf, 1);

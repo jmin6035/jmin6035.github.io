@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>주간 작업순서</title>
-<meta name="description" content="1030 확정 지시와 소재 매치된 주문을 오늘부터 어떤 순서로 돌릴지 — 초안을 고치고 저장·확정·점검">
+<meta name="description" content="확정 지시와 소재 매치된 주문을 오늘부터 어떤 순서로 돌릴지 — 초안을 고치고 저장·확정·점검">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611100149">
+<link rel="stylesheet" href="ui/theme.css?v=2611100306">
 <style>
 main.wrap { max-width: none; }
 .ws-bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 0 0 14px; }
@@ -30,7 +30,7 @@ main.wrap { max-width: none; }
 .ws-side > details > summary span { font-size: 14px; font-weight: 500; color: var(--ink-2); margin-left: 6px; }
 .pl-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 4px 20px; margin-top: 10px; }
 .pl-body { max-height: 420px; overflow-y: auto; }
-table.ws { width: 100%; min-width: 940px; border-collapse: collapse; font-size: 14.5px; table-layout: fixed; }
+table.ws { width: 100%; border-collapse: collapse; font-size: 14.5px; table-layout: fixed; }
 html body table.ws td { padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; line-height: 1.5; text-align: left !important; white-space: normal; }
 table.ws tr.dh td { background: var(--sub); border-top: 2px solid var(--line); padding: 10px 12px; }
 .dhh { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; } .dhh b { font-size: 16px; white-space: nowrap; } .dhh span { color: var(--ink-2); font-size: 14px; white-space: nowrap; } .dhh em { font-style: normal; color: var(--warn); font-weight: 700; white-space: nowrap; }
@@ -79,8 +79,8 @@ html body table.ws td.ac { text-align: right !important; line-height: 2; white-s
 .pl-g { margin: 0 0 12px; } .pl-g > summary { cursor: pointer; font-weight: 700; font-size: 15px; padding: 4px 0; white-space: nowrap; } .pl-g > summary span { color: var(--ink-2); font-weight: 500; font-size: 14px; }
 .pl-i { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; padding: 4px 4px; border-bottom: 1px solid var(--line); font-size: 14px; cursor: grab; }
 .pl-i .sub { white-space: normal; }
-.wk3 { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 4px; align-items: center; padding: 1px 0; } .wk3 + .wk3 { border-top: 1px dashed var(--line); }
-.wk3 > i, .wk3 em.lb { font-style: normal; font-size: 12px; font-weight: 700; color: var(--ink-2); } .wk3 em.lb { margin-left: 8px; padding-left: 10px; border-left: 1px solid var(--line); } .wk3 .ib { display: inline-flex; flex-wrap: wrap; gap: 3px 5px; align-items: center; } .wk3 > div { display: flex; flex-wrap: wrap; gap: 3px 5px; align-items: center; }
+.wk3 { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px; align-items: center; padding: 1px 0; } .wk3 + .wk3 { border-top: 1px dashed var(--line); }
+.wk3 > i, .wk3 em.lb { font-style: normal; font-size: 13.5px; font-weight: 700; color: var(--ink-2); } .wk3 em.lb { margin-left: 8px; padding-left: 10px; border-left: 1px solid var(--line); } .wk3 .ib { display: inline-flex; flex-wrap: wrap; gap: 3px 5px; align-items: center; } .wk3 > div { display: flex; flex-wrap: wrap; gap: 3px 5px; align-items: center; }
 .pl-i .sp { margin-top: 4px; }
 .pl-i button { font: inherit; font-size: 13.5px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--brand-2); cursor: pointer; white-space: nowrap; }
 .ck { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin: 0 0 16px; background: var(--surface); }
@@ -91,11 +91,56 @@ html body table.ws td.ac { text-align: right !important; line-height: 2; white-s
 .ck-ok { color: var(--good); font-weight: 700; }
 .miss { border-left: 4px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 6px; margin: 0 0 12px; font-size: 14px; }
 .btn[disabled] { opacity: .55; cursor: default; }
-@media (max-width: 760px) { .tm { width: auto; } .hd { display: none; } table.ws td { padding: 7px 6px; } }
+/* 날짜 머리줄 = 그날을 넘기는 동안 화면 위에 고정(위 막대 높이 = --ws-top, week_seq.js fit) */
+#ws-tblc { padding: 0; overflow: clip; }
+html body table.ws tr.dh td { position: sticky; top: var(--ws-top, 0px); z-index: 4; box-shadow: 0 1px 0 var(--line), 0 -3px 0 var(--sub); }
+.ac .mo { display: none; }
+html body .shell-head .sub { white-space: normal; overflow-wrap: anywhere; }
+/* 좁은 화면(본문 820px 미만, week_seq.js fit 이 .cmp 를 붙임): 한 작업 = 한 묶음(시각·계약 → 사양 → 톤), 줄 단추는 ⋯ 하나 */
+#ws-main.cmp table.ws, #ws-main.cmp table.ws tbody { display: block; width: 100%; }
+#ws-main.cmp table.ws colgroup { display: none; }
+#ws-main.cmp table.ws tr { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+html body #ws-main.cmp table.ws td { display: block; padding: 0; border: 0; width: auto; min-width: 0; background: none !important; box-shadow: none !important; }
+html body #ws-main.cmp table.ws td:empty, html body #ws-main.cmp table.ws td.hd { display: none; }
+#ws-main.cmp table.ws tr.dh { position: sticky; top: var(--ws-top, 0px); z-index: 4; background: var(--sub); border-top: 2px solid var(--line); box-shadow: 0 1px 0 var(--line); }
+html body #ws-main.cmp table.ws tr.dh td { position: static; flex: 1 1 100%; }
+#ws-main.cmp table.ws tr.j { background: var(--surface); align-items: flex-start; }
+#ws-main.cmp table.ws tr.j.fx { box-shadow: inset 4px 0 0 var(--brand-2); }
+#ws-main.cmp table.ws tr.j.hl { background: var(--warn-bg); } #ws-main.cmp table.ws tr.j.bad { background: color-mix(in srgb, var(--bad-bg) 60%, var(--surface)); }
+html body #ws-main.cmp table.ws tr.j td.no { order: 1; min-width: 20px; line-height: 1.5; } #ws-main.cmp table.ws tr.j td.tm { order: 2; width: auto; }
+#ws-main.cmp table.ws tr.j td.c-con { order: 3; flex: 1 1 150px; } html body #ws-main.cmp table.ws td.ac { order: 4; margin-left: auto; line-height: 1; }
+#ws-main.cmp table.ws tr.j td.c-sp { order: 5; flex: 1 1 100%; }
+html body #ws-main.cmp table.ws tr.j td.nm { order: 6; flex: 1 1 100%; text-align: left !important; display: flex; flex-wrap: wrap; gap: 0 10px; align-items: baseline; }
+#ws-main.cmp table.ws tr.ch { padding: 5px 10px 5px 38px; font-size: 13.5px; color: var(--warn); border-bottom: 1px dashed var(--line); background: color-mix(in srgb, var(--warn-bg) 35%, var(--surface)); }
+#ws-main.cmp table.ws tr.ch.may { color: var(--ink-2); background: var(--surface); }
+#ws-main.cmp table.ws tr.ev { background: var(--tint-2); } #ws-main.cmp table.ws tr.ev.w { background: var(--bad-bg); } #ws-main.cmp table.ws tr.ev.g { background: var(--warn-bg); }
+#ws-main.cmp table.ws tr.ev.sm { background: #effaf8; box-shadow: inset 4px 0 0 #0f766e; }
+#ws-main.cmp table.ws tr.ev td.tm { width: auto; } #ws-main.cmp table.ws tr.ev td[colspan] { flex: 1 1 0; }
+html body #ws-main.cmp table.ws tr.ch td, html body #ws-main.cmp table.ws tr.ev td[colspan], html body #ws-main.cmp table.ws td.c-con, html body #ws-main.cmp table.ws td.c-sp, html body #ws-main.cmp table.ws td.muted { white-space: normal !important; word-break: keep-all; }
+#ws-main.cmp table.ws tr.ev input { min-height: 40px; } #ws-main.cmp table.ws tr.ev input.nt { width: 100%; margin-top: 4px; } #ws-main.cmp table.ws tr.ev.sm .hint { display: none; }
+#ws-main.cmp .ac .acd { display: none; }
+#ws-main.cmp .ac .mo { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 40px; margin: 0; padding: 0; font-size: 22px; font-weight: 800; line-height: 1; letter-spacing: 1px; }
+#ws-main.cmp .ws-act input, #ws-main.cmp .ws-act select, #ws-main.cmp .ws-act .btn { min-height: 40px; }
+#ws-main.cmp .ws-act #ws-memo { flex: 1 1 140px; width: auto; min-width: 0; }
+#ws-main.cmp .ws-bar .seg button { min-height: 40px; }
+#ws-main.cmp .ws-side > details > summary, #ws-main.cmp .pl-g > summary, #ws-main.cmp .ck-g > summary { padding: 9px 0; white-space: normal; }
+#ws-main.cmp .pl-i button { min-height: 40px; min-width: 56px; } #ws-main.cmp .pl-cols { grid-template-columns: minmax(0, 1fr); }
+#ws-main.cmp .ck-g li a { display: inline-block; padding: 8px 6px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #ws-main.cmp table.ws tr.ev.sm { background: #0d2b29; } }
+:root[data-theme="dark"] #ws-main.cmp table.ws tr.ev.sm { background: #0d2b29; }
+/* 줄 동작 고르기(좁은 화면 ⋯) */
+.ws-sh { position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, .45); display: flex; align-items: flex-end; justify-content: center; }
+.ws-shb { box-sizing: border-box; width: 100%; max-width: 520px; max-height: 86vh; overflow-y: auto; background: var(--surface); color: var(--ink); border-radius: 16px 16px 0 0; padding: 16px 14px calc(14px + env(safe-area-inset-bottom, 0px)); }
+.ws-shb h3 { margin: 0; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ws-shb p { margin: 2px 0 12px; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.ws-shb .lb { margin: 14px 0 6px; font-size: 13.5px; font-weight: 700; color: var(--ink-2); }
+.ws-shb .g { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .ws-shb .g.d { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ws-shb button { min-height: 46px; font: inherit; font-size: 15px; font-weight: 700; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--ink); cursor: pointer; white-space: nowrap; padding: 0 6px; }
+.ws-shb button:disabled { opacity: .4; cursor: default; } .ws-shb button.x { color: var(--bad); } .ws-shb button.on { background: var(--tint-2); border-color: var(--brand-2); color: var(--brand-2); }
+.ws-shb .cl { width: 100%; margin-top: 14px; background: var(--sub); }
 </style>
 </head>
 <body>
-<header id="shell" data-page="weekseq" data-crumb="생산계획" data-title="주간 작업순서" data-sub="1030 확정 지시 전부 + 소재 매치된 주문을 오늘부터 돌릴 순서 — 초안을 고쳐 저장·확정·점검(계획에는 아직 안 씀)"></header>
+<header id="shell" data-page="weekseq" data-crumb="생산계획" data-title="주간 작업순서" data-sub="오늘부터 돌릴 작업 순서 — 초안을 고쳐 저장·확정·점검"></header>
 <main class="wrap">
   <div class="docmeta" id="ws-meta"></div>
   <section class="card lock" id="ws-lock">
@@ -124,13 +169,13 @@ html body table.ws td.ac { text-align: right !important; line-height: 2; white-s
     <div id="ws-ck"></div>
     <div class="ws-grid">
       <section class="card ws-side" id="ws-pool"></section>
-      <section class="card" data-noexport style="padding:0;overflow-x:auto"><table class="ws" id="ws-tbl"></table></section>
+      <section class="card" data-noexport id="ws-tblc"><table class="ws" id="ws-tbl"></table></section>
     </div>
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>대상: 컬러 = 작업지시 편성 대상(소재 매치)·확정 대기열 · 도금 = 지시된 코일(생산 전) + 소재 들어온 작업 · 시간 = 기존 속도(t/h) · 휴지 = 전환 기준표(1년 실적)·휴지계획 · 저장 = 공유 저장소(암호화, 버전 이력)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611100149"></script>
-<script src="engine/crypto.js?v=2611100149"></script>
-<script src="week_seq.js?v=2611100149"></script>
+<script src="ui/shell.js?v=2611100306"></script>
+<script src="engine/crypto.js?v=2611100306"></script>
+<script src="week_seq.js?v=2611100306"></script>
 </body>
 </html>

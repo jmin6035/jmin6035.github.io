@@ -9,9 +9,17 @@
     const s = new Blob([u8]).stream().pipeThrough(new Stream(mode));
     return new Uint8Array(await new Response(s).arrayBuffer());
   }
-  async function key(pw, salt, iter) {
+  async function derive(pw, salt, iter) {
     const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
     return crypto.subtle.deriveKey({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: iter }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  /* 푼 키는 이 화면이 떠 있는 동안 메모리에만 둠(같은 파일을 화면·관제 띠가 두 번 풀 때 PBKDF2 60만 회를 다시 하지 않게).
+     꺼낼 수 없는 키(extractable = false)이고 localStorage·sessionStorage 에는 쓰지 않음 — 화면을 닫으면 사라짐 */
+  const KEYS = new Map();
+  function key(pw, salt, iter) {
+    const id = iter + '|' + b64(salt) + '|' + pw;
+    if (!KEYS.has(id)) { const p = derive(pw, salt, iter); KEYS.set(id, p); p.catch(() => KEYS.delete(id)); }
+    return KEYS.get(id);
   }
   GP.encryptJSON = async function (obj, pw, label) {
     let data = new TextEncoder().encode(JSON.stringify(obj));
@@ -34,18 +42,32 @@
   // 게시본 위치: 사내 PC 자동 실행기(Supabase) + 계획 화면 수동 게시(GitHub). 둘 다 읽어 더 최근 것을 보여줌
   GP.SUPABASE_URL = 'https://gatcqxrzaonjsixajrwd.supabase.co';
   GP.PUBLISH_SOURCES = [GP.SUPABASE_URL + '/storage/v1/object/public/published/latest.plan.enc.json', GP.PUBLISH_PATH];
+  /* 원격(Supabase)에 없는 파일은 한 번 확인하면 이 브라우저에서 30분 동안 다시 묻지 않음(화면마다 2~8건씩 400 이 나던 것 — 대부분의 게시 파일은 사이트 쪽에만 있음).
+     없는 파일 주소와 시각만 localStorage 에 적음(내용·암호 아님). 사내 PC 가 새로 올리면 30분 안에 다시 확인 */
+  const MISS_KEY = 'gp-remote-miss', MISS_MS = 30 * 60 * 1000;
+  const missGet = () => { try { return JSON.parse(localStorage.getItem(MISS_KEY) || '{}') || {}; } catch (e) { return {}; } };
+  const missSet = (u) => { try { const m = missGet(), now = Date.now(); for (const k of Object.keys(m)) if (now - m[k] > MISS_MS) delete m[k]; m[u] = now; localStorage.setItem(MISS_KEY, JSON.stringify(m)); } catch (e) { /* 무시 */ } };
   GP.fetchPublished = async function (sources = GP.PUBLISH_SOURCES) {
+    const miss = missGet(), now = Date.now();
     const got = await Promise.all(sources.map(async (u) => {
+      const remote = /^https?:/.test(u);
+      if (remote && miss[u] && now - miss[u] < MISS_MS) return null;
       try {
-        const r = await fetch(u + (/^https?:/.test(u) ? `?v=${Date.now()}` : ''), { cache: 'no-store' });   // CDN 캐시 우회
+        const r = await fetch(u + (remote ? `?v=${Date.now()}` : ''), { cache: 'no-store' });   // CDN 캐시 우회
+        if (!r.ok && remote && (r.status === 400 || r.status === 404)) missSet(u);   // Supabase 공개 저장소는 없는 파일에 400 을 줌
         return r.ok ? await r.json() : null;
       } catch (e) { return null; }
     }));
     const stamp = (e) => (e && (e.created || e.savedAt)) || '';
     return got.filter(Boolean).sort((a, b) => (stamp(a) < stamp(b) ? 1 : -1))[0] || null;
   };
-  // 화면 자료: 사내 PC 자동 실행기(Supabase)와 GitHub 게시본 중 더 최근 것
-  GP.latest = (name) => GP.fetchPublished([GP.SUPABASE_URL + '/storage/v1/object/public/published/' + name, 'published/' + name]);
+  // 화면 자료: 사내 PC 자동 실행기(Supabase)와 GitHub 게시본 중 더 최근 것. 같은 화면에서 같은 파일을 여러 곳이 찾으면(화면·관제 띠) 한 번만 받음(20초)
+  const LATEST = new Map();
+  GP.latest = (name) => {
+    const c = LATEST.get(name); if (c && Date.now() - c.t < 20000) return c.p;
+    const p = GP.fetchPublished([GP.SUPABASE_URL + '/storage/v1/object/public/published/' + name, 'published/' + name]);
+    LATEST.set(name, { t: Date.now(), p }); return p;
+  };
   GP.PUBLISH_REPO = { owner: 'jmin6035', repo: 'jmin6035.github.io', branch: 'main' };
 
   /* GitHub에 바로 게시(관리자용). token: 이 저장소 Contents 쓰기 권한만 준 fine-grained 토큰. 브라우저 → GitHub API 직접 호출 */

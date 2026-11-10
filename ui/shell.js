@@ -14,19 +14,27 @@
   }
   /* 11/4 사용자 '전면 개편'(control_tower_redesign PRD): 공장별 25개 메뉴 → 의사결정 목적 7개. 지금 화면은 각 메뉴의 탭으로 묶고, 단계마다 새 화면으로 바꿈(gadong-plan/docs/22) */
   /* 11/4 2차 진단 3장: 메뉴 탭 = 업무 질문(화면 안에 탭을 또 두지 않음 — '#이름'으로 같은 화면의 하위 화면). 4번째 칸 'h' = 탭 막대에는 안 보이는 전문 화면(메뉴에는 속함) */
+  /* 11/10 메뉴 정리(보이는 탭 33 → 24): 칸 = [화면 id, 주소, 이름, 표시]. 표시 't' = 화면 위 탭 막대에만(왼쪽 메뉴에는 묶음 이름만).
+     메뉴에서 뺀 화면은 지우지 않고 '관리'에 둠 — 모든 화면이 메뉴로 닿음. 화면 제목(h1) = 메뉴 이름 */
   const MENU = [
-    /* 11/7 사용자 '기존 것은 전부 두고 탭 하나 만들어서 수주팀 PDF 양식(수주 관제 r1) 그대로' */
     ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '수주 진도'], ['suju', 'suju.html#prod', '생산'], ['suju', 'suju.html#mat', '소재'], ['suju', 'suju.html#stock', '재고'], ['suju', 'suju.html#close', '월 실적 마감']]],
-    ['ct1', '통합 관제', 'home', [['home', 'index.html#day', '금일 현황'], ['home', 'index.html#week', '7일 전망'], ['home', 'index.html#month', '월간 전망'], ['board', 'board.html', '판매그룹 관제판', 'h']]],
-    ['ct2', '수주·납기', 'cgorder', [['orders', 'ct_orders.html#status', '수주 현황'], ['orders', 'ct_orders.html#risk', '납기 지연 예상'], ['orders', 'ct_orders.html#track', '주문진도'], ['orders', 'ct_orders.html#cal', '납기 캘린더'], ['cgorder', 'cg_order.html', '도금 주문진도', 'h'], ['ccorder', 'cc_order.html', '컬러 주문·납기', 'h']]],
-    ['ct3', '생산계획', 'supply', [['plan7', 'ct_plan.html#week', '주간 생산 일정'], ['plan7', 'ct_plan.html#load', '라인 부하'], ['plan7', 'ct_plan.html#cmp', '계획 변경 비교'], ['supply', 'supply.html', '월간 가동'], ['weekseq', 'week_seq.html#cg', '도금 주간 작업순서'], ['weekseq', 'week_seq.html#cc', '컬러 주간 작업순서'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더', 'h'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더', 'h'], ['cgwo', 'cg_wo.html', '도금 작업지시 순서', 'h'], ['wo', 'wo.html', '컬러 작업지시 순서', 'h']]],
-    ['ct4', '소재·재고', 'matcal', [['matcal', 'matcal.html', '소재 수급'], ['matshort', 'ct_mat.html', '부족·조치'], ['integrated', 'integrated.html', '재고 전망'], ['procure', 'procure.html', '발주 일정'], ['planstock', 'planstock.html', '계획재', 'h']]],
-    ['ct5', '생산·출하', 'platact', [['prodsum', 'ct_prod.html#perf', '생산 실적'], ['prodsum', 'ct_prod.html#run', '가동·휴지'], ['prodsum', 'ct_prod.html#ship', '출하 실적'], ['prodsum', 'ct_prod.html#stock', '제품 재고'], ['platact', 'plating_actual.html', '도금 실적', 'h'], ['coloract', 'color_actual.html', '컬러 실적', 'h'], ['status', 'status.html', '도금 가동 현황', 'h'], ['colorstat', 'color_status.html', '컬러 가동 현황', 'h']]],
-    ['ct6', '이슈·조정', 'decisions', [['issues', 'ct_issue.html#now', '이슈 현황'], ['issues', 'ct_issue.html#req', '조정 요청'], ['decisions', 'decisions.html', '결정 이력'], ['cgtasks', 'cg_tasks.html', '업무 캘린더', 'h']]],
-    ['ct7', '분석·보고', 'report', [['perf', 'ct_perf.html#ops', '계획 대비 실적'], ['perf', 'ct_perf.html#cause', '미달 원인'], ['report', 'report.html', '주간 보고'], ['analysis', 'analysis.html', '도금 조건 분석', 'h'], ['coloranal', 'color_analysis.html', '컬러 조건 분석', 'h']]],
+    ['ct1', '통합 관제', 'home', [['home', 'index.html#day', '금일 현황', 't'], ['home', 'index.html#week', '7일 전망', 't'], ['home', 'index.html#month', '월간 전망', 't']]],
+    ['ct2', '주문·납기', 'cgorder', [['orders', 'ct_orders.html#risk', '납기 위험'], ['orders', 'ct_orders.html#track', '주문진도'], ['orders', 'ct_orders.html#cal', '납기 캘린더']]],
+    ['ct3', '생산계획', 'supply', [['supply', 'supply.html', '월간 가동'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더'], ['weekseq', 'week_seq.html', '주간 작업순서'], ['plan7', 'ct_plan.html#cmp', '계획 변경']]],
+    ['ct4', '소재·재고', 'matcal', [['matcal', 'matcal.html', '소재 관제'], ['procure', 'procure.html', '발주'], ['planstock', 'planstock.html', '계획재'], ['integrated', 'integrated.html', '재고 전망']]],
+    ['ct5', '실적·보고', 'platact', [['platact', 'plating_actual.html', '도금 실적'], ['coloract', 'color_actual.html', '컬러 실적'], ['prodsum', 'ct_prod.html#ship', '출하'], ['perf', 'ct_perf.html#ops', '계획 대비 실적'], ['report', 'report.html', '주간 보고']]],
   ];
-  const ADMIN = [['rolling', 'rolling.html', '도금 계획 계산'], ['colorcalc', 'color_calc.html', '컬러 계획 계산'], ['rules', 'rules.html', '계획 규칙'], ['health', 'health.html', '자료 상태'], ['docs', 'docs.html', '문서']];
-  const NAV = [...MENU.flatMap((m) => m[3]).filter((t, k, A) => A.findIndex((u) => u[1].split('#')[0] === t[1].split('#')[0]) === k).map((t) => [t[0], t[1].split('#')[0], t[2]]), '|관리·도움말', ...ADMIN];
+  const ADMIN = [['rolling', 'rolling.html', '도금 계획 계산'], ['colorcalc', 'color_calc.html', '컬러 계획 계산'], ['rules', 'rules.html', '계획 규칙'], ['health', 'health.html', '자료 상태'], ['docs', 'docs.html', '문서'],
+    ['analysis', 'analysis.html', '도금 조건 분석'], ['coloranal', 'color_analysis.html', '컬러 조건 분석'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['decisions', 'decisions.html', '결정 기록'],
+    ['board', 'board.html', '판매그룹 관제판'], ['issues', 'ct_issue.html#now', '이슈 현황'], ['issues', 'ct_issue.html#req', '조정 요청'],
+    ['plan7', 'ct_plan.html#week', '주간 생산 일정'], ['plan7', 'ct_plan.html#load', '라인 부하'], ['matshort', 'ct_mat.html', '소재 부족·조치'],
+    ['prodsum', 'ct_prod.html#perf', '생산 실적'], ['prodsum', 'ct_prod.html#run', '가동·휴지'], ['prodsum', 'ct_prod.html#stock', '제품 재고'], ['perf', 'ct_perf.html#cause', '미달 원인'],
+    ['status', 'status.html', '도금 가동 현황'], ['colorstat', 'color_status.html', '컬러 가동 현황'], ['cgorder', 'cg_order.html', '도금 주문진도'], ['ccorder', 'cc_order.html', '컬러 주문·납기'],
+    ['cgwo', 'cg_wo.html', '도금 작업지시 순서'], ['wo', 'wo.html', '컬러 작업지시 순서']];
+  const ADMN = '관리';
+  const ALL = [...MENU.flatMap((m) => m[3]), ...ADMIN];
+  const DEFV = { home: 'day', suju: 'dash', orders: 'status', plan7: 'week', prodsum: 'perf', perf: 'ops', issues: 'now' };   // 주소에 #이 없을 때 화면이 여는 하위 화면
+  const NAV = [...ALL.filter((t, k, A) => A.findIndex((u) => u[1].split('#')[0] === t[1].split('#')[0]) === k).map((t) => [t[0], t[1].split('#')[0], t[2]])];
   /* 공개 화면 제한(11/2 사용자 'IT 보안 검토 동안 가동 캘린더·소재 캘린더·재고 추이만 남기고 나머지 숨김').
      되돌리려면 SHOW = null. 목록에 없는 화면을 직접 열면 가동 캘린더로 보내고, 남긴 화면 안의 다른 화면 링크는 글자만 남김 */
   const SHOW = null;   // 11/2 회의 뒤 사용자 '다시 전부 다 보여줘' — 3화면만 남기려면 ['supply', 'matcal', 'integrated']
@@ -107,26 +115,38 @@
   /* 마크: 겹친 강판 띠(도금층·도장층)를 형상화한 자체 도안 — 공식 CI 파일을 받으면 여기만 바꾸면 됨 */
   const MARK = '<svg class="mk" viewBox="0 0 40 40" aria-hidden="true"><defs><clipPath id="mkc"><rect width="40" height="40" rx="11"/></clipPath></defs><g clip-path="url(#mkc)"><rect width="40" height="40" fill="#1b3f5f"/><path d="M-6 30 30-6h9L3 30z" fill="#3774a1"/><path d="M4 40 40 4v9L13 40z" fill="#6cb1d8"/><path d="M17 40 40 17v8L25 40z" fill="#ffffff" opacity=".92"/></g></svg>';
   const GRPCLR = { 도금: 'var(--gc-g)', 컬러: 'var(--gc-c)', 소재: 'var(--gc-m)', '계획 계산': 'var(--gc-x)' };
+  const DOCSP = (pg) => (DOCS.includes(pg) ? 'docs' : pg);
+  /* 지금 화면의 메뉴 칸: 화면 id + 주소 # 가 같은 칸 → 없으면 # 없는 칸 → 그 화면의 첫 칸 */
+  function curItem(pg) {
+    const hs = (location.hash || '').slice(1) || DEFV[pg] || '', C = ALL.filter((x) => x[0] === DOCSP(pg));
+    return C.find((x) => (x[1].split('#')[1] || '') === hs) || C.find((x) => !x[1].includes('#')) || C[0] || null;
+  }
+  const tabKey = (t) => `${t[0]}|${t[1].split('#')[1] || ''}`;
+  let built = false, curG = null;
   function build() {
     const h = document.getElementById('shell'); if (!h) return;
     const d = h.dataset, esc = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    // 메뉴: '경영 보고'(오너용 5개)는 늘 펼침, 나머지 실무 묶음은 접어 두고 머리글을 누르면 펼침(지금 화면이 든 묶음은 자동으로 펼침, 펼친 상태 기억)
     let open0 = []; try { open0 = JSON.parse(localStorage.getItem(NKEY) || '[]'); } catch (e) { /* 무시 */ }
-    const isOn = (x) => x[0] === d.page || (x[0] === 'docs' && DOCS.includes(d.page));
-    const curM = MENU.find((m) => m[3].some(isOn));
-    const mOK = (m) => !SHOWF || m[3].some((t) => SHOWF.includes(t[1]));
-    const mlink = (m, i) => { const t0 = SHOWF ? m[3].find((t) => SHOWF.includes(t[1])) : m[3][0];
+    const cur = curItem(d.page), curM = MENU.find((m) => m[3].includes(cur)) || null, inAdm = ADMIN.includes(cur);
+    curG = curM ? curM[0] : inAdm ? ADMN : '';
+    const okT = (t) => !SHOWF || SHOWF.includes(t[1].split('#')[0]);
+    const mOK = (m) => m[3].some(okT);
+    const only = (t) => (ONLY[t[0]] ? ` data-only="${ONLY[t[0]]}"` : '');
+    const mlink = (m, i) => { const t0 = m[3].find(okT);
       return `<a href="${t0[1]}" class="nv-m"${m === curM ? ' aria-current="page"' : ''}>${icon(m[2])}<span><small class="nv-no">${String(i + 1).padStart(2, '0')}</small>${m[1]}</span></a>`; };
-    const link = (x) => `<a href="${x[1]}"${isOn(x) ? ' aria-current="page"' : ''}${ONLY[x[0]] ? ` data-only="${ONLY[x[0]]}"` : ''}>${icon(x[0])}<span>${x[2]}</span></a>`;
-    const adm = SHOWF ? [] : ADMIN, aOpen = adm.some(isOn) || open0.includes('관리·도움말');
-    // 메뉴 밑 세부 탭(11/4 사용자 '탭을 들어가야 세부 탭이 눌러지던데, 탭 밑에 세부탭이 뜨게') — 화면에 들어가지 않고 바로 이동
-    const subs = (m) => { const L = m[3].filter((t) => t[3] !== 'h' && (!SHOWF || SHOWF.includes(t[1].split('#')[0])));
-      return L.length > 1 ? `<div class="nv-sub">${L.map((t) => `<a href="${t[1]}" data-tab="${t[0]}|${t[1].split('#')[1] || ''}"${ONLY[t[0]] ? ` data-only="${ONLY[t[0]]}"` : ''}>${esc(t[2])}</a>`).join('')}</div>` : ''; };
+    const link = (x) => `<a href="${x[1]}" data-tab="${tabKey(x)}"${only(x)}>${icon(x[0])}<span>${x[2]}</span></a>`;
+    const adm = SHOWF ? [] : ADMIN, aOpen = inAdm || open0.includes(ADMN);
+    // 메뉴 밑 세부 탭(11/4 사용자 '탭 밑에 세부탭이 뜨게') — 화면에 들어가지 않고 바로 이동
+    const subs = (m) => { const L = m[3].filter((t) => t[3] !== 't' && okT(t));
+      return L.length > 1 ? `<div class="nv-sub">${L.map((t) => `<a href="${t[1]}" data-tab="${tabKey(t)}"${only(t)}>${esc(t[2])}</a>`).join('')}</div>` : ''; };
     const nav = MENU.map((m, i) => (mOK(m) ? mlink(m, i) + subs(m) : '')).join('')
-      + (adm.length ? `<div class="nv-sec${aOpen ? ' open' : ''}" data-g="관리·도움말"><button type="button" class="nv-grp nv-tg" aria-expanded="${aOpen}">관리·도움말<span class="nv-n">${adm.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${adm.map(link).join('')}</div></div>` : '');
-    const vis = curM ? curM[3].filter((t) => t[3] !== 'h' && (!SHOWF || SHOWF.includes(t[1].split('#')[0]))) : [];
-    const hid = curM ? curM[3].find((t) => t[3] === 'h' && t[0] === d.page) : null;   // 전문 화면을 열었을 때는 그 화면 이름도 탭 끝에 보임
-    const tabs = vis.length > 1 || hid ? `<nav class="ct-tabs noprint" aria-label="${esc(curM[1])} 탭">${vis.concat(hid ? [hid] : []).map((t) => `<a href="${t[1]}" data-tab="${t[0]}|${t[1].split('#')[1] || ''}"${ONLY[t[0]] ? ` data-only="${ONLY[t[0]]}"` : ''}${t === hid ? ' class="hid"' : ''}>${esc(t[2])}</a>`).join('')}</nav>` : '';
+      + (adm.length ? `<div class="nv-sec${aOpen ? ' open' : ''}" data-g="${ADMN}"><button type="button" class="nv-grp nv-tg" aria-expanded="${aOpen}"><small class="nv-no">${String(MENU.length + 1).padStart(2, '0')}</small>${ADMN}<span class="nv-n">${adm.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${adm.map(link).join('')}</div></div>` : '');
+    // 화면 위 탭: 메뉴 묶음의 칸들. 관리 화면은 같은 파일의 하위 화면이 여럿일 때만(예: 생산 실적 · 가동·휴지 · 제품 재고 · 출하)
+    const file = cur ? cur[1].split('#')[0] : '';
+    const vis = (curM ? curM[3] : inAdm ? ALL.filter((t) => t[1].split('#')[0] === file) : []).filter(okT);
+    const tabs = vis.length > 1 ? `<nav class="ct-tabs noprint" aria-label="${esc(curM ? curM[1] : cur[2])} 탭">${vis.map((t) => `<a href="${t[1]}" data-tab="${tabKey(t)}"${only(t)}>${esc(t[2])}</a>`).join('')}</nav>` : '';
+    const title = d.titleAuto != null && cur ? cur[2] : (d.title || document.title);   // data-title-auto: 하위 화면(#)마다 제목 = 메뉴 이름
+    const crumb = curM ? `${String(MENU.indexOf(curM) + 1).padStart(2, '0')} ${curM[1]}` : inAdm ? `${String(MENU.length + 1).padStart(2, '0')} ${ADMN}` : d.crumb;
     const TH = { auto: '자동', light: '밝게', dark: '어둡게' };
     h.className = 'shell-top';
     h.innerHTML = `<div class="topbar noprint"><button type="button" class="hamb" aria-label="메뉴 열기" aria-expanded="false"><i></i><i></i><i></i></button><a class="brand" href="${HOME}">${MARK}<span class="bt"><b>POSCO STEELEON</b><small>도금·컬러 가동계획</small></span></a><a class="fresh" id="ui-fresh-m" href="health.html" hidden></a></div>
@@ -139,29 +159,33 @@
         </div>
       </aside>
       <div class="scrim noprint" aria-hidden="true"></div>
-      <div class="wrap shell-head"><div class="sh-l">${curM || d.crumb ? `<div class="crumb">${esc(curM ? `${String(MENU.indexOf(curM) + 1).padStart(2, '0')} ${curM[1]}` : d.crumb)}</div>` : ''}<div class="h1row"><h1>${esc(d.title || document.title)}</h1><div class="scope-seg hd-scope noprint" role="group" aria-label="공정 보기">${Object.entries(SCN).map(([k, n]) => `<button type="button" data-sc="${k}" aria-pressed="${k === scope}">${n}</button>`).join('')}</div>${HELP[d.page] ? '<button type="button" class="hbtn noprint" aria-expanded="false" aria-controls="ui-help" title="이 화면 사용법">?</button>' : ''}</div>${d.sub != null ? `<p class="sub" id="ui-sub">${esc(d.sub)}</p>` : ''}${HELP[d.page] ? `<p class="help" id="ui-help" hidden><b>이 화면에서</b>${esc(HELP[d.page])}</p>` : ''}${tabs}</div></div>`;
+      <div class="wrap shell-head"><div class="sh-l">${crumb ? `<div class="crumb">${esc(crumb)}</div>` : ''}<div class="h1row"><h1>${esc(title)}</h1><div class="scope-seg hd-scope noprint" role="group" aria-label="공정 보기">${Object.entries(SCN).map(([k, n]) => `<button type="button" data-sc="${k}" aria-pressed="${k === scope}">${n}</button>`).join('')}</div>${HELP[d.page] ? '<button type="button" class="hbtn noprint" aria-expanded="false" aria-controls="ui-help" title="이 화면 사용법">?</button>' : ''}</div>${d.sub != null ? `<p class="sub" id="ui-sub">${esc(d.sub)}</p>` : ''}${HELP[d.page] ? `<p class="help" id="ui-help" hidden><b>이 화면에서</b>${esc(HELP[d.page])}</p>` : ''}${tabs}</div></div>`;
     document.body.classList.add('has-side');
     const hb = h.querySelector('.hbtn'); if (hb) hb.addEventListener('click', () => { const p = h.querySelector('#ui-help'), v = p.hidden; p.hidden = !v; hb.setAttribute('aria-expanded', String(v)); });
     const open = (v) => { document.body.classList.toggle('nav-open', v); h.querySelector('.hamb').setAttribute('aria-expanded', String(v)); };
     h.querySelector('.hamb').addEventListener('click', () => open(!document.body.classList.contains('nav-open')));
     h.querySelector('.scrim').addEventListener('click', () => open(false));
-    addEventListener('keydown', (e) => { if (e.key === 'Escape') open(false); });
     h.querySelectorAll('.nv-tg').forEach((b) => b.addEventListener('click', () => {
       const sec = b.parentElement, v = !sec.classList.contains('open'); sec.classList.toggle('open', v); b.setAttribute('aria-expanded', String(v));
       const L = [...h.querySelectorAll('.nv-sec.open')].map((x) => x.dataset.g); try { localStorage.setItem(NKEY, JSON.stringify(L)); } catch (e) { /* 무시 */ }
     }));
-    const markTab = () => { const hs = (location.hash || '').slice(1), L = [...h.querySelectorAll('.ct-tabs a, .nv-sub a')], mine = L.filter((a) => a.dataset.tab.split('|')[0] === d.page);
-      const pick = (box) => { const M = mine.filter((a) => a.closest(box)); return M.find((a) => a.dataset.tab.split('|')[1] === hs) || M.find((a) => !a.dataset.tab.split('|')[1]) || M[0]; };
-      const on = [pick('.ct-tabs'), pick('.nv-sub')];
-      L.forEach((a) => (on.includes(a) ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'))); };
-    markTab(); addEventListener('hashchange', markTab);
-    const curA = h.querySelector('.shell-nav a[aria-current]'); if (curA) requestAnimationFrame(() => curA.scrollIntoView({ block: 'nearest' }));
+    const key = cur ? tabKey(cur) : '';
+    h.querySelectorAll('a[data-tab]').forEach((a) => (a.dataset.tab === key ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+    const curA = h.querySelector('.shell-nav a[data-tab][aria-current]') || h.querySelector('.shell-nav a[aria-current]'); if (curA) requestAnimationFrame(() => curA.scrollIntoView({ block: 'nearest' }));
     h.querySelectorAll('.scope-seg button').forEach((b) => b.addEventListener('click', () => { if (b.dataset.sc !== scope) setScope(b.dataset.sc); }));
     h.querySelectorAll('.shell-nav a[data-only], .ct-tabs a[data-only]').forEach((a) => a.classList.toggle('dim', scope !== 'all' && !a.dataset.only.includes(scope)));
     notice();
     h.querySelector('#ui-theme').addEventListener('click', (e) => {
       theme = { auto: 'light', light: 'dark', dark: 'auto' }[theme]; try { localStorage.setItem(TKEY, theme); } catch (x) { /* 무시 */ }
       applyTheme(theme); e.currentTarget.textContent = TH[theme];
+    });
+    if (built) return; built = true;
+    addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.body.classList.remove('nav-open'); const hm = h.querySelector('.hamb'); if (hm) hm.setAttribute('aria-expanded', 'false'); } });
+    /* 주소 # 가 바뀌면 지금 위치 표시를 다시 — 묶음이 바뀌거나(계획 변경 ↔ 주간 생산 일정) 제목이 # 마다 다르면 머리를 다시 그림 */
+    addEventListener('hashchange', () => {
+      const c2 = curItem(d.page), g2 = MENU.find((m) => m[3].includes(c2)), k2 = g2 ? g2[0] : ADMIN.includes(c2) ? ADMN : '';
+      if (k2 !== curG || d.titleAuto != null) { const nopen = document.body.classList.contains('nav-open'); build(); fresh(); document.body.classList.toggle('nav-open', nopen); return; }
+      const kk = c2 ? tabKey(c2) : ''; h.querySelectorAll('a[data-tab]').forEach((a) => (a.dataset.tab === kk ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
     });
   }
 
@@ -208,6 +232,20 @@
     });
   };
 
+  /* 공통 표기(11/10 화면마다 11-10 · 2026-11-10 · '2026. 11. 10.', 톤 · 천톤 · 25K 가 섞여 있던 것):
+     UI.fmtDate(v)     → 'M/D'(기준일과 같은 해) · 'YYYY.M.D'(다른 해). v = 'YYYY-MM-DD…' 글자 또는 Date
+     UI.fmtDateTime(v) → 'M/D HH:MM'(한국 시각). 시각 없는 날짜만 오면 'M/D'. 그래프 눈금의 천 단위 줄임은 UI.tick('25k', 소문자 k)
+     UI.fmtT(v)        → '12,345t'(반올림한 정수 + 천 단위 쉼표 + t). 값이 없으면 '–'
+     UI.rate(pct)      → 달성률(실적 ÷ 계획·일정, %) 판정 한 기준 — 홈 · 주간 보고 · 관제 칩이 같은 색:
+                         98% 이상 = 'ok'(초록, 초과 달성도 ok) · 90% 이상 98% 미만 = 'warn'(주황) · 90% 미만 = 'bad'(빨강) · 값 없음 = ''
+                         (재고처럼 '많아도 문제'인 값은 이 함수를 쓰지 않음) */
+  const isoOf = (v) => { if (v == null || v === '') return ''; if (v instanceof Date) return isNaN(v) ? '' : new Date(v.getTime() + 9 * 36e5).toISOString(); let t = String(v).trim(); if (/^\d{2}-\d{2}([ T]\d{2}:\d{2})?$/.test(t)) t = `${UI.today().slice(0, 4)}-${t}`;   // 해 없는 '11-10 09:45'
+    return /^\d{4}-\d{2}-\d{2}$/.test(t) || /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(t) ? t.replace(' ', 'T') : (/^\d{4}-\d{2}-\d{2}T.*(Z|[+-]\d{2}:?\d{2})$/.test(t) ? kstIso(t) || '' : (/^\d{4}-\d{2}-\d{2}/.test(t) ? t : '')); };
+  UI.fmtDate = (v) => { const k = isoOf(v); if (!k) return v == null || v === '' ? '–' : String(v); const y = k.slice(0, 4), md = `${+k.slice(5, 7)}/${+k.slice(8, 10)}`; return y === UI.today().slice(0, 4) ? md : `${y}.${+k.slice(5, 7)}.${+k.slice(8, 10)}`; };
+  UI.fmtDateTime = (v) => { const k = isoOf(v); if (!k) return v == null || v === '' ? '–' : String(v); const md = `${+k.slice(5, 7)}/${+k.slice(8, 10)}`; return /T\d{2}:\d{2}/.test(k) ? `${md} ${k.slice(11, 16)}` : md; };
+  UI.fmtT = (v) => (v == null || v === '' || isNaN(+v) ? '–' : `${Math.round(+v).toLocaleString('ko-KR')}t`);
+  UI.rate = (pct) => (pct == null || pct === '' || isNaN(+pct) ? '' : +pct >= 98 ? 'ok' : +pct >= 90 ? 'warn' : 'bad');
+
   /* 자료 신선도: status.json(사내 PC 자동 실행기·클라우드 게시 중 최신) → 헤더 배지(기준일 표시) + 오래되면 경고 띠 */
   async function fresh() {
     const h = document.getElementById('shell'); if (!h) return;
@@ -230,7 +268,7 @@
   /* 화면 한 줄 도움말 */
   const HELP = {
     home: '주요 숫자 6개 → 우선 조치(누르면 해당 주문) → 라인별 진도 → 기간 생산 계획. 기간(금일·이번 주(수~화)·이번 달)과 보기(도금·컬러)로 범위를 좁힘',
-    integrated: '기준 계획 기준 주별 제품·자가재 재고 추이와 일별 배치 기준. 날짜별 가동은 가동 캘린더, 라인별 일정은 가동 현황에서',
+    integrated: '기준 계획 기준 주별 제품·자가재 재고 추이와 일별 배치 기준. 날짜별 가동은 월간 가동에서',
     status: '도금 1·2CGL 게시 계획(매일 재계획)의 월별 간트·강종 전환·부서별 물량',
     rolling: '판매계획·자가재계획 엑셀로 도금 계획을 새로 계산하거나 실적으로 재계획하고 게시(담당자용). 정기수리를 추가하면 정지 시나리오도 볼 수 있음',
     analysis: '(계획 담당자용) MES 도금 실적으로 속도·M/C 손실·정지를 재산출해 계획 조건과 비교 — 반영권장 값은 계획 계산에 넣을 후보',
@@ -354,7 +392,15 @@
       const O = pe ? await GP.decryptJSON(pe, pw) : null; if (!O) return;
       const MO = me ? await GP.decryptJSON(me, pw).catch(() => null) : null;
       const b = document.createElement('div'); b.id = 'ui-ctl'; b.className = 'wrap ctl-strip';
-      const draw = () => { const html = UI.ctlStrip(O, MO); b.innerHTML = html || ''; b.hidden = !html; };   // 전체·도금·컬러 바꾸면 그 공정 판매그룹만 다시(11/5 사용자 '도금 선택해도 컬러가 나온다')
+      /* 11/10: 홈 밖 화면은 한 줄 요약('관제 · 조치 n · 주의 n')만 — 누르면 판매그룹별 값이 펼쳐짐(펼친 상태는 이 탭에서만 기억) */
+      let op = false; try { op = sessionStorage.getItem('cgl-ctl-open') === '1'; } catch (e) { /* 무시 */ }
+      const draw = () => {   // 전체·도금·컬러 바꾸면 그 공정 판매그룹만 다시(11/5 사용자 '도금 선택해도 컬러가 나온다')
+        const R = UI.ctlRows(O, MO) || [], html = R.length ? UI.ctlStrip(O, MO) : ''; b.hidden = !html; if (!html) { b.innerHTML = ''; return; }
+        const n = (t) => R.filter((r) => r.w === t).length, nb = n('bad'), nw = n('warn');
+        b.classList.toggle('open', op);
+        b.innerHTML = `<button type="button" class="cs-sum" aria-expanded="${op}" aria-controls="ui-ctl-all"><b>관제</b>${nb ? `<span class="cs-n bad"><i class="cdot bad"></i>조치 ${nb}</span>` : ''}${nw ? `<span class="cs-n warn"><i class="cdot warn"></i>주의 ${nw}</span>` : ''}${!nb && !nw ? '<span class="cs-n ok"><i class="cdot ok"></i>정상</span>' : ''}<svg class="cs-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="cs-all" id="ui-ctl-all"${op ? '' : ' hidden'}>${html}</div>`;
+        b.querySelector('.cs-sum').onclick = () => { op = !op; try { sessionStorage.setItem('cgl-ctl-open', op ? '1' : '0'); } catch (e) { /* 무시 */ } draw(); };
+      };
       draw(); (document.getElementById('ui-stale') || h).after(b);
       const mn = document.querySelector('main'); if (mn) { const cs = getComputedStyle(mn); b.style.maxWidth = cs.maxWidth; b.style.paddingLeft = cs.paddingLeft; b.style.paddingRight = cs.paddingRight; }   // 아래 기준일 줄과 왼쪽 맞춤
       UI.onScope(draw);
@@ -376,7 +422,44 @@
       if (nat > full * 0.62) { if (old) t.style.width = old; else t.style.removeProperty('width'); }
     });
   }
-  let tidyT = 0; const tidySoon = () => { clearTimeout(tidyT); tidyT = setTimeout(tidyTables, 120); };
+  /* 긴 표 머리글 붙박이(11/10): 화면 높이보다 긴 표는 스크롤해도 머리글이 위에 남음.
+     ① 표가 가로로 넘치지 않으면 CSS sticky — 표를 감싼 가로 스크롤 상자(.scroll)·카드(overflow hidden)가 있으면 sticky 가 그 상자 기준이 되므로 그 상자를 clip 으로 바꿈
+     ② 가로로 넘치는 표(가로 스크롤 상자 안 = 좁은 화면 대부분)는 CSS 로 안 되어, 스크롤할 때 머리글 줄을 그만큼 내려 줌(transform)
+     세로로 따로 스크롤하는 상자 안의 표는 건드리지 않음. 좁은 화면은 위 막대(.topbar) 높이만큼 내려 붙임. 끄려면 표나 상자에 data-nostick */
+  const stkJs = new Set(); let stkTop = 0, stkRaf = 0;
+  const stkMove = () => { stkRaf = 0; stkJs.forEach((t) => {
+    if (!t.isConnected || !t.tHead) { stkJs.delete(t); return; }
+    const r = t.getBoundingClientRect(), hh = t.tHead.offsetHeight;
+    const off = r.top < stkTop && r.bottom > stkTop + hh * 2 ? Math.round(Math.min(stkTop - r.top, r.height - hh * 2)) : 0;
+    if (off !== t._stk) { t._stk = off; t.tHead.style.transform = off ? `translateY(${off}px)` : ''; }
+  }); };
+  addEventListener('scroll', () => { if (stkJs.size && !stkRaf) stkRaf = requestAnimationFrame(stkMove); }, { passive: true });
+  function stickyHeads() {
+    const tb = document.querySelector('.topbar'); stkTop = tb && getComputedStyle(tb).position === 'sticky' ? tb.offsetHeight : 0;
+    document.querySelectorAll('main table').forEach((t) => {
+      if (!t.tHead || !t.tHead.rows.length || !t.offsetParent || t.closest('.ch, .ln-c, .ct-panel, dialog, [data-nostick]')) return;
+      const long = t.offsetHeight > innerHeight * 0.9;
+      const boxes = []; let mode = 'css';
+      for (let e = t.parentElement; e && e !== document.body && mode !== 'no'; e = e.parentElement) {
+        const cs = getComputedStyle(e), ox = cs.overflowX, oy = cs.overflowY, mine = !!e.dataset.stkBox;
+        if (!mine && ox === 'visible' && oy === 'visible') continue;
+        if (!mine && /clip|visible/.test(ox) && /clip|visible/.test(oy)) continue;
+        if (/auto|scroll/.test(oy) && e.scrollHeight > e.clientHeight + 40) mode = 'no';   // 세로로 스크롤하는 상자 = 그 상자가 알아서
+        else if (e.scrollWidth > e.clientWidth + 1) mode = 'js';
+        else boxes.push(e);
+      }
+      const css = long && mode === 'css', js = long && mode === 'js';
+      const bg = () => [...t.tHead.rows].forEach((r) => [...r.cells].forEach((c) => { if (!c.classList.contains('stk-bg') && /rgba\(.*, 0\)|transparent/.test(getComputedStyle(c).backgroundColor)) c.classList.add('stk-bg'); }));
+      if (css) { boxes.forEach((e) => { e.dataset.stkBox = '1'; e.classList.add('stk-box'); }); t.classList.add('stk'); let y = stkTop; [...t.tHead.rows].forEach((r) => { [...r.cells].forEach((c) => { c.style.top = y + 'px'; }); y += r.offsetHeight; }); bg(); }
+      else if (t.classList.contains('stk')) { t.classList.remove('stk'); [...t.tHead.rows].forEach((r) => [...r.cells].forEach((c) => c.style.removeProperty('top'))); }
+      if (js) { t.classList.add('stk-js'); stkJs.add(t); bg(); }
+      else if (stkJs.has(t)) { stkJs.delete(t); t.classList.remove('stk-js'); t.tHead.style.transform = ''; t._stk = 0; }
+    });
+    document.querySelectorAll('.stk-box').forEach((e) => { if (!e.querySelector('table.stk')) { delete e.dataset.stkBox; e.classList.remove('stk-box'); } });
+    stkMove();
+  }
+  UI.stickyHeads = stickyHeads;
+  let tidyT = 0; const tidySoon = () => { clearTimeout(tidyT); tidyT = setTimeout(() => { tidyTables(); try { stickyHeads(); } catch (e) { /* 무시 */ } }, 120); };
   const boot = () => { build(); fresh(); watchExport(); ctlStrip(); tidySoon(); try { new MutationObserver(tidySoon).observe(document.querySelector('main') || document.body, { childList: true, subtree: true }); } catch (e) { /* 무시 */ } addEventListener('resize', () => { document.querySelectorAll('main table[data-tidy]').forEach((t) => delete t.dataset.tidy); tidySoon(); }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 

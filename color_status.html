@@ -6,10 +6,10 @@
 <title>컬러 가동 현황</title>
 <meta name="description" content="컬러 1~4CCL 가동계획 조회 — 도금 가동 현황과 같은 양식">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="style.css?v=2611100149">
-<link rel="stylesheet" href="dashboard.css?v=2611100149">
-<link rel="stylesheet" href="ui/theme.css?v=2611100149">
-<link rel="stylesheet" href="ui/bridge.css?v=2611100149">
+<link rel="stylesheet" href="style.css?v=2611100306">
+<link rel="stylesheet" href="dashboard.css?v=2611100306">
+<link rel="stylesheet" href="ui/theme.css?v=2611100306">
+<link rel="stylesheet" href="ui/bridge.css?v=2611100306">
 <style>/* 11/10 점검: 한 달(31일)이 한 화면에 — 26일에서 잘리던 것 */ html body main.wrap table.gtable { min-width: 1150px !important; width: 100%; } html body main.wrap .gtable th, html body main.wrap .gtable td { min-width: 0 !important; padding: 6px 1px; } .load-row .n.neg { color: var(--bad); font-weight: 800; }
 .gtable td.idle { background: color-mix(in srgb, var(--sd) 55%, transparent); } .gtable td[data-d] { cursor: pointer; } .gtable tr.r-fam td { font-weight: 800; }/* 기준일 라인 현황 카드 */
 .ln-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
@@ -43,7 +43,7 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 .rg-n { display: flex; align-items: center; gap: 7px; white-space: nowrap; font-size: 14.5px; } .rg-n i { width: 12px; height: 12px; border-radius: 3px; flex: none; }
 .rg-bar { position: relative; display: flex; height: 26px; gap: 2px; } .rg-bar u { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); border-radius: 1px; }
 .rg-bar i, .rg-leg i { font-style: normal; display: flex; align-items: center; justify-content: center; font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; border-radius: 4px; }
-.rg-bar i.a, .rg-leg i.a { background: var(--brand-2); color: #fff; } .rg-bar i.c, .rg-leg i.c { background: color-mix(in srgb, var(--brand-2) 45%, var(--surface)); color: var(--ink); } .rg-bar i.p, .rg-leg i.p { background: var(--grid); color: var(--ink); }
+.rg-bar i.a, .rg-leg i.a { background: var(--brand-2); color: var(--on-brand, #fff); } .rg-bar i.c, .rg-leg i.c { background: color-mix(in srgb, var(--brand-2) 45%, var(--surface)); color: var(--ink); } .rg-bar i.p, .rg-leg i.p { background: var(--grid); color: var(--ink); }
 .rg-t { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; } .rg-t b { font-size: 15px; font-variant-numeric: tabular-nums; } .rg-t .st { font-size: 13.5px; }
 .rg-p { grid-column: 1; grid-row: 2; font-size: 13.5px; color: var(--ink-2); padding-left: 19px; }
 .rg-tot { border-bottom: 0; } .rg-tot .rg-n b { font-size: 15px; }
@@ -119,7 +119,7 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
       <summary><h2>상세: 미편성 목록 · 일별 품목</h2></summary>
       <h3>미편성 — 판매계획에 있지만 만들 수 있는 라인이 그 달 한도(MES 월차)·가동시간을 다 써서 일정에 못 넣은 물량. 이대로면 그 달 판매계획 미달</h3>
       <div class="scroll"><table class="data" id="d-early"></table></div>
-      <p class="hint">일별 품목과 배치 사유는 <a href="supply.html">가동 캘린더</a>에서 날짜 선택 시 확인.</p>
+      <p class="hint">일별 품목과 배치 사유는 <a href="supply.html">월간 가동</a>에서 날짜 선택 시 확인.</p>
     </details>
     <div class="row2">
       <section class="card">
@@ -137,9 +137,9 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <footer class="wrap foot">조회 전용 · 원자료: 통합 가동계획(컬러 판매계획·계획재 운영안·MES 월차·실적)</footer>
 
-<script src="ui/shell.js?v=2611100149"></script>
-<script src="engine/crypto.js?v=2611100149"></script>
-<script src="color_status.js?v=2611100149"></script>
-<script src="color_rolling.js?v=2611100149"></script>
+<script src="ui/shell.js?v=2611100306"></script>
+<script src="engine/crypto.js?v=2611100306"></script>
+<script src="color_status.js?v=2611100306"></script>
+<script src="color_rolling.js?v=2611100306"></script>
 </body>
 </html>

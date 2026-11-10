@@ -56,6 +56,7 @@
       const x = await GP.decryptJSON(e, pw); if (!x || !x.dayMin) return;
       A.actMin = {}; for (const [d, L] of Object.entries(x.dayMin)) for (const [l, m] of Object.entries(L)) A.actMin[`${l}|${d}`] = m;
       A.actStops = x.dayStops || null; A.actDummy = x.dayDummy || null;   // 24시간 구성(10/22 사용자: 24시간 안 되는 날 이유) — 설치 묶음 v69 이상
+      A.actTon = {}; for (const r of x.daily || []) for (const [l, t] of Object.entries(r)) if (l !== 'd') A.actTon[`${l}|${r.d}`] = t;   // 11/10: 재계획 기준일 다음 날은 계획 톤에 '실적' 표시가 붙던 문제 → MES 일 실적 톤
       A.accHist = x.accHist || null;                              // 날마다 '그날 아침 계획 vs 실적'(사내 PC 매일 기록) — 계획 대비 실적 표
       render();
     } catch (err) { /* 실적 자료 없으면 환산값 */ }
@@ -99,7 +100,7 @@
     const mi = A.mIdx(d), [yy, mm] = A.H.ym[Math.max(0, mi)], el = +d.slice(8) / GP.daysInMonth(yy, mm);
     $('d-now').innerHTML = P.lines.map((l) => {
       const c = A.calBy[`${l}|${d}`]; if (!c) return '';
-      const used = A.used[`${l}|${d}`] || 0, prod = A.prodLD[`${l}|${d}`] || 0, x = mix(l, d);
+      const used = A.used[`${l}|${d}`] || 0, x = mix(l, d), aT = x && A.actTon ? A.actTon[`${l}|${d}`] : null, prod = aT != null ? aT : (A.prodLD[`${l}|${d}`] || 0);
       const cp = A.campaigns.find((q) => q.line === l && q.start <= d && d <= q.end);
       const next = A.events.find((e) => e.line === l && e.date > d);
       const sdNext = P.shutdowns.find((q) => q.line === l && q.start > d);

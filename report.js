@@ -120,7 +120,7 @@
       const w = (v) => Math.max(0, Math.min(100, ((v || 0) / max) * 100)).toFixed(1);
       const rt = r.ref ? (r.v / r.ref) * 100 : null;
       let cls = 'ok';
-      if (rt != null) cls = mode === 'stock' ? (rt > 130 ? 'bad' : rt > 110 || rt < 80 ? 'warn' : 'ok') : (rt < 90 ? 'bad' : rt < 98 ? 'warn' : 'ok');
+      if (rt != null) cls = mode === 'stock' ? (rt > 130 ? 'bad' : rt > 110 || rt < 80 ? 'warn' : 'ok') : UI.rate(rt);   // 달성률 색 = 공통 기준(ui/shell.js UI.rate)
       if (r.ref == null) cls = 'na';
       const right = mode === 'stock'
         ? (r.ref == null ? `<b>${n0(r.v)}</b>t <span class="muted">목표 없음</span>` : `<b>${n0(r.v)}</b>t <span class="muted">/ 목표 ${n0(r.ref)}</span> <span class="pc ${cls}">${Math.round(rt)}%</span>`)
@@ -153,9 +153,9 @@
     const asOf = (M && M.asOf) || (ST_ && ST_.asOf);
     const asOfS = asOf ? md(asOf) : md(P.to);
     const MN = (() => { const a_ = String((M && M.asOf) || P.to || ''), m_ = +a_.slice(5, 7), d_ = +a_.slice(8, 10); return d_ > 1 ? m_ : (m_ + 10) % 12 + 1; })();   // 11/10 점검: '10월' 고정 글자 → 속보 달(속보는 전날까지)
-    const h1 = document.querySelector('.shell-head h1'); if (h1) h1.textContent = `주간 실적 보고 — ${o.title || w1}`;
+    const h1 = document.querySelector('.shell-head h1'); if (h1) h1.textContent = `주간 보고 — ${o.title || w1}`;
     document.title = `주간 보고 ${o.title || w1}`;
-    UI.sub(`주간 실적 ${w1} · 월 진도·재고 ${asOfS} 기준 · 작성 ${new Date(o.createdAt).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })}`);
+    UI.sub(`주간 실적 ${w1} · 월 진도·재고 ${asOfS} 기준 · 작성 ${UI.fmtDate(o.createdAt)}`);
     const sm = {}; (N.summary || []).forEach((x) => { sm[x.area] = x; });
     const prod = (name) => M && M.prod.find((x) => x.line === name);
     const shipT = M && M.ship.find((x) => x.name === '합계');
@@ -163,7 +163,7 @@
     const sumC = (rows, k) => rows.reduce((a, r) => a + r[k].tpd, 0);
 
     // 상태 기본값(해설이 없을 때): 진도·목표 대비 비율로
-    const auto = (r, lo1, lo2) => (r == null ? null : r >= lo1 ? 'good' : r >= lo2 ? 'warn' : 'bad');
+    const auto = (r) => (r == null || isNaN(r) ? null : { ok: 'good', warn: 'warn', bad: 'bad' }[UI.rate(r)]);   // 달성률 판정 = 공통 기준(UI.rate 98·90)
     const pG = prod('도금 계'), pC = prod('컬러 계');
     const cp = stk('컬러 제품'), gm = stk('도금 소재(F/H)');
     const K = {
@@ -204,7 +204,7 @@
       `<p class="hint">막대 = 실적 누계 · 세로선 = ${asOfS}까지 일정 · ${MN}월 계획 ${n0(pG && pG.month)}t</p></div>`;
     if (pa) b += box('c-pl-plan', '4분기 누적 생산 — 기준 계획 vs 실적', 't');
     b += '</div>';
-    let d = '<div class="scroll"><table class="t"><thead><tr><th>라인</th><th>앞 ${(o.period && o.period.nW0) || 12}주 평균 t/일</th><th>보고 주 t/일</th><th>증감</th><th>속도 t/hr <span class="muted">정지 포함</span></th><th>평균 두께 mm</th><th>가동일당 휴지 h</th></tr></thead><tbody>' +
+    let d = '<div class="scroll"><table class="t"><thead><tr><th>라인</th><th>앞 ' + ((o.period && o.period.nW0) || 12) + '주 평균 t/일</th><th>보고 주 t/일</th><th>증감</th><th>속도 t/hr <span class="muted">정지 포함</span></th><th>평균 두께 mm</th><th>가동일당 휴지 h</th></tr></thead><tbody>' +
       pl.rows.map((r, k) => `<tr><td class="l"><span class="sw" style="background:var(${SER[k]})"></span>${r.line}</td><td>${n0(r.w0.tpd)}</td><td><b>${n0(r.w1.tpd)}</b></td><td>${delta(r.dTpd)}</td><td>${n1(r.w0.tph)} → ${n1(r.w1.tph)}</td><td>${n3(r.w0.thick)} → ${n3(r.w1.thick)}</td><td>${n1(r.w0.stopH)} → ${n1(r.w1.stopH)}</td></tr>`).join('') + '</tbody></table></div>';
     d += '<div class="grid2">' + box('c-pl-trend', '주별 생산량', 't/일') + '<div>';
     if (pa) d += '<p class="ttl">강종 전환(M/C) 일정</p><div class="scroll"><table class="t"><thead><tr><th>일자</th><th>라인</th><th>전환</th></tr></thead><tbody>' +
@@ -226,7 +226,7 @@
       if (M) b += `<div><p class="ttl">${MN}월 진도 <span class="muted">MES 월차계획 · ${asOfS} 기준</span></p>` +
         bullets(M.prod.filter((x) => x.plant === '컬러').map((x) => ({ name: x.line, v: x.actual, ref: x.sched, total: /계$/.test(x.line) })), { mode: 'prod' }) + '</div>';
       b += box('c-co-week', '주별 생산량 (라인 누적)', 't/일') + '</div>';
-      d = '<div class="scroll"><table class="t"><thead><tr><th>라인</th><th>앞 ${(o.period && (o.period.nW0c || o.period.nW0)) || 12}주 평균 t/일</th><th>보고 주 t/일</th><th>증감</th><th>가동일</th><th>속도 t/hr <span class="muted">정지 포함</span></th><th>가동일당 휴지 h</th><th>주요 품목 (t)</th></tr></thead><tbody>' +
+      d = '<div class="scroll"><table class="t"><thead><tr><th>라인</th><th>앞 ' + ((o.period && (o.period.nW0c || o.period.nW0)) || 12) + '주 평균 t/일</th><th>보고 주 t/일</th><th>증감</th><th>가동일</th><th>속도 t/hr <span class="muted">정지 포함</span></th><th>가동일당 휴지 h</th><th>주요 품목 (t)</th></tr></thead><tbody>' +
         co.rows.map((r, k) => `<tr><td class="l"><span class="sw" style="background:var(${SER[k]})"></span>${r.line}</td><td>${n0(r.w0.tpd)}</td><td><b>${n0(r.w1.tpd)}</b></td><td>${delta(r.dTpd)}</td><td>${r.w1.days}/7</td><td>${n1(r.w0.tph)} → ${n1(r.w1.tph)}</td><td>${n1(r.w0.stopH)} → ${n1(r.w1.stopH)}</td><td class="l">${r.top.map((x) => `${esc(x[0])} ${n0(x[1])}`).join(' · ')}</td></tr>`).join('') + '</tbody></table></div>';
       d += '<div class="grid2">' + box('c-co-stop', '주별 휴지 구성 (4라인 합)', '시간/일') + '<div><p class="ttl">휴지 구성 (4라인 합, 시간/일)</p><div class="scroll"><table class="t"><thead><tr><th>구분</th><th>12주 평균</th><th>보고 주</th><th>증감</th></tr></thead><tbody>' +
         co.stops.map((s, k) => `<tr><td class="l"><span class="sw" style="background:var(${SER[k]})"></span>${esc(s.cat)}</td><td>${n1(s.w0)}</td><td><b>${n1(s.w1)}</b></td><td>${delta(pct(s.w1, s.w0), false)}</td></tr>`).join('') + '</tbody></table></div></div></div>';

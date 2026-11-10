@@ -6,7 +6,7 @@
 <title>컬러 생산 캘린더</title>
 <meta name="description" content="컬러 1~4CCL 라인별 월말까지 생산 캘린더 — MES 작업지시(시각표) · 남는 능력은 컬러 계획 편성(휴지 반영) · 소재 현황">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611100149">
+<link rel="stylesheet" href="ui/theme.css?v=2611100306">
 <style>
 main.wrap { max-width: none; }
 :root { --c-conf: #2e7d32; --c-plan: #3774a1; --c-fcst: #8fb8dc; --c-gap: #f4f6f8; }
@@ -21,7 +21,7 @@ table.cg th, table.cg td { border-right: 1px solid var(--line); border-bottom: 1
 table.cg td > button.cell { height: 100%; } button.cell > * { flex-shrink: 0; }
 tr.dsum td { padding: 6px 8px; text-align: right; font-size: 16px; font-variant-numeric: tabular-nums; background: var(--tint-2); } tr.dsum td small { font-size: 13.5px; color: var(--ink-2); margin-left: 1px; } tr.dsum td .sub { font-size: 13.5px; color: var(--ink-2); font-weight: 400; }
 table.cg tr > :first-child { border-left: 1px solid var(--line); width: 92px; }
-table.cg thead th { background: var(--brand); color: #fff; font-size: 14px; font-weight: 800; padding: 7px 4px; text-align: center; white-space: nowrap; }
+table.cg thead th { background: var(--brand); color: var(--on-brand, #fff); font-size: 14px; font-weight: 800; padding: 7px 4px; text-align: center; white-space: nowrap; }
 table.cg thead th.we { background: var(--ink-3); }
 table.cg .pad { background: transparent !important; border: 0 !important; }
 table.cg thead th.nx { background: var(--brand-2); }
@@ -58,7 +58,7 @@ td.jg .mk { display: inline-block; font-size: 13.5px; background: var(--tint-2);
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 0 0 12px; flex-wrap: wrap; }
 .seg button { font: inherit; border: 0; background: var(--surface); color: inherit; padding: 6px 14px; cursor: pointer; white-space: nowrap; }
 .seg button + button { border-left: 1px solid var(--line); }
-.seg button[aria-pressed="true"] { background: var(--brand-2); color: #fff; font-weight: 700; }
+.seg button[aria-pressed="true"] { background: var(--brand-2); color: var(--on-brand, #fff); font-weight: 700; }
 .rg { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 12px; overflow: hidden; }
 .rg > h3 { margin: 0; padding: 9px 14px; background: var(--tint-2); font-size: 16px; display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
 .rg > h3 span { font-size: 14px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
@@ -80,7 +80,7 @@ table.it tr:last-child td { border-bottom: 0; }
 .bd.late { background: var(--warn-bg); color: var(--warn); } .bd.od { background: var(--bad-bg); color: var(--bad); }
 dialog.dd { border: 0; border-radius: 14px; padding: 0; width: min(1180px, 96vw); max-height: 90vh; background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgba(0, 0, 0, .3); }
 dialog.dd::backdrop { background: rgba(15, 23, 32, .45); }
-.dh { position: sticky; top: 0; z-index: 1; background: var(--brand); color: #fff; padding: 12px 18px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+.dh { position: sticky; top: 0; z-index: 1; background: var(--brand); color: var(--on-brand, #fff); padding: 12px 18px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
 .dh b { font-size: 19px; } .dh span { font-size: 14.5px; white-space: nowrap; }
 .dh .x { margin-left: auto; display: flex; gap: 8px; }
 .dh button { font: inherit; font-size: 14px; border: 1px solid rgba(255,255,255,.5); background: transparent; color: #fff; border-radius: 6px; padding: 3px 10px; cursor: pointer; white-space: nowrap; }
@@ -91,7 +91,7 @@ dialog.dd::backdrop { background: rgba(15, 23, 32, .45); }
 .db h4 span.kd { color: #fff; font-weight: 800; } .db h4 span.kd.k예상 { color: var(--ink); }
 .cf { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 10px; }
 .cf input { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: inherit; width: 140px; }
-.cf button.go { font: inherit; font-weight: 800; border: 0; background: var(--brand-2); color: #fff; border-radius: 8px; padding: 8px 16px; cursor: pointer; white-space: nowrap; }
+.cf button.go { font: inherit; font-weight: 800; border: 0; background: var(--brand-2); color: var(--on-brand, #fff); border-radius: 8px; padding: 8px 16px; cursor: pointer; white-space: nowrap; }
 .cf button.go:disabled { opacity: .5; cursor: default; }
 .msg { font-size: 14px; color: var(--ink-2); } .msg .no, b.no { color: var(--bad); } b.okc { color: var(--good); }
 #cc-who { width: 150px; font-size: 13.5px; }
@@ -109,7 +109,7 @@ tr.mvr td { background: var(--tint-2); padding: 8px; }
 .mvw { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; }
 button.go2:disabled { opacity: .4; cursor: default; }
 .pv { font-size: 13.5px; margin-top: 6px; line-height: 1.7; } .pv .no { color: var(--bad); font-weight: 700; } .pv .ok { color: var(--good); font-weight: 800; }
-button.go2 { font: inherit; font-weight: 800; border: 0; background: var(--brand-2); color: #fff; border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+button.go2 { font: inherit; font-weight: 800; border: 0; background: var(--brand-2); color: var(--on-brand, #fff); border-radius: 6px; padding: 4px 12px; cursor: pointer; }
 .how { font-size: 13.5px; line-height: 1.6; color: var(--ink-2); background: var(--sub); border-radius: 8px; padding: 8px 12px; margin: 0 0 10px; }
 .how b { color: var(--ink); margin-right: 6px; } .how label { white-space: nowrap; } .how input { vertical-align: -2px; margin: 0 3px 0 0; }
 .dh .fam { background: #fff !important; color: var(--brand) !important; }
@@ -158,7 +158,7 @@ h4.kh { font-size: 15px; font-weight: 800; margin: 12px 0 6px; } h4.kh i { displ
 </style>
 </head>
 <body>
-<header id="shell" data-page="cccal" data-crumb="컬러" data-title="생산 캘린더" data-sub="라인별 날짜마다 무엇을 만들지 — 누르면 목록"></header>
+<header id="shell" data-page="cccal" data-crumb="컬러" data-title="컬러 생산 캘린더" data-sub="라인별 날짜마다 무엇을 만들지 — 누르면 목록"></header>
 <main class="wrap">
   <div id="cc-main" style="margin-top:12px">
     <section class="card lock" id="cc-lock">
@@ -169,9 +169,9 @@ h4.kh { font-size: 15px; font-weight: 800; margin: 12px 0 6px; } h4.kh i { displ
   </div>
   <dialog class="dd" id="cc-dlg"></dialog>
 </main>
-<footer class="foot"><div class="wrap"><span>원본: MES 컬러 작업지시(1020) · 작업지시 순서 시각표 · 통합 컬러 계획(휴지 반영) · 소재 재고·발주</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611100149"></script>
-<script src="engine/crypto.js?v=2611100149"></script>
-<script src="cc_calendar.js?v=2611100149"></script>
+<footer class="foot"><div class="wrap"><span>원본: MES 컬러 작업지시 · 작업지시 순서 시각표 · 통합 컬러 계획(휴지 반영) · 소재 재고·발주</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2611100306"></script>
+<script src="engine/crypto.js?v=2611100306"></script>
+<script src="cc_calendar.js?v=2611100306"></script>
 </body>
 </html>

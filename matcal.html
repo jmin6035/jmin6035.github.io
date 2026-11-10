@@ -6,7 +6,7 @@
 <title>소재 캘린더</title>
 <meta name="description" content="일별 가동 · 자가재 · 구매 소재(발주·입고·재고) · 제품 재고를 한 달력에서">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611100149">
+<link rel="stylesheet" href="ui/theme.css?v=2611100306">
 <style>
 .sbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 10px; font-size: 13.5px; color: var(--ink-2); }
 .sbar b { color: var(--ink); }
@@ -27,7 +27,7 @@ table.sc { border-collapse: separate; border-spacing: 0; font-size: 13.5px; font
 table.sc th, table.sc td { border-right: 1px solid var(--grid); border-bottom: 1px solid var(--grid); padding: 5px 3px; text-align: center; white-space: nowrap; min-width: 40px; }
 table.sc thead th { position: sticky; top: 0; z-index: 3; background: var(--tint-2); font-weight: 700; cursor: pointer; }
 table.sc thead th.we { color: var(--down); }
-table.sc thead th.today { background: var(--brand-2); color: #fff; }
+table.sc thead th.today { background: var(--brand-2); color: var(--on-brand, #fff); }
 table.sc .lb { position: sticky; left: 0; z-index: 2; background: var(--surface); text-align: left; padding-left: 8px; font-weight: 700; min-width: 132px; border-right: 2px solid var(--line); }
 table.sc thead .lb { z-index: 4; background: var(--tint-2); }
 table.sc tr.sec td { background: var(--surface-2); font-size: 13.5px; font-weight: 800; letter-spacing: .04em; text-align: left; padding: 6px 8px; color: var(--gc); border-top: 2px solid var(--line); }
@@ -72,7 +72,7 @@ table.dt.mt td.st { font-weight: 700; } table.dt.mt td.st.ok { color: var(--good
 .flw .fs.done { opacity: .6; } .flw .fs.done small::after { content: ' ✓'; }
 .flw .fs.now { background: var(--brand-2); border-color: var(--brand-2); } .flw .fs.now small, .flw .fs.now b { color: #fff; }
 table.dt.fl td { vertical-align: middle; padding: 5px 6px; } table.dt.fl td.st { white-space: normal !important; min-width: 150px; max-width: 220px; font-size: 13.5px; line-height: 1.35; } .det table.dt.fl td.wst { min-width: 0; } table.dt.fl tr:not(.cont) td { border-top: 1px solid var(--line); }
-.kd2 { display: inline-block; font-size: 13.5px; font-weight: 800; padding: 0 6px; border-radius: 999px; } .kd2.self { background: color-mix(in srgb, #5b4bb7 14%, var(--surface)); color: #5b4bb7; } .kd2.buy { background: color-mix(in srgb, #c46f00 14%, var(--surface)); color: #8a4b00; }
+.kd2 { display: inline-block; font-size: 13.5px; font-weight: 800; padding: 0 6px; border-radius: 999px; } .kd2.self { background: color-mix(in srgb, #5b4bb7 14%, var(--surface)); color: #5b4bb7; } .kd2.buy { background: color-mix(in srgb, #c46f00 14%, var(--surface)); color: var(--warn); }
 .srcl { font-size: 13.5px; color: var(--ink-3); margin-top: 2px; white-space: normal; max-width: 320px; }
 .fto { font-size: 13.5px; color: #0a7d71; font-weight: 700; margin-top: 2px; }
 .fin { display: flex; flex-direction: column; gap: 2px; margin: 0 0 6px; font-size: 13.5px; color: #5b4bb7; font-weight: 700; }
@@ -98,7 +98,7 @@ table.sc td.nd { color: var(--ink-3); }
 #s-cal3 tr.first td { border-top: 2px solid var(--line); } #s-cal3 td.wk, #s-cal3 th.wk { border-left: 2px solid var(--line); }
 #s-cal3 .lb { display: table-cell; min-width: 170px; } #s-cal3 .lb .tn { display: inline-block; min-width: 92px; font-weight: 800; color: var(--ink); }
 #s-cal3 .kd { display: inline-block; font-size: 13.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
-#s-cal3 .kd.m-ord { background: color-mix(in srgb, #c46f00 16%, var(--surface)); color: #8a4b00; } #s-cal3 tr.m-ord td.v { color: #8a4b00; background: color-mix(in srgb, #c46f00 9%, var(--surface)); }
+#s-cal3 .kd.m-ord { background: color-mix(in srgb, #c46f00 16%, var(--surface)); color: var(--warn); } #s-cal3 tr.m-ord td.v { color: var(--warn); background: color-mix(in srgb, #c46f00 9%, var(--surface)); }
 #s-cal3 .kd.m-inb { background: var(--good-bg); color: var(--good); } #s-cal3 tr.m-inb td.v { color: var(--good); background: color-mix(in srgb, var(--good) 8%, var(--surface)); } #s-cal3 tr.m-inb td.v.nw { background: transparent; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--good) 55%, transparent); }
 #s-cal3 .kd.m-use { background: var(--surface-2); color: var(--ink-2); } #s-cal3 tr.m-use td.v { color: var(--ink-2); font-weight: 500; }
 #s-cal3 td.v.late { background: var(--bad-bg) !important; color: var(--bad) !important; font-weight: 800; }
@@ -143,8 +143,8 @@ table.fm tr.unk td { color: var(--ink-3); }
 table.sc { min-width: 0; table-layout: fixed; font-size: 13.5px; }
 table.sc th, table.sc td { min-width: 0; padding: 7px 0; letter-spacing: -0.3px; font-style: normal !important; border-right: 1px solid var(--grid, #e8ebef); border-bottom: 1px solid var(--grid, #e8ebef); }
 table.sc thead th, .matcal table.sc thead th, .matcal table.sc thead .lb { background: var(--th, #f1f4f8); color: var(--ink-2); font-size: 13.5px; letter-spacing: 0; border-bottom: 1px solid var(--line); }
-table.sc thead th.sat, .matcal table.sc thead th.sat { background: var(--pt-sat); color: #8a4b00; } table.sc thead th.sun, .matcal table.sc thead th.sun { background: var(--pt-sun); color: #a51d2d; }
-table.sc thead th.today, .matcal table.sc thead th.today { background: var(--brand-2); color: #fff; }
+table.sc thead th.sat, .matcal table.sc thead th.sat { background: var(--pt-sat); color: var(--warn); } table.sc thead th.sun, .matcal table.sc thead th.sun { background: var(--pt-sun); color: var(--bad); }
+table.sc thead th.today, .matcal table.sc thead th.today { background: var(--brand-2); color: var(--on-brand, #fff); }
 table.sc thead th span { font-size: 13.5px !important; }
 table.sc tbody td.past { background: var(--pt-act); }
 table.sc td.tb, table.sc th.tb { border-left: 2px solid var(--brand-2); }
@@ -190,7 +190,7 @@ table.t.fwt { margin: 4px 0 0; font-size: 13.5px; width: auto; } table.t.fwt td 
 <style>
 .oj-sum{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 12px}.oj-b{flex:1;min-width:150px;border-radius:10px;padding:10px 12px;border:1px solid var(--line,#ddd)}
 .oj-n{font-size:26px;font-weight:700;line-height:1.1}.oj-n small{font-size:13px;font-weight:400;margin-left:3px}
-.oj-go{background:color-mix(in srgb,#e8590c 14%,transparent)}.oj-late{background:color-mix(in srgb,#c92a2a 15%,transparent)}.oj-ok{background:color-mix(in srgb,#2b8a3e 12%,transparent)}.oj-plan{background:color-mix(in srgb,#1971c2 10%,transparent)}.oj-dot{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:700;white-space:nowrap}.oj-dot.oj-late{color:#c92a2a}.oj-dot.oj-go{color:#d9480f}.oj-dot.oj-ok{color:#2b8a3e}.oj-dot.oj-plan{color:#1864ab}tr.oj-sec td{font-size:16px;font-weight:800;padding:12px 8px 6px;text-align:left!important;border-bottom:2px solid var(--line,#ccc)}tr.oj-g{cursor:pointer}tr.oj-g:hover{background:var(--surface-2,#f4f6f8)}tr.oj-g td{padding:10px 8px;text-align:left!important}tr.oj-g td.r{text-align:right!important}.oj-t td.wrap{white-space:normal;word-break:keep-all;text-align:left!important}.oj-t td:first-child{text-align:left!important}.oj-gn{font-size:16px}.oj-mcs{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0}.oj-mc{padding:4px 10px;border-radius:8px;white-space:nowrap}.oj-spec-h{font-weight:700;margin:8px 0 4px}.oj-gt th,.oj-t th:first-child{text-align:left!important}.oj-gt td.r,.oj-gt th.r{text-align:right!important}
+.oj-go{background:color-mix(in srgb,#e8590c 14%,transparent)}.oj-late{background:color-mix(in srgb,#c92a2a 15%,transparent)}.oj-ok{background:color-mix(in srgb,#2b8a3e 12%,transparent)}.oj-plan{background:color-mix(in srgb,#1971c2 10%,transparent)}.oj-dot{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:700;white-space:nowrap}.oj-dot.oj-late{color: var(--bad)}.oj-dot.oj-go{color:#d9480f}.oj-dot.oj-ok{color: var(--good)}.oj-dot.oj-plan{color:#1864ab}tr.oj-sec td{font-size:16px;font-weight:800;padding:12px 8px 6px;text-align:left!important;border-bottom:2px solid var(--line,#ccc)}tr.oj-g{cursor:pointer}tr.oj-g:hover{background:var(--surface-2,#f4f6f8)}tr.oj-g td{padding:10px 8px;text-align:left!important}tr.oj-g td.r{text-align:right!important}.oj-t td.wrap{white-space:normal;word-break:keep-all;text-align:left!important}.oj-t td:first-child{text-align:left!important}.oj-gn{font-size:16px}.oj-mcs{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0}.oj-mc{padding:4px 10px;border-radius:8px;white-space:nowrap}.oj-spec-h{font-weight:700;margin:8px 0 4px}.oj-gt th,.oj-t th:first-child{text-align:left!important}.oj-gt td.r,.oj-gt th.r{text-align:right!important}
 h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-spec{font-size:15px}.oj-m{display:inline-block;margin-left:6px;white-space:nowrap}
 .oj-b .oj-bh{font-weight:700;font-size:14.5px}.oj-b .oj-n{font-size:26px;font-weight:800;line-height:1.2}.oj-b .oj-n small{font-size:13.5px;font-weight:600;margin-left:3px}.oj-b .oj-bs{font-size:13.5px;color:var(--ink-2,#444)}
 .oj-wrap{overflow-x:auto}.oj-mx{table-layout:auto;min-width:100%}.oj-mx th,.oj-mx td{padding:7px 10px;text-align:left}.oj-mx td.r,.oj-mx th.r{text-align:right}
@@ -200,7 +200,7 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
 .oj-h{margin:16px 0 6px;font-size:16px}.oj-det{margin-top:14px}.oj-det summary{cursor:pointer;font-weight:700}
 .oj-t.oj-mx{table-layout:auto}.oj-t.oj-mx th{word-break:keep-all;vertical-align:bottom}.oj-t.oj-mx td.nw .oj-nx,.oj-t.oj-mx td.nw .oj-now{white-space:nowrap}
 .oj-nx{font-size:13.5px;color:var(--ink-2,#555);font-weight:600}.oj-now{display:inline-block;margin-top:2px;font-size:13.5px;font-weight:800;color:#fff;background:var(--bad,#c92a2a);border-radius:999px;padding:0 8px}.oj-def{display:inline-block;font-size:13.5px;font-weight:700;color:var(--warn,#b35c00);background:var(--warn-bg,#fff3e0);border-radius:6px;padding:0 5px}
-.oj-t{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}.oj-t th{background:var(--surface-2,#f4f6f8);font-weight:600;color:var(--muted,#555)}.oj-t th,.oj-t td{border-bottom:1px solid var(--grid,#e8ebef);text-align:center}.oj-t td.r,.oj-t th.r{text-align:right}.oj-t caption{text-align:left;padding:4px 2px}.oj-t td,.oj-t th{padding:5px 8px;vertical-align:middle}.nw{white-space:nowrap}.neg{color:#c92a2a}
+.oj-t{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}.oj-t th{background:var(--surface-2,#f4f6f8);font-weight:600;color:var(--ink-2,#555)}.oj-t th,.oj-t td{border-bottom:1px solid var(--grid,#e8ebef);text-align:center}.oj-t td.r,.oj-t th.r{text-align:right}.oj-t caption{text-align:left;padding:4px 2px}.oj-t td,.oj-t th{padding:5px 8px;vertical-align:middle}.nw{white-space:nowrap}.neg{color: var(--bad)}
 </style>
 </head>
 <body>
@@ -239,10 +239,10 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2611100149"></script>
-<script src="engine/crypto.js?v=2611100149"></script>
-<script src="ui/cal.js?v=2611100149"></script>
-<script src="ui/proccalc.js?v=2611100149"></script>
-<script src="supply.js?v=2611100149"></script>
+<script src="ui/shell.js?v=2611100306"></script>
+<script src="engine/crypto.js?v=2611100306"></script>
+<script src="ui/cal.js?v=2611100306"></script>
+<script src="ui/proccalc.js?v=2611100306"></script>
+<script src="supply.js?v=2611100306"></script>
 </body>
 </html>

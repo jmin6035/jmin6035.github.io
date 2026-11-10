@@ -23,9 +23,9 @@
     const rank = { bad: 0, warn: 1, ok: 2, na: 3 }, worst = [], vals = [];
     const row = (g) => {
       const P = g.prod || {}, fin = (P.actual || 0) + (P.after || 0), pp = P.month > 0 ? fin / P.month : null;
-      const prod = pp == null ? ['na', '–', ''] : [pp < 0.95 ? 'bad' : pp < 1 ? 'warn' : 'ok', `${Math.round(pp * 100)}%`, `월말 ${n0(fin)} / ${n0(P.month)}`];
+      const prod = pp == null ? ['na', '–', ''] : [UI.rate(pp * 100), `${Math.round(pp * 100)}%`, `월말 ${n0(fin)} / ${n0(P.month)}`];
       const S = g.ship, sp = S && S.month > 0 ? S.actual / Math.max(1, S.sched) : null;
-      const ship = !S ? ['na', '–', ''] : [S.sched < 1 ? 'ok' : sp < 0.9 ? 'bad' : sp < 1 ? 'warn' : 'ok', n0(S.actual), `오늘까지 계획 ${n0(S.sched)} · 월 ${n0(S.month)}`];
+      const ship = !S ? ['na', '–', ''] : [S.sched < 1 ? 'ok' : UI.rate(sp * 100), n0(S.actual), `오늘까지 계획 ${n0(S.sched)} · 월 ${n0(S.month)}`];
       const st = cur(g.key), d = UI.ctlTfd(g.key), dly = S && S.month ? S.month / dim((O.today || O.asOf).slice(0, 7)) : 0, cov = st != null && dly ? st / dly : null;
       const stock = cov == null || !d ? ['na', st != null ? n0(st) + 't' : '–', ''] : [cov < d * 0.5 ? 'bad' : cov > d ? 'warn' : 'ok', `${Math.round(cov)}일`, `${n0(st)}t · 상한 ${d}일`];
       const mg = (MO && MO.groups ? MO.groups.groups : []).filter((x) => (MOG[g.key] || []).includes(x.group));
@@ -70,7 +70,7 @@
     const NW = (O.plating || {}).now || {}, SB = NW.shortOrder || NW.shortBy || [], SF = NW.shortFill || [], mm = +m.slice(5);
     const G = (O.groups || []).filter((g) => UI.inScope(g.pl));
     const sig = (tone, big, sub, href) => `<td class="ct ${tone}"><a href="${href}"><b>${big}</b>${sub ? `<small>${sub}</small>` : ''}</a></td>`;
-    const pct = (a, p) => (p > 0 ? a / p : null), tone = (r) => (r == null ? 'na' : r < 0.95 ? 'bad' : r < 1 ? 'warn' : 'ok');
+    const pct = (a, p) => (p > 0 ? a / p : null), tone = (r) => (r == null ? 'na' : UI.rate(r * 100));   // 11/10: 달성률 색 = 공통 기준(UI.rate 98·90)
     const row = (g) => {
       const pp = plan(g.key, 'prod'), sp = plan(g.key, 'sales');
       let c1, c2, c3, c4, c5;
@@ -107,7 +107,7 @@
   UI.ctlStrip = (O, mo) => {   // 11/5 사용자 '진행 단계별로 값이 안 나온다' → 색 막대 대신 단계마다 값(생산·출하·재고·소재·납기)
     const R = UI.ctlRows(O, mo); if (!R || !R.length) return '';
     const seg = (r, i) => (r.cells[i] === 'na' && (r.vals[i] || [])[0] === '–') ? '' : `<span class="cs-v ${r.cells[i]}" title="${esc(COL[i] + ' ' + ((r.vals[i] || [])[1] || ''))}"><em>${COL[i]}</em>${esc((r.vals[i] || [])[0] || '–')}</span>`;
-    return `<a class="cs-home" href="board.html" title="판매그룹 관제판">관제</a>` + R.map((r) => `<a class="cs-g" href="board.html"><span class="cdot ${r.w}"></span><b>${esc(r.name)}</b>${r.cells.map((c, i) => seg(r, i)).join('')}</a>`).join('');
+    return `<a class="cs-home" href="board.html">관제판 →</a>` + R.map((r) => `<a class="cs-g" href="board.html"><span class="cdot ${r.w}"></span><b>${esc(r.name)}</b>${r.cells.map((c, i) => seg(r, i)).join('')}</a>`).join('');
   };
 
 })();

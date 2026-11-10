@@ -74,7 +74,7 @@
         const act = d <= t0, cp = (runs[l] || []).find((r) => r[0] <= d && d <= r[1]), why = [];
         if (act) why.push('MES 생산 실적(사내 PC 재계획 파일에 반영된 값)');
         else {
-          if (cp) why.push(`${l} ${cp[2]} 캠페인 ${cp[0].slice(5)}~${cp[1].slice(5)} — 오늘 아침 재계획의 강종 구간(M/C 횟수 최소화)`);
+          if (cp) why.push(`${l} ${cp[2]} 캠페인 ${UI.fmtDate(cp[0])}~${UI.fmtDate(cp[1])} — 오늘 아침 재계획의 강종 구간(M/C 횟수 최소화)`);
           const early = x.items.filter((it) => diff(it[6], d) > 14);
           why.push(early.length ? `납기보다 15일 이상 앞선 생산 ${n0(early.reduce((a, it) => a + it[5], 0))}t — 해당 강종의 이 라인 생산 가능 구간이 이 캠페인뿐이거나 후반 능력 부족` : '납기 근접 배치(선행 생산량 톤·일 최소화)');
         }
@@ -264,7 +264,7 @@
   }
 
   // ---------- 차트 공통(2026-10-21 사용자: 막대그래프 다시 — 한 색조 단계·2px 칸 사이·4px 둥근 끝·가는 격자·글자 안 늘어남) ----------
-  const kf = (v) => (Math.abs(v) >= 1000 ? `${+(v / 1000).toFixed(Math.abs(v) >= 10000 ? 0 : 1)}K` : String(Math.round(v)));
+  const kf = (v) => (Math.abs(v) >= 1000 ? `${+(v / 1000).toFixed(Math.abs(v) >= 10000 ? 0 : 1)}k` : String(Math.round(v)));   // 천 단위 줄임 = 소문자 k(UI.tick 과 같게)
   // 세로 막대: cats = [{ name, a(진한 칸), b(옅은 칸), plan(높이 기준 — 모자라는 몫은 회색 트랙), cap(위 숫자 HTML), sub(아래 작은 글), neg(sub 빨강), tip }]
   // 세로 막대(사용자 10/21: 막대 위 숫자 두 줄이 아마추어 같음) — 막대 위엔 달성률 하나, 계획은 가로 표시선, 숫자는 막대 아래 정렬된 표(행 = labels)
   function colChart(cats, vh = 180, labels = ['실적', '계획', '잔여']) {
@@ -825,7 +825,7 @@
     try { const pe = await GP.latest('procure.enc.json'); const P = pe ? await GP.decryptJSON(pe, pw) : null; PM = P ? prepMat(P, MOx) : null; MP = P ? matPlan(P, MOx) : null; } catch (e) { PM = null; MP = null; }
     mon = D.months.includes(today.slice(0, 7)) ? today.slice(0, 7) : D.months[0];
     const LV = D.live || {};
-    $('s-meta').innerHTML = LV.pl ? `실적 ~${md(LV.pl.t0)} · 재계획 ${esc(LV.pl.at.slice(5))}` : `기준 <b>기준 계획</b> · 계산 ${esc(String(W.built).replace('T', ' '))} · 실적 ~${esc(W.asOf)}`;
+    $('s-meta').innerHTML = LV.pl ? `실적 ~${md(LV.pl.t0)} · 재계획 ${esc(UI.fmtDateTime(LV.pl.at))}` : `기준 <b>기준 계획</b> · 계산 ${esc(UI.fmtDateTime(W.built))} · 실적 ~${esc(UI.fmtDate(W.asOf))}`;
     $('main').hidden = false; $('lock').hidden = true;
     tabs(); weekBox(); progress(); monthSum(); cal(); UI.reveal(document);
   }

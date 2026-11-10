@@ -15,7 +15,7 @@
     ? { L: ['1CGL', '2CGL'], file: 'plating_actual.enc.json', name: '도금', prodHead: '제품 · 강종',
         stopNote: 'MES 휴지 실적의 사유로 분류 — 강종 전환 / 정기수리(싱크롤 교체 등) / 설비·운전(기계·전기·운전이상) / 기타. 시간은 더미 코일 포함, 톤은 더미 제외.' }
     : { L: ['1CCL', '2CCL', '3CCL', '4CCL'], file: 'color_actual.enc.json', name: '컬러', prodHead: '품명',
-        stopNote: '휴지 사유 메모(SPL_REM)의 키워드로 분류 — 색상교체·청소 / 테스트·도막조정 / 폭·롤·두께 전환 / 기타. 주간 보고와 같은 기준.' };
+        stopNote: '휴지 사유 메모의 키워드로 분류 — 색상교체·청소 / 테스트·도막조정 / 폭·롤·두께 전환 / 기타. 주간 보고와 같은 기준.' };
   const L = CFG.L;
   const COL = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)'];
   let O = null, pl = L[0];
@@ -50,7 +50,7 @@
     if (t && mes) t.actual = O.lines.reduce((a, x) => a + Math.round((M[x.line] || {}).actual || 0), 0);   // 계 = 라인 값(반올림)의 합 — 월별 표 합계와 같은 값(14,976 vs 14,975 방지)
     return card('ca-line', '라인별 진도 · 주간 비교', `월차·일정 = 판매생산속보 ${O.month.asOf || ''}${mes ? ` · 실적 = MES 코일(~${md(O.asOf)})` : ''} · 주간 = 지난주 vs ${BW()} 평균`, '단위: 톤', `<div class="scroll"><table class="t big"><thead><tr><th class="l" rowspan="2">라인</th><th colspan="4">${MON()}월 진도 (MES 월차계획)</th><th colspan="3">생산 t/일</th><th rowspan="2">속도 t/hr <small>정지 포함</small></th><th rowspan="2">평균 두께 mm</th><th rowspan="2">휴지 h/일</th><th rowspan="2">가동일 <small>지난주</small></th></tr>
       <tr><th>월차</th><th>일정 누계</th><th>실적 누계</th><th>달성률</th><th>${BW()} 평균</th><th>지난주</th><th>증감</th></tr></thead><tbody>${rows}
-      ${t ? `<tr class="total"><td class="l">${CFG.name} 계</td><td>${n0(t.month)}</td><td>${n0(t.sched)}</td><td>${n0(t.actual)}</td><td class="pbar">${t.sched ? `<div><i class="${t.actual / t.sched >= 0.98 ? 'ok' : t.actual / t.sched >= 0.9 ? 'wn' : 'bd'}" style="width:${Math.min(100, t.actual / t.sched * 100)}%"></i></div><b>${(t.actual / t.sched * 100).toFixed(1)}%</b>` : '<span class="muted">일정 없음</span>'}</td><td>${n0(S0('tpd'))}</td><td><b>${n0(S1('tpd'))}</b></td><td>${dl(pct(S1('tpd'), S0('tpd')))}</td><td>${n1(TPH('w0'))} → <b>${n1(TPH('w1'))}</b></td><td></td><td>${n1(SHA('w0'))} → <b>${n1(SHA('w1'))}</b> <small class="muted">평균</small></td><td></td></tr>` : ''}</tbody></table></div>
+      ${t ? `<tr class="total"><td class="l">${CFG.name} 계</td><td>${n0(t.month)}</td><td>${n0(t.sched)}</td><td>${n0(t.actual)}</td><td class="pbar">${t.sched ? `<div><i class="${{ ok: 'ok', warn: 'wn', bad: 'bd' }[UI.rate(t.actual / t.sched * 100)]}" style="width:${Math.min(100, t.actual / t.sched * 100)}%"></i></div><b>${(t.actual / t.sched * 100).toFixed(1)}%</b>` : '<span class="muted">일정 없음</span>'}</td><td>${n0(S0('tpd'))}</td><td><b>${n0(S1('tpd'))}</b></td><td>${dl(pct(S1('tpd'), S0('tpd')))}</td><td>${n1(TPH('w0'))} → <b>${n1(TPH('w1'))}</b></td><td></td><td>${n1(SHA('w0'))} → <b>${n1(SHA('w1'))}</b> <small class="muted">평균</small></td><td></td></tr>` : ''}</tbody></table></div>
       <p class="small">속도 = 생산 t ÷ (작업 + 정지 시간) — 주간 보고와 같은 정의. MES 속보의 t/hr(정지 제외)와는 다름.</p>`);
   }
   /* 막대 하나짜리 그래프: 값 막대 + 기준선(평균·목표) */
