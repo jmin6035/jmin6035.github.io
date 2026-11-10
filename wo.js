@@ -158,7 +158,7 @@
       tot.fx += nf; tot.tfx += q.tFixed || 0; tot.n += q.nFree; tot.t += q.tFree || 0; tot.dn += q.downFreeSum || 0; tot.gain += g; tot.wait += q.waitN || 0;
       const fr = q.items.filter((x) => !x.fixed);
       return `<tr class="ln${l === line ? ' on' : ''}" data-l="${l}" tabindex="0"><td><b>${l}</b></td><td>${q.stop ? `<span class="wo-st off">휴지</span>` : '<span class="wo-st on">가동</span>'}</td><td><b>${nf}</b>건 · ${n0(q.tFixed)}t</td><td>${nf ? esc(tm(q.fixedUntil)) : '-'}</td><td><b>${q.nFree}</b>건 · ${n0(q.tFree)}t</td><td>${q.nFree ? `${esc(tm(fr[0].start))} ~ ${esc(tm(q.until))}` : '-'}</td><td><b>${n0(q.downFreeSum)}</b>분</td><td>${q.nFree ? `<b class="${g >= 0 ? 'wo-g' : 'wo-b'}">${g >= 0 ? '−' : '+'}${n0(Math.abs(g))}분</b>` : '-'}</td><td>${q.waitN ? `<b class="wo-w">${q.waitN}건</b>` : '-'}</td></tr>`; }).join('');
-    const allCard = `<section class="card"><h2>전체 <small class="bk">컬러 4개 라인 · 줄을 누르면 그 라인 순서</small></h2>
+    const allCard = `<section class="card"><h2>전체 <small class="bk">컬러 4개 라인 · 라인 선택 시 해당 순서 표시</small></h2>
       <div class="scroll"><table class="t wo-all"><thead><tr><th>라인</th><th>상태</th><th>확정 대기</th><th>확정분 끝</th><th>편성 제안</th><th>제안 기간</th><th>예상 휴지</th><th title="같은 지시를 MES 작업예정일·순번대로 돌릴 때와 비교(휴지 + 도료 기다림)">MES 순서 대비</th><th title="도료·PF 준비를 기다리는 지시">준비 대기</th></tr></thead><tbody>${all}
       <tr class="tot-r"><td><b>합계</b></td><td></td><td><b>${tot.fx}</b>건 · ${n0(tot.tfx)}t</td><td></td><td><b>${tot.n}</b>건 · ${n0(tot.t)}t</td><td></td><td><b>${n0(tot.dn)}</b>분</td><td><b class="${tot.gain >= 0 ? 'wo-g' : 'wo-b'}">${tot.gain >= 0 ? '−' : '+'}${n0(Math.abs(tot.gain))}분</b></td><td>${tot.wait ? `<b class="wo-w">${tot.wait}건</b>` : '-'}</td></tr></tbody></table></div></section>`;
     $('wo-main').innerHTML = tabs() + allCard + (O.missing && O.missing.length ? `<div class="miss"><b>아직 안 들어온 자료</b> — ${O.missing.map(esc).join(' / ')}</div>` : '')
@@ -171,7 +171,7 @@
       + '</div>'
       + (v.nFree ? `<div class="wo-cmp${gain < 0 ? ' bad' : ''}"><b>MES 순서와 비교</b> — 같은 ${v.nFree}건을 MES 에 지금 들어가 있는 작업예정일·순번대로 돌리면 휴지 ${n0(v.mes.down)}분${v.mes.wait ? ` + 도료 기다림 ${n0(v.mes.wait)}분` : ''} → 제안이 <b>${gain >= 0 ? `${n0(gain)}분 짧음` : `${n0(-gain)}분 김`}</b> <span class="bk">(같은 출발점, 같은 휴지 규칙)</span></div>` : '')
       + '</section>'
-      + (v.nFree ? `<section class="card"><h2>${line} 제안 순서 <small class="bk">날짜 줄을 누르면 그날 작업</small> <button type="button" class="btn sm" id="wo-exp" style="margin-left:10px">모두 펼치기·접기</button></h2>${LEG}${table(v, free, 'free')}</section>` : '')
+      + (v.nFree ? `<section class="card"><h2>${line} 제안 순서 <small class="bk">일자 선택 시 작업 내역 표시</small> <button type="button" class="btn sm" id="wo-exp" style="margin-left:10px">모두 펼치기·접기</button></h2>${LEG}${table(v, free, 'free')}</section>` : '')
       + (fx.length ? `<section class="card"><details class="fx"><summary>이미 확정된 대기열 ${fx.length}건 ${n0(v.tFixed)}t — MES 순서 그대로 (${esc(tm(v.from))} → ${esc(tm(v.fixedUntil))})</summary>${table(v, fx, 'fixed')}</details></section>` : '');
     $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; render(); });
     $('wo-main').querySelectorAll('tr.ln').forEach((r) => { const f = () => { line = r.dataset.l; render(); const c = document.getElementById('wo-lines'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }; r.onclick = f; r.onkeydown = (e) => { if (e.key === 'Enter') f(); }; });
