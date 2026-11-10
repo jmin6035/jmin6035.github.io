@@ -116,6 +116,7 @@ select.sj-in { width: auto; } .sj-in, #sj-grp { min-height: 34px; box-sizing: bo
 .sj-dt > summary { cursor: pointer; padding: 10px 14px; font-size: 14.5px; font-weight: 700; line-height: 1.5; } .sj-dt > summary small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 10px; }
 .sj-dt .sj-sch { border: 0; margin: 0; padding: 0 14px 8px; } .sj-dt.in { margin: 12px 0 0; background: none; } .sj-dt.in .sj-def { margin: 0 12px; } .sj-dt.in .sj-foot { margin: 10px 14px 12px; }
 .ct-kpi .v small { white-space: nowrap; }
+html body main #ct-main sup { font-size: 13.5px !important; }
 .ct-t.sj-mx sup { font-size: 13.5px; vertical-align: 1px; line-height: 1; margin-left: 2px; color: var(--ink-2); }
 .ct-b.ov { background: var(--warn-bg); color: var(--warn); box-shadow: inset 0 0 0 1.5px var(--warn); }   /* 계획 초과(경고 수준) — 빨강 아님 */
 @media (max-width: 700px) {
@@ -126,12 +127,19 @@ select.sj-in { width: auto; } .sj-in, #sj-grp { min-height: 34px; box-sizing: bo
   .sj-def b { display: block; }
 }
 .pos { color: var(--good); } .neg { color: var(--bad); } .wrn { color: var(--warn); }
+/* 11/10 서식: 조치 필요 = 6건 먼저, 나머지는 단추 */
+html body main table.ct-t.sj-mx { width: 100%; }
+.sj-act:not(.all) tr.x { display: none; } .sj-more { margin-top: 10px; }
+.sj-act .ct-t { width: 100% !important; } .sj-act .ct-t td.wrap { white-space: normal !important; word-break: keep-all; min-width: 230px; }
+.sj-act .ct-t td { padding-top: 6px !important; padding-bottom: 6px !important; }
+.sj-h h2 { font-size: 19px; } .sj-h p { font-size: 14px; }
+.wrn { color: var(--warn); }
 </style>
 </head>
 <body>
 <header id="shell" data-page="suju" data-title="수주 관제" data-sub="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준)"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
-<footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보·통합 계획 → 사내 PC 자동 실행 → 암호화 게시 · 화면 양식 = 수주팀 개발 요청(r1)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보·통합 계획 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611100706"></script>
 <script src="engine/crypto.js?v=2611100706"></script>
 <script src="ui/ct.js?v=2611100706"></script>

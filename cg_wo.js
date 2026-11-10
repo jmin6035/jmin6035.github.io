@@ -181,7 +181,7 @@
   function renderRules() {
     const L = Object.keys(O.lines);
     line = line && L.includes(line) ? line : L[0];
-    $('wo-meta').textContent = `${O.now} 기준(지금) · 계산 ${O.built || ''}`;
+    $('wo-meta').textContent = `${UI.fmtDateTime(O.now)} 기준 · 계산 ${UI.fmtDateTime(O.built || '')}`;
     $('wo-main').innerHTML = tabs() + `<section class="card"><div class="seg" id="wo-lines">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l}</button>`).join('')}</div></section>` + conditions(line);
     $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; renderRules(); });
     bindTabs();
@@ -205,14 +205,14 @@
     const L = Object.keys(O.lines);
     line = line && L.includes(line) ? line : L[0];
     const v = O.lines[line];
-    $('wo-meta').textContent = `${O.now} 기준(지금) · 계산 ${O.built || ''}`;
+    $('wo-meta').textContent = `${UI.fmtDateTime(O.now)} 기준 · 계산 ${UI.fmtDateTime(O.built || '')}`;
     const gain = (v.mes || 0) - (v.ours || 0);
     const plan = v.plan ? Object.entries(v.plan).map(([a, t]) => `${a} ${n0(t)}t`).join(' · ') : '-';
     const blk = (v.blocks || []).map((b) => `<span class="cgb"><b>${esc(b.sur)}</b> ${n0(b.n)}코일 · ${n0(b.t)}t</span>`).join('<span class="cga">→</span>');
     $('wo-main').innerHTML = tabs() + (O.missing && O.missing.length ? `<div class="miss"><b>아직 반영 안 된 조건</b> — ${O.missing.map(esc).join(' / ')}</div>` : '')
       + `<section class="card"><div class="seg" id="wo-lines">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l} <small>${O.lines[l].n}코일</small></button>`).join('')}</div>`
       + '<div class="kpis" style="margin-top:12px">'
-      + `<div class="kpi"><div class="l">돌릴 대상</div><div class="v">${n0(v.n)}<small>코일 ${n0(v.tSum)}t</small></div><div class="b">대상 선정 화면 · 그중 확정 ${n0(v.nConf)}코일 · 가동계획상 ${esc(md(v.day))} 강종 ${esc(plan)}</div></div>`
+      + `<div class="kpi"><div class="l">돌릴 대상</div><div class="v">${n0(v.n)}<small>코일 · ${n0(v.tSum)}t</small></div><div class="b">대상 선정 화면 · 그중 확정 ${n0(v.nConf)}코일 · 가동계획상 ${esc(md(v.day))} 강종 ${esc(plan)}</div></div>`
       + `<div class="kpi"><div class="l">제안 순서대로면</div><div class="v">${v.until ? esc(tm(v.until)) : '-'}<small>까지</small></div><div class="b">${esc(tm(v.from))} 출발${v.after1030 ? `(1030 지시 코일 ${n1(v.after1030)}시간 뒤)` : ''} · 생산 ${hm(v.runSum || 0)}${v.ours >= 0.5 ? ` + 예상 더미 ${n0(v.ours)}분` : ''}</div></div>`
       + `<div class="kpi"><div class="l">예상 더미 (제안 순서)</div><div class="v wv">${n1(v.ours)}<small>분</small></div><div class="b">더미 약 ${n1(v.oursDumT)}t · 사양 바뀜 ${n0(v.oursChg)}번</div></div>`
       + '</div>' + grpBars(v)

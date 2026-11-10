@@ -50,7 +50,7 @@
   function weekTable(days) {
     const idx = (d) => O.days.indexOf(d);
     const pad = '<td class="pad" aria-hidden="true"></td>'.repeat(Math.max(0, 7 - days.length));   // 마지막 주가 1~6일이면 빈 칸으로 채워 한 칸이 화면 폭 전체로 늘어나지 않게
-    const head = days.map((d) => { const wd = dt(d).getDay(); return `<th class="${wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}</th>`; }).join('') + pad.replace(/td/g, 'th');
+    const head = days.map((d) => { const wd = dt(d).getDay(); return `<th class="${wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}${d === UI.today() ? '<small class="tdy">오늘</small>' : ''}</th>`; }).join('') + pad.replace(/td/g, 'th');
     const rows = LINES.map((ln) => `<tr><th>${ln}<small>${n0(sum(days, (d) => O.lines[ln][idx(d)].cap))}t · ${n0(sum(days, (d) => O.lines[ln][idx(d)].usedH))}h</small></th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`).join('');
     const sd = (d) => sum(LINES, (l) => O.lines[l][idx(d)].cap);
     const tot = `<tr class="dsum"><th>하루 합<small>${n0(sum(days, sd))}t</small></th>${days.map((d) => `<td><b>${n0(sd(d))}</b><small>t</small></td>`).join('')}${pad}</tr>`;
@@ -58,7 +58,7 @@
   }
 
   function calCard() {
-    return `<section class="card"><h2>라인별 ~${END()} <small>라인 하루 24시간(계획 휴지 뺌) · 칸을 누르면 그날 계약 목록</small></h2>`
+    return `<section class="card"><h2>라인별 ~${END()} <small title="라인 하루 24시간(계획 휴지 뺌)">칸을 누르면 그날 계약 목록</small></h2>`
       + `<div class="lg">${KD.map(([, nm, cl, t]) => `<span title="${esc(t)}"><i class="${cl}"></i>${nm}</span>`).join('')}<span><i style="background:var(--bad-bg);box-shadow:inset 3px 0 0 var(--bad)"></i>작업대기 24시간 부족·빈 시간</span><span><i style="background:var(--tint-2);box-shadow:inset 0 0 0 1px var(--line)"></i>정지(휴지·수리)</span></div>`
       + (O.cus ? '' : '<p class="msg" style="margin:0 0 10px">DUMMY 고객 제외: 컬러 계약 고객사 자료(snap_cc_cus_names)가 사내 PC 다음 실행부터 들어옴 — 지금은 DUMMY 포함</p>')
       + Array.from({ length: Math.ceil(O.days.length / 7) }, (_, w) => `<div class="wk">${weekTable(O.days.slice(w * 7, w * 7 + 7))}</div>`).join('') + '</section>';

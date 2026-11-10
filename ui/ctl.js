@@ -25,7 +25,7 @@
       const P = g.prod || {}, fin = (P.actual || 0) + (P.after || 0), pp = P.month > 0 ? fin / P.month : null;
       const prod = pp == null ? ['na', '–', ''] : [UI.rate(pp * 100), `${Math.round(pp * 100)}%`, `월말 ${n0(fin)} / ${n0(P.month)}`];
       const S = g.ship, sp = S && S.month > 0 ? S.actual / Math.max(1, S.sched) : null;
-      const ship = !S ? ['na', '–', ''] : [S.sched < 1 ? 'ok' : UI.rate(sp * 100), n0(S.actual), `오늘까지 계획 ${n0(S.sched)} · 월 ${n0(S.month)}`];
+      const ship = !S ? ['na', '–', ''] : [S.sched < 1 ? 'ok' : UI.rate(sp * 100), `${n0(S.actual)}t`, `계획 누계 ${n0(S.sched)} · 월 ${n0(S.month)}`];
       const st = cur(g.key), d = UI.ctlTfd(g.key), dly = S && S.month ? S.month / dim((O.today || O.asOf).slice(0, 7)) : 0, cov = st != null && dly ? st / dly : null;
       const stock = cov == null || !d ? ['na', st != null ? n0(st) + 't' : '–', ''] : [cov < d * 0.5 ? 'bad' : cov > d ? 'warn' : 'ok', `${Math.round(cov)}일`, `${n0(st)}t · 상한 ${d}일`];
       const mg = (MO && MO.groups ? MO.groups.groups : []).filter((x) => (MOG[g.key] || []).includes(x.group));
@@ -46,8 +46,8 @@
     if (O.__rowsOnly) return G.map((g) => { worst.length = 0; vals.length = 0; row(g); return { key: g.key, pl: g.pl, name: g.name.replace(/\(.*\)/, ''), w: worst.reduce((a, x) => (rank[x] < rank[a] ? x : a), 'na'), cells: worst.slice(), vals: vals.slice() }; });
     const body = sec('G', '도금') + sec('C', '컬러');
     const c = (t) => worst.filter((x) => x === t).length;
-    return `<h2>관제판 <small>실적 ~${md(O.asOf)} · 판매그룹 × 상태 · 칸을 누르면 해당 화면</small></h2>
-      <div class="csum"><span class="cdot bad"></span>조치 ${c('bad')} <span class="cdot warn"></span>주의 ${c('warn')} <span class="cdot ok"></span>정상 ${c('ok')}</div>
+    return `<h2>관제판 <small>실적 ~${md(O.asOf)} · 칸을 누르면 해당 화면</small></h2>
+      <div class="csum"><span><i class="cdot bad"></i>조치 <b>${c('bad')}</b></span><span><i class="cdot warn"></i>주의 <b>${c('warn')}</b></span><span><i class="cdot ok"></i>정상 <b>${c('ok')}</b></span></div>
       <table class="ctl"><colgroup><col style="width:16%"><col><col><col><col><col></colgroup><thead><tr><th>판매그룹</th><th title="월말 예상 = 실적 + 남은 기간 계획 ÷ 월 계획">생산 (월말 예상)</th><th title="이번 달 출하 실적 ÷ 오늘까지 계획">출하 (이번 달)</th><th title="지금 재고 ÷ 하루 판매 = 며칠분, 상한 일수(TF) 넘으면 과잉">재고 (며칠분)</th><th title="3달 소재 — 가장 급한 소재 상태">소재</th><th title="오늘 재계획 결품">납기</th></tr></thead><tbody>${body}</tbody></table>`;
   }
 

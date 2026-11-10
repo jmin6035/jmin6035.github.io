@@ -49,7 +49,7 @@
     $('d-empty').hidden = true; $('d-body').hidden = false;
     const mL = MONTHS[MONTHS.length - 1];
     $('d-title').textContent = `'${MONTHS[0].slice(2, 4)}.${MONTHS[0].slice(0, 4) === mL.slice(0, 4) ? MONTHS.map((m) => +m.slice(5)).join('·') : `${+MONTHS[0].slice(5)}~'${mL.slice(2, 4)}.${+mL.slice(5)}`}월 컬러 CCL 가동계획`;   // 11/9: 달 = 자료(해 넘으면 '26.10~'27.2월)
-    $('d-meta').textContent = [`기준 계획(계획재 = 운영안 반영)`, `계산 ${String(O.built).replace('T', ' ')}`, lastAct && `실적 ~${md(lastAct)}`, `계획 기간 ${D0} ~ ${D1}`].filter(Boolean).join(' · ');   // 11/9: 기간 = 자료
+    $('d-meta').textContent = [`기준 계획(계획재 = 운영안 반영)`, `계산 ${UI.fmtDateTime(O.built)}`, lastAct && `실적 ~${md(lastAct)}`, `계획 기간 ${UI.fmtDate(D0)}~${UI.fmtDate(D1)}`].filter(Boolean).join(' · ');   // 11/9: 기간 = 자료
     const kinds = new Set((O.colorDown || []).map((x) => x[2]));
     const leg = Object.keys(KN).filter((k) => kinds.has(k)).map((k) => `<span><i class="sw k-${k}"></i>${KN[k]}</span>`).join('')
       + '<span>· 휴지(h) 행 = 그날 휴지 시간(종류 색), 종일 정지는 블록</span><span><i class="sw" style="background:var(--sd)"></i>가동 없음</span>';

@@ -1131,3 +1131,75 @@ table.stk-js thead { position: relative; z-index: 3; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════════════════
+   서식 기준(2026-11-10 정리) — 모든 화면 공통, 이 파일의 마지막(= 최우선). 화면별 <style> 에서 다시 정하지 말 것.
+   글자   화면 제목 h1 28(좁은 화면 22) · 부제 .sub 14.5 · 카드 제목 h2 19 + 보조 글 small 13.5(--ink-2, 보통 굵기) · 본문 14.5~16 · 보조 글 13.5 이상(--ink-2)
+   KPI    .ct-kpis > .ct-kpi(.bad .warn .ok .info) > .l(이름 14) · .v(숫자 30 + small 단위 18) · .s(한 줄 설명 13.5)   ※ 옛 .kpis/.kpi 도 같은 크기
+   상태   .ct-b(.bad 조치 · .warn 주의 · .ok 정상 · .na 자료 없음 · .done 완료)  = .st(.bad .warn .good) = 점 .cdot — 색은 --bad / --warn / --good 만
+   표     table.t · table.ct-t: 숫자 칸 오른쪽(.r 또는 td 기본) + tabular-nums, 글자 칸 .l, 줄 높이 1.5, 칸 여백 10px 이상, 머리글 한 줄
+   탭     .ct-tabs = 한 줄(넘치면 가로로 밀기), 세부 화면 탭 = a.dt(작은 글씨, 첫 칸 a.dt0 앞 구분선)
+   접기   details.fold > summary(이름 + small 요약)   빈 자료  p.empty(이유 + span 언제 채워지는지) = UI.empty(why, when)
+   표기   날짜 UI.fmtDate 'M/D' · 요일 필요 UI.fmtDateW 'M/D(화)' · 시각 UI.fmtDateTime · 톤 UI.fmtT '12,345t'(낱개 UI.fmtT1 '16.9t') · 숫자 UI.fmtN · 퍼센트 UI.fmtPct '86.2%' · 달성률 색 UI.rate
+   ════════════════════════════════════════════════════════════════════════════════════════ */
+/* 한국어는 낱말 중간에서 줄을 바꾸지 않음(docs/16 3번) — 칸보다 긴 낱말만 예외로 끊음 */
+html body, html .shell-head { word-break: keep-all; overflow-wrap: break-word; }
+/* ── 화면 머리: 제목·부제 한 크기, 탭 막대는 머리 폭 전체를 씀(오른쪽 장식 여백은 제목 줄에만) ── */
+html .wrap.shell-head { padding-top: 20px; padding-right: 28px; }
+html .shell-head .sh-l > :not(.ct-tabs) { max-width: min(78%, 1100px); }
+html .shell-head h1 { font-size: 28px; }
+html .shell-head .sub { font-size: 14.5px; margin-top: 6px; line-height: 1.5; }
+html .wrap.shell-head:has(.ct-tabs) { padding-bottom: 0; }
+@media (min-width: 1081px) { html .wrap.shell-head { padding-left: 24px; padding-right: 24px; } }
+@media (max-width: 640px) { html .wrap.shell-head { padding: 14px 14px 12px; } html .shell-head .sh-l > :not(.ct-tabs) { max-width: 100%; } html .shell-head h1 { font-size: 22px; } html .shell-head .sub { font-size: 13.5px; margin-top: 4px; } html .wrap.shell-head:has(.ct-tabs) { padding-bottom: 0; } }
+/* ── 탭 막대: 한 줄 ── */
+html .ct-tabs { flex-wrap: nowrap; gap: 2px; margin: 12px 0 0; border-bottom: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+html .ct-tabs::-webkit-scrollbar { display: none; }
+html .ct-tabs a { flex: 0 0 auto; padding: 9px 14px 8px; font-size: 14.5px; line-height: 1.5; margin-bottom: 0; }
+html .ct-tabs a[aria-current="page"] { background: color-mix(in srgb, var(--surface) 55%, transparent); }
+html .ct-tabs a.dt { font-size: 13.5px; font-weight: 500; padding-left: 10px; padding-right: 10px; }
+html .ct-tabs a.dt[aria-current="page"] { font-weight: 800; }
+html .ct-tabs a.dt0 { position: relative; margin-left: 17px; }
+html .ct-tabs a.dt0::before { content: ""; position: absolute; left: -9px; top: 11px; bottom: 10px; width: 1px; background: var(--ink-3); opacity: .55; }
+html .ct-tabs.more-r { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 44px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 44px), transparent); }
+html .ct-tabs.more-l { -webkit-mask-image: linear-gradient(270deg, #000 calc(100% - 44px), transparent); mask-image: linear-gradient(270deg, #000 calc(100% - 44px), transparent); }
+html .ct-tabs.more-l.more-r { -webkit-mask-image: linear-gradient(90deg, transparent, #000 44px, #000 calc(100% - 44px), transparent); mask-image: linear-gradient(90deg, transparent, #000 44px, #000 calc(100% - 44px), transparent); }
+@media (max-width: 640px) { html .ct-tabs a { padding: 10px 11px 9px; font-size: 14.5px; } html .ct-tabs a.dt { font-size: 13.5px; padding-left: 9px; padding-right: 9px; } }
+/* ── 카드 제목 + 보조 글 ── */
+html body main .card > h2 small, html body main .card > summary h2 small { font-size: 13.5px !important; font-weight: 500; color: var(--ink-2); }
+/* ── KPI 카드: 큰 숫자 + 단위 + 한 줄 설명 ── */
+html .ct-kpis { gap: 12px; margin: 0 0 16px; }
+html .ct-kpi { padding: 12px 14px 12px; min-width: 0; }
+html body main .ct-kpi .l { font-size: 14px !important; line-height: 1.5; font-weight: 700; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body main .ct-kpi .v { font-size: 30px; line-height: 1.25; margin-top: 2px; }
+html body main .ct-kpi .v small { font-size: 18px !important; font-weight: 700; margin-left: 3px; }
+html body main .ct-kpi .s { font-size: 13.5px !important; line-height: 1.5; margin-top: 4px; color: var(--ink-2); }
+html body main .kpi .v { font-size: 30px; }
+@media (max-width: 640px) { html .ct-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } html .ct-kpi { padding: 10px 11px; } html body main .ct-kpi .v { font-size: 24px; } html body main .kpi .v { font-size: 24px; } html body main :is(.kpi .l, .kpi .b) { font-size: 13.5px !important; } }
+/* ── 상태 배지·칩·점: 좋음 / 주의 / 나쁨 한 색 ── */
+html .ct-b { display: inline-block; padding: 2px 10px; font-size: 13.5px; font-weight: 800; line-height: 1.5; border-radius: 999px; white-space: nowrap; }
+.cdot.bad, .ctl-strip .cs-c i.bad { background: var(--bad); } .cdot.warn, .ctl-strip .cs-c i.warn { background: var(--warn); } .cdot.ok, .ctl-strip .cs-c i.ok { background: var(--good); }
+.cdot, .ctl-strip .cs-c i { background: var(--ink-3); }
+.pos { color: var(--good); } .neg { color: var(--bad); }
+/* ── 표: 숫자 자릿수 맞춤 · 줄 높이 ── */
+html body main :is(table.t, table.ct-t) { font-variant-numeric: tabular-nums; line-height: 1.5; }
+html body main table.ct-t :is(th, td) { padding-top: 10px; padding-bottom: 10px; }
+html body main table.ct-t th { font-size: 13.5px; color: var(--ink-2); }
+/* ── 단추(작은 보조 단추 포함) ── */
+html .btn { min-height: 36px; font-size: 14px; }
+html .btn.sm { min-height: 32px; padding: 4px 11px; font-size: 13.5px; }
+/* ── 접기 ── */
+details.fold { margin: 0 0 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+details.fold > summary { cursor: pointer; padding: 10px 14px; font-size: 14.5px; font-weight: 700; line-height: 1.5; list-style: none; display: flex; align-items: baseline; gap: 4px 10px; flex-wrap: wrap; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::before { content: ""; flex: 0 0 auto; align-self: center; width: 7px; height: 7px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(-45deg); transition: transform .15s; margin: 0 4px 0 2px; }
+details.fold[open] > summary::before { transform: rotate(45deg); }
+details.fold > summary small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); }
+details.fold > summary:hover { color: var(--brand-2); }
+details.fold > :not(summary) { margin-left: 14px; margin-right: 14px; } details.fold > :last-child:not(summary) { margin-bottom: 12px; }
+details.fold.in { margin: 12px 0 0; background: none; }
+/* ── 빈 자료 문구: 이유 + 언제 채워지는지 한 줄 ── */
+p.empty, div.empty:not(.card):not(.calc):not(.dv-day) { margin: 0; padding: 14px 12px; text-align: center; font-size: 14px; line-height: 1.5; color: var(--ink-2); background: var(--tint); border: 1px dashed var(--line); border-radius: 8px; }
+p.empty span { color: var(--ink-2); white-space: nowrap; } p.empty span::before { content: "· "; }
+/* ── 기준일 줄 · 보조 글 ── */
+html .ct-note { font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }

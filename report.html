@@ -8,6 +8,30 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/legacy.css?v=2611100706">
 <link rel="stylesheet" href="ui/theme.css?v=2611100706">
+<style>
+/* 인쇄: 16쪽 → 줄임. 요약을 첫 쪽에, 그래프·표는 2단, 카드가 통째로 다음 쪽으로 밀리지 않게 */
+@media print {
+  html body .shell-head { padding: 0 0 4px !important; } html body .shell-head h1 { font-size: 20px !important; margin: 0 !important; } html body .shell-head .sub, html body .shell-head .crumb { font-size: 11px !important; margin: 0 !important; }
+  html body main#r-main .card { padding: 2px 0 6px !important; margin: 0 0 6px !important; break-inside: auto !important; }
+  html body main#r-main .card > h2 { font-size: 16px !important; margin: 4px 0 6px !important; padding: 0 !important; break-after: avoid; }
+  html body main#r-main .sum-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 6px !important; }
+  html body main#r-main .sum-tile { padding: 7px 9px !important; gap: 2px !important; } html body main#r-main .sum-v { font-size: 24px !important; }
+  html body main#r-main :is(.sum-l, .sum-s, .sum-a, .sum-a span, .dc p, .hint, .muted, .legend, .legend span) { font-size: 10.5px !important; line-height: 1.4 !important; }
+  html body main#r-main .dc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; } html body main#r-main .dc { padding: 6px 9px !important; } html body main#r-main .dc b { font-size: 12px !important; }
+  html body main#r-main .decide2 { margin-top: 8px !important; }
+  html body main#r-main :is(.grid2, .g2, .minis) { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 4px 14px !important; margin: 0 !important; }
+  html body main#r-main .lead { font-size: 12px !important; padding: 5px 9px !important; margin: 0 0 6px !important; box-shadow: none !important; }
+  html body main#r-main :is(li, p, .bul-row, .ttl) { font-size: 11px !important; line-height: 1.45 !important; } html body main#r-main ul { margin: 4px 0 !important; }
+  html body main#r-main .bul { gap: 4px !important; } html body main#r-main .bul-track { height: 11px !important; }
+  html body main#r-main .chart svg { max-height: 46mm; width: 100%; }
+  html body main#r-main table.t { font-size: 10.5px !important; } html body main#r-main table.t th, html body main#r-main table.t td { font-size: 10.5px !important; padding: 2.5px 7px !important; }
+  html body main#r-main .scroll { overflow: visible !important; }
+  html body main#r-main details.more { margin-top: 6px !important; padding-top: 4px !important; } html body main#r-main details.more .more-b { margin-top: 4px !important; }
+  :is(.sum-tile, .dc, .chart, .bul, table, tr, .lead) { break-inside: avoid; } .ttl, h3 { break-after: avoid; }
+  html body main#r-main .card:not(:first-child):not(.ops) { break-before: page; }   /* 요약 1쪽 + 영역별 1쪽씩 */
+  footer.foot { font-size: 9.5px !important; padding: 4px 0 !important; margin: 0 !important; }
+}
+</style>
 </head>
 <body>
 <header id="shell" data-page="report" data-crumb="종합" data-title="주간 보고" data-sub="도금 1·2CGL · 컬러 1~4CCL"></header>

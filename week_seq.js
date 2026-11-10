@@ -251,7 +251,7 @@
     const v = $('ws-ver');
     if (dirty) { v.className = 'ws-ver ed'; v.textContent = '고침 · 저장 전'; }
     else if (cur && cur.state !== 'reset') { v.className = 'ws-ver ' + (cur.state === 'confirm' ? 'cf' : 'sv'); v.textContent = `${cur.state === 'confirm' ? '확정' : '저장'} v${cur.v} · ${cur.who} · ${kst(cur.at)}`; }
-    else { v.className = 'ws-ver'; v.textContent = `초안 · ${D.built} 자료`; }
+    else { v.className = 'ws-ver'; v.textContent = `초안 · ${UI.fmtDateTime(D.built)} 자료`; }
     $('ws-plant').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.p === plant)));
     // 라인 요약
     $('ws-kpis').innerHTML = LINES[plant].map((l) => {
@@ -429,7 +429,7 @@
   }
 
   // ───────── 저장소(Supabase cgl_week_seq, 암호화 · 추가만)
-  const kst = (s) => (s ? new Date(s).toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).slice(5, 16) : '');
+  const kst = (s) => (s ? UI.fmtDateTime(new Date(s).toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).slice(0, 16)) : '');
   const wkFrom = () => { const d = new Date(D.week + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - 7); return d.toISOString().slice(0, 10); };
   async function loadVers() {
     VERS = [];
@@ -439,7 +439,7 @@
       let v = 0;
       for (const x of (await r.json()).reverse()) { try { const p = await GP.decryptJSON(JSON.parse(x.payload), PW); VERS.push({ id: x.id, at: x.at, who: x.who, state: x.state, p, v: x.state === 'reset' ? null : ++v }); } catch (e) { /* 암호 다른 줄 */ } }
     } catch (e) { $('ws-res').textContent = e.message; }
-    $('ws-vers').innerHTML = '<option value="">버전 고르기</option><option value="draft">초안(자료 ' + esc(D.built) + ')</option>' + VERS.filter((x) => x.v).slice().reverse().map((x) => `<option value="${x.id}">v${x.v} ${x.state === 'confirm' ? '확정' : '저장'} · ${esc(x.who)} · ${kst(x.at)}</option>`).join('');
+    $('ws-vers').innerHTML = '<option value="">버전 고르기</option><option value="draft">초안(자료 ' + esc(UI.fmtDateTime(D.built)) + ')</option>' + VERS.filter((x) => x.v).slice().reverse().map((x) => `<option value="${x.id}">v${x.v} ${x.state === 'confirm' ? '확정' : '저장'} · ${esc(x.who)} · ${kst(x.at)}</option>`).join('');
   }
   function useVer(x, msg) {
     cur = x; dirty = false; CK = null; hl = null;
@@ -486,7 +486,7 @@
     if (!DATA[p]) { const env = await GP.latest(`week_seq_${p}.enc.json`); if (!env) throw new Error('자료 없음'); DATA[p] = await GP.decryptJSON(env, PW); }
     D = DATA[p]; R = D.rules; J = {}; D.jobs.forEach((x) => { J[x.id] = x; });
     line = LINES[p].find((l) => (D.lines[l].seq || []).length) || LINES[p][0];
-    $('ws-meta').textContent = `자료 ${D.now} 기준 · 하루 = 07시 ~ 다음날 07시`;
+    $('ws-meta').textContent = `자료 ${UI.fmtDateTime(D.now)} 기준 · 하루 = 07시 ~ 다음날 07시`;
     $('ws-meta').title = `초안 만든 시각 ${D.built} · 기간 = 오늘부터 7일(컬러는 확정 지시가 끝날 때까지)`;
     $('ws-miss').innerHTML = (D.missing || []).length ? `<div class="miss">${(D.missing || []).map(esc).join('<br>')}</div>` : '';
     await loadVers();

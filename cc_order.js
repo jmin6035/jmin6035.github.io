@@ -46,7 +46,7 @@
     const clr = `${x.top ? `<span class="ch clr" title="Top Color">${esc(x.top)}</span>` : ''}<div class="sub" title="Primer · Back">${[x.pri && `P ${esc(x.pri)}`, x.back && `B ${esc(x.back)}`].filter(Boolean).join(' · ')}</div>`;
     const pct = x.ordT ? Math.min(100, x.prodT / x.ordT * 100) : 0;
     return `<tr><td>${stBadge(x)}</td>`
-      + `<td><div class="con">${esc(x.con)}</div><div class="sub">${esc(x.line)}${x.spec ? ` · 규격 ${esc(x.spec)}` : ''}${x.pdt ? ` · ${esc(x.pdt)}` : ''}${by !== 'man' && x.man ? ` · 담당 ${esc(x.man)}` : ''}</div></td>`
+      + `<td><div class="con">${esc(x.con)}</div><div class="sub">${esc(x.line)}${x.spec ? ` · <span style="white-space:nowrap">규격 ${esc(x.spec)}</span>` : ''}${x.pdt ? ` · ${esc(x.pdt)}` : ''}${by !== 'man' && x.man ? ` · 담당 ${esc(x.man)}` : ''}</div></td>`
       + `<td><div class="sz">${x.thk != null ? `${(+x.thk).toFixed(2)} × ${n0(x.wdt)}` : ''}</div>${clr}</td>`
       + `<td class="nw">납기 <b class="${x.lateDue ? 'neg' : ''}">${md(x.due) || '-'}</b></td>`
       + `<td class="num"><b>${n1(x.remT)}t</b><div class="sub">주문 ${n1(x.ordT)} · 생산 ${n1(x.prodT)}</div><div class="hb" style="--gc:var(--g3a);margin-top:4px" title="생산 ${Math.round(pct)}%"><i style="width:${pct.toFixed(1)}%"></i></div></td>`
@@ -96,7 +96,7 @@
     const groups = G0.concat([...new Set(L.map((x) => x.grp))].filter((g) => !G0.includes(g)));
     const byG = groups.map((g) => [g, L.filter((x) => x.grp === g)]).filter((e) => e[1].length);
     const S = sumOf(L);
-    $('od-meta').textContent = `${O.asOf} 기준 · ${O.lines.map((l) => `${l} ${md(O.srcs[l].date)}`).join(' · ')}${O.missing.length ? ` · ${O.missing.join('·')} 자료 없음` : ''}`;
+    $('od-meta').textContent = `${UI.fmtDate(O.asOf)} 기준 · ${O.lines.map((l) => `${l} ${md(O.srcs[l].date)}`).join(' · ')}${O.missing.length ? ` · ${O.missing.join('·')} 자료 없음` : ''}`;
     $('od-main').innerHTML = `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 컬러 주문·납기</h2><div class="od-kpi" id="od-kpi">${kpi}</div>`
       + `<p class="od-note">주문잔여량 0 이하·1,000kg 이하 제외(계약번호 5번째 T·Q 는 포함) · 소재 경로: 계약번호 6번째 C = 재고기반(규격상 재고), M = 소재 발주 + 고객주문 · 매치 = MES 작업지시대상선정 매치량</p>`
       + (O.missing.length ? `<p class="od-wait">⏳ ${O.missing.join('·')}: 작업지시대상선정 자료가 아직 없음 — 라인별 내려받기를 받으면 같은 화면에 들어옴</p>` : '')

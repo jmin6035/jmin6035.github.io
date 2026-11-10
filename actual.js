@@ -48,7 +48,7 @@
     const SHA = (w) => { const L2 = O.lines.filter((x) => w === 'w0' || x.w1.days); return L2.length ? L2.reduce((a, x) => a + (SH(w, x.line) || 0), 0) / L2.length : null; };
     const mes = (O.month.rows || []).some((x) => x.src === 'MES');
     if (t && mes) t.actual = O.lines.reduce((a, x) => a + Math.round((M[x.line] || {}).actual || 0), 0);   // 계 = 라인 값(반올림)의 합 — 월별 표 합계와 같은 값(14,976 vs 14,975 방지)
-    return card('ca-line', '라인별 진도 · 주간 비교', `월차·일정 = 판매생산속보 ${O.month.asOf || ''}${mes ? ` · 실적 = MES 코일(~${md(O.asOf)})` : ''} · 주간 = 지난주 vs ${BW()} 평균`, '단위: 톤', `<div class="scroll"><table class="t big"><thead><tr><th class="l" rowspan="2">라인</th><th colspan="4">${MON()}월 진도 (MES 월차계획)</th><th colspan="3">생산 t/일</th><th rowspan="2">속도 t/hr <small>정지 포함</small></th><th rowspan="2">평균 두께 mm</th><th rowspan="2">휴지 h/일</th><th rowspan="2">가동일 <small>지난주</small></th></tr>
+    return card('ca-line', '라인별 진도 · 주간 비교', `월차·일정 = 판매생산속보 ${O.month.asOf || ''}${mes ? ` · 실적 = MES 코일(~${md(O.asOf)})` : ''} · 주간 = 지난주 vs ${BW()} 평균`, '단위: 톤', `<div class="scroll"><table class="t big"><thead><tr><th class="l" rowspan="2">라인</th><th colspan="4">${MON()}월 진도 (MES 월차계획)</th><th colspan="3">생산 t/일</th><th rowspan="2" title="생산 t ÷ (작업 + 정지 시간)">속도 t/hr</th><th rowspan="2" title="평균 두께">두께 mm</th><th rowspan="2">휴지 h/일</th><th rowspan="2" title="지난주 가동일">가동일</th></tr>
       <tr><th>월차</th><th>일정 누계</th><th>실적 누계</th><th>달성률</th><th>${BW()} 평균</th><th>지난주</th><th>증감</th></tr></thead><tbody>${rows}
       ${t ? `<tr class="total"><td class="l">${CFG.name} 계</td><td>${n0(t.month)}</td><td>${n0(t.sched)}</td><td>${n0(t.actual)}</td><td class="pbar">${t.sched ? `<div><i class="${{ ok: 'ok', warn: 'wn', bad: 'bd' }[UI.rate(t.actual / t.sched * 100)]}" style="width:${Math.min(100, t.actual / t.sched * 100)}%"></i></div><b>${(t.actual / t.sched * 100).toFixed(1)}%</b>` : '<span class="muted">일정 없음</span>'}</td><td>${n0(S0('tpd'))}</td><td><b>${n0(S1('tpd'))}</b></td><td>${dl(pct(S1('tpd'), S0('tpd')))}</td><td>${n1(TPH('w0'))} → <b>${n1(TPH('w1'))}</b></td><td></td><td>${n1(SHA('w0'))} → <b>${n1(SHA('w1'))}</b> <small class="muted">평균</small></td><td></td></tr>` : ''}</tbody></table></div>
       <p class="small">속도 = 생산 t ÷ (작업 + 정지 시간) — 주간 보고와 같은 정의. MES 속보의 t/hr(정지 제외)와는 다름.</p>`);
@@ -132,7 +132,7 @@
   }
   function render() {
     $('ca-main').innerHTML = lineTable() + daily() + weekly() + `<div class="grid2 rowc">${products()}${stops()}</div>` + (PLANT === 'G' ? mcCard() : '') + monthly();
-    $('ca-meta').innerHTML = `<span><b>실적</b>~${O.asOf}</span><span><b>지난주</b>${md(O.w1)}~</span><span><b>비교</b>${md(O.w0[0])}~${md(O.w0[1])} 주 (${NW()}주)</span><span><b>계산</b>${String(O.built).replace('T', ' ')}</span>`;
+    $('ca-meta').innerHTML = `<span><b>실적</b>~${UI.fmtDate(O.asOf)}</span><span><b>지난주</b>${md(O.w1)}~</span><span><b>비교</b>${md(O.w0[0])}~${md(O.w0[1])} 주 (${NW()}주)</span><span><b>계산</b>${UI.fmtDateTime(O.built)}</span>`;
     UI.reveal($('ca-main')); UI.count($('ca-main')); bindTip($('ca-main'));
     render2();
   }

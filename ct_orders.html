@@ -151,6 +151,8 @@ table.pdt tr.lv1 td.nm { padding-left: 26px !important; } table.pdt tr.lv2 td.nm
 table.pdt tr.lv0 td { border-bottom: 2px solid var(--line); } table.pdt tr.mu td { color: var(--ink-3); font-weight: 500; }
 @media (max-width: 1280px) { .pms { grid-template-columns: repeat(3, minmax(0, 1fr)); } .pts, .pts.p5, .pts.p6, .pts.p7 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .pms { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pts, .pts.p5, .pts.p6, .pts.p7 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pt .v { font-size: 21px; } .pm .v { font-size: 20px; } table.pl-t th:last-child, table.pl-t td.mu2 { display: none; } .sb.tall span { font-size: 0; } }
+/* 서식 통일(11/10): 타일 세부 낱말 중간 줄바꿈 없음 */
+.gq .nw { white-space: nowrap; } .pt .s, .pt .gq { word-break: keep-all; }
 </style>
 </head>
 <body>

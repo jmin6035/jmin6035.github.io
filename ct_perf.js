@@ -19,7 +19,7 @@
 
   function draw(D) {
     const m = document.getElementById('ct-main'), v = CT.view('ops', VIEWS), A = calc(D);
-    m.innerHTML = CT.basis([{ name: '주문 진도', at: A.M.asOf, kind: '실적' }, { name: '생산 실적', at: A.P.asOf, kind: '실적' }, { name: '판생속보', at: A.P.sr && A.P.sr.asOf, kind: '확정계획' }, A.LP && { name: '가동계획', at: A.LP.savedAt, kind: '재계획' }])
+    m.innerHTML = CT.basis([{ name: '주문 진도', at: A.M.asOf, kind: '실적' }, { name: '생산 실적', at: A.P.asOf, kind: '실적' }, { name: '판매생산속보', at: A.P.sr && A.P.sr.asOf, kind: '확정계획' }, A.LP && { name: '가동계획', at: A.LP.savedAt, kind: '재계획' }])
       + (v === 'cause' ? cause(A) : `<p class="pf-top"><a class="pf-btn" href="report.html">주간 보고 →</a></p><div class="pf-g">${A.cards.join('')}</div>`);
     if (!bound) { bound = true; CT.onView(() => { draw(D); if (window.UI && UI.reveal) UI.reveal(m); }); }
   }
@@ -72,7 +72,7 @@
         if (!CT.inScope(pl)) continue;
         let plan, act, how;
         if (m < cm2) { plan = mSum(m, pl); act = actM(pl === 'G' ? GA : CA, m); how = '기준 계획 월 생산'; }
-        else if (pl === 'G') { plan = gl.reduce((a, l) => a + (l.sched || 0), 0); act = gl.reduce((a, l) => a + (l.actual || 0), 0); how = `판생속보 일정(~${md(P.asOf)})`; }
+        else if (pl === 'G') { plan = gl.reduce((a, l) => a + (l.sched || 0), 0); act = gl.reduce((a, l) => a + (l.actual || 0), 0); how = `판매생산속보 일정(~${md(P.asOf)})`; }
         else { plan = cgp.reduce((a, g) => a + Math.max(0, (g.prod.month || 0) - (g.prod.after || 0)), 0); act = cgp.reduce((a, g) => a + (g.prod.actual || 0), 0); how = `그룹 계획(~${md(cgp[0] && cgp[0].prod.asOf || P.asOf)})`; }
         if (!plan && !act) continue;
         const q = pc(act, plan);

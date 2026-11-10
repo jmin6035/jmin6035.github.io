@@ -182,7 +182,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     const groups = G0.concat([...new Set(L.map((x) => x.grp || '그룹 미상'))].filter((g) => !G0.includes(g)));
     const byG = groups.map((g) => [g, L.filter((x) => (x.grp || '그룹 미상') === g)]).filter((e) => e[1].length);
     const S = sumOf(L);
-    $('od-meta').textContent = `${O.asOf} 기준 · 납기 −30일 ~ +90일 계약`;
+    $('od-meta').textContent = `${UI.fmtDate(O.asOf)} 기준 · 납기 −30일 ~ +90일 계약`;
     const wait = [!O.hasRun && '포스코 진행', !O.hasCus && '고객사·담당자', !O.hasFull && '목적지'].filter(Boolean);
     $('od-main').innerHTML = coverCard() + `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 주문진도</h2><div class="od-kpi" id="od-kpi">${kpi}</div>`
       + `<p class="od-note">필요 입고일 = 내수 납기 −${O.basis.leadIn + O.basis.prep}일 · 수출 출항 −${O.basis.leadIn + O.basis.prep}일 · 예상 입고 = F/H 인도기한 ${O.dleOff}일 · 포스코 독촉 = 필요 입고 3주 안인데 아직 열연 이전 · 입고 확인 = 필요 입고 2주 안 미입고 · 소재 지연 = 필요 입고일 지남</p>`

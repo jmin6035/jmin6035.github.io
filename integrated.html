@@ -70,6 +70,7 @@ table.rules td.wrap, table.sum td.wrap { white-space: normal; }
 .st-warn .st-b { background: var(--warn-bg); color: var(--warn); } .st-bad .st-b { background: var(--bad); color: #fff; } .st-over .st-b { background: var(--surface-2); color: var(--ink-2); }
 .st-v { font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin: 6px 0 2px; font-variant-numeric: tabular-nums; } .st-v small { font-size: 14px; color: var(--ink-3); margin-left: 2px; }
 .st-s { font-size: 13.5px; color: var(--ink-2); } .st-s small { color: var(--ink-3); }
+.st-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 10px; } .st-top > * { white-space: nowrap; }
 .st-w { margin-top: 6px; font-size: 13.5px; font-weight: 700; color: var(--warn); } .st-w.st-bad { color: var(--bad); } .st-w.ok { color: var(--good); font-weight: 600; }
 #st-tip { position: fixed; z-index: 50; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.14); padding: 6px 10px; font-size: 13.5px; line-height: 1.55; white-space: nowrap; font-variant-numeric: tabular-nums; }
 #st-tip i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }

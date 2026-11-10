@@ -22,7 +22,7 @@
     ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '수주 진도'], ['suju', 'suju.html#prod', '생산'], ['suju', 'suju.html#mat', '소재'], ['suju', 'suju.html#stock', '재고'], ['suju', 'suju.html#close', '월 실적 마감']]],
     ['ct1', '통합 관제', 'home', [['home', 'index.html#day', '금일 현황', 't'], ['home', 'index.html#week', '7일 전망', 't'], ['home', 'index.html#month', '월간 전망', 't'],
       ['board', 'board.html', '판매그룹 관제판', 'd'], ['issues', 'ct_issue.html#now', '이슈 현황', 'd'], ['issues', 'ct_issue.html#req', '조정 요청', 'd']]],
-    ['ct2', '주문·납기', 'cgorder', [['orders', 'ct_orders.html#risk', '납기 위험'], ['orders', 'ct_orders.html#track', '주문진도'], ['orders', 'ct_orders.html#cal', '납기 캘린더'],
+    ['ct2', '주문·납기', 'cgorder', [['risk', 'risk.html', '납기 위험'], ['orders', 'ct_orders.html#track', '주문진도'], ['orders', 'ct_orders.html#cal', '납기 캘린더'],
       ['cgorder', 'cg_order.html', '도금 주문진도', 'd'], ['ccorder', 'cc_order.html', '컬러 주문·납기', 'd']]],
     ['ct3', '생산계획', 'supply', [['supply', 'supply.html', '월간 가동'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더'], ['weekseq', 'week_seq.html', '주간 작업순서'], ['plan7', 'ct_plan.html#cmp', '계획 변경'],
       ['plan7', 'ct_plan.html#week', '주간 생산 일정', 'd'], ['plan7', 'ct_plan.html#load', '라인 부하', 'd'], ['cgwo', 'cg_wo.html', '도금 작업지시 순서', 'd'], ['wo', 'wo.html', '컬러 작업지시 순서', 'd']]],
@@ -123,6 +123,15 @@
     const hs = (location.hash || '').slice(1) || DEFV[pg] || '', C = ALL.filter((x) => x[0] === DOCSP(pg));
     return C.find((x) => (x[1].split('#')[1] || '') === hs) || C.find((x) => !x[1].includes('#')) || C[0] || null;
   }
+  /* 탭 막대 = 한 줄(11/10 서식 기준): 탭이 많거나 화면이 좁으면 줄을 바꾸지 않고 가로로 밀어 봄 — 지금 탭이 보이게 옮기고, 더 있는 쪽 끝을 흐리게(.more-l · .more-r) */
+  function tabsFit(h, keep) {
+    const n = h.querySelector('.ct-tabs'); if (!n) return;
+    const edge = () => { n.classList.toggle('more-l', n.scrollLeft > 4); n.classList.toggle('more-r', n.scrollLeft + n.clientWidth < n.scrollWidth - 4); };
+    if (!n.dataset.fit) { n.dataset.fit = '1'; n.addEventListener('scroll', edge, { passive: true }); }
+    const a = n.querySelector('a[aria-current]');
+    if (a && !keep) { const l = a.offsetLeft - n.offsetLeft; if (l < n.scrollLeft + 24 || l + a.offsetWidth > n.scrollLeft + n.clientWidth - 24) n.scrollLeft = Math.max(0, l - 40); }
+    edge();
+  }
   const tabKey = (t) => `${t[0]}|${t[1].split('#')[1] || ''}`;
   let built = false, curG = null;
   function build() {
@@ -146,7 +155,7 @@
     // 화면 위 탭: 메뉴 묶음의 칸들. 관리 화면은 같은 파일의 하위 화면이 여럿일 때만(예: 생산 실적 · 가동·휴지 · 제품 재고 · 출하)
     const file = cur ? cur[1].split('#')[0] : '';
     const vis = (curM ? curM[3] : inAdm ? ALL.filter((t) => t[1].split('#')[0] === file) : []).filter(okT);
-    const tabs = vis.length > 1 ? `<nav class="ct-tabs noprint" aria-label="${esc(curM ? curM[1] : cur[2])} 탭">${vis.map((t) => `<a href="${t[1]}" data-tab="${tabKey(t)}"${only(t)}>${esc(t[2])}</a>`).join('')}</nav>` : '';
+    const tabs = vis.length > 1 ? `<nav class="ct-tabs noprint" aria-label="${esc(curM ? curM[1] : cur[2])} 탭">${vis.map((t, i) => `<a href="${t[1]}" data-tab="${tabKey(t)}"${only(t)}${t[3] === 'd' ? ` class="dt${vis.findIndex((u) => u[3] === 'd') === i && i ? ' dt0' : ''}"` : ''}>${esc(t[2])}</a>`).join('')}</nav>` : '';   // 세부 화면 탭(.dt) = 작은 글씨 + 첫 칸 앞 구분선(.dt0)
     const title = d.titleAuto != null && cur ? cur[2] : (d.title || document.title);   // data-title-auto: 하위 화면(#)마다 제목 = 메뉴 이름
     const crumb = curM ? `${String(MENU.indexOf(curM) + 1).padStart(2, '0')} ${curM[1]}` : inAdm ? `${String(MENU.length + 1).padStart(2, '0')} ${ADMN}` : d.crumb;
     const TH = { auto: '자동', light: '밝게', dark: '어둡게' };
@@ -173,6 +182,7 @@
     }));
     const key = cur ? tabKey(cur) : '';
     h.querySelectorAll('a[data-tab]').forEach((a) => (a.dataset.tab === key ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+    tabsFit(h);
     const curA = h.querySelector('.shell-nav a[data-tab][aria-current]') || h.querySelector('.shell-nav a[aria-current]'); if (curA) requestAnimationFrame(() => curA.scrollIntoView({ block: 'nearest' }));
     h.querySelectorAll('.scope-seg button').forEach((b) => b.addEventListener('click', () => { if (b.dataset.sc !== scope) setScope(b.dataset.sc); }));
     h.querySelectorAll('.shell-nav a[data-only], .ct-tabs a[data-only]').forEach((a) => a.classList.toggle('dim', scope !== 'all' && !a.dataset.only.includes(scope)));
@@ -188,7 +198,9 @@
       const c2 = curItem(d.page), g2 = MENU.find((m) => m[3].includes(c2)), k2 = g2 ? g2[0] : ADMIN.includes(c2) ? ADMN : '';
       if (k2 !== curG || d.titleAuto != null) { const nopen = document.body.classList.contains('nav-open'); build(); fresh(); document.body.classList.toggle('nav-open', nopen); return; }
       const kk = c2 ? tabKey(c2) : ''; h.querySelectorAll('a[data-tab]').forEach((a) => (a.dataset.tab === kk ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+      tabsFit(h);
     });
+    addEventListener('resize', () => tabsFit(h, true));
   }
 
   /* 기준일 하나(11/8 사용자 '날짜를 최신으로 통일'): 모든 화면의 '기준일·오늘' = 마지막 자료를 받은 시각(status.json runAt)이 속한 생산일(07시~).
@@ -246,6 +258,18 @@
   UI.fmtDate = (v) => { const k = isoOf(v); if (!k) return v == null || v === '' ? '–' : String(v); const y = k.slice(0, 4), md = `${+k.slice(5, 7)}/${+k.slice(8, 10)}`; return y === UI.today().slice(0, 4) ? md : `${y}.${+k.slice(5, 7)}.${+k.slice(8, 10)}`; };
   UI.fmtDateTime = (v) => { const k = isoOf(v); if (!k) return v == null || v === '' ? '–' : String(v); const md = `${+k.slice(5, 7)}/${+k.slice(8, 10)}`; return /T\d{2}:\d{2}/.test(k) ? `${md} ${k.slice(11, 16)}` : md; };
   UI.fmtT = (v) => (v == null || v === '' || isNaN(+v) ? '–' : `${Math.round(+v).toLocaleString('ko-KR')}t`);
+  UI.fmtT1 = (v) => (v == null || v === '' || isNaN(+v) ? '–' : `${(+v).toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}t`);
+  /* 11/10 서식 기준 추가 — 화면에서 직접 toFixed·toLocaleString·요일 계산을 하지 말고 아래를 씀
+     UI.fmtDateW(v)    → 'M/D(화)' — 요일이 판단에 필요한 곳(마감·회의·입항)만. 그 밖의 날짜는 UI.fmtDate
+     UI.fmtT1(v)       → '16.9t' — 소수 1자리는 코일·주문 한 건처럼 100t 안팎의 낱개 값만. 합계·KPI 는 정수(UI.fmtT)
+     UI.fmtN(v, dec)   → '12,345'(단위 없는 숫자, 표 칸에서 머리글에 단위가 있을 때). 값이 없으면 '–'
+     UI.fmtPct(v, dec) → '86.2%'(기본 소수 1자리, 100% 이상도 그대로). 값이 없으면 '–'. 색은 UI.rate
+     UI.empty(why, when) → 빈 자료 문구 한 줄(docs/16 5번: 비어 있는 이유 + 언제 채워지는지) — '<p class="empty">…</p>' */
+  const WD = '일월화수목금토';
+  UI.fmtDateW = (v) => { const k = isoOf(v); if (!k) return UI.fmtDate(v); return `${UI.fmtDate(v)}(${WD[new Date(k.slice(0, 10) + 'T00:00:00Z').getUTCDay()]})`; };
+  UI.fmtN = (v, dec = 0) => (v == null || v === '' || isNaN(+v) ? '–' : (+v).toLocaleString('ko-KR', { minimumFractionDigits: dec, maximumFractionDigits: dec }));
+  UI.fmtPct = (v, dec = 1) => (v == null || v === '' || isNaN(+v) ? '–' : `${UI.fmtN(v, dec)}%`);
+  UI.empty = (why, when) => `<p class="empty">${String(why || '자료 없음').replace(/</g, '&lt;')}${when ? ` <span>${String(when).replace(/</g, '&lt;')}</span>` : ''}</p>`;
   UI.rate = (pct) => (pct == null || pct === '' || isNaN(+pct) ? '' : +pct >= 98 ? 'ok' : +pct >= 90 ? 'warn' : 'bad');
 
   /* 자료 신선도: status.json(사내 PC 자동 실행기·클라우드 게시 중 최신) → 헤더 배지(기준일 표시) + 오래되면 경고 띠 */
@@ -471,7 +495,7 @@
   document.addEventListener('DOMContentLoaded', () => { tagRows(); mo.observe(document.body, { childList: true, subtree: true }); });
 
   /* 긴 설명 문단(90자 넘는 '읽는 법') → 한 줄 + 누르면 펼침(docs/16 설명 문단 금지, 10/30 재검토). data-keep 이면 그대로 */
-  const FOLD = 'main p.hint, main p.small, main div.hint, main p.lead-note, main p.tr-note, main p.od-note, main p.cal-note';
+  const FOLD = 'main p.hint, main p.small, main div.hint, main p.lead-note, main p.tr-note, main p.od-note, main p.cal-note, main p.sj-foot, main p.ct-note';   // 11/10: 보조 글 공통(.ct-note)·수주 관제 산식 줄(.sj-foot)도 90자 넘으면 한 줄 + 자세히
   function foldHints(root) {
     if (document.body.dataset.nofold != null) return;
     const els = [...(root.matches && root.matches(FOLD) ? [root] : []), ...(root.querySelectorAll ? root.querySelectorAll(FOLD) : [])];

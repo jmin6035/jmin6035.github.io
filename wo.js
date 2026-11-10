@@ -17,6 +17,7 @@
   const BLK = { general: '일반', pvs2: 'PVS2', print: '프린트' };
   const DZ = [['col', '색·도료 교체'], ['order', '주문 바뀜'], ['test', '단판TEST'], ['roll', '폭(Roll)'], ['dummy', '두께(Dummy)'], ['block', '블록·프린트 전환']];
   let O = null, line = null;
+  const openDays = new Set();                                     // 펼친 날(11/10: 날짜 줄만 먼저 — 표가 2만px 이던 것)
   let view = 'seq';                                               // 탭: 작업지시 순서 | 작업지시 규칙(사용자 10/21) — 다시 바꿀 때까지 유지
   try { view = location.hash === '#rules' ? 'rules' : (localStorage.getItem('wo-view') || 'seq'); } catch (e) { /* 기본 */ }
   const tabs = () => `<div class="seg pgtab" id="wo-view"><button type="button" data-v="seq" aria-pressed="${view === 'seq'}">작업지시 순서</button><button type="button" data-v="rules" aria-pressed="${view === 'rules'}">작업지시 규칙</button></div>`;
@@ -40,10 +41,10 @@
       + `<td class="l wr">${x.thk} × ${n0(x.wdt)}<br><span class="bk">${esc(x.top || x.color)}${x.back ? ` / 이면 ${esc(x.back)}` : ''}${x.top ? '' : ' <span title="풀 코드 대기(도료 코드 조회)">…</span>'}</span></td>`
       + `<td class="num" title="${esc(x.speedSrc)}"><b>${x.t.toFixed(1)}t</b> · <span style="white-space:nowrap">${n0(x.runMin)}분</span><br><span class="bk">L/S ${x.ls} · ${x.tph}t/h</span>${x.tMade > 0.5 ? `<br><span class="bk" title="지시 ${x.tDrt}t 중 ${x.tMade}t 이미 생산">남은 양</span>` : ''}</td>`
       + `<td class="l wr">${(x.chg || []).map((c) => `<div>${esc(c)}</div>`).join('')}</td>`
-      + `<td class="l wr">${(x.downs || []).length ? ((x.downs.length > 1 && dn) ? `<div class="wo-ds">합계 ${n0(x.downMin)}분</div>` : '') + x.downs.map((d) => `<div class="wo-dl"><b>${esc(d.c)}</b> <span class="${d.m ? 'wo-dm' : 'wo-d0'}">${d.m}분</span> <span class="bk">· ${esc(d.b)}</span></div>`).join('') : '<span class="bk">없음</span>'}</td>`
+      + `<td class="l wr">${(x.downs || []).length ? ((x.downs.length > 1 && dn) ? `<div class="wo-ds">합계 ${n0(x.downMin)}분</div>` : '') + x.downs.filter((d) => d.m).map((d) => `<div class="wo-dl" title="${esc(d.b)}">${esc(String(d.c).replace(/^\d{4}\s*/, '').replace(/\s*—.*$/, '').replace(/\s*\(.*?\)\s*/g, ' ').trim())} <span class="wo-dm">${d.m}분</span></div>`).join('') : '<span class="bk">없음</span>'}</td>`
       + `<td class="l">${prep.join('<br>') || '<span class="bk">-</span>'}</td></tr>`;
   }
-  const HEAD = '<thead><tr><th>순서</th><th>시간</th><th class="l">품명 · 그룹</th><th class="l">두께 × 폭 · 색</th><th>톤 · 생산</th><th class="l">앞 작업과 바뀌는 것</th><th class="l">생기는 휴지 (MES 코드·분)</th><th class="l">준비 (도료·PF·부자재)</th></tr></thead>';
+  const HEAD = '<thead><tr><th>순서</th><th>시간</th><th class="l">품명 · 그룹</th><th class="l">두께 × 폭 · 색</th><th>톤 · 생산</th><th class="l">앞 작업과 바뀌는 것</th><th class="l">생기는 휴지</th><th class="l">준비 (도료·PF·부자재)</th></tr></thead>';
   const NC = 8;
   const LEG = '<div class="strip-lg"><span>날짜 줄 아래 막대 = 그날 07시~다음날 07시 라인 사용:</span><span><i class="sr"></i>생산(숫자 = 순서)</span><span><i class="sd"></i>전환 휴지</span><span><i class="sp"></i>휴지계획</span><span><i class="sw"></i>기다림(도료·PF 준비 전)</span><span><i class="sc"></i>이미 확정된 지시 작업</span></div>';
   // 하루 띠: 07시~다음날 07시 위에 생산(파랑)·휴지(주황)·휴지계획(회색)·기다림(빨강)
@@ -70,10 +71,11 @@
         const first = curDay == null;
         curDay = d;
         const s = ((v.days || {})[ph] || {})[d] || {};
-        h += `<tr class="day"><td colspan="${NC}"><div class="dayh"><b>${dayNm(d)}</b><span>${n0(s.n)}건 · ${n0(s.t)}t · 생산 ${hm(s.run || 0)} · <em>휴지 ${n0(s.down)}분</em>${s.plan ? ` · 휴지계획 ${hm(s.plan)}` : ''}${s.wait ? ` · 기다림 ${hm(s.wait)}` : ''}</span></div>${strip(v, ph, d, byS, first)}</td></tr>`;
+        h += `<tr class="day" data-day="${ph}${d}" tabindex="0" aria-expanded="${openDays.has(ph + d)}"><td colspan="${NC}"><div class="dayh"><i class="wo-ch">▸</i><b>${dayNm(d)}</b><span>${n0(s.n)}건 · ${n0(s.t)}t · 생산 ${hm(s.run || 0)} · <em>휴지 ${n0(s.down)}분</em>${s.plan ? ` · 휴지계획 ${hm(s.plan)}` : ''}${s.wait ? ` · 기다림 ${hm(s.wait)}` : ''}</span></div>${strip(v, ph, d, byS, first)}</td></tr>`;
       }
-      if (e.kind === 'job') { h += row(byS[e.seq], curDay); return; }
-      h += `<tr class="ev ${e.kind}"><td class="c">—</td><td class="tm">${tm(e.start, curDay)} – ${tm(e.end, curDay)}</td><td colspan="${NC - 2}"><b>${e.kind === 'plan' ? '휴지계획' : '라인 멈춤(기다림)'} ${hm(e.min)}</b> · ${esc(e.why)}</td></tr>`;
+      const hid = openDays.has(ph + curDay) ? '' : ' hidden';
+      if (e.kind === 'job') { h += row(byS[e.seq], curDay).replace('<tr', `<tr data-of="${ph}${curDay}"${hid}`); return; }
+      h += `<tr data-of="${ph}${curDay}"${hid} class="ev ${e.kind}"><td class="c">—</td><td class="tm">${tm(e.start, curDay)} – ${tm(e.end, curDay)}</td><td colspan="${NC - 2}"><b>${e.kind === 'plan' ? '휴지계획' : '라인 멈춤(기다림)'} ${hm(e.min)}</b> · ${esc(e.why)}</td></tr>`;
     });
     return `<div class="scroll"><table class="t wo"><colgroup><col style="width:5%"><col style="width:10%"><col style="width:13%"><col style="width:12%"><col style="width:9%"><col style="width:17%"><col style="width:23%"><col style="width:11%"></colgroup>${HEAD}<tbody>${h}</tbody></table></div>`
       + '<p class="hint lg"><i class="sr"></i>생산 <i class="sd"></i>휴지(앞 작업과 바뀜) <i class="sp"></i>휴지계획 <i class="sw"></i>기다림 — 띠에 마우스를 올리면 내용이 보입니다</p>';
@@ -134,7 +136,7 @@
   function renderRules() {
     const L = Object.keys(O.lines);
     line = line && L.includes(line) ? line : L[0];
-    $('wo-meta').textContent = `${O.now} 기준(지금) · 계산 ${O.built || ''}`;
+    $('wo-meta').textContent = `${UI.fmtDateTime(O.now)} 기준 · 계산 ${UI.fmtDateTime(O.built || '')}`;
     $('wo-main').innerHTML = tabs() + `<section class="card"><div class="seg" id="wo-lines">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l}</button>`).join('')}</div></section>` + conditions(line);
     $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; renderRules(); });
     bindTabs();
@@ -146,24 +148,36 @@
     line = line && L.includes(line) ? line : (L.find((l) => O.lines[l].nFree) || L[0]);
     const v = O.lines[line];
     const free = v.items.filter((x) => !x.fixed), fx = v.items.filter((x) => x.fixed);
-    $('wo-meta').textContent = `${O.now} 기준(지금) · 계산 ${O.built || ''}`;
+    $('wo-meta').textContent = `${UI.fmtDateTime(O.now)} 기준 · 계산 ${UI.fmtDateTime(O.built || '')}`;
     const dz = DZ.filter(([k]) => v.downFree[k] > 0.5).map(([k, nm]) => `${nm} ${n0(v.downFree[k])}`).join(' · ') || '없음';
     const gain = v.mes.sum - v.ours.sum;
     const stop = v.stop ? `<div class="miss"><b>${line} 휴지 중</b> — ${esc(v.stop.note)}. ${v.stop.until ? `재가동 ${md(v.stop.until)} 07시부터 시각 계산` : '재가동일 미정 — 아래 시각은 <b>지금 바로 재가동한다고 가정</b>한 것'}</div>` : '';
     const ns = (O.nospec || []).filter((x) => x.line === line);
-    $('wo-main').innerHTML = tabs() + (O.missing && O.missing.length ? `<div class="miss"><b>아직 안 들어온 자료</b> — ${O.missing.map(esc).join(' / ')}</div>` : '')
+    const tot = { fx: 0, tfx: 0, n: 0, t: 0, dn: 0, gain: 0, wait: 0 };
+    const all = L.map((l) => { const q = O.lines[l], nf = q.items.filter((x) => x.fixed).length, g = q.nFree ? q.mes.sum - q.ours.sum : 0;
+      tot.fx += nf; tot.tfx += q.tFixed || 0; tot.n += q.nFree; tot.t += q.tFree || 0; tot.dn += q.downFreeSum || 0; tot.gain += g; tot.wait += q.waitN || 0;
+      const fr = q.items.filter((x) => !x.fixed);
+      return `<tr class="ln${l === line ? ' on' : ''}" data-l="${l}" tabindex="0"><td><b>${l}</b></td><td>${q.stop ? `<span class="wo-st off">휴지</span>` : '<span class="wo-st on">가동</span>'}</td><td><b>${nf}</b>건 · ${n0(q.tFixed)}t</td><td>${nf ? esc(tm(q.fixedUntil)) : '-'}</td><td><b>${q.nFree}</b>건 · ${n0(q.tFree)}t</td><td>${q.nFree ? `${esc(tm(fr[0].start))} ~ ${esc(tm(q.until))}` : '-'}</td><td><b>${n0(q.downFreeSum)}</b>분</td><td>${q.nFree ? `<b class="${g >= 0 ? 'wo-g' : 'wo-b'}">${g >= 0 ? '−' : '+'}${n0(Math.abs(g))}분</b>` : '-'}</td><td>${q.waitN ? `<b class="wo-w">${q.waitN}건</b>` : '-'}</td></tr>`; }).join('');
+    const allCard = `<section class="card"><h2>전체 <small class="bk">컬러 4개 라인 · 줄을 누르면 그 라인 순서</small></h2>
+      <div class="scroll"><table class="t wo-all"><thead><tr><th>라인</th><th>상태</th><th>확정 대기</th><th>확정분 끝</th><th>편성 제안</th><th>제안 기간</th><th>예상 휴지</th><th title="같은 지시를 MES 작업예정일·순번대로 돌릴 때와 비교(휴지 + 도료 기다림)">MES 순서 대비</th><th title="도료·PF 준비를 기다리는 지시">준비 대기</th></tr></thead><tbody>${all}
+      <tr class="tot-r"><td><b>합계</b></td><td></td><td><b>${tot.fx}</b>건 · ${n0(tot.tfx)}t</td><td></td><td><b>${tot.n}</b>건 · ${n0(tot.t)}t</td><td></td><td><b>${n0(tot.dn)}</b>분</td><td><b class="${tot.gain >= 0 ? 'wo-g' : 'wo-b'}">${tot.gain >= 0 ? '−' : '+'}${n0(Math.abs(tot.gain))}분</b></td><td>${tot.wait ? `<b class="wo-w">${tot.wait}건</b>` : '-'}</td></tr></tbody></table></div></section>`;
+    $('wo-main').innerHTML = tabs() + allCard + (O.missing && O.missing.length ? `<div class="miss"><b>아직 안 들어온 자료</b> — ${O.missing.map(esc).join(' / ')}</div>` : '')
       + (ns.length ? `<div class="miss"><b>순서에서 뺀 지시 ${ns.length}건 — 계약 상세(두께·폭)가 MES 에 없음</b>: ${ns.map((x) => `${esc(x.con)} ${esc(x.item)} ${x.t}t(지시 ${md(x.drtDate)})`).join(' · ')}. 오래전 지시가 종료되지 않고 남은 것으로 보임 — MES 정리 확인</div>` : '')
       + `<section class="card"><div class="seg" id="wo-lines">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l} <small>${O.lines[l].stop ? '휴지' : `${O.lines[l].nFree}건`}</small></button>`).join('')}</div>${stop}`
       + '<div class="kpis" style="margin-top:12px">'
       + `<div class="kpi"><div class="l">지금 라인 · 확정 대기</div><div class="v">${fx.length}<small>건</small></div><div class="b">마지막 코일 ${esc(v.lastCoil ? tm(v.lastCoil) : '-')} 끝 · 확정분 ${n0(v.tFixed)}t 은 ${esc(tm(v.fixedUntil))} 까지</div></div>`
-      + `<div class="kpi"><div class="l">이번 제안(편성 대상)</div><div class="v">${v.nFree}<small>건 ${n0(v.tFree)}t</small></div><div class="b">${v.nFree ? `${esc(tm(free[0].start))} → ${esc(tm(v.until))}` : '편성할 지시 없음'}${v.waitN ? ` · 도료·PF 준비 기다리는 지시 ${v.waitN}건` : ''}</div></div>`
+      + `<div class="kpi"><div class="l">이번 제안(편성 대상)</div><div class="v">${v.nFree}<small>건 · ${n0(v.tFree)}t</small></div><div class="b">${v.nFree ? `${esc(tm(free[0].start))} → ${esc(tm(v.until))}` : '편성할 지시 없음'}${v.waitN ? ` · 도료·PF 준비 기다리는 지시 ${v.waitN}건` : ''}</div></div>`
       + `<div class="kpi"><div class="l">예상 휴지(제안 순서)</div><div class="v wv">${n0(v.downFreeSum)}<small>분</small></div><div class="b">${dz}</div></div>`
       + '</div>'
       + (v.nFree ? `<div class="wo-cmp${gain < 0 ? ' bad' : ''}"><b>MES 순서와 비교</b> — 같은 ${v.nFree}건을 MES 에 지금 들어가 있는 작업예정일·순번대로 돌리면 휴지 ${n0(v.mes.down)}분${v.mes.wait ? ` + 도료 기다림 ${n0(v.mes.wait)}분` : ''} → 제안이 <b>${gain >= 0 ? `${n0(gain)}분 짧음` : `${n0(-gain)}분 김`}</b> <span class="bk">(같은 출발점, 같은 휴지 규칙)</span></div>` : '')
       + '</section>'
-      + (v.nFree ? `<section class="card"><h2>제안 순서 <small class="bk">날짜별 · 줄마다 그 지시 앞에 생기는 휴지와 생산</small></h2>${LEG}${table(v, free, 'free')}</section>` : '')
+      + (v.nFree ? `<section class="card"><h2>${line} 제안 순서 <small class="bk">날짜 줄을 누르면 그날 작업</small> <button type="button" class="btn sm" id="wo-exp" style="margin-left:10px">모두 펼치기·접기</button></h2>${LEG}${table(v, free, 'free')}</section>` : '')
       + (fx.length ? `<section class="card"><details class="fx"><summary>이미 확정된 대기열 ${fx.length}건 ${n0(v.tFixed)}t — MES 순서 그대로 (${esc(tm(v.from))} → ${esc(tm(v.fixedUntil))})</summary>${table(v, fx, 'fixed')}</details></section>` : '');
     $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; render(); });
+    $('wo-main').querySelectorAll('tr.ln').forEach((r) => { const f = () => { line = r.dataset.l; render(); const c = document.getElementById('wo-lines'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }; r.onclick = f; r.onkeydown = (e) => { if (e.key === 'Enter') f(); }; });
+    $('wo-main').querySelectorAll('tr.day').forEach((r) => { const f = () => { const k = r.dataset.day; if (openDays.has(k)) openDays.delete(k); else openDays.add(k); const on = openDays.has(k); r.setAttribute('aria-expanded', on);
+      $('wo-main').querySelectorAll(`tr[data-of="${CSS.escape(k)}"]`).forEach((x) => { x.hidden = !on; }); }; r.onclick = f; r.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f(); } }; });
+    const ex = $('wo-exp'); if (ex) ex.onclick = () => { const days = [...$('wo-main').querySelectorAll('tr.day')].map((r) => r.dataset.day), allOn = days.every((k) => openDays.has(k)); days.forEach((k) => (allOn ? openDays.delete(k) : openDays.add(k))); render(); };
     bindTabs();
     if (window.UI) UI.reveal($('wo-main'));
   }

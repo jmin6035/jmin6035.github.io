@@ -14,7 +14,7 @@ ol.fix li { margin: 8px 0; font-size: 16px; } ol.fix code { background: var(--ti
 </style>
 </head>
 <body>
-<header id="shell" data-page="health" data-crumb="관리" data-title="자료 상태" data-sub="원천 자료별 마지막 날짜와 화면별 게시 시각 — 숫자가 언제 기준인지 확인"></header>
+<header id="shell" data-page="health" data-crumb="관리" data-title="자료 상태" data-sub="숫자가 언제 기준인지 — 원천 자료 마지막 날짜와 화면별 게시 시각"></header>
 <main class="wrap">
   <div id="h-main" style="margin-top:16px"><section class="card"><div class="skel"><i style="width:40%"></i><i></i><i style="width:70%"></i></div></section></div>
 </main>
@@ -36,15 +36,15 @@ ol.fix li { margin: 8px 0; font-size: 16px; } ol.fix code { background: var(--ti
     ['integrated.enc.json', '통합 가동계획', '계획 변경 시(수동)']];
   (async () => {
     const st = (await Promise.all([get(SUPA + 'status.json'), get('published/status.json')])).filter(Boolean).sort((a, b) => (String(a.runAt) < String(b.runAt) ? 1 : -1))[0];
-    const envs = await Promise.all(PAGES.map(async ([n]) => { const [a, b] = await Promise.all([get(SUPA + n), get('published/' + n)]); const ca = a && (a.created || a.savedAt), cb = b && (b.created || b.savedAt); return ca && (!cb || ca > cb) ? { src: '사내 PC(Supabase)', at: ca } : cb ? { src: '수동 게시', at: cb } : null; }));
+    const envs = await Promise.all(PAGES.map(async ([n]) => { const [a, b] = await Promise.all([get(SUPA + n), get('published/' + n)]); const ca = a && (a.created || a.savedAt), cb = b && (b.created || b.savedAt); return ca && (!cb || ca > cb) ? { src: '사내 PC 자동', at: ca } : cb ? { src: '수동 게시', at: cb } : null; }));
     let h = '';
     if (st) {
       const fs = st.feeds || [];
       const worst = Math.max(...fs.filter((f) => f.last && !/월말/.test(f.name)).map((f) => age(f.last)));
       h += `<section class="card"><h2>원천 자료 <small>마지막 게시 ${kst(st.runAt)}</small></h2>
-        <div class="kpis" style="margin-bottom:16px"><div class="kpi tone-${worst <= 1 ? 'good' : worst <= 2 ? 'warn' : 'bad'}"><div class="l">가장 오래된 일일 자료</div><div class="v">${worst}<small>일 전</small></div><div class="b">${worst <= 1 ? '정상 — 매일 갱신 중' : '자동 실행이 멈췄을 수 있음 — 아래 점검 순서'}</div></div>
-        <div class="kpi tone-brand"><div class="l">마지막 재계획</div><div class="v" style="font-size:26px">${st.auto && st.auto.actualTo ? esc(st.auto.actualTo) : (envs[3] ? kst(envs[3].at) : '-')}</div><div class="b">${st.auto && st.auto.replanned ? '재계획함' + (st.auto.optimal === false ? ' (시간 제한)' : '') : envs[3] ? `게시 계획 · ${esc(envs[3].src)}` : esc((st.auto && st.auto.notes && st.auto.notes.join(' · ')) || '-')}</div></div></div>
-        <div class="scroll"><table class="t"><thead><tr><th class="l">자료</th><th>마지막 날짜</th><th>경과</th><th>건수</th></tr></thead><tbody>${fs.map((f) => `<tr><td class="l"><b>${esc(f.name)}</b></td><td>${esc(f.last || '-')}</td><td class="c">${/월말/.test(f.name) ? '<span class="muted">월 1회</span>' : badge(age(f.last))}</td><td>${f.n != null ? f.n.toLocaleString('ko-KR') : '-'}</td></tr>`).join('')}</tbody></table></div></section>`;
+        <div class="kpis" style="margin-bottom:16px"><div class="kpi tone-${worst <= 1 ? 'good' : worst <= 2 ? 'warn' : 'bad'}"><div class="l">가장 오래된 일일 자료</div><div class="v">${worst}<small>일 전</small></div><div class="b">${worst <= 1 ? '정상 — 매일 갱신 중' : '자동 실행 확인 필요'}</div></div>
+        <div class="kpi tone-brand"><div class="l">마지막 재계획</div><div class="v" style="font-size:26px">${st.auto && st.auto.actualTo ? esc(UI.fmtDateTime(st.auto.actualTo)) : (envs[3] ? kst(envs[3].at) : '-')}</div><div class="b">${st.auto && st.auto.replanned ? '재계획함' + (st.auto.optimal === false ? ' (시간 제한)' : '') : envs[3] ? `게시 계획 · ${esc(envs[3].src)}` : esc((st.auto && st.auto.notes && st.auto.notes.join(' · ')) || '-')}</div></div></div>
+        <div class="scroll"><table class="t"><thead><tr><th class="l">자료</th><th>마지막 날짜</th><th>경과</th><th>건수</th></tr></thead><tbody>${fs.map((f) => `<tr><td class="l"><b>${esc(f.name)}</b></td><td>${f.last ? esc(UI.fmtDate(f.last)) : '–'}</td><td class="c">${/월말/.test(f.name) ? '<span class="muted">월 1회</span>' : badge(age(f.last))}</td><td>${f.n != null ? f.n.toLocaleString('ko-KR') : '–'}</td></tr>`).join('')}</tbody></table></div></section>`;
     } else h += '<section class="card"><h2>원천 자료</h2><p class="lead">자료 상태 파일이 아직 없습니다(새 자동 실행기 설치 후 생김).</p></section>';
     h += `<section class="card"><h2>화면별 게시 시각 <small>매일 자동 갱신본과 수동 게시본 중 최신</small></h2><div class="scroll"><table class="t"><thead><tr><th class="l">화면</th><th>게시</th><th>경과</th><th class="l">출처</th><th class="l">갱신 방식</th></tr></thead><tbody>${PAGES.map(([n, nm, how], i) => { const e = envs[i]; return `<tr><td class="l"><b>${nm}</b></td><td>${e ? kst(e.at) : '-'}</td><td class="c">${badge(e ? age(new Date(e.at).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })) : null)}</td><td class="l">${e ? e.src : '-'}</td><td class="l muted">${how}</td></tr>`; }).join('')}</tbody></table></div></section>`;
     h += `<section class="card"><h2>갱신 중단 시 점검 절차</h2><ol class="fix">

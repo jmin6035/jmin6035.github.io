@@ -138,7 +138,7 @@
     const A = riskAll().filter((o) => !R.cause || o.cause === R.cause).sort(sorter(R.sk, R.dir, imp));
     const row = (o) => `<tr class="ck" data-id="${esc(o.id)}"><td class="sk s1">${CT.badge(o)}</td>`
       + `<td>${o.last ? `<b>${md(o.last)}</b> <span class="lf">${CT.leftTxt(o)}</span>` : '<span class="mu">-</span>'}</td>${idCell(o, R.by ? plName(o) : o.grp + ' · ' + plName(o))}`
-      + `<td class="r"><b>${n1(imp(o))}</b></td><td class="c-need">${md(o.needProd) || '<span class="mu">-</span>'}</td><td>${dueCell(o)}</td>`
+      + `<td class="r"><b>${Math.abs(imp(o)) >= 100 ? n0(imp(o)) : n1(imp(o))}</b></td><td class="c-need">${md(o.needProd) || '<span class="mu">-</span>'}</td><td>${dueCell(o)}</td>`
       + `<td class="w">${esc(CT.why(o) || '-')}</td><td>${esc(o.dept || '-')}</td><td class="c-act"><span class="co-act">미조치</span></td></tr>`;
     const rows = R.by ? grouped(A, R, 9, row, imp) : A.slice(0, R.lim).map(row).join('');
     $('co-tbl').innerHTML = `<table class="ct-t co-t${R.by ? ' by' : ''}"><thead><tr>${th('risk', '상태', R, 'sk s1')}${th('last', '조치 마감일', R, '', '이 날까지 조치해야 납기를 지킬 수 있는 마지막 날')}${th('id', R.by ? '주문번호' : '주문번호·판매그룹', R, 'sk s2')}`
@@ -155,12 +155,12 @@
     const k = CT.kpis([
       { label: '납기 지연 예상(전 기간)', v: n0(red.length), unit: '건', sub: `<span title="${BASIS}">조치일 지난 ${n0(red.filter((o) => o.last && o.last < asOf).length)}건 포함 · 점검 필요 ${n0(warn.length)}건 별도</span>`, tone: red.length ? 'bad' : 'ok' },
       { label: '해당 물량', v: n0(sum(red.concat(warn), imp)), unit: 't', sub: `지연 예상 ${n0(sum(red, imp))}t · 점검 필요 포함`, tone: red.length ? 'bad' : 'ok' },
-      { label: '조치일 지남', v: n0(past.length), unit: '건', sub: `${n0(sum(past, imp))}t · 조치 마감일 지남`, tone: past.length ? 'bad' : 'ok' },
+      { label: '조치일 지남', v: n0(past.length), unit: '건', sub: `${n0(sum(past, imp))}t`, tone: past.length ? 'bad' : 'ok' },
       { label: '자료 확인 필요', v: n0(na.length), unit: '건', sub: '납기·주문량 없음 · 출하 실적 없음', tone: na.length ? 'warn' : 'ok' },
     ]);
     const chips = [['', '전체', A.length], ...Object.keys(CT.CAUSE).map((c) => [c, CT.CAUSE[c], A.filter((o) => o.cause === c).length])]
       .map(([c, n, cnt]) => `<button type="button" class="co-chip" data-c="${c}" aria-pressed="${c === R.cause}"${cnt || !c ? '' : ' disabled'}>${esc(n)} <b>${n0(cnt)}</b></button>`).join('');
-    return k + shipNote() + `<div class="co-chips" role="group" aria-label="원인">${chips}<label class="nw"><input type="checkbox" id="co-rby"${R.by ? ' checked' : ''}> 판매그룹 묶음</label>${allBtn('co-rall')}<span class="cnt" id="co-cnt"></span></div><div class="co-tw" id="co-tbl"></div>`;
+    return k + `<div class="co-chips" role="group" aria-label="원인">${chips}<label class="nw"><input type="checkbox" id="co-rby"${R.by ? ' checked' : ''}> 판매그룹 묶음</label>${allBtn('co-rall')}<span class="cnt" id="co-cnt"></span></div><div class="co-tw" id="co-tbl"></div>` + shipNote().replace('co-sn"', 'co-sn" style="margin:12px 2px 0"');
   }
   function bindRisk() {
     $('co-rby').onchange = (e) => { R.by = e.target.checked; R.lim = 200; drawRisk(); };
@@ -326,8 +326,8 @@
     const m0s = d.pl === 'C' ? (subT('발주 없음') > 0.5 ? ` · <span class="bad">발주 없음 ${n0(subT('발주 없음'))}t</span>` : '') : [['입고 지연', subT('입고 지연')], ['미발주', subT('미발주')]].filter((x) => x[1] > 0.5).map(([k, v]) => ` · <span class="bad">${k} ${n0(v)}t</span>`).join('');
     const hd = (rs, k) => `${n0(hSum(rs, k))}h · ${dayTxt(rs, k)}`;
     const wT = d.pl === 'C' ? w.rem : w.rem, wN = d.pl === 'C' ? w.rs.reduce((a, r) => a + (r.s1030 ? r.s1030.n : (+r.cfmN || 0)), 0) : w.n;
-    const gTxt = (rs, k) => { const o = {}; rs.forEach((r) => { const g = String(r.grp || '-').replace(/그룹$|판매그룹$/, ''); o[g] = (o[g] || 0) + tonOf(r, k); }); const e = Object.entries(o).filter((x) => x[1] >= 0.5).sort((a, b) => b[1] - a[1]); return e.length ? `<div class="gq">${e.map(([g, v]) => `${esc(g)} ${n0(v)}`).join(' · ')}</div>` : ''; };
-    const tiles = `<div class="pts p${4 + F.tiles.length}">${tile('주문 잔여량', n0(tot), 't', `${n0(n)}건 · ${d.pl === 'C' ? '작업지시대상' : '도금 작업지시대상'} 주문잔여량 1,000kg 넘는 것(계약번호 5번째 T·Q 포함)${gTxt(d.R, '')}`)}`
+    const gTxt = (rs, k) => { const o = {}; rs.forEach((r) => { const g = String(r.grp || '-').replace(/그룹$|판매그룹$/, ''); o[g] = (o[g] || 0) + tonOf(r, k); }); const e = Object.entries(o).filter((x) => x[1] >= 0.5).sort((a, b) => b[1] - a[1]); return e.length ? `<div class="gq">${e.map(([g, v]) => `<span class="nw">${esc(g)} ${n0(v)}</span>`).join(' · ')}</div>` : ''; };
+    const tiles = `<div class="pts p${4 + F.tiles.length}">${tile('주문 잔여량', n0(tot), 't', `<span title="${d.pl === 'C' ? '작업지시대상' : '도금 작업지시대상'} 주문잔여량 1,000kg 넘는 것(계약번호 5번째 T·Q 포함)">${n0(n)}건</span>${gTxt(d.R, '')}`)}`
       + tile(K0, n0(m0.rem), 't', `${n0(m0.n)}건${m0s}${gTxt(m0.rs, K0)}`, m0.rem > 0.5 ? 'bad' : '', xk(K0))
       + tile(KP, n0(mtT), 't', `${n0(mtN)}건 · ${hd(mtR, KP)}${gTxt(mtR, KP)}`, '', xk(KP))
       + F.tiles.map((k) => { const c = cat(k); return tile(`└ ${k}`, n0(c.rem), 't', `${n0(c.n)}건 · ${hd(c.rs, k)}${gTxt(c.rs, k)}`, (k === '부자재 대기' || k === '불량') && c.rem > 0.5 ? 'warn' : '', xk(k)); }).join('')
@@ -382,7 +382,7 @@
       + tr(1, KP, ag(mtR), dy(mtR, KP), 'b') + mt.map((c) => tr(2, c.k, ag(c.rs), dy(c.rs, c.k))).join('') + tr(1, KW, ag(w.rs), dy(w.rs, KW), 'b')
       + (d.pl === 'C' ? tr(1, '1,000kg 이하(제외, T·Q 제외)', d.exS, null, 'mu') + tr(0, '주문잔여량 없음(제외)', d.exZ, null, 'mu') : tr(0, '잔여 없음·생산 완료(제외)', ag((d.all || []).filter((o) => !d.R.includes(o))), null, 'mu'));
     const det = `<details class="pd"><summary${d.pl === 'C' ? ' title="MES SSCHC1010 양식"' : ''}>상세 표 <small>건수·주문량·생산량·잔여량·매치량·작업가능일(라인 평균)</small></summary><div class="ct-wrap"><table class="ct-t pdt"><thead><tr><th>구분</th><th class="r">건수</th><th class="r">주문량(t)</th><th class="r">생산량(t)</th><th class="r">잔여량(t)</th><th class="r">매치량(t)</th><th class="r">작업가능일</th></tr></thead><tbody>${tb}</tbody></table></div></details>`;
-    const note = d.pl === 'G' ? `<p class="ct-note">작업시간 = 주문잔여량 ÷ 계약별 t/h(라인·강종·부서 실적 속도, 1~10월 보정) · 작업가능일 = 라인별 작업시간 ÷ 24시간.</p>` : d.pl === 'C' ? `<p class="ct-note">작업시간 = 주문잔여량(작업지시량은 확정 지시중량) ÷ 계약별 t/h — ${esc(((D0 || {}).cc_order_progress || {}).tphNote || '컬러 생산 실적')}. 작업가능일 = 라인별 작업시간 ÷ 24시간.${d.cusLoaded ? '' : ' <b>DUMMY 고객사 제외는 고객사 자료(사내 PC 다음 실행)가 들어오면 적용</b>.'}</p>` : '<p class="ct-note">작업시간 = 잔여 ÷ (라인 하루 능력 1CGL 719 · 2CGL 927t ÷ 24).</p>';
+    const note = d.pl === 'G' ? `<p class="ct-note">작업시간 = 주문잔여량 ÷ 계약별 t/h(라인·강종·부서 실적 속도, 1~10월 보정) · 작업가능일 = 라인별 작업시간 ÷ 24시간.</p>` : d.pl === 'C' ? `<p class="ct-note" title="${esc(((D0 || {}).cc_order_progress || {}).tphNote || '컬러 생산 실적')}">작업시간 = 주문잔여량(작업지시량은 확정 지시중량) ÷ 계약별 t/h · 작업가능일 = 라인별 작업시간 ÷ 24시간.${d.cusLoaded ? '' : ' <b>DUMMY 고객사 제외는 고객사 자료(사내 PC 다음 실행)가 들어오면 적용</b>.'}</p>` : '<p class="ct-note">작업시간 = 잔여 ÷ (라인 하루 능력 1CGL 719 · 2CGL 927t ÷ 24).</p>';
     return `<section class="pc"><div class="pch"><b>${esc(title)}</b><span>${md(((D0 || {})[d.pl === 'C' ? 'cc_order_progress' : 'cg_order_progress'] || {}).asOf)} 기준 · ${d.pl === 'C' ? '<span title="MES SSCHC1010">MES 작업지시대상 주문잔여량 기준</span>' : '도금 주문진도(납기 −30~+90일)'}</span></div>${tiles}${segBar(d.cats, true)}<div class="lg2"><div>${leg}</div>${lday || pos ? `<div class="lg2r">${lday}${pos}</div>` : ''}</div>${exp}${det}${note}</section>`;
   }
   function progSum() {
@@ -452,17 +452,17 @@
       const line = (cls, ic, nm, A, tf) => (A.length ? `<div class="mk ${cls}"><i>${ic}</i>${nm} <b>${n0(sum(A, tf))}t</b> <span>${A.length}건</span>${both ? `<div class="pp">${split(A, tf).filter((x) => x.n).map((x) => `<span class="pl ${x.p}">${x.p === 'G' ? '도금' : '컬러'} ${n0(x.t)}t</span>`).join('')}</div>` : ''}</div>` : '');
       cells += `<div class="co-cd${today ? ' td' : ''}${past ? ' ps' : ''}${wk > 4 ? ' we' : ''}${has ? ' ck' : ''}" data-d="${d}"${has ? ` role="button" aria-label="${md(d)} 주문 ${c.P.length + c.S.length}건"` : ''}>`
         + `<div class="dt"><b>${+d.slice(8)}</b><span>${wd(d)}</span>${today ? '<em>오늘</em>' : ''}${c.rk ? `<em class="rk">지연 ${c.rk}</em>` : ''}</div>`
-        + line('p', '■', '생산요청', c.P, (o) => o.remT) + line('s', '▲', '출하완료', c.S, shipT) + '</div>';
+        + line('p', '■', '생산', c.P, (o) => o.remT) + line('s', '▲', '출하', c.S, shipT) + '</div>';
     }
     const kp = CT.kpis([
       { label: `${+m0.slice(5)}월 생산요청`, v: n0(sum(mP, (o) => o.remT)), unit: 't', tone: 'info', sub: `${n0(mP.length)}건${both ? ' · ' + split(mP, (o) => o.remT).map((x) => `${x.p === 'G' ? '도금' : '컬러'} ${n0(x.t)}t`).join(' · ') : ''}` },
       { label: `${+m0.slice(5)}월 출하완료`, v: n0(sum(mS, shipT)), unit: 't', tone: 'info', sub: `${n0(mS.length)}건${both ? ' · ' + split(mS, shipT).map((x) => `${x.p === 'G' ? '도금' : '컬러'} ${n0(x.t)}t`).join(' · ') : ''}` },
       { label: '지연 예상', v: n0(mR.size), unit: '건', tone: mR.size ? 'bad' : 'ok', sub: '이 달 생산요청·출하완료 주문 중' },
     ]);
-    return shipNote() + kp + `<div class="co-calh"><button type="button" class="lnk" id="co-prev" aria-label="이전 달">◀ 이전 달</button><b>${m0.slice(0, 4)}년 ${+m0.slice(5)}월</b>`
+    return kp + `<div class="co-calh"><button type="button" class="lnk" id="co-prev" aria-label="이전 달">◀ 이전 달</button><b>${m0.slice(0, 4)}년 ${+m0.slice(5)}월</b>`
       + `<button type="button" class="lnk" id="co-next" aria-label="다음 달">다음 달 ▶</button>${calOff ? '<button type="button" class="lnk" id="co-now">이번 달</button>' : ''}`
-      + '<span class="co-lg"><i class="p">■</i> 생산요청일(남은 생산 t) · <i class="s">▲</i> 출하완료일(미출하 t) · <i class="r">지연 n</i> = 지연 예상 주문</span></div>'
-      + `<div class="co-cal"><div class="co-wh">${['월', '화', '수', '목', '금', '토', '일'].map((x) => `<div>${x}</div>`).join('')}</div><div class="co-cg">${cells}</div></div>`;
+      + '<span class="co-lg"><i class="p">■</i> 생산 = 생산요청일(남은 t) · <i class="s">▲</i> 출하 = 출하완료일(미출하 t) · <i class="r">지연 n</i> = 지연 예상</span></div>'
+      + `<div class="co-cal"><div class="co-wh">${['월', '화', '수', '목', '금', '토', '일'].map((x) => `<div>${x}</div>`).join('')}</div><div class="co-cg">${cells}</div></div>` + shipNote().replace('co-sn"', 'co-sn" style="margin:12px 2px 0"');
   }
   function dayPanel(d) {
     const c = calDay(d);

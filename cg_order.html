@@ -127,6 +127,8 @@ table.gt .neg { color: var(--bad); } table.gt .wrn { color: var(--warn); } table
   @media (max-width:640px){.gb{grid-template-columns:72px minmax(0,1fr)}.gbv{grid-column:2}}
   .perf{margin:10px 0 0;font-size:13.5px} .perf-r{display:flex;flex-wrap:wrap;gap:6px 8px;margin-top:6px} .pchip{border:1px solid var(--line,#e5e7eb);border-radius:6px;padding:3px 8px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .gtab td.gbcell{min-width:340px} .gtab td.gbcell .gb{display:grid;grid-template-columns:minmax(160px,1fr) 90px;gap:8px;align-items:center} .gtab td.gbcell .gbv{text-align:right}
+/* 서식 통일(11/10): 상태 10칸을 5 × 2 로 */
+@media (min-width: 900px) { .od-kpi { grid-template-columns: repeat(5, 1fr); } }
 </style>
 </head>
 <body>

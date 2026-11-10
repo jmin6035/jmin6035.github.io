@@ -3,7 +3,7 @@
   const $ = (id) => document.getElementById(id), PW_KEY = 'cgl-analysis-pw';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const PL = { C: '컬러', G: '도금' };
-  let D = null, plant = 'all', PW = null;
+  let D = null, plant = 'all', PW = null, supOpen = false;
   const API = 'https://gatcqxrzaonjsixajrwd.supabase.co/rest/v1/cgl_decisions', KEY = 'sb_publishable_BlfAhxz_v3yg6iJw_nbRaA_YMFAOS7K';   // 결정 기록과 같은 공유 저장소(암호화, 추가만)
   const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
   const num = (k, v) => `<input type="number" min="0" max="365" step="1" data-k="${esc(k)}" data-o="${v}" value="${v}" aria-label="${esc(k)} 일수">`;
@@ -31,12 +31,10 @@
     const mx = Math.max(...D.types.map((t) => t[1]));
     const sup = D.sup.filter((s) => plant === 'all' || s[0] === plant);
     const grp = {}; sup.forEach((s) => { const k = `${s[0]}|${s[3]}`; (grp[k] = grp[k] || []).push(s); });
-    $('lt-meta').textContent = `기준 ${D.built.replace('T', ' ')} · ${D.team.source || ''}`;
+    const fd = (v) => (window.UI && UI.fmtDate ? UI.fmtDate(v) : String(v || '').slice(0, 10)), fdt = (v) => (window.UI && UI.fmtDateTime ? UI.fmtDateTime(v) : String(v || '').slice(0, 16).replace('T', ' '));
+    const mdTxt = (t) => String(t || '').replace(/(\d{4})-(\d{2})-(\d{2})/g, (m) => fd(m));   // 글 안의 YYYY-MM-DD → M/D
+    $('lt-meta').textContent = `기준 ${fdt(D.built)} · ${mdTxt(D.team.source)}`;
     $('lt-main').innerHTML = `
-      <section class="card lt-edit"><h2>고치기 <small>숫자를 바꾸고 '적용' — 다음 갱신(2시간 안)에 발주·소재·계획 화면이 새 값으로 다시 계산</small></h2>
-        <div class="lt-bar2"><input id="lt-who" placeholder="이름" maxlength="40" aria-label="이름"><input id="lt-memo" placeholder="바꾸는 이유(선택)" maxlength="200" aria-label="바꾸는 이유"><button type="button" class="btn primary" id="lt-apply" disabled>적용</button><span id="lt-n" class="lt-n"></span><span id="lt-res" class="small"></span></div>
-        ${D.src ? `<p class="small">지금 값: ${esc(D.src.who || '')} ${esc(String(D.src.at || '').slice(0, 10))}${D.src.memo ? ' · ' + esc(D.src.memo) : ''}</p>` : ''}
-        ${(D.log || []).length ? `<details class="small"><summary>바꾼 이력 ${D.log.length}건</summary>${D.log.map((g) => `<p>${esc(String(g.at).slice(0, 16).replace('T', ' '))} ${esc(g.who)} — ${esc((g.chg || []).join(' · '))}${g.memo ? ' (' + esc(g.memo) + ')' : ''}</p>`).join('')}</details>` : ''}</section>
       <section class="card"><h2>입고 뒤 계획이 쓰는 일수</h2>
         <div class="lt-k">${D.fixed.map((f) => `<div><small>${esc(f[1])}</small><b>${num(f[0], f[2])}<i>일</i></b><span>${esc(f[3])}</span><em>${esc(f[4])}</em></div>`).join('')}
           <div><small>도금 선생산 허용</small><b class="ro">${esc(D.release.split(' · ')[0])}</b><span>${esc(D.release.split(' · ').slice(1).join(' · '))}</span><em>도금 계획 엔진 — <a href="rules.html">계획 규칙</a>에서 고침</em></div></div></section>
@@ -44,21 +42,25 @@
         <div class="scroll"><table class="t"><thead><tr><th class="l">소재 유형</th><th>리드타임</th><th class="l" style="min-width:260px"></th><th class="l">발주 방식</th></tr></thead><tbody>
         ${D.types.map((t) => `<tr><td class="l"><b>${esc(t[0])}</b></td><td class="d">${num('t:' + t[0], t[1])} 일</td><td class="l"><i class="lt-bar" style="width:${Math.max(4, t[1] / mx * 240)}px"></i></td><td class="l">${esc(t[2])}</td></tr>`).join('')}
         </tbody></table></div></section>
-      <section class="card"><h2>단계별 흐름 <small>팀 리드타임 표 원문</small></h2>
+      <section class="card lt-edit"><h2>고치기 <small>위 숫자를 바꾸고 '적용' · 2시간 안에 발주·소재·계획 화면 반영</small></h2>
+        <div class="lt-bar2"><input id="lt-who" placeholder="이름" maxlength="40" aria-label="이름"><input id="lt-memo" placeholder="바꾸는 이유(선택)" maxlength="200" aria-label="바꾸는 이유"><button type="button" class="btn primary" id="lt-apply" disabled>적용</button><span id="lt-n" class="lt-n"></span><span id="lt-res" class="small"></span></div>
+        ${D.src ? `<p class="small">지금 값: ${esc(D.src.who || '')} ${esc(fd(D.src.at))}${D.src.memo ? ' · ' + esc(D.src.memo) : ''}</p>` : ''}
+        ${(D.log || []).length ? `<details class="small"><summary>바꾼 이력 ${D.log.length}건</summary>${D.log.map((g) => `<p>${esc(fdt(g.at))} ${esc(g.who)} — ${esc((g.chg || []).join(' · '))}${g.memo ? ' (' + esc(g.memo) + ')' : ''}</p>`).join('')}</details>` : ''}</section>
+      <section class="card"><details class="lt-fold"><summary><b>단계별 흐름</b> <small>팀 리드타임 표 원문 · ${D.team.rows.length}줄</small></summary>
         ${D.team.note ? `<p class="small">${esc(D.team.note)}</p>` : ''}
         <div class="scroll"><table class="t"><thead><tr>${D.team.columns.map((c) => `<th class="l">${esc(c)}</th>`).join('')}</tr></thead><tbody>
         ${D.team.rows.map((r) => `<tr>${D.team.columns.map((c, i) => `<td class="l">${i === 1 ? '<b>' + esc(r[c]) + '</b>' : esc(r[c])}</td>`).join('')}</tr>`).join('')}
-        </tbody></table></div></section>
-      <section class="card"><h2>업체별 <small>소재 발주 마스터(27년) · 발주 화면이 쓰는 값</small></h2>
+        </tbody></table></div></details></section>
+      <section class="card"><details class="lt-fold" id="lt-sup"${supOpen ? ' open' : ''}><summary><b>업체별</b> <small>소재 발주 기준(27년) · ${sup.length}곳</small></summary>
         <div class="lt-seg" role="group" aria-label="공장">${[['all', '전체'], ['C', '컬러'], ['G', '도금']].map(([k, n]) => `<button type="button" data-p="${k}" aria-pressed="${k === plant}">${n}</button>`).join('')}</div>
         <div class="scroll"><table class="t"><thead><tr><th class="l">공장</th><th class="l">유형</th><th class="l">업체</th><th class="l">소재</th><th>리드타임</th><th>27년 배정</th><th class="l">근거</th></tr></thead><tbody>
         ${Object.keys(grp).sort().map((k) => grp[k].map((s, i) => `<tr>${i ? '' : `<td class="l" rowspan="${grp[k].length}">${PL[s[0]] || s[0]}</td><td class="l" rowspan="${grp[k].length}"><b>${esc(s[3])}</b></td>`}<td class="l">${esc(s[2])}</td><td class="l">${esc((D.matCode && D.matCode[s[1]] && (D.matCode[s[1]].name || D.matCode[s[1]])) || s[1])}</td><td class="d">${s[4]}일</td><td>${s[6] ? s[6] + '%' : '-'}</td><td class="l">${esc(String(s[5] || '').replace(/^팀 리드타임 표\(10\/12\): /, ''))}</td></tr>`).join('')).join('')}
         </tbody></table></div>
-        <p class="small">업체 리드타임 = 위 소재 유형 값(유형을 고치면 그 유형 업체가 같이 바뀜).</p></section>`;
+        <p class="small">업체 리드타임 = 소재 유형 값</p></details></section>`;
     $('lt-main').querySelectorAll('input[data-k]').forEach((i) => (i.oninput = mark));
     $('lt-apply').onclick = apply;
     try { $('lt-who').value = localStorage.getItem('cgl-me') || ''; } catch (e) { /* 무시 */ }
-    $('lt-main').querySelectorAll('button[data-p]').forEach((b) => (b.onclick = () => { plant = b.dataset.p; draw(); }));
+    $('lt-main').querySelectorAll('button[data-p]').forEach((b) => (b.onclick = () => { plant = b.dataset.p; supOpen = true; draw(); }));
   }
   async function open(pw) {
     try {

@@ -14,7 +14,7 @@
     $('d-empty-title').textContent = '게시된 최신 계획';
     $('d-empty-text').textContent = '암호를 넣으면 게시된 계획 결과가 열립니다. 암호 해제는 이 브라우저 안에서만 합니다.';
     const lbl = String(env.label || '계획 결과').replace(/\(MES 실적 ~\d{4}-(\d{2})-(\d{2}),?\s*([^)]*)\)/, (_, m, d, x) => `· 재계획(실적 ~${+m}/${+d}${x ? ` · ${x}` : ''})`);   // 11/9: 재계획 표기 통일 '재계획(실적 ~M/D)' — 가동 캘린더와 같게
-    $('d-pubinfo').innerHTML = `<b>${esc(lbl)}</b> · 게시 ${new Date(env.created).toLocaleString('ko-KR')}`;
+    $('d-pubinfo').innerHTML = `<b>${esc(lbl)}</b> · 게시 ${UI.fmtDateTime(new Date(env.created))}`;
     $('d-unlock').hidden = false;
     let saved = null; try { saved = localStorage.getItem(PW_KEY) || localStorage.getItem('cgl-analysis-pw'); } catch (e) { saved = null; }
     if (saved) { $('d-pw').value = saved; $('d-remember').checked = true; unlock(); }
@@ -67,7 +67,7 @@
     const P = R.P, H = A.H, L = P.lines;
     $('d-empty').hidden = true; $('d-body').hidden = false;
     $('d-title').textContent = `'${String(H.ym[0][0]).slice(2)}.${H.ym.map(([, m]) => m).join('·')}월 도금 CGL 가동계획`;
-    $('d-meta').textContent = [meta.asOf && `판매계획 기준 ${meta.asOf}`, meta.savedAt && `계산 ${new Date(meta.savedAt).toLocaleString('ko-KR')}`, meta.auto && `MES 자동 갱신 ${new Date(meta.auto.runAt).toLocaleString('ko-KR')}${meta.auto.actualTo ? ` (실적 ~${GP.md(meta.auto.actualTo)})` : ''}`, `계획 기간 ${H.D0} ~ ${H.D1}`].filter(Boolean).join(' · ');
+    $('d-meta').textContent = [meta.asOf && `판매계획 기준 ${meta.asOf}`, meta.savedAt && `계산 ${UI.fmtDateTime(new Date(meta.savedAt))}`, meta.auto && `자동 갱신 ${UI.fmtDateTime(new Date(meta.auto.runAt))}${meta.auto.actualTo ? ` (실적 ~${GP.md(meta.auto.actualTo)})` : ''}`, `계획 기간 ${UI.fmtDate(H.D0)}~${UI.fmtDate(H.D1)}`].filter(Boolean).join(' · ');
     renderNow(); renderReplan();
     const fams = [...new Set(L.flatMap((l) => P.lineFamilies[l]))];
     const leg = fams.map((f) => `<span><i class="sw" style="background:${famVar(f)}"></i>${f}</span>`).join('') + '<span><i class="sw" style="background:var(--mc)"></i>M/C·재가동</span><span><i class="sw" style="background:var(--down)"></i>설비정지·실적 미달</span><span><i class="sw" style="background:var(--sd)"></i>정기수리</span>';
@@ -155,7 +155,7 @@
       const P = (d) => (l === '합계' ? GP.sum(L, (x) => get(d, x)[2]) : get(d, l)[2]), A_ = (d) => (l === '합계' ? GP.sum(L, (x) => get(d, x)[3]) : get(d, l)[3]);
       const cp = GP.sum(days, P), ca = GP.sum(days, A_);
       const tr = (lab, f, cls, tot) => `<tr class="${cls}">${lab}${days.map((d) => { const v = f(d); return `<td class="n${cls === 'df' && v < -0.5 ? ' neg' : cls === 'df' && v > 0.5 ? ' pos' : ''}">${cls === 'df' ? sg(v) : GP.fmt(v)}</td>`; }).join('')}${tot}</tr>`;
-      return tr(`<th class="ln" rowspan="3">${l}</th><th class="k">계획</th>`, P, 'pl', `<td class="n s">${GP.fmt(cp)}</td><td class="n s" rowspan="3"><b class="${ca < cp - 1 ? 'neg' : ''}">${pc(ca, cp)}</b></td>`)
+      return tr(`<th class="ln" rowspan="3">${l}</th><th class="k">계획</th>`, P, 'pl', `<td class="n s">${GP.fmt(cp)}</td><td class="n s" rowspan="3"><b class="r-${cp > 0 ? UI.rate(ca / cp * 100) : ''}">${pc(ca, cp)}</b></td>`)
         + tr('<th class="k">실적</th>', A_, 'ac', `<td class="n s"><b>${GP.fmt(ca)}</b></td>`)
         + tr('<th class="k">차이</th>', (d) => A_(d) - P(d), 'df', `<td class="n s ${ca - cp < -0.5 ? 'neg' : ca - cp > 0.5 ? 'pos' : ''}">${sg(ca - cp)}</td>`);
     }).join('');

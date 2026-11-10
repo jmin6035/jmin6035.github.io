@@ -72,11 +72,10 @@
         if (t < 0.5 && !e.event) continue;
         for (const [a, v] of Object.entries(x.alloy)) fa[FAM(a)] = (fa[FAM(a)] || 0) + v;
         const act = d <= t0, cp = (runs[l] || []).find((r) => r[0] <= d && d <= r[1]), why = [];
-        if (act) why.push('MES 생산 실적(사내 PC 재계획 파일에 반영된 값)');
-        else {
-          if (cp) why.push(`${l} ${cp[2]} 캠페인 ${UI.fmtDate(cp[0])}~${UI.fmtDate(cp[1])} — 오늘 아침 재계획의 강종 구간(M/C 횟수 최소화)`);
+        if (!act) {
+          if (cp) why.push(`${l} ${cp[2]} 캠페인 ${UI.fmtDate(cp[0])}~${UI.fmtDate(cp[1])}`);
           const early = x.items.filter((it) => diff(it[6], d) > 14);
-          why.push(early.length ? `납기보다 15일 이상 앞선 생산 ${n0(early.reduce((a, it) => a + it[5], 0))}t — 해당 강종의 이 라인 생산 가능 구간이 이 캠페인뿐이거나 후반 능력 부족` : '납기 근접 배치(선행 생산량 톤·일 최소화)');
+          if (early.length) why.push(`납기보다 15일 이상 앞선 생산 ${n0(early.reduce((a, it) => a + it[5], 0))}t`);
         }
         pl[k] = { t, fam: Object.keys(fa).sort((a, b) => fa[b] - fa[a])[0] || FAM(e.fam || 'AL'), ev: e.event || '', bo: e.blackout || 0, mcd: e.mcdummy || 0, cls: x.cls, items: x.items.sort((a, b) => (a[6] < b[6] ? -1 : 1)), why, act };
       }
@@ -376,8 +375,8 @@
     const sw = (c, t) => `<span><i class="sw ${c}"></i>${t}</span>`, sep = '<i class="gsep"></i>';
     $('s-calleg').innerHTML = (UI.inScope('G') ? '<span class="muted">도금 강종</span>' + sw('f-AL', 'AL') + sw('f-AZ', 'AZ') + sw('f-MAC', 'MAC') + sw('mcsw', 'M/C(강종 교체)') + sep : '')
       + (UI.inScope('C') ? '<span class="muted">컬러 판매그룹</span>' + sw('f-C수출', '컬러수출') + sw('f-C건재', '컬러건재') + sw('f-C수요', '수요개발') + sep : '')
-      + ['plan', 'repair', 'sd', 'jr'].filter((k) => SDK.has(k)).map((k) => sw(`sk-${k}`, `${KN[k]}(종일)`)).join('') + sw("idsw", "계획 물량 없음") + sep + sw('tbsw', '오늘') + '<span class="muted">칸 숫자 = 생산(t) · 오늘 이전 = 실적 · 칸에 마우스를 올리면 강종·판매그룹·휴지</span>';
-    $('s-shipleg').innerHTML = '<span class="muted">재고 칸 색 = 목표 대비</span>' + sw('hiw', '100~130%') + sw('hi2w', '130% 넘음') + sep + sw('tbsw', '오늘') + '<span class="muted">출하(t) · 재고(천t) · 오늘 이전 = 실적</span>';
+      + ['plan', 'repair', 'sd', 'jr'].filter((k) => SDK.has(k)).map((k) => sw(`sk-${k}`, `${KN[k]}(종일)`)).join('') + sw("idsw", "계획 물량 없음") + sep + sw('tbsw', '오늘') + '<span class="muted">오늘 이전 = 실적 · 칸에 마우스를 올리면 강종·판매그룹·휴지</span>';
+    $('s-shipleg').innerHTML = '<span class="muted">재고 칸 색 = 목표 대비</span>' + sw('hiw', '100~130%') + sw('hi2w', '130% 넘음') + sep + sw('tbsw', '오늘') + '<span class="muted">오늘 이전 = 실적</span>';
     // 판매그룹 출하·재고(라인 구분 없는 자료 — 사용자 10/21: 밑으로 따로 하나 더)
     let S2 = headG('판매그룹');
     const shipBlock = (pl, gs) => gs.forEach((g, gi) => {
@@ -555,7 +554,7 @@
       ${x.rows.length ? `<div class="scroll"><table class="dt mt fl"><thead><tr><th>품명 · 구분</th><th>고객·지역</th><th class="r">톤</th><th>소재</th><th>일정 (소재 → 생산 → 납기)</th><th>판정</th></tr></thead><tbody>${x.rows.slice(0, 12).map((r) => { const ML = x.act ? [] : matLine(r, d, l); const n = Math.max(1, ML.length); const due = r[9] ? md(r[9]) : esc(r[4] || '-'); const head_ = (k) => (k ? '' : `<td rowspan="${n}"><b>${esc(r[1])}</b> <small>${esc(r[0] === '주문재' ? '건재 주문재' : r[0])}</small></td><td rowspan="${n}">${r[0] === '계획재' ? `<span class="muted">재고 보충</span><small class="spec">${esc([r[13] || r[2], r[3]].filter(Boolean).join(' '))}</small>` : esc([r[13] || r[2], r[3]].filter(Boolean).join(' · '))}</td><td class="r" rowspan="${n}">${n0(r[5])}</td>`); return ML.length ? ML.map((m, k) => `<tr class="${k ? 'cont' : ''}"${r[8] ? ` title="배치 사유: ${esc(r[8])}"` : ''}>${head_(k)}<td><small class="kd2 ${m.kind === '자가재' ? 'self' : 'buy'}">${m.kind}</small> ${m.what}${m.src !== '-' && m.kind === '구매' ? `<div class="srcl">${m.src}</div>` : ''}</td><td>${flowHtml([...(m.steps || []), ['컬러 생산', md(d), d, 'now'], ['납기', due, r[9] || null]])}</td><td class="st ${m.st[0]}">${m.st[1]}</td></tr>`).join('') : `<tr>${head_(0)}<td colspan="3" class="small">실적일</td></tr>`; }).join('')}</tbody></table></div>${x.rows.length > 12 ? `<div class="why">외 ${x.rows.length - 12}건</div>` : ''}` : `<div class="why">${Object.entries(x.g).map(([k, v]) => `${esc(k)} ${n0(v)}t`).join(' · ')}</div>`}</section>`; };
     const sc = `<section class="card rv" data-noexport data-dom="C"><h3>자가재 (당일)</h3><table class="dt"><thead><tr><th>강종</th><th class="r">도금 입고</th><th class="r">컬러 출고</th><th class="r">기말 재고</th><th class="r">향후 3일 출고</th></tr></thead><tbody>${['AZ', 'MAC', 'AL'].map((a) => { const x = D.self[`${a}|${d}`] || {}; return `<tr><td>${a}</td><td class="r">${n0(x.prod)}</td><td class="r">${n0(x.use)}</td><td class="r"><b>${n0(x.stock)}</b></td><td class="r">${n0(useNext(a, d, 3))}</td></tr>`; }).join('')}</tbody></table></section>`;
     const mc = PM && PM.length ? `<section class="card rv" data-noexport data-dom="M"><h3>구매 소재 (당일, 추가 발주 없음 가정)</h3><table class="dt"><thead><tr><th>소재</th><th class="r">사용</th><th class="r">입고(기발주)</th><th class="r">재고</th><th>발주 마감</th></tr></thead><tbody>${PM.filter((m) => UI.inScope(m.plant)).slice(0, 10).map((m) => `<tr><td>${esc(m.nm)}</td><td class="r">${d < today ? '-' : n0(m.use[d] || 0)}</td><td class="r">${m.arr[d] ? n0(m.arr[d]) : ''}</td><td class="r">${d < today ? '-' : `<b class="${m.stock[d] < 0 ? 'neg' : ''}">${n0(m.stock[d])}</b>`}</td><td>${m.dl ? md(m.dl) : '-'}</td></tr>`).join('')}</tbody></table><div class="why">자세한 업체 판단·구매 요청은 <a href="procure.html">소재 발주</a></div></section>` : '';
-    $('s-det').innerHTML = `<div class="dethd g"><span>${md(d)}(${WD[wd(d)]}) 가동 상세 <small>도금·컬러 라인별 품목 · 납기 · 소재 연결 — 소재 발주·입고는 <a href="matcal.html">소재 캘린더</a>에서</small></span>${foldBtn('s-det')}</div>` + ['1CGL', '2CGL'].map(pcard).join('') + ['1CCL', '2CCL', '3CCL', '4CCL'].map(ccard).join('');
+    $('s-det').innerHTML = `<div class="dethd g"><span>${md(d)}(${WD[wd(d)]}) 가동 상세 <small><a href="matcal.html">소재 발주·입고는 소재 캘린더</a></small></span>${foldBtn('s-det')}</div>` + ['1CGL', '2CGL'].map(pcard).join('') + ['1CCL', '2CCL', '3CCL', '4CCL'].map(ccard).join('');
     UI.reveal($('s-det'));
   }
 
@@ -754,16 +753,16 @@
     const LB = kind === 'past' ? ['실적', '월 계획', '차이'] : kind === 'cur' ? ['실적', '월 계획', '남은'] : ['계획', '월 계획'];
     const chart = (pl, k) => { const ks = keys(pl, k); if (!ks.length) return '';
       return `<div class="pgv" data-dom="${pl}"><h3>${pl === 'G' ? '도금' : '컬러'} ${W(k)}</h3>` + colChart(ks.map((g) => { const [a, b, p] = val(g, k);
-        return { name: GNM[g], a, b, plan: p, pc: kind === 'fut' ? null : (p ? Math.round(a / p * 100) : null), neg: kind === 'past' && a < p - 0.5,
+        return { name: GNM[g].replace(/^(도금|컬러)(?=수출|국내|건재)/, '').replace('자동차강판', '자동차'), a, b, plan: p, pc: kind === 'fut' ? null : (p ? Math.round(a / p * 100) : null), neg: kind === 'past' && a < p - 0.5,
           vals: kind === 'past' ? [a, p, a - p] : kind === 'cur' ? [a, p, b] : [b, p],
           tip: `${GNM[g]} ${+m.slice(5)}월 ${W(k)}: 실적 ${n0(a)}t · ${kind === 'cur' ? `남은 계획 ${n0(b)}t · ` : ''}월 계획 ${n0(p)}t` }; }), 110, LB) + '</div>'; };
-    const sub = kind === 'past' ? `${md(end)} 월말 기준` : kind === 'cur' ? `${md(today)} 현재 · 막대 위 % = 실적 ÷ 월 계획` : '실적 없음 · 계획만';
+    const sub = kind === 'past' ? `${md(end)} 월말 기준` : kind === 'cur' ? `${md(today)} 현재` : '실적 없음 · 계획만';
     const L = kind === 'past' ? [['a', '실적'], ['p', '월 계획']] : kind === 'cur' ? [['a', '실적'], ['b', '남은 계획'], ['p', '월 계획']] : [['b', '계획'], ['p', '월 계획']];
     const shipSrc = (Object.values(MPn).find((x) => x.shipSrc) || {}).shipSrc || (kind === 'cur' ? '판생속보' : 'TF 판매계획');
     $('s-prog').innerHTML = `<h2>${+m.slice(5)}월 ${kind === 'past' ? '결산' : kind === 'cur' ? '진행' : '계획'} <small>${sub}</small><span class="unit">톤</span></h2>`
       + `<div class="pks">${['G', 'C'].filter((pl) => UI.inScope(pl)).flatMap((pl) => [kpi(pl, 'prod')]).join('')}${['G', 'C'].filter((pl) => UI.inScope(pl)).map((pl) => kpi(pl, 'ship')).join('')}</div>`
       + `<div class="pgv4">${['G', 'C'].map((pl) => UI.inScope(pl) ? chart(pl, 'prod') : '').join('')}${['G', 'C'].map((pl) => UI.inScope(pl) ? chart(pl, 'ship') : '').join('')}</div>`
-      + `<div class="pgl">${vzLegend(L)}<span class="small muted">생산 월 계획 = ${Object.values(GR).some((g) => /월 계획/.test((g.prod || {}).afterSrc || '')) ? 'TF 월 생산량(판매 + 목표 − 기초)' : '최신 가동계획'} · 출하 월 계획 = ${esc(shipSrc)} · 실적 = MES</span></div>`;
+      + `<div class="pgl">${vzLegend(L)}<span class="small muted">% = 실적 ÷ 월 계획 · 생산 월 계획 = ${Object.values(GR).some((g) => /월 계획/.test((g.prod || {}).afterSrc || '')) ? 'TF 월 생산량(판매 + 목표 − 기초)' : '최신 가동계획'} · 출하 월 계획 = ${esc(shipSrc)}</span></div>`;
   }
 
   /* 소재 관제(11/3 사용자 '관제 — 그룹별로 한눈에'): published/mat_order.enc.json — groups(판매그룹 × 소재 상태) + rows(계획재 소재 사양별 판정) */

@@ -21,9 +21,9 @@ table.wk td { position: relative; min-width: 76px; height: 76px; background: var
 table.wk.w14 td { height: 60px; min-width: 64px; }
 /* 14일·월간(11/5): 숫자·막대만 — 자세한 내용은 칸에 마우스(제목) · 누르면 패널 */
 table.wk.cpt { border-spacing: 2px; } table.wk.cpt td { height: 44px; min-width: 0; padding: 4px 3px 3px; text-align: center; vertical-align: middle; }
-table.wk.cpt td b { font-size: 13.5px; white-space: nowrap; } table.wk.wm td b { font-size: 12px; letter-spacing: -.05em; } table.wk.wm td { padding-left: 1px; padding-right: 1px; } table.wk.wm th.ln { width: 50px; } table.wk.wm th.r, table.wk.wm td.tot { width: 62px; } table.wk.wm th { padding: 4px 0; font-size: 12.5px; } table.wk.wm th small { font-size: 11.5px; }
-table.wk.cpt td .st { text-align: center; font-size: 12.5px; border: 0; background: none; padding: 0; border-radius: 0; box-shadow: none; min-width: 0; } table.wk.cpt td .ccb { margin: 3px 2px 0; height: 5px; }
-table.wk.cpt td .rk { top: -5px; left: auto; right: -4px; min-width: 15px; height: 15px; line-height: 15px; font-size: 11px; padding: 0 3px; }
+table.wk.cpt td b { font-size: 13.5px; white-space: nowrap; } table.wk.wm td b { font-size: 13.5px; letter-spacing: -.05em; } table.wk.wm td { padding-left: 1px; padding-right: 1px; } table.wk.wm th.ln { width: 50px; } table.wk.wm th.r, table.wk.wm td.tot { width: 62px; } table.wk.wm th { padding: 4px 0; font-size: 12.5px; } table.wk.wm th small { font-size: 11.5px; }
+table.wk.cpt td .st { text-align: center; font-size: 13.5px; border: 0; background: none; padding: 0; border-radius: 0; box-shadow: none; min-width: 0; } table.wk.cpt td .ccb { margin: 3px 2px 0; height: 5px; }
+table.wk.cpt td .rk { top: -5px; left: auto; right: -4px; min-width: 18px; height: 18px; line-height: 18px; font-size: 13.5px; padding: 0 3px; }
 table.wk.cpt td.hasev::after { content: ''; position: absolute; left: 50%; bottom: 3px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--warn); }
 table.wk.cpt td.mc { box-shadow: inset 0 -3px 0 #f2b705; } table.wk.cpt td.ccr { box-shadow: inset 0 3px 0 var(--bad); }
 table.wk td:hover, table.wk td:focus { border-color: var(--brand-2, #1f5fae); outline: none; }
@@ -42,7 +42,7 @@ table.wk td.free { background: var(--grid, #eef1f4); } table.wk td.free .st { co
 table.wk td.out { background: none; border: 1px dotted var(--line); } table.wk td.out .st { color: var(--ink-3, #9aa3ad); font-weight: 500; }
 table.wk td.mc { box-shadow: inset 0 -4px 0 #f2b705; }
 table.wk td .ev { display: block; font-size: 13.5px; color: var(--warn); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
-table.wk td .rk, .ct-note .rk { position: absolute; top: 4px; left: 5px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--bad); color: #fff; font-size: 12.5px; font-weight: 800; font-style: normal; text-align: center; line-height: 18px; padding: 0 4px; }
+table.wk td .rk, .ct-note .rk { position: absolute; top: 4px; left: 5px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--bad); color: #fff; font-size: 13.5px; font-weight: 800; font-style: normal; text-align: center; line-height: 18px; padding: 0 4px; }
 .ct-note .rk { position: static; display: inline-block; vertical-align: middle; margin: 0 4px 0 12px; }
 table.wk td.tot { background: none; border: 0; font-weight: 800; cursor: default; vertical-align: middle; height: auto; }
 .ct-note.lgd { line-height: 2; display: flex; flex-wrap: wrap; column-gap: 14px; } .ct-note.lgd span { white-space: nowrap; } .ct-note.lgd i.lg, .ct-note.lgd .rk { margin-left: 0; }
@@ -63,6 +63,8 @@ table.ld td.lc { min-width: 0; } table.ld th, table.ld td { padding-left: 6px; p
 .lb i { display: block; height: 100%; background: var(--good); border-radius: 4px; } .lb.warn i { background: var(--warn); } .lb.bad i { background: var(--bad); }
 .ld-h { font-size: 15px; font-weight: 800; margin: 16px 0 8px; } .ld-h small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 6px; }
 .ld-row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; } .ld-row > .ld-l { flex: 0 1 auto; min-width: 0; max-width: 100%; overflow-x: auto; } .ld-row > .ld-r { flex: 1 1 520px; min-width: 0; } .ld-row .ld-r .ld-h { margin-top: 0; }
+/* 서식 통일(11/10): 좁은 화면에서 칸이 세로로 찌그러지지 않게 가로로 넘겨 봄 */
+@media (max-width: 760px) { table.wk.w7 { min-width: 760px; } table.wk.w14 { min-width: 1100px; } table.wk.wm { min-width: 1500px; } }
 </style>
 </head>
 <body>

@@ -119,8 +119,8 @@ html body main td.dt { white-space: normal !important; min-width: 280px; text-al
     $('d-filter').innerHTML = F.map(([k]) => `<button type="button" data-f="${k}" aria-pressed="${k === filt}">${k}</button>`).join('');
     const L = rows.filter(F.find((x) => x[0] === filt)[1]);
     $('d-count').textContent = `${L.length}건 / 전체 ${rows.length}`;
-    $('d-body').innerHTML = L.map((r) => `<tr data-id="${esc(r.id)}"><td>${esc(String(r.at || '').slice(5, 10).replace('-', '/'))}</td><td class="c"><b>${esc(r.area)}</b></td><td class="l dt"><b>${esc(r.title)}</b>${r.detail ? `<br><span class="small">${esc(r.detail)}</span>` : ''}</td><td>${esc(r.owner || '')}</td>
-      <td class="${r.due && r.due < today && !['완료', '보류', '결정'].includes(r.status) ? 'overdue' : ''}">${esc(String(r.due || '').slice(5).replace('-', '/'))}</td><td><select data-st>${ST.map((s) => `<option ${s === r.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td><td class="muted">${esc(r.by || '')}</td></tr>`).join('') || '<tr><td colspan="7" class="c muted">없음</td></tr>';
+    $('d-body').innerHTML = L.map((r) => `<tr data-id="${esc(r.id)}"><td>${r.at ? esc(UI.fmtDate(String(r.at).slice(0, 10))) : ''}</td><td class="c"><b>${esc(r.area)}</b></td><td class="l dt"><b>${esc(r.title)}</b>${r.detail ? `<br><span class="small">${esc(r.detail)}</span>` : ''}</td><td>${esc(r.owner || '')}</td>
+      <td class="${r.due && r.due < today && !['완료', '보류', '결정'].includes(r.status) ? 'overdue' : ''}">${r.due ? esc(UI.fmtDate(r.due)) : ''}</td><td><select data-st>${ST.map((s) => `<option ${s === r.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td><td class="muted">${esc(r.by || '')}</td></tr>`).join('') || '<tr><td colspan="7" class="c muted">없음</td></tr>';
     $('d-filter').querySelectorAll('button').forEach((b) => b.onclick = () => { filt = b.dataset.f; draw(); });
     $('d-body').querySelectorAll('select[data-st]').forEach((s) => s.onchange = async () => { try { await push({ t: 'set', uid: s.closest('tr').dataset.id, status: s.value }); UI.toast('상태 바꿈'); } catch (e) { UI.toast('⚠ 저장 안 됨 — 다시 시도하세요'); } load(); });
   }

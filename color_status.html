@@ -56,6 +56,7 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 #r-sec h2 { word-break: keep-all; } #r-sec h2 small { white-space: nowrap; }
 @media (max-width: 760px) { #r-sec .head-row { flex-wrap: wrap; } #r-sec h2 { flex-basis: 100%; flex-wrap: wrap; } #r-sec h2 small { display: block; flex-basis: 100%; margin-left: 0; white-space: normal; margin-top: 2px; } .rg-row { grid-template-columns: 1fr; row-gap: 4px; } .rg-t { align-items: flex-start; flex-direction: row; gap: 10px; } .rg-p { grid-row: auto; padding-left: 0; } }
 #d-load { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 28px; } #d-load > .hint { grid-column: 1 / -1; }   /* 월별 부하: 라인 4개 나란히 */
+.hbtn { padding: 0; }   /* 옛 style.css 의 button 안쪽 여백이 '?' 를 아래로 밀던 것 */
 </style>
 </head>
 <body class="dash">

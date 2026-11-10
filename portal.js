@@ -144,7 +144,7 @@
   const toneP = (r) => (r >= 0.98 ? 'good' : r >= 0.9 ? 'warn' : 'bad');
   const toneS = (r) => (r >= 0.95 ? 'good' : r >= 0.8 ? 'warn' : 'bad');
   const toneK = (r) => (r <= 1.1 ? 'good' : r <= 1.3 ? 'warn' : 'bad');
-  const kt = (v) => (Math.abs(v) >= 10000 ? (v / 1000).toFixed(1) + '천' : n0(v));
+  const kt = (v) => n0(v);   // 11/10 서식: '24.5천' → '24,512'(같은 카드의 '최대 19,320' 과 같은 표기)
   function rollAt(O, keys, d) {                               // 매일 롤링 재고(재고 추이·가동 캘린더와 같은 값)의 그날 그룹 합
     const R = O.stockRoll; if (!R || !R.days) return null;
     const i = Math.round((Date.parse(d) - Date.parse(R.d0)) / 864e5);
@@ -280,7 +280,7 @@
   }
   function render(O) {
     lastO = O;
-    $('h-meta').innerHTML = `실적 <b>~${md(O.asOf)}</b> · 계획 <b>기준 계획 · 도금은 매일 실적 반영 재계산</b> · 계산 ${esc(String(O.built).replace('T', ' ').slice(5, 16))}`;
+    $('h-meta').innerHTML = `실적 <b>~${md(O.asOf)}</b> · 계산 ${esc(String(O.built).replace('T', ' ').slice(5, 16).replace(/^(\d\d)-(\d\d)/, (m, a, b) => `${+a}/${+b}`))}`;
     const ct = ctl(O); $('h-ctl').innerHTML = ct; $('h-ctl').hidden = !ct;
     const ow = owner(O); $('h-own').innerHTML = ow; $('h-own').hidden = !ow;
     const fc = fcCard(O); $('h-fc').innerHTML = fc; $('h-fc').hidden = !fc;

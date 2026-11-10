@@ -187,7 +187,7 @@
           + `<td class="r">${r == null ? '<span class="sub">-</span>' : `<b class="${tone(r)}">${Math.round(r * 100)}%</b>`}</td><td class="r">${x.over >= 1 ? `<b class="bad">${n0(x.over)}t</b>` : '0'}</td><td class="r">${x.aff.length ? `<b class="bad">${x.aff.length}</b>건` : '0'}</td></tr>`; }).join('')
         + '</tbody></table></div>';
       const bar = (w) => (w.out ? '<span class="sub">계획 범위 밖</span>' : w.idle ? '<span class="sub">정비·휴지</span>' : (w.r == null || w.r < 0.005) ? (w.need < 0.5 ? '<span class="sub">계획 물량 없음</span>' : '<span class="sub">계산 못 함</span>') : `<div class="lb ${tone(w.r)}" title="계획 ${n0(w.need)}t / 능력 ${n0(w.cap)}t"><i style="width:${Math.min(100, w.r * 100).toFixed(1)}%"></i></div><b class="${tone(w.r)}">${Math.round(w.r * 100)}%</b>`);
-      const heat = `<div class="ct-wrap"><table class="ct-t ld"><thead><tr><th>라인</th>${wk.map(([a, b]) => `<th>${md(a)}~${md(b)}</th>`).join('')}</tr></thead><tbody>`
+      const heat = `<div class="ct-wrap"><table class="ct-t ld"><thead><tr><th>라인</th>${wk.map(([a, b]) => `<th>${a === b ? md(a) : `${md(a)}~${md(b)}`}</th>`).join('')}</tr></thead><tbody>`
         + R.map((x) => `<tr><td class="id">${x.l}</td>${x.w.map((w) => `<td class="lc">${bar(w)}<small>${w.idle || w.out || w.need < 0.5 ? '' : `${n0(w.need)}t`}</small></td>`).join('')}</tr>`).join('')
         + '</tbody></table></div>';
       return `<section class="card"><h2>${mm} 라인별 부하 <small>${rng}</small></h2><div class="ld-row"><div class="ld-l">${sumT}</div><div class="ld-r"><h4 class="ld-h">주별 부하율 <small>수요일 시작 · 달 경계에서 끊음</small></h4>${heat}</div></div></section>`;   // 11/5 사용자 '옆으로 붙여 — 전부'
@@ -211,7 +211,7 @@
     const wks = [...new Set([...Object.keys(a.w), ...Object.keys(b.w)].map((k) => k.split('|')[1]))].sort();
     const LS = LG.filter((l) => CT.inScope('G'));
     const dl = (v) => (Math.abs(v) < 0.5 ? '<span class="sub">0</span>' : `<b class="${v > 0 ? 'up' : 'dn'}">${v > 0 ? '+' : ''}${n0(v)}</b>`);
-    const wkT = `<div class="ct-wrap"><table class="ct-t cw"><thead><tr><th rowspan="2">주</th>${LS.map((l) => `<th colspan="3" class="c">${l}</th>`).join('')}</tr><tr>${LS.map(() => '<th class="r">직전</th><th class="r">지금</th><th class="r">Δ</th>').join('')}</tr></thead><tbody>`
+    const wkT = `<div class="ct-wrap"><table class="ct-t cw"><thead><tr><th rowspan="2">주</th>${LS.map((l) => `<th colspan="3" class="c">${l}</th>`).join('')}</tr><tr>${LS.map(() => '<th class="r">직전</th><th class="r">지금</th><th class="r">차이</th>').join('')}</tr></thead><tbody>`
       + wks.map((s) => `<tr><td class="id">${md(s < t0 ? t0 : s)}~</td>${LS.map((l) => { const x = a.w[`${l}|${s}`] || 0, y = b.w[`${l}|${s}`] || 0; return `<td class="r">${n0(x)}</td><td class="r">${n0(y)}</td><td class="r">${dl(y - x)}</td>`; }).join('')}</tr>`).join('')
       + `<tr class="sum"><td>계</td>${LS.map((l) => { const x = wks.reduce((q, s) => q + (a.w[`${l}|${s}`] || 0), 0), y = wks.reduce((q, s) => q + (b.w[`${l}|${s}`] || 0), 0); return `<td class="r">${n0(x)}</td><td class="r">${n0(y)}</td><td class="r">${dl(y - x)}</td>`; }).join('')}</tr></tbody></table></div>`;
     const mc = (r, l) => (r.cal || []).filter((c) => c.line === l && c.date >= t0 && c.date <= tE && /M\/C/.test(c.event || '')).map((c) => c.date);
@@ -220,8 +220,8 @@
       return `<tr><td class="id">${l}</td><td>${x.map((d) => `<span class="${sy.has(d) ? '' : 'gone'}">${md(d)}</span>`).join(' ') || '-'}</td><td>${y.map((d) => `<span class="${sx.has(d) ? '' : 'new'}">${md(d)}</span>`).join(' ') || '-'}</td></tr>`; }).join('')}</tbody></table></div>`;
     const ma = ra.milp || {}, mb = rb.milp || {}, la = (ra.replan || {}).late ?? ma.late, lb = (rb.replan || {}).late ?? mb.late;
     const kp = CT.kpis([
-      { label: '결품', v: `${n0(ma.short)}→${n0(mb.short)}`, unit: 't', tone: (mb.short || 0) > (ma.short || 0) + 0.5 ? 'bad' : 'ok', sub: `Δ ${n0((mb.short || 0) - (ma.short || 0))}t` },
-      { label: '지연(천 t·일)', v: `${n0(la / 1000)}→${n0(lb / 1000)}`, unit: '', tone: lb > la + 0.5 ? 'bad' : 'ok', sub: `Δ ${n0((lb - la) / 1000)}천` },
+      { label: '결품', v: `${n0(ma.short)}→${n0(mb.short)}`, unit: 't', tone: (mb.short || 0) > (ma.short || 0) + 0.5 ? 'bad' : 'ok', sub: `차이 ${n0((mb.short || 0) - (ma.short || 0))}t` },
+      { label: '지연(천 t·일)', v: `${n0(la / 1000)}→${n0(lb / 1000)}`, unit: '', tone: lb > la + 0.5 ? 'bad' : 'ok', sub: `차이 ${n0((lb - la) / 1000)}천` },
       { label: 'M/C', v: `${ma.K ?? '-'}→${mb.K ?? '-'}`, unit: '회', tone: 'info' },
     ]);
     const mv = [];
@@ -257,16 +257,16 @@
     const dl = (v) => (Math.abs(v) < 0.5 ? '<span class="sub">0</span>' : `<b class="${v > 0 ? 'up' : 'dn'}">${v > 0 ? '+' : ''}${n0(v)}</b>`);
     const dnN = (x) => LS.reduce((q, l) => q + ((x.dn[l] || new Set()).size), 0);
     const kp = CT.kpis([
-      { label: '편성량(오늘 이후)', v: n0(b.tot), unit: 't', tone: 'info', sub: `직전 ${n0(a.tot)}t · Δ ${n0(b.tot - a.tot)}t` },
-      { label: '미편성', v: n0(b.un), unit: 't', tone: b.un > a.un + 0.5 ? 'bad' : 'ok', sub: `직전 ${n0(a.un)}t · Δ ${n0(b.un - a.un)}t` },
+      { label: '편성량(오늘 이후)', v: n0(b.tot), unit: 't', tone: 'info', sub: `직전 ${n0(a.tot)}t · 차이 ${n0(b.tot - a.tot)}t` },
+      { label: '미편성', v: n0(b.un), unit: 't', tone: b.un > a.un + 0.5 ? 'bad' : 'ok', sub: `직전 ${n0(a.un)}t · 차이 ${n0(b.un - a.un)}t` },
       { label: '계획 휴지일(라인 합)', v: String(dnN(b)), unit: '일', tone: 'info', sub: `직전 ${dnN(a)}일` },
     ]);
     const wks = [...new Set([...Object.keys(a.w), ...Object.keys(b.w)].map((k) => k.split('|')[1]))].sort();
-    const wkT = `<div class="ct-wrap"><table class="ct-t cw"><thead><tr><th rowspan="2">주</th>${LS.map((l) => `<th colspan="3" class="c">${l}</th>`).join('')}</tr><tr>${LS.map(() => '<th class="r">직전</th><th class="r">지금</th><th class="r">Δ</th>').join('')}</tr></thead><tbody>`
+    const wkT = `<div class="ct-wrap"><table class="ct-t cw"><thead><tr><th rowspan="2">주</th>${LS.map((l) => `<th colspan="3" class="c">${l}</th>`).join('')}</tr><tr>${LS.map(() => '<th class="r">직전</th><th class="r">지금</th><th class="r">차이</th>').join('')}</tr></thead><tbody>`
       + wks.map((s) => `<tr><td class="id">${md(s < t0 ? t0 : s)}~</td>${LS.map((l) => { const x = a.w[`${l}|${s}`] || 0, y = b.w[`${l}|${s}`] || 0; return `<td class="r">${n0(x)}</td><td class="r">${n0(y)}</td><td class="r">${dl(y - x)}</td>`; }).join('')}</tr>`).join('')
       + `<tr class="sum"><td>계</td>${LS.map((l) => { const x = wks.reduce((q, s) => q + (a.w[`${l}|${s}`] || 0), 0), y = wks.reduce((q, s) => q + (b.w[`${l}|${s}`] || 0), 0); return `<td class="r">${n0(x)}</td><td class="r">${n0(y)}</td><td class="r">${dl(y - x)}</td>`; }).join('')}</tr></tbody></table></div>`;
     const yms = [...new Set([...Object.keys(a.g), ...Object.keys(b.g)].map((k) => k.split('|')[1]))].sort(), gs = ['계획재', '주문재', '건재수출', '가전수출', '가전내수', '수요개발'].filter((g) => yms.some((m) => a.g[`${g}|${m}`] || b.g[`${g}|${m}`]));
-    const gT = `<div class="ct-wrap"><table class="ct-t cw"><thead><tr><th rowspan="2">그룹</th>${yms.map((m) => `<th colspan="3" class="c">${+m.slice(5)}월</th>`).join('')}</tr><tr>${yms.map(() => '<th class="r">직전</th><th class="r">지금</th><th class="r">Δ</th>').join('')}</tr></thead><tbody>`
+    const gT = `<div class="ct-wrap"><table class="ct-t cw"><thead><tr><th rowspan="2">그룹</th>${yms.map((m) => `<th colspan="3" class="c">${+m.slice(5)}월</th>`).join('')}</tr><tr>${yms.map(() => '<th class="r">직전</th><th class="r">지금</th><th class="r">차이</th>').join('')}</tr></thead><tbody>`
       + gs.map((g) => `<tr><td class="id">${esc(g)}</td>${yms.map((m) => { const x = a.g[`${g}|${m}`] || 0, y = b.g[`${g}|${m}`] || 0; return `<td class="r">${n0(x)}</td><td class="r">${n0(y)}</td><td class="r">${dl(y - x)}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div>';
     const dnT = LS.map((l) => { const x = a.dn[l] || new Set(), y = b.dn[l] || new Set(), add = [...y].filter((d) => !x.has(d)).sort(), del = [...x].filter((d) => !y.has(d)).sort();
       return `<tr><td class="id">${l}</td><td>${add.map((d) => `<span class="new">${md(d)}</span>`).join(' ') || '<span class="sub">-</span>'}</td><td>${del.map((d) => `<span class="gone">${md(d)}</span>`).join(' ') || '<span class="sub">-</span>'}</td></tr>`; }).join('');

@@ -37,7 +37,7 @@
     const names = (L) => (L.length ? L.map((m) => `${esc(m.name)}<small>(${esc(gn(m))})</small>`).join(' · ') : '없음');
     const LT = UI.matLate(M.late);                           // 발주 마감 지남 = 공통 기준(ui/shell.js UI.matLate, 11/8)
     const kp = CT.kpis([
-      { label: '3달 발주 필요', v: tT(sh), unit: 't', tone: '', sub: `${names(sh)} · ${md(GV.from)}~${md(GV.to)} · 경고 아님(재고·기발주 뺀 앞으로 발주할 양)` },   // 11/10: 11/9 회의 F13 — 3달 합은 경고가 아니라 '발주 필요량'
+      { label: '3달 발주 필요', v: tT(sh), unit: 't', tone: '', sub: `${md(GV.from)}~${md(GV.to)} 앞으로 발주할 양(경고 아님) · ${names(sh.slice().sort((a, b) => b.short - a.short).slice(0, 3))}${sh.length > 3 ? ` 외 ${sh.length - 3}` : ''}` },   // 11/10: 11/9 회의 F13 — 3달 합은 경고가 아니라 '발주 필요량'
       { label: '마감 지난 부족', v: LT ? n0(LT.t) : '-', unit: 't', tone: !LT ? '' : LT.t >= 0.5 ? 'bad' : 'ok', sub: LT ? (LT.items.length ? LT.items.map((x) => `${esc(x.name)}<small>${x.by === 'spec' ? '(규격별)' : ''} ${n0(x.t)}t</small>`).join(' · ') : '없음') : '다음 자동 실행부터' },
       { label: '해당 주문 확인 · 추정', v: `${n0(cA.size)} · ${n0(eA.size)}`, unit: '건', tone: cA.size ? 'bad' : eA.size ? 'warn' : 'ok', sub: `추정은 판매그룹·시점 기준` },
     ]);
@@ -51,13 +51,13 @@
         + `<td class="r">${m.sure ? `<b class="ct-neg">${n0(m.lateT)}</b>` : '-'}${m.short > 0.5 ? `<small title="3달 필요 − 재고 − 입고 예정 · 경고 아님">3달 발주 필요 ${n0(m.short)}</small>` : ''}</td><td>${m.first ? md(m.first) : '-'}</td>`
         + `<td class="w">${m.gs.map((x) => esc(x.group)).join(' · ') || '-'}</td>`
         + `<td class="ac">${m.short > 0.5 ? esc(CT.DEPT.mat) : '-'}</td><td>${m.short > 0.5 ? dl(m.deadline) + (m.next && m.nextT >= 1 ? `<small>${m.sure ? `다음 ${md(m.next)} · ` : ''}이번 발주 ${n0(m.nextT)}t</small>` : '') + (m.orderNow ? '<small class="ct-neg">지금 발주 기간</small>' : '') : '-'}</td>`
-        + `<td>${m.short > 0.5 ? '<span class="ct-b na">미조치</span>' : '-'}</td><td>${md(dataAt)}</td></tr>`;
+        + `<td>${m.short > 0.5 ? '<span class="ct-b na">미조치</span>' : '-'}</td></tr>`;
     };
     $('ct-main').innerHTML = CT.basis([{ name: '소재 관제', at: M.savedAt || M.today, kind: '재계획' }, { name: '주문', at: OM.cgAt, kind: '실적' }, { name: '컬러 주문', at: OM.ccAt, kind: OM.ccMissing.length ? `${OM.ccMissing.join('·')} 없음` : '' }])
       + kp
       + `<section class="card"><div class="hd"><h2>부족 소재 <small>마감 지남 먼저 · 발주 마감 순</small></h2>${CT.tabs('mt-all', [['s', '부족만'], ['a', '전체 소재']], showAll ? 'a' : 's')}</div>`
-      + `<div class="ct-wrap"><table class="ct-t mt"><thead><tr><th>상태</th><th class="r">해당 주문</th><th>소재</th><th class="r" title="발주 마감이 지나 지금 발주해도 못 대는 부족 · 아래 = 3달 발주 필요(경고 아님)">마감 지난 부족(t)</th><th>필요일</th><th>사용 판매그룹</th><th class="ac">담당부서</th><th>조치기한</th><th>조치 상태</th><th>확인일</th></tr></thead>`
-      + `<tbody>${L.map(tr).join('') || '<tr><td colspan="10">부족 소재 없음</td></tr>'}</tbody></table></div>`
+      + `<div class="ct-wrap"><table class="ct-t mt"><thead><tr><th>상태</th><th class="r">해당 주문</th><th>소재</th><th class="r" title="발주 마감이 지나 지금 발주해도 못 대는 부족 · 아래 = 3달 발주 필요(경고 아님)">마감 지난 부족(t)</th><th>필요일</th><th>사용 판매그룹</th><th class="ac">담당부서</th><th>조치기한</th><th>조치 상태</th></tr></thead>`
+      + `<tbody>${L.map(tr).join('') || '<tr><td colspan="9">부족 소재 없음</td></tr>'}</tbody></table></div>`
       + '<p class="ct-note">조치기한 = 정해진 발주일(P-FH 화 · 그 외 월 · 수입 10~20일) · 필요일 = 부족 시작</p></section>'
       + specCard(M, today);
     $('mt-all').querySelectorAll('button').forEach((b) => b.onclick = () => { showAll = b.dataset.k === 'a'; render(D); });

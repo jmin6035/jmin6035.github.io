@@ -173,7 +173,7 @@
       stock: { name: '재고', key: [cp ? `컬러 제품 <b>${n0(cp.current)}</b>t · 목표의 <b>${rate(cp.current, cp.target)}%</b>` : '', gm ? `도금 소재 ${n0(gm.current)}t · 목표의 ${rate(gm.current, gm.target)}%` : ''], st: ST_ && ST_.now ? (ST_.now.some((x) => x.target && x.current / x.target > 1.3) ? 'bad' : ST_.now.some((x) => x.target && x.current / x.target > 1.1) ? 'warn' : 'good') : null },
     };
     let h = '';
-    if (o.status && o.status.stale) h += `<div class="stale">⚠ 사내 PC 자동 실행이 하루 넘게 멈춰 있습니다(마지막 자료 ${new Date(o.status.savedAt).toLocaleString('ko-KR')}).</div>`;
+    if (o.status && o.status.stale) h += `<div class="stale">⚠ 사내 PC 자동 실행이 하루 넘게 멈춰 있습니다(마지막 자료 ${UI.fmtDateTime(new Date(o.status.savedAt))}).</div>`;
 
     // ① 한 장 요약: 구분별 타일(상태 · 대표 수치 1개 · 진도 막대 · 조치 한 줄) + 결정 필요 사항 카드
     const big = {

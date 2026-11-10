@@ -12,9 +12,9 @@
 .lt-k div { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--surface); }
 .lt-k small { display: block; color: var(--ink-2); font-size: 13.5px; }
 .lt-k b { display: block; font-size: 26px; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
-.lt-k span { color: var(--ink-3); font-size: 13.5px; }
+.lt-k span { color: var(--ink-2); font-size: 13.5px; line-height: 1.55; word-break: keep-all; }
 .lt-k b { display: flex; align-items: baseline; gap: 6px; } .lt-k b i { font-style: normal; font-size: 15px; color: var(--ink-2); } .lt-k b.ro { font-size: 20px; }
-.lt-k em { display: block; font-style: normal; color: var(--ink-3); font-size: 13.5px; margin-top: 6px; }
+.lt-k em { display: block; font-style: normal; color: var(--ink-2); font-size: 13.5px; margin-top: 6px; }
 #lt-main input[type=number] { width: 78px; font: inherit; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); }
 .lt-k input[type=number] { width: 92px !important; font-size: 24px !important; }
 #lt-main input.chg { border-color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, var(--surface)); }
@@ -24,6 +24,9 @@
 table.t td.d { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 table.t td.l { text-align: left; } table.t th.l { text-align: left; }
 .lt-seg { display: inline-flex; gap: 6px; margin: 0 0 10px; } .lt-seg button { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; font: inherit; cursor: pointer; } .lt-seg button[aria-pressed="true"] { background: var(--brand-2); color: var(--on-brand, #fff); border-color: var(--brand-2); }
+.lt-fold > summary { cursor: pointer; font-size: 17px; list-style-position: inside; padding: 2px 0; } .lt-fold > summary small { font-size: 14px; font-weight: 400; color: var(--ink-2); margin-left: 6px; } .lt-fold[open] > summary { margin-bottom: 12px; }
+.lt-edit .lt-bar2 { margin-bottom: 8px; }
+@media (max-width: 640px) { #lt-who { width: 100%; } .lt-bar { display: none; } #lt-main th[style] { min-width: 0 !important; padding: 0; } }
 </style>
 </head>
 <body>

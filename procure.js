@@ -97,7 +97,7 @@
           <div class="dg2"><label>상태<select data-f="status" aria-label="상태">${STATUS.map((x) => `<option ${x === (d.status || '판단대기') ? 'selected' : ''}>${x}</option>`).join('')}</select></label><label>메모<input class="memo" data-f="memo" type="text" value="${esc(d.memo || '')}" placeholder="예: 10/14 구매팀 발주 완료" aria-label="메모"></label></div>` : ''}
           <div class="use"><b>무엇을 만들려고</b> ${j.use.slice().sort((a, b) => b[3] - a[3]).slice(0, 12).map((r) => `<span><i>${esc(r[0])}</i> ${esc(r[1])} ${esc(r[2])} <b>${n0(r[3])}t</b></span>`).join('')}</div></div></td></tr>` : ''}`;
     }).join('');
-    return card('p-board', '판단 보드', `기준일 ${S.today} · 필요일 = 컬러 투입 ${S.safetyC}일 · 도금 투입 ${S.safetyG}일 전 입고`, kp + ctl + `
+    return card('p-board', '판단 보드', `기준일 ${UI.fmtDate(S.today)} · 필요일 = 컬러 투입 ${S.safetyC}일 · 도금 투입 ${S.safetyG}일 전 입고`, kp + ctl + `
       <div class="scroll"><table class="t bd"><thead><tr><th class="l">첫 사용일</th><th class="l">소재</th><th>필요(t)</th><th>충당</th><th>발주 필요</th><th class="l">판단 · 사유</th><th class="l">결정</th></tr></thead>
       <tbody>${rows || '<tr><td colspan="7" class="c muted">이 기간에 해당 없음</td></tr>'}</tbody></table></div>
       <p class="small">단위 = 필요 주차 × 소재 · 충당 = 재고 + 필요일까지 입고예정 · 남은 일수 = 첫 필요일 − 투입 여유(컬러 ${S.safetyC}·도금 ${S.safetyG}일) − 기준일 · 부족량 = 27년 배정 비중으로 업체 분배, 리드타임 초과 몫은 다른 배정 업체로 · 수량 수정은 이 브라우저에 저장</p>`);
@@ -126,7 +126,7 @@
       ${auto}<h3>직접 입력 <small>MES 밖 기발주(수입 등)·날짜 변경</small></h3>
       <div class="bar"><button type="button" class="btn" data-add="arr">+ 줄 추가</button><label class="btn">엑셀 업로드<input type="file" accept=".xlsx" data-up="arr" hidden></label><span class="small">양식: 소재조달_양식_v0.xlsx '입고예정' 시트 (업체 · 소재 · 수량(t) · 입고예정일 · 발주번호 · 메모)</span></div>
       <div class="scroll"><table class="t ed"><thead><tr><th>업체</th><th>소재</th><th>수량(t)</th><th>입고예정일</th><th>발주번호</th><th>메모</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="c muted">없음 — 지금 판단은 재고만으로 충당</td></tr>'}</tbody></table></div>
-      <h3>현재 재고(구매소재, 자가 제외) <small>MES 소재재고 · 판생속보와 정의 다름</small></h3><p class="small">${esc(D.stockNote)}</p>
+      <h3>현재 재고(구매소재, 자가 제외) <small>MES 소재 재고 · 판매생산속보와 정의 다름</small></h3><p class="small">${esc(D.stockNote)}</p>
       <div class="chips">${Object.entries(D.stock).filter(([k, t]) => t >= 1 && UI.inScope(k[0])).sort((a, b) => b[1] - a[1]).map(([k, t]) => `<span class="chip">${PL[k[0]]} ${esc(codeNm(k.slice(2)))} <b>${n0(t)}t</b></span>`).join('')}</div>`);
   }
 
@@ -164,7 +164,7 @@
       <div class="bar"><label class="small">기준일 <input type="date" id="p-today" value="${S.today}"></label><label class="small">입고 → 컬러 투입 <input type="number" id="p-safetyC" value="${S.safetyC}" min="0" max="30" style="width:56px">일</label><label class="small">입고 → 도금 투입 <input type="number" id="p-safetyG" value="${S.safetyG}" min="0" max="30" style="width:56px">일</label>
       <button type="button" class="btn" id="p-dl">설정·판단 내보내기(.json)</button><label class="btn">설정 가져오기<input type="file" accept=".json" id="p-ul" hidden></label><button type="button" class="btn" id="p-resetall">모두 초기화</button></div>
       <h3>공유</h3><div class="bar"><button type="button" class="btn primary" id="p-push">모두에게 올리기</button><button type="button" class="btn" id="p-pull">올라간 상태 받기</button><span class="small">업체·입고예정·주문재·판단 · 분석 암호로 잠가 저장 · 올린 사람·시각 기록</span></div>
-      <p class="small">저장 = 이 브라우저 · 계산 ${String(D.built).replace('T', ' ')}</p>`);
+      <p class="small">저장 = 이 브라우저 · 계산 ${UI.fmtDateTime(D.built)}</p>`);
   }
 
   // F/H 납기 비교 3차(2026-10-21 사용자: 더 직관적으로) — "발주하고 며칠 뒤에 들어오나" 한 줄: 실제 입고 · TF 기준 · 인도납기 세 날을 같은 축에
@@ -246,7 +246,7 @@
     const LT = UI.matLate(MO && MO.late);   // 11/10: 마감 지난 부족 = 공통 기준(소재 관제·부족·조치와 같은 값 — 업체별 계산 합은 쓰지 않음)
     const soon = P_.filter((j) => j.deadline >= S.today && diff(j.deadline, S.today) <= 14).sort((a, b) => (a.deadline < b.deadline ? -1 : 1));
     const k = (tone, l, v, unit, b) => `<div class="kpi tone-${tone}"><div class="l">${l}</div><div class="v"><b data-count="${Math.round(v)}">0</b><small>${unit}</small></div><div class="b">${b}</div></div>`;
-    return `<section class="card"><h2>발주 캘린더 <small>기준일 ${S.today} · 리드타임 역산 발주 마감 · 날짜 누르면 상세</small><span class="unit">단위: 톤</span></h2>
+    return `<section class="card"><h2>발주 캘린더 <small>기준일 ${UI.fmtDate(S.today)} · 리드타임 역산 발주 마감 · 날짜 누르면 상세</small><span class="unit">단위: 톤</span></h2>
       <div class="kpis">${k(!LT ? '' : LT.t >= 0.5 ? 'bad' : 'good', '마감 지난 부족', LT ? Math.round(LT.t) : 0, 't', LT ? `${LT.items.length}개 소재 · ${LT.items.map((x) => esc(x.name)).join(' · ') || '없음'}` : '소재 관제 자료 없음')}
       ${k(soon.length ? 'warn' : 'good', '2주 내 발주 마감', Math.round(soon.reduce((a, j) => a + j.short, 0)), 't', `${soon.length}건 · 최우선 ${soon[0] ? `${esc(codeNm(soon[0].code))}${soon[0].p ? ' ' + esc(supName(soon[0].p.s)) : ''} ${md(soon[0].deadline)}` : '-'}`)}
       ${(() => { const e = new Date(S.today + 'T00:00:00'); e.setMonth(e.getMonth() + 2, 0); const end = `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, '0')}-${String(e.getDate()).padStart(2, '0')}`, near = P_.filter((j) => j.deadline >= S.today && j.deadline <= end);   // 10/30 재검토: 27년 3월까지 합친 179천t 이 당장 부족처럼 읽힘 → 다음 달 말까지 마감만
@@ -294,8 +294,8 @@
     const body = { cal: calTab, board, arr: arrivals, due: dueTab, ord: orders, sup: suppliers, basis }[tab]();
     const fresh = lastTab !== tab; lastTab = tab;
     $('p-main').innerHTML = `<nav class="tabs big noprint">${TABS.map(([k, n]) => `<button type="button" data-tab="${k}" aria-pressed="${k === tab}">${n}</button>`).join('')}</nav><div class="${fresh ? 'fade' : ''}">${body}</div>`;
-    UI.sub(`발주 마감 · 입고 필요 · 업체 판단 · 구매 요청 · 기준일 ${S.today}`);
-    $('p-meta').innerHTML = `<span><b>기준일</b>${S.today}</span><span><b>자료</b>확정 컬러·도금 계획 · 소재재고List · 재고현황</span><span><b>계산</b>${String(D.built).replace('T', ' ')}</span><span><b>단위</b>톤</span>`;
+    UI.sub(`발주 마감 · 입고 필요 · 업체 판단 · 구매 요청 · 기준일 ${UI.fmtDate(S.today)}`);
+    $('p-meta').innerHTML = `<span><b>기준일</b>${UI.fmtDate(S.today)}</span><span><b>자료</b>확정 컬러·도금 계획 · 소재 재고 · 재고 현황</span><span><b>계산</b>${UI.fmtDateTime(D.built)}</span><span><b>단위</b>톤</span>`;
     if (tab === 'cal') calInit();
     if (tab === 'due') $('p-main').querySelectorAll('th[data-fk]').forEach((th) => th.addEventListener('click', () => { const st = window.__ftSort; st.d = st.k === th.dataset.fk ? -st.d : -1; st.k = th.dataset.fk; render(); }));
     UI.reveal($('p-main')); UI.count($('p-main')); justOpened = null;
@@ -373,7 +373,7 @@
     if (t.id === 'p-supreset' && confirm('업체 기준정보를 처음 값으로 되돌릴까요?')) { S.sup = defaults().sup; save(); render(); return; }
     if (t.id === 'p-resetall' && confirm('모든 설정·입고예정·주문재·판단을 지울까요?')) { S = defaults(); save(); render(); return; }
     if (t.id === 'p-push') { const by = (() => { try { return localStorage.getItem('cgl-me') || ''; } catch (x) { return ''; } })(); sharePush({ state: S, by, at: new Date().toISOString() }).then(() => UI.toast('모두에게 올림')).catch((x) => alert(x.message)); return; }
-    if (t.id === 'p-pull') { sharePull().then((r) => { if (!r) { alert('올라간 상태가 없습니다'); return; } if (!confirm(`${String(r.at).slice(0, 16).replace('T', ' ')} ${r.by || ''} 이 올린 상태로 바꿀까요? (이 브라우저 입력은 덮어씀)`)) return; S = { ...defaults(), ...r.state, today: D.today }; save(); render(); UI.toast('올라간 상태로 바꿈'); }).catch((x) => alert(x.message)); return; }
+    if (t.id === 'p-pull') { sharePull().then((r) => { if (!r) { alert('올라간 상태가 없습니다'); return; } if (!confirm(`${UI.fmtDateTime(r.at)} ${r.by || ''} 이 올린 상태로 바꿀까요? (이 브라우저 입력은 덮어씀)`)) return; S = { ...defaults(), ...r.state, today: D.today }; save(); render(); UI.toast('올라간 상태로 바꿈'); }).catch((x) => alert(x.message)); return; }
     if (t.id === 'p-dl') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' })); a.download = `소재조달_설정_${S.today}.json`; a.click(); }
   });
   document.addEventListener('change', (e) => {

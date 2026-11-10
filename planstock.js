@@ -63,7 +63,7 @@
     const LT = UI.matLate(MO && MO.late);   // 소재 '발주 마감 지남' 공통 기준(ui/shell.js UI.matLate, 11/8) — 부족·조치·소재 수급·수주 관제와 같은 값
     return card('ps-osum', '소재 발주 요약', `생산 일정(10월 ~ 3월) 기준 · ${md(UI.today(O.today))} 현재`, '단위: 톤',
       (LT ? `<p class="ps-late" title="${esc(LT.tip)}">마감 지난 부족 <b>${n0(LT.t)}t</b> <span>${LT.items.map((x) => esc(x.name)).join(' · ')}</span></p>` : '')
-      + `<div class="scroll"><table class="t big"><thead><tr><th>소재</th><th>업체</th><th title="발주 기간이 지난 생산분 필요량(재고 차감 전) — 경고 아님, 실제 부족은 위 '마감 지난 부족'">기간 지남 <small>재고 차감 전</small></th><th>2주 내 마감</th><th>이후</th><th>합계</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      + `<div class="scroll"><table class="t big"><thead><tr><th>소재</th><th>업체</th><th title="발주 기간이 지난 생산분 필요량(재고 차감 전) — 경고 아님, 실제 부족은 위 '마감 지난 부족'">기간 지남</th><th>2주 내 마감</th><th>이후</th><th>합계</th></tr></thead><tbody>${rows}</tbody></table></div>`
       + (next.length ? `<p class="small"><b>최우선 발주:</b> ${next.slice(0, 3).map((o) => `${md(o.o1)}까지 ${o.kind} ${n0(o.t - (o.ordered || 0))}t(${md(o.arr)} 입고)`).join(' · ')}</p>` : '')
       + '<p class="small">기간 지남 = 발주일이 지난 생산분의 소재 필요량(재고·기발주 빼기 전). 실제 부족은 위 \'마감 지난 부족\'(소재 관제와 같은 값).</p>');
   }
@@ -169,7 +169,7 @@
       + `<div class="grid2 rowc">${months()}${byMat()}</div>`
       + `<details class="card more" id="ps-more"><summary><h2>사양별 상세 <small>${O.n}개 사양 — 진도·월말 예상·판정</small></h2></summary>${specDiv()}</details>`
       + `<details class="card more"><summary><h2>계산 기준</h2></summary>${basis().replace(/^<section[^>]*>/, '').replace(/<\/section>$/, '')}</details>`;
-    $('ca-meta').innerHTML = `<span><b>실적</b>~${O.asOf}</span><span><b>시작 재고</b>MES ${O.stockMonth.slice(0, 4)}.${O.stockMonth.slice(4)}월말</span><span><b>기준</b>계획재 운영안 ${O.n}개 사양</span><span><b>계산</b>${String(O.built || '').replace('T', ' ')}</span>`;
+    $('ca-meta').innerHTML = `<span><b>실적</b>~${UI.fmtDate(O.asOf)}</span><span><b>시작 재고</b>${+O.stockMonth.slice(4)}월 말</span><span><b>기준</b>계획재 운영안 ${O.n}개 사양</span><span><b>계산</b>${UI.fmtDateTime(O.built)}</span>`;
     calInit();
     UI.reveal($('ca-main')); UI.count($('ca-main')); bindTip($('ca-main'));
     wire();

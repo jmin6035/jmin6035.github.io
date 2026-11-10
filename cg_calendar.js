@@ -357,7 +357,7 @@
   }
 
   function weekTable(days, nw) {
-    const head = days.map((d) => { const wd = dt(d).getDay(); return `<th class="${nw.includes(d) ? 'nx' : wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}${nw.includes(d) ? '<small>수요일 확정 대상</small>' : ''}</th>`; }).join('');
+    const head = days.map((d) => { const wd = dt(d).getDay(); return `<th class="${nw.includes(d) ? 'nx' : wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}${d === UI.today() ? '<small class="tdy">오늘</small>' : ''}${nw.includes(d) ? '<small>수요일 확정 대상</small>' : ''}</th>`; }).join('');
     const idx = (d) => O.days.indexOf(d);
     const pad = '<td class="pad" aria-hidden="true"></td>'.repeat(Math.max(0, 7 - days.length));   // 마지막 주가 1~6일이면 빈 칸으로 채워 한 칸이 화면 폭 전체로 늘어나지 않게
     const hrsOf = (ln) => {                                   // 2주 전체를 24시간 이어서 돌렸을 때 마지막 날 뒤로 넘어가는 양(T/Hr 시간 기준) — 하루·한 주 넘침은 다음 날로 이어져 생산되므로 안 보여 줌
@@ -378,7 +378,7 @@
   function calCard() {
     const nw = nextWeek();
     const ex = O.expNeed && O.expNeed.due ? ` · 배선 없는 수출 ${O.expNeed.due}건은 납기 − 1일` : '';
-    return `<section class="card"><h2>라인별 ~${END()} <small title="하루 능력 = 재계획 하루 톤(속도 = 2026.1월~ 실적 하루 생산량, 가동 현황·가동 캘린더·주문진도와 같은 값) · 강종 = 최신 재계획 · 채우는 순서 = 작업지시 → 1010 순서안 → 필요 생산일 빠른 순(수출 출항 − 1일 · 내수 납기 − 1일${ex})">칸을 누르면 그날 작업 순서 · 능력 = 실적 기준</small></h2>`
+    return `<section class="card"><h2>라인별 ~${END()} <small title="하루 능력 = 재계획 하루 톤(속도 = 2026.1월~ 실적 하루 생산량, 가동 현황·가동 캘린더·주문진도와 같은 값) · 강종 = 최신 재계획 · 채우는 순서 = 작업지시 → 1010 순서안 → 필요 생산일 빠른 순(수출 출항 − 1일 · 내수 납기 − 1일${ex})">칸을 누르면 그날 작업 순서</small></h2>`
       + '<div class="lg"><span title="MES에 지시가 나가고 아직 생산 전인 코일"><i style="background:var(--c-conf)"></i>작업지시</span><span title="소재가 들어온 주문"><i style="background:var(--c-plan)"></i>소재 있음</span>'
       + '<span title="소재가 들어올 주문 — 입고 + 5일부터 생산"><i style="background:repeating-linear-gradient(135deg, var(--c-plan) 0 2px, var(--c-fcst) 2px 5px)"></i>입고 예정</span><span><i style="background:var(--c-gap);box-shadow:inset 0 0 0 1px var(--line)"></i>빈칸</span>'
       + '<span><i style="background:#fff3bf;border:1px solid #f59f00"></i>M/C(강종 교체)</span><span title="현장 강종 ≠ 재계획 · 능력 초과 · 재질 순서"><i style="background:var(--bad)"></i>확인 필요</span></div>'
@@ -395,7 +395,7 @@
   }
 
   function moveBar() {
-    if (!MOVES.length) return '<p class="msg" style="margin:0 0 10px">칸을 눌러 옮기기·톤·빼기 · 아래 「칸에 못 들어간 주문」에서 넣기</p>';
+    if (!MOVES.length) return '';
     const rmT = (O.removed || []).reduce((a, p) => a + p.t, 0);
     const outs = LINES.flatMap((l) => (O.out[l] || []).map((p) => [l, p])), oT = outs.reduce((a, [, p]) => a + p.t, 0);
     return `<div class="mvbar"><b>바꾼 것 ${MOVES.length}건</b>${rmT >= 0.5 ? `<span class="msg">뺀 주문 ${(O.removed || []).length}건 ${n0(rmT)}t → 아래 목록 「뺀 주문」</span>` : ''}<span class="msg">${dirty() ? '아직 저장 안 됨 — 아래 「다음 주 생산 확정」에서 저장' : '확정본에 저장됨'}</span><button type="button" class="lnk" id="mv-clear">모두 되돌리기</button><ul>`

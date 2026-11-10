@@ -155,6 +155,12 @@ h4.kh { font-size: 15px; font-weight: 800; margin: 12px 0 6px; } h4.kh i { displ
 .mt { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
 .mt > div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
 .mt b.v { font-size: 22px; } .mt .s { font-size: 13.5px; color: var(--ink-2); }
+/* 서식 통일(11/10): 오늘 표시 · 작은 글씨 13.5px · 낱말 중간 줄바꿈 없음 */
+table.cg thead th small.tdy { display: inline-block; margin: 0 0 0 6px; padding: 0 7px; border-radius: 999px; background: #fff; color: var(--brand); font-size: 13.5px; font-weight: 800; line-height: 1.5; vertical-align: 1px; opacity: 1; }
+.kpi .b, .kpi .l { word-break: keep-all; }
+.hv, .sh, h4.kh small { font-size: 13.5px; }
+@media (max-width: 760px) { .gl, .gl span { font-size: 13.5px; } }
+@media (max-width: 760px) { .gl span { white-space: normal; overflow: visible; } }
 </style>
 </head>
 <body>

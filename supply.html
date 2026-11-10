@@ -226,6 +226,8 @@ html .gtable .c1 small { color: var(--ink-3); font-weight: 500; }
 #s-cal td.idle { background: repeating-linear-gradient(135deg, #8792a0 0 3px, #c9cfd7 3px 7px) !important; }
 .glegend .sw.idsw { background: repeating-linear-gradient(135deg, #8792a0 0 3px, #c9cfd7 3px 6px) !important; }
 html body main #s-cal td.sdblock small { font-size: 13.5px !important; letter-spacing: -0.4px; font-weight: 600; } #s-cal td.idleblk { vertical-align: middle; } #s-cal td.idleblk .idl { display: inline-block; background: var(--surface); color: var(--ink-2); font-size: 13.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+/* 서식 통일(11/10): 상세 표의 톤은 오른쪽 정렬 */
+html body main .det table.dt.fl td.r, html body main .det table.dt.fl th.r { text-align: right !important; }
 </style>
 </head>
 <body>
@@ -239,11 +241,11 @@ html body main #s-cal td.sdblock small { font-size: 13.5px !important; letter-sp
   <div id="main" hidden>
     <div class="sbar"><span id="s-meta"></span><div class="tabs" id="s-mon" role="group" aria-label="월"></div></div>
     <section class="card" id="s-prog"></section>
-    <section class="card"><h2>가동 캘린더 <small>라인별 생산 · M/C · 휴지 — 날짜를 누르면 아래에 그날 품목·납기·소재</small><span class="unit">톤</span></h2>
+    <section class="card"><h2>가동 캘린더 <small>라인별 생산 · M/C · 휴지</small><span class="unit">톤</span></h2>
       <div class="glegend" id="s-calleg"></div>
       <div class="gtable-wrap" id="s-calw"><table class="gtable" id="s-cal"></table></div>
     </section>
-    <section class="card"><h2>판매그룹 출하 · 재고 <small>출하 = MES 출하 실적(지난 날) · 계획 출고(앞날) · 재고 = 기말(천t), 색 = 목표 대비</small><span class="unit">톤</span></h2>
+    <section class="card"><h2>판매그룹 출하 · 재고 <small>출하(t) · 기말 재고(천t)</small><span class="unit">톤</span></h2>
       <div class="glegend" id="s-shipleg"></div>
       <div class="gtable-wrap" id="s-shw"><table class="gtable" id="s-ship"></table></div>
     </section>

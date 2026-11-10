@@ -93,8 +93,8 @@
     const { asOf, list } = B;
     const isOpen = (x) => ['접수', '조치 중', '보류'].includes(x.st);
     const cnt = { 신규: list.filter((x) => x.st === '신규').length, open: list.filter((x) => x.st === '접수' || x.st === '조치 중').length, over: list.filter((x) => x.over).length, done: list.filter((x) => x.st === '완료').length, hold: list.filter((x) => x.st === '보류').length };
-    const k = [{ label: '담당 미지정', v: n0(cnt.신규), unit: '건', tone: cnt.신규 ? 'warn' : 'ok', sub: '자동으로 찾은 문제 · 아직 아무도 접수 안 함' }, { label: '조치 진행 중', v: n0(cnt.open), unit: '건', tone: 'info', sub: `담당이 접수해 조치하는 중${cnt.hold ? ` · 보류 ${cnt.hold}` : ''}` },
-      { label: '조치일 지남', v: n0(cnt.over), unit: '건', tone: cnt.over ? 'bad' : 'ok', sub: `조치 기한이 ${md(asOf)} 전 · 종결 제외` }, { label: '종결', v: n0(cnt.done), unit: '건', tone: 'ok', sub: '조치 끝으로 기록된 것' }];
+    const k = [{ label: '담당 미지정', v: n0(cnt.신규), unit: '건', tone: cnt.신규 ? 'warn' : 'ok', sub: '아직 접수 전' }, { label: '조치 진행 중', v: n0(cnt.open), unit: '건', tone: 'info', sub: `접수 · 조치 중${cnt.hold ? ` · 보류 ${cnt.hold}` : ''}` },
+      { label: '조치일 지남', v: n0(cnt.over), unit: '건', tone: cnt.over ? 'bad' : 'ok', sub: `기한 ${md(asOf)} 전 · 종결 제외` }, { label: '종결', v: n0(cnt.done), unit: '건', tone: 'ok', sub: '조치 완료' }];
     const L = list.filter((x) => (fil === 'auto' ? x.st === '신규' : fil === 'open' ? isOpen(x) : fil === 'done' ? x.st === '완료' : true));
     const chips = `<div class="seg ct-seg" id="is-fil">${FIL.map(([k_, n]) => `<button type="button" data-k="${k_}" aria-pressed="${k_ === fil}">${n} <b>${n0(list.filter((x) => (k_ === 'auto' ? x.st === '신규' : k_ === 'open' ? isOpen(x) : k_ === 'done' ? x.st === '완료' : true)).length)}</b></button>`).join('')}</div>`;
     const row = (x) => `<tr class="ck" data-i="${x.id}"><td class="id">${esc(x.no)}</td><td class="w"><b>${esc(x.title)}</b><small>${esc(x.text)}</small></td><td class="w"><b>${esc(x.act)}</b><small>${esc(x.owner || x.dept)}</small></td>`
@@ -103,7 +103,7 @@
     const sec = (dp) => { const R = L.filter((x) => x.dept === dp).sort((a, b) => ST.indexOf(a.st) - ST.indexOf(b.st) || String(a.dueEff || '0').localeCompare(String(b.dueEff || '0')) || (b.t || 0) - (a.t || 0));
       const lt = R.filter((x) => x.over).length;
       return `<details class="is-g" open><summary><b>${esc(dp)}</b><span>${R.length}건</span>${lt ? `<span class="ct-neg">조치일 지남 ${lt}</span>` : ''}<span>영향 ${n0(R.reduce((a, x) => a + (x.t || 0), 0))}t</span></summary>`
-        + `<div class="ct-wrap"><table class="ct-t is-t2"><thead><tr><th>이슈번호</th><th>문제</th><th>해야 할 조치 · 담당</th><th class="r">해당 주문</th><th class="r">해당 물량</th><th>조치 기한</th><th>진행</th></tr></thead><tbody>${R.map(row).join('')}</tbody></table></div></details>`; };
+        + `<div class="ct-wrap"><table class="ct-t is-t2"><thead><tr><th>이슈번호</th><th>문제</th><th>해야 할 조치 · 담당</th><th class="r">해당 주문</th><th class="r">물량 t</th><th>조치 기한</th><th>진행</th></tr></thead><tbody>${R.map(row).join('')}</tbody></table></div></details>`; };
     return `<section class="card"><h2>이슈 현황 <small>담당 미지정 → 접수 → 조치 진행 → 종결</small><span class="unit">건 · 톤</span></h2>${CT.kpis(k)}${chips}`
       + (deps.length ? deps.map(sec).join('') : '<p class="ct-note">해당 이슈 없음</p>') + '</section>';
   }

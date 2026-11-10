@@ -151,7 +151,7 @@
       const wk = ahead ? ss.slice(wi + 1).indexOf(ahead) + wi + 1 : -1, pct = (i) => (r.tgt ? ` <small>목표의 ${Math.round(r.v[i] / r.tgt[i] * 100)}%</small>` : '');
       const a = (ACT[r.k] || []).length ? ACT[r.k][ACT[r.k].length - 1] : null;
       return `<div class="st-chart st-${now}"${r.title ? ` title="${esc(r.title)}"` : ''}><div class="st-h"><b>${esc(GN[r.k] || r.k)}</b><span class="st-b">${now === 'ok' ? '정상' : SN[now]}</span></div>
-        <div class="st-s"><b class="st-n">${n0(r.v[wi])}t</b> ${md(W[wi])} 주말${pct(wi)}${r.tgt ? ` · 목표 ${n0(r.tgt[wi])}t` : ''}${a ? ` · 실제 ${md(a[0])} <b>${n0(a[1])}t</b>` : ''}</div>
+        <div class="st-s st-top"><b class="st-n">${n0(r.v[wi])}t</b><span>${md(W[wi])} 주말${r.tgt ? ` · 목표 ${n0(r.tgt[wi])}t의 ${Math.round(r.v[wi] / r.tgt[wi] * 100)}%` : ''}</span>${a ? `<span>실제 ${md(a[0])} <b>${n0(a[1])}t</b></span>` : ''}</div>
         <svg viewBox="0 0 ${Wd} ${H}" class="cv" role="img" aria-label="${esc(GN[r.k] || r.k)} 주말 재고 추이">${g}</svg>
         ${ahead ? `<div class="st-w st-${ahead}">앞으로 ${SN[ahead]}: ${md(W[wk])} 주 ${n0(r.v[wk])}t</div>` : `<div class="st-w ok">12월 말 ${n0(r.v[last])}t — ${r.tgt ? '목표 미만 없음' : '바닥나지 않음'}</div>`}</div>`;
     };
