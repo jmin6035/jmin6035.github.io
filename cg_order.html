@@ -129,6 +129,18 @@ table.gt .neg { color: var(--bad); } table.gt .wrn { color: var(--warn); } table
 .gtab td.gbcell{min-width:340px} .gtab td.gbcell .gb{display:grid;grid-template-columns:minmax(160px,1fr) 90px;gap:8px;align-items:center} .gtab td.gbcell .gbv{text-align:right}
 /* 서식 통일(11/10): 상태 10칸을 5 × 2 로 */
 @media (min-width: 900px) { .od-kpi { grid-template-columns: repeat(5, 1fr); } }
+/* 첫 화면 결론·기준(11/11) */
+.od-top h2 small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 8px; }
+.od-kpi.od-k5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.od-kpi button { border-left: 5px solid var(--line); } .od-kpi button.bad { border-left-color: var(--bad); } .od-kpi button.warn { border-left-color: var(--warn); }
+.od-kpi button.bad .v { color: var(--bad); } .od-kpi button.warn .v { color: var(--warn); } .od-kpi .v small { font-size: 14.5px; font-weight: 700; margin-left: 2px; } .od-kpi .s { font-size: 14px; color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.od-kpi button.all { background: var(--surface-2); }
+.od-wk { margin: 0 0 10px; font-size: 15px; padding: 8px 12px; border-radius: 8px; background: var(--surface-2); } .od-wk b { font-variant-numeric: tabular-nums; } .od-wk .neg, .cov-f .neg { color: var(--bad); } .cov-f .wrn { color: var(--warn); }
+.cov-f > summary { cursor: pointer; font-size: 15px; padding: 8px 2px; } .cov-f > summary span { color: var(--ink-2); font-size: 14px; } .cov-f[open] > summary { margin-bottom: 8px; }
+.od-fold { margin: 0 0 14px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 16px; background: var(--surface); } .od-fold > summary { cursor: pointer; font-weight: 700; font-size: 15px; color: var(--ink-2); }
+.od-def { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; margin: 10px 0 4px; font-size: 14px; line-height: 1.55; } .od-def dt { font-weight: 700; white-space: nowrap; } .od-def dd { margin: 0; color: var(--ink-2); word-break: keep-all; }
+.spk { border-bottom: 1px dotted var(--ink-3); cursor: help; }
+@media (max-width: 900px) { .od-kpi.od-k5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .od-def { grid-template-columns: 1fr; gap: 2px; } .od-def dd { margin-bottom: 8px; } }
 </style>
 </head>
 <body>
@@ -146,6 +158,7 @@ table.gt .neg { color: var(--bad); } table.gt .wrn { color: var(--warn); } table
 <footer class="foot"><div class="wrap"><span>원자료: MES 소재 발주·입고·주문진행(포스코 진행)·도금생산예정일·작업지시·코일 실적·주문 상세</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611102108"></script>
 <script src="engine/crypto.js?v=2611102108"></script>
+<script src="ui/spec_ko.js?v=2611111200"></script>
 <script src="cg_order.js?v=2611102108"></script>
 </body>
 </html>

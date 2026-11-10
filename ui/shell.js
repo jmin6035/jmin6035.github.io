@@ -22,20 +22,20 @@
     ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '수주 진도'], ['suju', 'suju.html#prod', '생산'], ['suju', 'suju.html#mat', '소재'], ['suju', 'suju.html#stock', '재고'], ['suju', 'suju.html#close', '월 실적 마감']]],
     ['ct1', '통합 관제', 'home', [['home', 'index.html#day', '금일 현황', 't'], ['home', 'index.html#week', '7일 전망', 't'], ['home', 'index.html#month', '월간 전망', 't'],
       ['board', 'board.html', '판매그룹 관제판', 'd'], ['issues', 'ct_issue.html#now', '이슈 현황', 'd'], ['issues', 'ct_issue.html#req', '조정 요청', 'd']]],
-    ['ct2', '주문·납기', 'cgorder', [['risk', 'risk.html', '납기 위험'], ['orders', 'ct_orders.html#track', '주문진도'], ['orders', 'ct_orders.html#cal', '납기 캘린더'],
-      ['cgorder', 'cg_order.html', '도금 주문진도', 'd'], ['ccorder', 'cc_order.html', '컬러 주문·납기', 'd']]],
-    ['ct3', '생산계획', 'supply', [['supply', 'supply.html', '월간 가동'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더'], ['weekseq', 'week_seq.html', '주간 작업순서'], ['plan7', 'ct_plan.html#cmp', '계획 변경'],
-      ['plan7', 'ct_plan.html#week', '주간 생산 일정', 'd'], ['plan7', 'ct_plan.html#load', '라인 부하', 'd'], ['cgwo', 'cg_wo.html', '도금 작업지시 순서', 'd'], ['wo', 'wo.html', '컬러 작업지시 순서', 'd']]],
-    ['ct4', '소재·재고', 'matcal', [['matcal', 'matcal.html', '소재 관제'], ['procure', 'procure.html', '발주'], ['planstock', 'planstock.html', '계획재'], ['integrated', 'integrated.html', '재고 전망'], ['leadtime', 'leadtime.html', '리드타임 기준'],
-      ['matshort', 'ct_mat.html', '소재 부족·조치', 'd'], ['prodsum', 'ct_prod.html#stock', '제품 재고', 'd']]],
+    ['ct2', '주문·납기', 'cgorder', [['risk', 'risk.html', '납기 위험'], ['orders', 'ct_orders.html#track', '주문진도(전체)'], ['orders', 'ct_orders.html#cal', '납기 캘린더'],
+      ['cgorder', 'cg_order.html', '도금 주문진도', 'd'], ['ccorder', 'cc_order.html', '컬러 주문진도', 'd']]],
+    ['ct3', '생산계획', 'supply', [['supply', 'supply.html', '월간 가동'], ['plan7', 'ct_plan.html', '생산 일정'], ['weekseq', 'week_seq.html', '작업 순서'],
+      ['plan7', 'ct_plan.html#load', '라인 부하', 'd'], ['plan7', 'ct_plan.html#cmp', '계획 변경', 'd']]],
+    ['ct4', '소재·재고', 'matcal', [['matcal', 'matcal.html', '소재 관제'], ['procure', 'procure.html', '발주'], ['integrated', 'integrated.html', '제품 재고'], ['leadtime', 'leadtime.html', '리드타임 기준'],
+      ['planstock', 'planstock.html', '계획재', 'd']]],
     ['ct5', '실적·보고', 'platact', [['platact', 'plating_actual.html', '도금 실적'], ['coloract', 'color_actual.html', '컬러 실적'], ['prodsum', 'ct_prod.html#ship', '출하'], ['perf', 'ct_perf.html#ops', '계획 대비 실적'], ['report', 'report.html', '주간 보고'],
       ['status', 'status.html', '도금 가동 현황', 'd'], ['colorstat', 'color_status.html', '컬러 가동 현황', 'd'], ['prodsum', 'ct_prod.html#perf', '생산 실적', 'd'], ['prodsum', 'ct_prod.html#run', '가동·휴지', 'd'], ['perf', 'ct_perf.html#cause', '미달 원인', 'd']]],
-    ['ct6', '계획 기준', 'rules', [['rules', 'rules.html', '계획 규칙'], ['rolling', 'rolling.html', '도금 계획 계산'], ['colorcalc', 'color_calc.html', '컬러 계획 계산'], ['analysis', 'analysis.html', '도금 조건 분석'], ['coloranal', 'color_analysis.html', '컬러 조건 분석']]],
+    ['ct6', '계획 기준', 'rules', [['rules', 'rules.html', '계획 규칙'], ['plancalc', 'plan_calc.html', '계획 계산'], ['analysis', 'analysis.html', '조건 분석'], ['rolling', 'rolling.html', '도금 다시 계산', 'd'], ['colorcalc', 'color_calc.html', '컬러 다시 계산', 'd']]],
   ];
   const ADMIN = [['health', 'health.html', '자료 상태'], ['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['docs', 'docs.html', '문서']];
   const ADMN = '관리';
   const ALL = [...MENU.flatMap((m) => m[3]), ...ADMIN];
-  const DEFV = { home: 'day', suju: 'dash', orders: 'status', plan7: 'week', prodsum: 'perf', perf: 'ops', issues: 'now' };   // 주소에 #이 없을 때 화면이 여는 하위 화면
+  const DEFV = { home: 'day', suju: 'dash', orders: 'status', prodsum: 'perf', perf: 'ops', issues: 'now' };   // 주소에 #이 없을 때 화면이 여는 하위 화면
   const NAV = [...ALL.filter((t, k, A) => A.findIndex((u) => u[1].split('#')[0] === t[1].split('#')[0]) === k).map((t) => [t[0], t[1].split('#')[0], t[2]])];
   /* 공개 화면 제한(11/2 사용자 'IT 보안 검토 동안 가동 캘린더·소재 캘린더·재고 추이만 남기고 나머지 숨김').
      되돌리려면 SHOW = null. 목록에 없는 화면을 직접 열면 가동 캘린더로 보내고, 남긴 화면 안의 다른 화면 링크는 글자만 남김 */
@@ -54,7 +54,7 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', stripGo); else stripGo();
   }
   const TKEY = 'cgl-theme', SKEY = 'cgl-scope', NKEY = 'cgl-nav-open';
-  const ONLY = { status: 'G', analysis: 'G', rolling: 'G', platact: 'G', coloract: 'C', planstock: 'C', wo: 'C', colorstat: 'C', coloranal: 'C', colorcalc: 'C' };     // 도금 자료만 있는 화면
+  const ONLY = { status: 'G', rolling: 'G', platact: 'G', coloract: 'C', planstock: 'C', wo: 'C', colorstat: 'C', colorcalc: 'C' };     // 도금 자료만 있는 화면
   const SCN = { all: '전체', G: '도금', C: '컬러' };
   const DOCS = ['conditions', 'guide', 'requests', 'glossary', 'doc'];
   const UI = window.UI = window.UI || {};
@@ -106,6 +106,9 @@
     wo: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01',
     cgwo: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01',
     cgtasks: 'M4 5h16v15H4zM4 9h16M8 3v4M16 3v4M8 13h3M13 13h3M8 16.5h3',
+    plan7: 'M3 5h18v15H3zM3 10h18M9 5v15M15 5v15M5 13h2M11 13h2M17 16h2',
+    weekseq: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01',
+    plancalc: 'M5 3h14v18H5zM8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M8 18h6',
     cgcal: 'M3 5h18v15H3zM3 10h18M9 5v15M15 5v15M5 13h2M11 13h2M17 16h2',
     cccal: 'M3 5h18v15H3zM3 10h18M9 5v15M15 5v15M5 13h2M11 13h2M17 16h2',
     procure: 'M3 4h2.5l2.2 11h10.6L20 7H6.6M9 19.5h.01M17 19.5h.01',
@@ -297,13 +300,15 @@
     integrated: '기준 계획 기준 주별 제품·자가재 재고 추이와 일별 배치 기준. 날짜별 가동은 월간 가동에서',
     status: '도금 1·2CGL 게시 계획(매일 재계획)의 월별 간트·강종 전환·부서별 물량',
     rolling: '판매계획·자가재계획 엑셀로 도금 계획을 새로 계산하거나 실적으로 재계획하고 게시(담당자용). 정기수리를 추가하면 정지 시나리오도 볼 수 있음',
-    analysis: '(계획 담당자용) MES 도금 실적으로 속도·M/C 손실·정지를 재산출해 계획 조건과 비교 — 반영권장 값은 계획 계산에 넣을 후보',
+    analysis: '(계획 담당자용) MES 실적으로 도금 속도·M/C 손실·정지, 컬러 라인·품명 t/hr 를 다시 계산해 계획 조건과 비교',
+    plancalc: '지금 게시 계획이 어떤 숫자로 계산됐는지 — 그룹 월 계획(판매 + 목표 − 기초), 남은 주문, M/C·정기수리, 결품·지연',
+    plan7: '이번 주 라인별 편성·부하 → 생산 캘린더(도금·컬러). 라인 부하·계획 변경은 세부 탭',
+    weekseq: '라인별 주간 작업 순서 편집·점검·확정, 작업지시 제안 보기',
     platact: '도금 2라인 이번 달 진도, 일별·주별 생산, 속도, 제품·강종, 휴지, 강종 전환. 컬러 실적과 같은 양식',
     coloract: '컬러 4라인 이번 달 진도, 일별·주별 생산, 속도, 품명, 휴지. 지난주가 12주 평균과 얼마나 다른지',
     colorstat: '컬러 1~4CCL 4분기 계획의 월별 간트(지난 날 = 실적), 라인 한도 대비 편성, 그룹별 물량, 미편성 물량. 도금 가동 현황과 같은 역할',
     colorcalc: '(계획 담당자용) 판매계획·계획재 운영안·휴지계획 엑셀을 올려 컬러 4분기 일별 계획을 다시 계산하고, 현재 게시 계획과 비교한 뒤 게시. 서버와 같은 계산식(브라우저 안에서 실행), 도금은 기준 계획 유지',
-    coloranal: '(계획 담당자용) MES 컬러 실적으로 라인·품명 t/hr 를 재산출해 계획 조건과 비교 — 라인 속도 차이가 ±5% 초과 시 계획 조건 조정 검토',
-    planstock: '계획재 운영안(TF) 187개 사양의 재고·생산·판매 진도와 월말 재고 예측. \'조치 필요\'부터 보고 담당자별로 확인',
+    planstock: '계획재 운영안(TF) 88개 사양의 재고·생산·판매 진도와 월말 재고 예측. \'조치 필요\'부터 보고 담당자별로 확인',
     cgcal: '라인별 월말까지 생산 캘린더 — 현장 작업지시(확정)·소재 있는 주문(편성)·입고 예정(예상), 수요일 확정·준수율',
     cccal: '컬러 1~4CCL 라인별 월말까지 생산 캘린더 — MES 작업지시 · 컬러 계획 편성 · 소재 현황',
     cgtasks: '도금 수주 업무 달력 — 날짜·오전/오후별 할 일, 누르면 왜·순서·보는 곳·기준·결과물',

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>주간 작업순서</title>
-<meta name="description" content="확정 지시와 소재 매치된 주문을 오늘부터 어떤 순서로 돌릴지 — 초안을 고치고 저장·확정·점검">
+<title>작업 순서</title>
+<meta name="description" content="도금·컬러 라인별 작업 순서 — 주간 순서를 고쳐 저장·확정·점검, 작업지시 제안과 근거">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/theme.css?v=2611102108">
 <style>
@@ -137,10 +137,121 @@ html body #ws-main.cmp table.ws tr.ch td, html body #ws-main.cmp table.ws tr.ev 
 .ws-shb button { min-height: 46px; font: inherit; font-size: 15px; font-weight: 700; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--ink); cursor: pointer; white-space: nowrap; padding: 0 6px; }
 .ws-shb button:disabled { opacity: .4; cursor: default; } .ws-shb button.x { color: var(--bad); } .ws-shb button.on { background: var(--tint-2); border-color: var(--brand-2); color: var(--brand-2); }
 .ws-shb .cl { width: 100%; margin-top: 14px; background: var(--sub); }
+/* ── 작업지시 제안(옛 도금·컬러 작업지시 순서 화면) ── */
+.wo-how { border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); padding: 10px 14px; margin: 0 0 12px; }
+.wo-how summary { cursor: pointer; font-weight: 700; }
+.wo-how ol { margin: 8px 0 4px 20px; padding: 0; line-height: 1.7; }
+.wo-how p { margin: 6px 0 0; color: var(--ink-2); font-size: 13.5px; }
+.wo-cmp { border-left: 4px solid var(--good); background: var(--good-bg); padding: 9px 13px; border-radius: 6px; margin: 12px 0 0; }
+.wo-cmp.bad { border-left-color: var(--warn); background: var(--warn-bg); }
+table.t.wo { font-size: 14.5px; table-layout: fixed; width: 100%; min-width: 1080px; }
+table.t.wo td.wr, table.t.wo td.tm, table.t.wo td.num { white-space: normal !important; overflow: visible; } table.t.wo td.wr { overflow-wrap: anywhere; } table.t.wo th { white-space: nowrap; }
+table.t.wo td { overflow: hidden; text-overflow: ellipsis; }
+table.t.wo th { padding: 10px 10px; font-size: 14px; }
+table.t.wo td { padding: 9px 10px; vertical-align: top !important; line-height: 1.45; }
+table.t.wo td.l, table.t.wo th.l { text-align: left !important; }
+table.t.wo td.c { text-align: center !important; }
+table.t.wo td.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.t.wo td.tm { font-variant-numeric: tabular-nums; text-align: left !important; }
+table.t.wo td.desc, table.t.wo tr.ev td { white-space: normal !important; overflow: visible; }
+table.t.wo tr.day td { white-space: normal !important; }
+table.wo .why { font-size: 13.5px; color: var(--brand-2); margin-top: 3px; text-align: left; }
+table.wo tr.hasdn td { background: color-mix(in srgb, var(--warn-bg) 35%, transparent); }
+table.wo .dnb { display: inline-block; background: var(--warn-bg); color: var(--warn); font-weight: 800; border-radius: 6px; padding: 2px 8px; }
+table.t.wo tr.day td { background: var(--sub); text-align: left !important; border-top: 2px solid var(--line); padding: 10px 12px 14px; }
+.dayh { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; position: sticky; left: 12px; }
+.dayh b { font-size: 16px; } .dayh span { color: var(--ink-2); font-size: 14px; } .dayh em { font-style: normal; color: var(--warn); font-weight: 700; }
+.strip { position: relative; height: 22px; margin: 8px 0 26px; background: var(--grid); border-radius: 4px; }
+.strip i { position: absolute; top: 0; bottom: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: inset -1px 0 0 var(--surface); }
+.strip i b { font-size: 13.5px; font-weight: 700; color: #fff; white-space: nowrap; }
+.strip i.sc { background: repeating-linear-gradient(135deg, var(--surface-2) 0 5px, var(--grid) 5px 10px); } .strip i.sc b { color: var(--ink-3); }
+.strip-lg { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13.5px; color: var(--ink-2); margin: 0 0 8px; }
+.strip-lg i.sc { background: repeating-linear-gradient(135deg, var(--surface-2) 0 3px, var(--line) 3px 6px); }
+.strip-lg i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.strip span { white-space: nowrap; position: absolute; top: calc(100% + 3px); font-size: 13.5px; color: var(--ink-3); transform: translateX(-50%); }
+.strip .h0 { left: 0; transform: none; } .strip .h6 { left: 25%; } .strip .h12 { left: 50%; } .strip .h18 { left: 75%; } .strip .h24 { left: 100%; transform: translateX(-100%); }
+i.sr { background: var(--brand-2); } i.sd { background: var(--warn); } i.sp { background: var(--steel-3); } i.sw { background: var(--bad); }   /* 11/11: 주간 순서 표의 .sp(사양 칸)와 겹쳐 i 로 한정 */
+.hint.lg i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin: 0 4px 0 10px; vertical-align: middle; }
+table.t.wo tr.ev td { text-align: left !important; font-size: 14px; }
+table.wo tr.ev.plan td { background: var(--tint-2); }
+table.wo tr.ev.wait td { background: var(--bad-bg); }
+.wo-ds { font-weight: 800; color: var(--warn); margin-bottom: 3px; }
+.wo-dl { margin: 0 0 4px; line-height: 1.45; } .wo-dl b { font-weight: 700; } .wo-dm { color: var(--warn); font-weight: 800; } .wo-d0 { color: var(--ink-3); font-weight: 700; }
+table.t.cond { table-layout: auto; min-width: 0; font-size: 14.5px; margin: 6px 0 12px; }
+table.t.cond td { white-space: normal !important; vertical-align: top !important; padding: 8px 10px; }
+table.t.cond td.l, table.t.cond th.l { text-align: left !important; }
+.wo-how h3 { font-size: 15px; margin: 14px 0 2px; }
+.gt { display: inline-block; border-radius: 4px; padding: 0 6px; font-size: 13.5px; font-weight: 700; margin-left: 4px; }
+.gt1 { background: var(--gt-g); color: var(--gc-g); } .gt2 { background: var(--gt-c); color: var(--gc-c); } .gt3 { background: var(--grid); color: var(--ink-2); }
+.bk { font-size: 13.5px; color: var(--ink-3); }
+.rdy { color: var(--warn); font-weight: 700; }
+details.fx summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+table.t.cond.dtab td.num { text-align: right !important; font-variant-numeric: tabular-nums; white-space: nowrap !important; }
+table.t.cond.dtab th { white-space: nowrap; }
+table.t.cond.dtab b.up { color: var(--warn); } table.t.cond.dtab b.dn { color: var(--brand-2); }
+table.t.cond.dtab tr.tot-r td { background: var(--sub); border-top: 2px solid var(--line); }
+ul.llog { margin: 6px 0 0 18px; padding: 0; font-size: 13.5px; line-height: 1.6; } ul.llog .rp { color: var(--warn); font-weight: 700; }
+.miss { border-left: 4px solid var(--warn); background: var(--warn-bg); padding: 8px 12px; border-radius: 6px; margin: 8px 0 12px; }
+.pgtab { margin: 0 0 12px; } .pgtab button { font-size: 15px; font-weight: 700; padding: 8px 18px; }
+.lg-day { margin: 14px 0 6px; font-size: 13.5px; color: var(--ink-2, inherit); }
+table.t.cond.lgt td:first-child, table.t.cond.lgt th:first-child { white-space: nowrap !important; width: 1%; }
+table.t.cond.lgt td.num { text-align: right !important; font-variant-numeric: tabular-nums; white-space: nowrap !important; }
+.lgs { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.lgs.ok { background: color-mix(in srgb, var(--brand-2) 16%, transparent); color: var(--brand-2); }
+.lgs.no { background: var(--sub); color: var(--muted, #667); }
+.lgs.mid { background: var(--warn-bg); color: var(--warn); }
+table.t.cond:not(.dtab):not(.lgt):not(.wbx) td:first-child, table.t.cond:not(.dtab):not(.lgt):not(.wbx) td:last-child { white-space: nowrap !important; }
+table.wo-all td, table.wo-all th { padding: 11px 12px; } table.wo-all tr.ln { cursor: pointer; } table.wo-all tr.ln:hover td, table.wo-all tr.ln.on td { background: color-mix(in srgb, var(--brand-2) 8%, transparent); }
+.wo-st { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 13.5px; font-weight: 700; } .wo-st.on { background: color-mix(in srgb, var(--good) 16%, transparent); color: var(--good); } .wo-st.off { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink-2); }
+b.wo-g { color: var(--good); } .wo-b { color: var(--bad); } .wo-w { color: var(--warn); }
+tr.day { cursor: pointer; } tr.day .wo-ch { display: inline-block; font-style: normal; color: var(--brand-2); margin-right: 6px; transition: transform .15s; } tr.day[aria-expanded="true"] .wo-ch { transform: rotate(90deg); }
+table.t.wo.cgwo td.chg { white-space: normal !important; } table.t.wo.cgwo td.chg div { white-space: normal; font-size: 14px; }
+table.t.wo.cgwo .sp1 { white-space: nowrap; } table.t.wo.cgwo .sp2 { font-size: 13.5px; line-height: 1.4; } table.t.wo.cgwo .sp2 b { font-weight: 700; color: var(--ink-2); margin-right: 3px; }
+table.t.wo.cgwo .wo-dl .bk { font-size: 13.5px; }
+table.t.wo.cgwo td { vertical-align: top; }
+.wo-no { font-size: 18px; font-weight: 800; line-height: 1.1; margin-bottom: 2px; }
+.wo-con { white-space: nowrap; letter-spacing: -0.2px; }
+.wo-sz { font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.wo-why { font-weight: 700; margin-bottom: 2px; } .wo-why.bad { color: var(--warn); }
+.wo-runs { background: var(--tint-2); border-radius: 8px; padding: 10px 14px; margin: 0 0 12px; font-size: 14px; line-height: 1.6; } .wo-runs ol { margin: 4px 0 0 20px; padding: 0; } .wo-runs summary { cursor: pointer; } table.t.wo td .bk.nw { white-space: nowrap; }
+.wo-skip { font-size: 13.5px; color: var(--brand-2); margin-bottom: 4px; }
+.wo-g { font-size: 13.5px; line-height: 1.5; } .wo-g b { font-weight: 700; margin-right: 2px; }
+.wo-g.ok { color: var(--ink-2); } .wo-g.ok::first-letter { color: var(--ok); } .wo-g.no { color: var(--bad); font-weight: 600; } .wo-g.na { color: var(--ink-3); }
+.wo-dum { color: var(--warn); margin-bottom: 2px; } .wo-dum b { font-weight: 800; }
+.cgbs { margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; }
+.cgb { background: var(--tint-2); border-radius: 6px; padding: 3px 10px; } .cga { color: var(--ink-3); }
+.wb-g { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px 20px; }
+.wb h3 { font-size: 15px; margin: 4px 0 6px; } .wb-ck { margin: 0 0 6px; line-height: 1.5; }
+table.t.cond.wb-t { margin: 4px 0; } table.t.cond.wb-t td.num { text-align: right !important; font-variant-numeric: tabular-nums; }
+.wb-cats { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; font-size: 14px; }
+.wo-gr { display: inline-block; border-radius: 6px; padding: 0 8px; margin-left: 6px; font-size: 14px; font-weight: 800; background: var(--tint-2); color: var(--brand-2); white-space: nowrap; }
+  /* 판매그룹별 막대(10/29) */
+  .gbl{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px;margin:14px 0 8px}
+  .gbl span{display:inline-flex;align-items:center;gap:6px}
+  .gbl i{display:inline-block;width:14px;height:10px;border-radius:2px}
+  .gbl i.a,.gbr i.a{background:var(--vz-1)} .gbl i.b,.gbr i.b{background:var(--vz-2)}
+  .gbs{display:grid;gap:6px;max-width:900px}
+  .gb{display:grid;grid-template-columns:64px minmax(0,1fr) 180px;align-items:center;gap:10px}
+  .gbn{font-weight:600;font-size:13.5px}
+  .gbr{display:flex;gap:2px;height:14px;background:var(--vz-track);border-radius:4px;overflow:hidden}
+  .gbr i{display:block;height:100%}
+  .gbv{font-size:13.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .gbt .gbr{height:20px} .gbt{padding-bottom:6px;border-bottom:1px solid var(--line,#e5e7eb)}
+  @media (max-width:640px){.gb{grid-template-columns:56px minmax(0,1fr)}.gbv{grid-column:2}}
+/* 11/11 작업 순서 통합 — 작업지시 제안(도금 cg_wo.js · 컬러 wo.js, 아래 css 는 두 화면 것) · 오늘 순서 · 기준·사양 */
+.ws-md .seg button { font-size: 14.5px; }
+.ws-k .td { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); font-size: 13.5px; line-height: 1.6; }
+.ws-k .td > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); } .ws-k .td > div b { color: var(--ink); font-variant-numeric: tabular-nums; margin-right: 4px; } .ws-k .td em { font-style: normal; font-weight: 700; color: var(--ink-2); }
+.ws-k .ok { color: var(--good); font-weight: 700; }
+#ws-fold { margin-top: 18px; } #ws-fold h3 { font-size: 16px; margin: 16px 0 8px; } #ws-fold h4 { font-size: 15px; margin: 12px 0 6px; } #ws-fold h4 small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 6px; }
+#ws-fold .card { box-shadow: none; border: 0; padding: 0; margin: 0 0 12px; background: none; }
+.ws-ul { margin: 6px 0 8px 18px; padding: 0; font-size: 14px; line-height: 1.7; }
+table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px !important; white-space: nowrap; }
+.wo-rl { margin: 4px 0 8px; }
 </style>
 </head>
 <body>
-<header id="shell" data-page="weekseq" data-crumb="생산계획" data-title="주간 작업순서" data-sub="오늘부터 돌릴 작업 순서 — 초안을 고쳐 저장·확정·점검"></header>
+<header id="shell" data-page="weekseq" data-crumb="생산계획" data-title="작업 순서" data-sub="라인별 오늘부터 돌릴 순서 — 고쳐서 저장·확정·점검 · 작업지시 제안과 근거"></header>
 <main class="wrap">
   <div class="docmeta" id="ws-meta"></div>
   <section class="card lock" id="ws-lock">
@@ -151,9 +262,11 @@ html body #ws-main.cmp table.ws tr.ch td, html body #ws-main.cmp table.ws tr.ev 
   <div id="ws-main" hidden>
     <div class="ws-bar">
       <div class="seg" id="ws-plant"><button type="button" data-p="cg">도금</button><button type="button" data-p="cc">컬러</button></div>
+      <div class="seg ws-md" id="ws-mode"><button type="button" data-m="ed">주간 순서</button><button type="button" data-m="wo" title="MES 작업지시 대상 코일을 어떤 순서로 돌릴지 제안 — 선정 이유·예상 더미(휴지)·MES 순서 대비">작업지시 제안</button></div>
       <span class="ws-wk" id="ws-wk"></span>
       <span class="ws-ver" id="ws-ver"></span>
     </div>
+    <div class="ws-kpis" id="ws-kpis"></div>
     <div class="ws-act">
       <input id="ws-who" placeholder="이름" maxlength="40" aria-label="이름">
       <input id="ws-memo" placeholder="메모(선택)" maxlength="200" aria-label="메모">
@@ -165,17 +278,19 @@ html body #ws-main.cmp table.ws tr.ch td, html body #ws-main.cmp table.ws tr.ev 
       <span class="ws-res" id="ws-res"></span>
     </div>
     <div id="ws-miss"></div>
-    <div class="ws-kpis" id="ws-kpis"></div>
     <div id="ws-ck"></div>
     <div class="ws-grid">
       <section class="card ws-side" id="ws-pool"></section>
       <section class="card" data-noexport id="ws-tblc"><table class="ws" id="ws-tbl"></table></section>
     </div>
+    <div id="wo-host" hidden><div class="docmeta" id="wo-meta"></div><div id="wo-main"><section class="card lock"><div><h2>불러오는 중…</h2><p class="hint" id="wo-msg"></p></div></section></div></div>
+    <div id="wc-host" hidden><div class="docmeta" id="wc-meta"></div><div id="wc-main"><section class="card lock"><div><h2>불러오는 중…</h2><p class="hint" id="wc-msg"></p></div></section></div></div>
+    <details class="fold" id="ws-fold"><summary>기준·사양 <small>전환 휴지·더미 기준 · 점검 규칙 · 시간 계산 · 작업지시 편성 조건</small></summary><div id="ws-spec"></div><div id="ws-rules"></div></details>
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>대상: 컬러 = 작업지시 편성 대상(소재 매치)·확정 대기열 · 도금 = 지시된 코일(생산 전) + 소재 들어온 작업 · 시간 = 기존 속도(t/h) · 휴지 = 전환 기준표(1년 실적)·휴지계획 · 저장 = 공유 저장소(암호화, 버전 이력)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611102108"></script>
 <script src="engine/crypto.js?v=2611102108"></script>
-<script src="week_seq.js?v=2611102108"></script>
+<script src="week_seq.js?v=2611111200"></script>
 </body>
 </html>

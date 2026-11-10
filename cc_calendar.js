@@ -19,19 +19,20 @@
 
   const KD = [['작업대기', '작업대기량', 'kw', '확정 지시 — 생산우선순위 순번대로, 계약별 총 작업시간'], ['지시대기', '지시대기', 'ky', '미확정 지시 — 부원료 최종 입고일 뒤, 작업지시 순서대로'],
     ['부자재 입고대기', '부자재 입고대기', 'kb', '도료 입고 일정 없음 — 지시대기 마지막 뒤'], ['계획편성', '계획편성', 'kg', '작업대기·지시대기 뒤 남는 시간 = 통합 컬러 계획']];
-  const H = (v) => `${n1(v)}<small>h</small>`;
-  function kpis() {
-    const S = O.summary, tk = (k, j) => sum(LINES, (l) => ((S[l].kind || {})[k] || [0, 0])[j]);
-    const k = (l, v, b, tone) => `<div class="kpi${tone ? ' tone-' + tone : ''}"><div class="l">${l}</div><div class="v">${v}</div><div class="b">${b}</div></div>`;
-    const wu = LINES.filter((l) => S[l].woUntil).map((l) => `${l.slice(0, 1)}라인 ~${md(S[l].woUntil)}`).join(' · ');
-    const sh = LINES.filter((l) => S[l].woShortH >= 0.5).map((l) => `${l.slice(0, 1)}라인 ${n1(S[l].woShortH)}h`).join(' · ');
-    return '<div class="kpis" style="margin:0 0 14px">'
-      + k('작업대기량(확정 지시)', `${n0(tk('작업대기', 0))}<small>t</small>`, `${n1(tk('작업대기', 1))}h · ${wu || '-'}`, 'brand')
-      + k('작업대기 24시간 부족', sh ? `${n1(sum(LINES, (l) => S[l].woShortH || 0))}<small>h</small>` : '없음', sh || '작업대기로 하루 24시간 채움', sh ? 'bad' : 'good')
-      + k('지시대기(미확정 지시)', `${n0(tk('지시대기', 0))}<small>t</small>`, `${n1(tk('지시대기', 1))}h · 부원료 입고 뒤 확정`, 'warn')
-      + k('부자재 입고대기', `${n0(tk('부자재 입고대기', 0))}<small>t</small>`, `${n1(tk('부자재 입고대기', 1))}h · 도료 일정 없음`, 'brand')
-      + k('계획편성', `${n0(tk('계획편성', 0))}<small>t</small>`, `${n1(tk('계획편성', 1))}h · 통합 컬러 계획`, 'good')
-      + '</div>';
+  /* 결론(11/11 생산 화면 통합 — 생산 일정 화면 맨 위 PS.sum): 이번 주(오늘부터 7일) 라인별 생산·가동 시간·24시간 부족 + 월말까지 편성 구성 */
+  function summary() {
+    const S = O.summary, d7 = O.days.slice(0, 7), C = (l) => d7.map((d) => O.lines[l][O.days.indexOf(d)]);
+    const tk = (k, j) => sum(LINES, (l) => ((S[l].kind || {})[k] || [0, 0])[j]);
+    const rows = LINES.map((l) => { const X = C(l), t = sum(X, (c) => c.cap || 0), uh = sum(X, (c) => c.usedH || 0), ch = sum(X, (c) => (c.stop ? 0 : c.capH || 0)), ws = sum(X, (c) => c.woShort || 0), st = X.filter((c) => c.stop).length;
+      return `<tr><td class="l"><b>${l}</b></td><td class="r"><b>${n0(t)}</b>t</td><td class="r">${n0(uh)} / ${n0(ch)}h</td><td class="r">${ws >= 0.5 ? `<b class="bad">${n1(ws)}h</b>` : '<span class="sub">0</span>'}</td><td class="r">${st ? `${st}일` : '<span class="sub">-</span>'}</td><td class="r">${S[l].woUntil ? md(S[l].woUntil) : '<span class="sub">없음</span>'}</td></tr>`; }).join('');
+    const short = sum(LINES, (l) => sum(C(l), (c) => c.woShort || 0));
+    const chip = (k, cl) => `<span class="ps-c" title="${esc(KD.find((x) => x[0] === k)[3])}"><i class="${cl}"></i>${KD.find((x) => x[0] === k)[1]} <b>${n0(tk(k, 0))}t</b></span>`;
+    return `<div class="ps-st">${short >= 0.5 ? `<span class="ct-b bad">작업대기 부족 ${n1(short)}h</span>` : '<span class="ct-b ok">작업대기로 24시간 채움</span>'}<span class="ps-k">~${END()} 편성</span>${chip('작업대기', 'kw')}${chip('지시대기', 'ky')}${chip('부자재 입고대기', 'kb')}${chip('계획편성', 'kg')}</div>`
+      + `<div class="ct-wrap"><table class="ct-t ps-t"><thead><tr><th class="l">라인</th><th class="r">생산</th><th class="r" title="편성 시간 / 가용 시간(계획 휴지 뺀 24시간) — 차이 = 편성 없는 빈 시간">가동 시간</th><th class="r" title="확정 지시(작업대기)로 하루 24시간을 못 채운 시간">작업대기 부족</th><th class="r">정지</th><th class="r" title="확정 지시(작업대기)가 끝나는 날">작업대기 끝</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+  /* 기준·사양(생산 일정 맨 아래 접기) */
+  function spec() {
+    return `<h4>컬러 캘린더</h4><ul class="ps-ul"><li>하루 = 07시 ~ 다음날 07시 · 가용 = 24시간 − 계획 휴지(통합 컬러 계획 휴지 달력)</li>${KD.map(([, nm, cl, t]) => `<li><i class="ps-i ${cl}"></i><b>${nm}</b> — ${esc(t)}</li>`).join('')}<li><b>작업대기 부족</b> = 확정 지시로 하루 24시간을 못 채운 시간(빨강) · <b>빈 시간</b> = 편성 없는 시간</li><li>자료 ${esc(O.asOf)} · 작업지시 시각 ${esc(String(O.woNow || '').slice(0, 16).replace('T', ' '))} · 계산 ${esc(O.built || '')}</li></ul>`;
   }
 
   function cell(c, ln) {
@@ -77,7 +78,7 @@
   }
 
   function openDay(ln, d) {
-    const c = O.lines[ln][O.days.indexOf(d)], dlg = $('cc-dlg');
+    const c = O.lines[ln][O.days.indexOf(d)], dlg = $('kc-dlg');
     let body = c.stop ? '<p class="msg">라인 정지(휴지·수리)</p>' : '';
     for (const [k, nm, cl] of KD) {
       const I = c.items.filter((i) => i.kind === k);
@@ -91,28 +92,30 @@
     }
     if (!body) body = '<p class="msg">배정 없음</p>';
     dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>가용 <b>${n1(c.capH)}h</b> · 편성 ${n1(c.usedH)}h${c.woShort > 0 ? ` · <b class="bad">작업대기 부족 ${n1(c.woShort)}h</b>` : c.short > 0 ? ` · <b class="bad">빈 시간 ${n1(c.short)}h</b>` : ''}</span>`
-      + `<span class="x"><button type="button" id="cc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
-    $('cc-x').onclick = () => dlg.close();
+      + `<span class="x"><button type="button" id="kc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
+    $('kc-x').onclick = () => dlg.close();
     if (!dlg.open) dlg.showModal();
   }
 
   function render() {
     const stale = Math.round((Date.now() - dt(O.asOf).getTime()) / 864e5);
-    $('cc-main').innerHTML = (stale >= 2 ? `<div class="card" style="background:var(--warn-bg);color:var(--warn);font-weight:700">자료 기준 ${md(O.asOf)} — ${stale}일 전 자료</div>` : '')
-      + kpis() + calCard() + matCard()
-      + `<p class="msg" style="margin:4px 4px 0">자료 ${esc(O.asOf)} · 작업지시 시각 ${esc(String(O.woNow || '').slice(0, 16).replace('T', ' '))} · 계산 ${esc(O.built || '')}</p>`;
-    $('cc-main').querySelectorAll('button.cell').forEach((b) => b.onclick = () => openDay(b.dataset.ln, b.dataset.d));
-    if (window.UI) UI.reveal($('cc-main'));
+    $('kc-main').innerHTML = (stale >= 2 ? `<div class="card" style="background:var(--warn-bg);color:var(--warn);font-weight:700">자료 기준 ${md(O.asOf)} — ${stale}일 전 자료</div>` : '')
+      + calCard() + matCard();
+    $('kc-main').querySelectorAll('button.cell').forEach((b) => b.onclick = () => openDay(b.dataset.ln, b.dataset.d));
+    if (window.PS) PS.sum('C', summary(), spec(), O.asOf);
+    if (window.UI) UI.reveal($('kc-main'));
   }
-  $('cc-dlg').addEventListener('click', (e) => { if (e.target === $('cc-dlg')) $('cc-dlg').close(); });
+  $('kc-dlg').addEventListener('click', (e) => { if (e.target === $('kc-dlg')) $('kc-dlg').close(); });
+  /* 생산 일정 화면(ct_plan.html)에 붙어 있음 — 암호는 화면 공통 잠금(CT.boot)이 받고, 여기서는 저장된 암호로만 엶(ensure) */
   const envReady = GP.latest('cc_calendar.enc.json');
+  let busy = false;
   async function unlock(pw) {
+    if (O || busy || !pw) return; busy = true;
     const env = await envReady;
-    if (!env) { $('cc-msg').textContent = '게시된 자료가 없습니다.'; return; }
-    try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
-    catch (e) { $('cc-form').hidden = false; $('cc-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
-    render();
+    if (!env) { $('kc-msg').textContent = '게시된 자료가 없습니다.'; busy = false; return; }
+    try { O = await GP.decryptJSON(env, pw); }
+    catch (e) { $('kc-msg').textContent = '⚠ 암호가 맞지 않습니다'; busy = false; return; }
+    busy = false; render();
   }
-  $('cc-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('cc-pw').value); });
-  envReady.then(() => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (s) unlock(s); else $('cc-form').hidden = false; });
+  window.CCCAL = { ensure: () => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (O) render(); else unlock(s); } };
 })();

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>컬러 계획 계산</title>
+<title>컬러 다시 계산</title>
 <meta name="description" content="판매계획·계획재 운영안·휴지계획으로 컬러 1~4CCL 4분기 일별 계획을 다시 계산하고 게시(서버와 같은 계산)">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/theme.css?v=2611102108">
@@ -52,8 +52,9 @@ td.up1 { color: var(--good); font-weight: 700; } td.dn1 { color: var(--bad); fon
 </style>
 </head>
 <body>
-<header id="shell" data-page="colorcalc" data-crumb="계획 계산" data-title="컬러 계획 계산" data-sub="판매계획·계획재 운영안·휴지계획으로 컬러 1~4CCL 4분기 일별 계획을 다시 계산 — 서버와 같은 계산식, 도금은 확정 계획 유지"></header>
+<header id="shell" data-page="colorcalc" data-crumb="계획 기준" data-title="컬러 다시 계산" data-sub="판매계획·운영안·휴지계획으로 1~4CCL 일정을 이 브라우저에서 다시 계산(담당자 도구) — 지금 계획 숫자는 계획 계산"></header>
 <main class="wrap">
+  <p class="small" style="margin:12px 0 0"><a href="plan_calc.html">← 계획 계산</a>(지금 게시 계획이 어떻게 계산됐는지)</p>
   <section class="card lock" id="c-lock">
     <div class="ic">🔒</div>
     <h2 id="c-lock-t">기준 자료 불러오는 중…</h2>

@@ -13,12 +13,9 @@
   const tm = (s, d) => (!s ? '' : (d && s.slice(0, 5) === d.slice(5) ? s.slice(6) : `${+s.slice(0, 2)}/${+s.slice(3, 5)} ${s.slice(6)}`));
   const hm = (m) => { m = Math.round(m); return m >= 60 ? `${Math.floor(m / 60)}시간\u00a0${m % 60}분` : `${m}분`; };   // 줄바꿈 때 '분'만 떨어지지 않게
   let O = null, line = null;
-  let view = 'seq';                                               // 탭: 작업지시 순서 | 작업지시 규칙(사용자 10/21) — 다시 바꿀 때까지 유지
-  try { view = location.hash === '#rules' ? 'rules' : (localStorage.getItem('cgwo-view') || 'seq'); } catch (e) { /* 기본 */ }
-  const tabs = () => `<div class="seg pgtab" id="wo-view"><button type="button" data-v="seq" aria-pressed="${view === 'seq'}">작업지시 순서</button><button type="button" data-v="rules" aria-pressed="${view === 'rules'}">작업지시 규칙</button></div>`;
-  function bindTabs() {
-    $('wo-view').querySelectorAll('button').forEach((b) => b.onclick = () => { view = b.dataset.v; try { localStorage.setItem('cgwo-view', view); history.replaceState(null, '', view === 'rules' ? '#rules' : location.pathname); } catch (e) { /* 무시 */ } render(); });
-  }
+  const view = 'seq';                                          // 11/11: 규칙 탭 → 작업 순서 화면 맨 아래 '기준·사양'(rulesInto)
+  const tabs = () => '';
+  const bindTabs = () => {};
 
   // 표 열(10/28 사용자 '다시 재구성': 어떤 조건으로 골랐나 · 몇 톤 몇 분 · 더미 얼마) — 순서·시간 | 계약 | 사양 | 생산 예상 | 선정 조건 | 예상 더미
   const IND = { A: '508', B: '610', C: '305' };
@@ -178,15 +175,15 @@
   }
 
 
-  function renderRules() {
+  let rLine = null;
+  function rulesInto(el) {                                      // 기준·사양(작업 순서 화면 맨 아래): 라인 고르기 + 편성 조건 · 기준표 · 기준 변경 이력
+    if (!el || !O) return;
     const L = Object.keys(O.lines);
-    line = line && L.includes(line) ? line : L[0];
-    $('wo-meta').textContent = `${UI.fmtDateTime(O.now)} 기준 · 계산 ${UI.fmtDateTime(O.built || '')}`;
-    $('wo-main').innerHTML = tabs() + `<section class="card"><div class="seg" id="wo-lines">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l}</button>`).join('')}</div></section>` + conditions(line);
-    $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; renderRules(); });
-    bindTabs();
-    if (window.UI) UI.reveal($('wo-main'));
+    rLine = rLine && L.includes(rLine) ? rLine : (line && L.includes(line) ? line : L[0]);
+    el.innerHTML = `<div class="seg wo-rl">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === rLine}">${l}</button>`).join('')}</div>` + conditions(rLine);
+    el.querySelectorAll('.wo-rl button').forEach((b) => b.onclick = () => { rLine = b.dataset.l; rulesInto(el); });
   }
+
   /* 판매그룹별(10/29 사용자 '그룹별로 수치 · 합계로 그래프'): 돌릴 대상 코일을 그룹마다 날짜별 톤(진한 칸 = 첫날, 옅은 칸 = 그 뒤) */
   function grpBars(v) {
     const its = v.items || [];
@@ -201,7 +198,6 @@
         + `<span class="gbr"><i class="a" style="width:${P(x.a)}"></i><i class="b" style="width:${P(x.b)}"></i></span><span class="gbv"><b>${n0(x.a + x.b)}</b>t · ${x.n}코일 <small class="bk">${x.a + x.b ? Math.round(100 * (x.a + x.b) / (R[0][1].a + R[0][1].b)) : 0}%</small></span></div>`).join('') + '</div>';
   }
   function render() {
-    if (view === 'rules') { renderRules(); return; }
     const L = Object.keys(O.lines);
     line = line && L.includes(line) ? line : L[0];
     const v = O.lines[line];
@@ -233,11 +229,13 @@
   async function unlock(pw) {
     const env = await envReady;
     if (!env) { $('wo-msg').textContent = '게시된 제안이 없습니다.'; return; }
-    try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
-    catch (e) { $('wo-form').hidden = false; $('wo-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
+    try { O = await GP.decryptJSON(env, pw); }
+    catch (e) { $('wo-msg').textContent = '⚠ 암호가 맞지 않습니다'; return; }
     if (!O.lines || !Object.values(O.lines).every((v) => !v.n || v.events)) { $('wo-msg').textContent = '예전 형식의 제안입니다 — 다시 계산 후 게시가 필요합니다.'; return; }
     render();
   }
-  $('wo-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('wo-pw').value); });
-  envReady.then(() => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (s) unlock(s); else $('wo-form').hidden = false; });
+  /* 작업 순서 화면(week_seq.html)이 필요할 때 불러 붙임 — 암호는 그 화면이 이미 받아 저장해 둔 것 */
+  let pend = null;
+  const ready = envReady.then(() => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } return unlock(s || ''); }).then(() => { if (pend) rulesInto(pend); });
+  window.WO_CG = { rules: (el) => { pend = el; if (O) rulesInto(el); return ready; } };
 })();

@@ -51,6 +51,10 @@ table.t td.bad { color: var(--bad); font-weight: 700; } .ps-late { margin: 0 0 1
       <div class="skel" id="ca-skel" hidden><i style="width:40%"></i><i></i><i style="width:80%"></i></div>
     </section>
   </div>
+  <details class="fold" id="ps-ref" style="margin-top:16px" hidden><summary>기준·사양 <small>계산 기준 · 계획재 사양표(TF 운영안) · 소재 리드타임</small></summary>
+    <div id="ps-basis-box"></div>
+    <div data-ref="spec"></div>
+    <div data-ref="lt"></div></details>
 </main>
 <footer class="foot"><div class="wrap"><span>원자료: 계획재 운영안(TF, 목표·예측·생산계획), MES 컬러 생산·출하·월말 재고</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="ca-tip" role="tooltip"></div>
@@ -58,5 +62,6 @@ table.t td.bad { color: var(--bad); font-weight: 700; } .ps-late { margin: 0 0 1
 <script src="engine/crypto.js?v=2611102108"></script>
 <script src="ui/cal.js?v=2611102108"></script>
 <script src="planstock.js?v=2611102108"></script>
+<script src="matref.js?v=2611102108"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>도금 계획 계산</title>
+<title>도금 다시 계산</title>
 <meta name="description" content="도금 1·2CGL 분기 일별 가동계획 — 브라우저 안에서만 계산">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="style.css?v=2611102108">
@@ -14,10 +14,11 @@
 </style>
 </head>
 <body>
-<header id="shell" data-page="rolling" data-crumb="도금" data-title="도금 계획 계산" data-sub="판매계획·자가재계획·배선일정 → 도금 1·2CGL 일별 가동계획 (M/C 최소 → 선생산 최소 → 평준화)"></header>
+<header id="shell" data-page="rolling" data-crumb="계획 기준" data-title="도금 다시 계산" data-sub="판매계획·배선일정 엑셀로 1·2CGL 일정을 이 브라우저에서 다시 계산(담당자 도구) — 지금 계획 숫자는 계획 계산"></header>
 <div class="wrap pagebar"><span class="privacy">🔒 파일은 서버로 전송되지 않습니다. 모든 계산은 이 브라우저 안에서만 합니다.</span></div>
 
 <main class="wrap">
+  <p class="small" style="margin:12px 0 0"><a href="plan_calc.html">← 계획 계산</a>(지금 게시 계획이 어떻게 계산됐는지)</p>
   <section class="card" id="sec-files">
     <h2><span class="num">1</span>기준 자료 <small>파일을 올리지 않으면 아래 기준 · 분기 처음(10/1)부터 다시 짜 보기용 — 매일 실적·주문 반영 계획은 <a href="status.html">도금 가동 현황</a></small></h2>
     <div class="cc-steps" id="g-src"><p class="muted">기준 자료 불러오는 중…</p></div>

@@ -13,8 +13,12 @@
     [/STS|FSS/, '스테인리스 강판'], [/A3003/, '알루미늄 판(3003 합금)'], [/IZM/, 'IS 18513'], [/IS-14246/, 'IS 14246 연속 도장 아연도금 강판'],
   ];
   const GR = { CQ: '일반용', DQ: '가공용', DDQ: '심가공용', EDDQ: '초심가공용', XDDQ: '극심가공용', LFQ: '성형용' };
-  function grade(c) {   // [한글 등급, 코드표 등급]
+  const OVR = {   // 코드표 ORD_SPEC_STD 속성1(품질 등급)이 규격 체계와 다른 코드 — 코드표를 따름
+    'EN-DX51D AL': ['DQ', '코드표: ALCOSTA EN-DX51D DQ급'], 'EN-DX52D W04': ['CQ', '코드표 등급 CQ'], 'KS-SGMCC(SGM1CC)': ['DQ', '현대자동차 특별규격(극저) · 코드표 등급 DQ'],
+  };
+  function grade(c) {   // [한글 등급, 마우스 올림 설명]
     let m;
+    if (OVR[c]) return [GR[OVR[c][0]], OVR[c][1]];
     if ((m = c.match(/S(\d{3})GD/))) return [`구조용(${m[1]}MPa)`, '항복강도 ' + m[1] + 'MPa 이상'];
     if ((m = c.match(/HX(\d{3})YD/))) return [`고장력(${m[1]}MPa)`, '고장력강 · 항복강도 ' + m[1] + 'MPa 이상'];
     if ((m = c.match(/DX5([1-6])D/))) return [GR[{ 1: 'CQ', 2: 'DQ', 3: 'DDQ', 4: 'EDDQ', 6: 'XDDQ' }[m[1]]], ''];
@@ -26,7 +30,7 @@
     if ((m = c.match(/SA1([CDE])/))) return [GR[{ C: 'CQ', D: 'DQ', E: 'DDQ' }[m[1]]], ''];
     if ((m = c.match(/(?:SGM|CGM|SGL|CGL|CGC|SGC|SEC)C?D(\d)/))) return [GR[['', 'DQ', 'DDQ', 'EDDQ'][+m[1]] || 'DQ'], ''];
     if ((m = c.match(/(?:SGM|CGM|SGL|CGL|CGC|SGC)C?(\d{3})/))) return [`구조용(${m[1]}급)`, ''];
-    if (/(SGM|CGM|SGL|CGL|CGC|SGC|SEC)CC/.test(c)) return [GR.CQ, ''];
+    if (/(SGM|CGM|SGL|CGL|SG|CG|SE)CC/.test(c)) return [GR.CQ, ''];
     if ((m = c.match(/IS-17404\s*CR(\d)/))) return [GR[['', 'CQ', 'DQ', 'DDQ'][+m[1]]], ''];
     if (/IZMCCR4/.test(c)) return [GR.EDDQ, ''];   // 코드표 ORD_SPEC_STD 'IS 18513 IZMCCR4' 속성1 = EDDQ
     if (/IS-14246/.test(c)) return ['도장용', '세부 등급 미확인'];
@@ -41,7 +45,7 @@
     const [g, gTip] = grade(c), std = (STD.find(([re]) => re.test(c)) || [])[1] || '';
     const sub = (c.match(/-(G[XM]\d)$/) || [])[1];                                  // 세부 사양(고객·도금 부가 코드)
     const coat = /MAC|-GM\b|_MAC/.test(c) ? 'MAC' : /AZ/.test(c) ? 'AZ' : /[_ ]AL\b/.test(c) ? 'AL' : '';
-    const ko = g ? [reg, g].filter(Boolean).join(' ') : null;
+    const ko = g ? [reg && reg + '규격', g].filter(Boolean).join(' ') : null;   // '일본 가공용'은 목적지로 읽힐 수 있어 '일본규격 가공용'
     const r = { ko, tip: [c, std, gTip, sub ? `세부 사양 ${sub}` : '', coat ? `도금 ${coat}` : ''].filter(Boolean).join(' · ') };
     CACHE.set(c, r);
     return r;

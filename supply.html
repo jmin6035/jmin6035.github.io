@@ -144,7 +144,7 @@ table.mt2 thead th.c0, table.mt2 thead th.tot { border-bottom: 2px solid var(--i
 table.mt2 thead th.sat { color: #9a4f00; } table.mt2 thead th.sun { color: var(--bad); }
 table.mt2 thead th.we { background: color-mix(in srgb, var(--ink) 9%, var(--mt-hd)); }
 table.mt2 thead th.me { background: color-mix(in srgb, var(--ink) 16%, var(--mt-hd)); color: var(--ink); }
-table.mt2 thead th.today, table.mt2 thead th.tb { background: var(--brand-2); color: #fff; }
+table.mt2 thead th.today, table.mt2 thead th.tb { background: color-mix(in srgb, var(--brand-2) 16%, var(--surface)); color: var(--brand); font-weight: 900; box-shadow: inset 0 -2px 0 var(--brand-2); }   /* 공용 규칙(theme.css)과 같게 */
 /* 본문 칸 */
 table.mt2 tbody td.we { background: var(--mt-we); }
 table.mt2 .mon { border-left: 2px solid color-mix(in srgb, var(--ink-3) 50%, var(--surface)); }
@@ -174,7 +174,9 @@ table.mt2 tr.gap td { height: 14px; padding: 0; border: 0; background: transpare
 #s-cal td.mcc { position: relative; z-index: 0; color: #3d2900 !important; font-weight: 800; }
 #s-cal td.mcc::before { content: ''; position: absolute; inset: 5px 2px; background: #f2b705; border-radius: 6px; z-index: -1; }
 #s-cal td.sdblock { padding: 4px 3px; }
-#s-cal td.sdblock .sdp { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 26px; height: 100%; border-radius: 7px; background: #3f4a5a; color: #fff; font-weight: 800; font-size: 13.5px; letter-spacing: 0; white-space: nowrap; overflow: hidden; }
+#s-cal td.sdblock .sdp { display: flex; flex-direction: column; align-items: flex-start; padding: 0 12px; justify-content: center; min-height: 26px; height: 100%; border-radius: 7px; background: #3f4a5a; color: #fff; font-weight: 800; font-size: 13.5px; letter-spacing: 0; white-space: nowrap; }
+#s-cal td.sdblock .sdt { position: sticky; left: 202px; display: flex; flex-direction: column; }   /* 긴 정지 블록이 왼쪽으로 스크롤돼도 이름이 보이게 */
+#s-cal td.sdblock.one .sdp { align-items: center; padding: 0; } #s-cal td.sdblock.one .sdt { position: static; }
 #s-cal td.sdblock .sdp small { font-size: 13.5px; font-weight: 500; opacity: .9; }
 #s-cal td.sdblock.sk-repair .sdp { background: #c8372d; } #s-cal td.sdblock.sk-sd .sdp { background: #1f5fae; } #s-cal td.sdblock.sk-jr .sdp { background: #6a3fb5; }
 #s-cal td.sdblock.sk-idle .sdp { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink) 6%, var(--surface)) 0 6px, color-mix(in srgb, var(--ink) 12%, var(--surface)) 6px 12px); color: var(--ink-2); font-weight: 600; }

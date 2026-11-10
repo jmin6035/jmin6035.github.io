@@ -3,7 +3,7 @@
    작업지시 규칙 탭: 라인 탭 → 편성 조건 → 휴지 기준표 → 최근 바뀐 기준 */
 (function () {
   'use strict';
-  const $ = (id) => document.getElementById(id);
+  const $ = (id) => document.getElementById(id.replace(/^wo-/, 'wc-'));   // 작업 순서 화면 안에서 도금 제안(wo-)과 같이 쓰므로 id 앞머리 wc-
   const PW_KEY = 'cgl-analysis-pw';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const n0 = (v) => (v == null || isNaN(v) ? '-' : Math.round(v).toLocaleString('ko-KR'));
@@ -18,12 +18,9 @@
   const DZ = [['col', '색·도료 교체'], ['order', '주문 바뀜'], ['test', '단판TEST'], ['roll', '폭(Roll)'], ['dummy', '두께(Dummy)'], ['block', '블록·프린트 전환']];
   let O = null, line = null;
   const openDays = new Set();                                     // 펼친 날(11/10: 날짜 줄만 먼저 — 표가 2만px 이던 것)
-  let view = 'seq';                                               // 탭: 작업지시 순서 | 작업지시 규칙(사용자 10/21) — 다시 바꿀 때까지 유지
-  try { view = location.hash === '#rules' ? 'rules' : (localStorage.getItem('wo-view') || 'seq'); } catch (e) { /* 기본 */ }
-  const tabs = () => `<div class="seg pgtab" id="wo-view"><button type="button" data-v="seq" aria-pressed="${view === 'seq'}">작업지시 순서</button><button type="button" data-v="rules" aria-pressed="${view === 'rules'}">작업지시 규칙</button></div>`;
-  function bindTabs() {
-    $('wo-view').querySelectorAll('button').forEach((b) => b.onclick = () => { view = b.dataset.v; try { localStorage.setItem('wo-view', view); history.replaceState(null, '', view === 'rules' ? '#rules' : location.pathname); } catch (e) { /* 무시 */ } render(); });
-  }
+  const view = 'seq';                                          // 11/11: 규칙 탭 → 작업 순서 화면 맨 아래 '기준·사양'(rulesInto)
+  const tabs = () => '';
+  const bindTabs = () => {};
 
   function row(x, day) {
     const dn = x.downMin > 0.5;
@@ -133,17 +130,16 @@
       + '</section><section class="card">' + downTable(l) + '</section>';
   }
 
-  function renderRules() {
+  let rLine = null;
+  function rulesInto(el) {                                      // 기준·사양(작업 순서 화면 맨 아래): 라인 고르기 + 편성 조건 · 기준표 · 기준 변경 이력
+    if (!el || !O) return;
     const L = Object.keys(O.lines);
-    line = line && L.includes(line) ? line : L[0];
-    $('wo-meta').textContent = `${UI.fmtDateTime(O.now)} 기준 · 계산 ${UI.fmtDateTime(O.built || '')}`;
-    $('wo-main').innerHTML = tabs() + `<section class="card"><div class="seg" id="wo-lines">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l}</button>`).join('')}</div></section>` + conditions(line);
-    $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; renderRules(); });
-    bindTabs();
-    if (window.UI) UI.reveal($('wo-main'));
+    rLine = rLine && L.includes(rLine) ? rLine : (line && L.includes(line) ? line : L[0]);
+    el.innerHTML = `<div class="seg wo-rl">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === rLine}">${l}</button>`).join('')}</div>` + conditions(rLine);
+    el.querySelectorAll('.wo-rl button').forEach((b) => b.onclick = () => { rLine = b.dataset.l; rulesInto(el); });
   }
+
   function render() {
-    if (view === 'rules') { renderRules(); return; }
     const L = Object.keys(O.lines);
     line = line && L.includes(line) ? line : (L.find((l) => O.lines[l].nFree) || L[0]);
     const v = O.lines[line];
@@ -163,7 +159,7 @@
       <tr class="tot-r"><td><b>합계</b></td><td></td><td><b>${tot.fx}</b>건 · ${n0(tot.tfx)}t</td><td></td><td><b>${tot.n}</b>건 · ${n0(tot.t)}t</td><td></td><td><b>${n0(tot.dn)}</b>분</td><td><b class="${tot.gain >= 0 ? 'wo-g' : 'wo-b'}">${tot.gain >= 0 ? '−' : '+'}${n0(Math.abs(tot.gain))}분</b></td><td>${tot.wait ? `<b class="wo-w">${tot.wait}건</b>` : '-'}</td></tr></tbody></table></div></section>`;
     $('wo-main').innerHTML = tabs() + allCard + (O.missing && O.missing.length ? `<div class="miss"><b>아직 안 들어온 자료</b> — ${O.missing.map(esc).join(' / ')}</div>` : '')
       + (ns.length ? `<div class="miss"><b>순서에서 뺀 지시 ${ns.length}건 — 계약 상세(두께·폭)가 MES 에 없음</b>: ${ns.map((x) => `${esc(x.con)} ${esc(x.item)} ${x.t}t(지시 ${md(x.drtDate)})`).join(' · ')}. 오래전 지시가 종료되지 않고 남은 것으로 보임 — MES 정리 확인</div>` : '')
-      + `<section class="card"><div class="seg" id="wo-lines">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l} <small>${O.lines[l].stop ? '휴지' : `${O.lines[l].nFree}건`}</small></button>`).join('')}</div>${stop}`
+      + `<section class="card"><div class="seg" id="wc-lines">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l} <small>${O.lines[l].stop ? '휴지' : `${O.lines[l].nFree}건`}</small></button>`).join('')}</div>${stop}`
       + '<div class="kpis" style="margin-top:12px">'
       + `<div class="kpi"><div class="l">지금 라인 · 확정 대기</div><div class="v">${fx.length}<small>건</small></div><div class="b">마지막 코일 ${esc(v.lastCoil ? tm(v.lastCoil) : '-')} 끝 · 확정분 ${n0(v.tFixed)}t 은 ${esc(tm(v.fixedUntil))} 까지</div></div>`
       + `<div class="kpi"><div class="l">이번 제안(편성 대상)</div><div class="v">${v.nFree}<small>건 · ${n0(v.tFree)}t</small></div><div class="b">${v.nFree ? `${esc(tm(free[0].start))} → ${esc(tm(v.until))}` : '편성할 지시 없음'}${v.waitN ? ` · 도료·PF 준비 기다리는 지시 ${v.waitN}건` : ''}</div></div>`
@@ -171,10 +167,10 @@
       + '</div>'
       + (v.nFree ? `<div class="wo-cmp${gain < 0 ? ' bad' : ''}"><b>MES 순서와 비교</b> — 같은 ${v.nFree}건을 MES 에 지금 들어가 있는 작업예정일·순번대로 돌리면 휴지 ${n0(v.mes.down)}분${v.mes.wait ? ` + 도료 기다림 ${n0(v.mes.wait)}분` : ''} → 제안이 <b>${gain >= 0 ? `${n0(gain)}분 짧음` : `${n0(-gain)}분 김`}</b> <span class="bk">(같은 출발점, 같은 휴지 규칙)</span></div>` : '')
       + '</section>'
-      + (v.nFree ? `<section class="card"><h2>${line} 제안 순서 <small class="bk">일자 선택 시 작업 내역 표시</small> <button type="button" class="btn sm" id="wo-exp" style="margin-left:10px">모두 펼치기·접기</button></h2>${LEG}${table(v, free, 'free')}</section>` : '')
+      + (v.nFree ? `<section class="card"><h2>${line} 제안 순서 <small class="bk">일자 선택 시 작업 내역 표시</small> <button type="button" class="btn sm" id="wc-exp" style="margin-left:10px">모두 펼치기·접기</button></h2>${LEG}${table(v, free, 'free')}</section>` : '')
       + (fx.length ? `<section class="card"><details class="fx"><summary>이미 확정된 대기열 ${fx.length}건 ${n0(v.tFixed)}t — MES 순서 그대로 (${esc(tm(v.from))} → ${esc(tm(v.fixedUntil))})</summary>${table(v, fx, 'fixed')}</details></section>` : '');
     $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; render(); });
-    $('wo-main').querySelectorAll('tr.ln').forEach((r) => { const f = () => { line = r.dataset.l; render(); const c = document.getElementById('wo-lines'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }; r.onclick = f; r.onkeydown = (e) => { if (e.key === 'Enter') f(); }; });
+    $('wo-main').querySelectorAll('tr.ln').forEach((r) => { const f = () => { line = r.dataset.l; render(); const c = $('wo-lines'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }; r.onclick = f; r.onkeydown = (e) => { if (e.key === 'Enter') f(); }; });
     $('wo-main').querySelectorAll('tr.day').forEach((r) => { const f = () => { const k = r.dataset.day; if (openDays.has(k)) openDays.delete(k); else openDays.add(k); const on = openDays.has(k); r.setAttribute('aria-expanded', on);
       $('wo-main').querySelectorAll(`tr[data-of="${CSS.escape(k)}"]`).forEach((x) => { x.hidden = !on; }); }; r.onclick = f; r.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f(); } }; });
     const ex = $('wo-exp'); if (ex) ex.onclick = () => { const days = [...$('wo-main').querySelectorAll('tr.day')].map((r) => r.dataset.day), allOn = days.every((k) => openDays.has(k)); days.forEach((k) => (allOn ? openDays.delete(k) : openDays.add(k))); render(); };
@@ -185,11 +181,13 @@
   async function unlock(pw) {
     const env = await envReady;
     if (!env) { $('wo-msg').textContent = '아직 게시된 제안이 없습니다.'; return; }
-    try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
-    catch (e) { $('wo-form').hidden = false; $('wo-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
+    try { O = await GP.decryptJSON(env, pw); }
+    catch (e) { $('wo-msg').textContent = '⚠ 암호가 맞지 않습니다'; return; }
     if (!O.lines || !Object.values(O.lines).every((v) => v.mes)) { $('wo-msg').textContent = '예전 형식의 제안입니다 — 다시 계산 후 게시가 필요합니다.'; return; }
     render();
   }
-  $('wo-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('wo-pw').value); });
-  envReady.then(() => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (s) unlock(s); else $('wo-form').hidden = false; });
+  /* 작업 순서 화면(week_seq.html)이 필요할 때 불러 붙임 — 암호는 그 화면이 이미 받아 저장해 둔 것 */
+  let pend = null;
+  const ready = envReady.then(() => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } return unlock(s || ''); }).then(() => { if (pend) rulesInto(pend); });
+  window.WO_CC = { rules: (el) => { pend = el; if (O) rulesInto(el); return ready; } };
 })();
