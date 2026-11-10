@@ -6,7 +6,7 @@
 <title>월간 가동</title>
 <meta name="description" content="일별 가동 · 자가재 · 구매 소재(발주·입고·재고) · 제품 재고를 한 달력에서">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611101358">
+<link rel="stylesheet" href="ui/theme.css?v=2611101414">
 <style>
 .sbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 10px; font-size: 13.5px; color: var(--ink-2); }
 .sbar b { color: var(--ink); }
@@ -304,6 +304,20 @@ html body main table#s-cal td.sdblock.sk-idle .sdp { background: repeating-linea
 html body main table#s-cal td.idle { background: var(--surface) !important; }
 html body main table#s-cal tbody td[data-d]:hover { background: color-mix(in srgb, var(--brand-2) 14%, var(--surface)) !important; }
 .glegend .sw.f-AL, .glegend .sw.f-AZ, .glegend .sw.f-MAC, .glegend .sw.f-C수출, .glegend .sw.f-C건재, .glegend .sw.f-C수요 { height: 6px; width: 22px; border-radius: 2px; vertical-align: 2px; box-shadow: none; }
+
+/* 판매그룹 출하·재고: 그룹 띠 · 오늘·월말 강조(11/10 사용자) */
+#s-ship col.cc0 { width: 118px !important; } #s-ship .c1 { left: 118px !important; }
+#s-ship tr.first > * { border-top: 2px solid color-mix(in srgb, var(--ink-3) 60%, var(--surface)) !important; }
+#s-ship tr.gb1 td:not(.tot):not(.hi):not(.hi2):not(.tb) { background-color: color-mix(in srgb, var(--ink) 3.5%, var(--surface)); }
+html body #s-ship th.line { text-align: left !important; vertical-align: middle; padding: 6px 10px !important; white-space: normal !important; box-shadow: inset 4px 0 0 var(--pt-gG); } #s-ship th.line.C { box-shadow: inset 4px 0 0 var(--pt-gC); }
+#s-ship .sg-nm { font-size: 14.5px; font-weight: 800; color: var(--ink); line-height: 1.25; }
+#s-ship .sg-kk { margin-top: 3px; display: flex; flex-direction: column; gap: 1px; font-size: 13.5px; font-weight: 500; color: var(--ink-2); line-height: 1.3; }
+#s-ship .sg-kk b { font-size: 14.5px; font-weight: 800; color: var(--ink); } #s-ship .sg-kk b.hi { color: #8a5a00; } #s-ship .sg-kk b.hi2 { color: var(--bad); }
+#s-ship tbody td.tb { font-weight: 800 !important; color: var(--ink) !important; box-shadow: inset 2px 0 0 var(--brand-2), inset -2px 0 0 var(--brand-2) !important; }
+#s-ship tbody tr.r-k td.tb { font-size: 14.5px !important; }
+#s-ship thead th.me { background: color-mix(in srgb, var(--ink) 14%, var(--th)) !important; color: var(--ink) !important; }
+#s-ship tbody td.me { font-weight: 800 !important; color: var(--ink); box-shadow: inset 2px 0 0 var(--ink-3), inset -2px 0 0 var(--ink-3) !important; }
+#s-ship tbody tr.r-k td.me { font-size: 14.5px !important; }
 </style>
 </head>
 <body>
@@ -339,10 +353,10 @@ html body main table#s-cal tbody td[data-d]:hover { background: color-mix(in srg
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2611101358"></script>
-<script src="engine/crypto.js?v=2611101358"></script>
-<script src="ui/cal.js?v=2611101358"></script>
-<script src="ui/proccalc.js?v=2611101358"></script>
-<script src="supply.js?v=2611101358"></script>
+<script src="ui/shell.js?v=2611101414"></script>
+<script src="engine/crypto.js?v=2611101414"></script>
+<script src="ui/cal.js?v=2611101414"></script>
+<script src="ui/proccalc.js?v=2611101414"></script>
+<script src="supply.js?v=2611101414"></script>
 </body>
 </html>

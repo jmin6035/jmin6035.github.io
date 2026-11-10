@@ -310,7 +310,7 @@
     const W1 = ['일', '월', '화', '수', '목', '금', '토'], KN = { plan: '계획휴지', sd: 'S/D', repair: '수리', clean: '청소', test: 'Test', sample: '샘플', jr: '정기수리', color: '색상교체·청소', roll: '폭·롤 전환', etc: '기타 정지', gap: '기록 없는 정지(TEST 등)' }, HARD = ['plan', 'sd', 'repair', 'jr'];
     const wkC = (d) => (wd(d) === 6 || wd(d) === 0 ? ' we' : '') + (wd(d) === 1 && d !== ds[0] ? ' mon' : '');   // 11/10: 주말 열 바탕 · 주 경계(월요일 앞 굵은 선)
     const headG = (lab) => `<colgroup><col class="cc0"><col class="cc1">${ds.map(() => '<col>').join('')}<col class="ctot"></colgroup><thead><tr><th class="c0" colspan="2" rowspan="2">${lab}</th>`
-      + ds.map((d) => `<th data-d="${d}" class="${d === today ? 'today tb' : ''}${wkC(d)}">${+d.slice(8)}</th>`).join('') + '<th class="tot" rowspan="2">계</th></tr><tr>'
+      + ds.map((d) => `<th data-d="${d}" class="${d === today ? 'today tb' : ''}${wkC(d)}${d === ds[ds.length - 1] ? ' me' : ''}"${d === ds[ds.length - 1] ? ' title="월말"' : ''}>${+d.slice(8)}</th>`).join('') + '<th class="tot" rowspan="2">계</th></tr><tr>'
       + ds.map((d) => `<th class="wk ${wd(d) === 6 ? 'sat' : wd(d) === 0 ? 'sun' : ''}${d === today ? ' tb' : ''}${wkC(d)}">${W1[wd(d)]}</th>`).join('') + '</tr></thead><tbody>';
     const dayCls = (d) => (d < today ? ' past' : d === today ? ' today tb' : '');   // 지난 날(실적) 옅은 바탕 · 오늘 앞 파란 경계선 — 기울임 대신(사용자 10/21)
     const dn = {};                                                       // 라인|날짜 → [[종류, 분]]
@@ -389,15 +389,20 @@
     $('s-shipleg').innerHTML = '<span class="muted">재고 칸 색 = 목표 대비</span>' + sw('hiw', '100~130%') + sw('hi2w', '130% 초과') + sep + sw('tbsw', '오늘') + '<span class="muted">계 칸 %p = 출하 실적 누계 − 기준선(그룹 출하 실적 패턴) · 월 계획 대비</span>' + sep + '<span class="muted">전일까지 실적</span>';
     // 판매그룹 출하·재고(라인 구분 없는 자료 — 사용자 10/21: 밑으로 따로 하나 더)
     let S2 = headG('판매그룹');
+    const dEnd = ds[ds.length - 1], dNow = ds.includes(today) ? today : null;
     const shipBlock = (pl, gs) => gs.forEach((g, gi) => {
+      // 11/10 사용자 '그룹별로 구분 · 오늘·월말 몇 톤인지 강조': 그룹마다 띠(번갈아 바탕·굵은 구분선) + 이름 칸에 오늘 → 월말 재고
+      const kN = dNow && D.sw[`${g}|${dNow}`], kE = D.sw[`${g}|${dEnd}`];
+      const kTxt = (x) => (x ? (x.v / 1000).toFixed(1) : '-');
+      const nmCell = `<div class="sg-nm">${NM[g]}</div><div class="sg-kk">${dNow ? `<span>오늘 <b>${kTxt(kN)}</b>천t</span>` : ''}<span>월말 <b class="${kE && kE.tgt && kE.v > kE.tgt * 1.3 ? 'hi2' : kE && kE.tgt && kE.v > kE.tgt ? 'hi' : ''}">${kTxt(kE)}</b>천t</span></div>`;
       [['s', '출하(t)'], ['k', '재고(천t)']].forEach(([rk, lb], ri) => {
-        S2 += `<tr class="${rk === 's' ? 'r-s' : 'r-k'}${ri === 0 ? ' first' : ''}">` + (ri === 0 ? `<th class="c0 line ${pl}" rowspan="2">${NM[g]}</th>` : '') + `<th class="c1">${lb}</th>`;
+        S2 += `<tr class="${rk === 's' ? 'r-s' : 'r-k'}${ri === 0 ? ' first' : ''} gb${gi % 2}">` + (ri === 0 ? `<th class="c0 line ${pl}" rowspan="2">${nmCell}</th>` : '') + `<th class="c1">${lb}</th>`;
         let tot = 0; const actT = ds.filter((d) => d < today).reduce((a, d) => a + gship(g, d).t, 0);
         ds.forEach((d, i) => {
           let txt = '', cls = [], tip = '';
           if (rk === 's') { const x = gship(g, d); tot += x.t; if (x.t >= 0.5) { txt = dayN(x.t); cls.push('sh'); if (x.t >= 999.5) cls.push('w5'); tip = `${md(d)} ${NM[g]} 출하 ${n0(x.t)}t${x.act ? ' (MES 출하 실적)' : ' (계획 출고)'}`; } }
           else { const x = D.sw[`${g}|${d}`]; if (x) { const r = x.tgt ? x.v / x.tgt : 0; txt = (x.v / 1000).toFixed(1); tip = `${md(d)} ${NM[g]} 기말 재고 ${n0(x.v)}t / 목표 ${n0(x.tgt)}t (${x.tgt ? Math.round(r * 100) : '-'}%)`; cls.push(x.v < 0 ? 'neg' : !x.tgt ? '' : r > 1.3 ? 'hi2' : r > 1 ? 'hi' : 'ok'); } }
-          S2 += `<td class="${cls.join(' ')}${dayCls(d)}" style="--ci:${i}" data-d="${d}"${tip ? ` title="${esc(tip)}"` : ''}>${txt}</td>`;
+          S2 += `<td class="${cls.join(' ')}${dayCls(d)}${d === dEnd ? ' me' : ''}" style="--ci:${i}" data-d="${d}"${tip ? ` title="${esc(tip)}"` : ''}>${txt}</td>`;
         });
         // 11/10 사용자 '재고·출하 표에도 같은 기준': 이번 달 출하 실적 누계 vs 출하 기준선(그룹 출하 실적 패턴) — 계 칸 아래 한 줄
         const sh_ = (((D.PO || {}).groups || []).find((x) => x.key === g) || {}).ship || null, cur_ = ds.includes(today) && sh_ && sh_.due != null && sh_.month > 0;
