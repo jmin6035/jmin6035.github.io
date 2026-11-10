@@ -163,7 +163,7 @@
     c.grp = Object.fromEntries(Object.entries(g).sort((a, b) => b[1] - a[1]));
     c.late = c.items.filter((i) => i.late).length;
     c.lateE = c.items.filter((i) => i.late && i.exp && (i.dept || i.arr)).length;   // 출항일 넘김(필요 생산일 = 출항 − 1일, 10/29)
-    c.hrs = r1(c.items.reduce((s, i) => s + i.t / tphOf(c.line, i), 0));   // 이 칸 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리는 시간
+    c.hrs = r1(c.items.reduce((s, i) => s + i.t / tphOf(c.line, i), 0));   // 이 칸 주문을 T/Hr(같은 두께·폭 2026년 실적)로 돌리는 시간
     c.mvIn = c.items.filter((i) => i.moved).length;
     c.flag = c.flag0; c.flagS = c.flagS0; c.why = c.why0;
     const seq = c.items.filter((i) => i.kind !== '확정' && i.grade);   // 날짜 안 순서(재질 차례)대로 이었을 때 바로 못 잇는 짝이 남으면 = 사이에 다른 재질이 필요
@@ -338,7 +338,7 @@
       const X = d7.map((d) => O.lines[ln][I(d)]), f = X.reduce((s, c) => s + c.conf + c.plan + c.fcst, 0), cp = X.reduce((s, c) => s + c.cap, 0);
       const hr = X.reduce((s, c) => s + (c.hrs || 0), 0), ha = X.reduce((s, c) => s + (c.hAvail || 0), 0), r = ha >= 1 ? hr / ha : null;
       const nf = X.filter((c) => c.flag).length, lt = X.reduce((s, c) => s + (c.late || 0), 0), ov = over(ln, O.days);
-      return `<tr><td class="l"><b>${ln}</b></td><td class="r"><b>${n0(f)}</b> / ${n0(cp)}t</td><td class="r" title="편성 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리는 시간 ${n0(hr)}h ÷ 가동 가능 시간 ${n0(ha)}h">${r == null ? '<span class="sub">정지</span>' : `<b class="${r > 1.005 ? 'bad' : r < 0.9 ? 'warn' : ''}">${Math.round(r * 100)}%</b>`}</td>`
+      return `<tr><td class="l"><b>${ln}</b></td><td class="r"><b>${n0(f)}</b> / ${n0(cp)}t</td><td class="r" title="편성 주문을 T/Hr(같은 두께·폭 2026년 실적)로 돌리는 시간 ${n0(hr)}h ÷ 가동 가능 시간 ${n0(ha)}h">${r == null ? '<span class="sub">정지</span>' : `<b class="${r > 1.005 ? 'bad' : r < 0.9 ? 'warn' : ''}">${Math.round(r * 100)}%</b>`}</td>`
         + `<td class="r">${nf ? `<b class="bad">${nf}일</b>` : '<span class="sub">0</span>'}</td><td class="r">${lt ? `<b class="bad">${lt}건</b>` : '<span class="sub">0</span>'}</td>`
         + `<td class="r" title="${END()}까지 주문을 T/Hr로 24시간 이어서 돌릴 때 ${md(O.days[O.days.length - 1])} 뒤로 넘어가는 양">${ov ? `<b class="bad">${n0(ov.t)}t</b>` : '<span class="sub">0</span>'}</td></tr>`;
     }).join('');
@@ -359,7 +359,7 @@
       return `<div><h4>${ln} 시간당 생산량 <small>t/hr · 두께(행) × 폭(열) · 없으면 라인 평균 ${n1(S[ln])}</small></h4><div class="ct-wrap"><table class="ct-t ps-sp"><thead><tr><th class="l">두께＼폭</th>${wd.map((w) => `<th class="r">${n0(w)}</th>`).join('')}</tr></thead><tbody>`
         + th.map((t) => `<tr><td class="l"><b>${t}</b></td>${wd.map((w) => { const v = S[`${ln}|${t}|${w}`]; return `<td class="r">${v == null ? '<span class="sub">-</span>' : n1(v)}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div></div>';
     }).join('');
-    return `<h4>도금 캘린더</h4><ul class="ps-ul"><li>하루 능력 = 재계획 하루 톤(속도 = 2026.1월~ 실적 하루 생산량) · 강종 = 최신 재계획</li><li>채우는 순서 = MES 작업지시 → 1010 순서안 → 필요 생산일 빠른 순(수출 출항 − 1일 · 내수 납기 − 1일)</li><li><b>작업지시</b> = MES 지시 후 생산 대기 코일 · <b>소재 있음</b> = 소재가 들어온 주문 · <b>입고 예정</b> = 입고 + 5일부터 생산</li><li><b>넘침</b> = 칸 주문을 아래 t/hr 로 24시간 이어 돌릴 때 가동 가능 시간(24h × 제원치 가동률)을 넘는 양</li><li>다음 주 확정 = 매주 수요일 오전 다음 주(월~일) 저장 → 다음 날부터 준수율</li><li>자료 ${esc(O.asOf)} · ${O.planT0 ? `재계획(실적 ~${md(O.planT0)})` : esc(O.planSrc || '')} · 계산 ${esc(O.built || '')}</li><li>시간당 생산량 = 같은 두께(0.1mm)·폭(100mm) 최근 3개월 실적</li></ul><div class="ps-spw">${tb}</div>`;
+    return `<h4>도금 캘린더</h4><ul class="ps-ul"><li>하루 능력 = 재계획 하루 톤(속도 = 2026.1월~ 실적 하루 생산량) · 강종 = 최신 재계획</li><li>채우는 순서 = MES 작업지시 → 1010 순서안 → 필요 생산일 빠른 순(수출 출항 − 1일 · 내수 납기 − 1일)</li><li><b>작업지시</b> = MES 지시 후 생산 대기 코일 · <b>소재 있음</b> = 소재가 들어온 주문 · <b>입고 예정</b> = 입고 + 5일부터 생산</li><li><b>넘침</b> = 칸 주문을 아래 t/hr 로 24시간 이어 돌릴 때 가동 가능 시간(24h × 제원치 가동률)을 넘는 양</li><li>다음 주 확정 = 매주 수요일 오전 다음 주(월~일) 저장 → 다음 날부터 준수율</li><li>자료 ${esc(O.asOf)} · ${O.planT0 ? `재계획(실적 ~${md(O.planT0)})` : esc(O.planSrc || '')} · 계산 ${esc(O.built || '')}</li><li>시간당 생산량 = 같은 두께(0.1mm)·폭(100mm) 최근 2026년 실적</li></ul><div class="ps-spw">${tb}</div>`;
   }
 
   function cell(c, ln) {
@@ -388,7 +388,7 @@
       const C = O.lines[ln], h = C.reduce((s, c) => s + (c.hrs || 0), 0), a = C.reduce((s, c) => s + (c.hAvail || 0), 0), t = C.reduce((s, c) => s + c.conf + c.plan + c.fcst, 0);
       return h - a >= 1 ? { h: h - a, t: (h - a) * t / h } : null;
     };
-    const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small>${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small>${hr ? `<small class="hs ov" title="${END()}까지 주문을 T/Hr(같은 두께·폭 3개월 실적)로 24시간 이어서 돌리면 가동 가능 시간(24h × 제원치 가동률)보다 ${n1(hr.h)}시간 초과 → 약 ${n0(hr.t)}t 은 ${md(O.days[O.days.length - 1])} 뒤에 생산">${END()} 뒤 ${n0(hr.t)}t</small>` : ''}</th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`; }).join('');
+    const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small>${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small>${hr ? `<small class="hs ov" title="${END()}까지 주문을 T/Hr(같은 두께·폭 2026년 실적)로 24시간 이어서 돌리면 가동 가능 시간(24h × 제원치 가동률)보다 ${n1(hr.h)}시간 초과 → 약 ${n0(hr.t)}t 은 ${md(O.days[O.days.length - 1])} 뒤에 생산">${END()} 뒤 ${n0(hr.t)}t</small>` : ''}</th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`; }).join('');
     const jg = days.map((d) => {
       const j = O.jg[idx(d)], df = j.cumSched - j.cumPlan;
       return `<td class="jg" title="컬러 계획 = 컬러 라인 투입 일정에 맞추려면 이 날까지 도금에서 만들어 둬야 할 자가재 누계(가동계획 기준) · 도금 생산 = 이 캘린더대로 도금에서 만드는 자가재 누계(${md(O.days[0])}부터)"><div class="jr"><span>컬러 계획</span><b>${n0(j.cumPlan)}</b></div><div class="jr"><span>도금 생산</span><b>${n0(j.cumSched)}</b></div><div class="jr ${df < 0 ? 'bad' : 'good'}"><span>${df < 0 ? '부족' : '여유'}</span><b>${n0(Math.abs(df))}</b></div>${j.mark ? `<div class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 끝내야 할 자가재">컬러 마감 ${n0(j.mark)}t</div>` : (O.jg.some((x) => x.mark) ? '<div class="mk" style="visibility:hidden">-</div>' : '')}</td>`;

@@ -123,7 +123,7 @@
     const mcSame = LS.every((l) => mc(ra, l).join() === mc(rb, l).join());
     const mcT = `<div class="ct-wrap"><table class="ct-t mc"><thead><tr><th>라인</th><th>직전 M/C</th><th>지금 M/C</th></tr></thead><tbody>${LS.map((l) => { const x = mc(ra, l), y = mc(rb, l), sx = new Set(x), sy = new Set(y);
       return `<tr><td class="id">${l}</td><td>${x.map((d) => `<span class="${sy.has(d) ? '' : 'gone'}">${md(d)}</span>`).join(' ') || '-'}</td><td>${y.map((d) => `<span class="${sx.has(d) ? '' : 'new'}">${md(d)}</span>`).join(' ') || '-'}</td></tr>`; }).join('')}</tbody></table></div>`;
-    const ma = ra.milp || {}, mb = rb.milp || {}, la = (ra.replan || {}).late ?? ma.late, lb = (rb.replan || {}).late ?? mb.late;
+    const ma = ra.milp || {}, mb = rb.milp || {}, la = dueLate(ra), lb = dueLate(rb);
     const kp = CT.kpis([
       { label: '결품', v: `${n0(ma.short)}→${n0(mb.short)}`, unit: 't', tone: (mb.short || 0) > (ma.short || 0) + 0.5 ? 'bad' : 'ok', sub: `차이 ${n0((mb.short || 0) - (ma.short || 0))}t` },
       { label: '지연(천 t·일)', v: `${n0(la / 1000)}→${n0(lb / 1000)}`, unit: '', tone: lb > la + 0.5 ? 'bad' : 'ok', sub: `차이 ${n0((lb - la) / 1000)}천` },
@@ -187,11 +187,17 @@
 
   /* ---------- 결론(맨 위): 공정별 이번 주 + 계획 변경·이번 달 부하 한 줄 ---------- */
   const PLN = { G: '도금', C: '컬러' };
+  /* 11/11 사용자: 지연 톤·일 = 원래 납기 기준 하나로(계획 계산·홈과 같은 값 — cglplan/pages.py due_late 와 같은 식).
+     t0 뒤 계획 행마다 톤 × (생산일 − 납기일), 자가재는 새 수요(selfDue use-1)면 여유 0 · 옛 수요면 7일. 엔진 최적화 값(replan.late)은 판매계획 보충을 절반 무게로 세고 평준화 전 값이라 쓰지 않음 */
+  function dueLate(R) {
+    const t0 = (R.replan || {}).t0 || '', sk = ((R.orderDemand || {}).selfDue === 'use-1') ? 0 : 7, dd = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / 864e5);
+    return (R.rows || []).reduce((s, r) => { if (!(r[0] > t0)) return s; const k = r[3] === '자가재' ? sk : 0, d = dd(r[0], r[5]); return d > k ? s + (+r[4] || 0) * (d - k) : s; }, 0);
+  }
   const wk7 = (d) => (d ? `${md(d)}~${md(addD(d, 6))}` : '');
   function chgLine(D) {                                     // 계획 변경 한 줄(직전 게시 → 지금): 자세히 = #cmp
     const out = [];
     if (CT.inScope('G') && D.plan_prev && D['latest.plan']) {
-      const ra = D.plan_prev.result || {}, rb = D['latest.plan'].result || {}, ma = ra.milp || {}, mb = rb.milp || {}, la = (ra.replan || {}).late ?? ma.late, lb = (rb.replan || {}).late ?? mb.late;
+      const ra = D.plan_prev.result || {}, rb = D['latest.plan'].result || {}, ma = ra.milp || {}, mb = rb.milp || {}, la = dueLate(ra), lb = dueLate(rb);
       const ar = (a, b, f, bad) => `${f(a)}→<b class="${bad ? 'bad' : ''}">${f(b)}</b>`;
       out.push(`<span><b>도금</b> 결품 ${ar(ma.short || 0, mb.short || 0, (v) => n0(v) + 't', (mb.short || 0) > (ma.short || 0) + 0.5)} · 지연 ${ar(la || 0, lb || 0, (v) => n0(v / 1000) + '천', (lb || 0) > (la || 0) + 0.5)} t·일 · M/C ${ma.K ?? '-'}→${mb.K ?? '-'}회</span>`);
     }
@@ -212,7 +218,7 @@
     if (v !== 'cg' && v !== 'cc') { el.innerHTML = ''; return; }
     const pls = ['G', 'C'].filter((p) => CT.inScope(p));
     const blk = (p) => `<section class="card ps-b${(p === 'G') === (v === 'cg') ? ' on' : ''}"><h2>${PLN[p]} <small>이번 주 ${wk7(AT[p])}</small>${pls.length > 1 ? `<a class="ps-cal" href="#${p === 'G' ? 'cg' : 'cc'}">${(p === 'G') === (v === 'cg') ? '아래 캘린더' : '캘린더 보기 →'}</a>` : ''}</h2>${SUM[p] || '<p class="ct-note">불러오는 중…</p>'}</section>`;
-    const more = DD && X ? `<section class="card ps-m"><a class="ps-ln" href="#cmp"><i>계획 변경</i>${chgLine(DD) || '<span class="sub">직전 판 없음</span>'}<em>→</em></a><a class="ps-ln" href="#load" title="게시 재계획 물량 ÷ 가용 능력(도금 = 최근 실적 t/h, 컬러 = 편성분 ÷ 가용분) — 위 '시간 부하'(현장 편성 주문 × 두께·폭별 t/hr)와 기준이 다름"><i>${+X.today.slice(5, 7)}월 재계획 부하</i>${LR ? loadLine(LR) : ''}<em>→</em></a></section>` : '';
+    const more = DD && X ? `<section class="card ps-m"><a class="ps-ln" href="#cmp"><i>계획 변경</i>${chgLine(DD) || '<span class="sub">직전 판 없음</span>'}<em>→</em></a><a class="ps-ln" href="#load" title="게시 재계획 물량 ÷ 가용 능력(도금 = 2026년 실적 t/h, 컬러 = 편성분 ÷ 가용분) — 위 '시간 부하'(현장 편성 주문 × 두께·폭별 t/hr)와 기준이 다름"><i>${+X.today.slice(5, 7)}월 재계획 부하</i>${LR ? loadLine(LR) : ''}<em>→</em></a></section>` : '';
     el.innerHTML = `<div class="ps-g${pls.length > 1 ? ' two' : ''}">${pls.map(blk).join('')}</div>${more}`;
     el.querySelectorAll('.ps-go').forEach((b) => (b.onclick = () => { const t = $(b.dataset.go); if (t) t.scrollIntoView({ block: 'start', behavior: 'smooth' }); }));
   }

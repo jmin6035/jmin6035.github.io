@@ -13,6 +13,7 @@
   const TFD = { G수출: 15, G국내: 20, G자동차: 30, C수출: 15, C건재: 20 };   // 상한 일수 — 엔진 값(integrated tfRules.days)이 없을 때만
   const TFK = { G수출: 'G수출', G국내: 'G국내', G자동차: 'AL-STS', C수출: '건재수출', C건재: '주문재' };
   UI.ctlTfd = (k, IG) => { const v = (((IG || IGc || {}).tfRules || {}).days || {})[TFK[k]]; return v != null ? v : TFD[k]; };
+  const GNM = (g) => ({ G국내: '도금국내' }[g.key] || g.name.replace(/\(.*\)/, ''));   // 11/11: 화면 전체 그룹 이름 통일(도금판매 → 도금국내 — ui/ct.js GN 과 같게)
   const MOG = { G수출: ['도금수출'], G국내: ['도금국내'], G자동차: ['자동차'], G자가재: ['자가재'], C수출: ['컬러수출(건재)', '컬러수출(가전)', '가전내수'], C건재: ['컬러건재 주문재', '컬러건재 계획재'], C수요: ['수요개발'] };
   /* 판매그룹(portal) → 납기 위험 그룹(risk.enc.json). 컬러수출 = 건재수출 + 가전수출 + 가전내수 */
   const RKN = UI.ctlRiskGroups = { G수출: ['도금수출'], G국내: ['도금국내'], G자동차: ['자동차'], G자가재: ['자가재'], C수출: ['건재수출', '가전수출', '가전내수'], C건재: ['컬러건재'], C수요: ['수요개발'] };
@@ -77,7 +78,7 @@
       const dv = due ? [due.tone, due.risk >= 0.5 ? `위험 ${n0(due.risk)}t` : '위험 0', due.t ? `미결 ${n0(due.t)}t 중 ${Math.round(due.risk / due.t * 100)}%` : ''] : ['na', '–', ''];
       const all = [prod.v, ship ? ship.v : ['na', '–', ''], stock.v, mat.v, dv];
       const w4 = [all[0], all[1], all[2], all[4]].reduce((a, x) => (rank[x[0]] < rank[a] ? x[0] : a), 'na');   // 관제판 줄 색 = 납기·생산·출하·재고(소재는 소재 화면 신호 — 같은 F/H 부족이 모든 그룹을 빨갛게 덮던 것)
-      return { key: g.key, pl: g.pl, name: g.name.replace(/\(.*\)/, ''), w: w4, w4, w5: all.reduce((a, x) => (rank[x[0]] < rank[a] ? x[0] : a), 'na'), cells: all.map((x) => x[0]), vals: all.map((x) => [x[1], x[2]]), d: { due, prod, ship, stock, mat }, g };
+      return { key: g.key, pl: g.pl, name: GNM(g), w: w4, w4, w5: all.reduce((a, x) => (rank[x[0]] < rank[a] ? x[0] : a), 'na'), cells: all.map((x) => x[0]), vals: all.map((x) => [x[1], x[2]]), d: { due, prod, ship, stock, mat }, g };
     });
   }
 
@@ -124,7 +125,7 @@
         c5 = g.pl !== 'G' ? ['na', '–', ''] : sh.length ? ['bad', `결품 ${sm(sh)}t`, `주문 ${sh.length}건`] : sf.length ? ['warn', `미편성 ${sm(sf)}t`, `판매계획 보충 ${sf.length}건`] : ['ok', '결품 0', ''];
       }
       const all = [c1, c2, c3, c4, c5], rk = { bad: 0, warn: 1, ok: 2, na: 3 }, w = all.reduce((a, x) => (rk[x[0]] < rk[a] ? x[0] : a), 'na');
-      return `<tr><td class="cg"><span class="cdot ${w}"></span><b>${esc(g.name.replace(/\(.*\)/, ''))}</b></td>` + sig(c1[0], c1[1], c1[2], 'supply.html') + sig(c2[0], c2[1], c2[2], 'supply.html') + sig(c3[0], c3[1], c3[2], 'integrated.html') + sig(c4[0], c4[1], c4[2], 'matcal.html') + sig(c5[0], c5[1], c5[2], 'cg_order.html') + '</tr>';
+      return `<tr><td class="cg"><span class="cdot ${w}"></span><b>${esc(GNM(g))}</b></td>` + sig(c1[0], c1[1], c1[2], 'supply.html') + sig(c2[0], c2[1], c2[2], 'supply.html') + sig(c3[0], c3[1], c3[2], 'integrated.html') + sig(c4[0], c4[1], c4[2], 'matcal.html') + sig(c5[0], c5[1], c5[2], 'cg_order.html') + '</tr>';
     };
     const sec = (pl, lab) => { const gs = G.filter((g) => g.pl === pl); return gs.length ? `<tr class="csec"><td colspan="6">${lab}</td></tr>` + gs.map(row).join('') : ''; };
     const H = past ? ['생산 (실적/계획)', '출하 (실적/계획)', `재고 (${mm}월 말)`, '소재', '납기'] : ['생산 계획', '출하 계획', '재고 (월말 예상)', `소재 (${mm}월 부족분)`, `납기 (${mm}월 결품)`];
