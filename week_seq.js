@@ -470,6 +470,13 @@
       const r = await fetch(API, { method: 'POST', headers: Object.assign({ Prefer: 'return=minimal' }, H), body: JSON.stringify({ who: who.slice(0, 40), plant, week: D.week, state, payload: JSON.stringify(env) }) });
       if (!r.ok) throw new Error('저장 실패 ' + r.status + ' ' + (await r.text()).slice(0, 120));
       try { localStorage.setItem('cgl-me', who); } catch (e) { /* 무시 */ }
+      if (state === 'confirm' && plant === 'cg') {                 // 11/10 점검: 도금 확정을 생산 캘린더가 읽는 확정본(cgl_week_confirm)에도 — 예전엔 아무도 안 읽어 확정해도 캘린더 고정·준수율에 반영 안 됐음
+        const cl = {};
+        LINES.cg.forEach((l) => { cl[l] = {}; sim(l).filter((v) => v.k === 'j').forEach((v) => { const d = dayOf(v.s); (cl[l][d] = cl[l][d] || []).push([v.x.con, +(+v.x.t).toFixed(1), '확정']); }); });
+        const wk = String(D.w0).slice(0, 10), env2 = await GP.encryptJSON({ week: wk, asOf: D.built, built: D.built, lines: cl, extra: {}, moves: [], src: 'week_seq' }, PW, `도금 주간 확정 ${wk}`);
+        const r2 = await fetch(API.replace('cgl_week_seq', 'cgl_week_confirm'), { method: 'POST', headers: Object.assign({ Prefer: 'return=minimal' }, H), body: JSON.stringify({ who: who.slice(0, 40), week: wk, payload: JSON.stringify(env2) }) });
+        if (!r2.ok) throw new Error('확정은 저장됐으나 생산 캘린더 확정본 저장 실패 ' + r2.status);
+      }
       $('ws-memo').value = '';
       await loadVers();
       const last = VERS[VERS.length - 1];

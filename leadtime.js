@@ -22,7 +22,7 @@
       const r = await fetch(API, { method: 'POST', headers: H, body: JSON.stringify({ payload: JSON.stringify(env) }) });
       if (!r.ok) throw new Error('저장 실패 ' + r.status);
       try { localStorage.setItem('cgl-me', who); } catch (e) { /* 무시 */ }
-      C.forEach((i) => { i.dataset.o = String(Math.round(+i.value)); }); mark();
+      C.forEach((i) => { i.value = i.dataset.o = String(Math.round(+i.value)); }); mark();   // 소수 입력(32.4)은 보낸 값(32)으로 칸도 맞춤 — 안 맞추면 '1개 변경'이 남아 같은 요청을 또 보낼 수 있음
       $('lt-res').textContent = '접수했습니다 — 다음 갱신(2시간 안)에 전 화면 반영';
       if (window.UI && UI.toast) UI.toast('리드타임 수정 접수');
     } catch (e) { $('lt-res').textContent = '⚠ ' + e.message + ' — 재시도 바랍니다'; $('lt-apply').disabled = false; }
