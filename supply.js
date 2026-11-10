@@ -392,14 +392,17 @@
     const shipBlock = (pl, gs) => gs.forEach((g, gi) => {
       [['s', '출하(t)'], ['k', '재고(천t)']].forEach(([rk, lb], ri) => {
         S2 += `<tr class="${rk === 's' ? 'r-s' : 'r-k'}${ri === 0 ? ' first' : ''}">` + (ri === 0 ? `<th class="c0 line ${pl}" rowspan="2">${NM[g]}</th>` : '') + `<th class="c1">${lb}</th>`;
-        let tot = 0;
+        let tot = 0, actT = 0;
         ds.forEach((d, i) => {
           let txt = '', cls = [], tip = '';
-          if (rk === 's') { const x = gship(g, d); tot += x.t; if (x.t >= 0.5) { txt = dayN(x.t); cls.push('sh'); if (x.t >= 999.5) cls.push('w5'); tip = `${md(d)} ${NM[g]} 출하 ${n0(x.t)}t${x.act ? ' (MES 출하 실적)' : ' (계획 출고)'}`; } }
+          if (rk === 's') { const x = gship(g, d); tot += x.t; if (x.act) actT += x.t; if (x.t >= 0.5) { txt = dayN(x.t); cls.push('sh'); if (x.t >= 999.5) cls.push('w5'); tip = `${md(d)} ${NM[g]} 출하 ${n0(x.t)}t${x.act ? ' (MES 출하 실적)' : ' (계획 출고)'}`; } }
           else { const x = D.sw[`${g}|${d}`]; if (x) { const r = x.tgt ? x.v / x.tgt : 0; txt = (x.v / 1000).toFixed(1); tip = `${md(d)} ${NM[g]} 기말 재고 ${n0(x.v)}t / 목표 ${n0(x.tgt)}t (${x.tgt ? Math.round(r * 100) : '-'}%)`; cls.push(x.v < 0 ? 'neg' : !x.tgt ? '' : r > 1.3 ? 'hi2' : r > 1 ? 'hi' : 'ok'); } }
           S2 += `<td class="${cls.join(' ')}${dayCls(d)}" style="--ci:${i}" data-d="${d}"${tip ? ` title="${esc(tip)}"` : ''}>${txt}</td>`;
         });
-        S2 += `<td class="tot">${rk === 's' ? n0(tot) : ''}</td></tr>`;
+        // 11/10 사용자 '재고·출하 표에도 같은 기준': 이번 달 출하 실적 누계 vs 출하 기준선(그룹 출하 실적 패턴) — 계 칸 아래 한 줄
+        const sh_ = (((D.PO || {}).groups || []).find((x) => x.key === g) || {}).ship || null, cur_ = ds.includes(today) && sh_ && sh_.due != null && sh_.month > 0;
+        const gp_ = cur_ ? Math.round((actT - sh_.due) / sh_.month * 100) : null;
+        S2 += `<td class="tot"${cur_ ? ` title="${esc(`${NM[g]} 출하 실적 누계 ${n0(actT)}t / 기준선 ${n0(sh_.due)}t(${sh_.dueBy || ''}) · 월 계획 ${n0(sh_.month)}t`)}"` : ''}>${rk === 's' ? n0(tot) : cur_ ? `<span style="font-size:13.5px;font-weight:700;color:${gp_ <= -10 ? 'var(--bad)' : gp_ <= -5 ? 'var(--warn)' : 'var(--good)'}">${gp_ > 0 ? '+' : ''}${gp_}%p</span>` : ''}</td></tr>`;
       });
     });
     const shipSum = (cls, lab, gs) => [['s', '출하(t)'], ['k', '재고(천t)']].forEach(([rk, lb], ri) => {   // 출하·재고 합(사용자 10/21: 도금·컬러 합)
