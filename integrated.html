@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>재고 전망</title>
+<title>제품 재고</title>
 <meta name="description" content="컬러·도금·소재 2026년 4분기 통합 일별 가동계획 — 확정 계획과 배정 근거">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/legacy.css?v=2611102314">
-<link rel="stylesheet" href="ui/theme.css?v=2611102314">
+<link rel="stylesheet" href="ui/legacy.css?v=2611102108">
+<link rel="stylesheet" href="ui/theme.css?v=2611102108">
 <style>
 .vcol { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface-2); }
 .vcol.on { border: 2px solid var(--brand); }
@@ -81,10 +81,24 @@ table.rules td.wrap, table.sum td.wrap { white-space: normal; }
 .st-chart.st-ok, .st-chart.st-warn, .st-chart.st-bad, .st-chart.st-over { border-top: 4px solid var(--good); } .st-chart.st-warn { border-top-color: var(--warn); } .st-chart.st-bad { border-top-color: var(--bad); } .st-chart.st-over { border-top-color: var(--ink-3); }
 .st-chart .st-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; } .st-chart .st-h b { font-size: 15px; }
 .st-chart .st-n { font-size: 20px; font-weight: 800; letter-spacing: -.02em; color: var(--ink); margin-right: 4px; } .st-chart .st-w { margin: 2px 0 8px; }
+/* 11/11 소재·재고 개편: 결론(제품 재고 목표 대비 · 그룹 상태 · 계획재) — 예전 '제품 재고' 화면 합침 */
+.iv-top { margin: 4px 0 18px; }
+table.t.iv-t { width: 100%; } html body table.t.iv-t :is(td, th).l { text-align: left !important; } html body table.t.iv-t :is(td, th):not(.l) { text-align: right !important; } table.t.iv-t td, table.t.iv-t th { padding: 8px 12px; } html body table.t.iv-t td.wrap { white-space: normal !important; }
+.iv-over { color: var(--warn); } .iv-ok { color: var(--good); }
+.iv-why { display: inline-block; margin-right: 12px; white-space: nowrap; font-size: 14px; }
+.iv-at { font-size: 13.5px; color: var(--ink-2); margin: 6px 0 10px; }
+.iv-chip { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; font-size: 14.5px; padding: 7px 12px; margin: 0 0 6px; border-radius: 8px; border-left: 4px solid var(--line); background: var(--surface-2); }
+.iv-chip > b { min-width: 118px; font-size: 14px; } .iv-chip i { font-style: normal; color: var(--ink-3); } .iv-chip span { font-size: 13.5px; color: var(--ink-2); }
+.iv-chip.bad { border-left-color: var(--bad); } .iv-chip.bad > b { color: var(--bad); } .iv-chip.warn { border-left-color: var(--warn); } .iv-chip.warn > b { color: var(--warn); }
+.iv-chip.over > b { color: var(--ink-2); } .iv-chip.over { border-left-color: var(--ink-3); } .iv-chip.ok { border-left-color: var(--good); } .iv-chip.ok > b { color: var(--good); }
+.iv-chip a { margin-left: auto; font-size: 13.5px; font-weight: 700; }
+.iv-ul { margin: 4px 0 10px; padding-left: 20px; font-size: 13.5px; line-height: 1.7; color: var(--ink-2); }
+.iv-rule h2 { font-size: 15px; margin: 16px 0 6px; } .iv-rule h2 .n { display: none; }
+#g-main > details.fold { margin-top: 16px; }
 </style>
 </head>
 <body>
-<header id="shell" data-page="integrated" data-crumb="종합" data-title="재고 전망" data-sub="제품·자가재 주말 재고 — 목표 대비"></header>
+<header id="shell" data-page="integrated" data-crumb="종합" data-title="제품 재고" data-sub="제품 재고 목표 대비 → 공장·판매그룹 주말 재고"></header>
 <div class="wrap pagebar noprint" hidden><span class="lbl">자가재 기준</span><div class="seg" role="group" aria-label="자가재 기준"></div></div>
 <main class="wrap" id="g-main">
   <section class="card empty" id="g-lock">
@@ -97,8 +111,9 @@ table.rules td.wrap, table.sum td.wrap { white-space: normal; }
   </section>
 </main>
 <footer class="foot"><div class="wrap"><span>계산 순서: 월 물량(그룹별) → 컬러 일별 → 도금 일별(최적화) → 자가재·소재. 기초재고 = 재고현황 월말, 과거 일자는 실적.</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611102314"></script>
-<script src="engine/crypto.js?v=2611102314"></script>
-<script src="integrated.js?v=2611102314"></script>
+<script src="ui/shell.js?v=2611102108"></script>
+<script src="engine/crypto.js?v=2611102108"></script>
+<script src="matref.js?v=2611102108"></script>
+<script src="integrated.js?v=2611102108"></script>
 </body>
 </html>

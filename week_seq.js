@@ -1,7 +1,9 @@
 /* 주간 작업순서(11/9 사용자): published/week_seq_cg.enc.json · week_seq_cc.enc.json (gadong-plan/tools/week_seq.py)
    초안 = 기존 작업지시 순서 규칙(도금 cg_wo_sequence · 컬러 wo_sequence)을 수 07:00 ~ 화 07:00 로 넓힌 것.
    화면: 순서 바꾸기(끌어 옮기기·위/아래·다른 날)·휴지 넣기·빼기/넣기 → 시각 다시 계산(아래 sim, Python week_seq.sim 과 같은 식)
-   저장 = Supabase cgl_week_seq(분석 암호로 암호화, 추가만 = 버전 이력) · 확정 = state confirm · 점검 = 아래 checks(같은 규칙 자료) */
+   저장 = Supabase cgl_week_seq(분석 암호로 암호화, 추가만 = 버전 이력) · 확정 = state confirm · 점검 = 아래 checks(같은 규칙 자료)
+   11/11 생산 화면 통합(04 생산계획 › 작업 순서): 주소 #cg·#cc = 주간 순서(편집) · #cg-wo·#cc-wo = 작업지시 제안(옛 도금·컬러 작업지시 순서 화면, cg_wo.js·wo.js 를 불러 붙임)
+   맨 위 라인 칸 = 결론(작업·톤·남는 시간·점검 위반·오늘 순서), 맨 아래 접기 = 기준·사양(전환 휴지·더미 기준 · 점검 규칙 · 편성 조건) */
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
@@ -26,6 +28,7 @@
   const GR = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E 극저', GREL: 'Gr.E 저탄', GRA: 'Gr.A', GRB: 'Gr.B' };
   const IND = { A: '508', B: '610', C: '305' };
 
+  let mode = /-wo\b/.test(location.hash) ? 'wo' : 'ed';
   let PW = '', plant = /cc/.test(location.hash) ? 'cc' : 'cg', D = null, J = {}, R = null, L = {}, line = null;
   let VERS = [], cur = null, dirty = false, CK = null, gapN = 0, hl = null;
   const DATA = {};
@@ -253,17 +256,21 @@
     else if (cur && cur.state !== 'reset') { v.className = 'ws-ver ' + (cur.state === 'confirm' ? 'cf' : 'sv'); v.textContent = `${cur.state === 'confirm' ? '확정' : '저장'} v${cur.v} · ${cur.who} · ${kst(cur.at)}`; }
     else { v.className = 'ws-ver'; v.textContent = `초안 · ${UI.fmtDateTime(D.built)} 자료`; }
     $('ws-plant').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.p === plant)));
-    // 라인 요약
+    // 라인 요약(결론): 점검 위반은 늘 계산(자세한 목록은 '점검'을 눌렀을 때만), 오늘 순서 앞 3건
+    const CKA = CK || checks(), today = dayOf(Math.max(W0, tms(D.now ? String(D.now).replace('T', ' ') : iso(W0))));
     $('ws-kpis').innerHTML = LINES[plant].map((l) => {
       const ev = sim(l), js = ev.filter((q) => q.k === 'j' && q.s < W1);
       const run = js.reduce((s, q) => s + q.rm, 0), ch = js.reduce((s, q) => s + q.ch.m, 0);
       const pl = ev.filter((q) => q.k === 'p' && q.s < W1).reduce((s, q) => s + Math.min(q.e, W1) - q.s, 0) + ev.filter((q) => q.k === 'g' && q.s < W1).reduce((s, q) => s + (q.e2 - q.s), 0);
       const wt = ev.filter((q) => q.k === 'w' && q.s < W1).reduce((s, q) => s + Math.min(q.e, W1) - q.s, 0);
       const end = ev.length ? Math.max(...ev.map((q) => q.e2 || q.e)) : tms(D.lines[l].from), left = W1 - end;
-      const nb = CK ? CK.filter((c) => c.l === l && c.lv === 'bad').length : null;
+      const nb = CKA.filter((c) => c.l === l && c.lv === 'bad').length;
+      const tj = ev.filter((q) => q.k === 'j' && dayOf(q.s) === today).slice(0, 3), nT = ev.filter((q) => q.k === 'j' && dayOf(q.s) === today).length;
+      const spc = (x) => (plant === 'cg' ? `${(+x.thick).toFixed(2)}×${n0(x.width)} ${esc(x.al || '')}` : `${esc(x.item || '')} ${esc(x.code || x.color || '')}`);
+      const td = tj.length ? `<div class="td"><em>오늘 ${md(today)} · ${nT}건</em>${tj.map((q) => `<div title="${esc(conOf(q.x))}"><b>${hhmm(q.s)}</b>${esc(q.x.con || q.x.id)} · ${spc(q.x)}</div>`).join('')}</div>` : `<div class="td"><em>오늘 ${md(today)}</em><div>${D.lines[l] && D.lines[l].stop ? esc(D.lines[l].stop.note || '휴지') : '작업 없음'}</div></div>`;
       return `<button type="button" class="ws-k" data-l="${l}" aria-pressed="${l === line}"><div class="ln">${l}</div><div class="v">${js.length}<small>건</small> ${n0(js.reduce((s, q) => s + q.x.t, 0))}<small>t</small></div>`
         + `<div class="b">생산 <b>${hrs(run)}</b> · 전환 휴지 <b>${hrs(ch)}</b></div><div class="b">계획·직접 휴지 <b>${hrs(pl)}</b>${wt ? ` · 기다림 <b>${hrs(wt)}</b>` : ''}</div>`
-        + `<div class="b">${left >= 0 ? `남는 시간 <b>${hrs(left)}</b>` : `<span class="w">기간 끝 ${hrs(-left)} 넘침</span>`}${nb != null ? ` · 점검 ${nb ? `<span class="w">위반 ${nb}</span>` : '<b>위반 0</b>'}` : ''}</div></button>`;
+        + `<div class="b">${left >= 0 ? `남는 시간 <b>${hrs(left)}</b>` : `<span class="w">기간 끝 ${hrs(-left)} 넘침</span>`} · 점검 ${nb ? `<span class="w">위반 ${nb}</span>` : '<span class="ok">위반 0</span>'}</div>${td}</button>`;
     }).join('');
     $('ws-kpis').querySelectorAll('.ws-k').forEach((b) => (b.onclick = () => { line = b.dataset.l; draw(); }));
     // 순서 표(요일별)
@@ -507,6 +514,8 @@
       $('ws-lock').hidden = true; $('ws-main').hidden = false;
       await open(plant);
       try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ }
+      setMode(mode);
+      if (toRules) { toRules = false; setTimeout(() => $('ws-fold').scrollIntoView({ block: 'start' }), 300); }
     } catch (e) {
       $('ws-main').hidden = true; $('ws-lock').hidden = false; $('ws-form').hidden = false;
       $('ws-msg').textContent = pw ? (/자료 없음/.test(e.message) ? '게시 자료가 없습니다(다음 포털 갱신 시 생성)' : '암호가 맞지 않습니다') : '';
@@ -515,15 +524,57 @@
   }
   async function go(p) {
     if (!PW || p === plant) return;
-    if (dirty && !confirm('저장하지 않은 수정이 있습니다. 바꾸면 사라집니다.')) { history.replaceState(null, '', '#' + plant); return; }
+    if (dirty && !confirm('저장하지 않은 수정이 있습니다. 바꾸면 사라집니다.')) { history.replaceState(null, '', hashOf(plant, mode)); return; }
     try { await open(p); } catch (e) { $('ws-res').textContent = '자료 읽기 실패: ' + e.message; }
   }
-  $('ws-plant').querySelectorAll('button').forEach((b) => (b.onclick = () => { if (b.dataset.p !== plant) location.hash = b.dataset.p; }));
+  let toRules = false;
+  const hashOf = (p, m) => '#' + p + (m === 'wo' ? '-wo' : '');
+  $('ws-plant').querySelectorAll('button').forEach((b) => (b.onclick = () => { if (b.dataset.p !== plant) location.hash = hashOf(b.dataset.p, mode); }));
+  $('ws-mode').querySelectorAll('button').forEach((b) => (b.onclick = () => { if (b.dataset.m !== mode) location.hash = hashOf(plant, b.dataset.m); }));
   /* 위 보기(전체·도금·컬러)와 맞춤 — 컬러를 골랐는데 도금이 나오던 문제(11/10 사용자) */
-  const scopeGo = () => { const sc = window.UI && UI.scope ? UI.scope() : 'all', want = sc === 'C' ? 'cc' : sc === 'G' ? 'cg' : null; if (want && want !== plant) location.hash = want; };
+  const scopeGo = () => { const sc = window.UI && UI.scope ? UI.scope() : 'all', want = sc === 'C' ? 'cc' : sc === 'G' ? 'cg' : null; if (want && want !== plant) location.hash = hashOf(want, mode); };
   if (window.UI && UI.onScope) UI.onScope(scopeGo);
-  if (!location.hash) scopeGo();
-  addEventListener('hashchange', () => go(/cc/.test(location.hash) ? 'cc' : 'cg'));
+  if (!location.hash || /^#(cg|cc)?-?rules$/.test(location.hash)) { if (/rules/.test(location.hash)) { $('ws-fold').open = true; toRules = true; history.replaceState(null, '', location.pathname + location.search + hashOf(plant, 'ed')); } scopeGo(); }
+  addEventListener('hashchange', () => { const m = /-wo\b/.test(location.hash) ? 'wo' : 'ed', p = /cc/.test(location.hash) ? 'cc' : 'cg'; if (p !== plant) go(p).then(() => setMode(m)); else setMode(m); });
+  /* 작업지시 제안(옛 작업지시 순서 화면): 처음 열 때 그 공정 스크립트를 불러 붙임. 편집 칸은 숨김(저장 안 한 수정은 그대로 남음) */
+  const MOD = { cg: ['cg_wo.js', 'wo-host', 'WO_CG'], cc: ['wo.js', 'wc-host', 'WO_CC'] }, loaded = {};
+  const need = (p) => loaded[p] || (loaded[p] = new Promise((ok) => { const sc = document.createElement('script'); sc.src = MOD[p][0] + '?v=2611111200'; sc.onload = () => ok(window[MOD[p][2]]); sc.onerror = () => ok(null); document.body.appendChild(sc); }));
+  function setMode(m) {
+    mode = m;
+    $('ws-mode').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.m === mode)));
+    ['ws-kpis', 'ws-ck', 'ws-miss'].forEach((id) => ($(id).hidden = mode === 'wo'));
+    document.querySelector('.ws-act').hidden = mode === 'wo'; document.querySelector('.ws-grid').hidden = mode === 'wo';
+    $('ws-wk').hidden = $('ws-ver').hidden = $('ws-meta').hidden = mode === 'wo';
+    Object.entries(MOD).forEach(([p, [, host]]) => ($(host).hidden = !(mode === 'wo' && p === plant)));
+    if (mode === 'wo') need(plant);
+    if ($('ws-fold').open) foldFill();
+  }
+  /* 기준·사양(맨 아래 접기): 주간 순서 계산에 쓰는 전환 휴지·더미 기준 · 점검 규칙 · 시간 계산 + 작업지시 편성 조건(제안 화면 규칙) */
+  function specHtml() {
+    if (!D) return '';
+    const W = `<ul class="ws-ul"><li>하루 = 07시 ~ 다음날 07시(MES 일수) · 기간 = ${dnm(dayOf(tms(D.w0)))} 07시 ~ ${dnm(dayOf(tms(D.w1) - 1))} 다음날 07시(오늘부터 7일, 컬러는 확정 지시가 끝날 때까지)</li>`
+      + (plant === 'cg' ? '<li>생산 시간 = 코일 무게 ÷ 시간당 생산량(같은 두께·폭 2026년 실적) · 그날 처음 닿을 때 계획 휴지</li>' : '<li>생산 시간 = 길이 ÷ L/S(26년 1월~ 실적) × 라인 보정 · 도료·PF 입고 전이면 기다림 · 그날 처음 닿을 때 계획 휴지</li>')
+      + `<li>초안 = 작업지시 제안 규칙(아래 편성 조건)을 이 기간으로 넓힌 것 · 저장 = 버전 이력(암호화) · 확정 = 그 주 약속본${plant === 'cg' ? '(생산 일정 화면 「다음 주 확정」에도 같이 저장)' : ''}</li></ul>`;
+    let T = '';
+    if (plant === 'cc' && R.trans) {
+      const K = [...new Set(Object.values(R.trans).flatMap((x) => Object.keys(x)))].sort((a, b) => (a === '사양 같음') - (b === '사양 같음') || a.split('+').length - b.split('+').length || a.localeCompare(b));
+      T = `<h4>컬러 전환 휴지 <small>분 · 앞뒤 작업에서 바뀌는 것 × 라인 · 1년 실적 평균(색상교체·롤 교체·청소·더미)</small></h4><div class="ct-wrap"><table class="ct-t ws-tr"><thead><tr><th class="l">바뀌는 것</th>${LINES.cc.map((l) => `<th class="r">${l}</th>`).join('')}</tr></thead><tbody>`
+        + K.map((k) => `<tr><td class="l">${k === '사양 같음' ? '새 주문(사양 같음)' : esc(k)}</td>${LINES.cc.map((l) => { const v = (R.trans[l] || {})[k]; return `<td class="r">${v == null ? '<span class="sub">-</span>' : n0(v)}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div>';
+    }
+    if (plant === 'cg' && R.pt) {
+      const K = [...new Set(Object.values(R.pt).flatMap((x) => Object.keys(x)))];
+      T = `<h4>도금 더미 기준 <small>바뀜별 1년 실적 더미 비율 · 들어갈 때 분 · 톤 — ${R.dummyP || 50}% 이상만 시간에 넣음, 그 아래는 '더미 가능' 표시</small></h4><div class="ct-wrap"><table class="ct-t ws-tr"><thead><tr><th class="l">바뀌는 것</th>${LINES.cg.map((l) => `<th class="r">${l} 비율</th><th class="r">분</th><th class="r">톤</th>`).join('')}</tr></thead><tbody>`
+        + K.map((k) => `<tr><td class="l">${esc(k)}</td>${LINES.cg.map((l) => { const x = (R.pt[l] || {})[k]; return x ? `<td class="r">${x.p >= (R.dummyP || 50) ? `<b>${n0(x.p)}%</b>` : n0(x.p) + '%'}</td><td class="r">${n0(x.m)}</td><td class="r">${n1(x.t)}</td>` : '<td class="r"><span class="sub">-</span></td><td></td><td></td>'; }).join('')}</tr>`).join('') + '</tbody></table></div>'
+        + `<h4>점검 규칙</h4><ul class="ws-ul"><li>두께 차 ${R.thkStep}mm 이내(${Object.entries(R.thkStepThin || {}).map(([l, v]) => `${l} 0.4t 미만 ${v}mm`).join(' · ')}) · 두께비 ${R.thkRatio}배 이내 · 내경 바뀜은 ${R.indThin}t 미만 금지</li><li>폭 넓힘 ${R.widenLim}mm 까지(같은 두께는 넓히지 않음) · 재질 바로 못 잇는 짝 금지(사이 재질)</li><li>2CGL 후처리 같은 층 다른 약액 = 사이 ${R.trtGapN}코일·${n0(R.trtGap)}분 · M/C 날 첫 ${R.mcHead}코일 가전 금지 · 계획 강종 아닌 코일 · 소재 입고 전 작업</li></ul>`;
+    }
+    return `<h3>주간 순서</h3>${W}${T}<h3>작업지시 편성 조건 · 기준표</h3>`;
+  }
+  function foldFill() {
+    $('ws-spec').innerHTML = specHtml();
+    const el = $('ws-rules'); el.innerHTML = '<p class="sub">불러오는 중…</p>';
+    const p = plant; need(p).then((M) => { if (M && p === plant) M.rules(el); else if (!M) el.innerHTML = '<p class="sub">규칙 자료를 불러오지 못했습니다</p>'; });
+  }
+  $('ws-fold').addEventListener('toggle', () => { if ($('ws-fold').open) foldFill(); });
   $('ws-save').onclick = () => save('save');
   $('ws-conf').onclick = () => save('confirm');
   $('ws-reset').onclick = () => { if (confirm('초안으로 되돌릴까요? (저장본은 이력에 남습니다)')) save('reset'); };

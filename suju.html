@@ -85,7 +85,7 @@ html body main table.sj-cal tr.ga td { height: 44px; } .sj-cal tr.ga td.ac b { d
 /* 구역 머리 */
 html body main table.sj-cal tr.sec td { text-align: left !important; background: var(--ink); color: var(--surface); font-weight: 700; font-size: 14px !important; padding: 0 10px; height: 30px; }
 /* 소재 칸 */
-.sj-cal td.m1, .sj-cal td.m2, .sj-cal td.m3 { font-weight: 700; } .sj-cal td.m1 { background: #dcefe3; } .sj-cal td.m2 { background: #fbecc8; } .sj-cal td.m3 { background: #f8d4d4; color: #9b1c1c; }
+.sj-cal td.m1, .sj-cal td.m2, .sj-cal td.m3 { font-weight: 700; } .sj-cal td.m1 { background: #dcefe3; color: #17432a; } .sj-cal td.m2 { color: #5a3d00; } .sj-cal td.m2 { background: #fbecc8; } .sj-cal td.m3 { background: #f8d4d4; color: #9b1c1c; }
 .sj-cal td i { font-style: normal; font-size: 13.5px; color: #1f4f9c; margin-left: 1px; }
 .sj-cbt td.sj-cb { width: 38%; min-width: 260px; }
 .sj-cb .tr { position: relative; height: 16px; border-radius: 4px; overflow: hidden; }
@@ -134,6 +134,56 @@ html body main table.ct-t.sj-mx { width: 100%; }
 .sj-act .ct-t td { padding-top: 6px !important; padding-bottom: 6px !important; }
 .sj-h h2 { font-size: 19px; } .sj-h p { font-size: 14px; }
 .wrn { color: var(--warn); }
+/* 11/11 개편 */
+.nw { white-space: nowrap; }
+.sj-h h2 { margin: 0; }
+/* 월간 운영 일정 — 맨 위 단계 띠 */
+.sj-sch2 { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px 12px; margin: 0 0 14px; }
+.sj-sch2 .cap { display: flex; align-items: center; gap: 14px; margin: 0 0 8px; font-size: 14.5px; } .sj-sch2 .cap span { color: var(--ink-2); font-size: 13.5px; white-space: nowrap; }
+.sj-mb { flex: 1; height: 8px; background: var(--sub); border-radius: 4px; position: relative; overflow: hidden; } .sj-mb i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--brand-2); border-radius: 4px; }
+.sj-stps { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 1300px) { .sj-stps { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .sj-stps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.sj-stp { border: 1px solid var(--line); border-top: 4px solid var(--line); border-radius: 8px; padding: 6px 9px 7px; font-size: 13.5px; line-height: 1.45; word-break: keep-all; }
+.sj-stp .h { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin: 0 0 2px; } .sj-stp .h .ct-b { font-size: 13.5px; padding: 0 7px; }
+.sj-stp .dt { white-space: nowrap; } .sj-stp.done { color: var(--ink-2); } .sj-stp.done .t { color: var(--ink-2); }
+.sj-stp.now { border-top-color: var(--warn); background: var(--warn-bg); } .sj-stp.now .t { font-weight: 700; } .sj-stp.next { border-top-color: var(--brand-2); }
+/* 그룹 관제 매트릭스 */
+html body main table.ct-t.sj-mx2 { width: 100%; font-variant-numeric: tabular-nums; }
+.sj-mx2 th, .sj-mx2 td { padding: 7px 8px !important; vertical-align: middle; }
+.sj-mx2 thead tr.g th { text-align: center; font-size: 14.5px; color: var(--ink); } .sj-mx2 thead small { font-weight: 500; color: var(--ink-2); font-size: 13.5px; margin-left: 6px; }
+html body main .sj-mx2 .bk { border-left: 2px solid var(--line) !important; }
+.sj-mx2 td.iss { width: 96px; } .sj-mx2 td.iss .ct-b { display: block; width: max-content; margin: 2px 0; }
+.sj-mx2 td.pcol { min-width: 112px; } .sj-pc .ct-b { white-space: nowrap; } .sj-pc .sj-bar { margin: 6px 0 0; height: 7px; } .sj-pc .nt { display: block; font-size: 13.5px; color: var(--ink-2); margin-top: 3px; }
+.sj-mx2 td[rowspan] { background: var(--tint); }
+.sj-mx2 tr.sj-sub td { background: var(--sub); font-weight: 700; } .sj-mx2 tr.sj-sub small { font-weight: 500; color: var(--ink-2); font-size: 13.5px; }
+.sj-mx2 td.nm b { white-space: nowrap; } html body main .sj-mx2 thead tr:not(.g) th.bk:not(.r) { text-align: left !important; }
+/* 표 안 구역 줄 */
+html body main .ct-t tr.sj-sec td { background: var(--ink); color: var(--surface); font-weight: 700; font-size: 14px; padding: 6px 10px !important; text-align: left; }
+/* 기준·사양 접기 */
+.sj-spec { margin-top: 18px; } .sj-spb { padding: 0 14px 14px; } .sj-spb h3 { font-size: 15px; margin: 14px 0 6px; } .sj-spb .sj-def { margin: 0; }
+/* 월 수주 누적 */
+.sj-cum .sj-svg text { font-size: 13.5px; }
+.ct-t tr.cur td { background: var(--tint); }
+/* 수출 선적 */
+.sj-exg { margin-top: 4px; display: grid; gap: 18px; } .sj-exb h3 { font-size: 16px; margin: 4px 0 6px; } .sj-exb h3 small { font-size: 13.5px; color: var(--ink-2); font-weight: 500; margin-left: 6px; }
+.sj-exk { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 14px; margin: 0 0 8px; } .sj-exk span { white-space: nowrap; color: var(--ink-2); } .sj-exk b { color: var(--ink); font-size: 15px; }
+.sj-sb { display: flex; height: 14px; border-radius: 4px; overflow: hidden; background: var(--sub); min-width: 110px; } .sj-sb i { display: block; height: 100%; }
+html body main table.ct-t.sj-ext, html body main table.ct-t.sj-cbt, html body main table.ct-t.sj-mt2, html body main table.ct-t.sj-thr { width: 100%; } .sj-ext td.sbc { width: 26%; } .sj-ext td.stl { white-space: normal; }
+.sj-st { display: inline-block; white-space: nowrap; font-size: 13.5px; border-left: 4px solid var(--c); padding: 0 6px; margin: 1px 4px 1px 0; background: var(--sub); border-radius: 3px; }
+.ct-t tr.hot td { background: var(--bad-bg, rgba(192, 57, 43, .07)); }
+/* 1주 작업 편성 */
+html body main table.ct-t.sj-wo { width: 100%; table-layout: fixed; min-width: 980px; }
+.sj-wo th, .sj-wo td { vertical-align: top !important; padding: 6px 6px !important; } .sj-wo th.lab, .sj-wo td.lab { width: 92px; } .sj-wo th.we { color: var(--bad); }
+.sj-wo td.lab b { display: block; font-size: 14.5px; } .sj-wo td.lab span { font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
+.sj-wo .dt { font-size: 13.5px; color: var(--ink-2); text-align: right; margin: 0 0 3px; white-space: nowrap; }
+.wo { display: flex; justify-content: space-between; gap: 6px; border-left: 5px solid var(--c); background: color-mix(in srgb, var(--c) 13%, transparent); border-radius: 3px; padding: 1px 6px; margin: 0 0 3px; font-size: 13.5px; line-height: 1.5; white-space: nowrap; overflow: hidden; }
+.wo b { overflow: hidden; text-overflow: ellipsis; } .wo span { font-variant-numeric: tabular-nums; }
+/* 소재 */
+.sj-mt2 .tags { margin-top: 3px; } .sj-mt2 .tags .sj-tag { margin: 1px 3px 1px 0; }
+.sj-mt2 td.dcol { min-width: 150px; } .sj-dv b { font-size: 18px; white-space: nowrap; } html body main .sj-dv b small { display: inline !important; font-size: 13.5px; margin-left: 1px; } .sj-dv .sj-bar { margin: 4px 0 0; height: 7px; }
+.sj-ln td.nm { white-space: nowrap; } html body main .sj-ln td.sj-cb { width: auto; min-width: 90px; } html body main .sj-ln td.nx { white-space: normal !important; word-break: keep-all; min-width: 110px; } html body main .sj-ln th, html body main .sj-ln td { padding-left: 7px !important; padding-right: 7px !important; }
+@media (max-width: 700px) { .ct-kpi .l { white-space: normal; } .sj-sch2 .cap { flex-wrap: wrap; } .sj-mb { flex-basis: 100%; order: 3; } }
 </style>
 </head>
 <body>

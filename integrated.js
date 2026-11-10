@@ -102,7 +102,8 @@
   }
 
   // ---------- ② 재고·소재 추이 표 ----------
-  let PT = null;                                                     // portal.enc.json(사내 PC 매일 게시): stockTrend = 속보 원천 표 일별 재고(그룹 g:C건재 등) → 아래 그래프·타일에 실제 값으로
+  let PT = null, PS = null;   // PS = 계획재(planstock.enc.json) — 결론 한 줄 · 사양표
+  let BASIS = '';                                                     // portal.enc.json(사내 PC 매일 게시): stockTrend = 속보 원천 표 일별 재고(그룹 g:C건재 등) → 아래 그래프·타일에 실제 값으로
   function secStock() {
     const P0 = O.variants[V], W = O.weeks, today = UI.today(O.asOf);   // 공통 기준일(ui/shell.js, 11/8)
     // 2026-10-21 사용자: 재고 추이 = 가동 캘린더와 같은 숫자 — 제품 재고는 매일 롤링(portal.stockRoll: 어제 실제 재고 + 아침 재계획 생산 − 계획 출고), 자가재·구매 소재는 계획 그대로
@@ -188,6 +189,34 @@
         <svg viewBox="0 0 ${Wd} ${H}" class="cv" role="img" aria-label="${K.nm} 전체 재고 추이">${g}</svg></div>`;
     };
     const plants = ['G', 'C'].filter((pl) => inS(pl)).map(plant).join('');
+    // ⓪ 결론(11/11 소재·재고 개편 — 예전 '제품 재고'(ct_prod#stock) 화면을 합침): 제품 재고 목표 대비 · 그룹 상태 · 계획재
+    const SHIPK = { 도금판매: 'G국내', 도금수출: 'G수출', 자동차강판: 'G자동차', 컬러수출: 'C수출', 컬러건재: 'C건재' };
+    const pmon = String((PT && PT.asOf) || today).slice(0, 7), pdim = new Date(+pmon.slice(0, 4), +pmon.slice(5), 0).getDate(), pel = +String((PT && PT.asOf) || today).slice(8, 10) / pdim;
+    const why = (key) => {   // 목표 초과 근거(같은 판매그룹): 출하 일정 미달 · 생산 진도 초과(월 계획 × 경과율의 110% 넘음) — 예전 제품 재고 화면과 같은 계산
+      const out = [], g = ((PT && PT.groups) || []).find((x) => x.key === key), sr = ((PT && PT.sr && PT.sr.ship) || []).find((x) => SHIPK[x.name] === key);
+      const SD = PT && PT.shipDay && PT.shipDay.g && PT.shipDay.g[key], mes = SD ? Object.entries(SD).filter(([d]) => d.slice(0, 7) === pmon).reduce((a, [, v]) => a + v, 0) : null;
+      const a = g && g.ship ? g.ship.actual : mes != null ? mes : sr && sr.actual;
+      if (sr && sr.sched && a < sr.sched) out.push(`출하 일정 미달 ${n0(sr.sched - a)}t`);
+      if (g && g.prod && g.prod.month && g.prod.actual > g.prod.month * pel * 1.1) out.push(`생산 진도 초과 ${n0(g.prod.actual - g.prod.month * pel)}t`);
+      return out.map((w) => `${GN[key] || key} ${w}`);
+    };
+    const pkeys = (nm) => (/^도금/.test(nm) ? (/자가재/.test(nm) ? [] : ['G수출', 'G국내', 'G자동차']) : ['C수출', 'C건재']);
+    const cats = ((PT && PT.sr && PT.sr.stock) || []).filter((x) => !/소재/.test(x.name) && inS(/^도금/.test(x.name) ? 'G' : 'C'));
+    const crow = (x) => { const r = x.target ? x.current / x.target : null, over = r != null && r > 1, hs = over ? pkeys(x.name).flatMap(why) : [];
+      return `<tr><td class="l nm">${esc(x.name)}</td><td><b>${n0(x.current)}</b></td><td>${x.target ? n0(x.target) : '<span class="muted">목표 없음</span>'}</td><td>${r == null ? '-' : `<b class="${over ? 'iv-over' : 'iv-ok'}">${Math.round(r * 100)}%</b>`}</td><td>${x.target ? `${x.current >= x.target ? '+' : '−'}${n0(Math.abs(x.current - x.target))}` : '-'}</td>`
+        + `<td class="l wrap">${over ? (hs.length ? hs.map((h) => `<span class="iv-why">${esc(h)}</span>`).join('') : '<span class="muted">근거 자료 없음</span>') : r == null ? '-' : '<span class="muted">목표 이내</span>'}</td></tr>`; };
+    const gs = rows.map((r) => { const ss = r.v.map((_, i) => st(r, i)), ahead = ['bad', 'warn'].find((k) => ss.slice(wi + 1).includes(k)); return { r, now: ss[wi], ahead, wk: ahead ? ss.slice(wi + 1).indexOf(ahead) + wi + 1 : -1 }; });
+    const chip = (tone, label, L) => (L.length ? `<div class="iv-chip ${tone}"><b>${label}</b>${L.join('<i>·</i>')}</div>` : '');
+    const nm = (r) => esc(GN[r.k] || r.k);
+    const PSv = PS && PS.tot ? PS.tot : null;
+    const psLine = PSv && inS('C') ? `<div class="iv-chip ${PSv.stock > PSv.target * 1.5 ? 'warn' : ''}"><b>계획재</b>${n0(PS.n)}개 사양 ${n0(PSv.stock)}t · 목표 ${n0(PSv.target)}t의 ${Math.round(PSv.stock / PSv.target * 100)}% · ${+String(PS.month).slice(5)}월말 예상 ${n0(PSv.end[0])}t <i>·</i> 결품·안전재고 미만 ${n0((PS.flags.short || 0) + (PS.flags.low || 0))}개 사양 <a href="planstock.html">계획재 상세 →</a></div>` : '';
+    const topH = `<div class="iv-top"><div class="scroll"><table class="t iv-t"><thead><tr><th class="l">제품 재고</th><th>실재고</th><th title="'27 판생그룹 월말 최대">목표</th><th>목표 대비</th><th>차이</th><th class="l">초과 근거(같은 판매그룹)</th></tr></thead><tbody>${cats.map(crow).join('') || '<tr><td colspan="6" class="muted">판매생산속보 재고 없음</td></tr>'}</tbody></table></div>
+      <p class="iv-at">판매생산속보 ${PT && PT.sr ? esc(md(String(PT.sr.asOf).slice(0, 10))) : '-'} 기준 · 아래 그래프 = ${md(W[wi])} 주말 계획 · 실제(속보 원천 표)</p>
+      ${chip('bad', '부족 위험', gs.filter((x) => x.now === 'bad').map((x) => nm(x.r)))}
+      ${chip('warn', '앞으로 목표 미만', gs.filter((x) => x.now !== 'bad' && x.ahead).map((x) => `${nm(x.r)} <span>${md(W[x.wk])} 주 ${n0(x.r.v[x.wk])}t</span>`))}
+      ${chip('over', '상한 초과', gs.filter((x) => x.now === 'over').map((x) => `${nm(x.r)} <span>${x.r.tgt ? `목표의 ${Math.round(x.r.v[wi] / x.r.tgt[wi] * 100)}%` : ''}</span>`))}
+      ${chip('ok', '정상', gs.filter((x) => x.now === 'ok' && !x.ahead).map((x) => nm(x.r)))}
+      ${psLine}</div>`;
     // ③ 주별 표(접어 둠)
     const head = `<tr><th class="l">주 끝</th>${W.map((d) => `<th>${md(d)}</th>`).join('')}<th>목표</th></tr>`;
     let prevGrp = null;
@@ -196,12 +225,13 @@
       return `<tr${sep}><td class="l nm">${esc(GN[r.k] || r.k)}</td>${r.v.map((v, i) => `<td class="h-${st(r, i)}" title="${md(W[i])} ${n0(v)}t${r.tgt ? ' / 목표 ' + n0(r.tgt[i]) : ''}">${k1(v)}</td>`).join('')}<td class="muted">${r.tgt ? k1(r.tgt[r.tgt.length - 1]) : '0 이상'}</td></tr>`;
     }).join('');
     return { html: card('s-stock', '①', '제품·자가재 재고 추이', `${SRL ? `제품${SRL.v && SRL.v['G자가재'] ? '·자가재' : ''} = 매일 롤링(어제 ${md(SRL.asOf)} 실제 재고 + 아침 재계획)${SRL.v && SRL.v['G자가재'] ? '' : ` · 자가재 = ${VN[V]}`}` : `${VN[V]} 기준`} · 주말 재고 · ${md(W[wi])} 주부터 12월 말까지`, `
+      ${topH}
       ${plants ? `<h3 class="st-sec">공장별 전체 재고 <small>숫자 = 천t · 초록 = 실제(판매생산속보, 일별) · 파랑 = 계획(주말 예측)</small></h3><div class="dc-grid st-charts st-plant">${plants}</div>` : ''}
       <h3 class="st-sec">판매그룹별 재고 <small>숫자 = 주말 재고(천t) · 목표 = TF 목표 일수 × 다음 달 하루 판매 · 자가재 = 도금 → 컬러 소재(목표 없음, 바닥나지 않게)</small></h3>
       <div class="legend"><span><i style="background:var(--brand)"></i>주말 재고(계획)</span><span><i style="background:var(--s3)"></i>실제(속보, 일별)</span><span><i class="dash" style="background:var(--ink-2)"></i>목표</span><span><i class="box" style="background:color-mix(in srgb, var(--good) 18%, transparent)"></i>정상 범위(목표의 90~130%)</span><span><i class="dash" style="background:var(--bad)"></i>안전재고</span></div>
       <div class="dc-grid st-charts">${rows.map(mini).join('')}</div>
       <details class="tv"><summary>주별 표로 보기 (단위 천t)</summary><div class="scroll"><table class="t heat"><thead>${head}</thead><tbody>${body}</tbody></table></div></details>
-      <p class="small">구매 소재(F/H, 컬러 소재)의 재고·입고·발주는 <a href="procure.html">소재 발주</a>에서. 계산: 제품 = 매일 롤링 — 어제 말 실제 재고(판매생산속보 원천 표) + 아침 재계획 생산 − 계획 출고(가동 캘린더 재고와 같은 값). 재고 목표: 공장 월말 최대 = '27 판생그룹 목표(도금 판매재 22,300 · 컬러 제품 19,320 · 도금 소재 12,600 · 컬러 소재 20,940t), 그룹 = TF 목표 일수(2026-10-12 결정). 자가재 = 기초재고(재고현황 월말) + 도금 입고 − 컬러 출고(생산일 8일 전). 실제 재고(초록 선) = 판매생산속보 원천 표(MES 속보 8·9번 표)의 부서별 날짜별 합계 — 속보와 같은 값. 자가재는 속보에 강종별 값이 없어 실제 선 없음.</p>`) };
+`) };
   }
 
   // 재고 그래프 마우스 올리면 수치(2026-10-14): 커서와 가장 가까운 날짜의 점들(계획·실제)을 한 상자에 — 점의 <title> 문구 그대로
@@ -379,14 +409,29 @@
     return { html: card('s-need', '③', '추가 필요 자료', '', `<table class="t sum"><thead><tr><th></th><th>자료</th><th>활용처</th><th>현황</th></tr></thead><tbody>${R.filter((r) => inS(r[4])).map((r) => `<tr><td class="c"><span class="st ${r[0]}">${S[r[0]]}</span></td><td class="l nm">${r[1]}</td><td class="l wrap">${r[2]}</td><td class="l wrap">${r[3]}</td></tr>`).join('')}</tbody></table>`) };
   }
 
+  // 맨 아래 '기준·사양'(11/11): 재고 목표·안전재고 정의(TF 목표 일수 · '27 월말 최대) — 화면 숫자의 기준
+  let refOpen = false;
+  function refBasis() {
+    const TR = O.tfRules || {}, D = TR.days || {}, T = TR.target || {}, MX = O.stockMax || TR.stockMax || {};
+    const ks = Object.keys(D);
+    return `<h3 class="ref-h">재고 기준</h3><ul class="iv-ul">
+      <li><b>목표(점선)</b> = TF 목표 일수 × 다음 달 하루 판매 · <b>정상 범위</b> = 목표의 90%~상한 · <b>상한 초과</b> = 상한 일수를 넘는 재고 · <b>안전재고(붉은 점선)</b> 아래 = 부족 위험</li>
+      <li><b>제품 재고 목표</b> = '27 판생그룹 월말 최대(${Object.entries(MX).map(([k, v]) => `${esc(k)} ${n0(v)}t`).join(' · ')})</li>
+      <li><b>제품 재고</b> = 매일 롤링 — 어제 말 실제 재고(판매생산속보 원천 표) + 아침 재계획 생산 − 계획 출고(가동 캘린더 재고와 같은 값). 실제(초록 선) = 판매생산속보 원천 표 부서별 날짜별 합계</li>
+      <li><b>자가재</b> = 기초재고(재고현황 월말) + 도금 입고 − 컬러 출고(생산일 8일 전) · 목표 없음(바닥나지 않게) · 속보에 강종별 값이 없어 실제 선은 합계만</li>
+      <li>구매 소재(F/H · 컬러 소재) 재고·입고·발주 = <a href="matcal.html">소재 관제</a> · <a href="procure.html">발주</a></li></ul>
+      ${ks.length ? `<div class="scroll"><table class="t ref-t"><thead><tr><th class="l">판매그룹·구분</th><th>상한 일수</th><th>목표 일수</th></tr></thead><tbody>${ks.map((k) => `<tr><td class="l">${esc(GN[k] || k)}</td><td>${n0(D[k])}</td><td>${T[k] != null ? n0(T[k]) : '<span class="muted">상한과 같음</span>'}</td></tr>`).join('')}</tbody></table></div>
+      <p class="ref-n">${esc((TR.src && TR.src.who) || 'TF 확정값')} · ${esc(UI.fmtDate((TR.src && TR.src.at) || ''))} — 일수를 바꾸려면 <a href="rules.html">계획 규칙</a></p>` : ''}`;
+  }
   function rerender() { const y = window.scrollY; render(); window.scrollTo(0, y); }
   function render() {
     const r1 = secRule(), r2 = secNeed(), strip = (h) => h.replace(/^<section class="card" id="[^"]+">/, '').replace(/<\/section>$/, '');
-    const refs = { html: `<details class="card more" id="s-refs"><summary><h2>계획 기준 · 추가 필요 자료 <small>배치 규칙과 미수령 자료</small></h2></summary>${strip(r1.html)}${strip(r2.html)}</details>` };
+    const refs = { html: `<details class="fold" id="s-refs"${refOpen ? ' open' : ''}><summary>기준·사양 <small>재고 목표·안전재고 기준 · 계획재 사양표 · 배치 규칙 · 추가 필요 자료</small></summary>${refBasis()}${PS ? MatRef.specHtml(PS) : ''}<div class="iv-rule">${strip(r1.html)}${strip(r2.html)}</div></details>` };
     const secs = [secStock(), refs];   // 일별 가동 = 가동 캘린더·가동 현황, 매일 감시 = 자료 상태·가동 현황(겹쳐서 뺌)
     $('g-main').innerHTML = secs.map((s) => s.html).join('');
     secs.forEach((s) => s.after && s.after());
     hoverTips($('g-main'));
+    const rf = $('s-refs'); if (rf) rf.addEventListener('toggle', () => { refOpen = rf.open; });
     UI.sub(`${{ all: '제품·자가재', G: '도금 제품·자가재', C: '컬러 제품' }[UI.scope()]} 주말 재고 — 목표 대비 · ${(() => { const W = O.weeks && O.weeks.length ? [O.weeks[0], O.weeks[O.weeks.length - 1]] : [MONTHS[0], MONTHS[MONTHS.length - 1]]; return `${W[0].slice(0, 4)}년 ${+W[0].slice(5, 7)}~${W[1].slice(0, 4) !== W[0].slice(0, 4) ? `${W[1].slice(2, 4)}년 ` : ''}${+W[1].slice(5, 7)}월`; })()} · 기준 ${md(UI.today(O.asOf))}`);   // 11/10: 달 범위 = 재고 추이 주(weeks) — 계획 자료 달(27.2월까지)로 써서 '10~2월'인데 그래프는 12월까지였음   // 계산 시각 대신 공통 기준일(11/8) · 11/9: 달 범위 = 자료
     UI.reveal($('g-main'));
     const seg = document.querySelector('.seg');
@@ -408,6 +453,7 @@
       const cm = UI.today(O.asOf).slice(0, 7); mon = MONTHS.includes(cm) ? cm : MONTHS[0];
       render();
       GP.latest('portal.enc.json').then((e) => (e ? GP.decryptJSON(e, pw) : null)).then((x) => { if (x) { PT = x; rerender(); } }).catch(() => { /* 실제 재고 없으면 예측만 */ });
+      MatRef.load('planstock.enc.json', pw).then((x) => { if (x) { PS = x; rerender(); } });   // 계획재 한 줄 · 사양표
       UI.onScope(() => rerender());
     } catch (e) { $('g-form').hidden = false; $('g-msg').textContent = pw ? '암호가 맞지 않습니다' : ''; }
   }

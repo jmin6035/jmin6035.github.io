@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>통합 관제</title>
-<meta name="description" content="오늘 상황 · 납기 위험 · 라인 진도">
+<meta name="description" content="납기 위험 · 생산·출하 진도 · 라인별 실적">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/theme.css?v=2611102314">
 <style>
@@ -25,7 +25,7 @@ main.wrap { max-width: none; }
 .ct-pc .v { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; } .ct-pc .v small { font-size: 13.5px; font-weight: 600; color: var(--ink-2); margin-left: 2px; }
 .ct-pc .s { color: var(--ink-2); line-height: 1.5; }
 .ct-fold > summary { cursor: pointer; list-style: none; } .ct-fold > summary::-webkit-details-marker { display: none; } .ct-fold > summary h2 { display: inline; margin: 0; font-size: 19px; } .ct-fold > summary h2 small { font-size: 13.5px; color: var(--ink-3); font-weight: 400; margin-left: 8px; } .ct-fold > summary::after { content: ' 펼치기 ▾'; font-size: 13.5px; color: var(--brand-2, #1f5fae); } .ct-fold[open] > summary::after { content: ' 접기 ▴'; } .ct-fold[open] > summary { margin-bottom: 10px; }
-.ct-ul { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.7; }
+.ct-ul { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.7; } .ct-ul li { white-space: normal !important; } details.ct-f .ct-ul { font-weight: 400; color: var(--ink-2); } details.ct-f .ct-ul b { color: var(--ink); }
 @media (max-width: 1100px) { .ct-2c { grid-template-columns: 1fr; } }
 @media (max-width: 520px) { .ct-proc { grid-template-columns: 1fr; } .ct-fc th:last-child, .ct-fc td:last-child { display: none; } .ct-fold > summary h2 { font-size: 17px; } }
 .ln-pl { margin: 4px 0 18px; } .ln-pl:last-child { margin-bottom: 4px; }
@@ -85,28 +85,26 @@ main.wrap { max-width: none; }
 .cd-t .cd-e { color: var(--warn); font-weight: 700; margin-left: 6px; } .cd-t .cd-none { color: var(--ink-3); }
 .cd-k { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 13.5px; white-space: nowrap; font-weight: 700; border: 1px solid var(--line); }
 .cd-k.k0 { background: #1f5fae; color: #fff; border-color: #1f5fae; } .cd-k.k1 { background: rgba(31,95,174,.12); color: #1f5fae; border-color: rgba(31,95,174,.35); } .cd-k.k2 { color: var(--ink-2); border-style: dashed; } .cd-k.k3 { color: var(--ink-3); }
-/* 판매그룹별 현황(11/5) */
-.gg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; } .gp + .gp { margin-top: 14px; }
-.gc { display: block; border: 1px solid var(--line); border-top: 4px solid var(--gc-c, var(--line)); border-radius: 10px; padding: 12px 14px 10px; color: inherit; text-decoration: none; background: var(--surface); }
-.gc:hover { border-color: var(--gc-c, var(--brand-2)); } .gc.bad { --gc-c: #d03b3b; } .gc.warn { --gc-c: #eda100; } .gc.ok { --gc-c: #0ca30c; }
-.gh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; } .gh b { font-size: 15.5px; }
-.gs { font-size: 13.5px; white-space: nowrap; font-weight: 700; padding: 1px 9px; border-radius: 999px; border: 1px solid currentColor; } .gs.bad { color: var(--bad); } .gs.warn { color: var(--warn); } .gs.ok { color: var(--good); } .gs.na { color: var(--ink-3); }
-.gr { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 8px; align-items: start; padding: 6px 0; border-top: 1px solid var(--grid, #eef0f3); }
-.gk { font-size: 13.5px; font-weight: 700; color: var(--ink-2); padding-top: 1px; }
-.gt { font-size: 13.5px; color: var(--ink-2); line-height: 1.45; font-variant-numeric: tabular-nums; } .gt b { color: var(--ink); }
-.gt .bad, .gt .bad b { color: var(--bad); font-weight: 700; } .gt .warn, .gt .warn b { color: var(--warn); font-weight: 700; } .gt .ok, .gt .ok b { color: var(--good); font-weight: 700; }
-.gm { position: relative; height: 8px; border-radius: 999px; background: #e8eef7; margin: 4px 0 5px; }
-.gm i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: #2a78d6; } .gm i.bad { background: #d03b3b; } .gm i.warn { background: #eda100; } .gm i.ok { background: #2a78d6; }
-.gm em { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--ink); border-radius: 1px; transform: translateX(-1px); }
-@media (max-width: 1280px) { .gg { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 640px) { .gg { grid-template-columns: 1fr; } }
 .hm-st { display: flex; height: 14px; border-radius: 5px; overflow: hidden; background: var(--grid); min-width: 160px; } .hm-st i { display: block; height: 100%; }
-.hm-w { white-space: normal; word-break: keep-all; text-align: left; min-width: 260px; line-height: 1.5; }
-table.hm-rk td { padding-top: 11px; padding-bottom: 11px; } table.hm-rk tr:hover td { background: color-mix(in srgb, var(--brand-2) 6%, transparent); }
+.hm-w { white-space: normal; text-align: left !important; min-width: 420px; line-height: 1.5; }
+table.hm-rk .cdot { margin-right: 6px; } table.hm-rk b.bad { color: var(--bad); } table.hm-rk b.warn { color: var(--warn); } table.hm-rk b.ok { color: var(--ink); }
+.hm-lg { display: inline-flex; flex-wrap: wrap; gap: 2px 12px; margin-left: 14px; font-size: 13.5px; font-weight: 500; color: var(--ink-2); vertical-align: 2px; } .hm-lg span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; } .hm-lg i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+/* 원인 칩(관제판과 같은 모양) */
+.rc-l { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; line-height: 1.6; } .rc-l + .rc-l { margin-top: 4px; }
+.rc { display: inline-block; padding: 0 8px; border-radius: 6px; font-size: 13.5px; font-weight: 700; white-space: nowrap; color: var(--rc, var(--ink)); background: color-mix(in srgb, var(--rc, var(--ink)) 12%, transparent); border: 1px solid color-mix(in srgb, var(--rc, var(--ink)) 35%, transparent); }
+.rc-mat { --rc: #8a4fbf; } .rc-camp { --rc: #1f6fbf; } .rc-cap { --rc: #c0392b; } .rc-plate { --rc: #b8650f; } .rc-paint { --rc: #138a7a; } .rc-match { --rc: #a07800; }
+:root[data-theme="dark"] .rc-mat { --rc: #c39be8; } :root[data-theme="dark"] .rc-camp { --rc: #7fb6ee; } :root[data-theme="dark"] .rc-cap { --rc: #f08a7e; } :root[data-theme="dark"] .rc-plate { --rc: #f0a85a; } :root[data-theme="dark"] .rc-paint { --rc: #5fd0bf; } :root[data-theme="dark"] .rc-match { --rc: #e6c04a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .rc-mat { --rc: #c39be8; } :root:not([data-theme="light"]) .rc-camp { --rc: #7fb6ee; } :root:not([data-theme="light"]) .rc-cap { --rc: #f08a7e; } :root:not([data-theme="light"]) .rc-plate { --rc: #f0a85a; } :root:not([data-theme="light"]) .rc-paint { --rc: #5fd0bf; } :root:not([data-theme="light"]) .rc-match { --rc: #e6c04a; } }
+.rc-t { font-size: 15px; font-weight: 800; white-space: nowrap; color: var(--ink); }
+.rc-w { font-size: 13.5px; color: var(--ink-2); white-space: nowrap; } .rc-w .rc-n { font-style: normal; font-size: 13.5px; color: var(--ink-2); } .rc-w + .rc-w::before { content: "· "; }
+.ct-srcw { margin: 0 0 10px; padding: 8px 12px; border-radius: 8px; font-size: 13.5px; color: var(--warn); background: color-mix(in srgb, var(--warn) 10%, transparent); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); }
+details.ct-f { display: block; } details.ct-f .ct-basis { margin: 4px 14px 8px; } details.ct-f .ct-flow { margin-left: 0; } details.ct-f .ct-flh { margin-left: 14px; }
+@media (max-width: 640px) { .hm-w { min-width: 300px; } .hm-lg { display: none; } }
+table.hm-rk td { padding-top: 9px; padding-bottom: 9px; vertical-align: middle; } table.hm-rk tr:hover td { background: color-mix(in srgb, var(--brand-2) 6%, transparent); }
 </style>
 </head>
 <body>
-<header id="shell" data-page="home" data-title="통합 관제" data-sub="오늘 상황 · 납기 위험 · 라인 진도"></header>
+<header id="shell" data-page="home" data-title="통합 관제" data-sub="납기 위험 · 생산·출하 진도 · 라인별 실적"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611102314"></script>

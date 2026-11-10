@@ -121,210 +121,90 @@ table.sc tr.gr2 .lb .gn, table.sc tr.gr3 .lb .gn { display: inline-block; min-wi
 table.sc .lb .gk { display: inline-block; font-size: 13.5px; font-weight: 700; padding: 0 7px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); }
 table.sc tr.gr1 .gk { background: color-mix(in srgb, var(--gc) 14%, var(--surface)); color: var(--gc); } table.sc tr.gr2 .gk { background: color-mix(in srgb, #c46f00 14%, var(--surface)); color: var(--warn); } table.sc tr.gr3 .gk { background: var(--good-bg); color: var(--good); }
 table.sc td.gs { color: var(--warn); } table.sc tr.grs td { font-size: 13.5px; color: var(--ink-3); padding-top: 2px; padding-bottom: 2px; } table.sc .lb .gs2 { font-size: 13.5px; color: var(--ink-3); font-weight: 600; } table.sc td.gk2 { color: var(--ink-2); }
-html .gtable td.hi { background: color-mix(in srgb, var(--warn) 16%, var(--surface)); }
-html .gtable .c1 small { color: var(--ink-3); font-weight: 500; }
 .pks{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0 12px}.pk{border:1px solid var(--line,#dde1e6);border-radius:10px;padding:8px 12px}.pk-h{font-size:13.5px;color:var(--muted,#667);font-weight:600}.pk-v{font-size:22px;font-weight:700;white-space:nowrap}.pk-v small{font-size:13.5px;font-weight:500;margin-left:2px}.pk-v em{font-style:normal;font-size:15px;margin-left:8px;color:var(--accent,#1f5fbf)}.pk-s{font-size:13.5px;color:var(--muted,#667);white-space:nowrap}.pk-s .neg{color:var(--bad,#c62828)}.pk-s .pos{color:var(--ok,#2e7d32)}.pk-s b{color:var(--ink,#123);font-weight:700}.pk-d{font-weight:700}.pk-d.warn,.pk-s .warn{color:var(--warn,#b26a00)}.pk-d.neg{color:var(--bad,#c62828)}.pk-lag{display:flex;flex-wrap:wrap;gap:4px 22px;align-items:baseline;margin:0 0 14px;padding:8px 12px;border-radius:10px;background:var(--surface-2,#f3f5f8);font-size:14px}.pk-lh{font-weight:700}.pk-lh small{font-size:13.5px;font-weight:500;color:var(--ink-3,#667);margin-left:4px}.pk-li i{font-style:normal;font-size:13.5px;color:var(--ink-3,#667);margin-right:6px}.pk-li b.neg{color:var(--bad,#c62828)}.pk-li b.pos{color:var(--good,#2e7d32)}.pk-li span{font-size:13.5px;color:var(--ink-2,#445)}@media (max-width:700px){.pgv4{grid-template-columns:1fr}.pk-s{white-space:normal}.pk-v{font-size:20px}}.pgv4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 22px}.pgv4 .pgv h3{margin:0 0 18px 46px;font-size:14.5px}@media (max-width:1200px){.pgv4,.pks{grid-template-columns:1fr 1fr}}.pgl{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:6px}
     .pgvs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; margin-top: 16px; } @media (max-width: 900px) { .pgvs { grid-template-columns: 1fr; } }
 .pgv h3 { font-size: 15px; margin: 0 0 26px 70px; color: var(--ink); }
 .pgv > .pg { margin-bottom: 14px; } .pgs-t { font-size: 15px; margin: 18px 0 8px; } .pgs-ship { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
-/* 가동 캘린더 · 출하·재고 표(2026-10-21 사용자: 가동 현황 캘린더처럼 색, 기울임 없이, 고급스럽게) */
-:root { --pt-act: #f3f6fa; --pt-al: #dcebfb; --pt-az: #fde3d6; --pt-mac: #d6f2e6; --pt-cc: #e3f3ee; --pt-mc: #ffe48a; --pt-mcb: #e0a800; --pt-g: #2a78d6; --pt-c: #0f9d7a; --pt-sat: #fdebd0; --pt-sun: #fbdada; --pt-ok: #e2f3e6; --pt-hi: #ffe7b8; --pt-hi2: #ffcf87; --pt-ship: #e4f0fc; --pt-shipA: #cfe3f8; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pt-act: #18202a; --pt-al: #1d3553; --pt-az: #4a2a1d; --pt-mac: #173f31; --pt-cc: #173a31; --pt-mc: #6b5600; --pt-mcb: #c99a00; --pt-sat: #3d3220; --pt-sun: #402629; --pt-ok: #1c3a24; --pt-hi: #4a3a14; --pt-hi2: #6a4a10; --pt-ship: #1b2c40; --pt-shipA: #23405e; } }
-:root[data-theme="dark"] { --pt-act: #18202a; --pt-al: #1d3553; --pt-az: #4a2a1d; --pt-mac: #173f31; --pt-cc: #173a31; --pt-mc: #6b5600; --pt-mcb: #c99a00; --pt-sat: #3d3220; --pt-sun: #402629; --pt-ok: #1c3a24; --pt-hi: #4a3a14; --pt-hi2: #6a4a10; --pt-ship: #1b2c40; --pt-shipA: #23405e; }
-.glegend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13.5px; color: var(--ink-2); margin: 0 0 10px; }
-.glegend .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-right: 6px; vertical-align: -3px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 10%, transparent); }
-.glegend .sw.mcsw { background: var(--pt-mc); box-shadow: inset 0 0 0 2px var(--pt-mcb); } .glegend .sw.idsw { background: repeating-linear-gradient(135deg, transparent 0 3px, color-mix(in srgb, var(--ink-3) 30%, transparent) 3px 4px); }
-.glegend .sw.pastsw { background: var(--pt-act); } .glegend .sw.tbsw { background: none; box-shadow: inset 2px 0 0 var(--brand-2); width: 8px; }
-.glegend .sw.shsw { background: var(--pt-ship); } .glegend .sw.okw { background: var(--pt-ok); } .glegend .sw.hiw { background: var(--pt-hi); } .glegend .sw.hi2w { background: var(--pt-hi2); }
-.glegend .gsep { width: 1px; height: 14px; background: var(--line); }
-/* 가동 캘린더 2차(2026-10-21 사용자: 도금/컬러 구분, 색 줄이기 — 강종 막대·M/C·종일 정지만 색) */
-:root { --pt-AL: #2a78d6; --pt-AZ: #e2672c; --pt-MAC: #14a06e; --pt-MC: #f5b700; --pt-gG: #1f3b5c; --pt-gC: #1c5a50; --pt-sd: #dfe3e9; --pt-sdT: #3a4350; --pt-mcT: #8a5a00; --pt-gA: #333a45; --pt-Cx: #6a4fc4; --pt-Cb: #0b8793; --pt-Cd: #b4467c; --pt-hiT: #6b4300; --pt-hi2T: #5a3000; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pt-gG: #2a4d75; --pt-gC: #24695e; --pt-sd: #2c3440; --pt-sdT: #c9d1db; --pt-mcT: #f0c45a; --pt-gA: #46505e; --pt-hiT: #ffd58a; --pt-hi2T: #ffe2b0; } }
-:root[data-theme="dark"] { --pt-gG: #2a4d75; --pt-gC: #24695e; --pt-sd: #2c3440; --pt-sdT: #c9d1db; --pt-mcT: #f0c45a; --pt-gA: #46505e; --pt-hiT: #ffd58a; --pt-hi2T: #ffe2b0; }
-.glegend .sw.f-C수출 { background: var(--pt-Cx); } .glegend .sw.f-C건재 { background: var(--pt-Cb); } .glegend .sw.f-C수요 { background: var(--pt-Cd); } .glegend .sw.sumsw { background: var(--pt-gG); }
-.glegend .sw.f-AL { background: var(--pt-AL); } .glegend .sw.f-AZ { background: var(--pt-AZ); } .glegend .sw.f-MAC { background: var(--pt-MAC); }
-.glegend .sw.mcsw { background: var(--pt-MC); box-shadow: none; } .glegend .sw.sdsw { background: var(--pt-sd); }
-.glegend .muted { color: var(--ink-3); }
-
-/* 가동 캘린더 3차(2026-10-21 사용자: 깨짐·칸·색감·글자 아마추어, 종일 정지 색 안 보임) — 진한 채움 대신 옅은 색 + 진한 글자, 한 달이 한 화면에 */
-.glegend .sw.sdsw { background: var(--pt-sd2) !important; }
-.glegend .sw.idsw { background: repeating-linear-gradient(135deg, transparent 0 3px, color-mix(in srgb, var(--ink-3) 45%, transparent) 3px 4px) !important; }
-.glegend .sw.mcsw { background: var(--pt-mcbg) !important; box-shadow: inset 0 0 0 1px var(--pt-mcT) !important; }
-:root { --pt-gbg: #eef2f7; --pt-gbg2: #e2e8f0; --pt-sd2: #7b8796; --pt-mcbg: #fdefc3; --pt-mcT: #7a5200; --pt-AL: #1f6fd1; --pt-AZ: #d35a1f; --pt-MAC: #0f8f62; --pt-Cx: #5b45b5; --pt-Cb: #08798a; --pt-Cd: #a63d70; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pt-gbg: #1f2833; --pt-gbg2: #26313e; --pt-sd2: #5d6878; --pt-mcbg: #4a3a12; --pt-mcT: #f3cf74; --pt-AL: #6ba6ff; --pt-AZ: #ff9a66; --pt-MAC: #4fd1a0; --pt-Cx: #a896ff; --pt-Cb: #4cc3d1; --pt-Cd: #ee8ab8; } }
-:root[data-theme="dark"] { --pt-gbg: #1f2833; --pt-gbg2: #26313e; --pt-sd2: #5d6878; --pt-mcbg: #4a3a12; --pt-mcT: #f3cf74; --pt-AL: #6ba6ff; --pt-AZ: #ff9a66; --pt-MAC: #4fd1a0; --pt-Cx: #a896ff; --pt-Cb: #4cc3d1; --pt-Cd: #ee8ab8; }
-
-/* 가동 캘린더 4차(10/21 사용자: 가동 현황 표와 같은 모양 — 라인당 한 줄, 생산량만, 강종·판매그룹은 칸 색) */
-.glegend .sw.f-AL { background: color-mix(in srgb, var(--pt-AL) 30%, var(--surface)); } .glegend .sw.f-AZ { background: color-mix(in srgb, var(--pt-AZ) 30%, var(--surface)); } .glegend .sw.f-MAC { background: color-mix(in srgb, var(--pt-MAC) 30%, var(--surface)); }
-.glegend .sw.f-C수출 { background: color-mix(in srgb, var(--pt-Cx) 30%, var(--surface)); } .glegend .sw.f-C건재 { background: color-mix(in srgb, var(--pt-Cb) 30%, var(--surface)); } .glegend .sw.f-C수요 { background: color-mix(in srgb, var(--pt-Cd) 30%, var(--surface)); }
-
-/* 가동 캘린더 5차(10/21 사용자: 계획휴지 글자 잘림 · 생산 없음 색 안 보임 · 1,000t 쉼표) */
-.glegend .sw.idsw { background: repeating-linear-gradient(135deg, var(--pt-idle1) 0 3px, var(--pt-idle2) 3px 6px) !important; box-shadow: inset 0 0 0 1px var(--line) !important; }
-:root { --pt-idle1: #c9d0d9; --pt-idle2: #eef1f4; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pt-idle1: #46505d; --pt-idle2: #252c35; } }
-:root[data-theme="dark"] { --pt-idle1: #46505d; --pt-idle2: #252c35; }
-
-/* 계 칸은 오른쪽에 고정(스크롤해도 늘 보이게, 10/21) */
-
-/* 한 달이 넓은 화면에 스크롤 없이 들어가게(칸이 가려지지 않게, 10/21): 라인 칸 96px, 숫자 12.5px */
-
-
-/* 가동 캘린더·판매그룹 출하 재고 = 가동 현황 표(gtable)와 같은 서식(2026-10-21 사용자: 따로 덧댄 서식 전부 걷어냄) */
-:is(#s-cal, #s-ship) { table-layout: fixed; width: 100%; min-width: 1250px !important; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
-:is(#s-cal, #s-ship) th, :is(#s-cal, #s-ship) td { text-align: center; white-space: nowrap; padding: 6px 1px !important; font-size: 13.5px !important; letter-spacing: -0.3px !important; border-right: 1px solid var(--grid); border-bottom: 1px solid var(--grid); }
-:is(#s-cal, #s-ship) col.cc0 { width: 52px; } :is(#s-cal, #s-ship) col.cc1 { width: 52px; } :is(#s-cal, #s-ship) col.ctot { width: 66px; }
-:is(#s-cal, #s-ship) .c0 { position: sticky; left: 0; z-index: 3; background: var(--surface); font-weight: 800; color: var(--ink); }
-:is(#s-cal, #s-ship) .c1 { position: sticky; left: 52px; z-index: 3; background: var(--surface); color: var(--ink-3); font-weight: 600; font-size: 13.5px !important; }
-:is(#s-cal, #s-ship) thead th { background: var(--th); color: var(--ink-2); font-weight: 700; }
-:is(#s-cal, #s-ship) thead th.sat { color: #9a4f00; } :is(#s-cal, #s-ship) thead th.sun { color: var(--bad); }
-:is(#s-cal, #s-ship) thead th.today { background: var(--brand-2); color: var(--on-brand, #fff); }
-:is(#s-cal, #s-ship) tbody td.tb { background-color: color-mix(in srgb, var(--brand-2) 7%, var(--surface)); }
-:is(#s-cal, #s-ship) .tot { position: sticky; right: 0; z-index: 3; background: var(--th) !important; font-weight: 800; color: var(--ink); }
-:is(#s-cal, #s-ship) tr.first > * { border-top: 1px solid var(--line); }
-:is(#s-cal, #s-ship) tr.grp > * { background: var(--surface-2); font-weight: 800; color: var(--ink); }
-:is(#s-cal, #s-ship) tr.grp .gh { text-align: left; padding-left: 8px !important; line-height: 1.2; } :is(#s-cal, #s-ship) tr.grp .gh small { display: block; font-size: 13.5px; font-weight: 600; color: var(--ink-3); }
-:is(#s-cal, #s-ship) tr.gap td { border: 0; height: 8px; padding: 0 !important; background: transparent; }
-:is(#s-cal, #s-ship) th.line { text-align: left; padding-left: 8px !important; font-size: 13.5px !important; }
-:is(#s-cal, #s-ship) td[data-d] { cursor: pointer; }
-#s-cal td.fc { background: color-mix(in srgb, var(--fc) 15%, var(--surface)); }
-#s-cal td.f-AL { --fc: #1f6fd1; } #s-cal td.f-AZ { --fc: #d35a1f; } #s-cal td.f-MAC { --fc: #0f8f62; } #s-cal td.f-C수출 { --fc: #5b45b5; } #s-cal td.f-C건재 { --fc: #08798a; } #s-cal td.f-C수요 { --fc: #a63d70; }
-#s-cal td.mcc { background: color-mix(in srgb, #f2b705 24%, var(--surface)); color: #6b4700; font-weight: 800; }
-#s-cal td.sdblock { background: #7b8796; color: #fff; font-weight: 800; white-space: normal; word-break: keep-all; line-height: 1.3; }
-#s-cal td.sdblock small { display: block; font-size: 13.5px; font-weight: 600; opacity: .9; } #s-cal td.sdblock.one small { display: none; }
-#s-ship tr.r-k td { color: var(--ink-2); }
-#s-ship tr.r-k td.hi { background: color-mix(in srgb, #f2b705 16%, var(--surface)); color: #6b4700; }
-#s-ship tr.r-k td.hi2 { background: color-mix(in srgb, #e8590c 18%, var(--surface)); color: #8a3000; font-weight: 700; }
-#s-ship tr.r-k td.neg { color: var(--bad); font-weight: 800; }
-#s-ship tr.grp.A > * { background: var(--surface-2); }
-.glegend .sw.f-AL { background: color-mix(in srgb, #1f6fd1 30%, var(--surface)); } .glegend .sw.f-AZ { background: color-mix(in srgb, #d35a1f 30%, var(--surface)); } .glegend .sw.f-MAC { background: color-mix(in srgb, #0f8f62 30%, var(--surface)); }
-.glegend .sw.f-C수출 { background: color-mix(in srgb, #5b45b5 30%, var(--surface)); } .glegend .sw.f-C건재 { background: color-mix(in srgb, #08798a 30%, var(--surface)); } .glegend .sw.f-C수요 { background: color-mix(in srgb, #a63d70 30%, var(--surface)); }
-.glegend .sw.mcsw { background: color-mix(in srgb, #f2b705 35%, var(--surface)); } .glegend .sw.sdsw { background: #7b8796; } .glegend .sw.idsw { background: repeating-linear-gradient(135deg, #cfd5dd 0 3px, var(--surface) 3px 6px); box-shadow: inset 0 0 0 1px var(--line); }
-.glegend .sw.hiw { background: color-mix(in srgb, #f2b705 30%, var(--surface)); } .glegend .sw.hi2w { background: color-mix(in srgb, #e8590c 30%, var(--surface)); }
-.glegend .sw.tbsw { background: color-mix(in srgb, var(--brand-2) 25%, var(--surface)); }
-
-:is(#s-cal, #s-ship) tr.grp td { font-weight: 600 !important; font-size: 13.5px !important; letter-spacing: -0.45px !important; }
-:is(#s-cal, #s-ship) td.tb, :is(#s-cal, #s-ship) th.tb { border-left: 0 !important; box-shadow: none !important; }
-#s-ship col.cc0 { width: 78px; } #s-ship .c1 { left: 78px; }
-#s-ship th.line { white-space: normal; word-break: keep-all; line-height: 1.2; font-size: 13.5px !important; }
-
-
-/* 생산 없음 = 진한 빗금(10/21 사용자: 확실하게) · 합계 줄 아래 */
-#s-cal td.idle { background: repeating-linear-gradient(135deg, #5f6b7a 0 4px, #9aa4b0 4px 8px) !important; }
-.glegend .sw.idsw { background: repeating-linear-gradient(135deg, #5f6b7a 0 3px, #9aa4b0 3px 6px) !important; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #s-cal td.idle { background: repeating-linear-gradient(135deg, #6b7684 0 3px, #2a313b 3px 7px) !important; } }
-:root[data-theme="dark"] #s-cal td.idle { background: repeating-linear-gradient(135deg, #6b7684 0 3px, #2a313b 3px 7px) !important; }
-#s-ship tr.grp .gh { text-align: left; padding-left: 8px !important; }
-#s-ship tr.grp.A > * { background: var(--th) !important; }
-
-:is(#s-cal, #s-ship) tr td.w5, :is(#s-cal, #s-ship) tr.grp td.w5 { font-size: 13.5px !important; letter-spacing: -0.9px !important; padding: 0 !important; overflow: visible; }
-/* 종일 정지 = 종류별 색(10/22 사용자: 휴지·수리 구분, 색 바꿈) — 계획휴지 남회색 · 수리 빨강 · S/D 파랑 · 정기수리 보라. 생산 없음(빗금)과 구분 */
-#s-cal td.sdblock.sk-plan, .glegend .sw.sk-plan { background: #3f4a5a !important; color: #fff; }
-#s-cal td.sdblock.sk-repair, .glegend .sw.sk-repair { background: #c8372d !important; color: #fff; }
-#s-cal td.sdblock.sk-sd, .glegend .sw.sk-sd { background: #1f5fae !important; color: #fff; }
-#s-cal td.sdblock.sk-jr, .glegend .sw.sk-jr { background: #6a3fb5 !important; color: #fff; }
-#s-cal td.sdblock.sk-idle { background: repeating-linear-gradient(135deg, #eef0f3 0 6px, #dfe3e8 6px 12px) !important; color: #3f4a5a; }
-#s-cal td.idle { background: repeating-linear-gradient(135deg, #8792a0 0 3px, #c9cfd7 3px 7px) !important; }
-.glegend .sw.idsw { background: repeating-linear-gradient(135deg, #8792a0 0 3px, #c9cfd7 3px 6px) !important; }
-html body main #s-cal td.sdblock small { font-size: 13.5px !important; letter-spacing: -0.4px; font-weight: 600; } #s-cal td.idleblk { vertical-align: middle; } #s-cal td.idleblk .idl { display: inline-block; background: var(--surface); color: var(--ink-2); font-size: 13.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
-/* 서식 통일(11/10): 상세 표의 톤은 오른쪽 정렬 */
-html body main .det table.dt.fl td.r, html body main .det table.dt.fl th.r { text-align: right !important; }
-
-/* 11/10 사용자 '가동 캘린더·출하 재고 답답하고 구분 안 됨': 공장 띠 머리 + 여백, 주말·주 경계, 오늘 열, 실적(진한)·계획(옅은), 같은 강종 이어진 띠, 한 달 = 1440 한 화면 */
-@media (min-width: 1300px) { #s-cal { min-width: 0 !important; } #s-cal col.cc0, #s-cal col.cc1 { width: 42px; } #s-cal col.ctot { width: 60px; } #s-cal .c1 { left: 42px; } }
-#s-cal th, #s-cal td { padding: 10px 0 !important; line-height: 1.35; }
-#s-cal thead th { padding: 6px 0 !important; }
-#s-cal tbody td { border-right-color: color-mix(in srgb, var(--grid) 55%, transparent); border-bottom: 1px solid var(--line); }
-#s-cal tr.grp { --pb: var(--pt-gG); } #s-cal tr.grp.C { --pb: var(--pt-gC); }
-#s-cal tr.grp > * { background: color-mix(in srgb, var(--pb) 11%, var(--surface)); border-top: 2px solid var(--pb); border-bottom: 1px solid color-mix(in srgb, var(--pb) 35%, var(--surface)); padding: 7px 0 !important; }
-#s-cal tr.grp .gh { background: var(--pb); color: #fff; padding-left: 10px !important; font-size: 14.5px !important; } #s-cal tr.grp .gh small { color: #fff; opacity: .85; font-weight: 500; }
-#s-cal tr.grp td.gt { background: var(--pb) !important; color: #fff; }
-#s-cal tr.grp td.fu { color: var(--ink-3); font-weight: 500 !important; } #s-cal tr.grp td.pa { font-weight: 500 !important; color: var(--ink); } #s-cal tr.grp td.w5 { letter-spacing: -1.05px !important; font-variant-numeric: normal; }
-#s-cal tr.gap td { height: 22px; }
-#s-cal th.line { padding-left: 10px !important; box-shadow: inset 4px 0 0 var(--pt-gG); } #s-cal th.line.C { box-shadow: inset 4px 0 0 var(--pt-gC); }
-#s-cal td.fc.pa { background-color: color-mix(in srgb, var(--fc) 32%, var(--surface)); color: var(--ink); }
-#s-cal td.w5 { letter-spacing: -1.05px !important; font-variant-numeric: normal; }
-#s-cal td.fc.fu { background-color: color-mix(in srgb, var(--fc) 10%, var(--surface)); color: var(--ink-2); }
+/* ===== 가동 캘린더 · 판매그룹 출하·재고 = 같은 표 양식(11/11 사용자 '두 표 양식·서식·크기 전부 비슷하게 — 출하·재고 표 기준') =====
+   열: 이름 118 · 구분 70 · 날짜(같은 폭) · 계 76 / 그룹 띠(번갈아 바탕 + 굵은 윗선) · 오늘(파란 테)·월말(회색 테) · 칸 사이 옅은 세로선 · 숫자 13.5px 쉼표 */
+:root { --mt-g: #1f4f86; --mt-c: #1c6b5c; --mt-hd: #eef2f7; --mt-band: color-mix(in srgb, var(--ink) 3.5%, var(--surface)); --mt-we: color-mix(in srgb, var(--ink) 5%, var(--surface)); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --mt-g: #6fa3e0; --mt-c: #4fc3a6; --mt-hd: #1d2530; } }
+:root[data-theme="dark"] { --mt-g: #6fa3e0; --mt-c: #4fc3a6; --mt-hd: #1d2530; }
+table.mt2 { table-layout: fixed; width: 100%; min-width: 1720px; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; font-size: 13.5px; }
+table.mt2 col.cc0 { width: 118px; } table.mt2 col.cc1 { width: 72px; } table.mt2 col.ctot { width: 80px; }
+table.mt2 th, table.mt2 td { height: 36px; padding: 6px 2px; text-align: center; white-space: nowrap; font-size: 13.5px; letter-spacing: -0.3px; line-height: 1.3;
+  color: var(--ink-2); background: var(--surface); border-right: 1px solid color-mix(in srgb, var(--grid) 75%, transparent); border-bottom: 1px solid var(--grid);
+  box-shadow: var(--bar, 0 0 transparent), var(--edge, 0 0 transparent); }
+table.mt2 .c0 { position: sticky; left: 0; z-index: 3; } table.mt2 .c1 { position: sticky; left: 118px; z-index: 3; text-align: left; padding-left: 8px; font-weight: 600; color: var(--ink-2); border-right: 2px solid var(--line); }
+table.mt2 .tot { position: sticky; right: 0; z-index: 3; font-weight: 800; color: var(--ink); background: var(--mt-hd); border-left: 2px solid var(--line); text-align: right; padding-right: 8px; }
+/* 머리줄 */
+table.mt2 thead th { height: 28px; background: var(--mt-hd); color: var(--ink-2); font-weight: 700; }
+table.mt2 thead tr:last-child th { height: 24px; font-weight: 500; border-bottom: 2px solid var(--ink-3); }
+table.mt2 thead th.c0, table.mt2 thead th.tot { border-bottom: 2px solid var(--ink-3); color: var(--ink); text-align: center; }
+table.mt2 thead th.sat { color: #9a4f00; } table.mt2 thead th.sun { color: var(--bad); }
+table.mt2 thead th.we { background: color-mix(in srgb, var(--ink) 9%, var(--mt-hd)); }
+table.mt2 thead th.me { background: color-mix(in srgb, var(--ink) 16%, var(--mt-hd)); color: var(--ink); }
+table.mt2 thead th.today, table.mt2 thead th.tb { background: color-mix(in srgb, var(--brand-2) 16%, var(--surface)); color: var(--brand); font-weight: 900; box-shadow: inset 0 -2px 0 var(--brand-2); }   /* 공용 규칙(theme.css)과 같게 */
+/* 본문 칸 */
+table.mt2 tbody td.we { background: var(--mt-we); }
+table.mt2 .mon { border-left: 2px solid color-mix(in srgb, var(--ink-3) 50%, var(--surface)); }
+table.mt2 tbody td.pa, table.mt2 tbody td.past { color: var(--ink); font-weight: 700; }
+table.mt2 tbody td.me { --edge: inset 2px 0 0 var(--ink-3), inset -2px 0 0 var(--ink-3); font-weight: 800; color: var(--ink); }
+table.mt2 tbody td.tb { --edge: inset 2px 0 0 var(--brand-2), inset -2px 0 0 var(--brand-2); background-color: color-mix(in srgb, var(--brand-2) 9%, var(--surface)); font-weight: 800; color: var(--ink); }
+table.mt2 tbody td[data-d] { cursor: pointer; } table.mt2 tbody td[data-d]:hover { background-color: color-mix(in srgb, var(--brand-2) 15%, var(--surface)); }
+table.mt2 td.sel { outline: 2px solid var(--ink); outline-offset: -2px; }
+/* 그룹 띠: 첫 줄 굵은 윗선, 번갈아 바탕, 이름 칸 왼쪽 공장 색 막대 */
+table.mt2 tr.first > * { border-top: 2px solid color-mix(in srgb, var(--ink-3) 60%, var(--surface)); }
+table.mt2 tr.gb1 > td:not(.tb):not(.hi):not(.hi2):not(.tot), table.mt2 tr.gb1 > th { background-color: var(--mt-band); }
+table.mt2 th.line { text-align: left; vertical-align: middle; padding: 6px 10px; white-space: normal; --edge: inset 4px 0 0 var(--mt-g); }
+table.mt2 th.line.C { --edge: inset 4px 0 0 var(--mt-c); }
+table.mt2 .sg-nm { font-size: 14.5px; font-weight: 800; color: var(--ink); line-height: 1.25; }
+table.mt2 .sg-kk { margin-top: 3px; display: flex; flex-direction: column; gap: 1px; font-size: 13.5px; font-weight: 500; color: var(--ink-2); line-height: 1.3; }
+table.mt2 .sg-kk b { font-size: 14.5px; font-weight: 800; color: var(--ink); } table.mt2 .sg-kk b.hi { color: #8a5a00; } table.mt2 .sg-kk b.hi2 { color: var(--bad); }
+/* 합계 줄(공장 합 · 도금+컬러) */
+table.mt2 tr.grp > * { background: var(--surface-2); color: var(--ink); font-weight: 800; border-top: 2px solid var(--line); }
+table.mt2 tr.grp th.gh { text-align: left; padding-left: 10px; font-size: 14.5px; }
+table.mt2 tr.grp.G th.gh { --edge: inset 4px 0 0 var(--mt-g); } table.mt2 tr.grp.C th.gh { --edge: inset 4px 0 0 var(--mt-c); }
+table.mt2 tr.grp > .tot { background: color-mix(in srgb, var(--ink) 9%, var(--surface-2)); }
+table.mt2 tr.gap td { height: 14px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+/* 가동 캘린더: 강종·판매그룹 = 칸 아래 색 띠(실적 진하게 · 계획 옅게), 같은 강종 이어지면 칸 선 없음 */
+#s-cal td.fc { --bar: inset 0 -5px 0 color-mix(in srgb, var(--fc) 40%, var(--surface)); } #s-cal td.fc.pa { --bar: inset 0 -5px 0 var(--fc); }
 #s-cal td.fc.cn { border-right-color: transparent; }
-#s-cal td.mcc { background: #f2b705; color: #3d2900; box-shadow: inset 0 0 0 2px var(--surface); border-radius: 7px; }
-#s-cal td.sdblock { border-radius: 7px; box-shadow: inset 0 0 0 2px var(--surface); letter-spacing: 0 !important; }
-:is(#s-cal, #s-ship) th.we { background: color-mix(in srgb, var(--ink) 9%, var(--th)); }
-#s-cal tbody td.we { background-image: linear-gradient(color-mix(in srgb, var(--ink) 7%, transparent), color-mix(in srgb, var(--ink) 7%, transparent)); }
-:is(#s-cal, #s-ship) .mon { border-left: 2px solid color-mix(in srgb, var(--ink-3) 55%, var(--surface)); }
-#s-cal thead th.today { box-shadow: inset 0 -3px 0 var(--brand-2); }
-#s-cal tbody td.tb { box-shadow: inset 2px 0 0 var(--brand-2), inset -2px 0 0 var(--brand-2) !important; background-color: color-mix(in srgb, var(--brand-2) 16%, var(--surface)); color: var(--ink); }
-.glegend .sw.wesw { background: color-mix(in srgb, var(--ink) 12%, var(--surface)); }
-.glegend .sw.mcsw { background: #f2b705 !important; box-shadow: none !important; }
-/* 판매그룹 출하·재고 요약: 전체 → 공장 → 그룹, 가로선만 */
-.sg-r { display: grid; grid-template-columns: 112px minmax(0, 1.25fr) minmax(0, 1fr) 190px; gap: 6px 28px; align-items: center; padding: 13px 8px; border-bottom: 1px solid var(--grid); font-size: 14px; font-variant-numeric: tabular-nums; }
-.sg-hd { padding: 6px 8px; font-size: 13.5px; font-weight: 700; color: var(--ink-3); border-bottom: 1px solid var(--line); } .sg-hd small { font-size: 13.5px; font-weight: 500; margin-left: 6px; }
-.sg-n { font-weight: 700; } .sg-g .sg-n { padding-left: 14px; font-weight: 600; color: var(--ink-2); }
-.sg-all { background: var(--surface-2); border-radius: 8px; border-bottom: 0; } .sg-all .sg-n { font-size: 15px; font-weight: 800; }
-.sg-p { margin-top: 14px; border-bottom: 2px solid var(--pt-gG); } .sg-p.C { border-bottom-color: var(--pt-gC); } .sg-p .sg-n { font-size: 15px; font-weight: 800; color: var(--pt-gG); } .sg-p.C .sg-n { color: var(--pt-gC); }
-:root[data-theme="dark"] .sg-p .sg-n { color: var(--ink); } @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sg-p .sg-n { color: var(--ink); } }
-.sg-t { color: var(--ink-2); white-space: nowrap; margin-bottom: 5px; } .sg-t b { color: var(--ink); font-size: 15px; } .sg-t em { font-style: normal; font-weight: 700; margin-left: 8px; color: var(--ink); } .sg-t em.warn { color: var(--warn); } .sg-t em.bad { color: var(--bad); }
-.sg-bar { position: relative; height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--ink) 9%, var(--surface)); }
-.sg-bar i { display: block; height: 100%; border-radius: 4px; background: var(--good); min-width: 2px; } .sg-bar i.warn { background: var(--warn); } .sg-bar i.bad { background: var(--bad); }
-.sg-bar u { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); border-radius: 1px; }
-.sg-c { display: inline-block; white-space: nowrap; padding: 3px 10px; border-radius: 999px; font-size: 13.5px; font-weight: 700; background: var(--good-bg); color: var(--good); } .sg-c.warn { background: var(--warn-bg); color: var(--warn); } .sg-c.bad { background: var(--bad-bg); color: var(--bad); }
-.sg-det { margin-top: 16px; } .sg-det > summary { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--ink-2); padding: 6px 0; } .sg-det[open] > summary { margin-bottom: 8px; }
-#s-ship thead th.we { background: var(--th); } #s-ship .mon { border-left: 0; }   /* 출하·재고 표는 원래 서식 그대로(11/10 사용자) */
-@media (max-width: 760px) { .sg-r { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 10px; } .sg-s, .sg-k { grid-column: 1 / -1; } .sg-st { grid-column: 2; grid-row: 1; } .sg-hd { display: none; } .sg-t { white-space: normal; } }
-
-/* ===== 가동 캘린더 다시(11/10 사용자 '답답하고 구분이 안 된다 · 이게 최선이냐') — 칸 선·칸 색을 걷고 숫자만: 강종·판매그룹 = 칸 아래 색 띠, 주 경계만 세로선, 정지 = 알약 블록 ===== */
-html body main table#s-cal { border-collapse: separate; border-spacing: 0; }
-html body main table#s-cal th, html body main table#s-cal td { border: 0 !important; box-shadow: none !important; background-image: none !important; padding: 0 !important; height: 46px; font-size: 14px !important; letter-spacing: -0.2px !important; line-height: 1.2; border-radius: 0 !important; }
-@media (max-width: 1700px) { html body main table#s-cal th, html body main table#s-cal td { font-size: 13.5px !important; letter-spacing: -0.6px !important; } }
-html body main table#s-cal thead th { height: 30px; background: var(--surface) !important; color: var(--ink-2); font-weight: 700; }
-html body main table#s-cal thead tr:last-child th { height: 26px; font-weight: 500; font-size: 13.5px !important; border-bottom: 2px solid var(--ink-2) !important; }
-html body main table#s-cal thead th.c0, html body main table#s-cal thead th.tot { border-bottom: 2px solid var(--ink-2) !important; color: var(--ink-2); }
-html body main table#s-cal thead th.today { background: var(--brand-2) !important; color: #fff !important; border-radius: 8px 8px 0 0 !important; }
-html body main table#s-cal thead tr:last-child th.tb { background: var(--brand-2) !important; color: #fff !important; }
-html body main table#s-cal tbody td { background: var(--surface) !important; border-bottom: 1px solid var(--grid) !important; color: var(--ink-3); font-weight: 500; }
-html body main table#s-cal tbody td.pa { color: var(--ink); font-weight: 700; }
-html body main table#s-cal .we { background: color-mix(in srgb, var(--ink) 6%, var(--surface)) !important; }
-html body main table#s-cal .mon { border-left: 2px solid var(--line) !important; }
-html body main table#s-cal tbody td.tb { background: color-mix(in srgb, var(--brand-2) 10%, var(--surface)) !important; border-left: 2px solid var(--brand-2) !important; border-right: 2px solid var(--brand-2) !important; }
-html body main table#s-cal tbody td.fc { box-shadow: inset 0 -6px 0 color-mix(in srgb, var(--fc) 38%, var(--surface)) !important; }
-html body main table#s-cal tbody td.fc.pa { box-shadow: inset 0 -6px 0 var(--fc) !important; }
-html body main table#s-cal tr.grp > * { background: color-mix(in srgb, var(--pb) 9%, var(--surface)) !important; border-top: 0 !important; border-bottom: 2px solid var(--pb) !important; height: 40px; color: var(--ink-2); font-weight: 600 !important; }
-html body main table#s-cal tr.grp td.pa { color: var(--ink); font-weight: 800 !important; }
-html body main table#s-cal tr.grp .gh { background: var(--pb) !important; color: #fff !important; font-size: 15px !important; font-weight: 800 !important; text-align: left; padding-left: 12px !important; border-radius: 8px 0 0 0 !important; } html body main table#s-cal tr.grp .gh small { display: inline; margin-left: 6px; font-size: 13.5px; opacity: .85; }
-html body main table#s-cal tr.grp td.gt { background: var(--pb) !important; color: #fff !important; font-weight: 800 !important; border-radius: 0 8px 0 0 !important; }
-html body main table#s-cal th.line { background: var(--surface) !important; text-align: left; padding-left: 12px !important; font-size: 14.5px !important; font-weight: 800; color: var(--ink); border-bottom: 1px solid var(--grid) !important; box-shadow: inset 4px 0 0 var(--pt-gG) !important; } html body main table#s-cal th.line.C { box-shadow: inset 4px 0 0 var(--pt-gC) !important; }
-html body main table#s-cal tbody td.tot { background: color-mix(in srgb, var(--ink) 5%, var(--surface)) !important; color: var(--ink); font-weight: 800; border-left: 2px solid var(--line) !important; }
-@media (max-width: 1700px) { html body main table#s-cal td.w5 { font-weight: 600 !important; letter-spacing: -1.1px !important; } }
-html body main table#s-cal tr.gap td { height: 26px; border: 0 !important; background: transparent !important; }
-html body main table#s-cal td.mcc { background: var(--surface) !important; color: #3d2900 !important; font-weight: 800; position: relative; z-index: 0; box-shadow: none !important; }
-html body main table#s-cal td.mcc::before { content: ''; position: absolute; inset: 7px 2px; background: #f2b705; border-radius: 7px; z-index: -1; }
-html body main table#s-cal td.sdblock.sdblock.sdblock { background: var(--surface) !important; padding: 5px 3px !important; color: #fff; }
-html body main table#s-cal td.sdblock .sdp { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 34px; border-radius: 8px; background: #3f4a5a; color: #fff; font-weight: 800; font-size: 14px; letter-spacing: 0; white-space: nowrap; overflow: hidden; }
-html body main table#s-cal td.sdblock .sdp small { display: block; font-size: 13.5px !important; font-weight: 500; opacity: .9; }
-html body main table#s-cal td.sdblock.sk-repair .sdp { background: #c8372d; } html body main table#s-cal td.sdblock.sk-sd .sdp { background: #1f5fae; } html body main table#s-cal td.sdblock.sk-jr .sdp { background: #6a3fb5; }
-html body main table#s-cal td.sdblock.sk-idle .sdp { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink) 7%, var(--surface)) 0 6px, color-mix(in srgb, var(--ink) 13%, var(--surface)) 6px 12px); color: var(--ink-2); font-weight: 600; }
-html body main table#s-cal td.idle { background: var(--surface) !important; }
-html body main table#s-cal tbody td[data-d]:hover { background: color-mix(in srgb, var(--brand-2) 14%, var(--surface)) !important; }
-.glegend .sw.f-AL, .glegend .sw.f-AZ, .glegend .sw.f-MAC, .glegend .sw.f-C수출, .glegend .sw.f-C건재, .glegend .sw.f-C수요 { height: 6px; width: 22px; border-radius: 2px; vertical-align: 2px; box-shadow: none; }
-
-/* 판매그룹 출하·재고: 그룹 띠 · 오늘·월말 강조(11/10 사용자) */
-#s-ship col.cc0 { width: 118px !important; } #s-ship .c1 { left: 118px !important; }
-#s-ship tr.first > * { border-top: 2px solid color-mix(in srgb, var(--ink-3) 60%, var(--surface)) !important; }
-#s-ship tr.gb1 td:not(.tot):not(.hi):not(.hi2):not(.tb) { background-color: color-mix(in srgb, var(--ink) 3.5%, var(--surface)); }
-html body #s-ship th.line { text-align: left !important; vertical-align: middle; padding: 6px 10px !important; white-space: normal !important; box-shadow: inset 4px 0 0 var(--pt-gG); } #s-ship th.line.C { box-shadow: inset 4px 0 0 var(--pt-gC); }
-#s-ship .sg-nm { font-size: 14.5px; font-weight: 800; color: var(--ink); line-height: 1.25; }
-#s-ship .sg-kk { margin-top: 3px; display: flex; flex-direction: column; gap: 1px; font-size: 13.5px; font-weight: 500; color: var(--ink-2); line-height: 1.3; }
-#s-ship .sg-kk b { font-size: 14.5px; font-weight: 800; color: var(--ink); } #s-ship .sg-kk b.hi { color: #8a5a00; } #s-ship .sg-kk b.hi2 { color: var(--bad); }
-#s-ship tbody td.tb { font-weight: 800 !important; color: var(--ink) !important; box-shadow: inset 2px 0 0 var(--brand-2), inset -2px 0 0 var(--brand-2) !important; }
-#s-ship tbody tr.r-k td.tb { font-size: 14.5px !important; }
-#s-ship thead th.me { background: color-mix(in srgb, var(--ink) 14%, var(--th)) !important; color: var(--ink) !important; }
-#s-ship tbody td.me { font-weight: 800 !important; color: var(--ink); box-shadow: inset 2px 0 0 var(--ink-3), inset -2px 0 0 var(--ink-3) !important; }
-#s-ship tbody tr.r-k td.me { font-size: 14.5px !important; }
-
-/* 11/11: 날짜 칸 숫자 쉼표 — 칸 사이 옅은 세로선으로 1,418 · 1,031 이 붙어 보이지 않게 */
-html body main :is(#s-cal, #s-ship) tbody td:not(.sdblock) { border-right: 1px solid color-mix(in srgb, var(--grid) 70%, transparent) !important; }
-html body main :is(#s-cal, #s-ship) td.w5, html body main :is(#s-cal, #s-ship) tr.grp td.w5 { letter-spacing: -0.6px !important; font-weight: 600 !important; }
-
-/* 11/11: 쉼표 다섯 자리(12,170)가 들어가게 날짜 칸 최소 42px — 좁은 화면은 가로 스크롤(왼쪽 이름 칸 고정) */
-html body main table#s-cal, html body main table#s-ship { min-width: 1570px !important; }
+#s-cal td.f-AL { --fc: #1f6fd1; } #s-cal td.f-AZ { --fc: #d35a1f; } #s-cal td.f-MAC { --fc: #0f8f62; } #s-cal td.f-C수출 { --fc: #5b45b5; } #s-cal td.f-C건재 { --fc: #08798a; } #s-cal td.f-C수요 { --fc: #a63d70; }
+#s-cal td.mcc { position: relative; z-index: 0; color: #3d2900 !important; font-weight: 800; }
+#s-cal td.mcc::before { content: ''; position: absolute; inset: 5px 2px; background: #f2b705; border-radius: 6px; z-index: -1; }
+#s-cal td.sdblock { padding: 4px 3px; }
+#s-cal td.sdblock .sdp { display: flex; flex-direction: column; align-items: flex-start; padding: 0 12px; justify-content: center; min-height: 26px; height: 100%; border-radius: 7px; background: #3f4a5a; color: #fff; font-weight: 800; font-size: 13.5px; letter-spacing: 0; white-space: nowrap; }
+#s-cal td.sdblock .sdt { position: sticky; left: 202px; display: flex; flex-direction: column; }   /* 긴 정지 블록이 왼쪽으로 스크롤돼도 이름이 보이게 */
+#s-cal td.sdblock.one .sdp { align-items: center; padding: 0; } #s-cal td.sdblock.one .sdt { position: static; }
+#s-cal td.sdblock .sdp small { font-size: 13.5px; font-weight: 500; opacity: .9; }
+#s-cal td.sdblock.sk-repair .sdp { background: #c8372d; } #s-cal td.sdblock.sk-sd .sdp { background: #1f5fae; } #s-cal td.sdblock.sk-jr .sdp { background: #6a3fb5; }
+#s-cal td.sdblock.sk-idle .sdp { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink) 6%, var(--surface)) 0 6px, color-mix(in srgb, var(--ink) 12%, var(--surface)) 6px 12px); color: var(--ink-2); font-weight: 600; }
+/* 출하·재고: 재고 칸 색 = 목표 대비 */
+#s-ship tr.r-k td.hi { background: color-mix(in srgb, #f2b705 18%, var(--surface)); color: #6b4700; }
+#s-ship tr.r-k td.hi2 { background: color-mix(in srgb, #e8590c 18%, var(--surface)); color: #8a3000; font-weight: 700; }
+:root[data-theme="dark"] #s-ship tr.r-k td.hi { color: #ffd58a; } :root[data-theme="dark"] #s-ship tr.r-k td.hi2 { color: #ffb48a; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #s-ship tr.r-k td.hi { color: #ffd58a; } :root:not([data-theme="light"]) #s-ship tr.r-k td.hi2 { color: #ffb48a; } }
+#s-ship tr.r-k td.neg { color: var(--bad); font-weight: 800; }
+/* 범례 */
+.glegend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13.5px; color: var(--ink-2); margin: 0 0 10px; }
+.glegend .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-right: 6px; vertical-align: -3px; }
+.glegend .muted { color: var(--ink-2); font-weight: 700; } .glegend .gsep { width: 1px; height: 14px; background: var(--line); }
+.glegend .sw.f-AL, .glegend .sw.f-AZ, .glegend .sw.f-MAC, .glegend .sw.f-C수출, .glegend .sw.f-C건재, .glegend .sw.f-C수요 { height: 6px; width: 22px; border-radius: 2px; vertical-align: 2px; }
+.glegend .sw.f-AL { background: #1f6fd1; } .glegend .sw.f-AZ { background: #d35a1f; } .glegend .sw.f-MAC { background: #0f8f62; } .glegend .sw.f-C수출 { background: #5b45b5; } .glegend .sw.f-C건재 { background: #08798a; } .glegend .sw.f-C수요 { background: #a63d70; }
+.glegend .sw.mcsw { background: #f2b705; } .glegend .sw.sk-plan { background: #3f4a5a; } .glegend .sw.sk-repair { background: #c8372d; } .glegend .sw.sk-sd { background: #1f5fae; } .glegend .sw.sk-jr { background: #6a3fb5; }
+.glegend .sw.idsw { background: repeating-linear-gradient(135deg, #c9cfd7 0 3px, var(--surface) 3px 6px); box-shadow: inset 0 0 0 1px var(--line); }
+.glegend .sw.tbsw { background: color-mix(in srgb, var(--brand-2) 25%, var(--surface)); box-shadow: inset 0 0 0 2px var(--brand-2); } .glegend .sw.mesw { background: var(--surface); box-shadow: inset 0 0 0 2px var(--ink-3); } .glegend .sw.wesw { background: color-mix(in srgb, var(--ink) 12%, var(--surface)); }
+.glegend .sw.hiw { background: color-mix(in srgb, #f2b705 30%, var(--surface)); } .glegend .sw.hi2w { background: color-mix(in srgb, #e8590c 30%, var(--surface)); }
+/* 상세 표 톤 오른쪽 정렬 */
+html body main .det table.dt.fl td.r, html body main .det table.dt.fl th.r { text-align: right !important; }
+/* 결론 줄(첫 화면) */
+.concl { display: grid; gap: 8px; margin: 2px 0 14px; }
+.cc-r { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; padding: 10px 14px; border-radius: 10px; font-size: 14.5px; line-height: 1.5; background: var(--surface-2); border-left: 5px solid var(--ink-3); }
+.cc-r.bad { background: var(--bad-bg); border-left-color: var(--bad); } .cc-r.ok { background: var(--good-bg); border-left-color: var(--good); }
+.cc-h { font-weight: 800; color: var(--ink); white-space: nowrap; } .cc-h small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 4px; }
+.cc-i { white-space: nowrap; color: var(--ink-2); } .cc-i b { color: var(--ink); font-size: 15.5px; } .cc-i b.neg { color: var(--bad); } .cc-i b.pos { color: var(--good); } .cc-i i { font-style: normal; font-weight: 700; color: var(--ink-2); margin-right: 6px; }
+.spec { line-height: 1.7; font-size: 13.5px; color: var(--ink-2); } .spec h4 { margin: 12px 0 4px; font-size: 14.5px; color: var(--ink); } .spec ul { margin: 0; padding-left: 18px; } .spec b { color: var(--ink); }
 </style>
 </head>
 <body>
@@ -338,24 +218,36 @@ html body main table#s-cal, html body main table#s-ship { min-width: 1570px !imp
   <div id="main" hidden>
     <div class="sbar"><span id="s-meta"></span><div class="tabs" id="s-mon" role="group" aria-label="월"></div></div>
     <section class="card" id="s-prog"></section>
-    <section class="card"><h2>가동 캘린더 <small>라인별 생산 · M/C · 휴지</small><span class="unit">톤</span></h2>
+    <section class="card"><h2>가동 캘린더 <small>라인별 일 생산 · M/C · 정지</small><span class="unit">톤</span></h2>
       <div class="glegend" id="s-calleg"></div>
-      <div class="gtable-wrap" id="s-calw"><table class="gtable" id="s-cal"></table></div>
+      <div class="gtable-wrap" id="s-calw"><table class="mt2" id="s-cal"></table></div>
     </section>
-    <section class="card"><h2>판매그룹 출하 · 재고 <small>출하(t) · 기말 재고(천t)</small><span class="unit">톤</span></h2>
+    <section class="card"><h2>판매그룹 출하 · 재고 <small>일 출하(t) · 기말 재고(천t)</small><span class="unit">톤</span></h2>
       <div class="glegend" id="s-shipleg"></div>
-      <div class="gtable-wrap" id="s-shw"><table class="gtable" id="s-ship"></table></div>
+      <div class="gtable-wrap" id="s-shw"><table class="mt2" id="s-ship"></table></div>
     </section>
     <div class="det" id="s-det"></div>
-    <details class="basis" style="margin-top:10px;font-size:13.5px;color:var(--ink-3)"><summary style="cursor:pointer;font-weight:700;color:var(--ink-2)">산출 기준</summary>
-      <ul style="line-height:1.7">
-        <li>매일 바뀜(사내 PC 07:35): 도금 가동 = 그날 아침 재계획(지난 날은 MES 실적, 앞 2일 동결, M/C 날짜 유지) · 컬러 지난 날 = MES 실적 · 제품 재고 = 어제 말 실제 재고에서 재계획 생산 − 계획 출고로 굴린 값. 회색 바탕 칸 = 지난 날(실적·실제).</li><li>확정 계획 그대로: 컬러 앞으로의 생산(컬러는 매일 재계획 없음), 자가재 재고, 구매 소재. 도금 일정이 재계획으로 바뀌어도 자가재 재고 줄은 확정 계획 기준이라 어긋날 수 있음.</li>
-        <li>자가재 = 도금이 만든 컬러 소재(AZ·MAC·AL). 기말 재고 = 전일 재고 + 도금 입고 − 컬러 출고(컬러 생산일 5일 전 출고로 계산).</li>
-        <li>구매 소재(F/H · 컬러 소재)의 발주·입고는 소재 발주 캘린더에서(업체별 리드타임·재고·기발주 반영).</li>
-        <li>제품 재고 = 그룹별 기말 재고 추정. 컬러(건재·수출) 출하 = 월 판매계획을 MES 출하 실적의 월중 분포로 나눔(월말 6일에 건재 48%·수출 33%). 도금 = 판매계획 품목이 납기일에 출고(계획과 같은 기준), 목표 = 통합 속보 기준.</li>
-        <li>12월 말 흐린 숫자 = 계획 기간 밖(1월)을 추정한 값. 구매 소재 발주는 1월 이후 소요를 4분기 일평균으로, 자가재 12/27~31 출고는 12월 일평균으로 가정.</li>
-        <li>날짜 상세의 품목 줄 = 요청 납기(수출 벌크는 선적 완료기한, 그 외는 선적 반순) → 생산일 → 소재. 자가재는 그 반순 품목의 도금 생산일과 컬러 입고(+1일), 팀 기준(도금 생산 → 컬러 투입 8일)으로 판정. 구매 소재는 품명 → 소재 코드 비중(13주 실적)으로 소재를 정하고, 팀 소재 리드타임 표(10/12)로 입고 예정일·발주일 계산(입고 필요일 = 컬러 생산 − 7일; P-GI·EG 매주 발주 +5주, P-CR +4.5주, 동종-AZ 10~15일 발주 → 차차월 20일, MAC(P) 매월 초 → 차차월 30일, 외부SUS +4주·엘지향 +2일, 외부Alu +45일).</li>
-      </ul></details>
+    <details class="fold" style="margin-top:14px"><summary>기준·사양 <small>월 계획 · 출하 기준선 · 실적·계획 출처 · 범례</small></summary>
+      <div class="spec">
+        <h4>월 계획</h4><ul>
+          <li><b>생산 월 계획 = F3 공식</b>: 판매 + 목표 재고 − 기초 재고(MES 재고현황 전달 말). 한 달 동안 고정, 0 미만은 0(재고가 목표보다 많음). 다음 달 정기수리·능력 부족 대비 선생산은 월 계획에 넣지 않고 사유(막대 말풍선)로만.</li>
+          <li><b>출하 월 계획</b> = 이번 달 판생속보 월 계획, 다른 달은 TF 판매계획.</li>
+          <li>% = 실적 ÷ 월 계획 · 월말 전망 = 실적 + 남은 날 일별 계획(매일 아침 재계획).</li></ul>
+        <h4>진도 기준(가장 뒤처진 그룹)</h4><ul>
+          <li><b>생산 기준</b> = 월 계획 × 경과일(실적일 ÷ 그 달 일수).</li>
+          <li><b>출하 기준선</b> = 월 계획 × 그 그룹 월중 출하 실적 패턴(판매 출고 1300 실적, 2025-11 이후 완결 월 평균 누계 비율)의 그날 값. 패턴 2개월 미만 그룹만 경과일 비례.</li>
+          <li>가장 뒤처진 그룹 = 기준보다 모자란 톤이 가장 큰 그룹(생산·출하 하나씩). 판매그룹 표 계 칸 %p = 출하 실적 누계 − 기준선, 월 계획 대비.</li></ul>
+        <h4>가동 캘린더</h4><ul>
+          <li>칸 숫자 = 라인 일 생산(t). 굵게 = 실적(도금 MES 실적 · 컬러 MES 실적), 보통 = 계획(도금 = 매일 아침 재계획, 앞 2일 동결·M/C 날짜 유지 / 컬러 = 확정 계획).</li>
+          <li>칸 아래 색 띠 = 그날 주 강종(도금 AL·AZ·MAC) · 주 판매그룹(컬러 수출·건재·수요개발). 같은 강종이 이어지면 칸 선 없이 한 띠.</li>
+          <li><b>M/C(노랑)</b> = 강종 전환(Material Change) 날. 정지 블록 = 종일 정지: 계획휴지(남회색) · 수리(빨강) · S/D(파랑) · 정기수리(보라) · 계획 물량 없음(빗금 — 정지 계획 없이 배정 물량 없음).</li></ul>
+        <h4>판매그룹 출하 · 재고</h4><ul>
+          <li>출하 = 지난 날 MES 출하 실적, 앞날 = 계획 출고(재고 롤링과 같은 값). 기말 재고 = 어제 말 실제 재고 + 재계획 생산 − 계획 출고. 재고 칸 색 = 목표 대비 100~130%(노랑) · 130% 초과(주황).</li>
+          <li>컬러(건재·수출) 계획 출고 = 월 판매계획을 MES 출하 실적의 월중 분포로 나눔. 도금 = 판매계획 품목이 납기일에 출고.</li></ul>
+        <h4>날짜 상세 · 소재</h4><ul>
+          <li>품목 줄 = 요청 납기(수출 벌크 = 선적 완료기한, 그 외 = 선적 반순) → 생산일 → 소재. 자가재 = 도금 생산 → 컬러 투입 8일 기준. 구매 소재 = 품명 → 소재 코드 비중(13주 실적), 입고 필요일 = 컬러 생산 − 7일(도금 F/H − 5일).</li>
+          <li>팀 소재 리드타임(10/12): P-GI·EG 매주 발주 +5주 · P-CR +4.5주 · 동종-AZ 10~15일 발주 → 차차월 20일 · MAC(P) 매월 초 → 차차월 30일 · 외부SUS +4주(엘지향 +2일) · 외부Alu +45일. 발주·입고 일정은 <a href="matcal.html">소재 관제</a>.</li></ul>
+      </div></details>
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>

@@ -3,21 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>도금 조건 분석</title>
-<meta name="description" content="도금 1·2CGL 조건 분석 — 속도·M/C·손실을 실적으로 다시 재서 계획 조건과 비교">
+<title>조건 분석</title>
+<meta name="description" content="도금·컬러 조건 분석 — 속도·M/C·손실·휴지를 MES 실적으로 다시 재서 계획 조건과 비교">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="style.css?v=2611102314">
-<link rel="stylesheet" href="dashboard.css?v=2611102314">
-<link rel="stylesheet" href="ui/theme.css?v=2611102314">
-<link rel="stylesheet" href="ui/bridge.css?v=2611102314">
+<link rel="stylesheet" href="style.css?v=2611102108">
+<link rel="stylesheet" href="dashboard.css?v=2611102108">
+<link rel="stylesheet" href="ui/theme.css?v=2611102108">
+<link rel="stylesheet" href="ui/bridge.css?v=2611102108">
 <style>html body main #a-events td.wrap { min-width: 150px !important; max-width: 220px; }   /* 11/10 점검: M/C 사유 칸 잘림 → 줄바꿈 */.hbtn { padding: 0; }   /* 옛 style.css 의 button 안쪽 여백이 '?' 를 아래로 밀던 것 */
+.an-seg { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); margin: 4px 0 12px; }
+.an-seg button { border: 0; background: transparent; font: inherit; font-size: 15px; font-weight: 800; padding: 7px 22px; border-radius: 7px; color: var(--ink-2); cursor: pointer; }
+.an-seg button[aria-pressed="true"] { background: var(--brand-2); color: var(--on-brand, #fff); }
+details.fold > summary { cursor: pointer; font-weight: 800; font-size: 16px; padding: 4px 0; }
+details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size: 13.5px; margin-left: 6px; }
+.an-sum { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: baseline; font-size: 14.5px; line-height: 1.6; }
+.an-sum .big { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.an-sum .warn { color: var(--warn); } .an-sum .ok { color: var(--good); }
+.an-sum .lst { flex-basis: 100%; color: var(--ink-2); font-size: 14px; }
+.ref { margin: 8px 0 0; padding-left: 18px; line-height: 1.8; font-size: 14px; }
 </style>
 </head>
 <body class="dash">
-<header id="shell" data-page="analysis" data-crumb="도금" data-title="도금 조건 분석" data-sub="MES 실적으로 생산속도·M/C·손실을 재산출해 계획 조건과 비교 (계획 담당자용)"></header>
-<div class="wrap pagebar"><span class="small" id="a-meta">MES 실적으로 생산속도·M/C·손실을 재산출해 계획 조건과 비교합니다.</span></div>
-
+<header id="shell" data-page="analysis" data-crumb="계획 기준" data-title="조건 분석" data-sub="MES 실적으로 다시 잰 속도·손실 ↔ 지금 계획 조건"></header>
 <main class="wrap">
+  <div class="an-seg" role="group" aria-label="공장"><button type="button" data-p="cg" aria-pressed="true">도금</button><button type="button" data-p="cc" aria-pressed="false">컬러</button></div>
+  <div id="g-wrap">
+<div class="pagebar" style="margin:0 0 10px"><span class="small" id="a-meta">MES 실적으로 생산속도·M/C·손실을 재산출해 계획 조건과 비교합니다.</span></div>
+
   <section class="card empty" id="a-empty">
     <h2 id="a-empty-title">자동 분석 결과 불러오는 중…</h2>
     <p id="a-empty-text">매일 자동 재산출되는 분석 결과를 엽니다.</p>
@@ -33,10 +45,8 @@
   </section>
 
   <div id="a-body" hidden>
-    <section class="card" id="a-weekly-report" hidden>
-      <h2>주간 분석 보고서 <small class="muted" id="a-wr-meta"></small></h2>
-      <div class="report" id="a-wr-body"></div>
-    </section>
+    <section class="card"><h2>판정 <small class="muted">계획 조건 ↔ 최근 실적</small></h2><div class="an-sum" id="a-sum"></div></section>
+
 
     <section class="card">
       <h2>라인별 요약 <small class="muted" id="a-period"></small></h2>
@@ -48,10 +58,15 @@
       <h2>계획 조건 후보 <small class="muted">— 체크한 항목을 계획 계산 조건에 반영</small></h2>
       <div class="scroll"><table class="data" id="a-cands"></table></div>
       <div class="row">
-        <button type="button" class="primary" id="a-apply">선택 항목을 계획 계산 조건에 반영</button>
+        <button type="button" class="primary" id="a-apply">선택 항목을 다시 계산 도구 조건에 넣기</button>
         <span class="hint" id="a-msg"></span>
       </div>
-      <p class="hint"><b>M/C 손실과 비강종 더미는 같이 반영됩니다</b>(한쪽만 바꾸면 손실이 이중으로 잡힘). 속도(t/hr)는 제품 두께 구성에 크게 좌우됩니다(박물일수록 낮음). 기간이 짧거나 두께 구성이 치우치면 틀린 값이 나오므로 28일 이상·표본이 충분할 때만 “반영 권장”으로 표시합니다. 반영은 이 기기의 계획 계산 조건에 저장되고, 계산을 다시 돌려야 계획에 적용됩니다.</p>
+      <p class="hint">엔진 값 바꾸기 = <a href="rules.html#edit">계획 규칙 → 규칙 수치 바꾸기 ③</a>(이 버튼은 이 기기의 다시 계산 도구 조건만 바꿈). <b>M/C 손실과 비강종 더미는 같이 반영됩니다</b>(한쪽만 바꾸면 손실이 이중으로 잡힘). 속도(t/hr)는 제품 두께 구성에 크게 좌우됩니다(박물일수록 낮음). 기간이 짧거나 두께 구성이 치우치면 틀린 값이 나오므로 28일 이상·표본이 충분할 때만 “반영 권장”으로 표시합니다. 반영은 이 기기의 계획 계산 조건에 저장되고, 계산을 다시 돌려야 계획에 적용됩니다.</p>
+    </section>
+
+    <section class="card" id="a-weekly-report" hidden>
+      <h2>주간 분석 보고서 <small class="muted" id="a-wr-meta"></small></h2>
+      <div class="report" id="a-wr-body"></div>
     </section>
 
     <section class="card">
@@ -90,15 +105,105 @@
     <span id="a-file-name" class="muted"></span>
     <p class="hint">파일은 서버로 전송되지 않습니다. 비교 기준은 이 기기의 계획 계산 조건(없으면 기본값)입니다.</p>
   </details>
-</main>
-<footer class="wrap foot">계획 담당자용 · 원자료: MES 도금 생산·휴지 실적</footer>
 
-<script src="ui/shell.js?v=2611102314"></script>
-<script src="vendor/exceljs.min.js?v=2611102314"></script>
-<script src="engine/params.js?v=2611102314"></script>
-<script src="engine/util.js?v=2611102314"></script>
-<script src="engine/mes.js?v=2611102314"></script>
-<script src="engine/crypto.js?v=2611102314"></script>
-<script src="analysis.js?v=2611102314"></script>
+  </div>
+  <div id="c-wrap" hidden>
+<div class="pagebar" style="margin:0 0 10px"><span class="small" id="ca-meta">불러오는 중…</span></div>
+
+  <section class="card empty" id="ca-empty">
+    <h2 id="ca-empty-title">자동 분석 결과 불러오는 중…</h2>
+    <p id="ca-empty-text">매일 자동 재산출되는 분석 결과를 엽니다.</p>
+    <form id="ca-unlock" class="unlock" hidden>
+      <p id="ca-pubinfo"></p>
+      <div class="row">
+        <input type="password" id="ca-pw" placeholder="분석 암호" autocomplete="current-password" aria-label="분석 암호">
+        <button type="submit" class="primary">열기</button>
+      </div>
+      <label class="check"><input type="checkbox" id="ca-remember" checked> 이 기기에서 암호 기억(공용 PC면 해제)</label>
+      <p class="hint" id="ca-unlock-msg"></p>
+    </form>
+  </section>
+
+  <div id="ca-body" hidden>
+    <section class="card"><h2>판정 <small class="muted">계획 속도 ↔ 최근 실적</small></h2><div class="an-sum" id="ca-sum"></div></section>
+    <section class="card">
+      <h2>라인별 요약 <small class="muted" id="ca-period"></small></h2>
+      <div class="lines-now" id="ca-lines"></div>
+      <ul class="checks" id="ca-warns"></ul>
+    </section>
+
+    <section class="card">
+      <h2>계획 속도 점검 <small class="muted" id="ca-cand-sub">— 계획 계산에 쓰는 속도가 최근 실적과 맞는지 · 라인 카드를 누르면 그 라인 품명</small></h2>
+      <p class="lead-note">계획 계산은 라인·품명별 <b>속도(t/hr)</b>로 하루에 몇 톤을 만들지 정합니다. 이 속도는 <span id="ca-plan-per"></span> 실적으로 정한 값이라, 최근 실적과 비교해 차이가 크면 다음 계획 계산 때 속도를 바꾸자는 <b>제안</b>입니다(자동으로 바뀌지 않음). <b>계획</b> = 지금 계획에 쓰는 속도, <b>실제</b> = 최근 실적 속도.</p>
+      <div id="ca-cands"></div>
+      <p class="hint">속도 = 생산 톤 ÷ (작업 + 정지) 시간 — 색상교체·청소·테스트 정지 포함. 라인 카드 = 최근 실적 기간에 실제로 만든 품목을 계획 속도로 만들었다면 걸렸을 시간과 실제 걸린 시간 비교(품목 구성 차이는 빼고 속도만 비교).</p>
+    </section>
+
+    <section class="card">
+      <h2>월별 속도 추이 <small class="muted">(t/hr, 월 단위 · 이번 달은 누계 · 100t 이상 품명)</small></h2>
+      <div class="scroll"><table class="data" id="ca-weekly"></table></div>
+      <p class="hint">굵은 빨강 = 계획 조건보다 5% 이상 낮음, 굵은 파랑 = 5% 이상 높음. 칸에 마우스를 올리면 그 달 물량·코일 수. 같은 품명이라도 두께·폭·색상 교체 횟수에 따라 크게 달라짐.</p>
+    </section>
+
+    <div class="two">
+      <section class="card">
+        <h2>월별 제품 생산량 <small class="muted">(t · 이번 달은 누계)</small></h2>
+        <div class="scroll"><table class="data" id="ca-wtons"></table></div>
+      </section>
+      <section class="card">
+        <h2>월별 휴지 <small class="muted">(시간/가동일)</small></h2>
+        <div class="scroll"><table class="data" id="ca-events"></table></div>
+        <p class="hint">휴지 = 그 달 정지 시간 합 ÷ 가동일(생산한 날). 예: 6.1 = 생산한 날 하루 24시간 중 평균 6.1시간은 색상교체·청소·테스트 등으로 멈춰 있었다는 뜻. 이 정지는 생산속도(정지 포함 t/hr)에 이미 들어 있어서 계획에서 따로 빼지 않습니다.</p>
+      </section>
+    </div>
+
+    <section class="card" id="ca-reason-card" hidden>
+      <h2>휴지 사유 <small class="muted" id="ca-rs-sub">— 라인별 많은 순 8개</small></h2>
+      <div class="scroll"><table class="data" id="ca-reasons"></table></div>
+      <p class="hint" id="ca-rs-note">구분 = 휴지 메모 키워드로 분류(색상교체·청소 / 테스트·도막조정 / 폭·롤·두께 전환 / 기타) — 사유 하나에 구분 하나(시간이 가장 많은 구분).</p>
+    </section>
+
+  </div>
+
+
+  </div>
+  <section class="card">
+    <details class="fold"><summary>기준·사양 <small>정의 · 원자료 · 반영 방법</small></summary>
+      <ul class="ref">
+        <li>원자료 = MES 도금·컬러 코일 생산 실적 + 휴지 실적(사내 PC 매일 갱신)</li>
+        <li>도금 속도(t/h) = 제품 톤 ÷ 가동 시간(더미 코일 제외) · M/C 손실 = 정지 시작 ~ 새 강종 첫 제품 코일 · 설비정지·비강종 더미 = 하루 평균 분</li>
+        <li>컬러 속도(t/h) = 생산 톤 ÷ (작업 + 정지) 시간 — 색상교체·청소·테스트 정지 포함, 계획에서 따로 빼지 않음</li>
+        <li>반영 권장 = 차이 5% 이상 · 표본 충분(도금 28일 이상, 컬러 150t·4주 이상)일 때만 — 자동으로 바뀌지 않음</li>
+        <li>엔진 값 바꾸기 → <a href="rules.html#edit">계획 규칙 → 규칙 수치 바꾸기</a> · 지금 계획 조건 → <a href="rules.html">계획 규칙</a></li>
+      </ul>
+    </details>
+  </section>
+</main>
+<footer class="wrap foot">계획 담당자용 · 원자료: MES 도금·컬러 생산·휴지 실적</footer>
+
+<script src="ui/shell.js?v=2611102108"></script>
+<script src="vendor/exceljs.min.js?v=2611102108"></script>
+<script src="engine/params.js?v=2611102108"></script>
+<script src="engine/util.js?v=2611102108"></script>
+<script src="engine/mes.js?v=2611102108"></script>
+<script src="engine/crypto.js?v=2611102108"></script>
+<script src="analysis.js?v=2611102108"></script>
+<script src="color_analysis.js?v=2611102108"></script>
+<script>
+(function () {   // 도금 / 컬러 전환(11/11 — 옛 color_analysis.html 은 여기 #cc 로)
+  const B = document.querySelectorAll('.an-seg button');
+  function go(p, push) {
+    p = p === 'cc' ? 'cc' : 'cg';
+    document.getElementById('g-wrap').hidden = p !== 'cg'; document.getElementById('c-wrap').hidden = p !== 'cc';
+    B.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.p === p)));
+    if (push) try { history.replaceState(null, '', location.pathname + location.search + '#' + p); } catch (e) { /* 무시 */ }
+  }
+  B.forEach((b) => b.addEventListener('click', () => go(b.dataset.p, true)));
+  const h = location.hash.slice(1), sc = window.UI && UI.scope ? UI.scope() : 'all';
+  go(h === 'cc' || h === 'cg' ? h : sc === 'C' ? 'cc' : 'cg');
+  addEventListener('hashchange', () => go(location.hash.slice(1)));
+  if (window.UI && UI.onScope) UI.onScope((v) => { if (v === 'G' || v === 'C') go(v === 'C' ? 'cc' : 'cg', true); });
+})();
+</script>
 </body>
 </html>

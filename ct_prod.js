@@ -1,4 +1,4 @@
-/* 05 생산·출하(11/4 2차 진단 8장): 하위 화면 = 주소 # (#perf 생산 실적 · #run 가동·차질 · #ship 출하 실적 · #stock 제품 재고) — 화면 안 탭 없음
+/* 05 생산·출하(11/4 2차 진단 8장): 하위 화면 = 주소 # (#perf 생산 실적 · #run 가동·차질 · #ship 출하 실적 · #stock → 재고 전망으로 넘김) — 화면 안 탭 없음
    원천: portal(lines·groups·acc·sr·shipDay·stockTrend·stockRoll·week) · plating_actual(daily·dayMin·dayStops·dayDummy·accHist) · color_actual(daily·downAct·lines) · 주문(CT.orders) */
 (function () {
   'use strict';
@@ -6,13 +6,17 @@
   const FULL = '종일 정지(계획 휴지)';
   const CCAT = { color: '색상교체·청소', test: '테스트·도막조정', roll: '폭·롤·두께 전환', gap: '정지(사유 기록 없음)', etc: '기타' };
   const SHIPK = { 도금판매: 'G국내', 도금수출: 'G수출', 자동차강판: 'G자동차', 컬러수출: 'C수출', 컬러건재: 'C건재' };
-  const VIEWS = ['perf', 'run', 'ship', 'stock'];
+  const VIEWS = ['perf', 'run', 'ship'];
   let bound = false;
+  /* 11/11 소재·재고 개편: '제품 재고'(#stock)는 재고 전망(integrated.html) 맨 위 '제품 재고 목표 대비'로 합침 — 옛 주소는 넘김 */
+  const toStock = () => { if (location.hash === '#stock') { location.replace('integrated.html'); return true; } return false; };
+  if (toStock()) return;
+  addEventListener('hashchange', toStock);
   CT.boot(['portal.enc.json', 'plating_actual.enc.json', 'color_actual.enc.json', 'cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json'], draw);
 
   function draw(D) {
     const m = document.getElementById('ct-main'), v = CT.view('perf', VIEWS), X = ctx(D);
-    m.innerHTML = ({ perf, run, ship, stock })[v](X);
+    m.innerHTML = ({ perf, run, ship })[v](X);
     bind(m, X);
     CT.keyRows(m);
     if (!bound) { bound = true; CT.onView(() => { CT.panel(null); draw(D); if (window.UI && UI.reveal) UI.reveal(m); }); }
@@ -182,39 +186,6 @@
       + card('출하 실적 <small>판매그룹 · 월 누계</small><span class="unit">톤</span>', CT.kpis(k) + tbl)
       + `<div class="pp-2">${card(`미출하·지연 예상 주문 <small>도금 ${L.length}건 · 납기 경과 미출하 + 7일 안 지연 예상 · 컬러 포함(출고 실적 코일 연결) 없음</small><span class="unit">톤</span>`, L.length ? og : '<p class="ct-note">없음</p>')}`
       + `${card(`일별 출하 <small>${+mon.slice(5)}월 · 일별 계획 자료 없음</small><span class="unit">톤</span>`, ds.length ? t([th('일자'), ...S.map((s) => th(esc(s.key), 1)), th('계', 1)], dr) : '<p class="ct-note">자료 없음</p>')}</div>`;
-  }
-
-  /* #stock 제품 재고 */
-  function stock(X) {
-    const { P, mon, asOfG } = X;
-    const S = shipRows(X), GR = (P.groups || []).filter((g) => CT.inScope(g.pl));
-    const dim = new Date(+mon.slice(0, 4), +mon.slice(5), 0).getDate(), el = +String(asOfG).slice(8, 10) / dim;
-    // 판매그룹별 근거: 출하 일정 미달 · 생산 진도 초과(월 계획 × 경과율 대비)
-    const why = (key) => {
-      const out = [], s = S.find((x) => x.key === key), g = GR.find((x) => x.key === key);
-      if (s && s.sched && s.a < s.sched) out.push(`출하 일정 미달 ${n0(s.sched - s.a)}t`);
-      if (g && g.prod && g.prod.month && g.prod.actual > g.prod.month * el * 1.1) out.push(`생산 진도 초과 ${n0(g.prod.actual - g.prod.month * el)}t`);
-      return out;
-    };
-    const st = (P.stockTrend || []), last = st.reduce((a, x) => (x[0] > a ? x[0] : a), ''), first = st.filter((x) => x[0].slice(0, 7) < mon).reduce((a, x) => (x[0] > a ? x[0] : a), '');
-    const val = (d, k) => { const r = st.find((x) => x[0] === d && x[1] === k); return r ? r[2] : null; };
-    const SR = P.stockRoll || {}, ei = SR.d0 ? CT.diff(`${mon}-${String(dim).padStart(2, '0')}`, SR.d0) : null;
-    const cats = ((P.sr && P.sr.stock) || []).filter((s) => !/소재/.test(s.name) && CT.inScope(/^도금/.test(s.name) ? 'G' : 'C'));
-    const keys = (s) => /^도금/.test(s.name) ? (/자가재/.test(s.name) ? [] : ['G수출', 'G국내', 'G자동차']) : ['C수출', 'C건재'];
-    const crow = (s) => { const r = s.target ? s.current / s.target : null, over = r != null && r > 1;
-      const hs = over ? keys(s).flatMap((k) => why(k).map((w) => `${k.replace(/^G/, '도금').replace(/^C/, '컬러')} ${w}`)) : [];
-      return `<tr><td class="id">${esc(s.name)}</td><td class="r"><b>${n0(s.current)}</b></td><td class="r">${s.target ? n0(s.target) : '<span class="sub">목표 없음</span>'}</td>`
-        + `<td class="r">${r == null ? '-' : `<b class="${over ? 'wrn' : 'pos'}">${Math.round(r * 100)}%</b>`}</td><td class="r">${s.target ? sgn(s.current - s.target) : '-'}</td>`
-        + `<td class="w">${over ? `<span class="pp-tag">목표 초과</span>${hs.length ? hs.map((h) => `<span class="pp-c">${esc(h)}</span>`).join('') : '<span class="sub">근거 자료 없음</span>'}` : r == null ? '<span class="sub">-</span>' : '<span class="sub">목표 이내</span>'}</td></tr>`; };
-    const keysIn = [...new Set(st.filter((x) => x[1].startsWith('g:')).map((x) => x[1].slice(2)))].filter((k) => CT.inScope(k[0]));
-    const grow = (k) => { const cur = val(last, 'g:' + k), b = first ? val(first, 'g:' + k) : null, e = SR.days && SR.days[k] && ei != null ? SR.days[k][ei] : null, w = why(k), name = (GR.find((g) => g.key === k) || {}).name || k;
-      return `<tr><td class="id">${esc(name)}</td><td class="r"><b>${n0(cur)}</b></td><td class="r">${b == null ? '-' : `<span class="${cur - b > 0 ? 'wrn' : ''}">${sgn(cur - b)}</span>`}</td><td class="r">${e == null ? '-' : n0(e)}</td>`
-        + `<td class="w">${w.length ? w.map((x) => `<span class="pp-c">${esc(x)}</span>`).join('') : '<span class="sub">-</span>'}</td></tr>`; };
-    return CT.basis([{ name: '판매생산속보 재고', at: P.sr && P.sr.asOf, kind: '실적' }, { name: '그룹 재고', at: last, kind: '실적' }, { name: '재고 전망', at: SR.asOf, kind: '재계획' }])
-      + card(`제품 재고 <small>실재고 vs 월말 목표 · 소재 재고는 <a href="matcal.html">소재 관제</a></small><span class="unit">톤</span>`,
-        t([th('제품'), th('실재고', 1), th('목표', 1, '판생 월말 목표'), th('목표 대비', 1), th('차이', 1), th('초과 근거(같은 판매그룹)')], cats.map(crow)))
-      + card(`판매그룹별 제품 재고 <small>판매그룹 목표 없음 · ${md(last)} 기준</small><span class="unit">톤</span>`,
-        t([th('판매그룹'), th('실재고', 1), th(`${first ? md(first) : '월초'} 대비`, 1), th('월말 전망', 1, '최신 재계획 재고 전망'), th('관련 근거')], keysIn.map(grow)));
   }
 
   function bind(m, X) {

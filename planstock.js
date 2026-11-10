@@ -168,7 +168,8 @@
       + `<div class="grid2 rowc">${orderSum()}${fhCard()}</div>`
       + `<div class="grid2 rowc">${months()}${byMat()}</div>`
       + `<details class="card more" id="ps-more"><summary><h2>사양별 상세 <small>${O.n}개 사양 — 진도·월말 예상·판정</small></h2></summary>${specDiv()}</details>`
-      + `<details class="card more"><summary><h2>계산 기준</h2></summary>${basis().replace(/^<section[^>]*>/, '').replace(/<\/section>$/, '')}</details>`;
+;
+    const bx = $('ps-basis-box'); if (bx) bx.innerHTML = basis().replace(/^<section[^>]*>/, '').replace(/<\/section>$/, '').replace(/<h2>[^]*?<\/h2>/, '<h3 class="ref-h">계산 기준</h3>');   // 11/11: 맨 아래 '기준·사양' 접기 한 곳에(사양표·리드타임과 같이)
     $('ca-meta').innerHTML = `<span><b>실적</b>~${UI.fmtDate(O.asOf)}</span><span><b>시작 재고</b>${+O.stockMonth.slice(4)}월 말</span><span><b>기준</b>계획재 운영안 ${O.n}개 사양</span><span><b>계산</b>${UI.fmtDateTime(O.built)}</span>`;
     calInit();
     UI.reveal($('ca-main')); UI.count($('ca-main')); bindTip($('ca-main'));

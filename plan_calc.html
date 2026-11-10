@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>계획 계산</title>
+<meta name="description" content="이번 달 도금·컬러 계획이 어떻게 계산됐는지 — 그룹 월 계획(판매 + 목표 − 기초), 수요, M/C, 그날 그 라인 이유">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
+<link rel="stylesheet" href="ui/theme.css?v=2611102108">
+<style>
+.pc-seg { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); margin: 4px 0 14px; }
+.pc-seg button { border: 0; background: transparent; font: inherit; font-size: 15px; font-weight: 800; padding: 7px 22px; border-radius: 7px; color: var(--ink-2); cursor: pointer; }
+.pc-seg button[aria-pressed="true"] { background: var(--brand-2); color: var(--on-brand, #fff); }
+.pc-k { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.pc-k .k { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--surface); }
+.pc-k .k .l { font-size: 13.5px; color: var(--ink-2); font-weight: 700; }
+.pc-k .k .v { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; margin-top: 2px; white-space: nowrap; }
+.pc-k .k .v small { font-size: 14px; font-weight: 700; color: var(--ink-2); margin-left: 3px; }
+.pc-k .k .b { font-size: 13.5px; color: var(--ink-2); margin-top: 2px; word-break: keep-all; }
+.pc-k .k.bad { border-left: 4px solid var(--bad); } .pc-k .k.bad .v { color: var(--bad); }
+.pc-k .k.warn { border-left: 4px solid var(--warn); } .pc-k .k.warn .v { color: var(--warn); }
+.pc-k .k.ok { border-left: 4px solid var(--good); }
+table.t.pc td, table.t.pc th { padding: 8px 12px; }
+html body table.t.pc td.l, html body table.t.pc th.l { text-align: left !important; }
+html body table.t.pc td.n, html body table.t.pc th.n { text-align: right !important; font-variant-numeric: tabular-nums; }
+html body table.t.pc td.op { text-align: center; color: var(--ink-3); font-weight: 800; padding: 8px 2px; width: 14px; }
+html body table.t.pc td.eq { font-weight: 800; }
+html body table.t.pc td.nt { text-align: left !important; white-space: normal !important; min-width: 200px; max-width: 360px; color: var(--ink-2); font-size: 13.5px; line-height: 1.5; word-break: keep-all; }
+table.t.pc tr.gh td { background: var(--tint); font-weight: 800; }
+table.t.pc tr.sub td.l { padding-left: 26px; }
+.pc-mc { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 8px 12px; align-items: start; font-size: 14.5px; }
+.pc-mc .ln { font-weight: 800; padding-top: 3px; }
+.pc-mc .cs { display: flex; flex-wrap: wrap; gap: 6px; }
+.pc-mc .c { display: inline-flex; gap: 6px; align-items: baseline; border: 1px solid var(--line); border-radius: 8px; padding: 3px 9px; background: var(--surface); white-space: nowrap; }
+.pc-mc .c b { font-variant-numeric: tabular-nums; }
+.pc-mc .c.fx { border-color: var(--brand-2); background: var(--tint); }
+.pc-mc .c.sd { border-style: dashed; color: var(--ink-2); }
+.pc-mc .c em { font-style: normal; font-size: 13.5px; color: var(--brand-2); font-weight: 700; }
+.pc-lg { font-size: 13.5px; color: var(--ink-2); margin-top: 10px; }
+.rl-pick { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 0 0 12px; font-size: 14px; } .rl-pick label { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.rl-pick select, .rl-pick input { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); }
+.rl-why { margin: 0; padding-left: 20px; line-height: 1.75; font-size: 14.5px; } .rl-why li { margin-bottom: 8px; }
+.rl-late { color: var(--bad); }
+table.t.rl-t { width: auto; margin-top: 6px; font-size: 13.5px; } table.t.rl-t td, table.t.rl-t th { padding: 6px 10px; } html body table.t.rl-t td.l, html body table.t.rl-t th.l { text-align: left !important; }
+html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align: left !important; min-width: 260px; max-width: 520px; color: var(--ink-2); line-height: 1.5; }
+.rl-wt { white-space: normal; min-width: 280px; max-width: 520px; line-height: 1.5; color: var(--ink-2); }
+#x-out h3 { margin: 6px 0 8px; }
+details.fold > summary { cursor: pointer; font-weight: 800; font-size: 16px; padding: 4px 0; }
+details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size: 13.5px; margin-left: 6px; }
+.ref { margin: 8px 0 0; padding-left: 18px; line-height: 1.8; font-size: 14px; }
+.tools { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.tools a { display: inline-block; border: 1px solid var(--line); border-radius: 9px; padding: 9px 14px; background: var(--surface); font-weight: 700; text-decoration: none; color: var(--ink); }
+.tools a small { display: block; font-weight: 500; color: var(--ink-2); font-size: 13.5px; }
+@media (max-width: 900px) { .pc-k { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .pc-k .k .v { font-size: 20px; } .pc-mc { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header id="shell" data-page="plancalc" data-crumb="계획 기준" data-title="계획 계산" data-sub="이번 달 계획이 어떻게 계산됐는지 — 숫자로"></header>
+<main class="wrap">
+  <section class="card" id="c-lock" style="margin-top:12px" hidden>
+    <h2>분석 암호 입력 필요</h2>
+    <form class="unlock" id="c-form" style="justify-content:flex-start"><input type="password" id="c-pw" placeholder="분석 암호" autocomplete="current-password" aria-label="분석 암호"><button type="submit">열기</button></form>
+    <p class="hint" id="c-msg"></p>
+  </section>
+  <div id="c-main" hidden>
+    <div class="pc-seg" role="group" aria-label="공장"><button type="button" data-p="cg" aria-pressed="true">도금</button><button type="button" data-p="cc" aria-pressed="false">컬러</button></div>
+    <section class="card"><h2 id="k-h">계산 결과</h2><div class="pc-k" id="k-row"></div></section>
+    <section class="card"><h2 id="f-h">그룹 월 계획</h2>
+      <div class="scroll"><table class="t pc" id="f-tab"></table></div>
+      <p class="pc-lg" id="f-lg"></p>
+    </section>
+    <section class="card" id="mc-sec"><h2>강종 전환(M/C)·정기수리 일정 <small id="mc-sub"></small></h2>
+      <div class="pc-mc" id="mc-body"></div>
+      <p class="pc-lg">파란 칸 = 고정(판생 확정 다음 달 말까지) · 지정 = 회사가 정한 날짜 · 점선 = 정기수리</p>
+    </section>
+    <section class="card" id="x-sec"><h2>왜 그날, 그 라인에서? <small>지금 게시 계획 기준</small></h2>
+      <div class="rl-pick"><label>라인 <select id="x-line"></select></label><label>날짜 <input type="date" id="x-date"></label></div>
+      <div id="x-out"><p class="muted">불러오는 중…</p></div>
+      <h3 style="margin-top:22px">소재 — 부족 시작 → 입고 필요일 → 발주 마감</h3>
+      <div class="rl-pick"><label>소재 <select id="x-mat"></select></label></div>
+      <div id="x-mout"></div>
+    </section>
+    <section class="card">
+      <details class="fold"><summary>직접 다시 계산(담당자 도구) <small>엑셀을 올려 이 브라우저에서 계산 · 비교 · 게시</small></summary>
+        <div class="tools">
+          <a href="rolling.html">도금 다시 계산<small>판매계획·배선일정 엑셀 → 1·2CGL 일정</small></a>
+          <a href="color_calc.html">컬러 다시 계산<small>판매계획·운영안·휴지계획 → 1~4CCL 일정 · 캘린더 끌어 옮기기</small></a>
+        </div>
+      </details>
+    </section>
+    <section class="card">
+      <details class="fold"><summary>기준·사양 <small id="r-asof"></small></summary>
+        <ul class="ref" id="r-ref"></ul>
+      </details>
+    </section>
+  </div>
+</main>
+<footer class="foot"><div class="wrap"><span>자료 = 게시된 통합 계획 · 도금 재계획 · 컬러 롤링(2시간마다 갱신)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2611102108"></script>
+<script src="engine/crypto.js?v=2611102108"></script>
+<script src="rules_logic.js?v=2611102108"></script>
+<script src="plan_calc.js?v=2611102108"></script>
+</body>
+</html>

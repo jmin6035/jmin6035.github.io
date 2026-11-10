@@ -32,6 +32,9 @@
         + `<td class="n">${v(c, c.cur)}</td><td class="n"><b>${v(c, c.act)}</b></td><td class="n ${c.flag ? 'neg' : ''}">${d == null ? '-' : (d > 0 ? '+' : '') + GP.fmt(d * 100, 1) + '%'}</td>`
         + `<td class="l muted">${esc(c.basis || '').replace(/\d{4,}(?=코일)/g, (n) => GP.fmt(+n))}</td><td>${c.apply ? '<span class="pill warn">반영 권장</span>' : c.flag ? '<span class="pill">검토(표본 부족)</span>' : '유지'}</td></tr>`;
     }).join('');
+    { const ap = a.cands.filter((c) => c.apply), fl = a.cands.filter((c) => !c.apply && c.flag);   // 11/11 첫 화면 판정
+      $('a-sum').innerHTML = `<span><span class="big ${ap.length ? 'warn' : 'ok'}">${ap.length}</span> 반영 권장</span><span><span class="big">${fl.length}</span> 검토(표본 부족)</span><span><span class="big">${a.cands.length - ap.length - fl.length}</span> 유지</span>`
+        + (ap.length ? ['1CGL', '2CGL'].map((l) => { const L = ap.filter((c) => String(c.label).startsWith(l)); return L.length ? `<span class="lst"><b>${l}</b> ${L.map((c) => `${esc(String(c.label).slice(l.length).trim())} ${v(c, c.cur)} → <b>${v(c, c.act)}</b>`).join(' · ')}</span>` : ''; }).join('') + '<span class="lst">엔진 값은 <a href="rules.html#edit">계획 규칙 → 규칙 수치 바꾸기</a>에서(자동 반영 안 됨)</span>' : '<span class="lst">계획 조건이 최근 실적과 맞음</span>'); }
     renderWeekly(a);
     $('a-events').innerHTML = '<tr><th>시작</th><th>라인</th><th>전환</th><th>손실(분)</th><th>정지(분)</th><th>사유</th></tr>' + (a.events.map((e) =>
       `<tr><td>${esc(e.at)}</td><td>${e.line}</td><td>${e.kind === 'M/C' ? `${e.from}→${e.to}` : esc(e.kind)}</td><td class="n"><b>${GP.fmt(e.minutes)}</b></td><td class="n">${e.stopMin != null ? GP.fmt(e.stopMin) : '-'}</td><td class="l wrap">${esc(e.reason || '')}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">기간 중 강종 전환 없음</td></tr>');
@@ -76,7 +79,7 @@
     const pick = [...document.querySelectorAll('[data-cand]')].filter((e) => e.checked).map((e) => A.cands[+e.dataset.cand]).filter((c) => c.path && c.act != null);
     if (!pick.length) { $('a-msg').textContent = '선택한 항목이 없습니다.'; return; }
     try { localStorage.setItem(P_KEY, JSON.stringify(GP.mesApply(planParams(), pick))); } catch (e) { $('a-msg').textContent = '⚠ 이 브라우저에 저장할 수 없습니다.'; return; }
-    $('a-msg').innerHTML = `${pick.length}개 항목을 반영했습니다. <a href="rolling.html">롤링 화면</a>의 계획 조건(고급)에서 확인하고 재계산 바랍니다.`;
+    $('a-msg').innerHTML = `${pick.length}개 항목을 반영했습니다. <a href="rolling.html">도금 다시 계산</a>의 계획 조건(고급)에서 확인 후 계산. 엔진 값은 <a href="rules.html#edit">계획 규칙</a>에서 바꿈.`;
   };
 
   // ---- 주간 분석 보고서(Claude, 공개 사이트 published/weekly_report.enc.json, 분석 암호) ----

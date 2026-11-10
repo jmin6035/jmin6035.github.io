@@ -163,7 +163,7 @@
     c.grp = Object.fromEntries(Object.entries(g).sort((a, b) => b[1] - a[1]));
     c.late = c.items.filter((i) => i.late).length;
     c.lateE = c.items.filter((i) => i.late && i.exp && (i.dept || i.arr)).length;   // 출항일 넘김(필요 생산일 = 출항 − 1일, 10/29)
-    c.hrs = r1(c.items.reduce((s, i) => s + i.t / tphOf(c.line, i), 0));   // 이 칸 주문을 T/Hr(같은 두께·폭 3개월 실적)로 돌리는 시간
+    c.hrs = r1(c.items.reduce((s, i) => s + i.t / tphOf(c.line, i), 0));   // 이 칸 주문을 T/Hr(같은 두께·폭 2026년 실적)로 돌리는 시간
     c.mvIn = c.items.filter((i) => i.moved).length;
     c.flag = c.flag0; c.flagS = c.flagS0; c.why = c.why0;
     const seq = c.items.filter((i) => i.kind !== '확정' && i.grade);   // 날짜 안 순서(재질 차례)대로 이었을 때 바로 못 잇는 짝이 남으면 = 사이에 다른 재질이 필요
@@ -316,7 +316,7 @@
   }
   const famCh = (f) => (f ? `<span class="fam fam-${esc(String(f).split('-')[0].replace(/[^A-Z]/g, ''))}">${esc(f)}</span>` : '');
 
-  function kpis() {
+  function summary() {
     const S = O.summary, tot = (k) => LINES.reduce((s, l) => s + (S[l][k] || 0), 0);
     const win = O.risk.filter((r) => !r.od);
     // 재계획 강종 vs MES 작업지시 코일(예상 시각)이 다른 날
@@ -328,15 +328,38 @@
       const c0 = O.lines[l][O.days.indexOf(A[0])], ut = (c0.flag || '').match(/\(([^)]*까지)\)/);
       parts.push(`<b>${l}</b> 재계획 ${A.map(md).join('·')} ${c0.event || c0.fam} · MES 작업지시는 ${(c0.fieldFam || []).join('·')}${ut ? ' ' + ut[1] : ''}`);
     });
-    const fl = dset.size, misTxt = parts.join('<br>');
+    const fl = dset.size, misTxt = parts.join('\n').replace(/<[^>]+>/g, '');
     const jgMin = Math.min(...O.jg.map((j) => j.cumSched - j.cumPlan));
-    const k = (l, v, b, tone) => `<div class="kpi${tone ? ' tone-' + tone : ''}"><div class="l">${l}</div><div class="v">${v}</div><div class="b">${b}</div></div>`;
-    return '<div class="kpis" style="margin:0 0 14px">'
-      + k(`${END()}까지 라인 능력`, `${n0(tot('cap'))}<small>t</small>`, `작업지시 ${n0(tot('conf'))} · 소재 있음 ${n0(tot('plan'))} · 입고 예정 ${n0(tot('fcst'))} · 빈칸 ${n0(tot('gap'))}`, tot('gap') > 0 ? 'warn' : 'brand')
-      + k('필요일 경과 주문', `${n0(O.odT)}<small>t · ${O.nOd}건</small>`, `필요 생산일 지났는데 생산 전${(O.shipMiss || []).length ? ` · 그중 출항 지난 수출 ${O.shipMiss.length}건(배선 확인)` : ''}`, O.odT > 0 ? 'bad' : 'good')
-      + k('강종 날짜 · 재계획과 현장 다름', `${fl}<small>일</small>`, fl ? misTxt : '재계획 강종과 MES 작업지시가 맞음', fl ? 'bad' : 'good')
-      + k('자가재(컬러 투입) 진도', jgMin >= 0 ? '<span class="gv">충분</span>' : `<span class="bv">${n0(-jgMin)}t 부족</span>`, '컬러 계획(투입 일정) 대비 도금 생산 누계 — 최대 부족일', jgMin >= 0 ? 'good' : 'bad')
-      + '</div>';
+    /* 결론(11/11 생산 화면 통합 — 생산 일정 화면 맨 위 PS.sum): 확정 여부 · 필요일 경과 · 강종 불일치 · 자가재 진도 + 이번 주(오늘부터 7일) 라인별 편성·부하·넘침 */
+    const kst = (t) => { const x = new Date(new Date(t).getTime() + 9 * 36e5).toISOString(); return `${+x.slice(5, 7)}/${+x.slice(8, 10)} ${x.slice(11, 16)}`; };
+    const nw = nextWeek(), st = CONF ? `<span class="ct-b ok" title="다음 주 ${mdw(nw[0])}~${mdw(nw[6])} 확정본">다음 주 확정됨 ${kst(CONF.at)}${dirty() ? ' · 미저장 수정 있음' : ''}</span>` : `<button type="button" class="ct-b warn ps-go" data-go="cg-conf" title="매주 수요일 오전 · ${mdw(nw[0])}~${mdw(nw[6])} — 누르면 확정 칸으로">다음 주 미확정</button>`;
+    const d7 = O.days.slice(0, 7), I = (d) => O.days.indexOf(d);
+    const rows = LINES.map((ln) => {
+      const X = d7.map((d) => O.lines[ln][I(d)]), f = X.reduce((s, c) => s + c.conf + c.plan + c.fcst, 0), cp = X.reduce((s, c) => s + c.cap, 0);
+      const hr = X.reduce((s, c) => s + (c.hrs || 0), 0), ha = X.reduce((s, c) => s + (c.hAvail || 0), 0), r = ha >= 1 ? hr / ha : null;
+      const nf = X.filter((c) => c.flag).length, lt = X.reduce((s, c) => s + (c.late || 0), 0), ov = over(ln, O.days);
+      return `<tr><td class="l"><b>${ln}</b></td><td class="r"><b>${n0(f)}</b> / ${n0(cp)}t</td><td class="r" title="편성 주문을 T/Hr(같은 두께·폭 2026년 실적)로 돌리는 시간 ${n0(hr)}h ÷ 가동 가능 시간 ${n0(ha)}h">${r == null ? '<span class="sub">정지</span>' : `<b class="${r > 1.005 ? 'bad' : r < 0.9 ? 'warn' : ''}">${Math.round(r * 100)}%</b>`}</td>`
+        + `<td class="r">${nf ? `<b class="bad">${nf}일</b>` : '<span class="sub">0</span>'}</td><td class="r">${lt ? `<b class="bad">${lt}건</b>` : '<span class="sub">0</span>'}</td>`
+        + `<td class="r" title="${END()}까지 주문을 T/Hr로 24시간 이어서 돌릴 때 ${md(O.days[O.days.length - 1])} 뒤로 넘어가는 양">${ov ? `<b class="bad">${n0(ov.t)}t</b>` : '<span class="sub">0</span>'}</td></tr>`;
+    }).join('');
+    return `<div class="ps-st">${st}${O.odT > 0 ? `<span class="ct-b bad" title="필요 생산일 지났는데 생산 전${(O.shipMiss || []).length ? ` · 그중 출항 지난 수출 ${O.shipMiss.length}건(배선 확인)` : ''}">필요일 경과 ${n0(O.odT)}t · ${O.nOd}건</span>` : ''}`
+      + `${fl ? `<span class="ct-b bad" title="${esc(misTxt)}">재계획과 현장 강종 다름 ${fl}일</span>` : ''}<span class="ct-b ${jgMin >= 0 ? 'ok' : 'bad'}" title="컬러 계획(투입 일정) 대비 도금 자가재 생산 누계 — 최대 부족일">자가재 진도 ${jgMin >= 0 ? '충분' : `${n0(-jgMin)}t 부족`}</span>`
+      + `<span class="ps-k" title="~${END()} 라인 능력 = 작업지시 + 소재 있음 + 입고 예정 + 빈칸">~${END()} 능력 ${n0(tot('cap'))}t = 작업지시 ${n0(tot('conf'))} · 소재 있음 ${n0(tot('plan'))} · 입고 예정 ${n0(tot('fcst'))}${tot('gap') >= 1 ? ` · 빈칸 ${n0(tot('gap'))}` : ''}</span></div>`
+      + `<div class="ct-wrap"><table class="ct-t ps-t"><thead><tr><th class="l">라인</th><th class="r" title="편성(작업지시 + 소재 있음 + 입고 예정) / 능력(재계획 하루 톤 합)">편성 / 능력</th><th class="r" title="편성 주문을 실적 T/Hr 로 돌리는 시간 ÷ 가동 가능 시간(24h × 제원치 가동률)">시간 부하</th><th class="r" title="현장 강종 ≠ 재계획 · 재질 순서 등 확인할 날">확인 필요</th><th class="r" title="그날 생산하면 출항일(수출)·납기(내수)를 넘기는 주문">납기 초과</th><th class="r">~${END()} 넘침</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+  function over(ln, days) {                                   // days 전체를 24시간 이어 돌렸을 때 가동 가능 시간을 넘는 시간·톤(T/Hr 기준)
+    const C = days.map((d) => O.lines[ln][O.days.indexOf(d)]), h = C.reduce((s, c) => s + (c.hrs || 0), 0), a = C.reduce((s, c) => s + (c.hAvail || 0), 0), t = C.reduce((s, c) => s + c.conf + c.plan + c.fcst, 0);
+    return h - a >= 1 ? { h: h - a, t: (h - a) * t / h } : null;
+  }
+  function spec() {                                           // 기준·사양(생산 일정 맨 아래 접기): 채우는 순서 · 라인 속도 t/hr 표
+    const S = O.speed || {}, tb = LINES.map((ln) => {
+      const K = Object.keys(S).filter((k) => k.startsWith(ln + '|')).map((k) => k.split('|'));
+      const th = [...new Set(K.map((k) => k[1]))].sort((a, b) => a - b), wd = [...new Set(K.map((k) => k[2]))].sort((a, b) => a - b);
+      if (!th.length) return '';
+      return `<div><h4>${ln} 시간당 생산량 <small>t/hr · 두께(행) × 폭(열) · 없으면 라인 평균 ${n1(S[ln])}</small></h4><div class="ct-wrap"><table class="ct-t ps-sp"><thead><tr><th class="l">두께＼폭</th>${wd.map((w) => `<th class="r">${n0(w)}</th>`).join('')}</tr></thead><tbody>`
+        + th.map((t) => `<tr><td class="l"><b>${t}</b></td>${wd.map((w) => { const v = S[`${ln}|${t}|${w}`]; return `<td class="r">${v == null ? '<span class="sub">-</span>' : n1(v)}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div></div>';
+    }).join('');
+    return `<h4>도금 캘린더</h4><ul class="ps-ul"><li>하루 능력 = 재계획 하루 톤(속도 = 2026.1월~ 실적 하루 생산량) · 강종 = 최신 재계획</li><li>채우는 순서 = MES 작업지시 → 1010 순서안 → 필요 생산일 빠른 순(수출 출항 − 1일 · 내수 납기 − 1일)</li><li><b>작업지시</b> = MES 지시 후 생산 대기 코일 · <b>소재 있음</b> = 소재가 들어온 주문 · <b>입고 예정</b> = 입고 + 5일부터 생산</li><li><b>넘침</b> = 칸 주문을 아래 t/hr 로 24시간 이어 돌릴 때 가동 가능 시간(24h × 제원치 가동률)을 넘는 양</li><li>다음 주 확정 = 매주 수요일 오전 다음 주(월~일) 저장 → 다음 날부터 준수율</li><li>자료 ${esc(O.asOf)} · ${O.planT0 ? `재계획(실적 ~${md(O.planT0)})` : esc(O.planSrc || '')} · 계산 ${esc(O.built || '')}</li><li>시간당 생산량 = 같은 두께(0.1mm)·폭(100mm) 최근 2026년 실적</li></ul><div class="ps-spw">${tb}</div>`;
   }
 
   function cell(c, ln) {
@@ -365,7 +388,7 @@
       const C = O.lines[ln], h = C.reduce((s, c) => s + (c.hrs || 0), 0), a = C.reduce((s, c) => s + (c.hAvail || 0), 0), t = C.reduce((s, c) => s + c.conf + c.plan + c.fcst, 0);
       return h - a >= 1 ? { h: h - a, t: (h - a) * t / h } : null;
     };
-    const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small>${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small>${hr ? `<small class="hs ov" title="${END()}까지 주문을 T/Hr(같은 두께·폭 3개월 실적)로 24시간 이어서 돌리면 가동 가능 시간(24h × 제원치 가동률)보다 ${n1(hr.h)}시간 초과 → 약 ${n0(hr.t)}t 은 ${md(O.days[O.days.length - 1])} 뒤에 생산">${END()} 뒤 ${n0(hr.t)}t</small>` : ''}</th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`; }).join('');
+    const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small>${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small>${hr ? `<small class="hs ov" title="${END()}까지 주문을 T/Hr(같은 두께·폭 2026년 실적)로 24시간 이어서 돌리면 가동 가능 시간(24h × 제원치 가동률)보다 ${n1(hr.h)}시간 초과 → 약 ${n0(hr.t)}t 은 ${md(O.days[O.days.length - 1])} 뒤에 생산">${END()} 뒤 ${n0(hr.t)}t</small>` : ''}</th>${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`; }).join('');
     const jg = days.map((d) => {
       const j = O.jg[idx(d)], df = j.cumSched - j.cumPlan;
       return `<td class="jg" title="컬러 계획 = 컬러 라인 투입 일정에 맞추려면 이 날까지 도금에서 만들어 둬야 할 자가재 누계(가동계획 기준) · 도금 생산 = 이 캘린더대로 도금에서 만드는 자가재 누계(${md(O.days[0])}부터)"><div class="jr"><span>컬러 계획</span><b>${n0(j.cumPlan)}</b></div><div class="jr"><span>도금 생산</span><b>${n0(j.cumSched)}</b></div><div class="jr ${df < 0 ? 'bad' : 'good'}"><span>${df < 0 ? '부족' : '여유'}</span><b>${n0(Math.abs(df))}</b></div>${j.mark ? `<div class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 끝내야 할 자가재">컬러 마감 ${n0(j.mark)}t</div>` : (O.jg.some((x) => x.mark) ? '<div class="mk" style="visibility:hidden">-</div>' : '')}</td>`;
@@ -658,7 +681,7 @@
       + A.map((a) => `<tr><td class="nw">${mdw(a.week)}~</td><td class="sub nw">${esc(a.who)} ${esc(String(a.at).slice(5, 16).replace('T', ' '))}</td><td class="num">${n0(a.confT)}</td><td class="num">${n0(a.doneT)}</td>`
         + `<td class="num"><b>${a.rate == null ? '-' : Math.round(a.rate * 100) + '%'}</b></td><td class="nw">${Object.entries(a.lines || {}).map(([l, v]) => `${l} ${v.confT ? Math.round(100 * v.doneT / v.confT) : '-'}%`).join(' · ')}</td></tr>`).join('') + '</tbody></table>'
       : '<p class="msg">확정한 주 없음</p>';
-    return `<section class="card"><h2>다음 주 생산 확정 <small>매주 수요일 오전 · ${mdw(nw[0])} ~ ${mdw(nw[6])}</small></h2>`
+    return `<section class="card" id="cg-conf"><h2>다음 주 생산 확정 <small>매주 수요일 오전 · ${mdw(nw[0])} ~ ${mdw(nw[6])}</small></h2>`
       + '<p class="msg" style="margin:0 0 10px">다음 주(파란 머리 칸)를 저장 = 공정출하·마케팅과 약속한 주간 편성 · 저장 뒤에도 고쳐서 「수정 저장」 · 지난 주 준수율은 아래</p>'
       + `<div class="cf"><span class="nw">다음 주 생산 1CGL <b>${n0(tot('1CGL'))}t</b> · 2CGL <b>${n0(tot('2CGL'))}t</b></span>`
       + `<button type="button" class="go" id="cc-save">${btn}</button><span class="msg" id="cc-smsg">${stat}</span>`
@@ -690,23 +713,26 @@
   function render() {
     const stale = Math.round((Date.now() - dt(O.asOf).getTime()) / 864e5);
     $('cc-main').innerHTML = (stale >= 2 ? `<div class="card" style="background:var(--warn-bg);color:var(--warn);font-weight:700">자료 기준 ${md(O.asOf)} — ${stale}일 전 자료</div>` : '')
-      + kpis() + grpCard() + calCard() + confirmCard() + accCard() + riskCard()
-      + `<p class="msg" style="margin:4px 4px 0">자료 ${esc(O.asOf)} · ${O.planT0 ? `재계획(실적 ~${md(O.planT0)})` : esc(O.planSrc || '')} · 계산 ${esc(O.built || '')}</p>`;   // 11/9: 재계획 표기 통일(저장일 → 실적 기준일)
+      + calCard() + confirmCard() + riskCard() + fold(grpCard(), `판매그룹별 계획 · 재계획 목표 <small>~${END()} · 톤</small>`) + fold(accCard(), '계획 적중률 <small>계획 ↔ 실제 생산</small>');   // 11/11: 결론(확정·경과·라인 부하)은 맨 위 PS.sum, 세부(그룹별·적중률)는 접기
     $('cc-main').querySelectorAll('button.cell').forEach((b) => b.onclick = () => openDay(b.dataset.ln, b.dataset.d));
     $('cc-main').querySelectorAll('#cc-rk button').forEach((b) => b.onclick = () => { rk = b.dataset.rk; try { localStorage.setItem(RK_KEY, rk); } catch (e) { /* 무시 */ } render(); });
     $('cc-save').onclick = save;
     bindRisk();
     if ($('mv-clear')) $('mv-clear').onclick = () => { MOVES = []; saveMoves(); applyMoves(); render(); };
     $('cc-main').querySelectorAll('[data-undo]').forEach((b) => b.onclick = () => { MOVES.splice(+b.dataset.undo, 1); saveMoves(); applyMoves(); render(); });
+    if (window.PS) PS.sum('G', summary(), spec(), O.asOf);
     if (window.UI) UI.reveal($('cc-main'));
   }
+  const fold = (h, t) => (h ? `<details class="fold ps-fd"><summary>${t}</summary>${h.replace(/^<section class="card">\s*<h2>.*?<\/h2>/, '').replace(/<\/section>$/, '')}</details>` : '');
   $('cc-dlg').addEventListener('click', (e) => { if (e.target === $('cc-dlg')) $('cc-dlg').close(); });
   const envReady = GP.latest('cg_calendar.enc.json'), lpReady = GP.latest('latest.plan.enc.json').catch(() => null);   // 11/9: lp = 재계획 실적 기준일(t0)
+  let busy = false, ready = false;
   async function unlock(pw) {
+    if (O || busy || !pw) return; busy = true;
     const env = await envReady;
-    if (!env) { $('cc-msg').textContent = '게시된 자료가 없습니다.'; return; }
-    try { O = await GP.decryptJSON(env, pw); PW = pw; try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
-    catch (e) { $('cc-form').hidden = false; $('cc-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
+    if (!env) { $('cc-msg').textContent = '게시된 자료가 없습니다.'; busy = false; return; }
+    try { O = await GP.decryptJSON(env, pw); PW = pw; }
+    catch (e) { $('cc-msg').textContent = '⚠ 암호가 맞지 않습니다'; busy = false; return; }
     O.base = JSON.parse(JSON.stringify(O.lines));
     O.planT0 = await lpReady.then((e) => e && GP.decryptJSON(e, pw)).then((p) => (((p && p.result) || {}).replan || {}).t0 || null).catch(() => null);   // 11/9: 재계획 표기 = 실적 기준일
     CONF = await loadConfirm();
@@ -714,9 +740,9 @@
     const same = CONF && CONF.asOf === O.asOf;               // 같은 자료로 저장한 확정본이면 그 수정 내역을 그대로 불러와 이어서 고침(다음 날부터는 계산에 이미 고정돼 들어옴)
     MOVES = draft !== null ? (() => { try { return JSON.parse(draft); } catch (e) { return []; } })() : (same ? CONF.moves : []);
     SAVED = CONF ? JSON.stringify(same ? CONF.moves : []) : null;
-    applyMoves();
+    applyMoves(); ready = true;
     render();
   }
-  $('cc-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('cc-pw').value); });
-  envReady.then(() => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (s) unlock(s); else $('cc-form').hidden = false; });
+  /* 생산 일정 화면(ct_plan.html)에 붙어 있음 — 암호는 화면 공통 잠금(CT.boot)이 받고, 여기서는 저장된 암호로만 엶(ensure) */
+  window.CGCAL = { ensure: () => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (ready) render(); else unlock(s); } };
 })();

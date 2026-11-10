@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>계획 규칙</title>
-<meta name="description" content="계획 엔진이 따르는 규칙 목록 — 수치는 고치고 '적용'을 누르면 1시간 안에 다시 계산·게시, 바꾼 이력이 남음">
+<meta name="description" content="도금·컬러 계획을 만드는 핵심 규칙과 지금 값, 규칙 수치 바꾸기(적용 요청)">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/theme.css?v=2611102314">
 <style>
-.tr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 18px; }
+.tr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(600px, 100%), 1fr)); gap: 18px; }
 table.t.tr td, table.t.tr th { padding: 8px 12px; }
 table.t.tr td.l, table.t.tr th.l { text-align: left; }
 table.t.tr td.num { text-align: right; }
@@ -60,10 +60,41 @@ table.t.rl-t { width: auto; margin-top: 6px; font-size: 13.5px; } table.t.rl-t t
 html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align: left !important; min-width: 260px; max-width: 520px; color: var(--ink-2); line-height: 1.5; }
 @media (max-width: 640px) { .rl-g { grid-template-columns: 1fr; } .rl-g > span { margin-top: 4px; } .rl-st { grid-template-columns: 28px minmax(0, 1fr); gap: 8px; } .rl-n { width: 28px; height: 28px; font-size: 13.5px; } .rl-st:not(:last-child)::before { left: 13px; top: 30px; } }
 .rl-wt { white-space: normal; min-width: 280px; max-width: 520px; line-height: 1.5; color: var(--ink-2); }
+
+/* 11/11 개편: 핵심 규칙 · 흐름 · 접기 */
+.kr { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+html body table.kr td { text-align: left !important; white-space: normal !important; vertical-align: top !important; }
+.kr td { padding: 8px 12px; border-top: 1px solid var(--line); vertical-align: top; line-height: 1.55; }
+.kr tr:first-child td { border-top: 0; }
+html body .kr td.d { white-space: nowrap !important; width: 1%; }
+.kr .dt { display: inline-block; font-size: 13.5px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--tint-2); color: var(--brand-2); }
+.kr .dt.new { background: var(--warn-bg); color: var(--warn); }
+.kr td.r b { font-size: 15px; }
+.kr td.r .x { display: block; color: var(--ink-2); font-size: 13.5px; margin-top: 2px; word-break: keep-all; }
+html body table.kr td.v { white-space: nowrap !important; text-align: right !important; font-weight: 800; font-variant-numeric: tabular-nums; font-size: 15px; }
+html body .kr td.a { white-space: nowrap !important; width: 1%; } .kr td.a a { font-size: 13.5px; }
+.flow { display: grid; grid-template-columns: 76px repeat(4, minmax(0, 1fr)); gap: 10px; align-items: stretch; }
+.flow + .flow { margin-top: 14px; }
+.flow .pl { display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; border-radius: 10px; color: var(--on-brand, #fff); background: var(--gc-g, #1f5fae); }
+.flow.c .pl { background: var(--gc-c, #7a4fb5); }
+.flow .bx { position: relative; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface); font-size: 14px; line-height: 1.55; word-break: keep-all; }
+.flow .bx:not(:last-child)::after { content: '→'; position: absolute; right: -10px; top: 50%; transform: translate(50%, -50%); color: var(--ink-3); font-weight: 800; z-index: 1; }
+.flow .bx h4 { margin: 0 0 4px; font-size: 13.5px; color: var(--ink-2); font-weight: 700; }
+.flow .bx .k { display: block; font-weight: 800; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
+.flow .bx ul { margin: 0; padding-left: 16px; color: var(--ink-2); font-size: 13.5px; }
+.flow .bx b.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.r-st { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; font-size: 14px; margin: 0 0 14px; }
+.r-st b.pend { color: var(--warn); }
+details.fold { margin-top: 14px; }
+details.fold > summary { cursor: pointer; font-weight: 800; font-size: 16px; padding: 4px 0; }
+details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size: 13.5px; margin-left: 6px; }
+.ref { margin: 8px 0 0; padding-left: 18px; line-height: 1.8; font-size: 14px; }
+@media (max-width: 900px) { .flow { grid-template-columns: 1fr; } .flow .pl { padding: 8px; } .flow .bx:not(:last-child)::after { content: '↓'; right: 50%; top: auto; bottom: -10px; transform: translate(50%, 50%); } .kr td.a { display: none; } }
+@media (max-width: 640px) { html body table.kr td.v { white-space: normal !important; } }
 </style>
 </head>
 <body>
-<header id="shell" data-page="rules" data-crumb="관리" data-title="계획 규칙" data-sub="계획 엔진이 따르는 규칙 전체 — 수치는 여기서 고치고 '적용'을 누르면 다시 계산해 게시"></header>
+<header id="shell" data-page="rules" data-crumb="계획 기준" data-title="계획 규칙" data-sub="계획을 만드는 핵심 규칙과 지금 값 — 수치 바꾸기는 아래"></header>
 <main class="wrap">
   <section class="card" id="t-lock" style="margin-top:12px" hidden>
     <h2>분석 암호 입력 필요</h2>
@@ -71,41 +102,59 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
     <p class="hint" id="t-msg"></p>
   </section>
   <div id="t-main" hidden style="margin-top:16px">
-    <section class="card"><h2>적용 상태</h2><div id="t-st" class="st-box">불러오는 중…</div></section>
-    <section class="card"><h2>수치 고치기 <small id="t-src"></small></h2>
+    <section class="card"><h2>지금 적용 중인 핵심 규칙 <small id="k-asof"></small></h2>
+      <table class="kr"><tbody id="k-rows"></tbody></table>
+    </section>
+    <section class="card"><h2>계획이 만들어지는 순서 <small>수요 → 월 계획 → 편성 → 제약 · 지금 값</small></h2>
+      <div id="f-flow"></div>
+      <p class="small" style="margin:12px 0 0">이번 달 숫자로 보기 → <a href="plan_calc.html">계획 계산</a> · 실적으로 잰 속도·손실 → <a href="analysis.html">조건 분석</a></p>
+    </section>
+
+    <section class="card" id="t-edit-sec">
+      <details class="fold" id="t-edit" style="margin-top:0"><summary>규칙 수치 바꾸기 <small id="t-edit-sum">목표 일수 · 재고 상한 · 도금 손실 · 재계산 기준 → 저장하고 적용</small></summary>
+      <div class="r-st" id="t-st" style="margin-top:12px">불러오는 중…</div>
       <p class="tr-note" id="t-note"></p>
+      <p hidden><small id="t-src"></small></p>
       <div class="tr-grid">
         <div><h3>① 그룹별 월말 재고 — 목표 일수 = 상한</h3>
-          <p class="small" style="margin:-4px 0 8px">출하 <b>N일 전까지만 생산</b>, 월말 목표 재고 = <b>N일 × 다음 달 하루 판매량</b>(계획 일수가 상한보다 크면 상한).</p>
           <div class="scroll"><table class="t tr"><thead><tr><th class="l">판매 그룹</th><th>계획 일수</th><th>바꿀 계획 일수</th><th>상한</th><th>바꿀 상한</th></tr></thead><tbody id="t-days"></tbody></table></div></div>
         <div><h3>② 공장 월말 재고 상한(톤)</h3>
-          <p class="small" style="margin:-4px 0 8px">월말 재고 합이 이 톤을 넘지 않게 생산을 줄입니다('27 판생그룹 목표). ①의 그룹 목표보다 먼저 지킵니다.</p>
           <div class="scroll"><table class="t tr"><thead><tr><th class="l">재고 구분</th><th>지금 계획</th><th>바꿀 값(t)</th></tr></thead><tbody id="t-max"></tbody></table></div>
-</div>
+        </div>
       </div>
       <h3>③ 도금 하루 가동시간에서 빼는 시간 · 주문재 생산 시작</h3>
-      <p class="small" style="margin:-4px 0 8px">하루 24시간(1,440분)에서 아래 시간을 빼고 남은 시간만큼 생산합니다. MES 실적으로 잰 값이고(도금 조건 분석 화면), 늘리면 하루에 만들 수 있는 양이 줄어듭니다.</p>
       <div class="scroll"><table class="t tr"><thead><tr><th class="l">항목</th><th class="l">뜻</th><th>1CGL 지금</th><th>1CGL 바꿀 값</th><th>2CGL 지금</th><th>2CGL 바꿀 값</th></tr></thead><tbody id="t-pl"></tbody></table></div>
       <h3>④ 다시 계산할 때 기준</h3>
       <div class="scroll"><table class="t tr"><thead><tr><th class="l">항목</th><th class="l">뜻</th><th>지금 계획</th><th>바꿀 값</th></tr></thead><tbody id="t-rp"></tbody></table></div>
       <div class="tr-save"><input id="t-who" maxlength="40" placeholder="바꾼 사람(부서·이름)"><input id="t-memo" maxlength="300" placeholder="바꾼 이유(예: 11월 판생회의 — 자동차 재고 25일로)">
         <button type="button" class="btn" id="t-save">저장만</button><button type="button" class="btn primary" id="t-apply">저장하고 적용</button><button type="button" class="btn" id="t-reset">되돌리기</button></div>
       <p class="small" id="t-res"></p>
+      <details class="fold"><summary>바꾼 이력 <small id="t-hn"></small></summary>
+        <div class="scroll"><table class="t hist"><thead><tr><th>저장 시각</th><th>바꾼 사람</th><th class="l">바뀐 항목(직전 저장 대비)</th><th class="l">이유</th><th>적용</th></tr></thead><tbody id="t-hist"></tbody></table></div>
+        <p class="small">저장 = 분석 암호로 잠가 공유 저장소에 추가(수정·삭제 불가). 암호가 다른 줄은 계산에 쓰지 않음.</p>
+      </details>
+      </details>
     </section>
-    <section class="card" id="r-sec"><h2>계산 규칙 <small id="r-cnt"></small><small>계산 순서대로 · <span class="rl-edit">수정 가능</span> = 위 표에서 수정 · <span class="rl-auto">자동</span> = 엔진 고정 · <span class="rl-todo">반영 예정</span> = 엔진 반영 전 · <span class="rl-hold">보류</span> = 결정 대기</small></h2>
-      <div class="rl-tabs" id="r-tabs" role="tablist"></div>
-      <div id="r-body"></div>
+
+    <section class="card" id="r-sec">
+      <details class="fold" id="r-fold" style="margin-top:0"><summary>전체 규칙 — 단계별 <small id="r-cnt"></small></summary>
+        <p class="small" style="margin:10px 0"><span class="rl-edit">수정 가능</span> 위 수치 바꾸기 · <span class="rl-auto">자동</span> 엔진 고정 · <span class="rl-todo">반영 예정</span> 결정 완료·엔진 반영 전 · <span class="rl-hold">보류</span> 결정 대기</p>
+        <div class="rl-tabs" id="r-tabs" role="tablist"></div>
+        <div id="r-body"></div>
+      </details>
     </section>
-    <section class="card" id="x-sec"><h2>왜 그날, 그 라인에서, 그 시간에? <small>지금 게시된 계획·생산 캘린더로 단계별 이유</small></h2>
-      <div class="rl-pick"><label>라인 <select id="x-line"></select></label><label>날짜 <input type="date" id="x-date"></label></div>
-      <div id="x-out"></div>
-      <h3 style="margin-top:22px">소재 — 부족 시작 → 입고 필요일 → 발주 마감</h3>
-      <div class="rl-pick"><label>소재 <select id="x-mat"></select></label></div>
-      <div id="x-mout"></div>
-    </section>
-    <section class="card"><h2>바꾼 이력 <small id="t-hn"></small></h2>
-      <div class="scroll"><table class="t hist"><thead><tr><th>저장 시각</th><th>바꾼 사람</th><th class="l">바뀐 항목(직전 저장 대비)</th><th class="l">이유</th><th>적용</th></tr></thead><tbody id="t-hist"></tbody></table></div>
-      <p class="small">저장 내용은 분석 암호로 잠가 공유 저장소에 쌓입니다(추가만 가능 — 수정·삭제 불가로 이력 보존). 암호가 다른 줄은 계산에 쓰지 않습니다.</p>
+
+    <section class="card">
+      <details class="fold" style="margin-top:0"><summary>기준·사양 <small>결정 기록 · 계획 조건식 · 리드타임</small></summary>
+        <ul class="ref">
+          <li><a href="decisions.html">결정 기록</a> — 사용자·회의 결정 전체(날짜순)</li>
+          <li><a href="doc.html?d=conditions">계획 조건식</a> — 월 물량 · 컬러 일정 · 자가재 · 도금 일정 · 소재 · 재계획 계산식</li>
+          <li><a href="leadtime.html">리드타임 기준</a> — 소재 유형별 발주 → 입고 → 도금 → 컬러 표</li>
+          <li><a href="planstock.html">계획재</a> — 사양별 운영안 안전재고</li>
+          <li id="k-lt"></li>
+          <li>엔진 원본: 수요 tools/order_demand.py · 리드타임 cglplan/leadtime_rules.json · 그룹 월 계획 cglplan/pages.py(f3_month_plan) · 목표 일수·손실 cglplan/tf_rules.json</li>
+        </ul>
+      </details>
     </section>
   </div>
 </main>
@@ -140,7 +189,7 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
     stockMax: { '도금 소재(F/H)': 12600, '도금 제품(판매재)': 22300, '컬러 소재': 20940, '컬러 제품': 19320 },
     plating: { switchDummy: { '1CGL': 614.5, '2CGL': 811 }, nonfamDummy: { '1CGL': 5.97, '2CGL': 6.48 }, equipDown: { '1CGL': 12.76, '2CGL': 21.17 }, restartFamchg: { '1CGL': 462, '2CGL': 719 }, restartSame: { '1CGL': 106, '2CGL': 295 }, releaseDays: 15 },
     replan: { tradeoff: 100, freezeDays: 2 } };
-  let PW = '', IG = null, APPLIED = null, LATEST = null, HIST = [], ST = {}, CUR = null;
+  let PW = '', IG = null, APPLIED = null, LATEST = null, HIST = [], ST = {}, LT = null;
 
   const full = (o) => ({ days: Object.assign({}, DEF.days, o && o.days), stockMax: Object.assign({}, DEF.stockMax, o && o.stockMax),
     plating: Object.assign({}, DEF.plating, o && o.plating), replan: Object.assign({}, DEF.replan, o && o.replan), src: o && o.src, target: Object.assign({}, DEF.target, o && o.target), modeG: o && o.modeG, modeC: o && o.modeC });
@@ -161,8 +210,8 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
   }
   async function loadStatus() {
     try { const e = await GP.latest('rules_status.enc.json'); ST = e ? await GP.decryptJSON(e, PW) : {}; } catch (e) { ST = {}; }
-    try { const e = await GP.latest('latest.plan.enc.json'); const L = e ? await GP.decryptJSON(e, PW) : null; const rp = ((L && (L.result || L)) || {}).replan || {};   // 지금 게시된 계획(10/30 재검토: '적용 상태'가 10/22 시험 결과만 보여 지금 계획처럼 읽힘)
-      CUR = { at: L && L.savedAt, t0: rp.t0, late: rp.late, short: (rp.shortBy || []).reduce((a, x) => a + (+String(x).replace(/.* ([\d,]+)t$/, '$1').replace(/,/g, '') || 0), 0), mc: ((L && (L.result || L)).cal || []).filter((c) => c.date > rp.t0 && /M\/C/.test(c.event || '')).length }; } catch (e) { CUR = null; }
+    try { const e = await GP.latest('leadtime.enc.json'); const L = e ? await GP.decryptJSON(e, PW) : null; const fx = Object.fromEntries(((L && L.fixed) || []).map((x) => [x[0], x[2]]));
+      LT = { selfLead: fx.selfLead ?? 8, selfLeadMin: fx.selfLeadMin ?? 1, safetyC: fx['safety.C'] ?? 7, safetyG: fx['safety.G'] ?? 1, newOrderLT: fx.newOrderLT ?? 35, release: L && L.release }; } catch (e) { LT = null; }
   }
   const DEF_AT = '2026-11-09T06:00:00+00:00';   // 11/9 회의 반영(cglplan/tf_rules.json) — 이보다 오래된 저장값은 바꿀 값 칸의 기준으로 쓰지 않음(저장하고 적용 시 옛 값으로 되돌아가는 것 방지)
   const cur = () => (LATEST && String(LATEST.at) > DEF_AT ? LATEST : full(DEF));
@@ -177,29 +226,72 @@ html body table.t.rl-t td.rl-why-t { white-space: normal !important; text-align:
     $('t-rp').innerHTML = RP.map(([k, lb, u, lo, hi, ds]) => `<tr><td class="l"><b>${lb}</b></td><td class="l small ds">${ds}</td><td class="num">${n0(A.replan[k])}${u === '일' ? '일' : '톤·일'}</td><td>${inp('replan', k, C.replan[k], lo, hi, 1)}</td></tr>`).join('');
     const src = A.src;
     $('t-src').textContent = src && src.id ? `'지금 계획' = 지금 게시된 계획에 쓴 값(#${src.id} ${kst(src.at)} ${src.who || ''} 적용)` : `'지금 계획' = 지금 게시된 계획에 쓴 값${src && src.at ? `(${String(src.at).slice(5, 10).replace('-', '/')} ${src.who || ''} — cglplan/tf_rules.json)` : ''}`;   // 11/10 점검: '(10/22)' 고정 문구 → 실제 기준
-    $('t-note').innerHTML = `숫자를 바꾼 뒤 <b>저장하고 적용</b>을 눌러야 계획에 들어갑니다(<b>저장만</b>은 이력만 남기고 계획은 그대로).<br>`
-      + `① 매시 정각(08~20시)에 적용 요청이 있는지 확인 → ② 있으면 <b>월별 생산량 → 컬러·도금 일별 일정</b>을 어제까지 실적을 넣어 다시 계산(40~70분) → ③ 게시. 진행은 위 '적용 상태'에 보입니다.<br>`
-      + `다시 계산한 결과에 <b>결품이 생기거나, 남은 M/C가 3번 이상 늘거나, 납기 지연이 크게 늘면</b> 게시하지 않고 '검토 대기'로 멈춥니다 — 결과를 보고 '그래도 적용'을 누르면 게시합니다.<br>`
-      + `참고: 지금 도금은 ① 목표 일수, 컬러는 ${offC ? '생산주기 기준(10/21 결정 — 컬러 목표 일수는 저장만 되고 계획 미적용)' : '① 목표 일수'}로 계산합니다. ② 상한은 도금·컬러 모두 적용합니다.`;
-    marks(); drawStatus(); drawRules(); drawHist();
+    $('t-note').innerHTML = `<b>저장하고 적용</b> → 매시 정각(08~20시) 확인 → 실적 넣어 월 물량·컬러·도금 일정 다시 계산(40~70분) → 게시. <b>저장만</b> = 이력만.<br>`
+      + `결품이 생기거나, 남은 M/C 3번 이상 증가, 납기 지연이 크게 늘면 게시하지 않고 '검토 대기' → '그래도 적용'으로 게시.`;
+    marks(); drawStatus(); drawKey(); drawFlow(); drawRules(); drawHist();
   }
   function drawStatus() {
     const req = LATEST && LATEST.apply && (!ST.lastRequestId || LATEST.id > ST.lastRequestId) ? LATEST : null;
-    const r = ST.result, p = ST.prev, cls = { '게시': 'ok', '계산 중': 'run', '검토 대기': 'hold', '실패': 'fail' }[ST.state] || '';
-    let h = CUR && CUR.t0 ? `<div><b class="big">지금 계획</b> · 실적 ~${esc(String(CUR.t0).slice(5))} · 남은 M/C <b>${CUR.mc}회</b> · 납기 지연 <b>${n0(Math.round(CUR.late || 0))}톤·일</b> · 결품 <b>${n0(CUR.short)}t</b></div>` : '';
-    if (ST.state) h += '<div class="muted" style="margin-top:6px">마지막 규칙 적용</div>';
-    if (req) h += `<div><b class="big">적용 요청됨</b> — #${req.id} ${kst(req.at)} ${esc(req.who)}: 다음 정시 확인 뒤 계산을 시작합니다(최대 1시간 + 계산 40~70분)</div>`;
-    if (ST.state) h += `<div><b class="big">${esc(ST.state)}</b> · #${ST.lastRequestId} ${esc((ST.request || {}).who || '')} · ${kst(ST.at)} — ${esc(ST.msg || '')}</div>`
-      + (r && p ? `<div>남은 M/C ${p.mc} → <b>${r.mc}회</b> · 납기 지연 ${n0(p.late)} → <b>${n0(r.late)}톤·일</b> · 결품 <b>${n0(r.short)}t</b>${r.mcDays && r.mcDays.length ? `<br><small class="muted">M/C: ${esc(r.mcDays.join(' · '))}</small>` : ''}</div>` : '')
-      + (ST.state === '검토 대기' ? '<div style="margin-top:8px"><button type="button" class="btn primary" id="t-force">그래도 적용(게시)</button></div>' : '');
-    if (!h) h = '적용한 기록이 없습니다. 수치를 고치고 <b>저장하고 적용</b>을 누르면 여기에 진행이 보입니다.';
-    $('t-st').className = 'st-box ' + (req ? 'run' : cls); $('t-st').innerHTML = h;
+    const r = ST.result, p = ST.prev, src = APPLIED.src || {};
+    let h = `<span>지금 계획 수치 = <b>${src.id ? `#${src.id} ${esc(kst(src.at))} ${esc(src.who || '')}` : `${esc(String(src.at || '').slice(5, 10).replace('-', '/'))} ${esc(src.who || '파일')}`}</b></span>`;
+    if (req) h += `<span><b class="pend">적용 요청 대기</b> #${req.id} ${esc(kst(req.at))} ${esc(req.who)} — 다음 정시에 계산 시작</span>`;
+    if (ST.state) h += `<span>마지막 적용 요청 #${ST.lastRequestId} <b>${esc(ST.state)}</b> ${esc(kst(ST.at))}${r && p ? ` · M/C ${p.mc} → ${r.mc}회 · 지연 ${n0(p.late)} → ${n0(r.late)}톤·일 · 결품 ${n0(r.short)}t` : ''}</span>`;
+    if (ST.state === '검토 대기') h += '<span><button type="button" class="btn primary" id="t-force">그래도 적용(게시)</button></span>';
+    $('t-st').innerHTML = h;
+    $('t-edit-sum').innerHTML = req ? `<b class="pend" style="color:var(--warn)">적용 요청 대기 #${req.id}</b>` : '목표 일수 · 재고 상한 · 도금 손실 · 재계산 기준 → 저장하고 적용';
+    if (req || ST.state === '검토 대기' || location.hash === '#edit') $('t-edit').open = true;
     if ($('t-force')) $('t-force').onclick = () => save(true, true);
+  }
+  const DT = (s) => `<span class="dt${s === NEWEST ? ' new' : ''}">${esc(s)}</span>`;
+  let NEWEST = '';
+  const lockTo = () => { const t = new Date(Date.now() + 9 * 3600e3 - 864e5); return new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 2, 0)).toISOString().slice(0, 10); };   // 판생 확정 다음 달 말(실적 기준일 = 어제의 다음 달 말, tools/order_replan.py)
+  const mdy = (d) => `${+d.slice(5, 7)}/${+d.slice(8, 10)}`;
+  function drawKey() {
+    const A = APPLIED, T = (k) => Math.min(A.target[k] ?? A.days[k], A.days[k]), L = LT || { selfLead: 8, selfLeadMin: 1 };
+    const K = [
+      ['11/10', '그룹 월 계획 = 판매 + 목표 재고 − 기초 재고', '기초 = 전달 말 MES 재고 · 한 달 고정 · 0 미만이면 0(사유 표시)', 'F3', 'stock'],
+      ['11/9', '목표 재고 일수 = 상한 — 출하 N일 전까지만 생산', `가전내수 ${A.days['가전내수']} · 자동차 ${A.days['기타']} · AL-STS ${A.days['AL-STS']}일`, `${T('G국내')}일`, 'stock'],
+      ['11/10', '납기: 내수(도금·컬러) = 납기월 말일', '납기월 1일부터 생산 · 수출 = 출항 − 1일', '납기월 말일', 'cg'],
+      ['11/10', '자가재 = 컬러 사용일 − 1일 마감', `도금 생산 = 사용일 −${L.selfLead} ~ −${L.selfLeadMin}일 사이 · 반순 마감 폐지`, `−${L.selfLead} ~ −${L.selfLeadMin}일`, 'self'],
+      ['11/10', '계획재 = 운영안 안전재고만 지킴', '사양별 생산 = 남은 출하 + 안전재고 − 지금 재고(수입 F/H·서림 GI 90사양)', '안전재고', 'stock'],
+      ['11/10', 'M/C 고정 = 판생 확정 다음 달 말까지', `회사 지정 M/C 먼저 · 그 뒤는 엔진이 정함 · 앞 ${A.replan.freezeDays}일 강종 고정`, `~${mdy(lockTo())}`, 'cg'],
+      ['11/10', '생산 캘린더 하루 능력 = 재계획 톤 × 두께별 실적 속도', '두꺼운 주문은 같은 시간에 더 많이 · 0.6~1.6배', '두께별 속도', 'cg'],
+      ['11/10', '출하 진도 기준선 = 그룹 출하 실적 패턴', '그날까지 나갔어야 할 누계 = 월 계획 × 월중 출하 패턴(최근 12개월)', '실적 패턴', 'ship'],
+    ];
+    NEWEST = K.map((x) => x[0]).sort((a, b) => (+b.split('/')[0] * 100 + +b.split('/')[1]) - (+a.split('/')[0] * 100 + +a.split('/')[1]))[0];
+    $('k-rows').innerHTML = K.map(([d, r, x, v, tab]) => `<tr><td class="d">${DT(d)}</td><td class="r"><b>${esc(r)}</b><span class="x">${esc(x)}</span></td><td class="v">${esc(v)}</td><td class="a"><a href="#${tab}" data-tab="${tab}">자세히 →</a></td></tr>`).join('');
+    $('k-asof').textContent = `바뀐 날짜 = 결정일 · 최근 ${NEWEST}`;
+    $('k-rows').querySelectorAll('a[data-tab]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); openRule(a.dataset.tab); }));
+    if (LT) $('k-lt').innerHTML = `리드타임 고정값 — 자가재 도금 생산 = 컬러 사용일 −${LT.selfLead} ~ −${LT.selfLeadMin}일 · 구매 소재 투입 여유 컬러 ${LT.safetyC}일 · 도금 ${LT.safetyG}일 · 새 발주로 맞출 수 있는 최소 ${LT.newOrderLT}일${LT.release ? ` · 주문재 생산 시작 = ${esc(LT.release)}` : ''}`;
+  }
+  function openRule(k) {
+    $('r-fold').open = true;
+    const b = document.querySelector(`#r-tabs button[data-k="${k}"]`); if (b) b.click();
+    $('r-sec').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function drawFlow() {
+    const A = APPLIED, P = (IG && IG.planP) || {}, rb = P.rateBase || {}, L = LT || { selfLead: 8, selfLeadMin: 1, safetyC: 7, safetyG: 1 };
+    const T = (k) => Math.min(A.target[k] ?? A.days[k], A.days[k]);
+    const tph = (k) => (rb[k] ? `${(rb[k] * 60).toFixed(1)}` : '-');
+    const sd = (P.shutdowns || []).map((x) => `${x.line} ${mdy(x.start)}~${mdy(x.end)}`).join(' · ') || '없음';
+    const box = (h, k, li) => `<div class="bx"><h4>${h}</h4><span class="k">${k}</span><ul>${li.map((x) => `<li>${x}</li>`).join('')}</ul></div>`;
+    $('f-flow').innerHTML = `<div class="flow"><div class="pl">도금</div>`
+      + box('① 수요', '실주문 먼저 + 모자란 만큼 판매계획', ['수출 = 출항 − 1일', '내수 = 납기월 말일', `자가재 = 컬러 사용일 −${L.selfLead}~−${L.selfLeadMin}일`])
+      + box('② 월 계획', '판매 + 목표 − 기초', [`목표 = 하루 판매 × <b class="n">${T('G수출')}일</b>(상한)`, `자동차 ${A.days['기타']} · AL-STS ${A.days['AL-STS']}일`, '기초 = 전달 말 MES 재고'])
+      + box('③ 편성', '결품 → 지연 → M/C → 선생산 최소', [`M/C 1번 = 지연 <b class="n">${n0(A.replan.tradeoff)}톤·일</b>`, `앞 ${A.replan.freezeDays}일 강종 고정`, '하루 한 강종(1CGL AL·AZ · 2CGL AL·MAC)'])
+      + box('④ 제약', `M/C 고정 ~${mdy(lockTo())}`, [`정기수리 ${esc(sd)}`, `속도 1CGL AL ${tph('1CGL|AL')} · AZ ${tph('1CGL|AZ')} t/h`, `2CGL AL ${tph('2CGL|AL')} · MAC ${tph('2CGL|MAC')} t/h`, `M/C 손실 ${n0(A.plating.switchDummy['1CGL'])} · ${n0(A.plating.switchDummy['2CGL'])}분`, `소재 입고 → 도금 최소 ${L.safetyG}일`])
+      + `</div><div class="flow c"><div class="pl">컬러</div>`
+      + box('① 수요', '그룹 월 계획 → 품목', ['품목 = 판매계획 비율', `수출 = 선적 기한 전 ${A.days['건재수출']}일 창`, '계획재 = 운영안 안전재고'])
+      + box('② 월 계획', '판매 + 목표 − 기초', [`목표 ${T('주문재')}일(상한) · 가전내수 ${A.days['가전내수']}일`, '기초 = 전달 말 MES 재고', '이번 달 = 실적·확정 빼고 남은 양 롤링'])
+      + box('③ 편성', '집약 → 수출 → 내수·주문재 → 계획재', ['라인 = 톤파워 우선 · 2CCL 최후', 'Print = 4CCL · STS·Lami = 3CCL', '확정 창 = 오늘 ~ 다음 주 일요일 고정'])
+      + box('④ 제약', '하루 1,440분 − 계획정지', ['Test·샘플 시간도 뺌', '속도 = 품목별 단위생산량', '수입 FH = 입고월 13일 이후', `구매 소재 투입 여유 ${L.safetyC}일 · 휴지 집약 최대 30일 당김`])
+      + `</div>`;
   }
   let rulesOn = false;
   function drawRules() {   // 11/5: 규칙은 rules_logic.js(탭 · 단계 · 설명기)
     if (rulesOn || !window.RULES) return; rulesOn = true;
-    RULES.init({ A: cur(), IG, PW, P: (IG && IG.planP) || null }).catch((e) => { document.getElementById('r-body').textContent = '규칙 화면을 그리지 못했습니다: ' + e.message; });
+    try { RULES.init({ A: APPLIED, P: (IG && IG.planP) || null, LT, lockTo: lockTo() }); } catch (e) { document.getElementById('r-body').textContent = '규칙 화면을 그리지 못했습니다: ' + e.message; }
+    const h = location.hash.slice(1); if (h && h !== 'edit' && document.querySelector(`#r-tabs button[data-k="${h}"]`)) $('r-fold').open = true;
   }
   function drawHist() {
     $('t-hn').textContent = HIST.length ? `${HIST.length}건` : '';
