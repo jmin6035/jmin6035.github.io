@@ -91,7 +91,7 @@
       ['1CGL 월 생산 10/11/12', (c) => c.g1.map(k1).join(' / ') + (Math.min(...c.g1) < 0.7 * Math.max(...c.g1) ? ' <span class="st warn">공백</span>' : ''), best((c) => Math.max(...c.g1) - Math.min(...c.g1)), 'G'],
       ['2CGL 월 생산 10/11/12', (c) => c.g2.map(k1).join(' / '), null, 'G'],
       ['M/C 횟수', (c) => c.mc + '회', null, 'G'],
-      ['결품 · 납기 지연', (c) => `${n0(c.short)}t · ${n0(c.late)}`, null, 'G'],
+      ['결품 · 납기 지연(톤·일)', (c) => `${n0(c.short)}t · ${n0(c.lateDue != null ? c.lateDue : c.late)}`, null, 'G'],
     ].filter((r) => inS(r[3]));
     const tb = `<div class="scroll"><table class="t cmp"><thead><tr><th></th>${vs.map((v) => `<th class="${v === rec ? 'rec' : ''}">${esc(VN[v])}${v === rec ? (O.confirmed ? ' ✔' : ' ★추천') : ''}</th>`).join('')}</tr></thead><tbody>${rows.map(([nm, f, b]) => `<tr><td class="l">${nm}</td>${vs.map((v) => `<td class="${v === rec ? 'rec' : ''} ${b && b(v) ? 'best' : ''}">${f(C[v])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     const x = O.variants[vs[0]].self.AZ.map((r) => '2026-' + r[0]);
