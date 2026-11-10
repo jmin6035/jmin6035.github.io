@@ -1,20 +1,14 @@
-/* 02 수주·납기 통합(11/4 2차 진단 2·5·11장): 도금 주문진도 + 컬러 주문·납기 → 한 주문 모델(ui/ct.js CT.orders)
-   하위 화면 = 주소 #뒤(메뉴 탭과 같음, 화면 안 탭 없음): #status 수주 현황 · #risk 납기 위험 · #track 주문진도 · #cal 납기 캘린더
+/* 주문·납기(11/4 2차 진단 2·5·11장): 도금 + 컬러 → 한 주문 모델(ui/ct.js CT.orders)
+   하위 화면 = 주소 #뒤: #track 주문진도(기본 · 옛 #status·#risk 도 여기로) · #cal 납기 캘린더 — 납기 위험은 risk.html
    출하 확인 불가(출하 실적 연결 없음)는 완료로 보지 않음 */
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
   const { esc, n0, n1, md } = CT;
-  const VIEWS = ['status', 'risk', 'track', 'cal'];
-  const OPEN = ['위험', '주의', '판정 불가'];
-  const F = { grp: '', pl: '', risk: '', ful: '', q: '', done: false, by: true, stale: false, sk: 'risk', dir: 1, lim: 200, open: null, glim: {} };   // by = 판매그룹 묶음(기본, docs/16 '묶어서 보여 준다')
-  const R = { cause: '', by: true, sk: 'risk', dir: 1, lim: 200, open: null, glim: {} };
-  const T = { id: null, q: '', tag: '' };
+  const VIEWS = ['track', 'cal'];
   let calOff = 0, D0 = null, M = null, L = [], byId = {};
   const plName = (o) => `${o.pl === 'G' ? '도금' : '컬러'} ${o.line || ''}`.trim();
-  const imp = (o) => (o.pl === 'G' && o.ful !== '생산 전' && o.ful !== '생산 중' ? (o.unshipT || 0) : (o.remT || 0));   // 영향 톤: 생산 끝난 도금 = 미출하, 그 외 = 잔량
   const sum = (A, f) => A.reduce((s, o) => s + (f(o) || 0), 0);
-  const leq = (d, lim) => d && d <= lim;
   const dow = ['일', '월', '화', '수', '목', '금', '토'];
   const wd = (s) => dow[new Date(s + 'T00:00:00Z').getUTCDay()];
   const open = (o) => CT.panel(CT.orderDetail(o), o.id);
@@ -25,231 +19,6 @@
     return `<p class="ct-note co-sn">${[part(M.G, '도금'), part(M.C, '컬러')].filter(Boolean).join(' · ')} — MES 출고 실적(7/1~)을 코일번호로 주문에 연결</p>`;
   }
 
-  /* ---------- 정렬 ---------- */
-  const ACC = { id: (o) => o.id, grp: (o) => o.grp, item: (o) => o.item, remT: (o) => o.remT, imp, mat: (o) => o.matSt, eta: (o) => o.etaDone, need: (o) => o.needProd,
-    due: (o) => o.due, ful: (o) => CT.FUL.indexOf(o.ful), last: (o) => o.last, cause: (o) => o.cause, dept: (o) => o.dept };
-  function sorter(sk, dir, tonF) {
-    if (sk === 'risk') return (a, b) => dir * ((CT.RISK.indexOf(a.risk) - CT.RISK.indexOf(b.risk)) || ((a.left == null ? 999 : a.left) - (b.left == null ? 999 : b.left))) || (tonF(b) - tonF(a));
-    const f = ACC[sk];
-    return (a, b) => { const x = f(a), y = f(b); if (x == null || x === '') return y == null || y === '' ? 0 : 1; if (y == null || y === '') return -1; return dir * (x < y ? -1 : x > y ? 1 : 0); };
-  }
-  const th = (k, label, st, cls = '', tip = '') => `<th class="${cls}${st.sk === k ? ' on' : ''}" data-sk="${k}" aria-sort="${st.sk === k ? (st.dir > 0 ? 'ascending' : 'descending') : 'none'}"${tip ? ` title="${esc(tip)}"` : ''}><button type="button">${esc(label)}<i>${st.sk === k ? (st.dir > 0 ? '▲' : '▼') : ''}</i></button></th>`;
-  function bindSort(root, st, redraw) {
-    root.querySelectorAll('th[data-sk] button').forEach((b) => b.onclick = () => { const k = b.parentNode.dataset.sk; if (st.sk === k) st.dir = -st.dir; else { st.sk = k; st.dir = ['remT', 'imp'].includes(k) ? -1 : 1; } st.lim = 200; redraw(); });
-  }
-  /* 첫 두 칸(위험·주문번호) 왼쪽 고정 — 첫 칸 폭만큼 둘째 칸을 띄움 */
-  const pinLeft = (tb) => { const c = tb && tb.querySelector('thead th'); if (c) tb.style.setProperty('--c1', c.offsetWidth + 'px'); };
-  function bindRows(root) {
-    root.querySelectorAll('tr.ck').forEach((tr) => { tr.onclick = () => { const o = byId[tr.dataset.id]; if (o) open(o); }; });
-    CT.keyRows(root);
-  }
-  /* 판매그룹 묶음: 조치가 필요한 묶음 먼저(지연 예상 → 점검 필요 → 톤) · 처음엔 첫 묶음만 펼침 · 머리줄 = 건수·톤·조치 건수·가장 급한 조치 마감일 */
-  function grouped(A, st, cols, row, tonF) {
-    const G = new Map(); for (const o of A) { if (!G.has(o.grp)) G.set(o.grp, []); G.get(o.grp).push(o); }
-    const info = [...G].map(([g, X]) => ({ g, X, t: sum(X, tonF), red: X.filter((o) => o.risk === '위험').length, warn: X.filter((o) => o.risk === '주의').length,
-      first: X.filter((o) => (o.risk === '위험' || o.risk === '주의') && o.last).map((o) => o.last).sort()[0] })).sort((a, b) => b.red - a.red || b.warn - a.warn || b.t - a.t);
-    const all = info.length === 1 || A.length <= 60;      // 한 묶음뿐이거나 찾은 줄이 적으면 다 펼침
-    st.groups = info.map((x) => x.g);
-    st.cur = new Set(all ? st.groups : st.open ? st.groups.filter((g) => st.open.has(g)) : st.groups.slice(0, 1));   // 직접 여닫기 전에는 조치가 가장 많은 첫 묶음만
-    return info.map((x) => { const op = st.cur.has(x.g), lim = st.glim[x.g] || 100;
-      return `<tr class="co-gh" data-g="${esc(x.g)}" tabindex="0" role="button" aria-expanded="${op}"><td colspan="${cols}"><div class="gh"><i aria-hidden="true">${op ? '▾' : '▸'}</i><b>${esc(x.g || '-')}</b><span>${n0(x.X.length)}건 · ${n0(x.t)}t</span>`
-        + `${x.red ? `<span class="ct-b bad">${esc(CT.rl('위험'))} ${n0(x.red)}</span>` : ''}${x.warn ? `<span class="ct-b warn">${esc(CT.rl('주의'))} ${n0(x.warn)}</span>` : ''}${x.first ? `<span>가장 급한 조치 <b>${md(x.first)}</b></span>` : ''}</div></td></tr>`
-        + (op ? x.X.slice(0, lim).map(row).join('') + (x.X.length > lim ? `<tr class="co-gm"><td colspan="${cols}"><button type="button" class="lnk" data-gm="${esc(x.g)}">더 보기 (남은 ${n0(x.X.length - lim)}건)</button></td></tr>` : '') : ''); }).join('');
-  }
-  function bindGroups(root, st, redraw) {
-    const keep = (f) => { const y = root.scrollTop; f(); redraw(); root.scrollTop = y; };
-    root.querySelectorAll('tr.co-gh').forEach((tr) => { const go = () => keep(() => { const g = tr.dataset.g; st.open = new Set(st.cur); if (st.open.has(g)) st.open.delete(g); else st.open.add(g); });
-      tr.onclick = go; tr.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }; });
-    root.querySelectorAll('[data-gm]').forEach((b) => (b.onclick = () => keep(() => { st.glim[b.dataset.gm] = (st.glim[b.dataset.gm] || 100) + 200; })));
-    const th = root.querySelector('thead th'); if (th) root.style.setProperty('--hh', th.offsetHeight + 'px');
-  }
-  const allBtn = (id) => `<button type="button" class="lnk" id="${id}">모두 펼치기</button>`;
-  function bindAll(id, st, redraw) { const b = $(id); if (!b) return; const on = st.by && (st.groups || []).length > 1; b.hidden = !on; if (!on) return;
-    const full = st.groups.every((g) => st.cur.has(g)); b.textContent = full ? '모두 접기' : '모두 펼치기'; b.onclick = () => { st.open = new Set(full ? [] : st.groups); redraw(); }; }
-  const more = (n, lim) => (n > lim ? `<div class="co-more"><button type="button" class="lnk" id="co-more">더 보기 (${n0(Math.min(200, n - lim))}건 더 · 남은 ${n0(n - lim)}건)</button></div>` : '');
-  const matCell = (o) => `<span class="${['확보', '재고 있음'].includes(o.matSt) ? '' : o.matSt === '입고 대기' || o.matSt === '진행' ? 'co-w' : 'co-b'}">${esc(o.matSt || '-')}</span>`;
-  const dueCell = (o) => `${md(o.due) || '<span class="mu">-</span>'}${o.pl === 'G' && o.exp && o.ship ? `<small>출항 ${md(o.ship)}</small>` : ''}`;
-  const idCell = (o, sub) => `<td class="id sk s2">${esc(o.id)}<small>${esc(sub)}</small></td>`;
-
-  // '납기 지연 예상' 기준: 여기 = 미결 주문 전부(기간 제한 없음, 조치 마감일이 이미 지난 주문 포함) · 통합 관제 카드 = 조치 마감일이 고른 기간(금일·7일·월) 안인 주문만, 이미 지난 주문은 별도
-  const BASIS = '미결 주문 전부 — 조치 마감일이 이미 지난 주문 포함 · 통합 관제 카드는 고른 기간(금일·7일·월) 안에 조치 마감일이 있는 주문만 셈';
-  /* ---------- #status 수주 현황 ---------- */
-  function statusRows() {
-    let A = L.filter((o) => (F.stale ? CT.isStale(o) : !CT.isStale(o)) && (F.done || !o.closed) && (!F.grp || o.grp === F.grp) && (!F.pl || o.pl === F.pl) && (!F.risk || o.risk === F.risk) && (!F.ful || o.ful === F.ful));
-    if (F.q) { const q = F.q.toUpperCase(); A = A.filter((o) => [o.id, o.item, o.size, o.cus, o.man, o.grp].join(' ').toUpperCase().includes(q)); }
-    return A.sort(sorter(F.sk, F.dir, (o) => o.remT || 0));
-  }
-  const HEAD_S = () => `<thead><tr>${th('risk', '상태', F, 'sk s1')}${th('id', '주문번호', F, 'sk s2')}${F.by ? '' : th('grp', '판매그룹', F)}${th('item', '품명·규격', F)}${th('remT', '잔량(t)', F, 'r', '수주잔량')}`
-    + `${th('mat', '소재', F, '', '소재 확보')}${th('eta', '생산 완료 예정', F)}${th('need', '생산요청일', F, 'c-need', '수출 출항 −1 · 내수 납기 −1 · 컬러 = 납기')}${th('due', '출하완료일', F, '', '납기(수출은 출항일 같이 표시)')}${th('ful', '진행', F, '', '진행 단계')}</tr></thead>`;
-  const rowS = (o) => `<tr class="ck" data-id="${esc(o.id)}"><td class="sk s1">${CT.badge(o)}</td>${idCell(o, plName(o))}`
-    + `${F.by ? '' : `<td>${esc(o.grp)}${o.grpEst ? '<small>추정</small>' : ''}</td>`}<td class="w">${esc(o.item || '-')}<small>${esc(o.size)}</small></td><td class="r"><b>${n1(o.remT)}</b></td>`
-    + `<td>${matCell(o)}</td><td>${o.etaDone ? md(o.etaDone) : '<span class="mu">-</span>'}${o.etaSrc ? `<small>${esc(o.etaSrc)}</small>` : ''}</td>`
-    + `<td class="c-need">${md(o.needProd) || '<span class="mu">-</span>'}</td><td>${dueCell(o)}</td><td>${CT.fulBadge(o.ful)}</td></tr>`;
-  function drawStatus() {
-    const A = statusRows();
-    const body = F.by ? grouped(A, F, 9, rowS, (o) => o.remT) : A.slice(0, F.lim).map(rowS).join('');
-    $('co-cnt').textContent = `${n0(A.length)}건 · 잔량 ${n0(sum(A, (o) => o.remT))}t`;
-    $('co-tbl').innerHTML = `<table class="ct-t co-t${F.by ? ' by' : ''}">${HEAD_S()}<tbody>${body || '<tr><td colspan="10" class="mu">해당 주문이 없습니다.</td></tr>'}</tbody></table>` + (F.by ? '' : more(A.length, F.lim));
-    const tb = $('co-tbl').querySelector('table'); pinLeft(tb); bindSort($('co-tbl'), F, drawStatus); bindRows($('co-tbl')); bindGroups($('co-tbl'), F, drawStatus); bindAll('co-all', F, drawStatus);
-    const mb = $('co-more'); if (mb) mb.onclick = () => { F.lim += 200; drawStatus(); };
-  }
-  function viewStatus() {
-    const asOf = M.asOf, w0 = CT.wed(asOf), w1 = CT.addD(w0, 6), act = L.filter((o) => !o.closed && !CT.isStale(o));   // 금주 = 수요일 시작 7일(11/5 사용자) · 종결 확인 필요는 따로(11/8)
-    const stale = L.filter(CT.isStale);
-    const risk = act.filter((o) => o.risk === '위험');
-    const actSelf = act.filter((o) => /^자가재\(/.test(o.grp || '')), actS = act.filter((o) => !/^자가재\(/.test(o.grp || ''));   // 11/7 점검: 자가재 + 컬러 주문 = 이중 계상(docs/22)
-    const inW = (d) => d && d >= w0 && d <= w1;
-    const wP = act.filter((o) => inW(o.needProd) && (o.ful === '생산 전' || o.ful === '생산 중') && o.risk !== '판정 불가');
-    const shipD = (o) => o.ship || o.due;                                        // 출하 일정 = 출항(수출) · 납기(내수)
-    const wAll = act.filter((o) => o.pl === 'G' && inW(shipD(o)));
-    const wS = wAll.filter((o) => o.ful !== '출하 확인 불가' && o.risk !== '판정 불가');
-    const wNo = wAll.filter((o) => o.ful === '출하 확인 불가');
-    const wC = act.filter((o) => o.pl === 'C' && inW(o.due));
-    const wl = `${md(w0)}(수)~${md(w1)}(화)`;
-    const k = CT.kpis([
-      { label: '수주잔량', v: n0(sum(actS, (o) => o.remT)), unit: 't', sub: `${n0(actS.length)}건 · 출하 완료 제외${actSelf.length ? `<br>자가재(컬러 투입용 도금) ${n0(actSelf.length)}건 ${n0(sum(actSelf, (o) => o.remT))}t 별도 — 컬러 주문과 겹침` : ''}`, tone: 'info' },
-      { label: '금주 생산완료 필요', v: n0(sum(wP, (o) => o.remT)), unit: 't', sub: `${n0(wP.length)}건 · ${wl} 생산 필요일`, tone: wP.length ? 'warn' : 'ok' },
-      ...(CT.inScope('G') ? [{ label: '금주 출하 필요(도금)', v: n0(sum(wS, (o) => o.unshipT)), unit: 't', sub: `${n0(wS.length)}건 · ${wl} 출항·납기${wNo.length ? `<br>출하 실적 없음 ${n0(wNo.length)}건 별도(생산 완료)` : ''}${wC.length ? `<br>컬러 ${n0(wC.length)}건 출하 실적 없음` : ''}`, tone: 'info' }] : [{ label: '금주 납기(컬러)', v: n0(sum(wC, (o) => o.remT)), unit: 't', sub: `${n0(wC.length)}건 · ${wl} 납기 · 컬러 주문별 출하 자료 없음` }]),
-      { label: '납기 지연 예상(전 기간)', v: n0(risk.length), unit: '건', sub: `<span title="${BASIS}">${n0(sum(risk, imp))}t · 조치일 지난 ${n0(risk.filter((o) => o.last && o.last < asOf).length)}건 포함</span>`, tone: risk.length ? 'bad' : 'ok', href: '#risk' },
-      { label: '종결 확인 필요', v: n0(stale.length), unit: '건', sub: `${n0(sum(stale, (o) => o.remT))}t · 납기 60일 넘게 지난 미종결(잔량·지연 제외)`, tone: stale.length ? 'warn' : 'ok' },
-    ]);
-    const grps = [...new Set(L.map((o) => o.grp))].sort();
-    const sc = CT.scope(), plLock = sc !== 'all';
-    if (plLock) F.pl = '';
-    const sel = (id, lab, cur, opts) => `<label class="co-sel"><span>${lab}</span><select id="${id}"${id === 'co-pl' && plLock ? ' disabled title="상단 범위(도금/컬러)를 따름"' : ''}><option value="">전체</option>${opts.map(([v, n]) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>`;
-    return k + shipNote()
-      + `<div class="co-f1">${sel('co-grp', '판매그룹', F.grp, grps.map((g) => [g, g]))}${sel('co-pl', '공정', plLock ? sc : F.pl, [['G', '도금'], ['C', '컬러']])}`
-      + `${sel('co-risk', '상태', F.risk, CT.RISK.map((r) => [r, CT.rl(r)]))}${sel('co-ful', '진행 단계', F.ful, CT.FUL.map((r) => [r, CT.fl(r)]))}</div>`
-      + `<div class="co-f2"><input id="co-q" type="search" placeholder="주문번호·품명·고객·담당" value="${esc(F.q)}" aria-label="주문 찾기">`
-      + `<label class="nw"><input type="checkbox" id="co-stale"${F.stale ? ' checked' : ''}> 종결 확인 필요만</label><label class="nw"><input type="checkbox" id="co-done"${F.done ? ' checked' : ''}> 완료 포함</label><label class="nw"><input type="checkbox" id="co-by"${F.by ? ' checked' : ''}> 판매그룹 묶음</label>${allBtn('co-all')}<span class="cnt" id="co-cnt"></span></div>`
-      + '<div class="co-tw" id="co-tbl"></div>';
-  }
-  function bindStatus() {
-    const on = (id, f) => { const e = $(id); if (e) e.onchange = (ev) => { f(ev.target); F.lim = 200; drawStatus(); }; };
-    on('co-grp', (e) => { F.grp = e.value; }); on('co-pl', (e) => { F.pl = e.value; }); on('co-risk', (e) => { F.risk = e.value; }); on('co-ful', (e) => { F.ful = e.value; });
-    on('co-done', (e) => { F.done = e.checked; }); on('co-stale', (e) => { F.stale = e.checked; }); on('co-by', (e) => { F.by = e.checked; });
-    $('co-q').oninput = (e) => { F.q = e.target.value.trim(); F.lim = 200; clearTimeout(bindStatus.t); bindStatus.t = setTimeout(drawStatus, 200); };
-    drawStatus();
-  }
-
-  /* ---------- #risk 납기 위험 ---------- */
-  const riskAll = () => L.filter((o) => OPEN.includes(o.risk) && !CT.isStale(o));   // 종결 확인 필요(납기 60일+ 미종결)는 수주 현황에서 따로(11/8)
-  function drawRisk() {
-    const A = riskAll().filter((o) => !R.cause || o.cause === R.cause).sort(sorter(R.sk, R.dir, imp));
-    const row = (o) => `<tr class="ck" data-id="${esc(o.id)}"><td class="sk s1">${CT.badge(o)}</td>`
-      + `<td>${o.last ? `<b>${md(o.last)}</b> <span class="lf">${CT.leftTxt(o)}</span>` : '<span class="mu">-</span>'}</td>${idCell(o, R.by ? plName(o) : o.grp + ' · ' + plName(o))}`
-      + `<td class="r"><b>${Math.abs(imp(o)) >= 100 ? n0(imp(o)) : n1(imp(o))}</b></td><td class="c-need">${md(o.needProd) || '<span class="mu">-</span>'}</td><td>${dueCell(o)}</td>`
-      + `<td class="w">${esc(CT.why(o) || '-')}</td><td>${esc(o.dept || '-')}</td><td class="c-act"><span class="co-act">미조치</span></td></tr>`;
-    const rows = R.by ? grouped(A, R, 9, row, imp) : A.slice(0, R.lim).map(row).join('');
-    $('co-tbl').innerHTML = `<table class="ct-t co-t${R.by ? ' by' : ''}"><thead><tr>${th('risk', '상태', R, 'sk s1')}${th('last', '조치 마감일', R, '', '이 날까지 조치해야 납기를 지킬 수 있는 마지막 날')}${th('id', R.by ? '주문번호' : '주문번호·판매그룹', R, 'sk s2')}`
-      + `${th('imp', '물량(t)', R, 'r', '해당 물량: 생산 끝난 도금 = 미출하 · 그 외 = 잔량')}${th('need', '생산요청일', R, 'c-need')}${th('due', '출하완료일', R)}${th('cause', '근거', R)}${th('dept', '조치 부서', R)}<th class="c-act">조치 상태</th></tr></thead>`
-      + `<tbody>${rows || '<tr><td colspan="9" class="mu">해당 주문이 없습니다.</td></tr>'}</tbody></table>` + (R.by ? '' : more(A.length, R.lim));
-    $('co-cnt').textContent = `${n0(A.length)}건 · ${n0(sum(A, imp))}t`;
-    pinLeft($('co-tbl').querySelector('table')); bindSort($('co-tbl'), R, drawRisk); bindRows($('co-tbl')); bindGroups($('co-tbl'), R, drawRisk); bindAll('co-rall', R, drawRisk);
-    const mb = $('co-more'); if (mb) mb.onclick = () => { R.lim += 200; drawRisk(); };
-    document.querySelectorAll('.co-chip').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.c === R.cause)));
-  }
-  function viewRisk() {
-    const A = riskAll(), asOf = M.asOf;
-    const red = A.filter((o) => o.risk === '위험'), warn = A.filter((o) => o.risk === '주의'), past = A.filter((o) => o.last && o.last < asOf && o.risk !== '판정 불가'), na = A.filter((o) => o.risk === '판정 불가');
-    const k = CT.kpis([
-      { label: '납기 지연 예상(전 기간)', v: n0(red.length), unit: '건', sub: `<span title="${BASIS}">조치일 지난 ${n0(red.filter((o) => o.last && o.last < asOf).length)}건 포함 · 점검 필요 ${n0(warn.length)}건 별도</span>`, tone: red.length ? 'bad' : 'ok' },
-      { label: '해당 물량', v: n0(sum(red.concat(warn), imp)), unit: 't', sub: `지연 예상 ${n0(sum(red, imp))}t · 점검 필요 포함`, tone: red.length ? 'bad' : 'ok' },
-      { label: '조치일 지남', v: n0(past.length), unit: '건', sub: `${n0(sum(past, imp))}t`, tone: past.length ? 'bad' : 'ok' },
-      { label: '자료 확인 필요', v: n0(na.length), unit: '건', sub: '납기·주문량 없음 · 출하 실적 없음', tone: na.length ? 'warn' : 'ok' },
-    ]);
-    const chips = [['', '전체', A.length], ...Object.keys(CT.CAUSE).map((c) => [c, CT.CAUSE[c], A.filter((o) => o.cause === c).length])]
-      .map(([c, n, cnt]) => `<button type="button" class="co-chip" data-c="${c}" aria-pressed="${c === R.cause}"${cnt || !c ? '' : ' disabled'}>${esc(n)} <b>${n0(cnt)}</b></button>`).join('');
-    return k + `<div class="co-chips" role="group" aria-label="원인">${chips}<label class="nw"><input type="checkbox" id="co-rby"${R.by ? ' checked' : ''}> 판매그룹 묶음</label>${allBtn('co-rall')}<span class="cnt" id="co-cnt"></span></div><div class="co-tw" id="co-tbl"></div>` + shipNote().replace('co-sn"', 'co-sn" style="margin:12px 2px 0"');
-  }
-  function bindRisk() {
-    $('co-rby').onchange = (e) => { R.by = e.target.checked; R.lim = 200; drawRisk(); };
-    document.querySelectorAll('.co-chip').forEach((b) => b.onclick = () => { R.cause = b.dataset.c; R.lim = 200; drawRisk(); });
-    drawRisk();
-  }
-
-  /* ---------- #track 주문진도 ---------- */
-  // 11/5 사용자 '왜 이런 식으로 화면 구성을 한 거지?' — 상세를 한 줄 상황 → 단계 흐름(가로) → 핵심 숫자 → 속성 격자 순으로, 화면 폭 전체 사용
-  /* 매치없음 컬러 주문의 소재: 소재발주현황(SMMTA1080 = 발주·입고 표 — 화면에는 코드를 쓰지 않음) 발주처·발주일·입고납기 / 재고기반(계약번호 6번째 C) / 발주 없음 */
-  function poLine(o) {
-    if (o.pl !== 'C' || (o.mchT || 0) > 0.0005) return '';
-    if (o.po && o.po.no) return `발주 ${esc(o.po.sup || '')} · ${md(o.po.ordDt) || '-'} 발주 · 입고납기 <b>${md(o.po.dle) || '-'}</b>${o.po.entT ? ` · 입고 ${n1(o.po.entT)}t` : ''}`;
-    if (o.route === '재고기반') return `재고기반 주문서 · 소재 재고 ${n1(o.matT || 0)}t`;
-    if (o.self) return `자가재(도금) ${esc(o.self)}`;
-    return '<span class="ct-neg">소재 발주 없음</span>';
-  }
-  /* 아래 목록 필터 = 위 요약과 같은 단계(11/5 사용자 '밑에 필터링하는 것도 해당 분류로 바꿔'): 컬러 = 매치 전 → 매치 완료 → 부자재 대기 → 작업지시, 도금 = 소재 상태 */
-  const stageOf = (o) => (o.pl === 'C' ? catC(o.src || o) : catG(o));
-  const STAGES = () => { const seen = new Map(); [...(CT.inScope('C') ? CFG.C.leaves : []), ...(CT.inScope('G') ? CFG.G.leaves : [])].forEach(([k, c]) => { if (!seen.has(k)) seen.set(k, c); }); return [K0, ...MATCHED, KW].filter((k) => seen.has(k)).map((k) => [k, seen.get(k)]); };
-  function trackBase() {
-    if (T.q) { const q = T.q.toUpperCase(); return L.filter((o) => [o.id, o.item, o.cus, o.man].join(' ').toUpperCase().includes(q)).sort(CT.riskSort).slice(0, 200); }
-    const inSum = (o) => (o.pl === 'C' ? (o.remT || 0) > 0.0005 && CAPC[o.line] : CAPG[o.line] && ((o.remT || 0) > 1 || (/^[TQ]$/.test(String(o.id || '').charAt(4)) && (o.remT || 0) > 0.0005)));   // 위 요약(psData)과 같은 범위: 도금 = 1·2CGL · 1,000kg 넘는 것(T·Q 포함)
-    return L.filter((o) => !o.closed && !(o.src && o.src.dummy) && inSum(o) && (!PS.line || o.line === PS.line)).sort(CT.riskSort);
-  }
-  function trackList() { const A = trackBase(); return !T.tag ? A : T.tag === KP ? A.filter((o) => MATCHED.includes(stageOf(o))) : A.filter((o) => stageOf(o) === T.tag); }
-  function drawTrackList() {
-    const B = trackBase(), A = trackList(), cnt = {}, ton = {};
-    B.forEach((o) => { const k = stageOf(o); cnt[k] = (cnt[k] || 0) + 1; ton[k] = (ton[k] || 0) + (o.remT || 0); });
-    MATCHED.forEach((k) => { if (cnt[k]) { cnt[KP] = (cnt[KP] || 0) + cnt[k]; ton[KP] = (ton[KP] || 0) + ton[k]; } });
-    if (T.tag && !cnt[T.tag]) T.tag = '';
-    const st0 = STAGES(), stg = st0.flatMap(([k, c]) => (k === (st0.find((x) => MATCHED.includes(x[0])) || [])[0] ? [[KP, KP, '']] : []).concat([[k, MATCHED.includes(k) ? `└ ${k}` : k, c]]));
-    $('co-tc').innerHTML = [['', '전체', B.length, B.reduce((a, o) => a + (o.remT || 0), 0), '']].concat(stg.filter(([k]) => cnt[k]).map(([k, nm, c]) => [k, nm, cnt[k], ton[k], c]))
-      .map(([k, nm, v, t, c]) => `<button type="button" class="co-chip" data-k="${esc(k)}" aria-pressed="${(T.tag || '') === k}">${c ? `<i class="sw" style="background:${c}"></i>` : ''}${esc(nm)}<b>${n0(v)}</b><small>${n0(t)}t</small></button>`).join('');
-    $('co-tc').querySelectorAll('button').forEach((b) => { b.onclick = () => { T.tag = b.dataset.k; drawTrackList(); const f = trackList()[0]; if (f && !trackList().some((o) => o.id === T.id)) pickTrack(f.id); }; });
-    const A2 = trackList();
-    const A3 = A2.slice(0, 300).sort((x, y) => String(x.grp).localeCompare(String(y.grp)) || CT.riskSort(x, y)); let gp = null;   // 판매그룹별로 묶어(11/5 주문진도)
-    $('co-tl').innerHTML = A2.length ? A3.map((o) => `${o.grp !== gp ? `<li class="co-gh" role="presentation">${esc(gp = o.grp)} <small>${n0(A3.filter((x) => x.grp === o.grp).length)}건</small></li>` : ''}<li class="ck${o.id === T.id ? ' on' : ''}" data-id="${esc(o.id)}" role="option" aria-selected="${o.id === T.id}">`
-      + `<div class="a">${CT.badge(o)}<b>${esc(o.id)}</b></div><div class="b"><span>${esc(o.grp)} · ${esc(plName(o))}</span><span>납기 <b>${md(o.due) || '-'}</b> · 잔량 <b>${n1(o.remT || 0)}t</b></span></div>${poLine(o) ? `<div class="b po">${poLine(o)}</div>` : ''}</li>`).join('')
-      : '<li class="mu">해당 주문이 없습니다.</li>';
-    $('co-tn').textContent = T.q ? `찾기 ${n0(A2.length)}건` : `${T.tag || '잔여 있는 주문 전체'} ${n0(A2.length)}건 · ${n0(A2.reduce((a, o) => a + (o.remT || 0), 0))}t${A2.length > 300 ? ' · 앞 300건 표시' : ''}`;
-    $('co-tl').querySelectorAll('li.ck').forEach((li) => { li.onclick = () => pickTrack(li.dataset.id); });
-    CT.keyRows($('co-tl'));
-    return A;
-  }
-  /* 한 줄 상황: 왜 · 납기와 오늘 · 물량 */
-  function storyOf(o) {
-    const asOf = M.asOf, dd = o.due ? CT.diff(o.due, asOf) : null;
-    const why = o.risk === '정상' ? '정상 진행 중' : o.cause === 'data' ? `자료 확인 필요(${o.dataWhy || '자료 누락'})`
-      : ({ mat: o.matSt === '미발주' ? '소재를 아직 발주하지 않아' : o.pl === 'C' && o.matSt === '미확보' ? '소재가 없어' : '소재 입고가 늦어',
-        cap: '생산 편성일이 생산 필요일보다 늦어', plate: '자가재(도금) 생산이 늦어', ship: '생산은 끝났지만 출하가 늦어' })[o.cause] || '확인 필요';
-    const due = dd == null ? '납기 없음' : dd < 0 ? `${md(o.due)} 납기에서 <b class="ct-neg">${-dd}일 지남</b>` : dd === 0 ? `<b class="ct-neg">오늘 납기</b>` : `${md(o.due)} 납기까지 ${dd}일`;
-    const pdone = !['생산 전', '생산 중'].includes(o.ful);
-    const qty = pdone ? `${n1(o.ordT || 0)}t 중 ${n1(o.prodT || 0)}t 생산 — 생산 완료 처리됨` : `${n1(o.ordT || 0)}t 중 ${n1(o.prodT || 0)}t 생산, ${n1(o.remT || 0)}t 남음`;
-    const sh = o.unshipT == null ? ((o.fwdT || 0) > 0.5 ? `출하 ${n1(o.fwdT)}t` : o.ful === '생산 중' ? '아직 출하 전' : '생산 전') : o.ful === '출하 확인 불가' ? '출하 실적 없음' : o.ful === '출하 완료' ? '출하 완료' : (o.fwdT || 0) > 0.5 ? `출하 ${n1(o.fwdT)}t · 미출하 ${n1(o.unshipT)}t` : '아직 출하 전';
-    return `${esc(why)} — ${due} · ${qty} · ${sh}`;
-  }
-  function drawTrackDetail() {
-    const o = T.id && byId[T.id], box = $('co-td');
-    if (!o) { box.innerHTML = '<p class="ct-note">왼쪽에서 주문을 고르거나 주문번호로 찾으세요.</p>'; return; }
-    const asOf = M.asOf, ST = { done: '완료', cur: '진행 중', todo: '대기', na: '해당 없음' };
-    const dateCell = (d, plan, st) => {
-      if (!d && !plan) return '';
-      const late = d && plan && d > plan, lb = st === 'done' ? '실제' : d && d < asOf ? '예정(지남)' : '예정';
-      return `${d ? `<span class="${late ? 'ct-neg' : ''}">${lb} <b>${md(d)}</b></span>` : ''}${plan ? `<span>필요 <b>${md(plan)}</b></span>` : ''}`;
-    };
-    const steps = o.steps.filter((s) => s.st !== 'na' || /출하/.test(s.k));
-    const tl = `<ol class="co-flow" style="--n:${steps.length}">${steps.map((s) => `<li class="${s.st}"><i></i><div class="k">${esc(s.k)}</div>`
-      + `<div class="s">${s.st === 'na' && /출하/.test(s.k) ? '실적 없음' : ST[s.st]}</div><div class="d">${dateCell(s.d, s.plan, s.st)}</div>${s.note ? `<div class="n">${esc(s.note)}</div>` : ''}</li>`).join('')}</ol>`;
-    const left = o.last ? (CT.diff(o.last, asOf) < 0 ? `<em class="ct-neg">${-CT.diff(o.last, asOf)}일 지남</em>` : (CT.diff(o.last, asOf) === 0 ? `<em class="ct-neg">오늘</em>` : `<em>D-${CT.diff(o.last, asOf)}</em>`)) : '';
-    const fig = (k, v, u, sub) => `<div class="f"><span>${k}</span><b>${v}${u ? `<small>${u}</small>` : ''}</b>${sub ? `<div>${sub}</div>` : ''}</div>`;
-    const figs = `<div class="co-figs">${fig('수주량', n1(o.ordT || 0), 't')}${fig('생산', n1(o.prodT || 0), 't')}${fig('잔량', n1(o.remT || 0), 't')}`
-      + fig('미출하', o.unshipT == null ? '-' : n1(o.unshipT), o.unshipT == null ? '' : 't', (o.fwdT || 0) > 0.5 ? `출하 ${n1(o.fwdT)}t` : o.unshipT == null || o.ful === '출하 확인 불가' ? '출하 실적 없음' : '')
-      + fig('납기', md(o.due) || '-', '', o.pl === 'G' && o.exp && o.ship ? `출항 ${md(o.ship)}` : '') + fig('생산 필요일', md(o.needProd) || '-', '')
-      + fig('조치 마감일', md(o.last) || '-', '', left) + '</div>';
-    const kv = (k, v) => (v == null || v === '' ? '' : `<div class="g"><span>${esc(k)}</span><b>${v}</b></div>`);
-    const grid = `<div class="co-grid">${kv('판매그룹', esc(o.grp) + (o.grpEst ? ' <small>(추정)</small>' : ''))}${kv('고객사', esc(o.cus || ''))}${kv('담당', esc(o.man || ''))}`
-      + kv('공정·라인', esc(plName(o))) + kv('품목', esc(o.item)) + kv('두께×폭', esc(o.size)) + kv('지연 근거', o.cause ? esc(CT.why(o)) : '')
-      + kv('조치 부서', esc(o.dept || '')) + kv('진행 단계', CT.fulBadge(o.ful)) + kv('생산 완료 예정', o.etaDone ? `${md(o.etaDone)} <small>${esc(o.etaSrc || '')}</small>` : '')
-      + kv('소재', esc(o.matSt || '')) + (o.self ? kv('자가재(도금 주문)', esc(o.self)) : '') + (poLine(o) ? kv('소재 발주', poLine(o)) : '') + (o.src && o.src.wst ? kv('작업 상태', esc(o.src.wst)) : '') + '</div>';
-    box.innerHTML = `<div class="co-th"><div class="h1"><b>${esc(o.id)}</b>${CT.badge(o)}<span class="who">${[o.cus, o.grp, plName(o)].filter(Boolean).map(esc).join(' · ')}</span></div>`
-      + `<p class="co-story">${storyOf(o)}</p></div>${tl}${o.pl === 'G' && o.src && (o.src.purT || o.src.stg) ? `<div class="co-posco"><h4>포스코 진행 <small>F/H ${n1(o.src.purT || 0)}t · 입고 ${n1(o.src.entT || 0)}t${o.src.needIn ? ` · 필요 입고일 ${md(o.src.needIn)}` : ''}</small></h4>${CT.poscoBar(o.src)}</div>` : ''}${figs}${grid}`;
-  }
-  function pickTrack(id) {
-    T.id = id;
-    $('co-tl').querySelectorAll('li.ck').forEach((li) => { const on = li.dataset.id === id; li.classList.toggle('on', on); li.setAttribute('aria-selected', String(on)); });
-    drawTrackDetail();
-    if (matchMedia('(max-width: 900px)').matches) $('co-td').scrollIntoView({ block: 'start' });
-  }
   /* 주문진도 요약(11/5 사용자 'SSCHC1010 작업지시대상선정 요약 — 우리로 치면 주문진도'): 라인별 · 전체
      원본 전체 = 잔여 있음 + 1,000kg 이하(제외) + 잔여 없음(제외). 매치있음 = 매치량>0(이미 생산에 쓴 소재 제외), 아래 작업 상태 4줄은 안 끝난 작업지시(PF_CC_WORK_ORD) 기준.
      작업가능일 = 매치된 소재로 만들 수 있는 양(주문별 min(잔여, 매치)) ÷ 라인 하루 능력 */
@@ -399,32 +168,108 @@
     } else body = psData([PS.line]).map((d) => psCard(d, `${PS.line} 주문진도`)).join('');
     return `<div class="ps">${tabs}${body}</div>`;
   }
-  function viewTrack() {
-    if (!T.id) { const f = L.filter((o) => !o.closed && (o.remT || 0) > 0.5).sort(CT.riskSort)[0]; T.id = f ? f.id : null; }
-    return `<div id="co-ps">${progSum()}</div><div class="co-trk"><div class="co-tlw"><input id="co-tq" type="search" placeholder="주문번호·품명·고객·담당 (Enter)" value="${esc(T.q)}" aria-label="주문 찾기">`
-      + `<div class="co-tc" id="co-tc"></div><div class="co-tn" id="co-tn"></div><ul class="co-tl" id="co-tl" role="listbox" aria-label="주문 목록"></ul></div><section class="co-td" id="co-td"></section></div>`;
+  /* ---------- #track 주문진도(11/10 사용자 '항상 전체 먼저 → 그룹별로 뭐가 문제인지, 계약 나열은 상세가 아니다') ----------
+     전체(도금·컬러 각각 단계 흐름) → 판매그룹(단계 막대·한 문장) → 줄을 누르면 단계 × 강종(품명)·납기월 → (접힘) 계약.
+     단계 = 주문 추적(o.steps)에서 아직 안 끝난 첫 단계 · 톤 = 잔량(생산 끝난 주문은 미출하) — 새로 판정하지 않음 */
+  const SG = [['mat', '소재 확보'], ['plan', '작업 편성'], ['prod', '생산'], ['ship', '출하']], SGN = Object.fromEntries(SG), FLOW = ['mat', 'plan', 'prod'];
+  const pct = (a, b) => (b > 0 ? Math.round(a / b * 100) : 0);
+  const pdone = (o) => o.ful !== '생산 전' && o.ful !== '생산 중';
+  const stg = (o) => { if (pdone(o)) return 'ship';
+    const s = o.steps.find((x, i) => i > 0 && !/출하/.test(x.k) && x.st !== 'done' && x.st !== 'na');
+    return !s ? 'prod' : /소재|자가재/.test(s.k) ? 'mat' : /편성/.test(s.k) ? 'plan' : 'prod'; };
+  const tonT = (o) => (pdone(o) ? o.unshipT || 0 : o.remT || 0);
+  /* 지연 판정은 납기 위험 화면과 같은 자료(risk.enc.json)로 — 두 화면 숫자가 달라지지 않게. 자료 없으면 주문 모델 판정 */
+  let RS = null;
+  const lateOf = (o) => { if (RS) { const s = RS[o.pl + '|' + o.id]; return pdone(o) ? '' : s === 'past' || s === 'will' ? s : ''; }
+    return o.due && o.due < M.asOf ? 'past' : !pdone(o) && o.risk === '위험' ? 'will' : ''; };
+  const unplan = (o) => stg(o) === 'plan' && (o.steps.find((x) => /편성/.test(x.k)) || {}).st === 'todo';
+  const LN = { past: '납기 경과', will: '지연 예상', un: '미편성' };
+  const chipOf = (o) => { if (CT.isStale(o)) return '<span class="rk-chip stale">종결 확인</span>'; const l = lateOf(o) || (unplan(o) ? 'un' : ''); return l ? `<span class="rk-chip ${l}">${LN[l]}</span>` : ''; };
+  const trackAll = () => L.filter((o) => !o.closed && !CT.isStale(o));
+  function agg(X) {
+    const a = { t: 0, n: 0, will: 0, past: 0, un: 0, st: Object.fromEntries(SG.map(([k]) => [k, { t: 0, n: 0, will: 0, past: 0, un: 0, na: 0 }])) };
+    for (const o of X) { const k = stg(o), s = a.st[k], t = tonT(o), l = lateOf(o), u = unplan(o);
+      s.t += t; s.n++; if (l) s[l] += t; if (u) s.un += t; if (k === 'ship' && o.ful === '출하 확인 불가') s.na++;
+      if (k !== 'ship') { a.t += t; a.n++; if (l) a[l] += t; if (u) a.un += t; } }
+    a.top = FLOW.reduce((m, k) => (a.st[k].t > a.st[m].t ? k : m), 'mat');
+    a.blk = FLOW.reduce((m, k) => (a.st[k].will + a.st[k].past > (m ? a.st[m].will + a.st[m].past : 0.5) ? k : m), '');
+    return a;
   }
-  function bindTrack() {
-    const qi = $('co-tq');
-    qi.oninput = (e) => { T.q = e.target.value.trim(); clearTimeout(bindTrack.t); bindTrack.t = setTimeout(drawTrackList, 200); };
-    qi.onkeydown = (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); T.q = qi.value.trim(); const ex = byId[T.q] || byId[T.q.toUpperCase()]; drawTrackList(); const f = ex || trackList()[0]; if (f) pickTrack(f.id); }
-      if (e.key === 'ArrowDown') { e.preventDefault(); const f = $('co-tl').querySelector('li.ck'); if (f) f.focus(); }
-    };
-    $('co-tl').addEventListener('keydown', (e) => {
-      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-      e.preventDefault(); const it = [...$('co-tl').querySelectorAll('li.ck')], i = it.indexOf(document.activeElement);
-      const n = it[Math.max(0, Math.min(it.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))]; if (n) n.focus();
-      if (e.key === 'ArrowUp' && i <= 0) qi.focus();
-    });
+  const sbar = (a, cls) => `<div class="rk-st ${cls || ''}">${FLOW.map((k) => (a.st[k].t > 0 ? `<i class="${k}" style="flex:${a.st[k].t}" title="${SGN[k]} ${n0(a.st[k].t)}t"></i>` : '')).join('')}</div>`;
+  const lateTxt = (s, un) => [s.will >= 0.5 ? `지연 예상 ${n0(s.will)}t` : '', s.past >= 0.5 ? `납기 경과 ${n0(s.past)}t` : '', un && s.un >= 0.5 ? `미편성 ${n0(s.un)}t` : ''].filter(Boolean).join(' · ');
+  const TK = { open: null, q: '' };
+  function flowCard(pl, X) {
+    const a = agg(X), lt = a.will + a.past;
+    return `<div><div class="rk-big"><em class="ot-pl">${pl === 'G' ? '도금' : '컬러'}</em><b>${n0(a.t)}<small>t</small></b><span>미결 ${n0(a.n)}건${lt >= 0.5 ? ` · 지연 예상·납기 경과 <strong class="ot-bad">${n0(lt)}t(${pct(lt, a.t)}%)</strong>` : ''}</span></div>
+      ${sbar(a)}
+      <div class="rk-leg ot-leg">${SG.map(([k, nm]) => { const s = a.st[k], sh = k === 'ship';
+        return `<div class="${k}${a.blk === k ? ' blk' : ''}"><small>${nm}${a.blk === k ? ' <span class="rk-chip past">정체</span>' : ''}${sh ? ' <span class="ot-m">생산 완료분</span>' : ''}</small><b>${n0(s.t)}</b><em>t</em><span class="ot-n">${n0(s.n)}건${sh ? '' : ` · ${pct(s.t, a.t)}%`}</span>`
+          + `<p class="ot-l">${sh ? (s.na ? `<span>출하 실적 없음 ${n0(s.na)}건</span>` : '') : lateTxt(s, k === 'plan').split(' · ').map((x) => `<span>${x}</span>`).join('')}</p></div>`; }).join('')}</div></div>`;
+  }
+  const subOf = (o) => (o.pl === 'G' ? o.src.fam : o.src.pdt) || '기타';
+  const ymOf = (o) => (!o.due ? '납기 없음' : o.due.slice(0, 7) < M.asOf.slice(0, 7) ? '지난 달' : `${+o.due.slice(5, 7)}월`);
+  const ymKey = (o) => (!o.due ? '9999' : o.due.slice(0, 7) < M.asOf.slice(0, 7) ? '0000' : o.due.slice(0, 7));
+  function cross(X, keyF, nm, sortF, cap) {
+    const m = new Map(); X.filter((o) => stg(o) !== 'ship').forEach((o) => { const k = keyF(o); if (!m.has(k)) m.set(k, []); m.get(k).push(o); });
+    let R = [...m].map(([k, A]) => ({ k, a: agg(A), s: sortF ? sortF(A[0]) : '' })).filter((r) => r.a.t >= 0.5);
+    R.sort(sortF ? (x, y) => (x.s < y.s ? -1 : 1) : (x, y) => y.a.t - x.a.t);
+    const rest = cap && R.length > cap ? R.slice(cap) : []; if (rest.length) R = R.slice(0, cap);
+    const mx = Math.max(1, ...R.flatMap((r) => FLOW.map((k) => r.a.st[k].t)));
+    const cell = (v) => (v < 0.5 ? '<td class="hm z">-</td>' : `<td class="hm" style="background:color-mix(in srgb, var(--brand-2) ${Math.round(v / mx * 26)}%, transparent)"><b>${n0(v)}</b></td>`);
+    const bad = (v) => (v < 0.5 ? '<td class="z">-</td>' : `<td><b class="ot-bad">${n0(v)}</b></td>`);
+    const all = agg(X.filter((o) => stg(o) !== 'ship'));
+    const line = (k, a, c) => `<tr${c ? ` class="${c}"` : ''}><td class="l"><b>${esc(k)}</b></td>${c ? FLOW.map((f) => `<td><b>${a.st[f].t >= 0.5 ? n0(a.st[f].t) : '-'}</b></td>`).join('') : FLOW.map((f) => cell(a.st[f].t)).join('')}<td><b>${n0(a.t)}</b></td>${bad(a.will)}${bad(a.past)}</tr>`;
+    return `<div class="scroll"><table class="rk-s"><thead><tr><th class="l">${nm}</th>${FLOW.map((f) => `<th>${SGN[f]}</th>`).join('')}<th>합계</th><th>지연 예상</th><th>납기 경과</th></tr></thead><tbody>`
+      + R.map((r) => line(r.k, r.a)).join('') + (rest.length ? line(`그 외 ${rest.length}개`, agg(rest.flatMap((r) => m.get(r.k)))) : '') + line('합계', all, 'tot') + '</tbody></table></div>';
+  }
+  const conHead = '<thead><tr><th class="l">상태</th><th class="l">계약</th><th>라인</th><th class="l">품목</th><th class="l">두께×폭</th><th>납기</th><th>잔량</th><th>단계</th><th>생산 예정</th><th class="l">사유</th></tr></thead>';
+  const conRow = (o) => `<tr class="ck" data-id="${esc(o.id)}"><td class="l">${chipOf(o)}</td><td class="l">${esc(o.id)}</td><td>${esc(o.line || '-')}</td><td class="l">${esc(o.item || '-')}</td><td class="l">${esc(o.size || '')}</td><td>${md(o.due) || '-'}</td>`
+    + `<td><b>${n0(tonT(o))}t</b></td><td>${o.closed ? esc(CT.fl(o.ful)) : SGN[stg(o)]}</td><td>${!pdone(o) && o.etaDone ? md(o.etaDone) : '-'}</td><td class="w"><div class="rk-w">${esc((o.cause && CT.why(o)) || '')}</div></td></tr>`;
+  const conSort = (a, b) => ({ past: 0, will: 1, '': 2 }[lateOf(a)] - { past: 0, will: 1, '': 2 }[lateOf(b)]) || tonT(b) - tonT(a);
+  function grpDetail(g) {
+    const a = g.a, rows = g.X.slice().sort(conSort), sh = a.st.ship;
+    return `<div class="rk-dg">
+      <div><p class="rk-h3">단계 × ${g.pl === 'G' ? '강종' : '품명'} <small>톤</small></p>${cross(g.X, subOf, g.pl === 'G' ? '강종' : '품명', null, 12)}</div>
+      <div><p class="rk-h3">단계 × 납기월 <small>톤</small></p>${cross(g.X, ymOf, '납기월', ymKey)}${sh.n ? `<p class="rk-rule">생산 완료 · 출하 대기 ${n0(sh.n)}건 ${n0(sh.t)}t${sh.na ? ` (출하 실적 없음 ${n0(sh.na)}건)` : ''}</p>` : ''}</div></div>
+      <details class="rk-more"><summary>해당 계약 ${n0(rows.length)}건</summary><div class="scroll" style="margin-top:8px"><table class="rk-s">${conHead}<tbody>${rows.slice(0, 300).map(conRow).join('')}</tbody></table></div>${rows.length > 300 ? `<p class="rk-rule">지연·물량순 300건 표시 · 전체 ${n0(rows.length)}건</p>` : ''}</details>`;
+  }
+  function drawTrack() {
+    const A = trackAll(), stale = L.filter(CT.isStale), pls = ['G', 'C'].filter((p) => CT.inScope(p));
+    const GM = new Map(); A.forEach((o) => { const k = o.pl + '|' + o.grp; if (!GM.has(k)) GM.set(k, []); GM.get(k).push(o); });
+    const G = [...GM].map(([key, X]) => ({ key, pl: X[0].pl, g: X[0].grp, X, a: agg(X) })).sort((x, y) => (x.pl === y.pl ? y.a.t - x.a.t : x.pl === 'G' ? -1 : 1));
+    let last = null;
+    const msg = (a) => { if (a.t < 0.5) return `생산 잔량 없음 · 출하 대기 ${n0(a.st.ship.t)}t`; const s = a.st[a.top], x = lateTxt(s, a.top === 'plan');
+      return `<b>${SGN[a.top]}</b> ${n0(s.t)}t(${pct(s.t, a.t)}%)${x ? ` · ${x}` : ''}`; };
+    $('ot').innerHTML = `
+      <section class="card" id="ot-s1"><h2>전체 <small>미결 주문 · 수주 확정 → 소재 확보 → 작업 편성 → 생산 → 출하</small></h2>
+        <div class="rk-top"${pls.length < 2 ? ' style="grid-template-columns:minmax(0,1fr)"' : ''}>${pls.map((p) => flowCard(p, A.filter((o) => o.pl === p))).join('')}</div>${stale.length ? `<p class="rk-rule">종결 확인 ${n0(stale.length)}건 ${n0(sum(stale, (o) => o.remT))}t 제외</p>` : ''}</section>
+      <section class="card" id="ot-s2"><h2>판매그룹별 <small>선택 시 단계 × 강종(품명) · 납기월 표시</small></h2>
+        <div class="scroll"><table class="rk-g"><thead><tr><th class="l">그룹</th><th>미결</th><th class="l" style="min-width:220px">단계</th><th>지연 예상</th><th>납기 경과</th><th class="l">최대 정체 단계</th></tr></thead><tbody>
+        ${G.map((g) => { const on = TK.open === g.key, a = g.a, h = pls.length > 1 && last !== g.pl ? `<tr class="hd"><td colspan="6">${g.pl === 'G' ? '도금' : '컬러'}</td></tr>` : ''; last = g.pl;
+          const num = (v) => (v >= 0.5 ? `<b class="ot-bad">${n0(v)}t</b>` : '<span class="ot-z">-</span>');
+          return `${h}<tr class="g${on ? ' on' : ''}" data-k="${esc(g.key)}" tabindex="0" role="button" aria-expanded="${on}"><td class="l nm"><b><i class="ch">▸</i>${esc(g.g)}</b><small>${n0(a.n)}건</small></td><td><b>${n0(a.t)}t</b></td><td class="l">${sbar(a, 'sm')}</td><td>${num(a.will)}</td><td>${num(a.past)}</td><td class="w"><div class="rk-w">${msg(a)}</div></td></tr>${on ? `<tr class="rk-d"><td colspan="6">${grpDetail(g)}</td></tr>` : ''}`; }).join('')}
+        </tbody></table></div>
+        <p class="rk-rule ot-key">${FLOW.map((k) => `<span><i class="${k}"></i>${SGN[k]}</span>`).join('')}</p></section>
+      <section class="card" id="ot-s3"><h2>계약 조회</h2>
+        <input id="ot-q" class="ot-q" type="search" placeholder="계약번호·품명·고객·담당" value="${esc(TK.q)}" aria-label="계약 조회"><div id="ot-qr"></div>
+        <details class="rk-more" id="ot-psd"><summary>라인별 작업지시 현황</summary><div id="co-ps" style="margin-top:10px"></div></details></section>`;
+    $('ot').querySelectorAll('tr.g').forEach((tr) => { const f = () => { TK.open = TK.open === tr.dataset.k ? null : tr.dataset.k; drawTrack(); const t = [...document.querySelectorAll('tr.g')].find((x) => x.dataset.k === TK.open); if (t) t.scrollIntoView({ block: 'nearest' }); };
+      tr.onclick = f; tr.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f(); } }; });
+    const rowsOn = (root) => { root.querySelectorAll('tr.ck').forEach((tr) => { tr.onclick = () => { const o = byId[tr.dataset.id]; if (o) open(o); }; }); CT.keyRows(root); };
+    $('ot').querySelectorAll('tr.rk-d').forEach(rowsOn);
+    const find = () => { const q = TK.q.toUpperCase(), R = q.length < 2 ? [] : L.filter((o) => [o.id, o.item, o.cus, o.man].join(' ').toUpperCase().includes(q)).sort(conSort);
+      $('ot-qr').innerHTML = q.length < 2 ? '' : R.length ? `<div class="scroll" style="margin-top:10px"><table class="rk-s">${conHead}<tbody>${R.slice(0, 100).map(conRow).join('')}</tbody></table></div>${R.length > 100 ? `<p class="rk-rule">100건 표시 · 전체 ${n0(R.length)}건</p>` : ''}` : '<p class="rk-rule">해당 계약 없음</p>';
+      rowsOn($('ot-qr')); };
+    $('ot-q').oninput = (e) => { TK.q = e.target.value.trim(); clearTimeout(drawTrack.t); drawTrack.t = setTimeout(find, 200); };
+    find();
     const bindPS = () => {
-      document.querySelectorAll('.ps-seg button, .pm').forEach((bt) => bt.onclick = () => { PS.line = bt.dataset.l; PS.open = ''; $('co-ps').innerHTML = progSum(); bindPS(); drawTrackList(); const f = trackList()[0]; if (f && !trackList().some((o) => o.id === T.id)) pickTrack(f.id); });
-      document.querySelectorAll('#co-ps [data-ex]').forEach((el) => { const go = () => { PS.open = PS.open === el.dataset.ex ? '' : el.dataset.ex; const y = scrollY; $('co-ps').innerHTML = progSum(); bindPS(); scrollTo(0, y); const e = document.querySelector('.ps-exp'); if (e && PS.open) e.scrollIntoView({ block: 'nearest' }); };
+      const re = () => { const y = scrollY; $('co-ps').innerHTML = progSum(); bindPS(); scrollTo(0, y); };
+      document.querySelectorAll('.ps-seg button, .pm').forEach((bt) => (bt.onclick = () => { PS.line = bt.dataset.l; PS.open = ''; re(); }));
+      document.querySelectorAll('#co-ps [data-ex]').forEach((el) => { const go = () => { PS.open = PS.open === el.dataset.ex ? '' : el.dataset.ex; re(); const e = document.querySelector('.ps-exp'); if (e && PS.open) e.scrollIntoView({ block: 'nearest' }); };
         el.onclick = go; el.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } }; });
-      document.querySelectorAll('#co-ps th[data-xs] button').forEach((b) => (b.onclick = () => { const x = b.parentNode.dataset.xs; if (PS.sk === x) PS.dir = -PS.dir; else { PS.sk = x; PS.dir = x === 'due' ? 1 : -1; } const y = scrollY; $('co-ps').innerHTML = progSum(); bindPS(); scrollTo(0, y); }));
+      document.querySelectorAll('#co-ps th[data-xs] button').forEach((b) => (b.onclick = () => { const x = b.parentNode.dataset.xs; if (PS.sk === x) PS.dir = -PS.dir; else { PS.sk = x; PS.dir = x === 'due' ? 1 : -1; } re(); }));
     };
-    bindPS();
-    drawTrackList(); drawTrackDetail();
+    $('ot-psd').ontoggle = () => { if ($('ot-psd').open && !$('co-ps').innerHTML) { $('co-ps').innerHTML = progSum(); bindPS(); } };
   }
 
   /* ---------- #cal 납기 캘린더 ---------- */
@@ -482,20 +327,20 @@
   /* ---------- 공통 ---------- */
   function render(D) {
     D0 = D; M = CT.orders(D);
+    RS = D.risk && D.risk.groups ? Object.fromEntries(D.risk.groups.flatMap((g) => g.rows.map((r) => [g.pl + '|' + r[0], r[6]]))) : null;
     L = M.all.filter((o) => CT.inScope(o.pl));
     byId = Object.fromEntries(M.all.map((o) => [o.id, o]));
-    const v = CT.view('status', VIEWS);
+    const v = CT.view('track', VIEWS);   // # 없음·옛 #status·#risk → 주문진도
     const cg = D.cg_order_progress, cc = D.cc_order_progress;
     const basis = CT.basis([
       cg && { name: '도금 주문', at: cg.asOf, kind: '실적·재계획' },
       cc && { name: '컬러 주문', at: cc.asOf, kind: (cc.lines || []).join('·') },
       ...(M.ccMissing || []).map((l) => ({ name: l, at: null, ok: false, tip: '작업지시대상 자료 없음' })),
     ]);
-    const body = v === 'risk' ? viewRisk() : v === 'track' ? viewTrack() : v === 'cal' ? viewCal() : viewStatus();
-    $('ct-main').innerHTML = basis + `<section class="card co-card co-${v}" id="co-body">${body}</section>`;
-    ({ status: bindStatus, risk: bindRisk, track: bindTrack, cal: bindCal })[v]();
-    document.title = `${({ status: '수주 현황', risk: '납기 지연 예상', track: '주문진도', cal: '납기 캘린더' })[v]} · 수주·납기`;
+    if (v === 'cal') { $('ct-main').innerHTML = basis + `<section class="card co-card co-cal" id="co-body">${viewCal()}</section>`; bindCal(); }
+    else { $('ct-main').innerHTML = basis + '<div class="rk" id="ot" style="margin-top:12px"></div>'; drawTrack(); }
+    document.title = `${v === 'cal' ? '납기 캘린더' : '주문진도'} · 주문·납기`;
   }
   CT.onView(() => { if (D0) { CT.panel(null); render(D0); } });
-  CT.boot(['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json'], render);
+  CT.boot(['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'risk.enc.json'], render);
 })();

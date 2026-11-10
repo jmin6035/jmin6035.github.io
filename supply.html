@@ -6,7 +6,7 @@
 <title>월간 가동</title>
 <meta name="description" content="일별 가동 · 자가재 · 구매 소재(발주·입고·재고) · 제품 재고를 한 달력에서">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611100715">
+<link rel="stylesheet" href="ui/theme.css?v=2611100722">
 <style>
 .sbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 10px; font-size: 13.5px; color: var(--ink-2); }
 .sbar b { color: var(--ink); }
@@ -123,7 +123,7 @@ table.sc tr.gr1 .gk { background: color-mix(in srgb, var(--gc) 14%, var(--surfac
 table.sc td.gs { color: var(--warn); } table.sc tr.grs td { font-size: 13.5px; color: var(--ink-3); padding-top: 2px; padding-bottom: 2px; } table.sc .lb .gs2 { font-size: 13.5px; color: var(--ink-3); font-weight: 600; } table.sc td.gk2 { color: var(--ink-2); }
 html .gtable td.hi { background: color-mix(in srgb, var(--warn) 16%, var(--surface)); }
 html .gtable .c1 small { color: var(--ink-3); font-weight: 500; }
-.pks{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0 12px}.pk{border:1px solid var(--line,#dde1e6);border-radius:10px;padding:8px 12px}.pk-h{font-size:13.5px;color:var(--muted,#667);font-weight:600}.pk-v{font-size:22px;font-weight:700;white-space:nowrap}.pk-v small{font-size:13.5px;font-weight:500;margin-left:2px}.pk-v em{font-style:normal;font-size:15px;margin-left:8px;color:var(--accent,#1f5fbf)}.pk-s{font-size:13.5px;color:var(--muted,#667);white-space:nowrap}.pk-s .neg{color:var(--bad,#c62828)}.pk-s .pos{color:var(--ok,#2e7d32)}.pgv4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 22px}.pgv4 .pgv h3{margin:0 0 18px 46px;font-size:14.5px}@media (max-width:1200px){.pgv4,.pks{grid-template-columns:1fr 1fr}}.pgl{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.pks{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0 12px}.pk{border:1px solid var(--line,#dde1e6);border-radius:10px;padding:8px 12px}.pk-h{font-size:13.5px;color:var(--muted,#667);font-weight:600}.pk-v{font-size:22px;font-weight:700;white-space:nowrap}.pk-v small{font-size:13.5px;font-weight:500;margin-left:2px}.pk-v em{font-style:normal;font-size:15px;margin-left:8px;color:var(--accent,#1f5fbf)}.pk-s{font-size:13.5px;color:var(--muted,#667);white-space:nowrap}.pk-s .neg{color:var(--bad,#c62828)}.pk-s .pos{color:var(--ok,#2e7d32)}.pk-s b{color:var(--ink,#123);font-weight:700}.pk-d{font-weight:700}.pk-d.warn,.pk-s .warn{color:var(--warn,#b26a00)}.pk-d.neg{color:var(--bad,#c62828)}.pk-lag{display:flex;flex-wrap:wrap;gap:4px 22px;align-items:baseline;margin:0 0 14px;padding:8px 12px;border-radius:10px;background:var(--surface-2,#f3f5f8);font-size:14px}.pk-lh{font-weight:700}.pk-lh small{font-size:13.5px;font-weight:500;color:var(--ink-3,#667);margin-left:4px}.pk-li i{font-style:normal;font-size:13.5px;color:var(--ink-3,#667);margin-right:6px}.pk-li b.neg{color:var(--bad,#c62828)}.pk-li b.pos{color:var(--good,#2e7d32)}.pk-li span{font-size:13.5px;color:var(--ink-2,#445)}@media (max-width:700px){.pgv4{grid-template-columns:1fr}.pk-s{white-space:normal}.pk-v{font-size:20px}}.pgv4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 22px}.pgv4 .pgv h3{margin:0 0 18px 46px;font-size:14.5px}@media (max-width:1200px){.pgv4,.pks{grid-template-columns:1fr 1fr}}.pgl{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:6px}
     .pgvs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; margin-top: 16px; } @media (max-width: 900px) { .pgvs { grid-template-columns: 1fr; } }
 .pgv h3 { font-size: 15px; margin: 0 0 26px 70px; color: var(--ink); }
 .pgv > .pg { margin-bottom: 14px; } .pgs-t { font-size: 15px; margin: 18px 0 8px; } .pgs-ship { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
@@ -228,6 +228,47 @@ html .gtable .c1 small { color: var(--ink-3); font-weight: 500; }
 html body main #s-cal td.sdblock small { font-size: 13.5px !important; letter-spacing: -0.4px; font-weight: 600; } #s-cal td.idleblk { vertical-align: middle; } #s-cal td.idleblk .idl { display: inline-block; background: var(--surface); color: var(--ink-2); font-size: 13.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
 /* 서식 통일(11/10): 상세 표의 톤은 오른쪽 정렬 */
 html body main .det table.dt.fl td.r, html body main .det table.dt.fl th.r { text-align: right !important; }
+
+/* 11/10 사용자 '가동 캘린더·출하 재고 답답하고 구분 안 됨': 공장 띠 머리 + 여백, 주말·주 경계, 오늘 열, 실적(진한)·계획(옅은), 같은 강종 이어진 띠, 한 달 = 1440 한 화면 */
+@media (min-width: 1300px) { #s-cal { min-width: 0 !important; } #s-cal col.cc0, #s-cal col.cc1 { width: 42px; } #s-cal col.ctot { width: 60px; } #s-cal .c1 { left: 42px; } }
+#s-cal th, #s-cal td { padding: 10px 0 !important; line-height: 1.35; }
+#s-cal thead th { padding: 6px 0 !important; }
+#s-cal tbody td { border-right-color: color-mix(in srgb, var(--grid) 55%, transparent); border-bottom: 1px solid var(--line); }
+#s-cal tr.grp { --pb: var(--pt-gG); } #s-cal tr.grp.C { --pb: var(--pt-gC); }
+#s-cal tr.grp > * { background: color-mix(in srgb, var(--pb) 11%, var(--surface)); border-top: 2px solid var(--pb); border-bottom: 1px solid color-mix(in srgb, var(--pb) 35%, var(--surface)); padding: 7px 0 !important; }
+#s-cal tr.grp .gh { background: var(--pb); color: #fff; padding-left: 10px !important; font-size: 14.5px !important; } #s-cal tr.grp .gh small { color: #fff; opacity: .85; font-weight: 500; }
+#s-cal tr.grp td.gt { background: var(--pb) !important; color: #fff; }
+#s-cal tr.grp td.fu { color: var(--ink-3); font-weight: 500 !important; } #s-cal tr.grp td.pa { font-weight: 500 !important; color: var(--ink); } #s-cal tr.grp td.w5 { letter-spacing: -1.05px !important; font-variant-numeric: normal; }
+#s-cal tr.gap td { height: 22px; }
+#s-cal th.line { padding-left: 10px !important; box-shadow: inset 4px 0 0 var(--pt-gG); } #s-cal th.line.C { box-shadow: inset 4px 0 0 var(--pt-gC); }
+#s-cal td.fc.pa { background-color: color-mix(in srgb, var(--fc) 32%, var(--surface)); color: var(--ink); }
+#s-cal td.w5 { letter-spacing: -1.05px !important; font-variant-numeric: normal; }
+#s-cal td.fc.fu { background-color: color-mix(in srgb, var(--fc) 10%, var(--surface)); color: var(--ink-2); }
+#s-cal td.fc.cn { border-right-color: transparent; }
+#s-cal td.mcc { background: #f2b705; color: #3d2900; box-shadow: inset 0 0 0 2px var(--surface); border-radius: 7px; }
+#s-cal td.sdblock { border-radius: 7px; box-shadow: inset 0 0 0 2px var(--surface); letter-spacing: 0 !important; }
+:is(#s-cal, #s-ship) th.we { background: color-mix(in srgb, var(--ink) 9%, var(--th)); }
+#s-cal tbody td.we { background-image: linear-gradient(color-mix(in srgb, var(--ink) 7%, transparent), color-mix(in srgb, var(--ink) 7%, transparent)); }
+:is(#s-cal, #s-ship) .mon { border-left: 2px solid color-mix(in srgb, var(--ink-3) 55%, var(--surface)); }
+#s-cal thead th.today { box-shadow: inset 0 -3px 0 var(--brand-2); }
+#s-cal tbody td.tb { box-shadow: inset 2px 0 0 var(--brand-2), inset -2px 0 0 var(--brand-2) !important; background-color: color-mix(in srgb, var(--brand-2) 16%, var(--surface)); color: var(--ink); }
+.glegend .sw.wesw { background: color-mix(in srgb, var(--ink) 12%, var(--surface)); }
+.glegend .sw.mcsw { background: #f2b705 !important; box-shadow: none !important; }
+/* 판매그룹 출하·재고 요약: 전체 → 공장 → 그룹, 가로선만 */
+.sg-r { display: grid; grid-template-columns: 112px minmax(0, 1.25fr) minmax(0, 1fr) 190px; gap: 6px 28px; align-items: center; padding: 13px 8px; border-bottom: 1px solid var(--grid); font-size: 14px; font-variant-numeric: tabular-nums; }
+.sg-hd { padding: 6px 8px; font-size: 13.5px; font-weight: 700; color: var(--ink-3); border-bottom: 1px solid var(--line); } .sg-hd small { font-size: 13.5px; font-weight: 500; margin-left: 6px; }
+.sg-n { font-weight: 700; } .sg-g .sg-n { padding-left: 14px; font-weight: 600; color: var(--ink-2); }
+.sg-all { background: var(--surface-2); border-radius: 8px; border-bottom: 0; } .sg-all .sg-n { font-size: 15px; font-weight: 800; }
+.sg-p { margin-top: 14px; border-bottom: 2px solid var(--pt-gG); } .sg-p.C { border-bottom-color: var(--pt-gC); } .sg-p .sg-n { font-size: 15px; font-weight: 800; color: var(--pt-gG); } .sg-p.C .sg-n { color: var(--pt-gC); }
+:root[data-theme="dark"] .sg-p .sg-n { color: var(--ink); } @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sg-p .sg-n { color: var(--ink); } }
+.sg-t { color: var(--ink-2); white-space: nowrap; margin-bottom: 5px; } .sg-t b { color: var(--ink); font-size: 15px; } .sg-t em { font-style: normal; font-weight: 700; margin-left: 8px; color: var(--ink); } .sg-t em.warn { color: var(--warn); } .sg-t em.bad { color: var(--bad); }
+.sg-bar { position: relative; height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--ink) 9%, var(--surface)); }
+.sg-bar i { display: block; height: 100%; border-radius: 4px; background: var(--good); min-width: 2px; } .sg-bar i.warn { background: var(--warn); } .sg-bar i.bad { background: var(--bad); }
+.sg-bar u { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); border-radius: 1px; }
+.sg-c { display: inline-block; white-space: nowrap; padding: 3px 10px; border-radius: 999px; font-size: 13.5px; font-weight: 700; background: var(--good-bg); color: var(--good); } .sg-c.warn { background: var(--warn-bg); color: var(--warn); } .sg-c.bad { background: var(--bad-bg); color: var(--bad); }
+.sg-det { margin-top: 16px; } .sg-det > summary { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--ink-2); padding: 6px 0; } .sg-det[open] > summary { margin-bottom: 8px; }
+#s-ship th, #s-ship td { border-right-color: transparent !important; }
+@media (max-width: 760px) { .sg-r { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 10px; } .sg-s, .sg-k { grid-column: 1 / -1; } .sg-st { grid-column: 2; grid-row: 1; } .sg-hd { display: none; } .sg-t { white-space: normal; } }
 </style>
 </head>
 <body>
@@ -245,9 +286,11 @@ html body main .det table.dt.fl td.r, html body main .det table.dt.fl th.r { tex
       <div class="glegend" id="s-calleg"></div>
       <div class="gtable-wrap" id="s-calw"><table class="gtable" id="s-cal"></table></div>
     </section>
-    <section class="card"><h2>판매그룹 출하 · 재고 <small>출하(t) · 기말 재고(천t)</small><span class="unit">톤</span></h2>
+    <section class="card"><h2>판매그룹 출하 · 재고 <small>출하 진도 · 재고</small><span class="unit">톤</span></h2>
+      <div class="sg" id="s-shipsum"></div>
+      <details class="sg-det"><summary>일별 출하 · 재고</summary>
       <div class="glegend" id="s-shipleg"></div>
-      <div class="gtable-wrap" id="s-shw"><table class="gtable" id="s-ship"></table></div>
+      <div class="gtable-wrap" id="s-shw"><table class="gtable" id="s-ship"></table></div></details>
     </section>
     <div class="det" id="s-det"></div>
     <details class="basis" style="margin-top:10px;font-size:13.5px;color:var(--ink-3)"><summary style="cursor:pointer;font-weight:700;color:var(--ink-2)">산출 기준</summary>
@@ -263,10 +306,10 @@ html body main .det table.dt.fl td.r, html body main .det table.dt.fl th.r { tex
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2611100715"></script>
-<script src="engine/crypto.js?v=2611100715"></script>
-<script src="ui/cal.js?v=2611100715"></script>
-<script src="ui/proccalc.js?v=2611100715"></script>
-<script src="supply.js?v=2611100715"></script>
+<script src="ui/shell.js?v=2611100722"></script>
+<script src="engine/crypto.js?v=2611100722"></script>
+<script src="ui/cal.js?v=2611100722"></script>
+<script src="ui/proccalc.js?v=2611100722"></script>
+<script src="supply.js?v=2611100722"></script>
 </body>
 </html>
