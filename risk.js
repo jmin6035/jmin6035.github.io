@@ -8,7 +8,7 @@
   const pct = (a, b) => (b > 0 ? Math.round(a / b * 100) : 0);
   const ST = [['ok', '납기 안에 가능'], ['warn', '주의'], ['will', '지연 예상'], ['past', '납기 지남'], ['stale', '종결 확인']];
   const STN = Object.fromEntries(ST);
-  const STT = { ok: '소재·강종·생산 예정이 납기 안', warn: '소재가 아직 없지만 납기까지 여유', will: '지금 계획대로면 납기를 넘김', past: '납기가 이미 지났는데 미생산', stale: '납기 60일 넘게 지난 미종결 주문 — 실제 위험보다 종결 누락' };
+  const STT = { ok: '소재·강종·생산 예정이 모두 납기 안', warn: '소재가 아직 없지만 납기까지 여유 있음', will: '지금 계획대로면 납기를 넘김', past: '납기가 지났는데 아직 생산 전', stale: '납기 60일 넘게 지난 주문 — MES 종결 누락 가능' };
   let D = null, open = null;
   const scope = () => (window.UI && UI.scope ? UI.scope() : 'all');
   const stack = (o, cls) => `<div class="rk-st ${cls || ''}">${ST.map(([k, nm]) => (o[k] > 0 ? `<i class="${k}" style="flex:${o[k]}" title="${nm} ${n0(o[k])}t"></i>` : '')).join('')}</div>`;
@@ -38,17 +38,18 @@
     const sc = scope(), T = D.tot[sc] || D.tot.all, CZ = D.cause[sc] || {}, G = D.groups.filter((g) => sc === 'all' || g.pl === sc);
     const risk = T.will + T.past, mx = Math.max(1, ...Object.values(CZ));
     $('rk-meta').textContent = `기준 ${md(D.asOf)} · 도금 주문 ${md(D.cgAt)} · 컬러 주문 ${md(D.ccAt)}`;
-    const ymAll = {}; G.forEach((g) => Object.entries(g.ym).forEach(([y, v]) => { const a = (ymAll[y] = ymAll[y] || [0, 0]); a[0] += v[0]; a[1] += v[1]; }));
-    const cur = D.asOf.slice(0, 7), ys = Object.keys(ymAll).sort(), oldA = ys.filter((y) => y < cur).reduce((s, y) => [s[0] + ymAll[y][0], s[1] + ymAll[y][1]], [0, 0]);
+    const ymAll = {}; G.forEach((g) => Object.entries(g.ym).forEach(([y, v]) => { const a = (ymAll[y] = ymAll[y] || [0, 0, 0]); a[0] += v[0]; a[1] += v[1]; a[2] += v[2] || 0; }));
+    const cur = D.asOf.slice(0, 7), ys = Object.keys(ymAll).sort(), oldA = ys.filter((y) => y < cur).reduce((s, y) => [s[0] + ymAll[y][0], s[1] + ymAll[y][1], s[2] + ymAll[y][2]], [0, 0, 0]);
     const cols = (oldA[0] >= 0.5 ? [['지난 달', oldA]] : []).concat(ys.filter((y) => y >= cur).map((y) => [mon(y), ymAll[y]])), mxm = Math.max(1, ...cols.map((c) => c[1][0]));
     const hdr = (pl) => (sc === 'all' ? `<tr class="hd"><td colspan="6">${pl === 'G' ? '도금' : '컬러'}</td></tr>` : '');
     let last = null;
     $('rk-main').innerHTML = `
       <section class="card"><h2>전체 <small>미결 주문 ${sc === 'all' ? '도금 + 컬러' : sc === 'G' ? '도금' : '컬러'}</small></h2>
         <div class="rk-top"><div>
-          <div class="rk-big"><b>${n0(T.t)}<small>t</small></b><span>${n0(T.n)}건 중 <b style="font-size:17px;color:var(--bad)">${n0(risk)}t(${pct(risk, T.t)}%)</b>가 납기 위험</span></div>
+          <div class="rk-big"><span class="lb">미결</span><b>${n0(T.t)}<small>t</small></b><span>${n0(T.n)}건</span><span class="sep">|</span><span class="lb">위험</span><b class="bad">${n0(risk)}<small>t</small></b><span>${pct(risk, T.t)}%</span></div>
+          <dl class="rk-def"><dt>미결</dt><dd>주문량 중 아직 생산하지 않은 잔량</dd><dt>위험</dt><dd>지연 예상 + 납기 지남</dd></dl>
           ${stack(T)}
-          <div class="rk-leg">${ST.map(([k, nm]) => `<div class="${k}" title="${STT[k]}"><small>${nm}</small><b>${n0(T[k])}</b><em>${pct(T[k], T.t)}%</em></div>`).join('')}</div>
+          <div class="rk-leg">${ST.map(([k, nm]) => `<div class="${k}"><small>${nm}</small><b>${n0(T[k])}</b><em>${pct(T[k], T.t)}%</em><p>${STT[k]}</p></div>`).join('')}</div>
         </div><div>
           <p class="rk-h3">위험 ${n0(risk)}t 의 원인</p>
           <div class="rk-cz">${D.causeOrder.filter((c) => CZ[c] >= 0.5).sort((a, b) => CZ[b] - CZ[a]).map((c) => `<span class="n">${esc(D.causeNm[c])}</span><span class="bar"><i style="width:${Math.max(2, CZ[c] / mx * 100)}%"></i></span><b>${n0(CZ[c])}t</b><span class="d">${esc(D.dept[c])}</span>`).join('') || '<span>위험 없음</span>'}</div>
@@ -59,8 +60,9 @@
           return `${h}<tr class="g${on ? ' on' : ''}" data-k="${esc(key)}" tabindex="0"><td class="l nm"><b><i class="ch">▸</i>${esc(g.g)}</b><small>${n0(g.n)}건</small></td><td><b>${n0(g.t)}t</b></td><td class="l">${stack(g, 'sm')}</td><td><b>${n0(g.risk)}t</b></td><td><span class="rk-pct ${p >= 30 ? 'b' : p >= 15 ? 'w' : 'g'}">${p}%</span></td><td class="w"><div class="rk-w">${esc(g.msg) || '<span style="color:var(--good);font-weight:600">위험 없음</span>'}</div></td></tr>${on ? `<tr class="rk-d"><td colspan="6">${detail(g)}</td></tr>` : ''}`; }).join('')}
         </tbody></table></div>
         <p class="rk-rule">납기 기준: 도금 내수 = 납기월 말 · 도금 수출 = 출항 전날 · 컬러 = 주문 납기 &nbsp;|&nbsp; ${ST.map(([k, nm]) => `<span class="rk-chip ${k === 'ok' ? '' : k}">${nm}</span>`).join('')}</p></section>
-      <section class="card"><h2>납기월별 <small>빨강 = 위험 물량</small></h2>
-        <div class="rk-m">${cols.map(([nm, v]) => `<div class="col"><div class="bx" style="height:${Math.max(8, v[0] / mxm * 150)}px"><i class="o" style="flex:${Math.max(0.01, v[0] - v[1])}"></i><i class="r" style="flex:${v[1]}"></i></div><b>${n0(v[0])}t</b><small>${nm}</small>${v[1] >= 0.5 ? `<em>위험 ${n0(v[1])}t · ${pct(v[1], v[0])}%</em>` : '<small>위험 없음</small>'}</div>`).join('')}</div></section>`;
+      <section class="card"><h2>납기월별 미결 <small>납기가 든 달 기준 · 지난 달 = 납기가 이미 지난 달</small></h2>
+        <div class="rk-m">${cols.map(([nm, v]) => `<div class="col"><div class="bx" style="height:${Math.max(8, v[0] / mxm * 150)}px"><i class="o" style="flex:${Math.max(0.01, v[0] - v[1] - v[2])}"></i><i class="s" style="flex:${v[2]}"></i><i class="r" style="flex:${v[1]}"></i></div><b>${n0(v[0])}t</b><small>${nm}</small>${v[1] >= 0.5 ? `<em>위험 ${n0(v[1])}t · ${pct(v[1], v[0])}%</em>` : '<small>위험 없음</small>'}${v[2] >= 0.5 ? `<small>종결 확인 ${n0(v[2])}t</small>` : ''}</div>`).join('')}</div>
+        <p class="rk-rule"><span class="rk-chip past">위험</span><span class="rk-chip stale">종결 확인</span><span class="rk-chip" style="background:color-mix(in srgb, var(--good) 22%, transparent)">납기 안에 가능 · 주의</span> &nbsp;12월 이후 위험이 작은 것은 생산 예정일이 정해진 범위(2~3주)까지만 판정하기 때문</p></section>`;
     $('rk-main').querySelectorAll('tr.g').forEach((tr) => { const f = () => { open = open === tr.dataset.k ? null : tr.dataset.k; draw(); const t = document.querySelector(`tr.g[data-k="${CSS.escape(open || '')}"]`); if (t) t.scrollIntoView({ block: 'nearest' }); };
       tr.onclick = f; tr.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f(); } }; });
   }

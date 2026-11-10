@@ -6,19 +6,21 @@
 <title>납기 위험</title>
 <meta name="description" content="미결 주문 전체의 납기 위험 — 전체, 판매그룹별, 원인별">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611100706">
+<link rel="stylesheet" href="ui/theme.css?v=2611100713">
 <style>
 .rk { --c-ok: var(--good); --c-warn: #c9a227; --c-will: #e07b39; --c-past: var(--bad); --c-stale: #9aa5b1; }
 .rk-top { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 28px; align-items: start; }
-.rk-big { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin: 2px 0 14px; }
-.rk-big b { font-size: 40px; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; } .rk-big b small { font-size: 20px; font-weight: 700; margin-left: 2px; }
-.rk-big span { color: var(--ink-2); font-size: 15px; }
+.rk-big { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin: 0 0 6px; }
+.rk-big b { font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums; } .rk-big b small { font-size: 16px; font-weight: 700; margin-left: 1px; } .rk-big b.bad { color: var(--bad); }
+.rk-big span { color: var(--ink-2); font-size: 14.5px; } .rk-big span.lb { font-weight: 700; color: var(--ink); font-size: 15px; } .rk-big span.sep { color: var(--line); margin: 0 8px; }
+.rk-def { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; margin: 0 0 14px; font-size: 13.5px; color: var(--ink-2); } .rk-def dt { font-weight: 700; color: var(--ink); } .rk-def dd { margin: 0; }
+.rk-leg p { margin: 4px 0 0; font-size: 13.5px; color: var(--ink-2); line-height: 1.45; word-break: keep-all; }
 .rk-st { display: flex; height: 34px; border-radius: 8px; overflow: hidden; background: var(--grid); }
 .rk-st i { display: block; height: 100%; min-width: 2px; }
 .rk-st i.ok { background: var(--c-ok); } .rk-st i.warn { background: var(--c-warn); } .rk-st i.will { background: var(--c-will); } .rk-st i.past { background: var(--c-past); } .rk-st i.stale { background: var(--c-stale); }
 .rk-leg { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
 .rk-leg div { border-left: 4px solid var(--grid); padding: 2px 0 2px 10px; } .rk-leg div.ok { border-color: var(--c-ok); } .rk-leg div.warn { border-color: var(--c-warn); } .rk-leg div.will { border-color: var(--c-will); } .rk-leg div.past { border-color: var(--c-past); } .rk-leg div.stale { border-color: var(--c-stale); }
-.rk-leg small { display: block; color: var(--ink-2); font-size: 13.5px; white-space: nowrap; } .rk-leg b { font-size: 19px; font-variant-numeric: tabular-nums; white-space: nowrap; } .rk-leg em { font-style: normal; color: var(--ink-2); font-size: 13.5px; margin-left: 5px; }
+.rk-leg small { display: block; color: var(--ink-2); font-size: 13.5px; white-space: nowrap; } .rk-leg b { font-size: 17px; font-variant-numeric: tabular-nums; white-space: nowrap; } .rk-leg em { font-style: normal; color: var(--ink-2); font-size: 13.5px; margin-left: 5px; }
 .rk-h3 { font-size: 15px; font-weight: 700; margin: 0 0 10px; } .rk-h3 small { font-weight: 400; color: var(--ink-2); font-size: 13.5px; margin-left: 6px; }
 .rk-cz { display: grid; grid-template-columns: max-content minmax(60px, 1fr) max-content max-content; gap: 9px 12px; align-items: center; font-size: 14.5px; }
 .rk-cz .bar { height: 14px; border-radius: 7px; background: var(--grid); overflow: hidden; } .rk-cz .bar i { display: block; height: 100%; border-radius: 7px; background: var(--brand-2); }
@@ -48,10 +50,10 @@ table.rk-s td.z { color: var(--ink-3); }
 .rk-more { margin-top: 14px; } .rk-more summary { cursor: pointer; font-weight: 600; font-size: 14.5px; }
 .rk-m { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(92px, 1fr); gap: 14px; align-items: end; overflow-x: auto; padding-top: 6px; }
 .rk-m .col { text-align: center; } .rk-m .bx { height: 150px; display: flex; flex-direction: column; justify-content: flex-end; border-radius: 6px 6px 0 0; overflow: hidden; }
-.rk-m .bx i { display: block; } .rk-m .bx i.r { background: var(--c-past); } .rk-m .bx i.o { background: var(--c-ok); opacity: .55; }
+.rk-m .bx i { display: block; } .rk-m .bx i.r { background: var(--c-past); } .rk-m .bx i.o { background: var(--c-ok); opacity: .55; } .rk-m .bx i.s { background: var(--c-stale); }
 .rk-m b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; margin-top: 6px; } .rk-m small { color: var(--ink-2); font-size: 13.5px; display: block; white-space: nowrap; } .rk-m em { font-style: normal; color: var(--bad); font-weight: 700; font-size: 13.5px; white-space: nowrap; }
 .rk-rule { color: var(--ink-2); font-size: 13.5px; margin: 10px 0 0; }
-@media (max-width: 900px) { .rk-top, .rk-dg { grid-template-columns: 1fr; } .rk-leg { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rk-big b { font-size: 32px; } main.rk table.rk-g td.w { min-width: 220px; } }
+@media (max-width: 900px) { .rk-top, .rk-dg { grid-template-columns: 1fr; } .rk-leg { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rk-big b { font-size: 22px; } main.rk table.rk-g td.w { min-width: 220px; } }
 </style>
 </head>
 <body>
@@ -65,8 +67,8 @@ table.rk-s td.z { color: var(--ink-3); }
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>원자료: MES 주문·소재 입고·생산 실적·작업예정, 판생 M/C 일정</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611100706"></script>
-<script src="engine/crypto.js?v=2611100706"></script>
-<script src="risk.js?v=2611100706"></script>
+<script src="ui/shell.js?v=2611100713"></script>
+<script src="engine/crypto.js?v=2611100713"></script>
+<script src="risk.js?v=2611100713"></script>
 </body>
 </html>
