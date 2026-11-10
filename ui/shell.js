@@ -443,6 +443,7 @@
       if (t.tHead) [...t.tHead.rows].forEach((r) => { if (r !== t.tHead.rows[t.tHead.rows.length - 1]) return; let ci = 0; [...r.cells].forEach((c) => { if (c.colSpan === 1 && cnt[ci]) { const m = Object.entries(cnt[ci]).sort((a, b) => b[1] - a[1])[0][0]; if (getComputedStyle(c).textAlign.replace('start', 'left') !== m) c.style.setProperty('text-align', m, 'important'); } ci += c.colSpan; }); });
       const box = t.parentElement; if (!box || t.closest('.ch, .ln-c')) return;
       const full = box.clientWidth; if (full < 500) return;
+      if (getComputedStyle(t).tableLayout === 'fixed') return;   // 칸 폭 고정 표(가동 캘린더 등)는 내용 폭이 의미 없음 — 넓은 화면에서 좁게 뭉치던 원인
       const old = t.style.width; t.style.setProperty('width', 'auto', 'important');
       const nat = t.getBoundingClientRect().width;
       if (nat > full * 0.62) { if (old) t.style.width = old; else t.style.removeProperty('width'); }
