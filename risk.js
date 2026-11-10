@@ -46,10 +46,10 @@
     $('rk-main').innerHTML = `
       <section class="card"><h2>전체 <small>미결 주문 현황(${sc === 'all' ? '도금 + 컬러' : sc === 'G' ? '도금' : '컬러'})</small></h2>
         <div class="rk-top"><div>
-          <div class="rk-big"><span class="lb">미결</span><b>${n0(T.t)}<small>t</small></b><span>${n0(T.n)}건</span><span class="sep">|</span><span class="lb">위험</span><b class="bad">${n0(risk)}<small>t</small></b><span>${pct(risk, T.t)}%</span></div>
-          <dl class="rk-def"><dt>미결</dt><dd>주문량 중 미생산 잔량</dd><dt>위험</dt><dd>지연 예상 + 납기 경과</dd></dl>
+          <div class="rk-big"><span class="lb">미결</span><b>${n0(T.t)}<small>t</small></b><span>${n0(T.n)}건</span><span class="sep">|</span><span class="lb">위험</span><b class="bad">${n0(risk)}<small>t</small></b><span>${pct(risk, T.t)}%</span>${T.sn ? `<span class="sep">|</span><span>종결 확인 ${n0(T.sn)}건 ${n0(T.stale)}t 별도</span>` : ''}</div>
+          <dl class="rk-def"><dt>미결</dt><dd>주문량 중 미생산 잔량(종결 확인 제외 · 주문진도와 같음)</dd><dt>위험</dt><dd>지연 예상 + 납기 경과</dd></dl>
           ${stack(T)}
-          <div class="rk-leg">${ST.map(([k, nm]) => `<div class="${k}"><small>${nm}</small><b>${n0(T[k])}</b><em>${pct(T[k], T.t)}%</em><p>${STT[k]}</p></div>`).join('')}</div>
+          <div class="rk-leg">${ST.map(([k, nm]) => `<div class="${k}"><small>${nm}</small><b>${n0(T[k])}</b><em>${k === 'stale' ? '별도' : pct(T[k], T.t) + '%'}</em><p>${STT[k]}</p></div>`).join('')}</div>
         </div><div>
           <p class="rk-h3">위험 물량 ${n0(risk)}t 원인별</p>
           <div class="rk-cz">${D.causeOrder.filter((c) => CZ[c] >= 0.5).sort((a, b) => CZ[b] - CZ[a]).map((c) => `<span class="n">${esc(D.causeNm[c])}</span><span class="bar"><i style="width:${Math.max(2, CZ[c] / mx * 100)}%"></i></span><b>${n0(CZ[c])}t</b><span class="d">${esc(D.dept[c])}</span>`).join('') || '<span>위험 없음</span>'}</div>

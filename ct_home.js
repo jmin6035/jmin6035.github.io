@@ -21,7 +21,7 @@
     const p1 = view === 'day' ? asOf : view === 'week' ? (addD(CT.wed(asOf), 6) > mEnd ? mEnd : addD(CT.wed(asOf), 6)) : mEnd;
     const pLbl = view === 'day' ? `${md(asOf)} ${wd(asOf)}` : view === 'week' ? `${md(p0)}(수)~${md(p1)}(화)` : `${+asOf.slice(5, 7)}월(${md(p0)}~${md(p1)})`;
     const until = p1, inP = (d) => d && d >= (p0 > asOf ? p0 : asOf) && d <= p1;   // 11/7 점검: 이미 지난 납기는 '기간 안'에서 빼고 아래 overdue 로
-    const open = M.all.filter((o) => !o.closed && !CT.isStale(o) && CT.inScope(o.pl));   // 종결 확인 필요(납기 60일+ 미종결) 제외(11/8)
+    const open = M.all.filter((o) => CT.isOpen(o) && !CT.isStale(o) && CT.inScope(o.pl));   // 종결 확인 필요(납기 60일+ 미종결) 제외(11/8)
     const inWin = (o) => inP(o.last || o.needProd);
     const risk = open.filter((o) => o.risk === '위험' && inWin(o)), warn = open.filter((o) => o.risk === '주의' && inWin(o)), nd = open.filter((o) => o.risk === '판정 불가');
     const overdue = open.filter((o) => (o.risk === '위험' || o.risk === '주의') && (o.last || o.needProd) && (o.last || o.needProd) < asOf);

@@ -70,7 +70,7 @@
       return `<tr data-dom="${g.pl}"><td class="nm"><i class="${st}"></i>${esc(g.name.replace('(컬러 소재)', ''))}</td>
         <td class="gbar"><div class="hb" title="실적 ${n0(P.actual)} · 남은 계획대로면 ${n0(proj)} · 월 계획 ${n0(P.month)}"><i style="width:${P.actual / w * 100}%;--i:${i}"></i><u style="left:${P.actual / w * 100}%;width:${Math.max(0, proj - P.actual) / w * 100}%"></u><em style="left:${P.month / w * 100}%"></em></div></td>
         <td><b>${n0(P.actual)}</b><span class="mu"> / ${n0(P.month)}</span></td><td class="hide-m">${n0(left)}</td><td class="hide-m">${rem ? n0(left / rem) : '-'}</td>
-        <td>${pc(proj, P.month)}%</td>
+        <td>${P.month ? pc(proj, P.month) + '%' : `<span class="mu" title="${esc(P.note || '')}">계획 0</span>`}</td>
         <td>${S ? `<b>${n0(S.actual)}</b><span class="mu"> / ${n0(S.month)}</span>` : '<span class="mu">-</span>'}</td><td class="hide-m">${S ? sg(S.actual - S.sched) : ''}</td></tr>`.replace('--i:' + i, '--i:' + (i++));
     };
     const tot = (pl, t, L0) => {                               // 공장 합계
@@ -87,7 +87,7 @@
     return `<h2>마케팅 그룹별 이번 달 <small>${g0 ? `도금 ~${md(g0.prod.asOf)}` : ''}${c0 ? ` · 컬러 ~${md(c0.prod.asOf)}` : ''}${s0 ? ` · 출하 실적 MES · 월차 ${esc(String(s0.asOf).slice(5, 10).replace('-', '/'))} 속보` : ''}</small><span class="unit">톤</span></h2>
       <div class="scroll"><table class="gt"><thead><tr><th class="l">그룹</th><th class="l">생산 진도 <span style="font-weight:400">(줄무늬 = 남은 계획, 선 = 월 계획)</span></th><th>실적 / 생산계획</th><th class="hide-m">잔여 생산량</th><th class="hide-m">하루 필요</th><th>월말 예상</th><th>출하 / 월차</th><th class="hide-m">출하 일정 대비</th></tr></thead>
       <tbody>${sec('G', '도금')}${sec('C', '컬러')}</tbody></table></div>
-      <p class="small" style="margin:6px 0 0">생산계획 = 그룹 월 계획(도금 = TF 월 생산량, 컬러 = 가동 현황 월간 계획 · 아래 표 필요 생산과 같은 값) · 잔여 생산량 = 생산계획 − 실적 · 월말 예상 = (실적 + 남은 날 재계획 생산) ÷ 생산계획 · 출하 일정 대비 = 출하 실적 − 판매생산속보 출하 일정누계(오늘까지 나갔어야 할 양). 도금 계에는 컬러 소재로 가는 자가재가 들어 있어 도금 + 컬러 생산을 더하면 이중 계상</p>`;
+      <p class="small" style="margin:6px 0 0">생산계획 = 그룹 월 계획(TF 월 생산량 = 판매 + 목표 − 기초, 기초 = 전달 말 MES 재고 — 한 달 고정 · 아래 표 필요 생산과 같은 값. 컬러건재 0 = 계획재 과재고 — 「계획 0」에 마우스를 올리면 계산식) · 잔여 생산량 = 생산계획 − 실적 · 월말 예상 = (실적 + 남은 날 재계획 생산) ÷ 생산계획 · 출하 일정 대비 = 출하 실적 − 판매생산속보 출하 일정누계(오늘까지 나갔어야 할 양). 도금 계에는 컬러 소재로 가는 자가재가 들어 있어 도금 + 컬러 생산을 더하면 이중 계상</p>`;
   }
 
   // ---------- 그룹별 판매계획 → 필요 생산 → 진도(10/22 사용자: 판매계획·필요생산량(월차)·진도율 그룹별, 도금·컬러) ----------
@@ -118,12 +118,12 @@
     const dTone = (v, t) => (v == null || !t ? '' : v < t * 0.7 ? 'neg' : v > t * 1.3 ? 'warn' : 'pos');
     const MPn = O.monthPlan || {}, gp = (g, i) => { const x = (MPn[M[i]] || {})[g]; return i >= mi && x && x.prodSrc ? x.prod : ((PL[g] || [])[i] || {}).prod || 0; };   // 11/10 점검: 이번 달부터 필요 생산 = 그룹 월 계획(관제판·칩과 같은 값)
     const cell = (g) => { const p = PL[g] || []; const a = act[g]; const need = gp(g, mi); const r = a != null && need > 0 ? a / need : null;
-      const o = { sales: p.map((x) => x.sales || 0), prod: p.map((x, i) => gp(g, i)), a, r, now: stNow(g), end: stEnd(g) }; o.tgt = tgtD(g, o); return o; };
+      const o = { sales: p.map((x) => x.sales || 0), prod: p.map((x, i) => gp(g, i)), a, r, now: stNow(g), end: stEnd(g), nt: ((MPn[M[mi]] || {})[g] || {}).prodNote }; o.tgt = tgtD(g, o); return o; };
     const row = (g, cls) => { const c = typeof g === 'string' ? cell(g) : g; const nm = typeof g === 'string' ? GN[g] : g.nm;
       const q = (k) => c[k].reduce((x, y) => x + y, 0);
       return `<tr class="${cls || ''}"><td class="l">${nm}</td>`
         + M.map((m, i) => `<td class="${i === mi ? 'cm' : ''}">${n0(c.sales[i])}</td><td class="${i === mi ? 'cm' : ''}"><b>${n0(c.prod[i])}</b></td>`
-          + (i === mi ? `<td class="cm">${c.a != null ? n0(c.a) : '-'}</td><td class="cm"><b class="${tone(c.r)}">${c.r != null ? Math.round(c.r * 100) + '%' : '-'}</b></td>`
+          + (i === mi ? `<td class="cm">${c.a != null ? n0(c.a) : '-'}</td><td class="cm"><b class="${tone(c.r)}">${c.r != null ? Math.round(c.r * 100) + '%' : c.nt ? `<span class="mu" title="${esc(c.nt)}">계획 0</span>` : '-'}</b></td>`
             + `<td class="cm sk">${c.now != null ? n0(c.now) : '-'}</td><td class="cm">${c.end != null ? n0(c.end) : '-'}</td><td class="cm">${(() => { const v = sdays(c); return v == null ? '-' : `<b class="${dTone(v, c.tgt)}">${Math.round(v)}일</b>${c.tgt ? ` <small class="mu">/ ${Math.round(c.tgt)}</small>` : ''}`; })()}</td>` : '')).join('')
         + `<td class="q">${n0(q('sales'))}</td><td class="q"><b>${n0(q('prod'))}</b></td></tr>`; };
     const sec = (pl, t, gs) => { if (!UI.inScope(pl)) return ''; const C = gs.map(cell);

@@ -281,7 +281,7 @@
       const seg = [[a, 'a'], [b, 'b']].filter(([v]) => v > Math.max(top, pl) * 0.004).map(([v, k]) => `<i class="${k}" style="flex:${v} 0 0"></i>`).join('');
       const pc = c.pc !== undefined ? c.pc : (pl ? Math.round(top / pl * 100) : null);
       return `<div class="vz-c" title="${esc(c.tip || '')}"><div class="vz-st" style="height:${P(top)}%">${seg}</div>${pl ? `<em class="vz-pl" style="bottom:${P(pl)}%"></em>` : ''}`
-        + `<div class="vz-cap${c.neg || c.lag ? ' neg' : ''}" style="bottom:${P(Math.max(top, pl))}%">${pc == null ? '' : pc + '%'}</div></div>`; };
+        + `<div class="vz-cap${c.neg || c.lag ? ' neg' : ''}" style="bottom:${P(Math.max(top, pl))}%">${pc == null ? esc(c.cap || '') : pc + '%'}</div></div>`; };
     const tbl = labels.map((lb, i) => `<div class="vz-r"><span class="vz-rl">${lb}</span><div class="vz-rv">${cats.map((c) => { const v = (c.vals || [])[i]; return `<span class="${i === labels.length - 1 && c.neg ? 'neg' : ''}${i === 0 ? ' b' : ''}">${v == null ? '-' : n0(v)}</span>`; }).join('')}</div></div>`).join('');
     return `<div class="vz-col" style="--vh:${vh}px"><div class="vz-y">${y}</div><div class="vz-plot">${gl}${cats.map(col).join('')}</div>`
       + `<div class="vz-x">${cats.map((c) => `<div><b>${esc(c.name)}</b></div>`).join('')}</div></div><div class="vz-tbl">${tbl}</div>`;
@@ -812,7 +812,8 @@
       return `<div class="pgv" data-dom="${pl}"><h3>${pl === 'G' ? '도금' : '컬러'} ${W(k)}</h3>` + colChart(ks.map((g) => { const [a, b, p] = val(g, k);
         return { name: GNM[g].replace(/^(도금|컬러)(?=수출|국내|건재)/, '').replace('자동차강판', '자동차'), a, b, plan: p, pc: kind === 'fut' ? null : (p ? Math.round(a / p * 100) : null), neg: kind === 'past' && a < p - 0.5, lag: !!lagG[`${g}|${k}`],
           vals: kind === 'past' ? [a, p, a - p] : kind === 'cur' ? [a, p, b] : [b, p],
-          tip: `${GNM[g]} ${+m.slice(5)}월 ${W(k)}: 실적 ${n0(a)}t · ${kind === 'cur' ? `잔여 계획 ${n0(b)}t · ` : ''}월 계획 ${n0(p)}t` }; }), 110, LB) + '</div>'; };
+          cap: k === 'prod' && !p && a + b > 0 ? '계획 0' : '',
+          tip: `${GNM[g]} ${+m.slice(5)}월 ${W(k)}: 실적 ${n0(a)}t · ${kind === 'cur' ? `잔여 계획 ${n0(b)}t · ` : ''}월 계획 ${n0(p)}t${k === 'prod' && !p ? ` · ${(GR[g] && GR[g].prod && GR[g].prod.note) || (MPn[g] || {}).prodNote || ''}` : ''}` }; }), 110, LB) + '</div>'; };
     const sub = kind === 'past' ? `${md(end)} 월말 기준` : kind === 'cur' ? `${md(today)} 현재` : '실적 없음 · 계획만';
     const L = kind === 'past' ? [['a', '실적'], ['p', '월 계획']] : kind === 'cur' ? [['a', '실적'], ['b', '잔여 계획'], ['p', '월 계획']] : [['b', '계획'], ['p', '월 계획']];
     $('s-prog').innerHTML = `<h2>${+m.slice(5)}월 ${kind === 'past' ? '결산' : kind === 'cur' ? '진행' : '계획'} <small>${sub}</small><span class="unit">톤</span></h2>`

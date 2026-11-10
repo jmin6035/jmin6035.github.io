@@ -185,7 +185,7 @@
   const unplan = (o) => stg(o) === 'plan' && (o.steps.find((x) => /편성/.test(x.k)) || {}).st === 'todo';
   const LN = { past: '납기 경과', will: '지연 예상', un: '미편성' };
   const chipOf = (o) => { if (CT.isStale(o)) return '<span class="rk-chip stale">종결 확인</span>'; const l = lateOf(o) || (unplan(o) ? 'un' : ''); return l ? `<span class="rk-chip ${l}">${LN[l]}</span>` : ''; };
-  const trackAll = () => L.filter((o) => !o.closed && !CT.isStale(o));
+  const trackAll = () => L.filter((o) => CT.isOpen(o) && !CT.isStale(o));   // 미결 정의 = ui/ct.js CT.isOpen(납기 위험과 같은 집합)
   function agg(X) {
     const a = { t: 0, n: 0, will: 0, past: 0, un: 0, st: Object.fromEntries(SG.map(([k]) => [k, { t: 0, n: 0, will: 0, past: 0, un: 0, na: 0 }])) };
     for (const o of X) { const k = stg(o), s = a.st[k], t = tonT(o), l = lateOf(o), u = unplan(o);
@@ -276,7 +276,7 @@
   /* ---------- #cal 납기 캘린더 ---------- */
   const monday = (s) => { const d = new Date(s + 'T00:00:00Z'), w = (d.getUTCDay() + 6) % 7; return CT.addD(s, -w); };
   function calDay(d) {
-    const act = L.filter((o) => !o.closed && !CT.isStale(o));
+    const act = L.filter((o) => CT.isOpen(o) && !CT.isStale(o));
     const P = act.filter((o) => o.needProd === d && (o.ful === '생산 전' || o.ful === '생산 중'));
     const S = act.filter((o) => o.due === d);
     const rk = [...new Set(P.concat(S).filter((o) => o.risk === '위험').map((o) => o.id))].length;

@@ -192,7 +192,12 @@
     return { asOf, all, G, C, ccLines: cc ? cc.lines : [], ccMissing: cc ? cc.missing : ['1CCL', '2CCL', '3CCL', '4CCL'], cgAt: cg && cg.asOf, ccAt: cc && cc.asOf };
   };
  /* 종결 확인 필요(11/8 사용자): 납기 60일 넘게 지난 미종결 주문 — 실제 위험보다 MES 종결 누락. 잔량·지연 집계에서 빼고 따로 목록 */
-  CT.isStale = (o) => !!(o && o.stale && !o.closed);
+  /* 미결 정의(11/10 — 납기 위험 tools/risk_build.py 와 같은 계약·행번 집합): 종결(출하 완료·자가재 생산 완료) 아님 + (생산 끝남 = 출하 대기 | 생산 잔량 0.5t 이상).
+     생산 잔량 0.5t 미만 끝자락(컬러 소량 잔량·주문량 0 행)은 미결에서 뺌. 건 = 계약번호-행번 */
+  CT.MIN_REM = 0.5;
+  CT.pDone = (o) => o.ful !== '생산 전' && o.ful !== '생산 중';
+  CT.isOpen = (o) => !!o && !o.closed && (CT.pDone(o) || (+o.remT || 0) >= CT.MIN_REM);
+  CT.isStale = (o) => !!(o && o.stale && CT.isOpen(o));
   CT.riskSort = (a, b) => (CT.RISK.indexOf(a.risk) - CT.RISK.indexOf(b.risk)) || ((a.left == null ? 999 : a.left) - (b.left == null ? 999 : b.left)) || (b.remT - a.remT);
 
   /* ---------- 화면 부품 ---------- */

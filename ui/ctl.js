@@ -23,7 +23,7 @@
     const rank = { bad: 0, warn: 1, ok: 2, na: 3 }, worst = [], vals = [];
     const row = (g) => {
       const P = g.prod || {}, fin = (P.actual || 0) + (P.after || 0), pp = P.month > 0 ? fin / P.month : null;
-      const prod = pp == null ? ['na', '–', ''] : [UI.rate(pp * 100), `${Math.round(pp * 100)}%`, `월말 ${n0(fin)} / ${n0(P.month)}`];
+      const prod = pp == null ? (P.note ? ['na', '계획 0', `실적 ${n0(P.actual || 0)}t`] : ['na', '–', '']) : [UI.rate(pp * 100), `${Math.round(pp * 100)}%`, `월말 ${n0(fin)} / ${n0(P.month)}`];
       const S = g.ship, sp = S && S.month > 0 ? S.actual / Math.max(1, S.sched) : null;
       const ship = !S ? ['na', '–', ''] : [S.sched < 1 ? 'ok' : UI.rate(sp * 100), `${n0(S.actual)}t`, `계획 누계 ${n0(S.sched)} · 월 ${n0(S.month)}`];
       const st = cur(g.key), d = UI.ctlTfd(g.key), dly = S && S.month ? S.month / dim((O.today || O.asOf).slice(0, 7)) : 0, cov = st != null && dly ? st / dly : null;
