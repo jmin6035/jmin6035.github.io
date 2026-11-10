@@ -14,7 +14,7 @@
     const who = $('lt-who').value.trim(); if (!who) { $('lt-res').textContent = '이름을 적어 주세요'; $('lt-who').focus(); return; }
     if (C.some((i) => !(+i.value >= 0 && +i.value <= 365))) { $('lt-res').textContent = '0~365일 사이로 적어 주세요'; return; }
     const rules = { safety: {}, types: {} };
-    C.forEach((i) => { const k = i.dataset.k, v = Math.round(+i.value); if (k === 'selfLead' || k === 'newOrderLT') rules[k] = v; else if (k.startsWith('safety.')) rules.safety[k.slice(7)] = v; else rules.types[k.slice(2)] = v; });
+    C.forEach((i) => { const k = i.dataset.k, v = Math.round(+i.value); if (k === 'selfLead' || k === 'selfLeadMin' || k === 'newOrderLT') rules[k] = v; else if (k.startsWith('safety.')) rules.safety[k.slice(7)] = v; else rules.types[k.slice(2)] = v; });
     if (!confirm(`리드타임 ${C.length}개를 바꿉니다. 다음 갱신(2시간 안)부터 발주·소재·계획 화면이 새 값으로 다시 계산됩니다.`)) return;
     $('lt-apply').disabled = true; $('lt-res').textContent = '보내는 중…';
     try {
