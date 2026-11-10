@@ -16,21 +16,23 @@
   /* 11/4 2차 진단 3장: 메뉴 탭 = 업무 질문(화면 안에 탭을 또 두지 않음 — '#이름'으로 같은 화면의 하위 화면). 4번째 칸 'h' = 탭 막대에는 안 보이는 전문 화면(메뉴에는 속함) */
   /* 11/10 메뉴 정리(보이는 탭 33 → 24): 칸 = [화면 id, 주소, 이름, 표시]. 표시 't' = 화면 위 탭 막대에만(왼쪽 메뉴에는 묶음 이름만).
      메뉴에서 뺀 화면은 지우지 않고 '관리'에 둠 — 모든 화면이 메뉴로 닿음. 화면 제목(h1) = 메뉴 이름 */
+  /* 11/10 사용자 '관리 탭에 왜 전부 몰아놨냐 — 각 탭 성격에 맞게': 관리에 모았던 화면을 성격에 맞는 묶음으로 되돌림.
+     표시 'd' = 세부 화면 — 화면 위 탭에는 늘 보이고, 왼쪽 메뉴에는 그 묶음에 들어가 있을 때만 펼침(메뉴가 길어지지 않게) */
   const MENU = [
     ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '수주 진도'], ['suju', 'suju.html#prod', '생산'], ['suju', 'suju.html#mat', '소재'], ['suju', 'suju.html#stock', '재고'], ['suju', 'suju.html#close', '월 실적 마감']]],
-    ['ct1', '통합 관제', 'home', [['home', 'index.html#day', '금일 현황', 't'], ['home', 'index.html#week', '7일 전망', 't'], ['home', 'index.html#month', '월간 전망', 't']]],
-    ['ct2', '주문·납기', 'cgorder', [['orders', 'ct_orders.html#risk', '납기 위험'], ['orders', 'ct_orders.html#track', '주문진도'], ['orders', 'ct_orders.html#cal', '납기 캘린더']]],
-    ['ct3', '생산계획', 'supply', [['supply', 'supply.html', '월간 가동'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더'], ['weekseq', 'week_seq.html', '주간 작업순서'], ['plan7', 'ct_plan.html#cmp', '계획 변경']]],
-    ['ct4', '소재·재고', 'matcal', [['matcal', 'matcal.html', '소재 관제'], ['procure', 'procure.html', '발주'], ['planstock', 'planstock.html', '계획재'], ['integrated', 'integrated.html', '재고 전망']]],
-    ['ct5', '실적·보고', 'platact', [['platact', 'plating_actual.html', '도금 실적'], ['coloract', 'color_actual.html', '컬러 실적'], ['prodsum', 'ct_prod.html#ship', '출하'], ['perf', 'ct_perf.html#ops', '계획 대비 실적'], ['report', 'report.html', '주간 보고']]],
+    ['ct1', '통합 관제', 'home', [['home', 'index.html#day', '금일 현황', 't'], ['home', 'index.html#week', '7일 전망', 't'], ['home', 'index.html#month', '월간 전망', 't'],
+      ['board', 'board.html', '판매그룹 관제판', 'd'], ['issues', 'ct_issue.html#now', '이슈 현황', 'd'], ['issues', 'ct_issue.html#req', '조정 요청', 'd']]],
+    ['ct2', '주문·납기', 'cgorder', [['orders', 'ct_orders.html#risk', '납기 위험'], ['orders', 'ct_orders.html#track', '주문진도'], ['orders', 'ct_orders.html#cal', '납기 캘린더'],
+      ['cgorder', 'cg_order.html', '도금 주문진도', 'd'], ['ccorder', 'cc_order.html', '컬러 주문·납기', 'd']]],
+    ['ct3', '생산계획', 'supply', [['supply', 'supply.html', '월간 가동'], ['cgcal', 'cg_calendar.html', '도금 생산 캘린더'], ['cccal', 'cc_calendar.html', '컬러 생산 캘린더'], ['weekseq', 'week_seq.html', '주간 작업순서'], ['plan7', 'ct_plan.html#cmp', '계획 변경'],
+      ['plan7', 'ct_plan.html#week', '주간 생산 일정', 'd'], ['plan7', 'ct_plan.html#load', '라인 부하', 'd'], ['cgwo', 'cg_wo.html', '도금 작업지시 순서', 'd'], ['wo', 'wo.html', '컬러 작업지시 순서', 'd']]],
+    ['ct4', '소재·재고', 'matcal', [['matcal', 'matcal.html', '소재 관제'], ['procure', 'procure.html', '발주'], ['planstock', 'planstock.html', '계획재'], ['integrated', 'integrated.html', '재고 전망'], ['leadtime', 'leadtime.html', '리드타임 기준'],
+      ['matshort', 'ct_mat.html', '소재 부족·조치', 'd'], ['prodsum', 'ct_prod.html#stock', '제품 재고', 'd']]],
+    ['ct5', '실적·보고', 'platact', [['platact', 'plating_actual.html', '도금 실적'], ['coloract', 'color_actual.html', '컬러 실적'], ['prodsum', 'ct_prod.html#ship', '출하'], ['perf', 'ct_perf.html#ops', '계획 대비 실적'], ['report', 'report.html', '주간 보고'],
+      ['status', 'status.html', '도금 가동 현황', 'd'], ['colorstat', 'color_status.html', '컬러 가동 현황', 'd'], ['prodsum', 'ct_prod.html#perf', '생산 실적', 'd'], ['prodsum', 'ct_prod.html#run', '가동·휴지', 'd'], ['perf', 'ct_perf.html#cause', '미달 원인', 'd']]],
+    ['ct6', '계획 기준', 'rules', [['rules', 'rules.html', '계획 규칙'], ['rolling', 'rolling.html', '도금 계획 계산'], ['colorcalc', 'color_calc.html', '컬러 계획 계산'], ['analysis', 'analysis.html', '도금 조건 분석'], ['coloranal', 'color_analysis.html', '컬러 조건 분석']]],
   ];
-  const ADMIN = [['rolling', 'rolling.html', '도금 계획 계산'], ['colorcalc', 'color_calc.html', '컬러 계획 계산'], ['rules', 'rules.html', '계획 규칙'], ['health', 'health.html', '자료 상태'], ['docs', 'docs.html', '문서'],
-    ['analysis', 'analysis.html', '도금 조건 분석'], ['coloranal', 'color_analysis.html', '컬러 조건 분석'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['decisions', 'decisions.html', '결정 기록'],
-    ['board', 'board.html', '판매그룹 관제판'], ['issues', 'ct_issue.html#now', '이슈 현황'], ['issues', 'ct_issue.html#req', '조정 요청'],
-    ['plan7', 'ct_plan.html#week', '주간 생산 일정'], ['plan7', 'ct_plan.html#load', '라인 부하'], ['matshort', 'ct_mat.html', '소재 부족·조치'],
-    ['prodsum', 'ct_prod.html#perf', '생산 실적'], ['prodsum', 'ct_prod.html#run', '가동·휴지'], ['prodsum', 'ct_prod.html#stock', '제품 재고'], ['perf', 'ct_perf.html#cause', '미달 원인'],
-    ['status', 'status.html', '도금 가동 현황'], ['colorstat', 'color_status.html', '컬러 가동 현황'], ['cgorder', 'cg_order.html', '도금 주문진도'], ['ccorder', 'cc_order.html', '컬러 주문·납기'],
-    ['cgwo', 'cg_wo.html', '도금 작업지시 순서'], ['wo', 'wo.html', '컬러 작업지시 순서']];
+  const ADMIN = [['health', 'health.html', '자료 상태'], ['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['docs', 'docs.html', '문서']];
   const ADMN = '관리';
   const ALL = [...MENU.flatMap((m) => m[3]), ...ADMIN];
   const DEFV = { home: 'day', suju: 'dash', orders: 'status', plan7: 'week', prodsum: 'perf', perf: 'ops', issues: 'now' };   // 주소에 #이 없을 때 화면이 여는 하위 화면
@@ -137,7 +139,7 @@
     const link = (x) => `<a href="${x[1]}" data-tab="${tabKey(x)}"${only(x)}>${icon(x[0])}<span>${x[2]}</span></a>`;
     const adm = SHOWF ? [] : ADMIN, aOpen = inAdm || open0.includes(ADMN);
     // 메뉴 밑 세부 탭(11/4 사용자 '탭 밑에 세부탭이 뜨게') — 화면에 들어가지 않고 바로 이동
-    const subs = (m) => { const L = m[3].filter((t) => t[3] !== 't' && okT(t));
+    const subs = (m) => { const L = m[3].filter((t) => t[3] !== 't' && (t[3] !== 'd' || m === curM) && okT(t));
       return L.length > 1 ? `<div class="nv-sub">${L.map((t) => `<a href="${t[1]}" data-tab="${tabKey(t)}"${only(t)}>${esc(t[2])}</a>`).join('')}</div>` : ''; };
     const nav = MENU.map((m, i) => (mOK(m) ? mlink(m, i) + subs(m) : '')).join('')
       + (adm.length ? `<div class="nv-sec${aOpen ? ' open' : ''}" data-g="${ADMN}"><button type="button" class="nv-grp nv-tg" aria-expanded="${aOpen}"><small class="nv-no">${String(MENU.length + 1).padStart(2, '0')}</small>${ADMN}<span class="nv-n">${adm.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${adm.map(link).join('')}</div></div>` : '');
