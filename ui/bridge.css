@@ -34,4 +34,4 @@ footer.foot, .foot { font-size: 13.5px; }
 #d-unlock .row { justify-content: center; }
 #d-unlock label.check { flex-direction: row; justify-content: center; margin-top: 10px; color: var(--ink-2); }
 #d-unlock label.check input { width: 16px; height: 16px; }
-body.dash .wrap { max-width: 1800px; }
+body.dash .wrap { max-width: none; }   /* 11/12 전 화면 폭 통일 */

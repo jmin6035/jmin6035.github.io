@@ -238,7 +238,7 @@ table.t input[type=number] { width: 88px; text-align: right; }
 
 /* ---------- 가독성(40·50대 기준): 넓은 화면 · 큰 글씨 · 큰 칸 ---------- */
 html body { font-size: 16px; }
-.wrap { max-width: 1720px; padding: 0 28px; }
+.wrap { max-width: none; padding: 0 28px; }   /* 11/12 사용자 '너비를 다르게 쓰는 이유': 1720px 상한 화면과 상한 없는 화면이 섞여 넓은 화면·축소 배율에서 폭이 달랐음 → 전 화면 상한 없음으로 통일 */
 @media (max-width: 640px) { .wrap { padding: 0 14px; } }
 .small, .hint { font-size: 14px; }
 .lead { font-size: 17px; }
