@@ -337,30 +337,32 @@
 
   /* 월 수주 누적 — 생산주 누적 막대. 막대 높이 = 그 주 끝까지 편성 누계(있어야 할 주문), 진한 = 확정 누계, 연한 = 소재 매치 전 등록, 빨강 빗금 = 마감된 주인데 모자람, 회색 = 아직 마감 전 */
   function cumChart(W, wv, sales) {
-    const n = W.length, Wd = CW(innerWidth > 1280 ? 0.58 : 1), H = 300, L = 60, R = 16, Tp = 30, Bt = 58;
+    /* 11/12 사용자 '그래프 모양이 이게 최선이냐' — 겹친 틀·빗금 대신 생산주마다 막대 두 개를 나란히: 회색 = 있어야 할 주문(편성 누계) · 파랑 = 확정 누계(위 연한 부분 = 소재 매치 전 등록)
+       확정이 편성보다 모자라면 파랑 숫자 빨강 · 위 % = 확정 ÷ 편성 누계 · 가로 점선 = 월 판매계획 */
+    const n = W.length, Wd = CW(innerWidth > 1280 ? 0.58 : 1), H = 320, L = 64, R = 16, Tp = 62, Bt = 56;
     let cp = 0, cm = 0, co = 0;
     const P = W.map((w) => { cp += wv(w, 'plan'); cm += wv(w, 'mat'); co += Math.max(wv(w, 'ord'), wv(w, 'mat')); return { w, cp, cm, co }; });
-    const ymax = Math.max(sales || 0, ...P.map((p) => Math.max(p.cp, p.co)), 1) * 1.1, y = (v) => Tp + (1 - v / ymax) * (H - Tp - Bt), h = (v) => H - Bt - y(v);
-    const bw = (Wd - L - R) / n, x0 = (i) => L + i * bw + bw * 0.18, wd = bw * 0.64;
-    let b = `<defs><pattern id="sjh" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3.5" height="7" fill="#e5a3a3"/><rect x="3.5" width="3.5" height="7" fill="#f8d4d4"/></pattern></defs>`;
-    b += [0, 0.5, 1].map((k) => { const v = ymax / 1.1 * k; return `<line x1="${L}" x2="${Wd - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid, var(--line))"/>` + tx(L - 8, y(v) + 5, n0(v), { a: 'end' }); }).join('');
-    P.forEach((p, i) => { const { w } = p, closed = w.state === '마감', x = x0(i), cx = x + wd / 2;
-      const gap = Math.max(0, p.cp - p.co), mt = Math.min(p.cm, Math.max(p.cp, p.cm)), reg = Math.max(0, p.co - p.cm);
-      b += `<rect x="${x}" y="${y(p.cp)}" width="${wd}" height="${h(p.cp)}" fill="var(--sub)" stroke="var(--ink-2)" stroke-dasharray="${closed ? '0' : '4 3'}" rx="3"><title>${md(w.wFrom)}~ 편성 누계 ${n0(p.cp)}t</title></rect>`;
-      b += `<rect x="${x}" y="${y(mt)}" width="${wd}" height="${h(mt)}" fill="${w.past ? '#5b7fb8' : '#2457c5'}" rx="3"><title>확정 누계 ${n0(p.cm)}t</title></rect>`;
-      if (reg >= 1) b += `<rect x="${x}" y="${y(p.cm + reg)}" width="${wd}" height="${h(p.cm + reg) - h(p.cm)}" fill="#a9c1ea"><title>소재 매치 전 등록 ${n0(reg)}t</title></rect>`;
-      if (gap >= 1 && closed) b += `<rect x="${x}" y="${y(p.cp)}" width="${wd}" height="${h(p.cp) - h(p.co)}" fill="url(#sjh)" stroke="var(--bad)" stroke-width="1.5"><title>부족 ${n0(p.cp - p.cm)}t(확정 기준)</title></rect>`;
-      const r = p.cp ? p.cm / p.cp * 100 : null;
-      b += tx(cx, y(Math.max(p.cp, p.co)) - 8, `${n0(p.cm)}`, { w: 800, c: 'var(--ink)', s: 15 });
-      if (r != null) b += tx(cx, y(Math.max(p.cp, p.co)) - 26 < Tp - 10 ? y(mt) + 18 : y(Math.max(p.cp, p.co)) - 26, `${Math.round(r)}%`, { w: 700, c: closed ? (r >= 100 ? 'var(--good)' : r >= 90 ? 'var(--warn)' : 'var(--bad)') : 'var(--ink-2)' });
+    const ymax = Math.max(sales || 0, ...P.map((p) => Math.max(p.cp, p.co)), 1) * 1.12, y = (v) => Tp + (1 - v / ymax) * (H - Tp - Bt), h = (v) => Math.max(0, H - Bt - y(v));
+    const bw = (Wd - L - R) / n, gw = Math.min(46, bw * 0.3), gap = 6;
+    let b = [0, 0.5, 1].map((k) => { const v = ymax / 1.12 * k; return `<line x1="${L}" x2="${Wd - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/>` + tx(L - 8, y(v) + 5, n0(v), { a: 'end' }); }).join('');
+    if (sales) b += `<line x1="${L}" x2="${Wd - R}" y1="${y(sales)}" y2="${y(sales)}" stroke="var(--ink-2)" stroke-dasharray="6 4"/>` + tx(L + 6, y(sales) - 7, `월 판매계획 ${n0(sales)}t`, { a: 'start', w: 700, c: 'var(--ink-2)' });
+    P.forEach((p, i) => { const { w } = p, cx = L + i * bw + bw / 2, x1 = cx - gw - gap / 2, x2 = cx + gap / 2;
+      const mt = p.cm, reg = Math.max(0, p.co - p.cm), r = p.cp ? p.cm / p.cp * 100 : null, short = p.cp - p.cm >= 1, past = w.past;
+      b += `<rect x="${x1}" y="${y(p.cp)}" width="${gw}" height="${h(p.cp)}" fill="${past ? '#d5dbe4' : '#c3cad5'}" rx="3"><title>${md(w.wFrom)}~ 있어야 할 주문(편성 누계) ${n0(p.cp)}t</title></rect>`;
+      b += tx(x1 + gw / 2, y(p.cp) - 6, n0(p.cp), { c: 'var(--ink-2)', s: 13 });
+      b += `<rect x="${x2}" y="${y(mt)}" width="${gw}" height="${h(mt)}" fill="${past ? '#6f8fc4' : '#2457c5'}" rx="3"><title>확정 누계(소재 매치) ${n0(p.cm)}t</title></rect>`;
+      if (reg >= 1) b += `<rect x="${x2}" y="${y(mt + reg)}" width="${gw}" height="${h(mt + reg) - h(mt)}" fill="#b9cdee" rx="3"><title>소재 매치 전 등록 ${n0(reg)}t</title></rect>`;
+      const top = Math.min(y(p.cp), y(mt + reg));
+      b += tx(x2 + gw / 2, y(mt + reg) - 6, n0(p.cm), { w: 800, c: short && !past ? 'var(--bad)' : 'var(--ink)', s: 14 });
+      if (r != null) b += tx(cx, top - 24, `${Math.round(r)}%`, { w: 800, s: 14, c: Math.round(r) >= 100 ? 'var(--good)' : r >= 90 ? 'var(--warn)' : 'var(--bad)' });
       b += tx(cx, H - Bt + 20, `${md(w.wFrom)}~${md(CT.addD(w.wFrom, 6))}`, { w: 700, c: 'var(--ink)' });
-      const lab = w.past ? '지난 주(실적)' : closed ? `확정 · 마감 ${md(w.deadline)}` : w.state === '진행 중' ? `수주 중 · 마감 ${md(w.deadline)}` : `마감 전 · ${md(w.deadline)}`;
-      b += tx(cx, H - Bt + 40, lab, { c: closed || w.past ? 'var(--ink-2)' : '#b45309', w: w.state === '진행 중' ? 700 : 500 });
+      const lab = past ? '지난 주(실적)' : w.state === '마감' ? `확정 · 마감 ${md(w.deadline)}` : w.state === '진행 중' ? `수주 중 · 마감 ${md(w.deadline)}` : `마감 전 · ${md(w.deadline)}`;
+      b += tx(cx, H - Bt + 40, lab, { c: w.state === '진행 중' ? '#b45309' : 'var(--ink-2)', w: w.state === '진행 중' ? 700 : 500 });
     });
-    if (sales) b += `<line x1="${L}" x2="${Wd - R}" y1="${y(sales)}" y2="${y(sales)}" stroke="var(--ink-2)" stroke-dasharray="6 4"/>` + tx(L + 6, y(sales) - 6, `월 판매계획 ${n0(sales)}`, { a: 'start', w: 700 });
-    const lg = `<div class="sj-clg"><span><i style="background:var(--sub);border-color:var(--ink-2)"></i>편성 누계(있어야 할 주문)</span><span><i style="background:#2457c5;border-color:#2457c5"></i>확정 누계(숫자)</span><span><i style="background:#a9c1ea"></i>소재 매치 전 등록</span><span><i class="gsh"></i>마감됐는데 부족</span><span>% = 확정 ÷ 편성 누계</span></div>`;
+    const lg = `<div class="sj-clg"><span><i style="background:#c3cad5;border-color:#c3cad5"></i>있어야 할 주문(편성 누계)</span><span><i style="background:#2457c5;border-color:#2457c5"></i>확정 누계(소재 매치)</span><span><i style="background:#b9cdee;border-color:#b9cdee"></i>소재 매치 전 등록</span><span>% = 확정 ÷ 있어야 할 주문 · 빨간 숫자 = 모자람</span></div>`;
     return lg + `<div class="sj-cum">${SV(Wd, H, b, '월 수주 누적')}</div>`;
   }
+
   /* ---------- ③ 생산 ---------- */
   const LSPEC = { '1CCL': 'PVS 등', '2CCL': '건재', '3CCL': 'STS·POR·PLY', '4CCL': 'PPG·PPH·Al', '1CGL': 'AZ·AL', '2CGL': 'AL·MAC' };
   const GCOL = { 건재수출: '#2457c5', 가전수출: '#0e8a8a', 가전내수: '#7c3aed', 수요개발: '#b45309', 주문재: '#be185d', 계획재: '#64748b', 도금수출: '#1e7a46', 도금국내: '#c2410c', 자동차: '#0369a1', 자가재: '#a16207' };
