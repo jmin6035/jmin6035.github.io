@@ -8,9 +8,11 @@
   let DATA = null, ST = {};
   const WD = '일월화수목금토', wd = (d) => WD[new Date(d + 'T00:00:00Z').getUTCDay()];
 
-  function render(D) {
-    DATA = D;
-    const view = CT.view('day', Object.keys(PER)), per = PER[view];
+  /* 11/12 사용자 '금일·7일·월간 합치라고 녹음에 있다': 기간 단추로 바꾸는 대신 한 화면 — 기간마다 다른 숫자(납기 위험·생산 진도·출하 미달)는 카드 안에 금일·7일·월간 나란히,
+     나머지(그룹별 납기 위험·라인 진도·생산 계획)는 이번 달 기준 + 오늘·내일 생산 계약 접기 */
+  function render(D, vOverride, dry) {
+    if (!dry) DATA = D;
+    const view = vOverride || 'month', per = PER[view];
     const P = D.portal || {}, L = (D['latest.plan'] || {}).result || {}, LP = (D.plan_prev || {}).result || {}, W = D.integrated || {}, MO = D.mat_order || {};
     const M = CT.orders(D), asOf = M.asOf;
     // 기간(11/5 사용자): 금일 = 오늘 · 7일 = 수요일 시작 한 주 · 월간 = 이번 달(월 단위로 끊음)
@@ -329,6 +331,12 @@
     const gOpen = open.filter((o) => o.pl === 'G').length, cOpen = open.filter((o) => o.pl === 'C').length;
     const cnt = [CT.inScope('G') ? `도금 진행 ${gOpen}건` : '', CT.inScope('C') ? `컬러 진행 ${cOpen}건` : '', `출하 실적 없음 ${noShip.length}건`].filter(Boolean).join(' · ');
 
+    if (dry) return { K, conSec: typeof conSec === 'string' ? conSec : '' };
+    const Dd = render(D, 'day', true), Dw = render(D, 'week', true);
+    [2, 3].forEach((i) => {   // 납기 위험·소재 부족·자료 확인은 기간과 무관(같은 값) → 한 값만
+ const ks = [['금일', Dd.K[i]], ['7일', Dw.K[i]], ['월간', K[i]]];
+      if (!K[i] || ks.some(([, k]) => !k)) return;
+      K[i] = Object.assign({}, K[i], { label: i === 2 ? '생산 진도' : K[i].label, unit: '', v: `<span class="kp3">${ks.map(([t, k]) => `<span class="${k.tone || ''}"><i>${t}</i><em><b>${k.v}</b><u>${esc(k.v === '-' ? '' : k.unit || '')}</u></em></span>`).join('')}</span>` }); });
     const main = document.getElementById('ct-main');
     // 11/11 개편(사용자 '처음 보는 게 결론'): 핵심 숫자 → 납기 위험 그룹·원인 → 라인 진도 → (기간별) 계획 → 접기(계약·주문 흐름·기준). 판매그룹 생산·출하·재고는 관제판 한 곳(복제 안 함)
     const warnSrc = badSrc.length ? `<p class="ct-srcw">자료 확인 필요: ${badSrc.map((x) => `<b>${esc(x.name)}</b> ${esc(x.tip || '')}`).join(' · ')}</p>` : '';
@@ -339,13 +347,13 @@
       + `<li><b>생산 진도</b> = ${view === 'month' ? '라인 실적 ÷ 일정 누계(도금 = 재계획 일정, 컬러 = 월 계획)' : '하루가 끝난 날의 도금 실적 ÷ 그날 아침 계획(컬러는 지난 날 일 계획 기록이 없어 월간에서)'} · 98% 이상 정상 · 90% 이상 주의</li>`
       + `<li><b>출하 미달</b> = ${view === 'month' ? '판매그룹 출하 실적 ÷ 오늘까지 기준(월 계획 × 그룹 월중 출하 실적 패턴) — 판매그룹 관제판과 같은 값' : '전날까지 MES 출하 실적 vs 하루 출고 계획(재고 추이와 같은 값)'}</li>`
       + `<li><b>소재 부족</b> = 발주 마감이 지난 부족(소재 화면과 같은 값)</li></ul>`;
-    const conFold = view === 'day' ? conSec.replace(/^<section class="card"><h2>오늘·내일 라인별 생산 계약 <small>/, '<details class="fold ct-f"><summary>오늘·내일 라인별 생산 계약 <small>').replace(/<\/small><\/h2>/, '</small></summary>').replace(/<\/section>$/, '</details>') : '';
+    const conFold = (Dd.conSec || '') && Dd.conSec.replace(/^<section class="card"><h2>오늘·내일 라인별 생산 계약 <small>/, '<details class="fold ct-f"><summary>오늘·내일 라인별 생산 계약 <small>').replace(/<\/small><\/h2>/, '</small></summary>').replace(/<\/section>$/, '</details>');
     main.innerHTML = warnSrc
-      + `<div class="ct-bar"><span class="ct-per"><span class="seg ct-seg ct-pseg" role="group" aria-label="기간">${[['day', '금일'], ['week', '7일'], ['month', '월간']].map(([k, t]) => `<button type="button" data-v="${k}" aria-pressed="${k === view}">${t}</button>`).join('')}</span><span class="ct-note"><b>${pLbl}</b> · ${SCN} · 기준 ${md(asOf)}</span></span><a class="ct-note" href="board.html">판매그룹별 생산·출하·재고 → 관제판</a></div>`
+      + `<div class="ct-bar"><span class="ct-per"><span class="ct-note"><b>${pLbl}</b> · ${SCN} · 기준 ${md(asOf)}</span></span><a class="ct-note" href="board.html">판매그룹별 생산·출하·재고 → 관제판</a></div>`
       + CT.kpis(K)
       + (rkTbl ? `<section class="card ct-act"><h2>판매그룹별 납기 위험 <small>위험 많은 순 · <a href="risk.html">납기 위험 화면 →</a></small>${rkLeg}</h2>${rkTbl}</section>` : `<section class="card ct-act"><h2>우선 조치 10건 <small>납기 지연 예상 → 마감 빠른 순</small></h2>${actTbl}</section>`)
       + lineSec
-      + (view === 'day' ? conFold : `<section class="card"><h2>${view === 'week' ? '이번 주' : `${+asOf.slice(5, 7)}월`} 생산 계획 <small>${pLbl} · 지난 날 = 실적, 오늘부터 = 계획 · 생산 필요일이 그날인 주문${view === 'month' ? ' · 수요일 시작 주' : ''}</small></h2><div class="ct-wrap">${fc}</div></section>`)
+      + conFold + (false ? '' : `<section class="card"><h2>${view === 'week' ? '이번 주' : `${+asOf.slice(5, 7)}월`} 생산 계획 <small>${pLbl} · 지난 날 = 실적, 오늘부터 = 계획 · 생산 필요일이 그날인 주문${view === 'month' ? ' · 수요일 시작 주' : ''}</small></h2><div class="ct-wrap">${fc}</div></section>`)
       + fold('주문 진행 현황', cnt, `${flow('G', '도금')}${flow('C', '컬러')}`)
       + fold('기준·자료 상태', `자료 ${src.length}개 중 ${badSrc.length ? `확인 필요 ${badSrc.length}` : '모두 최신'}${exc.length ? ` · 자료 확인 필요 ${nd.length}건` : ''}`, `${CT.basis(src)}${defs}${exc.length ? `<div class="ct-flh">자료 확인 필요 <small>${exc.length}종 · ${nd.length}건</small></div><ul class="ct-ul">${exc.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}`);
 

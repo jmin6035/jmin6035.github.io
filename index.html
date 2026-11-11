@@ -6,7 +6,7 @@
 <title>통합 관제</title>
 <meta name="description" content="납기 위험 · 생산·출하 진도 · 라인별 실적">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611112243">
+<link rel="stylesheet" href="ui/theme.css?v=2611112247">
 <style>
 main.wrap { max-width: none; }
 .ct-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 12px; } .ct-bar .ct-seg { margin: 0; } .ct-bar .ct-note { margin: 0; }
@@ -102,16 +102,18 @@ table.hm-rk .cdot { margin-right: 6px; } table.hm-rk b.bad { color: var(--bad); 
 details.ct-f { display: block; } details.ct-f .ct-basis { margin: 4px 14px 8px; } details.ct-f .ct-flow { margin-left: 0; } details.ct-f .ct-flh { margin-left: 14px; }
 @media (max-width: 640px) { .hm-w { min-width: 300px; } .hm-lg { display: none; } }
 table.hm-rk td { padding-top: 9px; padding-bottom: 9px; vertical-align: middle; } table.hm-rk tr:hover td { background: color-mix(in srgb, var(--brand-2) 6%, transparent); }
+
+/* 11/12 금일·7일·월간 한 카드 */ .kp3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: 100%; } .kp3 > span { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; } .kp3 i { font-style: normal; font-size: 13.5px; color: var(--ink-2); font-weight: 600; } .kp3 b { font-size: 22px; } .kp3 em { font-style: normal; white-space: nowrap; } .kp3 u { text-decoration: none; font-size: 13.5px; color: var(--ink-2); margin-left: 2px; } .kp3 .bad b { color: var(--bad); } .kp3 .warn b { color: var(--warn); } .kp3 .ok b { color: var(--good); }
 </style>
 </head>
 <body>
 <header id="shell" data-page="home" data-title="통합 관제" data-sub="납기 위험 · 생산·출하 진도 · 라인별 실적"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611112243"></script>
-<script src="engine/crypto.js?v=2611112243"></script>
-<script src="ui/ct.js?v=2611112243"></script>
-<script src="ui/ctl.js?v=2611112243"></script>
-<script src="ct_home.js?v=2611112243"></script>
+<script src="ui/shell.js?v=2611112247"></script>
+<script src="engine/crypto.js?v=2611112247"></script>
+<script src="ui/ct.js?v=2611112247"></script>
+<script src="ui/ctl.js?v=2611112247"></script>
+<script src="ct_home.js?v=2611112247"></script>
 </body>
 </html>

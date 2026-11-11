@@ -392,7 +392,12 @@
     const head = days.map((d) => { const wd = dt(d).getDay(); return `<th class="${nw.includes(d) ? 'nx' : wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}${d === UI.today() ? '<small class="tdy">오늘</small>' : ''}</th>`; }).join('');
     const idx = (d) => O.days.indexOf(d);
     const P = (n) => '<td class="pad" aria-hidden="true"></td>'.repeat(Math.max(0, n));
-    const pad = P(7 - lead - days.length), lp = P(lead);   // 지난 날·월말 뒤는 빈 칸으로 채워 칸 폭을 7칸에 맞춤
+    const pad = P(7 - lead - days.length), lp = P(lead);   // 월말 뒤는 빈 칸으로 채워 칸 폭을 7칸에 맞춤
+    const pds = Array.from({ length: Math.max(0, lead) }, (_, i) => { const x = dt(w0); x.setDate(x.getDate() + i); return iso(x); });   // 이번 주 지난 날(11/12 사용자: 빈 칸 → 실적)
+    const av = (ln, d) => (O.act || {})[`${ln}|${d}`];
+    const pTh = pds.map((d) => `<th class="pst">${mdw(d)}<small class="tdy" style="background:var(--sub);color:var(--ink-2)">실적</small></th>`).join('');
+    const pTd = (ln) => pds.map((d) => { const v = av(ln, d); return `<td class="pst" title="${mdw(d)} ${ln} 생산 실적"><div class="pstv">${v == null ? '<span class="muted">–</span>' : `<b>${n0(v)}</b>t`}</div><small class="muted">실적</small></td>`; }).join('');
+    const pSum = pds.map((d) => { const has = LINES.some((l) => av(l, d) != null), v = LINES.reduce((q, l) => q + (av(l, d) || 0), 0); return `<td class="pst" title="${mdw(d)} 생산 실적 합${has ? '' : ' — 아직 실적 자료 없음(다음 날 아침 들어옴)'}">${has ? `<b>${n0(v)}</b>t` : '<span class="muted">–</span>'}</td>`; }).join('');
     const we = (() => { const x = dt(w0); x.setDate(x.getDate() + 6); return iso(x); })();
     const wl = nw.includes(days[0]) ? ['다음 주', '확정 대상', 'nx'] : days[0] < nw[0] ? ['이번 주', '진행 중', ''] : ['계획', '확정 전', 'pl'];
     const corner = `<th class="wl ${wl[2]}" title="생산주 ${mdw(w0)} ~ ${mdw(we)} · ${wl[0] === '다음 주' ? '이번 수요일에 확정해 저장할 주' : wl[0] === '이번 주' ? '지금 작업 중인 생산주(지난 수요일 확정 대상)' : '아직 확정 전 — 재계획대로 깐 계획'}">${wl[0]}<small>${md(w0)}~${md(we)}</small><small>${wl[1]}</small></th>`;
@@ -401,14 +406,14 @@
       const C = O.lines[ln], h = C.reduce((s, c) => s + (c.hrs || 0), 0), a = C.reduce((s, c) => s + (c.hAvail || 0), 0), t = C.reduce((s, c) => s + c.conf + c.plan + c.fcst, 0);
       return h - a >= 1 ? { h: h - a, t: (h - a) * t / h } : null;
     };
-    const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small title="이 주(${md(days[0])}~${md(days[days.length - 1])}) ${ln} 능력 합 = 재계획 하루 톤 합">능력 ${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small>${hr ? `<small class="hs ov" title="${END()}까지 주문을 T/Hr(같은 두께·폭 2026년 실적)로 24시간 이어서 돌리면 가동 가능 시간(24h × 제원치 가동률)보다 ${n1(hr.h)}시간 초과 → 약 ${n0(hr.t)}t 은 ${md(O.days[O.days.length - 1])} 뒤에 생산">${END()} 뒤 ${n0(hr.t)}t</small>` : ''}</th>${lp}${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`; }).join('');
+    const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small title="이 주(${md(days[0])}~${md(days[days.length - 1])}) ${ln} 능력 합 = 재계획 하루 톤 합">능력 ${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small>${hr ? `<small class="hs ov" title="${END()}까지 주문을 T/Hr(같은 두께·폭 2026년 실적)로 24시간 이어서 돌리면 가동 가능 시간(24h × 제원치 가동률)보다 ${n1(hr.h)}시간 초과 → 약 ${n0(hr.t)}t 은 ${md(O.days[O.days.length - 1])} 뒤에 생산">${END()} 뒤 ${n0(hr.t)}t</small>` : ''}</th>${pTd(ln)}${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`; }).join('');
     const jg = lp + days.map((d) => {
       const j = O.jg[idx(d)], df = j.cumSched - j.cumPlan;
       return `<td class="jg" title="컬러 계획 = 컬러 라인 투입 일정에 맞추려면 이 날까지 도금에서 만들어 둬야 할 자가재 누계(가동계획 기준) · 도금 생산 = 이 캘린더대로 도금에서 만드는 자가재 누계(${md(O.days[0])}부터)"><div class="jr"><span>컬러 계획</span><b>${n0(j.cumPlan)}</b></div><div class="jr"><span>도금 생산</span><b>${n0(j.cumSched)}</b></div><div class="jr ${df < 0 ? 'bad' : 'good'}"><span>${df < 0 ? '부족' : '여유'}</span><b>${n0(Math.abs(df))}</b></div>${j.mark ? `<div class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 도금에서 끝내야 할 자가재 톤">컬러 마감 ${n0(j.mark)}t</div>` : (O.jg.some((x) => x.mark) ? '<div class="mk" style="visibility:hidden">-</div>' : '')}</td>`;
     }).join('');
     const sumD = (d) => LINES.reduce((s, l) => { const c = O.lines[l][idx(d)]; return s + c.conf + c.plan + c.fcst; }, 0);
-    const tot = `<tr class="dsum"><th title="두 라인 하루 생산 톤 합 · 아래 = 1CGL + 2CGL">하루 합<small>주 ${n0(days.reduce((s, d) => s + sumD(d), 0))}t</small></th>${lp}${days.map((d) => `<td title="${mdw(d)} 1CGL + 2CGL 생산 톤"><b>${n0(sumD(d))}</b><small>t</small><div class="sub">${LINES.map((l) => n0(O.lines[l][idx(d)].conf + O.lines[l][idx(d)].plan + O.lines[l][idx(d)].fcst)).join(' + ')}</div></td>`).join('')}${pad}</tr>`;
-    return `<table class="cg"><thead><tr>${corner}${lp.replace(/td/g, 'th')}${head}${pad.replace(/td/g, 'th')}</tr></thead><tbody>${rows}${tot}<tr><th title="컬러에 보낼 자가재(도금 → 컬러) 누계 — 컬러 계획(필요) vs 도금 생산(이 캘린더)">자가재<small>누계 t</small></th>${jg}${pad}</tr></tbody></table>`;
+    const tot = `<tr class="dsum"><th title="두 라인 하루 생산 톤 합 · 아래 = 1CGL + 2CGL">하루 합<small>주 ${n0(days.reduce((s, d) => s + sumD(d), 0))}t</small></th>${pSum}${days.map((d) => `<td title="${mdw(d)} 1CGL + 2CGL 생산 톤"><b>${n0(sumD(d))}</b><small>t</small><div class="sub">${LINES.map((l) => n0(O.lines[l][idx(d)].conf + O.lines[l][idx(d)].plan + O.lines[l][idx(d)].fcst)).join(' + ')}</div></td>`).join('')}${pad}</tr>`;
+    return `<table class="cg"><thead><tr>${corner}${pTh}${head}${pad.replace(/td/g, 'th')}</tr></thead><tbody>${rows}${tot}<tr><th title="컬러에 보낼 자가재(도금 → 컬러) 누계 — 컬러 계획(필요) vs 도금 생산(이 캘린더)">자가재<small>누계 t</small></th>${jg}${pad}</tr></tbody></table>`;
   }
 
   function calCard() {
@@ -752,7 +757,9 @@
     try { O = await GP.decryptJSON(env, pw); PW = pw; }
     catch (e) { $('cc-msg').textContent = '⚠ 암호가 맞지 않습니다'; busy = false; return; }
     O.base = JSON.parse(JSON.stringify(O.lines));
-    O.planT0 = await lpReady.then((e) => e && GP.decryptJSON(e, pw)).then((p) => (((p && p.result) || {}).replan || {}).t0 || null).catch(() => null);   // 11/9: 재계획 표기 = 실적 기준일
+    const LPd = await lpReady.then((e) => e && GP.decryptJSON(e, pw)).catch(() => null), LPr = (LPd && LPd.result) || {};
+    O.planT0 = (LPr.replan || {}).t0 || null;   // 11/9: 재계획 표기 = 실적 기준일
+    O.act = {}; for (const r of LPr.rows || []) if (O.planT0 && r[0] <= O.planT0) O.act[`${r[1]}|${r[0]}`] = (O.act[`${r[1]}|${r[0]}`] || 0) + (+r[4] || 0);   // 11/12 사용자 '하루씩 사라지냐': 이번 주 지난 날 = 실적으로 채움
     CONF = await loadConfirm();
     let draft = null; try { draft = localStorage.getItem(MV_KEY()); } catch (e) { /* 무시 */ }
     const same = CONF && CONF.asOf === O.asOf;               // 같은 자료로 저장한 확정본이면 그 수정 내역을 그대로 불러와 이어서 고침(다음 날부터는 계산에 이미 고정돼 들어옴)
