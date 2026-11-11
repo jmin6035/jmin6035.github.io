@@ -152,6 +152,8 @@ html body main table.ct-t.sj-mx { width: 100%; }
 .sj-stp .h { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin: 0 0 2px; } .sj-stp .h .ct-b { font-size: 13.5px; padding: 0 7px; }
 .sj-stp .dt { white-space: nowrap; } .sj-stp.done { color: var(--ink-2); } .sj-stp.done .t { color: var(--ink-2); }
 .sj-stp.now { border-top-color: var(--warn); background: var(--warn-bg); } .sj-stp.now .t { font-weight: 700; } .sj-stp.next { border-top-color: var(--brand-2); }
+/* 11/11 회의: 결론 카드 누르면 해당 탭 */
+a.sj-kl { display: block; color: inherit; text-decoration: none; } a.sj-kl > .ct-kpi { height: 100%; transition: box-shadow .15s, transform .15s; } a.sj-kl:hover > .ct-kpi { box-shadow: 0 4px 14px rgba(15, 40, 80, .14); transform: translateY(-1px); }
 /* 그룹 관제 매트릭스 */
 html body main table.ct-t.sj-mx2 { width: 100%; font-variant-numeric: tabular-nums; }
 /* 11/11 사용자 '칸 안 맞음': 칸 폭 고정(넓혀도 머리글·숫자가 같은 줄) — 숫자 칸 머리글은 오른쪽, 진도·문제는 왼쪽, 상태는 가운데 */
@@ -185,7 +187,8 @@ html body main .ct-t tr.sj-sec td { background: var(--ink); color: var(--surface
 .sj-sb { display: flex; height: 14px; border-radius: 4px; overflow: hidden; background: var(--sub); min-width: 110px; } .sj-sb i { display: block; height: 100%; }
 html body main table.ct-t.sj-ext, html body main table.ct-t.sj-cbt, html body main table.ct-t.sj-mt2, html body main table.ct-t.sj-thr { width: 100%; } .sj-ext td.sbc { width: 26%; } .sj-ext td.stl { white-space: normal; }
 .sj-st { display: inline-block; white-space: nowrap; font-size: 13.5px; border-left: 4px solid var(--c); padding: 0 6px; margin: 1px 4px 1px 0; background: var(--sub); border-radius: 3px; }
-.ct-t tr.hot td { background: var(--bad-bg, rgba(192, 57, 43, .07)); }
+.ct-t tr.hot td:first-child { box-shadow: inset 4px 0 0 var(--bad); }   /* 11/11 회의 '빨간색 남발': 줄 전체 빨강 → 왼쪽 띠 + 날짜 빨간 글씨만 */
+.sj-2c { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 18px; align-items: start; } .sj-2c > * { margin-top: 0 !important; min-width: 0; } @media (max-width: 1280px) { .sj-2c { grid-template-columns: minmax(0, 1fr); } }
 /* 1주 작업 편성 */
 html body main table.ct-t.sj-wo { width: 100%; table-layout: fixed; min-width: 980px; }
 .sj-wo th, .sj-wo td { vertical-align: top !important; padding: 6px 6px !important; } .sj-wo th.lab, .sj-wo td.lab { width: 92px; } .sj-wo th.we { color: var(--bad); }
