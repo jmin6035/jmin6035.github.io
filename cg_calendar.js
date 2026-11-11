@@ -298,11 +298,14 @@
   const dirty = () => SAVED === null ? MOVES.length > 0 : JSON.stringify(cleanMoves()) !== SAVED;
   async function loadConfirm() {
     try {
-      const nw = nextWeek(), r = await fetch(`${SB}?select=id,at,who,week,payload&week=eq.${nw[0]}&order=id.desc&limit=1`, { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } });
+      const nw = nextWeek(), r = await fetch(`${SB}?select=id,at,who,week,payload&week=eq.${nw[0]}&order=id.desc&limit=20`, { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } });
       const rows = r.ok ? await r.json() : [];
-      if (!rows.length) return null;
-      const p2 = await GP.decryptJSON(JSON.parse(rows[0].payload), PW);
-      return { at: rows[0].at, who: rows[0].who, asOf: p2.asOf, moves: p2.moves || [] };
+      for (const x of rows) {                                 // 11/11: 컬러 확정(작업 순서 화면, 본문 plant 'cc')도 같은 표 — 도금 것만(plant 없음 = 도금)
+        let p2; try { p2 = await GP.decryptJSON(JSON.parse(x.payload), PW); } catch (e) { continue; }
+        if ((p2.plant || 'cg') !== 'cg') continue;
+        return { at: x.at, who: x.who, asOf: p2.asOf, moves: p2.moves || [] };
+      }
+      return null;
     } catch (e) { return null; }
   }
   const saveMoves = () => { try { localStorage.setItem(MV_KEY(), JSON.stringify(MOVES)); } catch (e) { /* 무시 */ } };

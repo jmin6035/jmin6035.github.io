@@ -18,6 +18,7 @@ main.wrap { max-width: none; }
 .ws-act input, .ws-act select { font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--ink); }
 .ws-act #ws-who { width: 110px; } .ws-act #ws-memo { width: 220px; }
 .ws-res { font-size: 14px; color: var(--ink-2); }
+.ws-hint { font-size: 13.5px; color: var(--ink-3, var(--ink-2)); }
 .ws-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin: 0 0 16px; }
 .ws-k { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; background: var(--surface); cursor: pointer; text-align: left; font: inherit; color: var(--ink); }
 .ws-k[aria-pressed="true"] { border: 2px solid var(--brand-2); background: var(--tint-2); padding: 11px 15px; }
@@ -270,11 +271,12 @@ table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px 
     <div class="ws-act">
       <input id="ws-who" placeholder="이름" maxlength="40" aria-label="이름">
       <input id="ws-memo" placeholder="메모(선택)" maxlength="200" aria-label="메모">
-      <button type="button" class="btn primary" id="ws-save">저장</button>
-      <button type="button" class="btn" id="ws-conf">확정</button>
+      <button type="button" class="btn primary" id="ws-save" title="버전 이력만 남김 — 생산 일정에는 반영 안 됨">저장</button>
+      <button type="button" class="btn" id="ws-conf" title="그 주 약속본 — 다음 포털 갱신 때 생산 일정(도금·컬러 캘린더)에 이 라인·날짜로 고정">확정</button>
       <button type="button" class="btn" id="ws-chk">점검</button>
       <button type="button" class="btn" id="ws-reset">초안으로 되돌리기</button>
       <select id="ws-vers" aria-label="저장 버전"></select>
+      <span class="ws-hint">확정하면 생산 일정에 반영(다음 갱신 때) · 저장은 반영 안 됨</span>
       <span class="ws-res" id="ws-res"></span>
     </div>
     <div id="ws-miss"></div>
@@ -291,6 +293,6 @@ table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px 
 <footer class="foot"><div class="wrap"><span>대상: 컬러 = 작업지시 편성 대상(소재 매치)·확정 대기열 · 도금 = 지시된 코일(생산 전) + 소재 들어온 작업 · 시간 = 기존 속도(t/h) · 휴지 = 전환 기준표(1년 실적)·휴지계획 · 저장 = 공유 저장소(암호화, 버전 이력)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611110708"></script>
 <script src="engine/crypto.js?v=2611110708"></script>
-<script src="week_seq.js?v=2611110708"></script>
+<script src="week_seq.js?v=2611111800"></script>
 </body>
 </html>

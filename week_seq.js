@@ -477,12 +477,14 @@
       const r = await fetch(API, { method: 'POST', headers: Object.assign({ Prefer: 'return=minimal' }, H), body: JSON.stringify({ who: who.slice(0, 40), plant, week: D.week, state, payload: JSON.stringify(env) }) });
       if (!r.ok) throw new Error('저장 실패 ' + r.status + ' ' + (await r.text()).slice(0, 120));
       try { localStorage.setItem('cgl-me', who); } catch (e) { /* 무시 */ }
-      if (state === 'confirm' && plant === 'cg') {                 // 11/10 점검: 도금 확정을 생산 캘린더가 읽는 확정본(cgl_week_confirm)에도 — 예전엔 아무도 안 읽어 확정해도 캘린더 고정·준수율에 반영 안 됐음
-        const cl = {};
-        LINES.cg.forEach((l) => { cl[l] = {}; sim(l).filter((v) => v.k === 'j').forEach((v) => { const d = dayOf(v.s); (cl[l][d] = cl[l][d] || []).push([v.x.con, +(+v.x.t).toFixed(1), '확정']); }); });
-        const wk = String(D.w0).slice(0, 10), env2 = await GP.encryptJSON({ week: wk, asOf: D.built, built: D.built, lines: cl, extra: {}, moves: [], src: 'week_seq' }, PW, `도금 주간 확정 ${wk}`);
+      if (state === 'confirm') {                                   // 11/11 사용자 '저장은 생산 일정에 반영 말고, 확정은 반영 — 컬러도': 확정만 생산 일정이 읽는 확정본(cgl_week_confirm)에도
+        // 한 줄 = [계약, 톤, 종류, 작업 id] · 종류 '확정' = MES 작업지시(도금 1030 지시·컬러 1030 작업대기, 이미 고정 — 생산 일정이 다시 고정 안 함), '편성' = 이 확정으로 그 라인·날짜에 고정
+        //   (11/11 점검: 예전엔 도금도 전부 '확정'으로 보내 생산 캘린더가 하나도 고정하지 않았음)
+        const cl = {}, done = (x) => (plant === 'cg' ? x.issued : x.fixed);
+        LINES[plant].forEach((l) => { cl[l] = {}; sim(l).filter((v) => v.k === 'j' && v.x.con && !v.x.dummy).forEach((v) => { const d = dayOf(v.s); (cl[l][d] = cl[l][d] || []).push([v.x.con, +(+v.x.t).toFixed(1), done(v.x) ? '확정' : '편성', v.x.id]); }); });
+        const wk = D.week, env2 = await GP.encryptJSON({ plant, week: wk, asOf: D.built, built: D.built, lines: cl, extra: {}, moves: [], src: 'week_seq' }, PW, `${plant === 'cg' ? '도금' : '컬러'} 주간 확정 ${wk}`);   // 키 = 생산주(수~화) 수요일(11/11)
         const r2 = await fetch(API.replace('cgl_week_seq', 'cgl_week_confirm'), { method: 'POST', headers: Object.assign({ Prefer: 'return=minimal' }, H), body: JSON.stringify({ who: who.slice(0, 40), week: wk, payload: JSON.stringify(env2) }) });
-        if (!r2.ok) throw new Error('확정은 저장됐으나 생산 캘린더 확정본 저장 실패 ' + r2.status);
+        if (!r2.ok) throw new Error('확정은 저장됐으나 생산 일정 확정본 저장 실패 ' + r2.status);
       }
       $('ws-memo').value = '';
       await loadVers();
@@ -554,7 +556,7 @@
     if (!D) return '';
     const W = `<ul class="ws-ul"><li>하루 = 07시 ~ 다음날 07시(MES 일수) · 기간 = ${dnm(dayOf(tms(D.w0)))} 07시 ~ ${dnm(dayOf(tms(D.w1) - 1))} 다음날 07시(오늘부터 7일, 컬러는 확정 지시가 끝날 때까지)</li>`
       + (plant === 'cg' ? '<li>생산 시간 = 코일 무게 ÷ 시간당 생산량(같은 두께·폭 2026년 실적) · 그날 처음 닿을 때 계획 휴지</li>' : '<li>생산 시간 = 길이 ÷ L/S(26년 1월~ 실적) × 라인 보정 · 도료·PF 입고 전이면 기다림 · 그날 처음 닿을 때 계획 휴지</li>')
-      + `<li>초안 = 작업지시 제안 규칙(아래 편성 조건)을 이 기간으로 넓힌 것 · 저장 = 버전 이력(암호화) · 확정 = 그 주 약속본${plant === 'cg' ? '(생산 일정 화면 「다음 주 확정」에도 같이 저장)' : ''}</li></ul>`;
+      + `<li>초안 = 작업지시 제안 규칙(아래 편성 조건)을 이 기간으로 넓힌 것 · 저장 = 버전 이력(암호화) · 확정 = 그 주 약속본 — 생산 일정에 반영(다음 갱신 때, MES 작업지시 전 작업을 확정한 라인·날짜에 고정) · 저장은 반영 안 됨</li></ul>`;
     let T = '';
     if (plant === 'cc' && R.trans) {
       const K = [...new Set(Object.values(R.trans).flatMap((x) => Object.keys(x)))].sort((a, b) => (a === '사양 같음') - (b === '사양 같음') || a.split('+').length - b.split('+').length || a.localeCompare(b));
