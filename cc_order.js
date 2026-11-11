@@ -43,7 +43,7 @@
     return out.join('');
   }
   function row(x) {
-    const clr = `${x.top ? `<span class="ch clr" title="Top Color">${esc(x.top)}</span>` : ''}<div class="sub" title="Primer · Back">${[x.pri && `P ${esc(x.pri)}`, x.back && `B ${esc(x.back)}`].filter(Boolean).join(' · ')}</div>`;
+    const clr = `${x.pdtNm ? `<span class="ch clr" title="품명 ${esc(x.pdt || '')}${x.top ? ` · 상도 도료 코드 ${esc(x.top)}` : ''}">${esc(x.pdtNm)}</span>` : ''}<div class="sub" title="Primer · Back">${[x.pri && `P ${esc(x.pri)}`, x.back && `B ${esc(x.back)}`].filter(Boolean).join(' · ')}</div>`;
     const pct = x.ordT ? Math.min(100, x.prodT / x.ordT * 100) : 0;
     return `<tr class="${x.st !== '매치 완료' ? 'f-nomch ' : ''}${x.st === '소재 없음' ? 'f-none ' : ''}${x.lateDue ? 'f-late' : ''}"><td>${stBadge(x)}</td>`
       + `<td><div class="con">${esc(x.con)}</div><div class="sub">${esc(x.line)}${x.spec ? ` · <span style="white-space:nowrap">규격 ${window.UI && UI.specHtml ? UI.specHtml(x.spec) : esc(x.spec)}</span>` : ''}${x.pdt ? ` · ${esc(x.pdt)}` : ''}${by !== 'man' && x.man ? ` · 담당 ${esc(x.man)}` : ''}${by !== 'cus' && x.cus ? ` · ${esc(x.cus)}` : ''}</div></td>`
@@ -115,7 +115,7 @@
     const R = O.rows;
     let L = R.filter(F[flt][1]);
     if (ln) L = L.filter((x) => x.line === ln);
-    if (q) { const qq = q.toUpperCase(); L = L.filter((x) => [x.con, x.man, x.cus, x.top, x.spec, window.UI && UI.specKo && (UI.specKo(x.spec) || {}).ko, x.grp, x.po && x.po.no, x.self].join(' ').toUpperCase().includes(qq)); }
+    if (q) { const qq = q.toUpperCase(); L = L.filter((x) => [x.con, x.man, x.cus, x.top, x.pdtNm, x.spec, window.UI && UI.specKo && (UI.specKo(x.spec) || {}).ko, x.grp, x.po && x.po.no, x.self].join(' ').toUpperCase().includes(qq)); }
     const G0 = O.groups || [];
     const groups = G0.concat([...new Set(L.map((x) => x.grp))].filter((g) => !G0.includes(g)));
     const byG = groups.map((g) => [g, L.filter((x) => x.grp === g)]).filter((e) => e[1].length);

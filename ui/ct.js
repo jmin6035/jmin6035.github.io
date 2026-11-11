@@ -145,7 +145,7 @@
   /* 컬러: 소재(재고기반 규격 재고 / 소재 발주 / 자가재 = 도금 주문) → 매치 → 작업예정 → 생산. 생산 필요일 = 납기 */
   function cRow(x, asOf, G) {
     const selfG = x.self && G[x.self];
-    const o = { id: x.con, pl: 'C', line: x.line, grp: CT.grpName(x.grp), grpEst: x.grpSrc && x.grpSrc !== '주문', item: [x.top, x.spec].filter(Boolean).join(' '), size: x.thk != null ? `${(+x.thk).toFixed(2)}×${CT.n0(x.wdt)}` : '',
+    const o = { id: x.con, pl: 'C', line: x.line, grp: CT.grpName(x.grp), grpEst: x.grpSrc && x.grpSrc !== '주문', item: [x.pdtNm, x.spec].filter(Boolean).join(' ')   /* 11/12 사용자: 품목 = 품명 약호(PGS 등) + 규격 — 상도 도료 코드(G762310039 등)는 빼고 */, size: x.thk != null ? `${(+x.thk).toFixed(2)}×${CT.n0(x.wdt)}` : '',
       exp: x.exp, man: x.man, ordT: x.ordT, prodT: x.prodT, remT: x.remT, due: x.due, needProd: x.due, sche: x.sche, can: x.can, mchT: x.mchT, matT: x.matT, woT: x.woT, route: x.route, self: x.self, po: x.po, src: x };
     o.steps = [
       { k: '수주 확정', st: 'done' },
