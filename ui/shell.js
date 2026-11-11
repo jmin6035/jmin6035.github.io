@@ -444,8 +444,11 @@
       if (!t.offsetParent || !t.tBodies[0] || !t.tBodies[0].rows.length || t.dataset.tidy === String(t.tBodies[0].rows.length)) return;
       t.dataset.tidy = String(t.tBodies[0].rows.length);
       const cnt = [];
-      [...t.tBodies[0].rows].slice(0, 40).forEach((r) => { let ci = 0; [...r.cells].forEach((c) => { if (c.colSpan === 1) { const a = getComputedStyle(c).textAlign.replace('start', 'left'); (cnt[ci] = cnt[ci] || {})[a] = ((cnt[ci] || {})[a] || 0) + 1; } ci += c.colSpan; }); });
-      if (t.tHead) [...t.tHead.rows].forEach((r) => { if (r !== t.tHead.rows[t.tHead.rows.length - 1]) return; let ci = 0; [...r.cells].forEach((c) => { if (c.colSpan === 1 && cnt[ci]) { const m = Object.entries(cnt[ci]).sort((a, b) => b[1] - a[1])[0][0]; if (getComputedStyle(c).textAlign.replace('start', 'left') !== m) c.style.setProperty('text-align', m, 'important'); } ci += c.colSpan; }); });
+      { const BR = [...t.tBodies[0].rows].slice(0, 40), bo = BR.map(() => []); BR.forEach((r, ri) => { let ci = 0; [...r.cells].forEach((c) => { while (bo[ri][ci]) ci++; for (let dr = 0; dr < (c.rowSpan || 1) && ri + dr < BR.length; dr++) for (let dc = 0; dc < (c.colSpan || 1); dc++) bo[ri + dr][ci + dc] = 1; if (c.colSpan === 1 && (c.rowSpan || 1) === 1) { const a = getComputedStyle(c).textAlign.replace('start', 'left'); (cnt[ci] = cnt[ci] || {})[a] = ((cnt[ci] || {})[a] || 0) + 1; } ci += c.colSpan || 1; }); }); }
+      if (t.tHead) {   // 11/11: 머리글 칸 위치 = 위 줄의 세로 합친 칸(rowspan)을 건너뛴 실제 열 — 예전엔 0부터 세어 두 줄 머리글에서 옆 칸 정렬이 붙었음('판매계획'이 '그룹'처럼 왼쪽)
+        const HR = [...t.tHead.rows], occ = HR.map(() => []); const colOf = new Map();
+        HR.forEach((r, ri) => { let ci = 0; [...r.cells].forEach((c) => { while (occ[ri][ci]) ci++; colOf.set(c, ci); for (let dr = 0; dr < (c.rowSpan || 1) && ri + dr < HR.length; dr++) for (let dc = 0; dc < (c.colSpan || 1); dc++) occ[ri + dr][ci + dc] = 1; ci += c.colSpan || 1; }); });
+        const r = HR[HR.length - 1]; [...r.cells].forEach((c) => { const ci = colOf.get(c); if (c.colSpan === 1 && cnt[ci]) { const m = Object.entries(cnt[ci]).sort((a, b) => b[1] - a[1])[0][0]; if (getComputedStyle(c).textAlign.replace('start', 'left') !== m) c.style.setProperty('text-align', m, 'important'); } }); }
       const box = t.parentElement; if (!box || t.closest('.ch, .ln-c, .rk')) return;
       const full = box.clientWidth; if (full < 500) return;
       if (getComputedStyle(t).tableLayout === 'fixed') return;

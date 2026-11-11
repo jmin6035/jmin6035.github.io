@@ -151,7 +151,7 @@
       + `<tr><th class="r bk" title="이달 판매(출하) 목표">판매계획</th><th class="r" title="${md(D.month + '-01')}~${md(D.cut)} 생산 편성 — 오늘까지 확정됐어야 할 양">기준선</th><th class="r" title="실적 + 소재 매치 잔량">확정</th><th class="bk" title="확정 ÷ 기준선 · 검은 선 = 100%">진도</th>`
       + `<th class="r bk" title="월초 계획 1일~${md(D.asOf)}">계획</th><th class="r">실적</th><th class="bk" title="실적 ÷ 계획 · 검은 선 = 100%">진도</th><th class="r bk">재고(t)</th><th class="r" title="예상 / 상한">일수</th><th class="c">상태</th></tr>`;
     return card(2, '그룹 관제 매트릭스', `${md(D.month + '-01')}~${md(D.today)} 누계 · 막대 검은 선 = 100%`,
-      `<div class="ct-wrap"><table class="ct-t sj-mx2"><thead>${hd}</thead><tbody>${body}</tbody></table></div>`);
+      `<div class="ct-wrap"><table class="ct-t sj-mx2"><colgroup><col class="c-nm"><col class="c-is"><col class="c-n"><col class="c-n"><col class="c-n"><col class="c-pc"><col class="c-n"><col class="c-n"><col class="c-pc"><col class="c-n"><col class="c-d"><col class="c-st"></colgroup><thead>${hd}</thead><tbody>${body}</tbody></table></div>`);
   }
 
   /* ③ 일별 계획 캘린더: 라인 가동(지난 날 실적, 오늘 이후 계획) + 그룹별 계획·실적 + 소재 재고일수 */
