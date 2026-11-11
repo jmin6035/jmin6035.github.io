@@ -36,7 +36,7 @@
     return s;
   };
   /* 원인 칩 HTML(통합 관제·관제판 공용): [원인 이름] 굵은 톤 · 짧은 사유(언제 풀리는지) */
-  UI.causeHtml = (RK, cz, max = 2, items = 2) => (cz || []).filter((z) => z[1] >= 0.5).slice(0, max).map(([c, t, n, act, it]) => `<div class="rc-l"><span class="rc rc-${esc(c)}" title="${esc(((RK || {}).dept || {})[c] ? `조치: ${RK.dept[c]}` : '')}">${esc(((RK || {}).causeNm || {})[c] || c)}</span><b class="rc-t">${n0(t)}t</b>`
+  UI.causeHtml = (RK, cz, max = 2, items = 2) => (cz || []).filter((z) => z[1] >= 0.5).slice(0, max).map(([c, t, n, act, it]) => `<div class="rc-l"><span class="rc rc-${esc(c)}" title="${esc([((RK || {}).causeDef || {})[c], ((RK || {}).dept || {})[c] ? `조치: ${RK.dept[c]}` : ''].filter(Boolean).join(' · '))}">${esc(((RK || {}).causeNm || {})[c] || c)}</span><b class="rc-t">${n0(t)}t</b>`
     + `${(it || []).filter((w) => w[0] && w[1] >= 0.5).slice(0, items).map((w) => `<span class="rc-w" title="${esc(`${w[0]} ${n0(w[1])}t · ${w[2]}건`)}">${esc(w[0])} <i class="rc-n">${n0(w[1])}t</i></span>`).join('')}</div>`).join('');
 
   function rowsOf(O) {

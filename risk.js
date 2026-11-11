@@ -9,7 +9,7 @@
   const ST = [['ok', '납기 내 생산 가능'], ['warn', '주의'], ['will', '지연 예상'], ['past', '납기 경과'], ['stale', '종결 확인']];
   const STN = Object.fromEntries(ST);
   const STT = { ok: '소재·강종·생산 일정 모두 납기 이내', warn: '소재 미확보 · 납기까지 여유', will: '현 계획 기준 납기 초과 예상', past: '납기 경과 · 미생산', stale: '납기 60일 이상 경과 · MES 종결 누락 가능' };
-  let D = null, open = null;
+  let D = null, open = null, oldOpen = true;
   const scope = () => (window.UI && UI.scope ? UI.scope() : 'all');
   const stack = (o, cls) => `<div class="rk-st ${cls || ''}">${ST.map(([k, nm]) => (o[k] > 0 ? `<i class="${k}" style="flex:${o[k]}" title="${nm} ${n0(o[k])}t"></i>` : '')).join('')}</div>`;
   const mon = (ym) => `${+ym.slice(5)}월`;
@@ -33,6 +33,18 @@
       <details class="rk-more"><summary>대상 계약 ${g.rows.length}건</summary><div class="scroll" style="margin-top:8px"><table class="rk-s"><thead><tr><th class="l">상태</th><th class="l">계약</th><th class="l">품목</th><th class="l">두께×폭</th><th>납기</th><th>잔량</th><th class="l">원인</th><th>해소 예정일</th></tr></thead><tbody>
         ${g.rows.slice(0, 300).map((r) => `<tr><td class="l"><span class="rk-chip ${r[6]}">${STN[r[6]]}</span></td><td class="l">${esc(r[0])}</td><td class="l">${esc(r[1])}</td><td class="l">${esc(r[2])}</td><td>${md(r[4])}</td><td><b>${n0(r[5])}t</b></td><td class="w"><div class="rk-w">${r[7] ? `<b>${esc(D.causeNm[r[7]])}</b> ` : ''}${esc(r[8] || '')}</div></td><td>${r[9] ? md(r[9]) : '-'}</td></tr>`).join('')}
         </tbody></table></div>${g.rows.length > 300 ? `<p class="rk-rule">큰 순 300건만 표시 · 전체 ${g.rows.length}건</p>` : ''}</details>`;
+  }
+  /* 11/11 회의 '전월 미생산 14,000t 퉁으로 치지 말고 도금·컬러 → 그룹별 → 품목별로, 원인까지' — 납기월별 표 '전월 이전' 줄을 누르면 펼침 */
+  function oldDetail(G) {
+    const chips = (o) => Object.entries(o || {}).filter(([, t]) => t >= 0.5).map(([c, t]) => `<span class="rk-chip rk-oc">${esc(D.causeNm[c] || c)} <b>${n0(t)}t</b></span>`).join('');
+    const blk = (pl) => {
+      const L = G.filter((g) => g.pl === pl && g.old && g.old.t >= 0.5); if (!L.length) return '';
+      const T = L.reduce((a, g) => a + g.old.t, 0), N = L.reduce((a, g) => a + g.old.n, 0);
+      return `<div class="rk-ob"><p class="rk-h3">${pl === 'G' ? '도금' : '컬러'} <b>${n0(T)}t</b> <small>${n0(N)}건</small></p><table class="rk-s rk-ot"><thead><tr><th class="l">판매그룹</th><th>미생산</th><th class="l">원인</th></tr></thead><tbody>${
+        L.map((g) => `<tr class="og-g"><td class="l"><a href="#" data-k="${esc(g.pl + g.g)}"><b>${esc(g.g)}</b></a><small> ${n0(g.old.n)}건</small></td><td><b>${n0(g.old.t)}t</b></td><td class="w">${chips(g.old.c)}</td></tr>`
+          + `<tr class="og-i"><td colspan="3"><span class="rk-ol">${g.pl === 'G' ? '강종' : '품명'}</span>${g.old.sub.filter((s) => s[1] >= 0.5).slice(0, 8).map((s) => `<span class="rk-oi" title="${esc(Object.entries(s[3]).map(([c, t]) => `${D.causeNm[c] || c} ${n0(t)}t`).join(' · '))}"><b>${esc(s[0])}</b> ${n0(s[1])}t<small> ${s[2]}건</small></span>`).join('')}${g.old.sub.length > 8 ? `<span class="rk-oi"><small>그 외 ${g.old.sub.length - 8}개 ${n0(g.old.sub.slice(8).reduce((a, s) => a + s[1], 0))}t</small></span>` : ''}</td></tr>`).join('')}</tbody></table></div>`;
+    };
+    return `<div class="rk-og">${blk('G')}${blk('C')}</div><p class="rk-rule">그룹 이름을 누르면 위 판매그룹별 표에서 그 그룹 상세(원인별 내역 · 계약)로 이동 · 품목에 마우스를 올리면 원인별 톤</p>`;
   }
   function draw() {
     const sc = scope(), T = D.tot[sc] || D.tot.all, CZ = D.cause[sc] || {}, G = D.groups.filter((g) => sc === 'all' || g.pl === sc);
@@ -62,8 +74,12 @@
         <p class="rk-rule">납기 기준: 도금 내수 납기월 말일 · 도금 수출 출항 전일 · 컬러 주문 납기일 &nbsp;|&nbsp; ${ST.map(([k, nm]) => `<span class="rk-chip ${k === 'ok' ? '' : k}">${nm}</span>`).join('')}</p></section>
       <section class="card"><h2>납기월별 미결 <small>납기월 기준 · 전월 이전 = 납기 경과분</small></h2>
         <div class="scroll"><table class="rk-mt"><thead><tr><th class="l">납기월</th><th>미결</th><th class="l">구성</th><th>위험</th><th>비율</th><th>종결 확인</th><th>납기 내 생산 가능 · 주의</th></tr></thead><tbody>${cols.map(([nm, v]) => { const ok = Math.max(0, v[0] - v[1] - v[2]), op = Math.max(0, v[0] - v[2]), p = pct(v[1], op);   // 미결 = 종결 확인 제외(맨 위 미결과 같은 정의, 11/10 검토)
-          return `<tr><td class="l"><b>${nm}</b></td><td><b>${n0(op)}t</b></td><td class="l"><div class="rk-mb" style="width:${Math.max(3, v[0] / mxm * 100)}%">${v[1] >= 0.5 ? `<i class="r" style="flex:${v[1]}">${p >= 12 ? p + '%' : ''}</i>` : ''}${v[2] >= 0.5 ? `<i class="s" style="flex:${v[2]}"></i>` : ''}${ok >= 0.5 ? `<i class="o" style="flex:${ok}"></i>` : ''}</div></td><td>${v[1] >= 0.5 ? `<b class="rk-bad">${n0(v[1])}t</b>` : '-'}</td><td>${v[1] >= 0.5 ? `<span class="rk-pct ${p >= 30 ? 'b' : p >= 15 ? 'w' : 'g'}">${p}%</span>` : '-'}</td><td>${v[2] >= 0.5 ? n0(v[2]) + 't' : '-'}</td><td>${ok >= 0.5 ? n0(ok) + 't' : '-'}</td></tr>`; }).join('')}</tbody></table></div>
+          const isOld = nm === '전월 이전' && G.some((g) => g.old);
+          return `<tr${isOld ? ` class="rk-old${oldOpen ? ' on' : ''}" tabindex="0" title="누르면 도금·컬러 → 판매그룹 → 품목별로 펼침"` : ''}><td class="l"><b>${isOld ? '<i class="ch">▸</i>' : ''}${nm}</b>${isOld ? '<small class="rk-osub">지난 달까지 생산했어야 할 물량</small>' : ''}</td><td><b>${n0(op)}t</b></td><td class="l"><div class="rk-mb" style="width:${Math.max(3, v[0] / mxm * 100)}%">${v[1] >= 0.5 ? `<i class="r" style="flex:${v[1]}">${p >= 12 ? p + '%' : ''}</i>` : ''}${v[2] >= 0.5 ? `<i class="s" style="flex:${v[2]}"></i>` : ''}${ok >= 0.5 ? `<i class="o" style="flex:${ok}"></i>` : ''}</div></td><td>${v[1] >= 0.5 ? `<b class="rk-bad">${n0(v[1])}t</b>` : '-'}</td><td>${v[1] >= 0.5 ? `<span class="rk-pct ${p >= 30 ? 'b' : p >= 15 ? 'w' : 'g'}">${p}%</span>` : '-'}</td><td>${v[2] >= 0.5 ? n0(v[2]) + 't' : '-'}</td><td>${ok >= 0.5 ? n0(ok) + 't' : '-'}</td></tr>${isOld && oldOpen ? `<tr class="rk-d"><td colspan="7">${oldDetail(G)}</td></tr>` : ''}`; }).join('')}</tbody></table></div>
         <p class="rk-rule"><span class="rk-key"><i class="r"></i>위험(지연 예상 · 납기 경과)</span><span class="rk-key"><i class="s"></i>종결 확인</span><span class="rk-key"><i class="o"></i>납기 내 생산 가능 · 주의</span> &nbsp;|&nbsp; 12월 이후 물량은 생산 예정일이 확정된 범위(2~3주)까지만 판정</p></section>`;
+    const ro = $('rk-main').querySelector('tr.rk-old');
+    if (ro) { const f = () => { oldOpen = !oldOpen; draw(); const t = document.querySelector('tr.rk-old'); if (t) t.scrollIntoView({ block: 'nearest' }); }; ro.onclick = f; ro.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f(); } }; }
+    $('rk-main').querySelectorAll('.rk-og a[data-k]').forEach((a) => { a.onclick = (e) => { e.preventDefault(); open = a.dataset.k; draw(); const t = document.querySelector(`tr.g[data-k="${CSS.escape(open)}"]`); if (t) t.scrollIntoView({ block: 'start', behavior: 'smooth' }); }; });
     $('rk-main').querySelectorAll('tr.g').forEach((tr) => { const f = () => { open = open === tr.dataset.k ? null : tr.dataset.k; draw(); const t = document.querySelector(`tr.g[data-k="${CSS.escape(open || '')}"]`); if (t) t.scrollIntoView({ block: 'nearest' }); };
       tr.onclick = f; tr.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f(); } }; });
   }

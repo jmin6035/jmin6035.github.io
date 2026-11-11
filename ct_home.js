@@ -1,5 +1,5 @@
 /* 01 통합 관제(11/4 2차 진단 4장): 10초 안에 위험 인지, 30초 안에 우선 조치 결정
-   메뉴 탭 = 기간(#day 금일 · #week 수요일 시작 7일 · #month 이번 달). KPI 6 · 조치 TOP10 + 공정별 상태 · 기간 전망 · (접힘) 수주 이행 흐름·자료 예외 */
+   기간 = 화면 안 단추(11/11 회의: 하위 화면 셋 → 한 화면) — #day 금일 · #week 수요일 시작 7일 · #month 이번 달(주소 그대로 열림). KPI 6 · 조치 TOP10 + 공정별 상태 · 기간 전망 · (접힘) 수주 이행 흐름·자료 예외 */
 (function () {
   'use strict';
   const { esc, n0, n1, md, addD, diff } = CT;
@@ -335,13 +335,13 @@
     const fold = (title, sub, body, open) => `<details class="fold ct-f"${open ? ' open' : ''}><summary>${title}${sub ? ` <small>${sub}</small>` : ''}</summary>${body}</details>`;
     const defs = `<ul class="ct-ul">`
       + `<li><b>납기 위험</b> = 지연 예상 + 납기 지남(미결 주문, 납기 60일 넘게 지난 미종결 제외) — 납기 위험 화면과 같은 판정${RK ? `(${md(RK.asOf)})` : ''}. 그룹 색: 위험 ÷ 미결 30% 이상 빨강 · 15% 이상 주황</li>`
-      + `<li><b>주요 원인</b> = 위험 톤이 큰 원인 2개, 옆 = 언제 풀리나(다음 생산일·입고 예정일). ${RK ? Object.entries(RK.causeNm || {}).map(([k, v]) => `${esc(v)} → ${esc((RK.dept || {})[k] || '')}`).join(' · ') : ''}</li>`
+      + `<li><b>주요 원인</b> = 위험 톤이 큰 원인 2개, 옆 = 언제 풀리나(다음 생산일·입고 예정일)${RK ? `<ul>${Object.entries(RK.causeNm || {}).map(([k, v]) => `<li><b>${esc(v)}</b>${(RK.causeDef || {})[k] ? ` = ${esc(RK.causeDef[k])}` : ''} → ${esc((RK.dept || {})[k] || '')}</li>`).join('')}</ul>` : ''}</li>`
       + `<li><b>생산 진도</b> = ${view === 'month' ? '라인 실적 ÷ 일정 누계(도금 = 재계획 일정, 컬러 = 월 계획)' : '하루가 끝난 날의 도금 실적 ÷ 그날 아침 계획(컬러는 지난 날 일 계획 기록이 없어 월간에서)'} · 98% 이상 정상 · 90% 이상 주의</li>`
       + `<li><b>출하 미달</b> = ${view === 'month' ? '판매그룹 출하 실적 ÷ 오늘까지 기준(월 계획 × 그룹 월중 출하 실적 패턴) — 판매그룹 관제판과 같은 값' : '전날까지 MES 출하 실적 vs 하루 출고 계획(재고 추이와 같은 값)'}</li>`
       + `<li><b>소재 부족</b> = 발주 마감이 지난 부족(소재 화면과 같은 값)</li></ul>`;
     const conFold = view === 'day' ? conSec.replace(/^<section class="card"><h2>오늘·내일 라인별 생산 계약 <small>/, '<details class="fold ct-f"><summary>오늘·내일 라인별 생산 계약 <small>').replace(/<\/small><\/h2>/, '</small></summary>').replace(/<\/section>$/, '</details>') : '';
     main.innerHTML = warnSrc
-      + `<div class="ct-bar"><span class="ct-note"><b>${({ day: '금일 현황', week: '7일 전망', month: '월간 전망' })[view]}</b> · ${pLbl} · ${SCN} · 기준 ${md(asOf)}</span><a class="ct-note" href="board.html">판매그룹별 생산·출하·재고 → 관제판</a></div>`
+      + `<div class="ct-bar"><span class="ct-per"><span class="seg ct-seg ct-pseg" role="group" aria-label="기간">${[['day', '금일'], ['week', '7일'], ['month', '월간']].map(([k, t]) => `<button type="button" data-v="${k}" aria-pressed="${k === view}">${t}</button>`).join('')}</span><span class="ct-note"><b>${pLbl}</b> · ${SCN} · 기준 ${md(asOf)}</span></span><a class="ct-note" href="board.html">판매그룹별 생산·출하·재고 → 관제판</a></div>`
       + CT.kpis(K)
       + (rkTbl ? `<section class="card ct-act"><h2>판매그룹별 납기 위험 <small>위험 많은 순 · <a href="risk.html">납기 위험 화면 →</a></small>${rkLeg}</h2>${rkTbl}</section>` : `<section class="card ct-act"><h2>우선 조치 10건 <small>납기 지연 예상 → 마감 빠른 순</small></h2>${actTbl}</section>`)
       + lineSec
@@ -356,6 +356,7 @@
           (p) => { p.querySelectorAll('tr.ck').forEach((r) => r.onclick = () => { const o = os[+r.dataset.j]; CT.panel(CT.orderDetail(o), o.id); }); CT.keyRows(p); });
       } else if (a.href) location.href = a.href;
     };
+    main.querySelectorAll('.ct-pseg button').forEach((bt) => bt.onclick = () => { if (bt.dataset.v !== view) location.hash = bt.dataset.v; });   // 11/11 회의 '금일·7일·월간 따로 하지 말고 한 화면에서': 기간만 바꿈(주소 #day·#week·#month 그대로)
     main.querySelectorAll('.cd-seg button').forEach((bt) => bt.onclick = () => { main.querySelectorAll('.cd-seg button').forEach((x) => x.setAttribute('aria-pressed', String(x === bt))); main.querySelectorAll('.cd-wrap').forEach((w) => { w.hidden = w.dataset.d !== bt.dataset.d; }); });
     main.querySelectorAll('tr.ck').forEach((tr) => tr.onclick = () => open1(top[+tr.dataset.i]));
     CT.keyRows(main);

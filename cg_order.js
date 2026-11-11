@@ -90,7 +90,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     const needOn = x.remIn > 0.5;                                 // 소재가 다 들어왔으면(입고 완료·생산) 필요 입고일은 의미 없음
     const nm = (t, pre) => `<span class="nmw" title="${esc(t)}">${pre || ''}${esc(t).replace(/-/g, '\u2011').replace(/\(/g, '\u200b(')}</span>`;   // 이름은 띄어쓰기·괄호 앞에서만 줄 바꿈(하이픈에서 안 끊음)
     const who = [by !== 'cus' && x.cus ? nm(x.cus) : '', x.lcus && x.lcus !== x.cus ? nm(x.lcus, '최종\u00a0') : '', by !== 'man' && x.man ? `<span class="nw">담당 ${esc(x.man)}</span>` : '', by !== 'dst' && x.dst ? `<span class="nw">→ ${esc(x.dst)}</span>` : ''].filter(Boolean);
-    return `<tr><td>${stBadge(x)}${x.woWait ? '<div class="sub">작업지시됨</div>' : ''}</td>`
+    return `<tr class="${x.lateIn ? 'f-late ' : ''}${x.hurry ? 'f-hurry ' : ''}${x.chk ? 'f-chk' : ''}"><td>${stBadge(x)}${x.woWait ? '<div class="sub">작업지시됨</div>' : ''}</td>`
       + `<td><div class="con">${esc(x.con)}</div><div class="sub">${[x.line, x.pln, x.usg && `<span title="용도 코드"><span class="nw">용도 ${esc(x.usg)}</span>${x.usgNm ? ` ${esc(x.usgNm)}` : ''}</span>`].filter(Boolean).join(' · ')}</div></td>`
       + `<td><div class="chips">${prodChips(x)}</div><div class="sz">${x.thk != null ? `<span class="nw">${(+x.thk).toFixed(2)} × ${n0(x.wdt)}</span>` : ''}${x.ordT ? ` <span class="sub">· 주문 ${n1(x.ordT)}t</span>` : ''}</div>${x.pspec || x.spec ? `<div class="sub spc">${x.pspec ? `<span class="nw">제품 ${spk(x.pspec)}${x.grade && !(window.UI && UI.specKo && (UI.specKo(x.pspec) || {}).ko) ? ` <b>${esc(GRN[x.grade] || x.grade)}</b>` : ''}</span>` : ''}${x.pspec && x.spec ? ' · ' : ''}${x.spec ? `<span class="nw" title="소재(F/H) 규격 — 포스코 강종 약호">소재 ${esc(x.spec)}${x.specGr ? ` ${esc(GRN[x.specGr] || x.specGr)}` : ''}</span>` : ''}</div>` : ''}</td>`
       + `<td>${who.length ? who.map((w) => `<div>${w}</div>`).join('') : '<span class="sub">-</span>'}</td>`
@@ -104,8 +104,9 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
   const COLS = '<colgroup>' + [8.5, 13, 12.5, 11, 8, 9, 12, 8, 9.5, 8.5].map((w) => `<col style="width:${w}%">`).join('') + '</colgroup>';
   const HEAD = '<thead><tr><th>상태</th><th>계약번호-행번</th><th>제품 · 두께×폭</th><th>고객사·담당·목적지</th><th>납기 · 입항</th><th class="num">F/H 발주</th><th title="접수 → 제강(출강·SLAB) → 열연 → 냉연(압연·소둔·정정·판정) → 출하(운송) → 입고 · 파랑 = 지남 · 주황 = 지금 물량 있음 · 초록 = 입고">포스코 진행<div class="pbar ph"><span>접수</span><span>제강</span><span>열연</span><span>냉연</span><span>출하</span><span>입고</span></div></th><th class="num">입고 · 미입고</th><th class="num">생산</th><th class="num">필요 입고</th></tr></thead>';
   const sumOf = (L) => ({ n: L.length, rem: L.reduce((s, x) => s + (x.remIn || 0), 0), hurry: L.filter((x) => x.hurry).length, chk: L.filter((x) => x.chk).length, late: L.filter((x) => x.lateIn).length, est: L.filter((x) => x.grpSrc && x.grpSrc !== '주문').length, need: L.filter((x) => x.remIn > 0.5).map((x) => x.needIn).filter(Boolean).sort()[0] });
-  const stat = (S) => `<span class="gs"><b>${n0(S.n)}</b>건</span><span class="gs">미입고 <b>${n0(S.rem)}</b>t</span>`
-    + (S.late ? `<span class="gs bad">소재 지연 <b>${S.late}</b></span>` : '') + (S.hurry ? `<span class="gs warn">독촉 <b>${S.hurry}</b></span>` : '') + (S.chk ? `<span class="gs warn">입고 확인 <b>${S.chk}</b></span>` : '')
+  /* 11/11 회의 '소재 지연 누르면 그것만 나올 줄 알았는데 전부 나온다': 묶음 머리의 건수 칩 = 그 묶음 안 거르기(다시 누르거나 'N건' 누르면 전체) */
+  const stat = (S) => `<button type="button" class="gs gf" data-sf="" title="이 묶음 전체">${'<b>' + n0(S.n) + '</b>'}건</button><span class="gs">미입고 <b>${n0(S.rem)}</b>t</span>`
+    + (S.late ? `<button type="button" class="gs gf bad" data-sf="late" title="이 묶음에서 소재 지연만">소재 지연 <b>${S.late}</b></button>` : '') + (S.hurry ? `<button type="button" class="gs gf warn" data-sf="hurry" title="이 묶음에서 포스코 독촉만">독촉 <b>${S.hurry}</b></button>` : '') + (S.chk ? `<button type="button" class="gs gf warn" data-sf="chk" title="이 묶음에서 입고 확인만">입고 확인 <b>${S.chk}</b></button>` : '')
     + (S.need ? `<span class="gs">가장 이른 필요 입고 <b>${md(S.need)}</b></span>` : '');
   /* 판매그룹별 수치 + 합계 막대(10/29 사용자 '그룹별로 수치 · 합계로 그래프'): 주문 톤 = 생산 완료 + 소재 있음(생산 전) + 미입고 — 지금 고른 묶음·필터 그대로 */
   // 최근 2주 실제 생산이 필요 생산일 안에 끝난 비율(그룹별, 필터와 무관) — 수출은 실제 실린 배의 출항일 기준도 같이
@@ -125,7 +126,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     const gs = (g) => ({ 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차강판', 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발' }[g] || g);
     const tr = ([g, s], i) => `<tr${i === 0 ? ' class="tot"' : ''}><td>${i ? `<a href="#og-${i - 1}"><b>${esc(gs(g))}</b></a>` : `<b>${esc(gs(g))}</b>`}</td><td class="num">${n0(s.n)}</td>`
       + `<td class="gbcell"><div class="gb" title="${esc(g)} · 주문 ${n0(s.o)}t = 생산 완료 ${n0(s.p)} + 소재 있음 ${n0(s.h)} + 미입고 ${n0(s.r)}"><span class="gbr"><i class="a" style="width:${P(s.p)}"></i><i class="m" style="width:${P(s.h)}"></i><i class="b" style="width:${P(s.r)}"></i></span><span class="gbv"><b>${n0(s.o)}</b>t</span></div></td>`
-      + `<td class="num">${n0(s.p)} <small class="sub">${s.o ? Math.round(100 * s.p / s.o) : 0}%</small></td><td class="num">${n0(s.h)}</td><td class="num">${n0(s.r)}</td><td class="num ${s.late ? 'bad' : ''}">${s.late || '-'}</td><td class="num ${s.hurry ? 'warn' : ''}">${s.hurry || '-'}</td><td class="num">${s.chk || '-'}</td></tr>`;
+      + `<td class="num">${n0(s.p)} <small class="sub">${s.o ? Math.round(100 * s.p / s.o) : 0}%</small></td><td class="num">${n0(s.h)}</td><td class="num">${n0(s.r)}</td>${[['late', s.late, 'bad'], ['hurry', s.hurry, 'warn'], ['chk', s.chk, '']].map(([f, v, c]) => `<td class="num ${v ? c : ''}">${v ? `<button type="button" class="gcn" data-gf="${f}" data-g="${i ? esc(g) : ''}" title="${esc(gs(g))} ${F[f][0]} ${v}건만 보기">${v}</button>` : '-'}</td>`).join('')}</tr>`;
     return '<div class="gcard"><div class="gbl"><span><i class="a"></i>생산 완료</span><span><i class="m"></i>소재 있음(생산 전)</span><span><i class="b"></i>미입고(포스코 진행·미발주)</span><span class="sub">주문 톤</span></div>'
       + '<div class="scroll"><table class="t gtab"><thead><tr><th>그룹</th><th>건</th><th>주문 톤</th><th>생산 완료</th><th>소재 있음</th><th>미입고</th><th title="필요 입고일 대비 소재 지연">소재 지연</th><th title="필요 입고 3주 이내 · 열연 이전">포스코 독촉</th><th title="인도기한 지났는데 입고 기록 없음">입고 확인</th></tr></thead>'
       + `<tbody>${R.map((x, i) => tr(x, i)).join('')}</tbody></table></div>${perfLine(gs)}</div>`;
@@ -134,7 +135,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     const S = sumOf(L);
     L.sort((a, b) => (b.lateIn - a.lateIn) || (b.hurry - a.hurry) || (b.chk - a.chk) || String(a.needIn || a.due || '9').localeCompare(String(b.needIn || b.due || '9')) || a.con.localeCompare(b.con));
     const open = S.late > 0 && L.length <= 40 && i < 2;   // 11/11: 조치 필요한 묶음 중 위 2개만 펼침(화면이 수십 장 길어지던 것)
-    return `<details class="sg"${open ? ' open' : ''}><summary><span class="sn">${esc(name)}</span><span class="ss">${stat(S)}</span></summary>`
+    return `<details class="sg${S.late ? ' h-late' : ''}${S.hurry ? ' h-hurry' : ''}${S.chk ? ' h-chk' : ''}"${open ? ' open' : ''}><summary><span class="sn">${esc(name)}</span><span class="ss">${stat(S)}</span></summary>`
       + `<div class="scroll od-wrap"><table class="t od">${COLS}${HEAD}<tbody>${L.map(row).join('')}</tbody></table></div></details>`;
   }
   function group(g, L, gi) {
@@ -143,7 +144,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     for (const x of L) { const k = BY[by][1](x) || BY[by][2](); if (!m.has(k)) m.set(k, []); m.get(k).push(x); }
     const subs = [...m.entries()].map((e) => [e[0], e[1], sumOf(e[1])])
       .sort((a, b) => (b[2].late - a[2].late) || (b[2].hurry - a[2].hurry) || (b[2].chk - a[2].chk) || (b[2].n - a[2].n) || String(a[0]).localeCompare(String(b[0])));
-    return `<section class="og" id="og-${gi}"><header class="og-h"><h2>${esc(g)}</h2><div class="og-s">${stat(S)}${S.est ? `<span class="gs est" title="주문서 판매부서가 없어 실적·계약번호·용도로 판매그룹을 정한 계약">그룹 추정 ${S.est}</span>` : ''}</div></header>`
+    return `<section class="og" id="og-${gi}" data-g="${esc(g)}"><header class="og-h"><h2>${esc(g)}</h2><div class="og-s">${stat(S)}${S.est ? `<span class="gs est" title="주문서 판매부서가 없어 실적·계약번호·용도로 판매그룹을 정한 계약">그룹 추정 ${S.est}</span>` : ''}</div></header>`
       + `<div class="og-b">${subs.map(([k, v], i) => sub(k, v, i)).join('')}</div></section>`;
   }
   // 주문 충당(10/28 사용자: 2주치 주문이 깔려 있어야 — 라인별 캐파, 목표 = 월차). 핵심 숫자만(사용자 '부연설명 많다')
@@ -209,7 +210,8 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     const S = sumOf(L);
     $('od-meta').textContent = `${UI.fmtDate(O.asOf)} 기준 · 납기 −30일 ~ +90일 계약`;
     const wait = [!O.hasRun && '포스코 진행', !O.hasCus && '고객사·담당자', !O.hasFull && '목적지'].filter(Boolean);
-    $('od-main').innerHTML = topCard(R) + `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 주문진도</h2>`
+    const scN = window.UI && UI.scope && UI.scope() === 'C' ? '<p class="od-wait">이 화면은 도금 주문입니다 — <a href="cc_order.html?pl=C">컬러 주문진도 →</a></p>' : '';
+    $('od-main').innerHTML = scN + topCard(R) + `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 주문진도</h2>`
       + (wait.length ? `<p class="od-wait">⏳ ${wait.join(' · ')}: 다음 자동 실행(07:35) 뒤</p>` : '')
       + `<div class="od-flt"><span class="lb">묶음</span><span class="seg" id="od-by">${Object.keys(BY).map((b) => `<button type="button" data-b="${b}" aria-pressed="${b === by}">${BY[b][0]}별</button>`).join('')}</span>`
       + `<select id="od-f" aria-label="상태">${Object.keys(F).map((f) => `<option value="${f}"${f === flt ? ' selected' : ''}>${F[f][0]} ${n0(R.filter(F[f][1]).length)}</option>`).join('')}</select>`
@@ -221,6 +223,18 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
       + grpChart(byG) + byG.map(([g, v], gi) => group(g, v, gi)).join('') + '</section>' + basisFold();
     $('od-kpi').querySelectorAll('button').forEach((b) => b.onclick = () => { flt = flt === b.dataset.f ? 'all' : b.dataset.f; render(); });
     $('od-f').onchange = (e) => { flt = e.target.value; render(); };
+    $('od-main').querySelectorAll('.gf').forEach((b) => b.onclick = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const box = b.closest('details.sg') || b.closest('section.og'), f = box.dataset.sf === b.dataset.sf ? '' : b.dataset.sf;
+      box.dataset.sf = f;
+      box.querySelectorAll(':scope > summary .gf, :scope > header .gf').forEach((x) => x.setAttribute('aria-pressed', String(!!f && x.dataset.sf === f)));
+      if (box.tagName === 'DETAILS') box.open = true; else if (f) box.querySelectorAll(`details.sg.h-${f}`).forEach((d) => { d.open = true; });
+    });
+    $('od-main').querySelectorAll('.gcn').forEach((b) => b.onclick = () => {
+      const g = b.dataset.g; flt = b.dataset.gf; render();
+      const sec = g ? [...document.querySelectorAll('section.og')].find((x) => x.dataset.g === g) : null;
+      if (sec) { sec.querySelectorAll('details.sg').forEach((d) => { d.open = true; }); sec.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+    });
     $('od-by').querySelectorAll('button').forEach((b) => b.onclick = () => { by = b.dataset.b; try { localStorage.setItem(BY_KEY, by); } catch (e) { /* 무시 */ } render(); });
     $('od-q').oninput = (e) => { q = e.target.value; clearTimeout(render.t); render.t = setTimeout(() => { render(); const i = $('od-q'); i.focus(); i.setSelectionRange(q.length, q.length); }, 250); };
     $('od-ln').onchange = (e) => { ln = e.target.value; render(); };
@@ -229,6 +243,20 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     $('od-close').onclick = () => document.querySelectorAll('details.sg').forEach((d) => { d.open = false; });
     if (window.UI) UI.reveal($('od-main'));
   }
+  /* 11/11 회의 '도금 주문진도에 컬러가 나온다 — 치워라': 판매그룹이 컬러수출·컬러건재·수요개발인 도금 계약은 컬러 공장 투입용 도금(자가재, tools/order_demand.order_cls 와 같음)
+     → '자가재(컬러 투입)' 한 묶음으로 맨 뒤에(컬러 판매그룹 이름이 도금 화면에 안 나오게 · 도금 라인이 만들어야 하는 물량이라 지우지는 않음) */
+  const SELF = '자가재(컬러 투입)', isSelf = (g) => /^컬러|^수요/.test(String(g || ''));
+  function selfGroups() {
+    if (O._self) return; O._self = true;
+    O.rows.forEach((x) => { if (isSelf(x.grp)) { x.grpOrg = x.grp; x.grp = SELF; } });
+    O.groups = (O.groups || []).filter((g) => !isSelf(g)).concat(O.rows.some((x) => x.grp === SELF) ? [SELF] : []);
+    const P = O.perf && O.perf.groups;
+    if (P) { const m = { t: 0, known: 0, ok: 0, shipT: 0, shipOk: 0 }; let has = false;
+      Object.keys(P).filter(isSelf).forEach((g) => { has = true; Object.keys(m).forEach((k) => { m[k] += P[g][k] || 0; }); delete P[g]; });
+      if (has) P[SELF] = m; }
+  }
+  // 11/11 회의 '도금·컬러 나누는 거 — 컬러 눌러도 똑같다': 위 보기에서 컬러를 누르면 컬러 주문진도로
+  if (window.UI && UI.onScope) UI.onScope(() => { if (UI.scope() === 'C') location.href = 'cc_order.html?pl=C'; });
   const envReady = GP.latest('cg_order_progress.enc.json'), calReady = GP.latest('cg_calendar.enc.json');
   async function unlock(pw) {
     const env = await envReady;
@@ -236,6 +264,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
     catch (e) { $('od-form').hidden = false; $('od-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
     try { const ce = await calReady; if (ce) CAL = (await GP.decryptJSON(ce, pw)).contracts || null; } catch (e) { CAL = null; }
+    selfGroups();
     render();
   }
   $('od-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('od-pw').value); });

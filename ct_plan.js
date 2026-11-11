@@ -217,7 +217,7 @@
     if (!el) return;
     if (v !== 'cg' && v !== 'cc') { el.innerHTML = ''; return; }
     const pls = ['G', 'C'].filter((p) => CT.inScope(p));
-    const blk = (p) => `<section class="card ps-b${(p === 'G') === (v === 'cg') ? ' on' : ''}"><h2>${PLN[p]} <small>이번 주 ${wk7(AT[p])}</small>${pls.length > 1 ? `<a class="ps-cal" href="#${p === 'G' ? 'cg' : 'cc'}">${(p === 'G') === (v === 'cg') ? '아래 캘린더' : '캘린더 보기 →'}</a>` : ''}</h2>${SUM[p] || '<p class="ct-note">불러오는 중…</p>'}</section>`;
+    const blk = (p) => `<section class="card ps-b${(p === 'G') === (v === 'cg') ? ' on' : ''}"><h2>${PLN[p]} <small title="주 = 수~화 생산주 · 이 칸은 오늘부터 7일 합">오늘부터 7일 ${wk7(AT[p])}</small>${pls.length > 1 ? `<a class="ps-cal" href="#${p === 'G' ? 'cg' : 'cc'}">${(p === 'G') === (v === 'cg') ? '아래 캘린더' : '캘린더 보기 →'}</a>` : ''}</h2>${SUM[p] || '<p class="ct-note">불러오는 중…</p>'}</section>`;
     const more = DD && X ? `<section class="card ps-m"><a class="ps-ln" href="#cmp"><i>계획 변경</i>${chgLine(DD) || '<span class="sub">직전 판 없음</span>'}<em>→</em></a><a class="ps-ln" href="#load" title="게시 재계획 물량 ÷ 가용 능력(도금 = 2026년 실적 t/h, 컬러 = 편성분 ÷ 가용분) — 위 '시간 부하'(현장 편성 주문 × 두께·폭별 t/hr)와 기준이 다름"><i>${+X.today.slice(5, 7)}월 재계획 부하</i>${LR ? loadLine(LR) : ''}<em>→</em></a></section>` : '';
     el.innerHTML = `<div class="ps-g${pls.length > 1 ? ' two' : ''}">${pls.map(blk).join('')}</div>${more}`;
     el.querySelectorAll('.ps-go').forEach((b) => (b.onclick = () => { const t = $(b.dataset.go); if (t) t.scrollIntoView({ block: 'start', behavior: 'smooth' }); }));

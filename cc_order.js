@@ -45,7 +45,7 @@
   function row(x) {
     const clr = `${x.top ? `<span class="ch clr" title="Top Color">${esc(x.top)}</span>` : ''}<div class="sub" title="Primer · Back">${[x.pri && `P ${esc(x.pri)}`, x.back && `B ${esc(x.back)}`].filter(Boolean).join(' · ')}</div>`;
     const pct = x.ordT ? Math.min(100, x.prodT / x.ordT * 100) : 0;
-    return `<tr><td>${stBadge(x)}</td>`
+    return `<tr class="${x.st !== '매치 완료' ? 'f-nomch ' : ''}${x.st === '소재 없음' ? 'f-none ' : ''}${x.lateDue ? 'f-late' : ''}"><td>${stBadge(x)}</td>`
       + `<td><div class="con">${esc(x.con)}</div><div class="sub">${esc(x.line)}${x.spec ? ` · <span style="white-space:nowrap">규격 ${window.UI && UI.specHtml ? UI.specHtml(x.spec) : esc(x.spec)}</span>` : ''}${x.pdt ? ` · ${esc(x.pdt)}` : ''}${by !== 'man' && x.man ? ` · 담당 ${esc(x.man)}` : ''}${by !== 'cus' && x.cus ? ` · ${esc(x.cus)}` : ''}</div></td>`
       + `<td><div class="sz">${x.thk != null ? `${(+x.thk).toFixed(2)} × ${n0(x.wdt)}` : ''}</div>${clr}</td>`
       + `<td class="nw">납기 <b class="${x.lateDue ? 'neg' : ''}">${md(x.due) || '-'}</b></td>`
@@ -57,8 +57,9 @@
   const COLS = '<colgroup>' + [8, 14, 13, 8.5, 11, 9, 21.5, 15].map((w) => `<col style="width:${w}%">`).join('') + '</colgroup>';
   const HEAD = '<thead><tr><th>상태</th><th>계약번호-행번</th><th>두께×폭 · 색</th><th>납기</th><th class="num" title="미생산 = 주문량 − 생산량(MES 주문잔여량)">미생산 · 주문 · 생산</th><th class="num">매치 · 지시</th><th>소재 연결</th><th class="num">작업 예정 · 가동가능</th></tr></thead>';
   const sumOf = (L) => ({ n: L.length, rem: L.reduce((s, x) => s + x.remT, 0), late: L.filter((x) => x.lateDue).length, none: L.filter((x) => x.st === '소재 없음').length, nomch: L.filter((x) => x.st !== '매치 완료').length });
-  const stat = (S) => `<span class="gs"><b>${n0(S.n)}</b>건</span><span class="gs">미생산 <b>${n0(S.rem)}</b>t</span>`
-    + (S.nomch ? `<span class="gs warn">미매치 <b>${S.nomch}</b></span>` : '') + (S.none ? `<span class="gs bad">소재 없음 <b>${S.none}</b></span>` : '') + (S.late ? `<span class="gs bad">납기 경과 <b>${S.late}</b></span>` : '');
+  /* 11/11 회의 '누르면 그것만 나올 줄 알았는데 전부 나온다 — 컬러도 똑같다': 묶음 머리 칩 = 그 묶음 안 거르기('N건' = 전체) */
+  const stat = (S) => `<button type="button" class="gs gf" data-sf="" title="이 묶음 전체"><b>${n0(S.n)}</b>건</button><span class="gs">미생산 <b>${n0(S.rem)}</b>t</span>`
+    + (S.nomch ? `<button type="button" class="gs gf warn" data-sf="nomch" title="이 묶음에서 미매치만">미매치 <b>${S.nomch}</b></button>` : '') + (S.none ? `<button type="button" class="gs gf bad" data-sf="none" title="이 묶음에서 소재 없음만">소재 없음 <b>${S.none}</b></button>` : '') + (S.late ? `<button type="button" class="gs gf bad" data-sf="late" title="이 묶음에서 납기 경과만">납기 경과 <b>${S.late}</b></button>` : '');
   function grpChart(byG) {                                    // 판매그룹별 잔량 = 매치 완료 + 소재 있음 + 입고 대기 + 소재 없음(t)
     if (!byG.length) return '';
     const sm = (L) => { const t = (s) => L.filter((x) => x.st === s).reduce((a, x) => a + x.remT, 0); return { m: t('매치 완료'), s: t('소재 있음'), w: t('입고 대기'), z: t('소재 없음'), ...sumOf(L) }; };
@@ -66,7 +67,7 @@
     const P = (v) => (100 * v / mx).toFixed(2) + '%';
     const tr = ([g, s], i) => `<tr${i === 0 ? ' class="tot"' : ''}><td>${i ? `<a href="#og-${i - 1}"><b>${esc(gs(g))}</b></a>` : `<b>${esc(gs(g))}</b>`}</td><td class="num">${n0(s.n)}</td>`
       + `<td class="gbcell"><div class="gb" title="${esc(gs(g))} 미생산 ${n0(s.rem)}t = 매치 완료 ${n0(s.m)} + 소재 있음 ${n0(s.s)} + 입고 대기 ${n0(s.w)} + 소재 없음 ${n0(s.z)}"><span class="gbr"><i class="a" style="width:${P(s.m)}"></i><i class="m" style="width:${P(s.s)}"></i><i class="w" style="width:${P(s.w)}"></i><i class="z" style="width:${P(s.z)}"></i></span><span class="gbv">${n0(s.rem)}t</span></div></td>`
-      + `<td class="num">${n0(s.m)}</td><td class="num">${n0(s.s)}</td><td class="num">${n0(s.w)}</td><td class="num ${s.z ? 'bad' : ''}">${n0(s.z)}</td><td class="num ${s.late ? 'bad' : ''}">${s.late || '-'}</td></tr>`;
+      + `<td class="num">${n0(s.m)}</td><td class="num">${n0(s.s)}</td><td class="num">${n0(s.w)}</td><td class="num ${s.z ? 'bad' : ''}">${n0(s.z)}</td><td class="num ${s.late ? 'bad' : ''}">${s.late ? `<button type="button" class="gcn" data-gf="late" data-g="${i ? esc(g) : ''}" title="${esc(gs(g))} 납기 경과 ${s.late}건만 보기">${s.late}</button>` : '-'}</td></tr>`;
     return '<div class="gcard"><div class="gbl"><span><i class="a"></i>매치 완료</span><span><i class="m"></i>소재 있음(매치 전)</span><span><i class="w"></i>입고 대기</span><span><i class="z"></i>소재 없음</span><span class="sub">미생산 톤</span></div>'
       + '<div class="scroll"><table class="t gtab"><thead><tr><th>그룹</th><th>건</th><th>미생산 t</th><th>매치 완료 t</th><th>소재 있음 t</th><th>입고 대기 t</th><th>소재 없음 t</th><th>납기 경과 건</th></tr></thead>'
       + `<tbody>${R.map((x, i) => tr(x, i)).join('')}</tbody></table></div></div>`;
@@ -75,14 +76,14 @@
   function sub(name, L, i) {
     const S = sumOf(L);
     L.sort((a, b) => (ORD[a.st] - ORD[b.st]) || (b.lateDue - a.lateDue) || String(a.due || '9').localeCompare(String(b.due || '9')) || a.con.localeCompare(b.con));
-    return `<details class="sg"${S.none && L.length <= 40 && i < 2 ? ' open' : ''}><summary><span class="sn">${esc(name)}</span><span class="ss">${stat(S)}</span></summary>`
+    return `<details class="sg${S.nomch ? ' h-nomch' : ''}${S.none ? ' h-none' : ''}${S.late ? ' h-late' : ''}"${S.none && L.length <= 40 && i < 2 ? ' open' : ''}><summary><span class="sn">${esc(name)}</span><span class="ss">${stat(S)}</span></summary>`
       + `<div class="scroll od-wrap"><table class="t od">${COLS}${HEAD}<tbody>${L.map(row).join('')}</tbody></table></div></details>`;
   }
   function group(g, L, gi) {
     const m = new Map();
     for (const x of L) { const k = BY[by][1](x); if (!m.has(k)) m.set(k, []); m.get(k).push(x); }
     const subs = [...m.entries()].map((e) => [e[0], e[1], sumOf(e[1])]).sort((a, b) => (b[2].none - a[2].none) || (b[2].late - a[2].late) || (b[2].n - a[2].n));
-    return `<section class="og" id="og-${gi}"><header class="og-h"><h2>${esc(gs(g))}</h2><div class="og-s">${stat(sumOf(L))}</div></header>`
+    return `<section class="og" id="og-${gi}" data-g="${esc(g)}"><header class="og-h"><h2>${esc(gs(g))}</h2><div class="og-s">${stat(sumOf(L))}</div></header>`
       + `<div class="og-b">${subs.map(([k, v], i) => sub(k, v, i)).join('')}</div></section>`;
   }
   /* 첫 화면 결론(11/11): 조치가 필요한 묶음(건·미생산 t)을 크게 → 누르면 아래 목록이 그 묶음만 · 이번 주(수~화) 납기 한 줄 */
@@ -120,7 +121,8 @@
     const byG = groups.map((g) => [g, L.filter((x) => x.grp === g)]).filter((e) => e[1].length);
     const S = sumOf(L);
     $('od-meta').textContent = `${UI.fmtDate(O.asOf)} 기준 · ${O.lines.map((l) => `${l} ${md(O.srcs[l].date)}`).join(' · ')}${O.missing.length ? ` · ${O.missing.join('·')} 자료 없음` : ''}`;
-    $('od-main').innerHTML = topCard(R) + `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 주문진도</h2>`
+    const scN = window.UI && UI.scope && UI.scope() === 'G' ? '<p class="od-wait">이 화면은 컬러 주문입니다 — <a href="cg_order.html?pl=G">도금 주문진도 →</a></p>' : '';
+    $('od-main').innerHTML = scN + topCard(R) + `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 주문진도</h2>`
       + (O.missing.length ? `<p class="od-wait">⏳ ${O.missing.join('·')}: 작업지시대상선정 자료 없음 — 라인별 내려받기 수신 시 같은 화면에 표시</p>` : '')
       + `<div class="od-flt"><span class="lb">묶음</span><span class="seg" id="od-by">${Object.keys(BY).map((b) => `<button type="button" data-b="${b}" aria-pressed="${b === by}">${BY[b][0]}별</button>`).join('')}</span>`
       + `<select id="od-f" aria-label="상태">${Object.keys(F).map((f) => `<option value="${f}"${f === flt ? ' selected' : ''}>${F[f][0]} ${n0(R.filter(F[f][1]).length)}</option>`).join('')}</select>`
@@ -131,6 +133,18 @@
       + grpChart(byG) + byG.map(([g, v], gi) => group(g, v, gi)).join('') + '</section>' + basisFold();
     $('od-kpi').querySelectorAll('button').forEach((b) => b.onclick = () => { flt = flt === b.dataset.f ? 'all' : b.dataset.f; render(); });
     $('od-f').onchange = (e) => { flt = e.target.value; render(); };
+    $('od-main').querySelectorAll('.gf').forEach((b) => b.onclick = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const box = b.closest('details.sg') || b.closest('section.og'), f = box.dataset.sf === b.dataset.sf ? '' : b.dataset.sf;
+      box.dataset.sf = f;
+      box.querySelectorAll(':scope > summary .gf, :scope > header .gf').forEach((x) => x.setAttribute('aria-pressed', String(!!f && x.dataset.sf === f)));
+      if (box.tagName === 'DETAILS') box.open = true; else if (f) box.querySelectorAll(`details.sg.h-${f}`).forEach((d) => { d.open = true; });
+    });
+    $('od-main').querySelectorAll('.gcn').forEach((b) => b.onclick = () => {
+      const g = b.dataset.g; flt = b.dataset.gf; render();
+      const sec = g ? [...document.querySelectorAll('section.og')].find((x) => x.dataset.g === g) : null;
+      if (sec) { sec.querySelectorAll('details.sg').forEach((d) => { d.open = true; }); sec.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+    });
     $('od-by').querySelectorAll('button').forEach((b) => b.onclick = () => { by = b.dataset.b; try { localStorage.setItem(BY_KEY, by); } catch (e) { /* 무시 */ } render(); });
     $('od-q').oninput = (e) => { q = e.target.value; clearTimeout(render.t); render.t = setTimeout(() => { render(); const i = $('od-q'); i.focus(); i.setSelectionRange(q.length, q.length); }, 250); };
     $('od-ln').onchange = (e) => { ln = e.target.value; render(); };
@@ -138,6 +152,8 @@
     $('od-close').onclick = () => document.querySelectorAll('details.sg').forEach((d) => { d.open = false; });
     if (window.UI) UI.reveal($('od-main'));
   }
+  // 11/11 회의 '도금·컬러 나누는 거 — 눌러도 똑같다': 위 보기에서 도금을 누르면 도금 주문진도로
+  if (window.UI && UI.onScope) UI.onScope(() => { if (UI.scope() === 'G') location.href = 'cg_order.html?pl=G'; });
   const envReady = GP.latest('cc_order_progress.enc.json');
   async function unlock(pw) {
     const env = await envReady;
