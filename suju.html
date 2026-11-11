@@ -6,7 +6,7 @@
 <title>수주 관제</title>
 <meta name="description" content="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준) — 수주팀 화면 양식">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611110510">
+<link rel="stylesheet" href="ui/theme.css?v=2611110517">
 <style>
 main.wrap { max-width: none; }
 #ui-ctl { display: none !important; }   /* 포털 공통 그룹 상태 띠 — ① 그룹 매트릭스와 같은 내용이라 이 탭에서만 숨김 */
@@ -62,13 +62,17 @@ html body main table.sj-cal th, html body main table.sj-cal td { border: 1px sol
 html body main table.sj-cal thead th { background: var(--th, var(--sub)); color: var(--ink-2); height: 42px; }
 .sj-cal thead th b { display: block; font-size: 14px; color: var(--ink); } .sj-cal thead th span { display: block; font-size: 13.5px; font-weight: 500; }
 .sj-cal thead th.we b, .sj-cal thead th.we span { color: var(--bad); }
-html body main table.sj-cal .lab { width: 136px; text-align: left !important; padding: 3px 10px; background: var(--surface); position: sticky; left: 0; z-index: 1; }
+html body main table.sj-cal .lab { width: 196px; text-align: left !important; padding: 3px 10px; background: var(--surface); position: sticky; left: 0; z-index: 1; }
 .sj-cal td.lab b { display: block; font-size: 14px; color: var(--ink); } .sj-cal td.lab span { display: block; white-space: nowrap; font-size: 13.5px; color: var(--ink-2); font-weight: 500; }
 html body main table.sj-cal .wst { border-left: 2px solid var(--ink-2) !important; }
 html body main table.sj-cal td.gsep:not(.wst), html body main table.sj-cal th.gsep:not(.wst) { border-left: 1px solid var(--line) !important; }   /* 공통 월 구분선이 요일 '월'을 달로 읽어 생기던 굵은 선 지움 */
 html body main table.sj-cal .now { box-shadow: inset 0 0 0 2px var(--bad); }
 /* 가동 칸 */
 .sj-cal td.ac { font-weight: 700; color: var(--ink); }
+/* 11/11 회의: 한 칸 위 계획 · 아래 실적 */
+html body main table.sj-cal tr.r2 td { height: 46px; } .sj-cal td.pa span, .sj-cal td.pl span { display: block; font-size: 13.5px; color: var(--ink-2); font-weight: 500; } .sj-cal td.pa b { display: block; font-size: 14px; color: var(--ink); }
+.sj-cal td.pa.lo b { color: var(--bad); } .sj-cal td.pl b.fu { display: block; color: transparent; }
+.sj-cal td.lab span.pa2 { color: var(--ink); font-weight: 600; } html body main table.sj-cal tr.tot td { background: var(--sub); font-weight: 700; } html body main table.sj-cal tr.tot td.lab { background: var(--sub); }
 .sj-clg i.ac { background: var(--surface); box-shadow: inset 0 0 0 1px var(--ink-2); }
 html body main table.sj-cal tr.ga td { height: 44px; } .sj-cal tr.ga td.ac b { display: block; color: #1f4f9c; } .sj-cal tr.ga em { display: block; font-style: normal; font-size: 13.5px; font-weight: 600; }
 .sj-cal tr.ga td.lab em { display: inline; } .sj-cal em.up { color: var(--ink-2); } .sj-cal em.dn { color: var(--bad); }
@@ -151,8 +155,8 @@ html body main table.ct-t.sj-mx { width: 100%; }
 /* 그룹 관제 매트릭스 */
 html body main table.ct-t.sj-mx2 { width: 100%; font-variant-numeric: tabular-nums; }
 /* 11/11 사용자 '칸 안 맞음': 칸 폭 고정(넓혀도 머리글·숫자가 같은 줄) — 숫자 칸 머리글은 오른쪽, 진도·문제는 왼쪽, 상태는 가운데 */
-html body main table.ct-t.sj-mx2 { table-layout: fixed; min-width: 1180px; }
-.sj-mx2 col.c-nm { width: 12%; } .sj-mx2 col.c-is { width: 8%; } .sj-mx2 col.c-n { width: 7%; } .sj-mx2 col.c-pc { width: 12%; } .sj-mx2 col.c-d { width: 7%; } .sj-mx2 col.c-st { width: 7%; }
+html body main table.ct-t.sj-mx2 { table-layout: fixed; min-width: 1400px; }
+.sj-mx2 col.c-nm { width: 10%; } .sj-mx2 col.c-is { width: 7%; } .sj-mx2 col.c-n { width: 5.2%; } .sj-mx2 col.c-pc { width: 10%; } .sj-mx2 col.c-d { width: 6.4%; } .sj-mx2 col.c-st { width: 5%; } .sj-pc .nt2 { font-size: 13.5px; color: var(--ink-2); margin-left: 6px; white-space: nowrap; } .sj-mx2 td.r .nt { display: block; font-size: 13.5px; color: var(--ink-2); }
 html body main table.ct-t.sj-mx2 th.r, html body main table.ct-t.sj-mx2 td.r { text-align: right !important; }
 html body main table.ct-t.sj-mx2 th.c, html body main table.ct-t.sj-mx2 td.c { text-align: center !important; }
 html body main table.ct-t.sj-mx2 thead tr:not(.g) th:not(.r):not(.c) { text-align: left !important; }
@@ -200,9 +204,9 @@ html body main table.ct-t.sj-wo { width: 100%; table-layout: fixed; min-width: 9
 <header id="shell" data-page="suju" data-title="수주 관제" data-sub="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준)"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보·통합 계획 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611110510"></script>
-<script src="engine/crypto.js?v=2611110510"></script>
-<script src="ui/ct.js?v=2611110510"></script>
-<script src="suju.js?v=2611110510"></script>
+<script src="ui/shell.js?v=2611110517"></script>
+<script src="engine/crypto.js?v=2611110517"></script>
+<script src="ui/ct.js?v=2611110517"></script>
+<script src="suju.js?v=2611110517"></script>
 </body>
 </html>
