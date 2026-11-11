@@ -126,10 +126,12 @@
 
   /* ② 그룹 관제 매트릭스(11/11 사용자 '칸 늘려도 되니 더 직관적으로') — 수주 · 생산 · 재고 세 묶음, 공장별 소계, 합으로 판정하는 그룹은 한 칸으로 합침, 첫 칸 = 문제 */
   function matrix(G, prog) {
+    // 11/11 검토: 생산 판정 = 표시 숫자와 같은 기준(실적 ÷ 월 계획 − 경과 위치) · ±5%p 정상 · ±10%p 주의 · 그 밖 경고(넘으면 초과)
+    const mGap = (g) => (g.planMon ? (g.actMon - g.planMonCum) / g.planMon * 100 : null), mSt = (g) => { const d = mGap(g); return d == null ? null : Math.abs(d) <= 5 ? '정상' : Math.abs(d) <= 10 ? '주의' : '경고'; };
     const ISS = (g) => { const a = [];
       if (g.progSt === '경고' || g.progSt === '주의') a.push([SC[g.progSt], '수주 부족']);
       if (g.progSt === '확인') a.push(['warn', '주문 확인']);
-      if (g.achSt === '경고' || g.achSt === '주의') a.push(g.ach > 100 ? ['warn', '생산 초과'] : [SC[g.achSt], '생산 미달']);
+      if (mSt(g) === '경고' || mSt(g) === '주의') a.push(mGap(g) > 0 ? ['warn', '생산 초과'] : [SC[mSt(g)], '생산 미달']);
       if (g.stockSt === '부족') a.push(['bad', '재고 부족']); else if (g.stockSt === '경고' || g.stockSt === '주의') a.push([SC[g.stockSt], '재고 과다']);
       return a; };
     const span = (L, i, k) => { const v = L[i][k]; if (!v) return 1; if (i > 0 && L[i - 1][k] === v) return 0; let n = 1; while (L[i + n] && L[i + n][k] === v) n++; return n; };
@@ -138,7 +140,7 @@
       const pcell = ps === 0 ? '' : g.base == null ? '<td class="bk pcol"><span class="muted">주문 없음</span></td>' : pc(g.progJ != null ? g.progJ : g.prog, g.progSt, false, ps, g.progGrp ? '3그룹 합' : '');
       // 11/11 회의: 생산 진도 = 월 계획 대비 실적(막대 검은 선 = 오늘까지 계획 위치) · 판정 색은 1일~어제 계획 대비
       const mv = g.planMon ? g.actMon / g.planMon * 100 : null, mk = g.planMon ? g.planMonCum / g.planMon * 100 : null;
-      const acell = as === 0 ? '' : `<td class="bk pcol"${as > 1 ? ` rowspan="${as}"` : ''}>${mv == null ? (g.planMon === 0 ? '<span class="muted" title="이달 그룹 월 계획 0(재고가 목표보다 많음)">월 계획 0</span>' : '<span class="ct-b na">–</span>') : `<div class="sj-pc" title="월 계획 ${T(g.planMon)}t 중 실적 ${T(g.actMon)}t · 오늘까지 계획 ${T(g.planMonCum)}t(${pct(mk)}) · 계획 대비 ${pct(g.ach)}">${B(g.achSt, pct(mv))}<span class="nt2">기준 ${pct(mk)}</span>${bar(mv, 100, stCol(g.achSt, isOver(g.achSt, g.ach)), mk)}${g.achGrp ? `<span class="nt">${g.achGrp.startsWith('컬러수출') ? '3그룹 합' : '건재 합'}</span>` : ''}</div>`}</td>`;
+      const acell = as === 0 ? '' : `<td class="bk pcol"${as > 1 ? ` rowspan="${as}"` : ''}>${mv == null ? (g.planMon === 0 ? '<span class="muted" title="이달 그룹 월 계획 0(재고가 목표보다 많음)">월 계획 0</span>' : '<span class="ct-b na">–</span>') : `<div class="sj-pc" title="월 계획 ${T(g.planMon)}t 중 실적 ${T(g.actMon)}t · 경과 위치 ${T(g.planMonCum)}t(${pct(mk)}) · 차이 ${mGap(g) >= 0 ? '+' : ''}${(mGap(g) || 0).toFixed(1)}%p">${B(mSt(g), pct(mv))}<span class="nt2">기준 ${pct(mk)}</span>${bar(mv, 100, stCol(mSt(g), mGap(g) > 5), mk)}${g.achGrp ? `<span class="nt">${g.achGrp.startsWith('컬러수출') ? '3그룹 합' : '건재 합'}</span>` : ''}</div>`}</td>`;
       // 출하: 판매생산속보 월 계획 · 실적 · 진도(검은 선 = 출하 기준선 = 그룹 출하 실적 패턴) — 컬러는 수출 3그룹·건재 2그룹 합
       const ss = span(L, i, 'shipGrp'), sv = g.shipMon ? g.shipAct / g.shipMon * 100 : null, sk = g.shipMon && g.shipDue != null ? g.shipDue / g.shipMon * 100 : null, sst = sv == null || sk == null ? null : sv - sk >= -5 ? '정상' : sv - sk >= -15 ? '주의' : '경고';
       const shcell = ss === 0 ? '' : g.shipMon == null ? '<td class="r bk"><span class="muted">출하 없음</span></td><td></td><td class="pcol"></td>'
@@ -161,7 +163,7 @@
     if (G.some((g) => g.plant === 'C') && G.some((g) => g.plant === 'G')) body += sub('전체 합계 <small>자가재 제외(내부 투입)</small>', G.filter((g) => g.key !== '자가재'));
     const hd = `<tr class="g"><th rowspan="2">그룹</th><th rowspan="2">문제</th><th colspan="4" class="bk">수주 <small>~${md(D.cut)} 편성 기준</small></th><th colspan="3" class="bk">생산 <small>월 계획 대비 · 실적 ~${md(D.asOf)}</small></th><th colspan="3" class="bk">출하 <small>판생 월 계획 대비</small></th><th colspan="3" class="bk">재고 <small>예상 월말</small></th></tr>`
       + `<tr><th class="r bk" title="이달 판매(출하) 목표">판매계획</th><th class="r" title="${md(D.month + '-01')}~${md(D.cut)} 생산 편성 — 오늘까지 확정됐어야 할 양">기준선</th><th class="r" title="실적 + 소재 매치 잔량">확정</th><th class="bk" title="확정 ÷ 기준선 · 검은 선 = 100%">진도</th>`
-      + `<th class="r bk" title="이달 생산 계획(월 전체)">월 계획</th><th class="r">실적</th><th class="bk" title="실적 ÷ 월 계획 · 검은 선 = 오늘까지 계획 위치 · 색 = 오늘까지 계획 대비">진도</th><th class="r bk" title="판매생산속보 이달 출하 계획">월 계획</th><th class="r">실적</th><th title="출하 실적 ÷ 월 계획 · 검은 선 = 출하 기준선(그룹 출하 실적 패턴)">진도</th><th class="r bk">재고(t)</th><th class="r" title="예상 / 상한">일수</th><th class="c">상태</th></tr>`;
+      + `<th class="r bk" title="이달 생산 계획(월 전체)">월 계획</th><th class="r">실적</th><th class="bk" title="실적 ÷ 월 계획 · 검은 선 = 오늘까지 계획 위치 · 색 = 오늘까지 계획 대비">진도</th><th class="r bk" title="판매생산속보 이달 출하 계획">월 계획</th><th class="r">실적</th><th title="출하 실적 ÷ 월 계획 · 검은 선 = 출하 기준선(그룹 출하 실적 패턴) · 출하 실적 = MES 출하(선적·출고 확정 기준, 월간 가동과 같은 값) — 재고 탭의 출고(재고 변화로 계산)와 기준이 다름">진도</th><th class="r bk">재고(t)</th><th class="r" title="예상 / 상한">일수</th><th class="c">상태</th></tr>`;
     return card(2, '그룹 관제 매트릭스', `수주 · 생산 · 출하 · 재고 · ${+D.month.slice(5)}월 · 막대 검은 선 = 오늘 있어야 할 위치`,
       `<div class="ct-wrap"><table class="ct-t sj-mx2"><colgroup><col class="c-nm"><col class="c-is"><col class="c-n"><col class="c-n"><col class="c-n"><col class="c-pc"><col class="c-n"><col class="c-n"><col class="c-pc"><col class="c-n"><col class="c-n"><col class="c-pc"><col class="c-n"><col class="c-d"><col class="c-st"></colgroup><thead>${hd}</thead><tbody>${body}</tbody></table></div>`);
   }
@@ -442,7 +444,8 @@
         + tbl(['소재', '두께×폭', ['필요', 'r'], ['3달 발주 필요', 'r'], ['마감 지난 부족', 'r'], '판정', '첫 부족일', '발주일', '입고 예상'], S.map((x) => `<tr title="${esc(String(x.why || '').replace(/\b(\d{2})-(\d{2})\b/g, (m, a, b) => `${+a}/${+b}`))}"><td class="nm">${esc(x.mat)}</td><td class="nw">${esc(x.size)}</td><td class="r">${T(x.need)}</td><td class="r">${T(x.gap)}</td><td class="r">${x.late >= 1 ? `<b class="neg">${T(x.late)}</b>` : '–'}</td><td>${x.late >= 1 ? '<span class="ct-b bad">마감 지남</span>' : '<span class="ct-b warn">발주</span>'}</td><td>${md(x.first)}</td><td>${[...new Set(x.order || [])].map(md).join('~')}</td><td>${md(x.arrive)}</td></tr>`)) + '</details>' : '';
       // 11/11 회의 '컬러 소재는 자가재가 나와야지': 도금 자가재(AZ·MAC·AL — 도금이 만들어 컬러에 넣는 소재) 한 줄 — 재고 = 지금 자가재 실재고, 월 소요 = 이달 컬러 투입 필요, 이달 입고 = 이달 도금 자가재 생산, 예상 월말 = 그룹 관제 매트릭스와 같은 값
       const sg = p === 'C' ? D.groups.find((g) => g.key === '자가재') : null, sw_ = (D.kpi && D.kpi.whG) || {};
-      const sr = sg ? row({ st: sg.endDays == null ? null : sg.endDays < 5 ? '경고' : sg.endDays < 7 ? '주의' : '정상', name: '도금 자가재(AZ·MAC·AL)', cls: ['자사 도금 생산'], days: sg.endDays, stock: sw_.self, use: sg.sales, recv: sg.actCum, dueIn: null, end: sg.end, lt: null }) : '';
+      const sb_ = (D.bridge || []).find((x) => x.eng === 'G자가재') || {};   // 재고 탭과 같은 값: 지금 재고 + 남은 도금 생산 − 남은 컬러 투입 = 예상 월말
+      const sr = sg ? row({ st: sg.stockSt, name: '도금 자가재(AZ·MAC·AL)', cls: ['자사 도금 생산 · 월 소요 = 남은 컬러 투입 · 입고 예정 = 남은 도금 생산'], days: sg.endDays, stock: sb_.begin ?? sw_.self, use: sb_.sales, recv: sg.actCum, dueIn: sb_.prod, end: sb_.end ?? sg.end, lt: null }) : '';
       const bd = Y.filter((x) => x.st && x.st !== '정상').length;
       return card(p === 'G' ? 1 : 2, `${PN(p)} 소재`, `${Y.length}종${bd ? ` · 위험 ${bd}` : ' · 모두 7일분 이상'} · 재고일수 낮은 순`, `<div class="ct-wrap"><table class="ct-t sj-mt2">${hd}<tbody>${sr}${Y.map(row).join('')}</tbody></table></div>` + sh); };
     const c3 = card(3, '2주 안 발주 대상', '발주일 가까운 순 · 소재 발주 화면과 같은 발주일', N.length ? tbl(['소재', '공급사', '발주일', ['이번 발주량', 'r'], '상태'], N.map((x) => `<tr><td class="nm" title="${PN(x.plant)} · 부족 시작 ${md(x.first)} · 3달 발주 필요 ${T(x.short)}t"><b>${esc(x.mat)}</b></td><td>${esc(x.sup)}</td><td class="nw" title="${esc(x.rule || '')}"><b>${md(x.deadline)}</b> ${dday(x.deadline)}</td><td class="r"><b>${T(x.t)}</b></td><td><span class="ct-b ${x.orderNow ? 'bad' : 'warn'}">${x.orderNow ? '발주 기간' : '대기'}</span></td></tr>`)) + '<p class="sj-foot"><a href="procure.html">→ 소재 발주 화면</a></p>' : UI.empty('2주 안 발주일 없음'));
