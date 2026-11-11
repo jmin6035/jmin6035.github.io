@@ -152,7 +152,7 @@
       + (d.pl === 'C' ? tr(1, '1,000kg 이하(제외, T·Q 제외)', d.exS, null, 'mu') + tr(0, '미생산 없음(제외)', d.exZ, null, 'mu') : tr(0, '미생산 없음·생산 완료(제외)', ag((d.all || []).filter((o) => !d.R.includes(o))), null, 'mu'));
     const det = `<details class="pd"><summary${d.pl === 'C' ? ' title="MES SSCHC1010 양식"' : ''}>상세 표 <small>건수·주문량·생산량·미생산·매치량·작업가능일(라인 평균)</small></summary><div class="ct-wrap"><table class="ct-t pdt"><thead><tr><th>구분</th><th class="r">건수</th><th class="r">주문량(t)</th><th class="r">생산량(t)</th><th class="r">미생산(t)</th><th class="r">매치량(t)</th><th class="r">작업가능일</th></tr></thead><tbody>${tb}</tbody></table></div></details>`;
     const note = d.pl === 'G' ? `<p class="ct-note">작업시간 = 미생산 잔량 ÷ 계약별 t/h(라인·강종·부서 실적 속도, 1~10월 보정) · 작업가능일 = 라인별 작업시간 ÷ 24시간.</p>` : d.pl === 'C' ? `<p class="ct-note" title="${esc(((D0 || {}).cc_order_progress || {}).tphNote || '컬러 생산 실적')}">작업시간 = 미생산 잔량(작업지시량은 확정 지시중량) ÷ 계약별 t/h · 작업가능일 = 라인별 작업시간 ÷ 24시간.${d.cusLoaded ? '' : ' <b>DUMMY 고객사 제외는 고객사 자료(사내 PC 다음 실행)가 들어오면 적용</b>.'}</p>` : '<p class="ct-note">작업시간 = 미생산 ÷ (라인 하루 능력 1CGL 719 · 2CGL 927t ÷ 24).</p>';
-    return `<section class="pc"><div class="pch"><b>${esc(title)}</b><span>${md(((D0 || {})[d.pl === 'C' ? 'cc_order_progress' : 'cg_order_progress'] || {}).asOf)} 기준 · ${d.pl === 'C' ? '<span title="MES SSCHC1010">MES 작업지시대상 미생산 잔량 기준</span>' : '도금 주문진도(납기 −30~+90일)'}</span></div>${tiles}${segBar(d.cats, true)}<div class="lg2"><div>${leg}</div>${lday || pos ? `<div class="lg2r">${lday}${pos}</div>` : ''}</div>${exp}${det}${note}</section>`;
+    return `<section class="pc"><div class="pch"><b>${esc(title)}</b><span>${md(((D0 || {})[d.pl === 'C' ? 'cc_order_progress' : 'cg_order_progress'] || {}).asOf)} 기준 · ${d.pl === 'C' ? '<span title="MES SSCHC1010">MES 작업지시대상 미생산 잔량 기준</span>' : '도금 주문진도(납기 −30~+90일)'}</span></div>${tiles}${segBar(d.cats, true)}<div class="lg2"><div>${leg}</div>${lday ? `<div class="lg2r">${lday}</div>` : ''}</div>${pos ? `<div class="lg2b">${pos}</div>` : ''}${exp}${det}${note}</section>`;
   }
   const allLines = () => (CT.inScope('G') ? ['1CGL', '2CGL'] : []).concat(CT.inScope('C') ? (((D0 || {}).cc_order_progress || {}).lines || []) : []);
   function lineTabs() {
@@ -262,14 +262,7 @@
     let fo = false; try { fo = localStorage.getItem('cgl-ot-ps') === '1'; } catch (e) { /* 무시 */ }
     $('ot').innerHTML = `${lineTabs()}
       <section class="card" id="ot-s1">${concl(A, LN)}</section>
-      <section class="card" id="ot-s2"><h2>판매그룹별${LN ? ` · ${LN}` : ''} <small>줄을 누르면 단계 × 강종(품명)·고객사·목적지 · 납기월</small></h2>${stale.length ? `<p class="ot-z" style="margin:-4px 0 8px">종결 확인 ${n0(stale.length)}건 ${n0(sum(stale, (o) => o.remT))}t 제외</p>` : ''}
-        <div class="scroll"><table class="rk-g"><thead><tr><th class="l">그룹</th><th>미결</th><th class="l otb">단계</th><th>지연 예상</th><th>납기 경과</th><th class="l">최대 정체 단계</th></tr></thead><tbody>
-        ${G.map((g) => { const on = TK.open === g.key, a = g.a, h = pls.length > 1 && last !== g.pl ? `<tr class="hd"><td colspan="6">${g.pl === 'G' ? '도금' : '컬러'}</td></tr>` : ''; last = g.pl;
-          const num = (v) => (v >= 0.5 ? `<b class="ot-bad">${n0(v)}t</b>` : '<span class="ot-z">-</span>');
-          return `${h}<tr class="g${on ? ' on' : ''}" data-k="${esc(g.key)}" tabindex="0" role="button" aria-expanded="${on}"><td class="l nm"><b><i class="ch">▸</i>${esc(g.g)}</b><small>${n0(a.n)}건</small></td><td><b>${n0(a.t)}t</b></td><td class="l otb">${sbar(a, 'sm')}</td><td>${num(a.will)}</td><td>${num(a.past)}</td><td class="w"><div class="rk-w">${msg(a)}</div></td></tr>${on ? `<tr class="rk-d"><td colspan="6">${grpDetail(g)}</td></tr>` : ''}`; }).join('')}
-        </tbody></table></div>
-        <p class="rk-rule ot-key">${FLOW.map((k) => `<span><i class="${k}"></i>${SGN[k]}</span>`).join('')}</p></section>
-      <details class="fold ct-fold ot-psf"${fo ? ' open' : ''}><summary>라인별 진행 단계 <small>MES 작업지시대상 기준 · 소재 매치 → 부자재 → 작업지시 · 작업가능일</small></summary><div id="co-ps"></div></details>
+      <section class="card ot-psc" id="ot-s2"><h2>라인별 진행 단계${LN ? ` · ${LN}` : ''} <small>MES 작업지시대상 기준 · 소재 매치 → 부자재 → 작업지시 · 작업가능일 — 칸을 누르면 해당 주문</small></h2>${stale.length ? `<p class="ot-z" style="margin:-4px 0 8px">종결 확인 ${n0(stale.length)}건 ${n0(sum(stale, (o) => o.remT))}t 제외</p>` : ''}<div id="co-ps"></div></section>
       <section class="card" id="ot-s3"><h2>계약 조회</h2>
         <form id="ot-qf" class="ot-qf"><input id="ot-q" class="ot-q" type="search" placeholder="계약번호 · 품명 · 고객사 · 담당자 입력" value="${esc(TK.q)}" aria-label="계약 조회"><button type="submit" class="ot-qb">조회</button><span class="ot-z">2자 이상 입력 · 미결 주문 ${n0(L.filter(inLn).length)}건 대상</span></form><div id="ot-qr"></div></section>${basisFold('track')}`;
     $('ot').querySelectorAll('tr.g').forEach((tr) => { const f = () => { TK.open = TK.open === tr.dataset.k ? null : tr.dataset.k; drawTrack(); const t = [...document.querySelectorAll('tr.g')].find((x) => x.dataset.k === TK.open); if (t) t.scrollIntoView({ block: 'nearest' }); };
@@ -290,7 +283,6 @@
         el.onclick = go; el.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } }; });
       document.querySelectorAll('#co-ps th[data-xs] button').forEach((b) => (b.onclick = () => { const x = b.parentNode.dataset.xs; if (PS.sk === x) PS.dir = -PS.dir; else { PS.sk = x; PS.dir = x === 'due' ? 1 : -1; } re(); }));
     };
-    const fd = document.querySelector('.ot-psf'); fd.ontoggle = () => { try { localStorage.setItem('cgl-ot-ps', fd.open ? '1' : '0'); } catch (e) { /* 무시 */ } };
     $('co-ps').innerHTML = progSum(); bindPS();
   }
 

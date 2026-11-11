@@ -651,7 +651,7 @@
         + `<span class="gbv"><b>${n0(p)}</b> / ${n0(g.target)} <small class="${d < -0.5 ? 'neg' : 'sub'}">${d >= 0 ? '+' : ''}${n0(d)}</small> <small class="sub">(소재 ${n0(a)} · 입고 ${n0(b)})</small></span></div>`; };
     const chart = `<div class="gbl"><span><i class="a"></i>소재 있음(작업지시 포함)</span><span><i class="b"></i>입고 예정</span><span><em></em>재계획 목표</span><span class="sub">계획 / 목표 · 차이</span></div>`
       ;   // 막대는 아래 표 둘째 칸으로(11/2 사용자 '그래프 하나 표 하나 말고 하나로')
-    return `<section class="card"><h2>판매그룹별 <small>~${END()} · 톤</small></h2>` + chart + '<div class="scroll"><table class="it gbt-tbl" style="max-width:1200px"><thead><tr><th>그룹</th>'
+    return `<section class="card"><h2>판매그룹별 <small>~${END()} · 톤</small></h2>` + chart + '<div class="scroll"><table class="it gbt-tbl"><thead><tr><th>그룹</th>'
       + '<th>생산 계획 / 재계획 목표 · 차이</th>'
       + '<th class="num" title="그 날 생산하면 출항일(수출)·납기(내수)를 초과하는 주문">출항일·납기 초과</th><th class="num" title="' + END() + '까지 필요하나 미편성인 주문(소재 없음·능력 부족)">' + END() + '까지 미편성</th><th class="num" title="필요 생산일이 이미 지났는데 생산 전">필요일 경과</th>'
       + (hasAcc ? '<th class="num" title="지난 계획 중 그날 실제로 만든 톤 비율">계획 적중률</th>' : '') + '</tr></thead><tbody>'
@@ -663,7 +663,7 @@
     const pc = (a, b) => (b >= 1 ? Math.round(100 * a / b) + '%' : '-');
     const sum = (k) => { const R = V.flatMap((v) => v.rows.filter((r) => r.k === k)); const p = R.reduce((s, r) => s + r.planT, 0); return R.length ? `${['오늘', '내일', '모레'][k]} 계획 ${pc(R.reduce((s, r) => s + r.hit, 0), p)} (±1일 ${pc(R.reduce((s, r) => s + r.hit1, 0), p)})` : ''; };
     const body = V.length ? `<p class="msg" style="margin:0 0 8px"><b>${[0, 1, 2].map(sum).filter(Boolean).join(' · ')}</b></p>`
-      + '<table class="it" style="max-width:900px"><thead><tr><th>계획 만든 날</th><th>라인</th><th>생산일</th><th class="num">계획 t</th><th class="num">실제 t</th><th class="num">같은 날 맞음</th><th class="num">±1일</th><th class="num">계약 맞음</th></tr></thead><tbody>'
+      + '<table class="it"><thead><tr><th>계획 만든 날</th><th>라인</th><th>생산일</th><th class="num">계획 t</th><th class="num">실제 t</th><th class="num">같은 날 맞음</th><th class="num">±1일</th><th class="num">계약 맞음</th></tr></thead><tbody>'
       + V.flatMap((v) => v.rows.map((r) => `<tr><td class="nw">${md(v.asOf)}</td><td>${r.line}</td><td class="nw">${md(r.d)} <small class="sub">${['당일', '다음날', '모레'][r.k]}</small></td><td class="num">${n0(r.planT)}</td><td class="num">${n0(r.actT)}</td>`
         + `<td class="num"><b>${pc(r.hit, r.planT)}</b></td><td class="num">${pc(r.hit1, r.planT)}</td><td class="num">${r.nHit}/${r.nPlan}</td></tr>`)).join('') + '</tbody></table>'
       : '<p class="msg">10/30 아침부터 표시</p>';
@@ -677,7 +677,7 @@
     const dt2 = dirty(), n = MOVES.length;
     const stat = CONF ? `<b class="okc">확정됨</b> ${kst(CONF.at)}${CONF.who && CONF.who !== '도금 수주' ? ` · ${esc(CONF.who)}` : ''}${CONF.asOf === O.asOf && CONF.moves.length ? ` · 바꾼 것 ${CONF.moves.length}건 포함` : ''}${dt2 ? ` · <b class="no">미저장 수정 있음</b>` : ''}` : (n ? `<b class="no">미확정</b> · 바꾼 것 ${n}건` : '<b class="no">미확정</b>');
     const btn = !CONF ? '다음 주 확정' : dt2 ? '수정 저장' : '다시 저장';
-    const adh = A.length ? '<table class="it" style="max-width:820px"><thead><tr><th>확정 주</th><th>저장</th><th class="num">확정 톤</th><th class="num">그 주 실제 생산</th><th class="num">준수율</th><th>라인별</th></tr></thead><tbody>'
+    const adh = A.length ? '<table class="it"><thead><tr><th>확정 주</th><th>저장</th><th class="num">확정 톤</th><th class="num">그 주 실제 생산</th><th class="num">준수율</th><th>라인별</th></tr></thead><tbody>'
       + A.map((a) => `<tr><td class="nw">${mdw(a.week)}~</td><td class="sub nw">${esc(a.who)} ${esc(String(a.at).slice(5, 16).replace('T', ' '))}</td><td class="num">${n0(a.confT)}</td><td class="num">${n0(a.doneT)}</td>`
         + `<td class="num"><b>${a.rate == null ? '-' : Math.round(a.rate * 100) + '%'}</b></td><td class="nw">${Object.entries(a.lines || {}).map(([l, v]) => `${l} ${v.confT ? Math.round(100 * v.doneT / v.confT) : '-'}%`).join(' · ')}</td></tr>`).join('') + '</tbody></table>'
       : '<p class="msg">확정한 주 없음</p>';

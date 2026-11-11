@@ -448,7 +448,10 @@
       if (t.tHead) [...t.tHead.rows].forEach((r) => { if (r !== t.tHead.rows[t.tHead.rows.length - 1]) return; let ci = 0; [...r.cells].forEach((c) => { if (c.colSpan === 1 && cnt[ci]) { const m = Object.entries(cnt[ci]).sort((a, b) => b[1] - a[1])[0][0]; if (getComputedStyle(c).textAlign.replace('start', 'left') !== m) c.style.setProperty('text-align', m, 'important'); } ci += c.colSpan; }); });
       const box = t.parentElement; if (!box || t.closest('.ch, .ln-c, .rk')) return;
       const full = box.clientWidth; if (full < 500) return;
-      if (getComputedStyle(t).tableLayout === 'fixed') return;   // 칸 폭 고정 표(가동 캘린더 등)는 내용 폭이 의미 없음 — 넓은 화면에서 좁게 뭉치던 원인
+      if (getComputedStyle(t).tableLayout === 'fixed') return;
+      const ncol = Math.max(0, ...[...t.rows].slice(0, 6).map((r) => [...r.cells].reduce((n, c) => n + (c.colSpan || 1), 0)));
+      if (ncol >= 5) { t.style.setProperty('width', '100%', 'important'); return; }
+      if (ncol === 4) { t.style.setProperty('min-width', Math.round(full * 0.5) + 'px'); }   // 11/11 사용자 '칸 일부러 좁게 쓰냐': 칸 5개 이상 표는 카드 폭 그대로(넓은 화면·배율 축소에서 1,066px 로 뭉치던 원인) — 줄이는 건 2~4칸 작은 표만   // 칸 폭 고정 표(가동 캘린더 등)는 내용 폭이 의미 없음 — 넓은 화면에서 좁게 뭉치던 원인
       const old = t.style.width; t.style.setProperty('width', 'auto', 'important');
       const nat = t.getBoundingClientRect().width;
       if (nat > full * 0.62) { if (old) t.style.width = old; else t.style.removeProperty('width'); }
