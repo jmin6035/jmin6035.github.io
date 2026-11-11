@@ -238,14 +238,16 @@
     const k2 = kpi('기준선 대비 부족', gapT > 0 ? 'bad' : 'ok', `${T(gapT)}<small>t</small>`, `${dem.filter((g) => (g.gap || 0) > 0).map((g) => `${esc(g.name)} ${T(g.gap)}`).slice(0, 4).join(' · ') || '없음'}`);
     const k3 = nextDl ? kpi(`마감 ${md(nextDl.deadline)} <span class="ct-b warn">${dday(nextDl.deadline)}</span>`, nw[0] && nw[1] / nw[0] < 0.7 ? 'warn' : '', `${nw[0] ? Math.round(nw[1] / nw[0] * 100) : '–'}<small>% 확정</small>`, `생산주 ${md(nextDl.wFrom)}~${md(CT.addD(nextDl.wFrom, 6))} · 편성 ${T(nw[0])} 중 확정 ${T(nw[1])}t`) : kpi('다음 마감', '', '–', '이달 남은 마감 없음');
     const k4 = kpi('미수주 위험', risk.length ? 'bad' : 'ok', `${risk.length}<small>건</small>`, risk.length ? `${[...new Set(risk.map((r) => D.groups.find((y) => y.key === r[1]).name))].join(' · ')}` : '마감 2주 안 확정률 70% 미만 없음');
-    // 그룹별 진도(진도 낮은 순)
-    const gr = dem.slice().sort((a, b) => (a.plant === b.plant ? 0 : a.plant === 'G' ? -1 : 1) || (a.progJ ?? a.prog ?? 999) - (b.progJ ?? b.prog ?? 999)).map((x) => {   // 11/11 회의: 도금 먼저 → 컬러, 공장 안에서 진도 낮은 순
+    // 그룹별 진도
+    // 11/12 사용자 '계획재 어디 갔냐 · 통일해라': 그룹 순서·칸 순서를 위 매트릭스와 같게(판매계획 → 기준선 → 확정 → 부족 → 진도), 주문 없는 그룹(자가재·계획재)도 줄로
+    const gr = groups().map((x) => {
+      if (x.base == null) return `<tr><td class="nm"><b>${esc(x.name)}</b></td><td class="sj-cb"><span class="muted">주문 없이 계획 생산</span></td><td class="r">${T(x.sales)}</td><td class="r">–</td><td class="r">–</td><td class="r">–</td><td><span class="muted">주문 없음</span></td></tr>`;
       const rm = Math.max(x.sales || 0, x.base || 0, x.orders || 0, 1), Wd = (v) => `${Math.min(100, Math.max(0, v) / rm * 100)}%`, o = Math.min(x.orders || 0, x.sales || x.orders || 0), short = Math.max(0, (x.base || 0) - (x.orders || 0));
       return `<tr><td class="nm"><b>${esc(x.name)}</b></td><td class="sj-cb"><div class="tr"><i class="s" style="width:${Wd(x.sales || 0)}"></i><i class="o" style="width:${Wd(o)};background:${stCol(x.progSt)}"></i>${short ? `<i class="g" style="left:${Wd(x.orders || 0)};width:${Wd(short)}"></i>` : ''}<u style="left:${Wd(x.base || 0)}"></u></div></td>`
-        + `<td class="r"><b>${T(x.orders)}</b></td><td class="r">${T(x.base)}</td><td class="r">${T(x.sales)}</td><td class="r"><b class="${short ? 'neg' : ''}">${short ? T(short) : '–'}</b></td><td>${B(x.progSt, pct(x.progJ != null ? x.progJ : x.prog))}${x.progGrp ? '<sup title="컬러수출 3그룹 합으로 판정">합</sup>' : ''}</td></tr>`; });
-    const c2 = card(2, '그룹별 수주 — 도금 · 컬러, 진도 낮은 순', `${md(D.today)} 기준`,
+        + `<td class="r">${T(x.sales)}</td><td class="r">${T(x.base)}</td><td class="r"><b>${T(x.orders)}</b></td><td class="r"><b class="${short ? 'neg' : ''}">${short ? T(short) : '–'}</b></td><td>${B(x.progSt, pct(x.progJ != null ? x.progJ : x.prog))}${x.progGrp ? '<sup title="컬러수출 3그룹 합으로 판정">합</sup>' : ''}</td></tr>`; });
+    const c2 = card(2, '그룹별 수주 — 도금 · 컬러', `${md(D.today)} 기준`,
       `<div class="sj-clg"><span><i style="background:var(--good)"></i>확정</span><span><i class="gsh"></i>부족 = 기준선 − 확정</span><span><i style="background:var(--sub)"></i>남은 판매계획</span><span><i class="bl"></i>기준선(~${md(D.cut)} 편성)</span></div>`
-      + tbl(['그룹', '진행', ['확정', 'r'], ['기준선', 'r'], ['판매계획', 'r'], ['부족', 'r'], '진도'], gr, 'sj-cbt'));
+      + tbl(['그룹', '진행', ['판매계획', 'r'], ['기준선', 'r'], ['확정', 'r'], ['부족', 'r'], '진도'], gr, 'sj-cbt'));
     // 월 수주 누적(11/11 사용자 '더 직관적으로') — 생산주마다 누적 막대: 회색 틀 = 그 주까지 편성(있어야 할 주문), 채움 = 확정, 빨강 빗금 = 마감됐는데 모자란 양
     const segs = `<div class="seg ct-seg">${`<button type="button" data-cg="all" aria-pressed="${gsel === 'all'}">전체 그룹</button>`}${dem.map((x) => `<button type="button" data-cg="${x.key}" aria-pressed="${x.key === gsel}">${esc(x.name)}</button>`).join('')}</div>`;
     const gs = gsel === 'all' ? { name: '전체 그룹', sales: dem.reduce((a, x) => a + (x.sales || 0), 0) } : D.groups.find((x) => x.key === gsel);
