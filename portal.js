@@ -20,21 +20,19 @@
     const mon = String(O.today || O.asOf).slice(0, 7), nd = dim(mon), el = Math.min(1, +String(O.asOf).slice(8, 10) / nd);
     const cell = (href, tone, html, title) => `<td class="bc ${tone || ''}"${title ? ` title="${esc(title)}"` : ''}><a href="${href}">${html}</a></td>`;
     const row = (r) => {
-      const { due, prod, ship, stock, mat } = r.d;
-      const cDue = !due ? cell('risk.html', 'na', '<span class="bv">–</span><span class="bs">납기 위험 자료 없음</span>')
-        : cell('risk.html', due.tone, `<span class="bl1"><span class="bv ${due.tone}">${due.risk >= 0.5 ? `${n0(due.risk)}<small>t</small>` : '0<small>t</small>'}</span>${stack(due)}</span><span class="bs"><b>${PCT(due.risk, due.t) || 0}%</b> / 미결 ${n0(due.t)}t</span>`,
-          due.subs.length > 1 ? due.subs.map((s) => `${s.g} ${n0(s.risk)}t`).join(' · ') : '');
-      const cWhy = `<td class="bw">${due && due.risk >= 0.5 ? `<a href="risk.html">${UI.causeHtml(RK, due.cz, 2, 1)}</a>` : `<span class="ok-t">${due ? '위험 없음' : ''}</span>`}</td>`;
-      const cProd = prod.pct == null ? cell('ct_prod.html#perf', 'na', `<span class="bv">${prod.note ? '계획 0' : '–'}</span><span class="bs">실적 ${n0(prod.actual)}t</span>`, prod.note || '')
-        : cell('ct_prod.html#perf', prod.tone, `<span class="bl1"><span class="bv ${prod.tone}">${Math.round(prod.pct * 100)}<small>%</small></span>${meter(prod.actual, Math.max(prod.month, prod.fin), prod.month * el, prod.tone)}</span><span class="bs"><b>${n0(prod.actual)}</b> / 월 ${n0(prod.month)}t</span>`,
-          `월말 예상 = 실적 ${n0(prod.actual)} + 남은 계획 ${n0(prod.fin - prod.actual)} → ${n0(prod.fin)}t ÷ 월 계획 ${n0(prod.month)}t · 막대 표시 = 오늘까지 경과(${Math.round(el * 100)}%)`);
-      const cShip = !ship ? cell('ct_prod.html#ship', 'na', '<span class="bv">–</span><span class="bs">출하 없음</span>')
-        : cell('ct_prod.html#ship', ship.tone, `<span class="bl1"><span class="bv ${ship.tone}">${ship.pct == null ? '–' : `${Math.round(ship.pct * 100)}<small>%</small>`}</span>${meter(ship.actual, Math.max(ship.month, ship.actual), ship.base, ship.tone)}</span><span class="bs"><b>${n0(ship.actual)}</b> / 기준 ${n0(ship.base)}t</span>`,
-          `실적 ${n0(ship.actual)}t − 기준 ${n0(ship.base)}t = ${ship.actual >= ship.base ? '+' : '−'}${n0(Math.abs(ship.actual - ship.base))}t · 기준 = ${ship.to ? md(ship.to) + '까지 ' : ''}나갔어야 할 누계(월 ${n0(ship.month)}t × ${ship.by}) · 막대 표시 = 기준`);
-      const sT = stock.target, sMax = Math.max(stock.end || 0, stock.now || 0, (sT || 0) * stock.over) * 1.05;
-      const cStock = stock.end == null || !sT ? cell('integrated.html', stock.tone, `<span class="bv ${stock.tone}">${esc(r.vals[2][0])}</span><span class="bs">${esc(r.vals[2][1])}</span>`)
-        : cell('integrated.html', stock.tone, `<span class="bl1"><span class="bv ${stock.tone}">${n0(stock.end)}<small>t</small></span><div class="bm st"><i class="${stock.tone}" style="width:${(stock.end / sMax * 100).toFixed(1)}%"></i><em style="left:${(sT / sMax * 100).toFixed(1)}%"></em>${stock.now != null ? `<u style="left:${Math.min(100, stock.now / sMax * 100).toFixed(1)}%"></u>` : ''}</div></span><span class="bs">목표 <b>${n0(sT)}</b> · 오늘 ${stock.now != null ? n0(stock.now) : '–'}</span>`,
-          `월말 예상 ${n0(stock.end)}t(오늘 실재고에서 남은 생산·출하 계획대로) · 월말 목표 ${n0(sT)}t(통합 계획) · 목표의 70% 미만 조치, ${Math.round(stock.over * 100)}% 초과 주의 · 막대 표시 = 목표, 점선 = 오늘`);
+      const { due, prod, ship, stock } = r.d;
+      // 11/12 사용자 '이렇게 보면 뭘 이해하라는 거냐 — 규칙': 칸마다 큰 숫자 하나 + 기준 한 줄, 막대·바탕색·설명 문구 없음, 상태는 숫자 색으로만
+      const c1 = (href, tone, big, sub, title) => `<td class="bc"${title ? ` title="${esc(title)}"` : ''}><a href="${href}"><span class="bv ${tone || ''}">${big}</span><span class="bs">${sub}</span></a></td>`;
+      const cDue = !due ? c1('risk.html', 'na', '–', '자료 없음')
+        : c1('risk.html', due.tone, `${n0(due.risk >= 0.5 ? due.risk : 0)}<small>t</small>`, `미결 ${n0(due.t)}t의 ${PCT(due.risk, due.t) || 0}%`, `정상 ${n0(due.ok)}t · 점검 ${n0(due.warn)}t · 지연 예상 ${n0(due.will)}t · 납기 지남 ${n0(due.past)}t`);
+      const cWhy = `<td class="bw">${due && due.risk >= 0.5 ? `<a href="risk.html">${UI.causeHtml(RK, due.cz, 2, 0)}</a>` : `<span class="ok-t">${due ? '위험 없음' : ''}</span>`}</td>`;
+      const cProd = prod.pct == null ? c1('ct_prod.html#perf', 'na', prod.note ? '계획 0' : '–', `실적 ${n0(prod.actual)}t`, prod.note || '')
+        : c1('ct_prod.html#perf', prod.tone, `${Math.round(prod.pct * 100)}<small>%</small>`, `${n0(prod.fin)} / ${n0(prod.month)}t`, `월말 예상 = 실적 ${n0(prod.actual)} + 남은 계획 ${n0(prod.fin - prod.actual)} → ${n0(prod.fin)}t ÷ 월 계획 ${n0(prod.month)}t`);
+      const cShip = !ship ? c1('ct_prod.html#ship', 'na', '–', '출하 없음')
+        : c1('ct_prod.html#ship', ship.tone, ship.pct == null ? '–' : `${Math.round(ship.pct * 100)}<small>%</small>`, `${n0(ship.actual)} / ${n0(ship.base)}t`, `오늘까지 나갔어야 할 양(월 ${n0(ship.month)}t × 출하 패턴) 대비 실적`);
+      const sT = stock.target;
+      const cStock = stock.end == null || !sT ? c1('integrated.html', stock.tone, esc(r.vals[2][0]), esc(r.vals[2][1]))
+        : c1('integrated.html', stock.tone, `${n0(stock.end)}<small>t</small>`, `목표 ${n0(sT)}t`, `월말 예상 ${n0(stock.end)}t · 목표 ${n0(sT)}t · 오늘 ${stock.now != null ? n0(stock.now) : '–'}t`);
       return `<tr class="${r.w4}"><th scope="row" class="bg" title="${esc(SLB[r.w4])}"><span class="cdot ${r.w4}"></span><b>${esc(r.name)}</b></th>${cDue}${cWhy}${cProd}${cShip}${cStock}</tr>`;
     };
     const sec = (pl, nm) => { const rs = R.filter((r) => r.pl === pl); return rs.length ? `<tr class="bsec"><td colspan="6">${nm}</td></tr>${rs.map(row).join('')}` : ''; };
@@ -48,7 +46,7 @@
       + (matLate ? `<a class="bk" href="matcal.html#mt-orders">소재 발주 마감 지남 <b class="neg">${matLate}개 그룹</b></a>` : '')
       + `<span class="bd">실적 ~${md(O.asOf)} · 납기 판정 ${RK ? md(RK.asOf) : '–'}</span></div>`;
     return head + `<div class="ct-wrap"><table class="bt"><colgroup><col class="c-g"><col class="c-d"><col class="c-w"><col class="c-p"><col class="c-s"><col class="c-k"></colgroup>`
-      + `<thead><tr><th>판매그룹</th><th title="지연 예상 + 납기 지남(납기 위험 화면과 같은 판정)">납기 위험</th><th>주요 원인 <small>· 언제 풀리나</small></th><th title="월말 예상 = 실적 + 남은 계획, ÷ 월 계획">생산 <small>월말 예상</small></th><th title="실적 ÷ 오늘까지 기준(그룹 출하 실적 패턴)">출하 <small>기준 대비</small></th><th title="월말 예상 재고 vs 월말 목표">재고 <small>월말 예상</small></th></tr></thead>`
+      + `<thead><tr><th>판매그룹</th><th title="지연 예상 + 납기 지남(납기 위험 화면과 같은 판정)">납기 위험</th><th>주요 원인</th><th title="월말 예상 생산 ÷ 월 계획">생산 달성 예상</th><th title="실적 ÷ 오늘까지 나갔어야 할 양">출하 진도</th><th title="월말 예상 재고 vs 목표">월말 재고</th></tr></thead>`
       + `<tbody>${sec('G', '도금')}${sec('C', '컬러')}</tbody></table></div>`;
   }
 

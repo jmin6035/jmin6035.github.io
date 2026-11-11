@@ -7,7 +7,7 @@
 <meta name="description" content="판매그룹별 납기 위험 · 생산·출하 진도 · 재고">
 <script>if (/[?&]src=/.test(location.search)) location.replace('status.html' + location.search);</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611112354">
+<link rel="stylesheet" href="ui/theme.css?v=2611112359">
 <style>
 main.wrap { max-width: none; }
 #ui-ctl { display: none !important; }   /* 관제 띠 = 이 화면 요약 → 이 화면에서는 숨김 */
@@ -23,8 +23,8 @@ main.wrap { max-width: none; }
 .bsum .bk b.ok { color: var(--good); } .bsum .bk b.warn { color: var(--warn); } .bsum .bk b.bad, .bsum .bk b.neg { color: var(--bad); }
 .bsum .bd { margin-left: auto; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
 /* 판매그룹 표 */
-table.bt { width: 100%; min-width: 1010px; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
-table.bt col.c-g { width: 102px; } table.bt col.c-d { width: 142px; } table.bt col.c-w { width: auto; } table.bt col.c-p, table.bt col.c-s { width: 146px; } table.bt col.c-k { width: 164px; }
+table.bt { width: 100%; min-width: 1000px; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
+table.bt col.c-g { width: 120px; } table.bt col.c-d { width: 170px; } table.bt col.c-w { width: 240px; } table.bt col.c-p, table.bt col.c-s { width: 160px; } table.bt col.c-k { width: 150px; }
 table.bt :is(td, th) { text-align: left !important; }
 table.bt thead th { font-size: 13.5px; font-weight: 700; color: var(--ink-2); text-align: left; padding: 6px 10px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 table.bt thead th small { font-weight: 500; font-size: 13.5px; color: var(--ink-2); }
@@ -34,11 +34,11 @@ table.bt tbody th.bg b { font-size: 15px; font-weight: 800; } table.bt th.bg .cd
 .gs { display: block; width: max-content; margin: 3px 0 0 16px; font-size: 13.5px; font-weight: 700; padding: 0 8px; border-radius: 999px; border: 1px solid currentColor; line-height: 1.5; }
 .gs.bad { color: var(--bad); } .gs.warn { color: var(--warn); } .gs.ok { color: var(--good); } .gs.na { color: var(--ink-2); }
 table.bt td { padding: 0; border-bottom: 1px solid var(--grid); vertical-align: top; }
-table.bt td > a { display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 4px 8px; min-height: 100%; color: inherit; text-decoration: none; border-radius: 6px; }
+table.bt td > a { display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 6px 10px; min-height: 100%; color: inherit; text-decoration: none; border-radius: 6px; }
 table.bt td > a:hover { background: color-mix(in srgb, var(--brand-2) 7%, transparent); }
-td.bc.bad > a { background: color-mix(in srgb, var(--bad) 7%, transparent); } td.bc.warn > a { background: color-mix(in srgb, var(--warn) 8%, transparent); }
+
 .bl1 { display: flex; align-items: center; gap: 8px; min-width: 0; } .bl1 > .bm, .bl1 > .hm-st { flex: 1 1 auto; min-width: 24px; margin: 0; }
-.bv { font-size: 17px; font-weight: 800; line-height: 1.2; white-space: nowrap; color: var(--ink); } .bv small { font-size: 14px; font-weight: 700; margin-left: 1px; color: var(--ink-2); }
+.bv { font-size: 19px; font-weight: 800; line-height: 1.2; white-space: nowrap; color: var(--ink); } .bv small { font-size: 14px; font-weight: 700; margin-left: 1px; color: var(--ink-2); }
 .bv.sm { font-size: 16px; } .bv.bad { color: var(--bad); } .bv.warn { color: var(--warn); } .bv.ok { color: var(--ink); }
 .bs { font-size: 13.5px; color: var(--ink-2); line-height: 1.45; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .bs b { color: var(--ink); }
 .bs .neg { color: var(--bad); font-weight: 700; } .bs .pos { color: var(--good); font-weight: 700; }
@@ -85,10 +85,10 @@ table.qt b.ok { color: var(--good); } table.qt b.warn { color: var(--warn); } ta
 <header id="shell" data-page="board" data-title="판매그룹 관제판" data-sub="판매그룹별 지금 문제 · 이번 달 진도 · 재고"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611112354"></script>
-<script src="engine/crypto.js?v=2611112354"></script>
-<script src="ui/ct.js?v=2611112354"></script>
-<script src="ui/ctl.js?v=2611112354"></script>
-<script src="portal.js?v=2611112354"></script>
+<script src="ui/shell.js?v=2611112359"></script>
+<script src="engine/crypto.js?v=2611112359"></script>
+<script src="ui/ct.js?v=2611112359"></script>
+<script src="ui/ctl.js?v=2611112359"></script>
+<script src="portal.js?v=2611112359"></script>
 </body>
 </html>
