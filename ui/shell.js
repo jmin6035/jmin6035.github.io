@@ -20,7 +20,7 @@
      표시 'd' = 세부 화면 — 화면 위 탭에는 늘 보이고, 왼쪽 메뉴에는 그 묶음에 들어가 있을 때만 펼침(메뉴가 길어지지 않게) */
   const MENU = [
     ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '수주 진도'], ['suju', 'suju.html#prod', '생산'], ['suju', 'suju.html#mat', '소재'], ['suju', 'suju.html#stock', '재고'], ['suju', 'suju.html#close', '월 실적 마감']]],
-    ['ct1', '통합 관제', 'home', [['home', 'index.html#day', '금일 현황', 't'], ['home', 'index.html#week', '7일 전망', 't'], ['home', 'index.html#month', '월간 전망', 't'],
+    ['ct1', '통합 관제', 'home', [['home', 'index.html', '통합 관제', 't'],
       ['board', 'board.html', '판매그룹 관제판', 'd'], ['issues', 'ct_issue.html#now', '이슈 현황', 'd'], ['issues', 'ct_issue.html#req', '조정 요청', 'd']]],
     ['ct2', '주문·납기', 'cgorder', [['risk', 'risk.html', '납기 위험'], ['orders', 'ct_orders.html#track', '주문진도(전체)'], ['orders', 'ct_orders.html#cal', '납기 캘린더'],
       ['cgorder', 'cg_order.html', '도금 주문진도', 'd'], ['ccorder', 'cc_order.html', '컬러 주문진도', 'd']]],
