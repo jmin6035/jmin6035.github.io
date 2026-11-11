@@ -6,7 +6,7 @@
 <title>수주 관제</title>
 <meta name="description" content="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준) — 수주팀 화면 양식">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611112312">
+<link rel="stylesheet" href="ui/theme.css?v=2611112313">
 <style>
 main.wrap { max-width: none; }
 #ui-ctl { display: none !important; }   /* 포털 공통 그룹 상태 띠 — ① 그룹 매트릭스와 같은 내용이라 이 탭에서만 숨김 */
@@ -52,45 +52,79 @@ main.wrap { max-width: none; }
 .sj-bar u { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); }
 .sj-gb { margin: 0 0 14px; font-size: 13.5px; } .sj-gb .h { display: flex; justify-content: space-between; gap: 8px; } .sj-gb .h span { font-weight: 700; }
 td .sj-bar { min-width: 150px; }
-/* 일별 계획 캘린더 — 칸 글자 한 크기, 가동(초록·노랑·빨강) / 생산주(파랑) / 소재(같은 3색, 숫자 진하게) 구분 */
+/* 범례(다른 화면 공용) */
 .sj-clg { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; color: var(--ink-2); margin: 0 0 10px; }
 .sj-clg span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; } .sj-clg .gap { margin-left: 10px; }
 .sj-clg i { display: inline-block; width: 16px; height: 12px; border-radius: 3px; border: 1px solid var(--line); }
-.sj-clg i.nowk { border: 2px solid var(--bad); background: none; }
-html body main table.sj-cal { border-collapse: collapse; table-layout: fixed; width: 100%; min-width: 1540px; font-variant-numeric: tabular-nums; }
-html body main table.sj-cal th, html body main table.sj-cal td { border: 1px solid var(--line); padding: 0 1px; height: 32px; font-size: 13.5px !important; line-height: 1.2; overflow: hidden; }
-html body main table.sj-cal thead th { background: var(--th, var(--sub)); color: var(--ink-2); height: 42px; }
-.sj-cal thead th b { display: block; font-size: 14px; color: var(--ink); } .sj-cal thead th span { display: block; font-size: 13.5px; font-weight: 500; }
-.sj-cal thead th.we b, .sj-cal thead th.we span { color: var(--bad); }
-html body main table.sj-cal .lab { width: 196px; text-align: left !important; padding: 3px 10px; background: var(--surface); position: sticky; left: 0; z-index: 1; }
-.sj-cal td.lab b { display: block; font-size: 14px; color: var(--ink); } .sj-cal td.lab span { display: block; white-space: nowrap; font-size: 13.5px; color: var(--ink-2); font-weight: 500; }
-html body main table.sj-cal .wst { border-left: 2px solid var(--ink-2) !important; }
-html body main table.sj-cal td.gsep:not(.wst), html body main table.sj-cal th.gsep:not(.wst) { border-left: 1px solid var(--line) !important; }   /* 공통 월 구분선이 요일 '월'을 달로 읽어 생기던 굵은 선 지움 */
-html body main table.sj-cal .now { box-shadow: inset 0 0 0 2px var(--bad); }
-/* 가동 칸 */
-.sj-cal td.ac { font-weight: 700; color: var(--ink); }
-/* 11/11 회의: 한 칸 위 계획 · 아래 실적 */
-html body main table.sj-cal tr.r2 td { height: 46px; } .sj-cal td.pa span, .sj-cal td.pl span { display: block; font-size: 13.5px; color: var(--ink-2); font-weight: 500; } .sj-cal td.pa b { display: block; font-size: 14px; color: var(--ink); }
-.sj-cal td.pa.lo b { color: var(--bad); } .sj-cal td.pl b.fu { display: block; color: transparent; }
-.sj-cal td.lab span.pa2 { color: var(--ink); font-weight: 600; } html body main table.sj-cal tr.tot td { background: var(--sub); font-weight: 700; } html body main table.sj-cal tr.tot td.lab { background: var(--sub); }
-.sj-clg i.ac { background: var(--surface); box-shadow: inset 0 0 0 1px var(--ink-2); }
-html body main table.sj-cal tr.ga td { height: 44px; } .sj-cal tr.ga td.ac b { display: block; color: #1f4f9c; } .sj-cal tr.ga em { display: block; font-style: normal; font-size: 13.5px; font-weight: 600; }
-.sj-cal tr.ga td.lab em { display: inline; } .sj-cal em.up { color: var(--ink-2); } .sj-cal em.dn { color: var(--bad); }
-.sj-cal td.pl, .sj-clg i.pl { background: var(--surface); color: var(--ink-2); font-weight: 500; }
-.sj-cal td.id, .sj-clg i.id { background: repeating-linear-gradient(135deg, var(--sub) 0 4px, transparent 4px 8px); color: var(--ink-3, var(--ink-2)); }
-.sj-cal td.nd { color: var(--ink-3, var(--ink-2)); }
-/* 생산주 줄(파랑 계열) */
-.sj-cal tr.wk td { font-size: 13.5px !important; font-weight: 700; }
-.sj-cal td.w0 { background: var(--sub); color: var(--ink-2); }
-.sj-cal td.w1, .sj-clg i.w1 { background: #dbe7fb; color: #1f4f9c; }
-.sj-cal td.w2, .sj-clg i.w2 { background: #fff; color: #1f4f9c; box-shadow: inset 0 0 0 2px #5b8de0; }
-.sj-cal td.w3, .sj-clg i.w3 { background: #fff; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
-.sj-clg i.w2 { border: 2px solid #5b8de0; } .sj-clg i.w1 { border-color: #b7cdf3; }
-/* 구역 머리 */
-html body main table.sj-cal tr.sec td { text-align: left !important; background: var(--ink); color: var(--surface); font-weight: 700; font-size: 14px !important; padding: 0 10px; height: 30px; }
-/* 소재 칸 */
-.sj-cal td.m1, .sj-cal td.m2, .sj-cal td.m3 { font-weight: 700; } .sj-cal td.m1 { background: #dcefe3; color: #17432a; } .sj-cal td.m2 { color: #5a3d00; } .sj-cal td.m2 { background: #fbecc8; } .sj-cal td.m3 { background: #f8d4d4; color: #9b1c1c; }
-.sj-cal td i { font-style: normal; font-size: 13.5px; color: #1f4f9c; margin-left: 1px; }
+/* ===== 일별 계획 캘린더 = 월간 가동(supply.html) 가동 캘린더 CSS 복사(11/11 사용자 '월간 가동 표 비슷하게') — 바꿀 땐 두 곳 같이 =====
+   열: 이름 118 · 구분 70 · 날짜(같은 폭) · 계 76 / 그룹 띠(번갈아 바탕 + 굵은 윗선) · 오늘(파란 테)·월말(회색 테) · 칸 사이 옅은 세로선 · 숫자 13.5px 쉼표 */
+:root { --mt-g: #1f4f86; --mt-c: #1c6b5c; --mt-hd: #eef2f7; --mt-band: color-mix(in srgb, var(--ink) 3.5%, var(--surface)); --mt-we: color-mix(in srgb, var(--ink) 5%, var(--surface)); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --mt-g: #6fa3e0; --mt-c: #4fc3a6; --mt-hd: #1d2530; } }
+:root[data-theme="dark"] { --mt-g: #6fa3e0; --mt-c: #4fc3a6; --mt-hd: #1d2530; }
+table.mt2 { table-layout: fixed; width: 100%; min-width: 1720px; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; font-size: 13.5px; }
+table.mt2 col.cc0 { width: 118px; } table.mt2 col.cc1 { width: 72px; } table.mt2 col.ctot { width: 80px; }
+table.mt2 th, table.mt2 td { height: 36px; padding: 6px 2px; text-align: center; white-space: nowrap; font-size: 13.5px; letter-spacing: -0.3px; line-height: 1.3;
+  color: var(--ink-2); background: var(--surface); border-right: 1px solid color-mix(in srgb, var(--grid) 75%, transparent); border-bottom: 1px solid var(--grid);
+  box-shadow: var(--bar, 0 0 transparent), var(--edge, 0 0 transparent); }
+table.mt2 .c0 { position: sticky; left: 0; z-index: 3; } table.mt2 .c1 { position: sticky; left: 118px; z-index: 3; text-align: left; padding-left: 8px; font-weight: 600; color: var(--ink-2); border-right: 2px solid var(--line); }
+table.mt2 .tot { position: sticky; right: 0; z-index: 3; font-weight: 800; color: var(--ink); background: var(--mt-hd); border-left: 2px solid var(--line); text-align: right; padding-right: 8px; }
+/* 머리줄 */
+table.mt2 thead th { height: 28px; background: var(--mt-hd); color: var(--ink-2); font-weight: 700; }
+table.mt2 thead tr:last-child th { height: 24px; font-weight: 500; border-bottom: 2px solid var(--ink-3); }
+table.mt2 thead th.c0, table.mt2 thead th.tot { border-bottom: 2px solid var(--ink-3); color: var(--ink); text-align: center; }
+table.mt2 thead th.sat { color: #9a4f00; } table.mt2 thead th.sun { color: var(--bad); }
+table.mt2 thead th.we { background: color-mix(in srgb, var(--ink) 9%, var(--mt-hd)); }
+table.mt2 thead th.me { background: color-mix(in srgb, var(--ink) 16%, var(--mt-hd)); color: var(--ink); }
+table.mt2 thead th.today, table.mt2 thead th.tb { background: color-mix(in srgb, var(--brand-2) 16%, var(--surface)); color: var(--brand); font-weight: 900; box-shadow: inset 0 -2px 0 var(--brand-2); }   /* 공용 규칙(theme.css)과 같게 */
+/* 본문 칸 */
+table.mt2 tbody td.we { background: var(--mt-we); }
+table.mt2 .mon { border-left: 2px solid color-mix(in srgb, var(--ink-3) 50%, var(--surface)); }
+table.mt2 tbody td.pa, table.mt2 tbody td.past { color: var(--ink); font-weight: 700; }
+table.mt2 tbody td.me { --edge: inset 2px 0 0 var(--ink-3), inset -2px 0 0 var(--ink-3); font-weight: 800; color: var(--ink); }
+table.mt2 tbody td.tb { --edge: inset 2px 0 0 var(--brand-2), inset -2px 0 0 var(--brand-2); background-color: color-mix(in srgb, var(--brand-2) 9%, var(--surface)); font-weight: 800; color: var(--ink); }
+table.mt2 td.sel { outline: 2px solid var(--ink); outline-offset: -2px; }
+/* 그룹 띠: 첫 줄 굵은 윗선, 번갈아 바탕, 이름 칸 왼쪽 공장 색 막대 */
+table.mt2 tr.first > * { border-top: 2px solid color-mix(in srgb, var(--ink-3) 60%, var(--surface)); }
+table.mt2 tr.gb1 > td:not(.tb):not(.hi):not(.hi2):not(.tot), table.mt2 tr.gb1 > th { background-color: var(--mt-band); }
+table.mt2 th.line { text-align: left; vertical-align: middle; padding: 6px 10px; white-space: normal; --edge: inset 4px 0 0 var(--mt-g); }
+table.mt2 th.line.C { --edge: inset 4px 0 0 var(--mt-c); }
+table.mt2 .sg-nm { font-size: 14.5px; font-weight: 800; color: var(--ink); line-height: 1.25; }
+table.mt2 .sg-kk { margin-top: 3px; display: flex; flex-direction: column; gap: 1px; font-size: 13.5px; font-weight: 500; color: var(--ink-2); line-height: 1.3; }
+table.mt2 .sg-kk b { font-size: 14.5px; font-weight: 800; color: var(--ink); } table.mt2 .sg-kk b.hi { color: #8a5a00; } table.mt2 .sg-kk b.hi2 { color: var(--bad); }
+/* 합계 줄(공장 합 · 도금+컬러) */
+table.mt2 tr.grp > * { background: var(--surface-2); color: var(--ink); font-weight: 800; border-top: 2px solid var(--line); }
+table.mt2 tr.grp th.gh { text-align: left; padding-left: 10px; font-size: 14.5px; }
+table.mt2 tr.grp.G th.gh { --edge: inset 4px 0 0 var(--mt-g); } table.mt2 tr.grp.C th.gh { --edge: inset 4px 0 0 var(--mt-c); }
+table.mt2 tr.grp > .tot { background: color-mix(in srgb, var(--ink) 9%, var(--surface-2)); }
+table.mt2 tr.gap td { height: 14px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+/* 가동 캘린더: 강종·판매그룹 = 칸 아래 색 띠(실적 진하게 · 계획 옅게), 같은 강종 이어지면 칸 선 없음 */
+table.sjg-l td.fc { --bar: inset 0 -5px 0 color-mix(in srgb, var(--fc) 40%, var(--surface)); } table.sjg-l td.fc.pa { --bar: inset 0 -5px 0 var(--fc); }
+table.sjg-l td.fc.cn { border-right-color: transparent; }
+table.sjg-l td.f-AL { --fc: #1f6fd1; } table.sjg-l td.f-AZ { --fc: #d35a1f; } table.sjg-l td.f-MAC { --fc: #0f8f62; } table.sjg-l td.f-C수출 { --fc: #5b45b5; } table.sjg-l td.f-C건재 { --fc: #08798a; } table.sjg-l td.f-C수요 { --fc: #a63d70; }
+table.sjg-l td.mcc { position: relative; z-index: 0; color: #3d2900 !important; font-weight: 800; }
+table.sjg-l td.mcc::before { content: ''; position: absolute; inset: 5px 2px; background: #f2b705; border-radius: 6px; z-index: -1; }
+table.sjg-l td.sdblock { padding: 4px 3px; }
+table.sjg-l td.sdblock .sdp { display: flex; flex-direction: column; align-items: flex-start; padding: 0 12px; justify-content: center; min-height: 26px; height: 100%; border-radius: 7px; background: #3f4a5a; color: #fff; font-weight: 800; font-size: 13.5px; letter-spacing: 0; white-space: nowrap; }
+table.sjg-l td.sdblock .sdt { position: sticky; left: 202px; display: flex; flex-direction: column; }   /* 긴 정지 블록이 왼쪽으로 스크롤돼도 이름이 보이게 */
+table.sjg-l td.sdblock.one .sdp { align-items: center; padding: 0; } table.sjg-l td.sdblock.one .sdt { position: static; }
+table.sjg-l td.sdblock .sdp small { font-size: 13.5px; font-weight: 500; opacity: .9; }
+table.sjg-l td.sdblock.sk-repair .sdp { background: #c8372d; } table.sjg-l td.sdblock.sk-sd .sdp { background: #1f5fae; } table.sjg-l td.sdblock.sk-jr .sdp { background: #6a3fb5; }
+table.sjg-l td.sdblock.sk-idle .sdp { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink) 6%, var(--surface)) 0 6px, color-mix(in srgb, var(--ink) 12%, var(--surface)) 6px 12px); color: var(--ink-2); font-weight: 600; }
+/* 출하·재고: 재고 칸 색 = 목표 대비 */
+/* 범례 */
+.glegend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 13.5px; color: var(--ink-2); margin: 0 0 10px; }
+.glegend .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-right: 6px; vertical-align: -3px; }
+.glegend .muted { color: var(--ink-2); font-weight: 700; } .glegend .gsep { width: 1px; height: 14px; background: var(--line); }
+.glegend .sw.f-AL, .glegend .sw.f-AZ, .glegend .sw.f-MAC, .glegend .sw.f-C수출, .glegend .sw.f-C건재, .glegend .sw.f-C수요 { height: 6px; width: 22px; border-radius: 2px; vertical-align: 2px; }
+.glegend .sw.f-AL { background: #1f6fd1; } .glegend .sw.f-AZ { background: #d35a1f; } .glegend .sw.f-MAC { background: #0f8f62; } .glegend .sw.f-C수출 { background: #5b45b5; } .glegend .sw.f-C건재 { background: #08798a; } .glegend .sw.f-C수요 { background: #a63d70; }
+.glegend .sw.mcsw { background: #f2b705; } .glegend .sw.sk-plan { background: #3f4a5a; } .glegend .sw.sk-repair { background: #c8372d; } .glegend .sw.sk-sd { background: #1f5fae; } .glegend .sw.sk-jr { background: #6a3fb5; }
+.glegend .sw.idsw { background: repeating-linear-gradient(135deg, #c9cfd7 0 3px, var(--surface) 3px 6px); box-shadow: inset 0 0 0 1px var(--line); }
+.glegend .sw.tbsw { background: color-mix(in srgb, var(--brand-2) 25%, var(--surface)); box-shadow: inset 0 0 0 2px var(--brand-2); } .glegend .sw.mesw { background: var(--surface); box-shadow: inset 0 0 0 2px var(--ink-3); } .glegend .sw.wesw { background: color-mix(in srgb, var(--ink) 12%, var(--surface)); }
+/* 수주 관제 추가: 지난 날 실적 < 월초 계획 = 빨강 · 판매그룹 표 제목 */
+table.mt2.sjg tbody td.lo { color: var(--bad) !important; font-weight: 800; }
+table.mt2 .sg-kk b.neg { color: var(--bad); }
+.glegend .sjg-lo { color: var(--bad); font-weight: 700; }
+.sjg-h { font-size: 15px; font-weight: 800; margin: 18px 0 8px; } .sjg-h small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 6px; }
 .sj-cbt td.sj-cb { width: 38%; min-width: 260px; }
 .sj-cb .tr { position: relative; height: 16px; border-radius: 4px; overflow: hidden; }
 .sj-cb .tr i { position: absolute; top: 0; bottom: 0; left: 0; } .sj-cb .tr i.s { background: var(--sub); } .sj-cb .tr i.o { border-radius: 4px 0 0 4px; }
@@ -207,9 +241,9 @@ html body main table.ct-t.sj-wo { width: 100%; table-layout: fixed; min-width: 9
 <header id="shell" data-page="suju" data-title="수주 관제" data-sub="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준)"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보·통합 계획 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611112312"></script>
-<script src="engine/crypto.js?v=2611112312"></script>
-<script src="ui/ct.js?v=2611112312"></script>
-<script src="suju.js?v=2611112312"></script>
+<script src="ui/shell.js?v=2611112313"></script>
+<script src="engine/crypto.js?v=2611112313"></script>
+<script src="ui/ct.js?v=2611112313"></script>
+<script src="suju.js?v=2611112313"></script>
 </body>
 </html>
