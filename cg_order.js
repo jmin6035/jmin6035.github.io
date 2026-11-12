@@ -270,7 +270,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
   function basisFold() {
     const B = O.basis || {}, li = (a, b) => `<dt>${a}</dt><dd>${b}</dd>`;
     return `<details class="fold od-fold"><summary>기준·사양</summary><dl class="od-def">`
-      + li('기준일', `${UI.fmtDate(O.asOf)} · 자료 ${esc(O.dataAt || '')} · 납기 −30일 ~ +90일 계약`)
+      + li('기준일', `${UI.fmtDate(O.asOf)} · 자료 ${esc(O.dataAt || '')} · 생산 남은 계약 전부(납기 무관)`)
       + li('필요 입고일', `내수 납기 −${B.leadIn + B.prep}일 · 수출 출항 −${B.leadIn + B.prep}일(입고 ${B.leadIn}일 + 준비 ${B.prep}일)`)
       + li('예상 입고', `F/H 인도기한 ${O.dleOff}일(실적 ${n0(O.dleOffN)}건 중앙값) — 포스코 입고예정이 없을 때`)
       + li('소재 지연', '필요 입고일 지남 · 미입고') + li('포스코 독촉', '필요 입고 3주 이내 · 열연 이전') + li('입고 확인', '필요 입고 2주 안 미입고 · 인도기한 지났는데 입고 기록 없음') + li('미발주', '소재(F/H) 발주 전') + li('소재 미확보', '미입고(발주한 소재 중 아직 안 들어온 양) + 미발주 주문의 미생산 잔량')
@@ -289,7 +289,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     const groups = G0.concat([...new Set(L.map((x) => x.grp || '그룹 미상'))].filter((g) => !G0.includes(g)));
     const byG = groups.map((g) => [g, L.filter((x) => (x.grp || '그룹 미상') === g)]).filter((e) => e[1].length);
     const S = sumOf(L);
-    $('od-meta').textContent = `${UI.fmtDate(O.asOf)} 기준 · 납기 −30일 ~ +90일 계약`;
+    $('od-meta').textContent = `${UI.fmtDate(O.asOf)} 기준 · 생산 남은 계약 전부(납기 무관)`;
     const wait = [!O.hasRun && '포스코 진행', !O.hasCus && '고객사·담당자', !O.hasFull && '목적지'].filter(Boolean);
     const scN = window.UI && UI.scope && UI.scope() === 'C' ? '<p class="od-wait">이 화면은 도금 주문입니다 — <a href="cc_order.html?pl=C">컬러 주문진도 →</a></p>' : '';
     $('od-main').innerHTML = scN + topCard(R) + `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 주문진도</h2>`

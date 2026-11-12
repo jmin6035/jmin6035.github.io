@@ -50,7 +50,7 @@
       const cm = months[months.length - 1], cur = sumB(done.filter((o) => String(o.src.prodLast).slice(0, 7) === cm)), pcur = pc(cur[1], cur[0]);
       cards.push(card('납기 내 생산', `도금 주문 · 생산 완료일이 생산 필요일 안 · 월별, 수요일 시작 2주`, big(pcur, tone(pcur), `${MN(cm)} ${n0(cur[1])} / ${n0(cur[0])}t`)
         + tbl(['기간', '생산 완료(t)', '기한 안(t)', '준수율'], rowsB)
-        + `<p class="pf-n">컬러 주문은 주문별 생산 완료일 자료가 없어 제외(컬러 주문 진도에 완료일 칸 없음). 도금 주문 진도에 든 주문(납기 −30~+90일)만</p>`));
+        + `<p class="pf-n">컬러 주문은 주문별 생산 완료일 자료가 없어 제외(컬러 주문 진도에 완료일 칸 없음). 도금 주문 진도에 든 주문(생산 남은 주문 전부)만</p>`));
       const g1 = Object.entries(gAll).filter(([k]) => k.startsWith(cm) && gAll[k][0] >= 50).sort((a, b) => a[1][1] / a[1][0] - b[1][1] / b[1][0])[0];
       if (g1) {
         const gn = g1[0].split('|')[1], cz = M.all.filter((o) => o.grp === gn && o.risk === '위험'), cc = {};
