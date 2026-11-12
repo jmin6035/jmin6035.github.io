@@ -259,6 +259,7 @@ table.dt.mt td.st { font-weight: 700; } table.dt.mt td.st.ok { color: var(--good
 .flw .fs { display: inline-flex; align-items: baseline; gap: 5px; line-height: 1.2; padding: 3px 8px; border-radius: 7px; background: var(--surface-2); border: 1px solid var(--line); }
 .flw .fs small { font-size: 13.5px; color: var(--ink-3); font-weight: 700; } .flw .fs b { font-size: 13.5px; font-weight: 800; white-space: nowrap; }
 .flw .fs.done { opacity: .6; } .flw .fs.done small::after { content: ' ✓'; }
+.flw .fs.late { opacity: 1; } .flw .fs.late small, .flw .fs.late b { color: var(--warn); } .flw .fs.late small::after { content: ''; }   /* 지난 날 실적: 납기보다 늦게 생산 */
 .flw .fs.now { background: var(--brand-2); border-color: var(--brand-2); } .flw .fs.now small, .flw .fs.now b { color: #fff; }
 table.dt.fl td { vertical-align: middle; padding: 5px 6px; } table.dt.fl td.st { white-space: normal !important; min-width: 150px; max-width: 220px; font-size: 13.5px; line-height: 1.35; } .det table.dt.fl td.wst { min-width: 0; } table.dt.fl tr:not(.cont) td { border-top: 1px solid var(--line); }
 .kd2 { display: inline-block; font-size: 13.5px; font-weight: 800; padding: 0 6px; border-radius: 999px; } .kd2.self { background: color-mix(in srgb, #5b4bb7 14%, var(--surface)); color: #5b4bb7; } .kd2.buy { background: color-mix(in srgb, #c46f00 14%, var(--surface)); color: var(--warn); }
