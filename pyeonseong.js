@@ -189,7 +189,7 @@
   }
 
   /* 칸 한 양식(도금·컬러·지난 날 같음): ① 큰 톤 + 강종/품명 칩 + 시간 부하 % ② 상태 톤 ③ 그룹 톤 ④ 경고 칩 · 정지/비가동 = 글자만 가운데 */
-  const pctB = (r, tip) => (r == null ? '' : `<span class="pc${r > 1.005 ? ' ov' : ''}" title="${esc(tip)}">부하 ${Math.round(r * 100)}%</span>`);
+  const pctB = (r, tip) => (r == null ? '' : `<span class="ld${r > 1.005 ? ' ov' : ''}" title="${esc(tip)}">부하 ${Math.round(r * 100)}%</span>`);
   /* 그룹 이름 = 관제 판매그룹(kj.js GRP 와 같은 묶음): 컬러수출 = 건재수출·가전수출·가전내수 · 컬러건재 = 주문재+계획재 · 도금 = 도금수출·도금국내·자동차·도금 자가재 */
   const GNM = { 수출: '도금수출', 도금수출: '도금수출', 국내: '도금국내', 도금국내: '도금국내', 자동차: '자동차', 자동차내수: '자동차', 자동차수출: '자동차', 자가재: '도금 자가재',
     건재수출: '컬러수출', 가전수출: '컬러수출', 가전내수: '컬러수출', 주문재: '컬러건재', 계획재: '컬러건재', 수요개발: '수요개발' };
@@ -238,35 +238,39 @@
       : (a.pr || []).filter(([, v]) => v >= 0.5).slice(0, 1).map(([q]) => `<span class="fam">${esc(q)}</span>`).join('');
     return cellH({ ln, d, past: 1, t: a.t, chips, G: a.grp, tip: `${ln} ${mdw(d)} 생산 실적(MES) ${n0(a.t)}t${a.h ? ` · ${n1(a.h)}h` : ''}${a.pr ? ` · 품명 ${a.pr.map(([q, v]) => `${q} ${n0(v)}`).join(' · ')}` : ''}` });
   }
+  /* 2주 표(11/12 사용자 '편성은 2주치로 늘려, 칸 좀 줄여서'): 열 = 이번 생산주(수~화) + 다음 생산주 14일 · 이번 주 지난 날 = 실적 · 창(월말) 밖 = 빈 칸 */
   function grid(p) {
     const C = CAL[p](), R = C && C.raw && C.raw(); if (!R) return '';
-    const { w0, days } = R, today = UI.today(), LN = LINES[p];
+    const { w0, days } = R, today = UI.today(), LN = LINES[p], plan = days.concat(R.days2 || []);
     const FL = p === 'cc' ? ccFlow(R).F : null;
-    const pds = []; for (let d = w0; d < days[0]; d = addD(d, 1)) pds.push(d);
-    const pad = Math.max(0, 7 - pds.length - days.length), padTd = '<td class="pad" aria-hidden="true"></td>'.repeat(pad);
-    const tdc = (d, x) => `${d === today ? 'td' : ''}${x ? ' ' + x : ''}`.trim();
+    const w1 = addD(w0, 7), D14 = Array.from({ length: 14 }, (_, k) => addD(w0, k));
+    const kind = (d) => (d < days[0] ? 'pst' : plan.includes(d) ? 'pl' : 'pad');
+    const wb = (d) => (d === w1 ? ' wb' : '');                      // 다음 주 첫날 = 굵은 세로선
+    const tdc = (d, x) => `${d === today ? 'td' : ''}${x ? ' ' + x : ''}${wb(d)}`.trim();
     const S = SEL[p], selD = S && S.all ? S.d : null;
-    const head = `<th class="cn">이번 주<small>${md(w0)}~${md(addD(w0, 6))}</small></th>` + pds.map((d) => `<th class="pst dk${d === selD ? ' on' : ''}" data-d="${d}" tabindex="0" role="button" aria-expanded="${d === selD}">${mdw(d)}<small>실적</small></th>`).join('')
-      + days.map((d) => `<th class="${tdc(d, 'dk' + (d === selD ? ' on' : ''))}" data-d="${d}" tabindex="0" role="button" aria-expanded="${d === selD}">${mdw(d)}${d === today ? '<small>오늘</small>' : ''}</th>`).join('') + padTd.replace(/td/g, 'th');
+    const dh = (d) => (kind(d) === 'pad' ? `<th class="pad${wb(d)}" aria-hidden="true"></th>`
+      : `<th class="${kind(d) === 'pst' ? `pst dk${wb(d)}` : tdc(d, 'dk')}${d === selD ? ' on' : ''}" data-d="${d}" tabindex="0" role="button" aria-expanded="${d === selD}">${mdw(d)}${kind(d) === 'pst' ? '<small>실적</small>' : d === today ? '<small>오늘</small>' : ''}</th>`);
+    const head = `<tr class="wh"><th class="cn" rowspan="2">${md(w0)}~${md(addD(w0, 13))}</th><th colspan="7">이번 주 <small>${md(w0)}~${md(addD(w0, 6))}</small></th><th colspan="7" class="wb">다음 주 <small>${md(w1)}~${md(addD(w1, 6))}</small></th></tr><tr>${D14.map(dh).join('')}</tr>`;
     const planT = (ln, d) => (p === 'cg' ? (() => { const c = R.cell(ln, d); return (c.cap || 0) < 1 ? 0 : c.conf + c.plan + c.fcst; })() : FL[ln][d].t);
     const pastT = (ln, d) => { const a = R.act(ln, d); return a ? a.t || 0 : null; };
-    const dayT = (ln, d) => (pds.includes(d) ? pastT(ln, d) || 0 : planT(ln, d));
-    const allD = [...pds, ...days], wkT = (ln) => allD.reduce((s, d) => s + dayT(ln, d), 0);
+    const dayT = (ln, d) => (kind(d) === 'pst' ? pastT(ln, d) || 0 : kind(d) === 'pl' ? planT(ln, d) : 0);
+    const W1 = D14.slice(0, 7), W2 = D14.slice(7), wT = (ln, W) => W.reduce((s, d) => s + dayT(ln, d), 0);
+    const wkS = (f) => `<small>이번 주 ${n0(f(W1))}t</small><small>다음 주 ${n0(f(W2))}t</small>`;
+    const pad = (d) => `<td class="pad${wb(d)}" aria-hidden="true"></td>`;
     const rows = LN.map((ln) => {
-      const idle = days.every((d) => (p === 'cg' ? (R.cell(ln, d).cap || 0) < 1 : R.cell(ln, d).stop)) && pds.every((d) => !pastT(ln, d));
+      const idle = plan.every((d) => (p === 'cg' ? (R.cell(ln, d).cap || 0) < 1 : R.cell(ln, d).stop)) && D14.every((d) => kind(d) !== 'pst' || !pastT(ln, d));
       const ov = p === 'cg' && R.over(ln);
-      return `<tr class="ln${idle ? ' idle' : ''}"><th>${ln}<small>이번 주 ${n0(wkT(ln))}t</small>${ov ? `<small class="ovt" title="${R.end}까지 주문을 실적 T/Hr로 24시간 이어 돌리면 가동 가능 시간을 ${n1(ov.h)}시간 넘음">${R.end} 뒤 ${n0(ov.t)}t</small>` : ''}</th>`
-        + pds.map((d) => `<td class="pst">${pastCell(p, R.act(ln, d), ln, d)}</td>`).join('')
-        + days.map((d) => `<td class="${tdc(d)}">${p === 'cg' ? cgCell(R.cell(ln, d), ln, d === today) : ccCell(FL[ln][d], ln, R.KD, d === today)}</td>`).join('') + padTd + '</tr>';
+      return `<tr class="ln${idle ? ' idle' : ''}"><th>${ln}${wkS((W) => wT(ln, W))}${ov ? `<small class="ovt" title="${R.end}까지 주문을 실적 T/Hr로 24시간 이어 돌리면 가동 가능 시간을 ${n1(ov.h)}시간 넘음">${R.end} 뒤 ${n0(ov.t)}t</small>` : ''}</th>`
+        + D14.map((d) => (kind(d) === 'pad' ? pad(d) : kind(d) === 'pst' ? `<td class="pst${wb(d)}">${pastCell(p, R.act(ln, d), ln, d)}</td>`
+          : `<td class="${tdc(d)}">${p === 'cg' ? cgCell(R.cell(ln, d), ln, d === today) : ccCell(FL[ln][d], ln, R.KD, d === today)}</td>`)).join('') + '</tr>';
     }).join('');
     const parts = (d) => `<div class="sn pls">${spans(LN.map((l) => { const v = dayT(l, d); return v >= 0.5 ? `${l} ${n0(v)}` : ''; }))}</div>`;
     const sumCell = (d) => `<div class="tv">${d === today ? '<span class="rmn">오늘 남은</span>' : ''}${n0(LN.reduce((s, l) => s + dayT(l, d), 0))}<small>t</small></div>${parts(d)}`;
-    const wk = LN.reduce((s, l) => s + wkT(l), 0);
-    console.assert(Math.abs(wk - allD.reduce((s, d) => s + LN.reduce((q, l) => q + dayT(l, d), 0), 0)) < 0.01, `편성: ${p} 주 합 ≠ 하루 합의 합`);
-    const tot = `<tr class="dsum"><th>하루 합<small>이번 주 ${n0(wk)}t</small></th>`
-      + pds.map((d) => `<td class="pst">${LN.some((l) => pastT(l, d) != null) ? sumCell(d) : '<div class="tv">–</div>'}</td>`).join('')
-      + days.map((d) => `<td class="${tdc(d)}">${sumCell(d)}</td>`).join('') + padTd + '</tr>';
-    return `<table class="psw v2-grid"><thead><tr>${head}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
+    const all = LN.reduce((s, l) => s + wT(l, D14), 0);
+    console.assert(Math.abs(all - D14.reduce((s, d) => s + LN.reduce((q, l) => q + dayT(l, d), 0), 0)) < 0.01, `편성: ${p} 2주 합 ≠ 하루 합의 합`);
+    const tot = `<tr class="dsum"><th>하루 합${wkS((W) => LN.reduce((s, l) => s + wT(l, W), 0))}</th>`
+      + D14.map((d) => (kind(d) === 'pad' ? pad(d) : kind(d) === 'pst' ? `<td class="pst${wb(d)}">${LN.some((l) => pastT(l, d) != null) ? sumCell(d) : '<div class="tv">–</div>'}</td>` : `<td class="${tdc(d)}">${sumCell(d)}</td>`)).join('') + '</tr>';
+    return `<table class="psw v2-grid"><thead>${head}</thead><tbody>${rows}${tot}</tbody></table>`;
   }
   function drawCal(p) {
     const host = $('ps-cal-' + p), C = CAL[p]();
@@ -338,7 +342,20 @@
     box.hidden = false;
     box.querySelector('button[data-x]').onclick = () => { SEL[p] = null; drawCal(p); drawDay(p); };
   }
+  /* 맨 위 = 주문진도 화면(ct_orders.js)의 '컬러·도금 전체 주문진도' 그대로(CTORD.mount — 같은 함수·같은 자료, 라인별 미생산 카드만 뺌) */
+  let ORD = null;
+  async function loadOrd() {
+    if (!window.CTORD) return null;
+    const E = await Promise.all(CTORD.FILES.map((f) => GP.latest(f).catch(() => null))), D = {};
+    for (let k = 0; k < E.length; k++) D[CTORD.FILES[k].replace(/\.enc\.json$/, '')] = E[k] ? await GP.decryptJSON(E[k], PW).catch(() => null) : null;
+    return D.cg_order_progress || D.cc_order_progress ? D : null;
+  }
+  function drawOrd() {
+    const host = $('ps-ord'); $('ps-ordc').hidden = !ORD;
+    if (ORD) { try { CTORD.mount(host, ORD); } catch (e) { console.error(e); $('ps-ordc').hidden = true; } }
+  }
   function drawAll() {
+    drawOrd();
     const P = plants(); if (!P.length) return;
     if (!P.some((p) => LINES[p].includes(line))) line = LINES[P[0]].find((l) => lineSum(P[0], l).n) || LINES[P[0]][0];
     $('ps-cgc').hidden = !P.includes('cg'); $('ps-ccc').hidden = !P.includes('cc');
@@ -388,7 +405,7 @@ main.wrap { margin: 0 !important; padding: 0 !important; max-width: none !import
       }
       try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ }
       await Promise.all(['cg', 'cc'].map(async (p) => { const sv = await lastSaved(p); X[p].ver = sv; useSaved(p, sv); }));
-      await Promise.all([window.CGCAL && CGCAL.load(pw), window.CCCAL && CCCAL.load(pw)].map((x) => Promise.resolve(x).catch(() => null)));   // 캘린더 = 생산 일정 화면과 같은 자료
+      await Promise.all([window.CGCAL && CGCAL.load(pw), window.CCCAL && CCCAL.load(pw), loadOrd().then((D) => { ORD = D; })].map((x) => Promise.resolve(x).catch(() => null)));   // 캘린더 = 생산 일정 화면과 같은 자료 · 주문진도 = 주문진도 화면과 같은 자료
       $('ps-lock').hidden = true; $('ps-main').hidden = false;
       drawAll();
     } catch (e) {
