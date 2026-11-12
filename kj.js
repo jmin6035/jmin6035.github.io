@@ -117,6 +117,12 @@
       }
       grp[G.k] = out;
     }
+    // 재고 목표 = '27 판생그룹 적정재고량(11/12 사용자 사진, 합 = 공장 소재 12,600·20,940 / 제품 22,300·19,320 = 75,160)
+    //  [소재, 제품] — 컬러수출 = 건재수출(1섹션) + 가전수출(2섹션) · 자가재 목표 없음
+    //  도금 소재 12,600 = 더미재 500 + 그룹 12,100 — 그룹 몫은 그룹 제품 목표 비율로 나눔(11/12 사용자 '도금 소재는 그룹별 제품재고 비율만큼 나눠'): 수출 12,100·국내 4,600·자동차 5,600 / 22,300
+    const GM = (t) => Math.round(12100 * t / 22300);
+    const T27 = { G수출: [12100 - GM(4600) - GM(5600), 12100], G국내: [GM(4600), 4600], G자동차: [GM(5600), 5600], G자가재: [null, null], C수출: [4910 + 6630, 5070 + 5950], C건재: [9100, 8000], C수요: [300, 300] };
+    for (const G of GRP) for (const m of months) { const o = grp[G.k][m], t = T27[G.k]; if (!t) continue; o.matT = t[0]; o.cap = o.stk == null ? null : t[1]; }
     // 공장 전체 = 그룹 합(자가재는 판매·수주·출하·제품 재고에서 빠짐 — 내부 투입) · 소재 재고·상한은 공장 단위
     const SR = P.sr || {}, stkOf = (re) => (SR.stock || []).find((x) => re.test(x.name)) || {}, SM = I.stockMax || {};
     const matEnd = (key, m) => { const R = (((V.mat || {})[key] || {}).rows || []), md_ = m.slice(5) + '-'; const L = R.filter((r) => String(r[0]).startsWith(md_)); return L.length ? L[L.length - 1][4] : null; };
@@ -347,12 +353,12 @@
     const pc = (v, cls) => `<td${cl('kp', cls)}>${v == null ? '–' : P0(v)}</td>`;
     // 재고 = 목표 | 소재 | 제품 | 비율 (11/12 사용자 '소재 발주한 사람 추적하면 그룹 나온다, 합 더해서 목표랑 비교하는 비율') — 비율 = (소재 + 제품) ÷ 목표, 100% 넘으면 주황
     // 그룹 목표 = 제품 재고 목표 · 공장 목표 = 소재 목표 + 제품 목표 합 · 그룹 소재가 없는 달(다음 달 계획)은 공장 칸을 그룹 줄까지 세로로 합침
-    const stock = (x, grp, span) => { const tg = grp ? x.cap : (x.matCap != null || x.cap != null ? (x.matCap || 0) + (x.cap || 0) : null);
-      const own = !grp || x.mat !== undefined, r = own && x.mat != null && x.stk != null ? pctOf(x.mat + x.stk, tg) : null;
+    const stock = (x, grp, span) => { const po = grp && x.matT == null, tg = grp ? (po ? x.cap : x.cap == null ? null : x.matT + x.cap) : (x.matCap != null || x.cap != null ? (x.matCap || 0) + (x.cap || 0) : null);   // po = 그룹 소재 목표 없음(도금) → 비율 = 제품 ÷ 제품 목표
+      const own = !grp || x.mat !== undefined, r = po ? pctOf(x.stk, x.cap) : own && x.mat != null && x.stk != null ? pctOf(x.mat + x.stk, tg) : null;
       return `<td class="gs">${tg == null ? '<span class="na">–</span>' : n0(tg)}</td>`
         + (grp ? (own ? nb(x.mat) : '') : `<td${span > 1 ? ` rowspan="${span}" class="mspan"` : ''}>${x.mat == null ? '<span class="na">자료 없음</span>' : n0(x.mat)}${x.matNa >= 1 ? `<small class="kj-mna">미배정 ${n0(x.matNa)}</small>` : ''}</td>`)
         + (x.stk == null ? '<td><span class="na">자료 없음</span></td>' : nb(x.stk))
-        + pc(r, r != null && r > 100 ? 'ov' : ''); };
+        + `<td class="kp${r != null && r > 100 ? ' ov' : ''}">${r == null ? '–' : P0(r)}${po && r != null ? '<small class="kj-mna">제품만</small>' : ''}</td>`; };
     const rowCur = (nm, x, cls, grp, self, span) => `<tr${cl(cls)}><th scope="row">${nm}</th>`
       + (self ? na(4, '내부 투입 — 주문 없음', 1) : `${nb(x.sales, 1)}${nb(x.ord)}${nb(x.off)}${pc(pctOf(x.ord, x.sales))}`)
       + `${nb(x.pPlan, 1)}${nb(x.pAct)}${pc(pctOf(x.pAct, x.pPlan), shortT(x.pAct, x.pDue))}`
@@ -370,7 +376,7 @@
     if (pls.length > 1) { const P = pls.map((p) => A.plant[p][mSel]), T = {};
       for (const k of [...FLOW, 'mat', 'matCap', 'cap', 'matNa']) T[k] = sum(P, (x) => x[k]);
       rows.push(rowOf('합계', T, 'tot')); }
-    const STH = '<th class="gs">목표<br><small>그룹 = 제품<br>재고 목표</small></th><th>소재</th><th>제품</th><th>비율<br><small>소재+제품<br>÷ 목표</small></th>';
+    const STH = '<th class="gs">목표<br><small>소재 + 제품<br>(\'27 판생)</small></th><th>소재</th><th>제품</th><th>비율<br><small>소재+제품<br>÷ 목표</small></th>';
     const hd = cur
       ? `<tr><th rowspan="2" scope="col">구분</th><th colspan="4" class="gs" scope="colgroup">수주 <small>판매계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">생산 <small>월 계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">출하 <small>월 계획 대비</small></th><th colspan="4" class="gs" scope="colgroup">재고 <small>${md(A.S.asOf)}</small></th></tr>`
         + `<tr><th class="gs">판매계획</th><th>소재 ON<br><small>매치 끝난 주문</small></th><th>소재 OFF<br><small>매치 전 주문</small></th><th>진도<br><small>ON ÷ 판매계획</small></th><th class="gs">월 계획</th><th>실적</th><th>진도</th><th class="gs">월 계획</th><th>실적</th><th>진도</th>${STH}</tr>`
