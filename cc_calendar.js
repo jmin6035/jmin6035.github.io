@@ -74,18 +74,32 @@
       + '</button>';
   }
 
+  /* 지난 날 칸(11/12 사용자 '수요일엔 왜 안 쓰는데'): MES 실적(color_actual byGroup — 라인·날 × 판매그룹 · 품명, 생산 분) — 앞날 칸과 같은 모양, 막대 = 완료 */
+  function pastCell(ln, d) {
+    const A = O.act || {}, x = (A.days || {})[d], a = x && x[ln], st = 'style="background:transparent;cursor:default;color:var(--ink)"';
+    if (!A.asOf || d > A.asOf) return `<button type="button" class="cell pcell" tabindex="-1" ${st} title="${mdw(d)} ${ln} 실적 자료 없음(다음 날 아침 들어옴)"><div class="tv">–</div></button>`;
+    if (!a) return `<button type="button" class="cell pcell" tabindex="-1" ${st} title="${mdw(d)} ${ln} 생산 없음"><div class="ct"><span class="ev">비가동</span></div><div class="tv">0<small>t 실적</small></div></button>`;
+    const [g, mn, pr] = a, t = sum(Object.values(g || {}), (v) => v), G = Object.entries(g || {}).filter(([, v]) => v >= 0.5).sort((p, q) => q[1] - p[1]), P = (pr || []).filter(([, v]) => v >= 0.5).slice(0, 2);
+    return `<button type="button" class="cell pcell" tabindex="-1" ${st} title="${mdw(d)} ${ln} 생산 실적(MES) ${n0(t)}t · ${n1(mn / 60)}h · 품명 ${(pr || []).map(([p, v]) => `${p} ${n0(v)}`).join(' · ')}">`
+      + `<div class="ct">${P.map(([p]) => `<span class="fam">${esc(p)}</span>`).join('')}</div>`
+      + '<div class="bar"><i style="width:100%;background:var(--ink-2)"></i></div>'
+      + `<div class="tv">${n0(t)}<small>t 실적</small> <span class="hv">${n1(mn / 60)}h</span></div>`
+      + `<div class="gl">${G.map(([k, v]) => `<span>${esc(k)} ${n0(v)}</span>`).join('')}</div></button>`;
+  }
+  const actT = (ln, d) => { const x = ((O.act || {}).days || {})[d], a = x && x[ln]; return a ? sum(Object.values(a[0] || {}), (v) => v) : 0; };
   const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const wedOf = (s) => { const x = dt(s); x.setDate(x.getDate() - ((x.getDay() + 4) % 7)); return iso(x); };   // 생산주(수~화)의 수요일 — 도금 캘린더·작업 순서와 같은 주
   function weekTable(w0, days) {
     const idx = (d) => O.days.indexOf(d);
     const lead = Math.round((dt(days[0]) - dt(w0)) / 864e5), P = (n) => '<td class="pad" aria-hidden="true"></td>'.repeat(Math.max(0, n));
-    const pad = P(7 - lead - days.length), lp = P(lead);   // 지난 날·월말 뒤는 빈 칸으로 채워 칸 폭을 7칸에 맞춤
+    const pad = P(7 - lead - days.length);   // 월말 뒤는 빈 칸으로 채워 칸 폭을 7칸에 맞춤
+    const pds = Array.from({ length: Math.max(0, lead) }, (_, i) => { const x = dt(w0); x.setDate(x.getDate() + i); return iso(x); });   // 이번 주 지난 날 = 실적
     const nx = (() => { const x = dt(wedOf(O.asOf)); x.setDate(x.getDate() + 7); return iso(x); })(), we = (() => { const x = dt(w0); x.setDate(x.getDate() + 6); return iso(x); })();
     const wl = w0 === nx ? ['다음 주', 'nx'] : w0 < nx ? ['이번 주', ''] : ['계획', 'pl'];
-    const head = `<th class="wl ${wl[1]}" title="생산주 ${mdw(w0)} ~ ${mdw(we)}">${wl[0]}<small>${md(w0)}~${md(we)}</small></th>` + lp.replace(/td/g, 'th') + days.map((d) => { const wd = dt(d).getDay(); return `<th class="${wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}${d === UI.today() ? '<small class="tdy">오늘</small>' : ''}</th>`; }).join('') + pad.replace(/td/g, 'th');
-    const rows = LINES.map((ln) => `<tr><th>${ln}<small title="이 주 ${ln} 생산 톤 · 편성 시간">${n0(sum(days, (d) => O.lines[ln][idx(d)].cap))}t · ${n0(sum(days, (d) => O.lines[ln][idx(d)].usedH))}h</small></th>${lp}${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`).join('');
+    const head = `<th class="wl ${wl[1]}" title="생산주 ${mdw(w0)} ~ ${mdw(we)}">${wl[0]}<small>${md(w0)}~${md(we)}</small></th>` + pds.map((d) => `<th class="pst">${mdw(d)}<small class="tdy" style="background:var(--sub);color:var(--ink-2)">실적</small></th>`).join('') + days.map((d) => { const wd = dt(d).getDay(); return `<th class="${wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}${d === UI.today() ? '<small class="tdy">오늘</small>' : ''}</th>`; }).join('') + pad.replace(/td/g, 'th');
+    const rows = LINES.map((ln) => `<tr><th>${ln}<small title="이 주 ${ln} 생산 톤 · 편성 시간">${n0(sum(days, (d) => O.lines[ln][idx(d)].cap))}t · ${n0(sum(days, (d) => O.lines[ln][idx(d)].usedH))}h</small></th>${pds.map((d) => `<td class="pst">${pastCell(ln, d)}</td>`).join('')}${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`).join('');
     const sd = (d) => sum(LINES, (l) => O.lines[l][idx(d)].cap);
-    const tot = `<tr class="dsum"><th title="네 라인 하루 생산 톤 합">하루 합<small>주 ${n0(sum(days, sd))}t</small></th>${lp}${days.map((d) => `<td><b>${n0(sd(d))}</b><small>t</small></td>`).join('')}${pad}</tr>`;
+    const tot = `<tr class="dsum"><th title="네 라인 하루 생산 톤 합">하루 합<small>주 ${n0(sum(days, sd))}t</small></th>${pds.map((d) => `<td class="pst" title="${mdw(d)} 네 라인 생산 실적"><b>${n0(sum(LINES, (l) => actT(l, d)))}</b><small>t</small></td>`).join('')}${days.map((d) => `<td><b>${n0(sd(d))}</b><small>t</small></td>`).join('')}${pad}</tr>`;
     return `<table class="cg"><thead><tr>${head}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
   }
 
@@ -96,10 +110,11 @@
       + '<span><i class="kc"></i><b>이어짐</b>다음 계약이 길어 칸만 다음 날 — 현장은 이어서 작업</span>'
       + '<span><i class="ky"></i><b>지시대기</b>소재 매치까지 된 물량(MES 1020)</span>'
       + '<span><i class="kb"></i><b>도료 미입고</b>지시대기 중 도료 입고 일정 없음</span>'
-      + '<span><i class="kg"></i><b>계획편성</b>남는 시간에 우리 계획이 깐 물량</span></div>'
+      + '<span><i class="kg"></i><b>계획편성</b>남는 시간에 우리 계획이 깐 물량</span>'
+      + '<span><i style="background:var(--ink-2)"></i><b>회색 칸 = 실적</b>지난 날 MES 생산</span></div>'
       + `<p class="lgn"><b style="color:var(--bad)">작업대기 부족</b>(빨간 줄) = 24시간 중 현장 물량(작업대기)으로 못 채우는 시간 → 지시대기로 메워야 함 · <b>빈 시간</b> = 아무 물량도 없는 시간 · <b>회색 칸</b> = 정지(휴지·수리) · <b>칸 숫자</b> = 그날 톤 · 편성 시간/가용 시간 · <b>주</b> = 수~화 생산주</p></div>`
       + (O.cus ? '' : '<p class="msg" style="margin:0 0 10px">DUMMY 고객 제외: 컬러 계약 고객사 자료(snap_cc_cus_names)가 사내 PC 다음 실행부터 반영 — 현재는 DUMMY 포함</p>')
-      + (() => { const W = []; O.days.forEach((d) => { const w = wedOf(d); if (!W.length || W[W.length - 1][0] !== w) W.push([w, []]); W[W.length - 1][1].push(d); }); return W; })().map(([w0, ds]) => `<div class="wk">${weekTable(w0, ds)}</div>`).join('') + '</section>';
+      + weeks().map(([w0, ds]) => `<div class="wk">${weekTable(w0, ds)}</div>`).join('') + '</section>';
   }
 
   function matCard() {
@@ -138,21 +153,27 @@
     const stale = Math.round((Date.now() - dt(O.asOf).getTime()) / 864e5);
     $('kc-main').innerHTML = (stale >= 2 ? `<div class="card" style="background:var(--warn-bg);color:var(--warn);font-weight:700">자료 기준 ${md(O.asOf)} — ${stale}일 전 자료</div>` : '')
       + calCard() + matCard();
-    $('kc-main').querySelectorAll('button.cell').forEach((b) => b.onclick = () => openDay(b.dataset.ln, b.dataset.d));
+    $('kc-main').querySelectorAll('button.cell[data-d]').forEach((b) => b.onclick = () => openDay(b.dataset.ln, b.dataset.d));
     if (window.PS) PS.sum('C', summary(), spec(), O.asOf);
     if (window.UI) UI.reveal($('kc-main'));
   }
-  $('kc-dlg').addEventListener('click', (e) => { if (e.target === $('kc-dlg')) $('kc-dlg').close(); });
+  if ($('kc-dlg')) $('kc-dlg').addEventListener('click', (e) => { if (e.target === $('kc-dlg')) $('kc-dlg').close(); });
   /* 생산 일정 화면(ct_plan.html)에 붙어 있음 — 암호는 화면 공통 잠금(CT.boot)이 받고, 여기서는 저장된 암호로만 엶(ensure) */
-  const envReady = GP.latest('cc_calendar.enc.json');
+  const envReady = GP.latest('cc_calendar.enc.json'), actReady = GP.latest('color_actual.enc.json').catch(() => null);
   let busy = false;
   async function unlock(pw) {
     if (O || busy || !pw) return; busy = true;
     const env = await envReady;
-    if (!env) { $('kc-msg').textContent = '게시된 자료가 없습니다.'; busy = false; return; }
+    const msg = (t) => { if ($('kc-msg')) $('kc-msg').textContent = t; };
+    if (!env) { msg('게시된 자료가 없습니다.'); busy = false; return; }
     try { O = await GP.decryptJSON(env, pw); flow(); }
-    catch (e) { $('kc-msg').textContent = '⚠ 암호가 맞지 않습니다'; busy = false; return; }
-    busy = false; render();
+    catch (e) { msg('⚠ 암호가 맞지 않습니다'); busy = false; return; }
+    O.act = await actReady.then((e) => e && GP.decryptJSON(e, pw)).then((a) => (a && a.byGroup) || {}).catch(() => ({}));
+    busy = false; if ($('kc-main')) render();
   }
-  window.CCCAL = { ensure: () => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (O) render(); else unlock(s); } };
+  const weeks = () => { const W = []; O.days.forEach((d) => { const w = wedOf(d); if (!W.length || W[W.length - 1][0] !== w) W.push([w, []]); W[W.length - 1][1].push(d); }); return W; };
+  /* raw() = 이번 생산주 자료만(편성 화면이 칸을 직접 그림 — 생산 일정 화면 모양은 그대로) · act = 실적(자료 없음 null, 생산 없음 t 0) */
+  const raw = () => { const W = O && weeks()[0]; if (!W) return null; const [w0, days] = W, i = (d) => O.days.indexOf(d), A = O.act || {};
+    return { w0, days, KD, cell: (ln, d) => O.lines[ln][i(d)], allDays: O.days, all: (ln) => O.lines[ln], woUntil: (ln) => (O.summary[ln] || {}).woUntil, act: (ln, d) => { if (!A.asOf || d > A.asOf) return null; const x = (A.days || {})[d], a = x && x[ln]; if (!a) return { t: 0, h: 0, grp: {}, pr: [] }; return { t: sum(Object.values(a[0] || {}), (v) => v), h: (a[1] || 0) / 60, grp: a[0] || {}, pr: a[2] || [] }; } }; };
+  window.CCCAL = { raw, load: async (pw) => { await unlock(pw); return !!O; }, week: () => { const W = O && weeks()[0]; return W ? weekTable(W[0], W[1]) : ''; }, items: (ln, d) => { const c = O && O.lines[ln] && O.lines[ln][O.days.indexOf(d)]; return c ? c.items : []; }, stop: (ln, d) => { const c = O.lines[ln][O.days.indexOf(d)]; return !!c && !!c.stop; }, ensure: () => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (O) render(); else unlock(s); } };
 })();

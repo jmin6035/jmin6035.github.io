@@ -1,7 +1,8 @@
-/* 편성(11/12 회의: 1주 작업지시 편성 = 주문 마감 → 소재 매치 → 라인 배분 → 작업 순서) — 작업 순서 화면(week_seq)의 보기 전용.
-   자료 = week_seq 와 같은 게시본(published/week_seq_cg·cc.enc.json) + 같은 저장소(cgl_week_seq)의 최근 저장·확정본(읽기만).
-   시각 흘리기(sim)·전환 휴지(chgCG·chgCC)·바뀜 이름(catOf·fsCG)은 week_seq.js 와 같은 식(그 파일이 모듈이 아니라 복사 — 바꾸면 둘 다).
-   순서 바꾸기·저장·확정은 없음(수정은 작업 순서 화면). 생산 일정(시각·캘린더)과 겹치는 칸은 넣지 않음 */
+/* 편성(11/12 회의: 1주 작업지시 편성) — 11/12 사용자 '편성도 더 이쁘게 간략하게': 위 = 이번 생산주(수~화) 라인별 캘린더(생산 일정 화면 칸 그대로 — cg_calendar.js·cc_calendar.js 의 표를 불러 씀, 지난 날 = MES 실적),
+   칸을 누르면 그날 그 라인 작업 순서가 아래에 펼쳐짐, 맨 아래 = 작업 순서 수정(week_seq.html iframe).
+   작업 순서 자료 = week_seq 와 같은 게시본(published/week_seq_cg·cc.enc.json) + 같은 저장소(cgl_week_seq)의 최근 저장·확정본(읽기만).
+   지시 여부 = 도금 issued(MES 1030 지시)·컬러 fixed(MES 1030 작업대기) — week_seq.js 와 같은 기준.
+   시각 흘리기(sim)·전환 휴지(chgCG·chgCC)·바뀜 이름(catOf·fsCG)은 week_seq.js 와 같은 식(복사 — 바꾸면 둘 다). */
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
@@ -18,12 +19,11 @@
   const iso = (m) => new Date(m * 6e4).toISOString().slice(0, 16).replace('T', ' ');
   const dayOf = (m) => iso(m - 420).slice(0, 10);                 // MES 하루 = 07시 ~ 다음날 07시
   const addD = (d, k) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + k); return x.toISOString().slice(0, 10); };
-  const hrs = (m) => `${n0(m / 60)}시간`;
   const LINES = { cg: ['1CGL', '2CGL'], cc: ['1CCL', '2CCL', '3CCL', '4CCL'] };
-  const PN = { cg: '도금', cc: '컬러' };
   const SC = { cg: 'G', cc: 'C' };
   const X = {};                                                    // 공장별 { D, R, J, L, ver }
   let PW = '', line = null;
+  const SEL = { cg: null, cc: null };                              // 누른 칸 { l, d } — 그날 작업 순서 펼침
 
   // ───────── 전환 휴지·바뀜 이름 (week_seq.js 와 같은 식)
   const sk = (c) => { c = String(c || ''); return c.includes('·') ? c.split('·')[1] : c.length >= 7 ? c.slice(3, 7) : c; };
@@ -122,100 +122,230 @@
     } catch (e) { return null; }
   }
 
-  // ───────── 라인 요약: 배분(건·톤) · 작업 가능 시간(기간 − 계획 휴지)
+  // ───────── 라인 요약: 배분(건·톤) · 작업 가능 시간(기간 − 계획 휴지) · 배분 시간(전환 휴지 + 생산, 기간 안)
   function lineSum(p, l) {
     const { D } = X[p], W0 = tms(D.w0), W1 = tms(D.w1), ev = sim(p, l);
     const js = ev.filter((q) => q.k === 'j' && q.s < W1);
     const from = Math.max(W0, tms(D.lines[l].from));
     const pl = ev.filter((q) => q.k === 'p' && q.s < W1).reduce((s, q) => s + Math.min(q.e, W1) - q.s, 0);
-    return { n: js.length, t: js.reduce((s, q) => s + q.x.t, 0), avail: Math.max(0, W1 - from - pl), stop: !js.length && D.lines[l].stop };
+    const busy = js.reduce((s, q) => s + Math.max(0, Math.min(q.e, W1) - Math.max(q.ds, from)), 0);
+    const avail = Math.max(0, W1 - from - pl);
+    return { n: js.length, t: js.reduce((s, q) => s + q.x.t, 0), avail, busy, fill: avail ? busy / avail : 0, stop: !js.length && D.lines[l].stop };
   }
   const plants = () => ['cg', 'cc'].filter((p) => X[p] && UI.inScope(SC[p]));
-
-  function drawFlow() {
+  const done = (p, x) => !!(p === 'cg' ? x.issued : x.fixed);                // 작업지시 내려감(MES 1030) — week_seq.js 와 같은 기준
+  // 위 한 줄: 주문 마감 → 다음 마감 · 이번 주 배분 · 지시
+  function drawLine() {
     const P = plants(), D0 = X[P[0] || 'cg'].D;
-    const cut = addD(D0.week, -7);                                 // 이번 순서 = 지난 수요일 마감분, 다음 마감 = D.week(주 시작 수요일, week_seq 저장 키)
-    let nJ = 0, tJ = 0, nA = 0, tA = 0;
-    P.forEach((p) => {
-      const { D } = X[p]; nJ += D.jobs.length; tJ += D.jobs.reduce((s, x) => s + (x.t || 0), 0);
-      LINES[p].forEach((l) => { const o = lineSum(p, l); nA += o.n; tA += o.t; });
-    });
-    const per = P.map((p) => { const D = X[p].D, W1 = tms(D.w1); return `${PN[p]} ${md(dayOf(tms(D.w0)))}~${md(dayOf(W1 - 1))}`; }).join(' · ');
-    const vs = P.map((p) => { const s = X[p].ver; return `${PN[p]} ${s ? `${s.state === 'confirm' ? '확정' : '저장'} v${s.v}` : '초안'}`; }).join(' · ');
-    const st = (i, l, v, s) => `<div class="ps-st"><div class="l"><i>${i}</i>${l}</div><div class="v">${v}</div><div class="s" title="${esc(s)}">${s}</div></div>`;
-    $('ps-flow').innerHTML = st(1, '주문 마감', dnm(cut), `다음 마감 ${dnm(D0.week)} 오전`)
-      + st(2, '소재 매치', `${n0(nJ)}<small>건</small> ${n0(tJ)}<small>t</small>`, '소재 들어온 작업')
-      + st(3, '라인 배분', `${n0(nA)}<small>건</small> ${n0(tA)}<small>t</small>`, per)
-      + st(4, '작업 순서', P.every((p) => X[p].ver && X[p].ver.state === 'confirm') ? '확정' : P.some((p) => X[p].ver) ? '저장본' : '초안', vs);
+    let tA = 0, nF = 0;
+    P.forEach((p) => LINES[p].forEach((l) => { tA += lineSum(p, l).t; sim(p, l).forEach((q) => { if (q.k === 'j' && done(p, q.x)) nF++; }); }));
+    $('ps-line').innerHTML = `<span>주문 마감 <b>${dnm(addD(D0.week, -7))}</b></span><span class="ar">→</span><span>다음 <b>${dnm(D0.week)}</b></span><span>작업 순서 배분 <b>${n0(tA)}t</b></span><span>지시 <b>${n0(nF)}건</b></span>`;
   }
-  function drawSum() {
-    const P = plants();
-    const head = `<thead><tr><th rowspan="2"></th>${P.map((p) => { const D = X[p].D; return `<th colspan="${LINES[p].length}" class="pl">${PN[p]} ${md(dayOf(tms(D.w0)))}~${md(dayOf(tms(D.w1) - 1))}</th>`; }).join('')}</tr>`
-      + `<tr>${P.map((p) => LINES[p].map((l) => `<th class="ln${l === line ? ' on' : ''}" data-l="${l}">${l}</th>`).join('')).join('')}</tr></thead>`;
-    const S = {}; P.forEach((p) => LINES[p].forEach((l) => { S[l] = lineSum(p, l); }));
-    const cell = (l, f) => `<td class="ln${l === line ? ' on' : ''}" data-l="${l}">${f(S[l])}</td>`;
-    const stopTxt = (o) => `<span class="st" title="${esc(o.stop.note || '')}">정지${o.stop.until ? ` ~${md(o.stop.until)}` : ''}</span>`;
-    const row = (nm, f) => `<tr><th>${nm}</th>${P.map((p) => LINES[p].map((l) => cell(l, f)).join('')).join('')}</tr>`;
-    $('ps-sum').innerHTML = head + '<tbody>'
-      + row('배분 톤', (o) => (o.stop ? stopTxt(o) : `<b>${n0(o.t)}t</b> · ${o.n}건`))
-      + row('작업 가능 시간', (o) => (o.stop ? '0시간' : hrs(o.avail))) + '</tbody>';
-    $('ps-sum').querySelectorAll('.ln').forEach((c) => (c.onclick = () => { line = c.dataset.l; drawAll(); }));
+  // 캘린더 — 표 양식(행 = 라인·하루 합, 열 = 수~화)은 생산 일정 화면과 같고, 칸 안은 편성 화면용으로 다시 그림
+  // 11/12 사용자 '자가재 빼고, 막대그래프 필요없다, 날짜 누르면 그날 작업, 컬러랑 도금 양식 똑같이, 이어짐 쓰지 말고 전날로 넘겨라'
+  const CAL = { cg: () => window.CGCAL, cc: () => window.CCCAL };
+  const DOWS = '일월화수목금토';
+  const mdw = (d) => `${md(d)}(${DOWS[new Date(d + 'T00:00:00Z').getUTCDay()]})`;
+  const tsum = (a) => a.reduce((s, i) => s + (+i.t || 0), 0);
+  const famC = (f) => (f ? `<span class="fam fam-${esc(String(f).split('-')[0].replace(/[^A-Z]/g, ''))}">${esc(f)}</span>` : '');
+  const spans = (a) => a.filter(Boolean).map((x) => `<span>${x}</span>`).join('');
+
+  /* 컬러 '이어짐' 없앰: 작업대기를 끊지 않고 이어 돌림(현장 방식) — 칸 편성 규칙(계약이 그날 남은 시간보다 길면 다음 날)이 남긴 빈 시간을
+     다음 작업대기 계약 앞부분으로 채움(톤 = 그 계약 t/h 비례). cc_calendar flow() 의 woC(연속 기준 작업대기 시간)와 같은 식.
+     작업대기 끝 날(woUntil)까지만, 지시대기·도료 미입고·계획편성·확정본은 제자리 */
+  let CCF = null;
+  function ccFlow(R) {
+    if (CCF) return CCF;
+    const F = {}, wk = new Set(R.days), mv = { h: 0, t: 0, inW: 0, outW: 0 };
+    const isWO = (i) => i.kind === '작업대기' && !i.locked;
+    LINES.cc.forEach((ln) => {
+      const A = R.all(ln), D = R.allDays, wu = R.woUntil(ln), Q = [];
+      const on = (k) => !A[k].stop && !!wu && D[k] <= wu;
+      let lastOn = -1; A.forEach((c, k) => { if (on(k)) lastOn = k; });
+      A.forEach((c, k) => { if (on(k)) c.items.forEach((i) => { if (isWO(i)) Q.push({ i, h: +i.h || 0, t: +i.t || 0, d0: D[k] }); }); });
+      F[ln] = {};
+      A.forEach((c, k) => {
+        const d = D[k];
+        let items = c.items.slice();
+        if (on(k)) {
+          const keep = c.items.filter((i) => !isWO(i)), P = [];
+          let room = (c.capH || 0) - keep.reduce((s, i) => s + (+i.h || 0), 0);
+          while (Q.length && (k === lastOn || room > 0.05)) {
+            const q = Q[0], take = k === lastOn || q.h <= room + 0.05 ? q.h : room, t = q.h > 0 ? q.t * take / q.h : q.t;
+            P.push(Object.assign({}, q.i, { t, h: take }));
+            if (q.d0 !== d) { mv.h += take; mv.t += t; if (wk.has(d) && !wk.has(q.d0)) mv.inW += t; if (!wk.has(d) && wk.has(q.d0)) mv.outW += t; }
+            q.h -= take; q.t -= t; room -= take; if (q.h <= 1e-6) Q.shift();
+          }
+          items = [...P, ...keep];
+        }
+        const h = items.reduce((s, i) => s + (+i.h || 0), 0), K = {}, G = {};
+        items.forEach((i) => { K[i.kind] = (K[i.kind] || 0) + (+i.t || 0); G[i.grp || '기타'] = (G[i.grp || '기타'] || 0) + (+i.t || 0); });
+        F[ln][d] = { c, d, items, t: tsum(items), h, K, G, empty: c.stop ? 0 : Math.max(0, (c.capH || 0) - h) };
+      });
+      console.assert(Math.abs(tsum(A.flatMap((c) => c.items)) - D.reduce((s, d) => s + F[ln][d].t, 0)) < 0.01, `편성: ${ln} 이어 돌린 뒤 전체 톤이 다름`);
+    });
+    CCF = { F, mv };
+    return CCF;
   }
 
-  // 묶은 이유: 앞 작업과 같은 것(굵게) + 바뀐 것(작업 순서 화면의 바뀜 이름)
-  function why(p, q) {
-    const a = q.prev, b = q.x, R = X[p].R;
-    if (b.dummy) return '<span class="ch">더미</span>';
-    if (!a) return '<span class="ch">첫 작업</span>';
-    let same = [], chg = [];
-    if (p === 'cg') {
-      const ta = a.trt || {}, tb = b.trt || {};
-      if (a.con && a.con === b.con) same.push('계약');
-      if (a.al === b.al) same.push('강종'); else chg.push(`강종 ${esc(a.al)}→${esc(b.al)}`);
-      if (a.thick === b.thick) same.push('두께');
-      if (Math.abs((a.width || 0) - (b.width || 0)) <= 5) same.push('폭');
-      if (ta.cot && ta.cot === tb.cot) same.push('도금량');
-      if ((ta.aft || '') === (tb.aft || '')) same.push('후처리');
-      chg = chg.concat(fsCG(R, a, b));
-      if ((ta.aft || '') !== (tb.aft || '') && !(ta.aft && tb.aft)) chg.push(`후처리 ${ta.aft || '없음'}→${tb.aft || '없음'}`);
+  /* 칸 한 양식(도금·컬러·지난 날 같음): ① 큰 톤 + 강종/품명 칩 + 시간 부하 % ② 상태 톤 ③ 그룹 톤 ④ 경고 칩 · 정지/비가동 = 글자만 가운데 */
+  const pctB = (r, tip) => (r == null ? '' : `<span class="pc${r > 1.005 ? ' ov' : ''}" title="${esc(tip)}">${Math.round(r * 100)}%</span>`);
+  const grpLine = (G) => { const E = Object.entries(G || {}).filter(([, v]) => v >= 0.5).sort((a, b) => b[1] - a[1]).slice(0, 3); return E.length ? `<div class="ln2 gl">${spans(E.map(([g, v]) => `${esc(g)} ${n0(v)}`))}</div>` : ''; };
+  function cellH(o) {
+    const at = o.past ? ' tabindex="-1"' : ` data-ln="${o.ln}" data-d="${o.d}"`;
+    if (o.off) return `<button type="button" class="cell stp${o.past ? ' pcell' : ''}"${o.past ? ' tabindex="-1"' : ''} title="${esc(o.tip)}"><span class="off">${esc(o.off)}</span></button>`;
+    const st = (o.st || []).filter(([, v]) => v >= 0.5);
+    const wn = (o.wn || []).filter(Boolean);
+    return `<button type="button" class="cell${o.fl ? ' fl' : ''}${o.past ? ' pcell' : ''}"${at} title="${esc(o.tip)}">`
+      + (o.band ? `<div class="band${o.mc ? ' mc' : ''}">${esc(o.band)}</div>` : '')
+      + `<div class="bd"><div class="r1"><span class="tv">${o.t == null ? '–' : `${n0(o.t)}<small>t</small>`}</span>${o.chips || ''}${o.past ? '<span class="ac">실적</span>' : ''}${o.pct || ''}</div>`
+      + (st.length ? `<div class="ln2 ss">${spans(st.map(([k, v]) => `${k} ${n0(v)}t`))}</div>` : '')
+      + grpLine(o.G)
+      + (wn.length ? `<div class="wn">${wn.map((x) => `<span class="wc">${esc(x)}</span>`).join('')}</div>` : '')
+      + '</div></button>';
+  }
+  function cgCell(c, ln) {
+    const fill = c.conf + c.plan + c.fcst, cap = c.cap || 0;
+    const mc = /M\/C/.test(c.event || ''), ev = String(c.event || '').replace(/\s*\(([^)]*)\)/, ' $1');
+    if (cap < 1) return cellH({ ln, d: c.d, off: '정지', tip: `${ln} ${mdw(c.d)} ${c.event || '정지'}` });
+    const r = c.hAvail >= 1 ? (c.hrs || 0) / c.hAvail : null;
+    return cellH({ ln, d: c.d, fl: !!c.flag, band: c.event ? ev : '', mc, t: fill, chips: famC(c.fam),
+      pct: pctB(r, `시간 부하 = 칸 주문을 실적 T/Hr(같은 두께·폭)로 돌리는 시간 ${n1(c.hrs)}h ÷ 가동 가능 시간 ${n1(c.hAvail)}h`),
+      st: [['작업대기', c.conf], ['지시대기', c.plan], ['입고예정', c.fcst]], G: c.grp,
+      wn: [c.flag && (c.flagS || c.flag), c.gap >= 0.5 && `빈칸 ${n0(c.gap)}t`, c.lateE && `출항일 초과 ${c.lateE}건`, c.late - c.lateE > 0 && `납기 초과 ${c.late - c.lateE}건`],
+      tip: `${ln} ${mdw(c.d)} · 생산 ${n0(fill)}t / 능력 ${n0(cap)}t${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
+  }
+  function ccCell(x, ln, KD) {
+    const c = x.c;
+    if (c.stop) return cellH({ ln, d: x.d, off: '정지', tip: `${ln} ${mdw(x.d)} 정지(휴지·수리)` });
+    const P = {}; x.items.forEach((i) => { if (i.item) P[i.item] = (P[i.item] || 0) + (+i.t || 0); });
+    const top = Object.entries(P).sort((a, b) => b[1] - a[1])[0], em = Math.round(x.empty * 10) / 10;
+    return cellH({ ln, d: x.d, fl: c.woShort > 0 || em > 0, t: x.t, chips: top ? `<span class="fam">${esc(top[0])}</span>` : '',
+      pct: pctB(c.capH ? x.h / c.capH : null, `시간 부하 = 편성 ${n1(x.h)}h ÷ 가용 ${n1(c.capH)}h(24시간 − 계획 휴지)`),
+      st: KD.map(([k, nm]) => [nm, x.K[k] || 0]), G: x.G,
+      wn: [c.woShort > 0 && `작업대기 부족 ${n1(c.woShort)}h`, !(c.woShort > 0) && em > 0 && `빈 시간 ${n1(em)}h`, c.overH && `확정본 넘침 ${n1(c.overH)}h`],
+      tip: `${ln} ${mdw(x.d)} · 생산 ${n0(x.t)}t · 편성 ${n1(x.h)}h / 가용 ${n1(c.capH)}h${c.lockT ? ` · 확정본 ${n1(c.lockT)}t` : ''} · 누르면 그날 작업 순서` });
+  }
+  function pastCell(p, a, ln, d) {
+    if (!a) return cellH({ ln, d, past: 1, t: null, tip: `${ln} ${mdw(d)} 실적 자료 없음(다음 날 아침 들어옴)` });
+    if (!(a.t >= 0.5)) return cellH({ ln, d, past: 1, off: '비가동', tip: `${ln} ${mdw(d)} 생산 없음` });
+    const chips = p === 'cg' ? Object.entries(a.fam || {}).filter(([, v]) => v >= 0.5).sort((x, y) => y[1] - x[1]).slice(0, 2).map(([f]) => famC(f)).join('')
+      : (a.pr || []).filter(([, v]) => v >= 0.5).slice(0, 1).map(([q]) => `<span class="fam">${esc(q)}</span>`).join('');
+    return cellH({ ln, d, past: 1, t: a.t, chips, G: a.grp, tip: `${ln} ${mdw(d)} 생산 실적(MES) ${n0(a.t)}t${a.h ? ` · ${n1(a.h)}h` : ''}${a.pr ? ` · 품명 ${a.pr.map(([q, v]) => `${q} ${n0(v)}`).join(' · ')}` : ''}` });
+  }
+  function grid(p) {
+    const C = CAL[p](), R = C && C.raw && C.raw(); if (!R) return '';
+    const { w0, days } = R, today = UI.today(), LN = LINES[p];
+    const FL = p === 'cc' ? ccFlow(R).F : null;
+    const pds = []; for (let d = w0; d < days[0]; d = addD(d, 1)) pds.push(d);
+    const pad = Math.max(0, 7 - pds.length - days.length), padTd = '<td class="pad" aria-hidden="true"></td>'.repeat(pad);
+    const tdc = (d, x) => `${d === today ? 'td' : ''}${x ? ' ' + x : ''}`.trim();
+    const S = SEL[p], selD = S && S.all ? S.d : null;
+    const head = `<th class="cn">이번 주<small>${md(w0)}~${md(addD(w0, 6))}</small></th>` + pds.map((d) => `<th class="pst">${mdw(d)}<small>실적</small></th>`).join('')
+      + days.map((d) => `<th class="${tdc(d, 'dk' + (d === selD ? ' on' : ''))}" data-d="${d}" tabindex="0" role="button" aria-expanded="${d === selD}" title="${mdw(d)} 모든 라인 작업 순서 보기">${mdw(d)}${d === today ? '<small>오늘</small>' : ''}</th>`).join('') + padTd.replace(/td/g, 'th');
+    const planT = (ln, d) => (p === 'cg' ? (() => { const c = R.cell(ln, d); return (c.cap || 0) < 1 ? 0 : c.conf + c.plan + c.fcst; })() : FL[ln][d].t);
+    const pastT = (ln, d) => { const a = R.act(ln, d); return a ? a.t || 0 : null; };
+    const dayT = (ln, d) => (pds.includes(d) ? pastT(ln, d) || 0 : planT(ln, d));
+    const allD = [...pds, ...days], wkT = (ln) => allD.reduce((s, d) => s + dayT(ln, d), 0);
+    const rows = LN.map((ln) => {
+      const idle = days.every((d) => (p === 'cg' ? (R.cell(ln, d).cap || 0) < 1 : R.cell(ln, d).stop)) && pds.every((d) => !pastT(ln, d));
+      const ov = p === 'cg' && R.over(ln);
+      return `<tr class="ln${idle ? ' idle' : ''}"><th>${ln}<small>이번 주 ${n0(wkT(ln))}t</small>${ov ? `<small class="ovt" title="${R.end}까지 주문을 실적 T/Hr로 24시간 이어 돌리면 가동 가능 시간을 ${n1(ov.h)}시간 넘음">${R.end} 뒤 ${n0(ov.t)}t</small>` : ''}</th>`
+        + pds.map((d) => `<td class="pst">${pastCell(p, R.act(ln, d), ln, d)}</td>`).join('')
+        + days.map((d) => `<td class="${tdc(d)}">${p === 'cg' ? cgCell(R.cell(ln, d), ln) : ccCell(FL[ln][d], ln, R.KD)}</td>`).join('') + padTd + '</tr>';
+    }).join('');
+    const parts = (d) => `<div class="sn pls">${spans(LN.map((l) => { const v = dayT(l, d); return v >= 0.5 ? `${l} ${n0(v)}` : ''; }))}</div>`;
+    const sumCell = (d) => `<div class="tv">${n0(LN.reduce((s, l) => s + dayT(l, d), 0))}<small>t</small></div>${parts(d)}`;
+    const wk = LN.reduce((s, l) => s + wkT(l), 0);
+    console.assert(Math.abs(wk - allD.reduce((s, d) => s + LN.reduce((q, l) => q + dayT(l, d), 0), 0)) < 0.01, `편성: ${p} 주 합 ≠ 하루 합의 합`);
+    const tot = `<tr class="dsum"><th>하루 합<small>이번 주 ${n0(wk)}t</small></th>`
+      + pds.map((d) => `<td class="pst">${LN.some((l) => pastT(l, d) != null) ? sumCell(d) : '<div class="tv">–</div>'}</td>`).join('')
+      + days.map((d) => `<td class="${tdc(d)}">${sumCell(d)}</td>`).join('') + padTd + '</tr>';
+    return `<table class="psw v2-grid"><thead><tr>${head}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
+  }
+  function drawCal(p) {
+    const host = $('ps-cal-' + p), C = CAL[p]();
+    host.innerHTML = (C && (C.raw ? grid(p) : C.week())) || '<p class="ps-empty">캘린더 자료 없음</p>';
+    host.querySelectorAll('button.cell[data-d]').forEach((b) => {
+      const on = SEL[p] && !SEL[p].all && SEL[p].l === b.dataset.ln && SEL[p].d === b.dataset.d;
+      b.classList.toggle('on', !!on); b.setAttribute('aria-expanded', on ? 'true' : 'false');
+      b.onclick = () => { SEL[p] = on ? null : { l: b.dataset.ln, d: b.dataset.d }; if (!on) line = b.dataset.ln; drawCal(p); drawDay(p); syncFrame(); };
+    });
+    host.querySelectorAll('th.dk[data-d]').forEach((h) => {          // 날짜 머리 = 그날 모든 라인 작업 순서
+      const go = () => { const on = SEL[p] && SEL[p].all && SEL[p].d === h.dataset.d; SEL[p] = on ? null : { all: true, d: h.dataset.d }; drawCal(p); drawDay(p); };
+      h.onclick = go; h.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+    });
+  }
+  // 펼침 목록 = 칸 숫자와 같은 자료(도금: 작업지시 MES 순서 → 1010 순서안 → 재질·폭 순 · 컬러: 작업대기(이어 돌린 뒤) → 지시대기 → 도료 미입고 → 계획편성)
+  const KC = { 확정: ['작업대기', 'k1'], 편성: ['지시대기', 'k2'], 예상: ['입고예정', 'k3'], 작업대기: ['작업대기', 'w1'], 지시대기: ['지시대기', 'w2'], '부자재 입고대기': ['도료 미입고', 'w3'], 계획편성: ['계획편성', 'w4'] };
+  const chip = (t, c) => (t ? `<span class="cp${c ? ' ' + c : ''}">${esc(t)}</span>` : '');
+  const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E 극저', GREL: 'Gr.E 저탄', GRB: 'Gr.B' };
+  const dayItems = (p, l, d) => { const C = CAL[p](); if (p === 'cc') { const R = C.raw(), x = R && ccFlow(R).F[l][d]; return x ? x.items : []; } return C.items(l, d); };
+  function seqTable(p, I) {
+    const row = (i, k) => {
+      const kc = KC[i.kind] || [i.kind, ''], sz = i.thk ? `${(+i.thk).toFixed(2)} × ${n0(i.wdt)}` : '–';
+      const sp = p === 'cg' ? chip(i.fam, 'al') + chip(GRN[i.grade] || i.grade) + chip(i.cot) + chip(i.aft) : chip(i.item) + chip(i.color, 'cl');
+      const dl = p === 'cg' ? (i.dept ? `출항 ${md(i.dept)}` : i.arr ? `입항 ${md(i.arr)}` : i.due ? `납기 ${md(i.due)}` : '–') : (i.ready ? `준비 ${md(i.ready)}` : '–');
+      return `<tr class="${i.kind === '확정' || i.kind === '작업대기' ? 'fx' : ''}${i.late ? ' lt' : ''}"><td class="no">${k + 1}</td><td><i class="kd ${kc[1]}">${esc(kc[0])}</i></td><td class="cn" title="${esc([i.con, i.cus, i.dst].filter(Boolean).join(' · '))}">${esc(i.con || '주문 연결 전')}</td><td>${esc(i.grp || '')}</td><td class="sp">${sp}</td><td class="sz">${sz}</td><td class="t">${n1(i.t)}t</td><td class="dl">${dl}</td></tr>`;
+    };
+    return `<table class="ps-seq"><colgroup><col style="width:72px"><col style="width:120px"><col style="width:230px"><col style="width:110px"><col><col style="width:150px"><col style="width:100px"><col style="width:120px"></colgroup>`
+      + `<thead><tr><th>순서</th><th>상태</th><th>계약</th><th>그룹</th><th>${p === 'cg' ? '강종·재질·도금량·후처리' : '품명·색상'}</th><th>두께 × 폭</th><th>톤</th><th>${p === 'cg' ? '출항·납기' : '부원료'}</th></tr></thead><tbody>${I.map(row).join('')}</tbody></table>`;
+  }
+  function drawDay(p) {
+    const box = $('ps-day-' + p), S = SEL[p], C = CAL[p]();
+    if (!S || !C) { box.hidden = true; box.innerHTML = ''; return; }
+    const isStop = (l) => !!(C.stop && C.stop(l, S.d));
+    const body = (l, I) => (I.length ? seqTable(p, I) : `<p class="ps-empty">${isStop(l) ? '라인 정지' : '배정된 주문 없음'}</p>`);
+    const close = '<button type="button" data-x="1">접기</button>';
+    if (S.all) {
+      const L = LINES[p].map((l) => [l, dayItems(p, l, S.d)]), N = L.reduce((s, [, I]) => s + I.length, 0), T = L.reduce((s, [, I]) => s + tsum(I), 0);
+      box.innerHTML = `<div class="ps-dh"><b>${dnm(S.d)} 모든 라인</b><span>${N}건 · ${n0(T)}t</span>${close}</div>`
+        + L.map(([l, I]) => (!I.length && isStop(l) ? `<div class="ps-sh"><b>${l}</b><span>정지</span></div>` : `<div class="ps-sh"><b>${l}</b><span>${I.length}건 · ${n0(tsum(I))}t</span></div>${body(l, I)}`)).join('');
     } else {
-      const k = catOf(a, b);
-      if (k === '사양 같음') same = ['색상', '두께·폭'];
-      else {
-        const NM = { 하도: '하도', 상도: '색상', 이면: '이면', 치수: '두께·폭' };
-        same = ['상도', '치수'].filter((z) => !k.split('+').includes(z)).map((z) => NM[z]);
-        chg.push(k.split('+').map((z) => NM[z]).join('·') + ' 바뀜');
-      }
+      const I = dayItems(p, S.l, S.d), nk = {}; I.forEach((i) => { nk[i.kind] = (nk[i.kind] || 0) + 1; });
+      box.innerHTML = `<div class="ps-dh"><b>${S.l} ${dnm(S.d)}</b><span>${I.length}건 · ${n0(tsum(I))}t</span>${Object.entries(nk).map(([k, n]) => `<span><i class="kd ${(KC[k] || [])[1] || ''}">${esc((KC[k] || [k])[0])}</i> ${n}건</span>`).join('')}${close}</div>` + body(S.l, I);
     }
-    const tail = chg.map(esc).concat(q.chm >= 1 ? [`휴지 ${n0(q.chm)}분`] : []).join(' · ');
-    return (same.length ? `<span class="sm">같은 ${same.join('·')}</span>` : '') + (tail ? `${same.length ? ' ' : ''}<span class="ch">${tail}</span>` : '');
-  }
-  function spec(p, x) {
-    if (p === 'cg') { const t = x.trt || {}; return `<span class="cp al">${esc(x.al || x.sur)}</span>${t.cot ? `<span class="cp" title="도금량">${esc(t.cot)}</span>` : ''}${t.aft ? `<span class="cp" title="후처리">${esc(t.aft)}</span>` : ''}`; }
-    if (x.dummy) return '<span class="cp wr">더미</span>';
-    return `<span class="cp" title="품명">${esc(x.item || x.pdt)}</span><span class="cp cl" title="상도 색상">${esc(x.code || x.color || '')}</span>`;
-  }
-  const size = (p, x) => (p === 'cg' ? `${(+x.thick).toFixed(2)} × ${n0(x.width)}` : `${(+x.thk).toFixed(2)} × ${n0(x.wdt)}`);
-  function drawList() {
-    const P = plants(), p = P.find((z) => LINES[z].includes(line));
-    $('ps-lines').innerHTML = P.map((z) => LINES[z].map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l}</button>`).join('')).join('');
-    $('ps-lines').querySelectorAll('button').forEach((b) => (b.onclick = () => { line = b.dataset.l; drawAll(); }));
-    $('ps-go').href = `week_seq.html#${p}`;
-    const o = X[p], s = o.ver;
-    $('ps-ver').innerHTML = s ? `<b>${s.state === 'confirm' ? '확정' : '저장'} v${s.v}</b> · ${esc(s.who)} · ${esc(UI.fmtDateTime(new Date(s.at).toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).slice(0, 16)))}` : `<b>초안</b> · ${esc(UI.fmtDateTime(o.D.built))} 자료`;
-    const W1 = tms(o.D.w1), ev = sim(p, line).filter((q) => q.k === 'j');
-    if (!ev.length) { const st = o.D.lines[line].stop; $('ps-list').innerHTML = `<p class="ps-empty">${line} 이 기간 작업 없음${st ? ' — ' + esc(st.note || '정지') : ''}</p>`; return; }
-    const G = []; ev.forEach((q) => { const d = q.s >= W1 ? 'over' : dayOf(q.s); let g = G[G.length - 1]; if (!g || g.d !== d) G.push(g = { d, q: [] }); g.q.push(q); });
-    let n = 0;
-    const body = G.map((g) => `<tr class="dh"><td colspan="6" class="v2-l"><b>${g.d === 'over' ? `기간 끝(${md(dayOf(W1))}) 넘침` : dnm(g.d)}</b><span>${g.q.length}건 · ${n0(g.q.reduce((s, q) => s + q.x.t, 0))}t</span></td></tr>`
-      + g.q.map((q) => `<tr><td class="no">${++n}</td><td class="cn" title="${esc(q.x.con || q.x.id)}">${esc(q.x.con || '계약 미연결')}</td><td class="sp">${spec(p, q.x)}</td><td class="sz">${size(p, q.x)}</td><td class="t">${n1(q.x.t)}t</td><td class="wy v2-l">${why(p, q)}</td></tr>`).join('')).join('');
-    $('ps-list').innerHTML = `<table class="ps-seq"><colgroup><col style="width:64px"><col style="width:210px"><col style="width:220px"><col style="width:150px"><col style="width:96px"><col></colgroup>`
-      + `<thead><tr><th>순번</th><th>계약</th><th>${p === 'cg' ? '강종·도금량·후처리' : '품명·색상'}</th><th>두께 × 폭</th><th>톤</th><th class="wy v2-l">묶은 이유</th></tr></thead><tbody>${body}</tbody></table>`;
+    box.hidden = false;
+    box.querySelector('button[data-x]').onclick = () => { SEL[p] = null; drawCal(p); drawDay(p); };
   }
   function drawAll() {
     const P = plants(); if (!P.length) return;
     if (!P.some((p) => LINES[p].includes(line))) line = LINES[P[0]].find((l) => lineSum(P[0], l).n) || LINES[P[0]][0];
-    drawFlow(); drawSum(); drawList();
+    $('ps-cgc').hidden = !P.includes('cg'); $('ps-ccc').hidden = !P.includes('cc');
+    drawLine(); P.forEach((p) => { drawCal(p); drawDay(p); }); syncFrame();
+  }
+
+  // ───────── 아래 '작업 순서 수정' = 작업 순서 화면(week_seq.html) 그대로(iframe, 높이 = 화면 높이 · 안에서 넘김 — 날짜 머리줄 고정이 그대로 동작). 머리·메뉴·공장/방식 고르기·라인 요약 칸(위와 같은 내용)은 숨기고, 라인은 위 선택을 따라감
+  const FR = $('ps-frame');
+  const FCSS = `#shell, header.topbar, .topbar, nav, aside, .side, .sidebar, footer.foot, #ui-ctl, #ui-scope-note, #ui-stale, #v2-flag, .docmeta, #ws-plant, #ws-mode, #ws-kpis, .ws-hint { display: none !important; }
+html, body { background: transparent !important; min-height: 0 !important; height: auto !important; }
+body { margin: 0 !important; padding: 0 !important; display: block !important; }
+main.wrap { margin: 0 !important; padding: 0 !important; max-width: none !important; width: auto !important; }
+#ws-main .card { box-shadow: none; }`;
+  let frReady = false;
+  function fitFrame() { FR.style.height = Math.max(640, innerHeight - 96) + 'px'; }
+  addEventListener('resize', fitFrame);
+  function frameLoaded() {
+    const d = FR.contentDocument; if (!d) return;
+    const st = d.createElement('style'); st.textContent = FCSS; d.head.appendChild(st);
+    frReady = true; syncFrame(); fitFrame();
+  }
+  let syncT = null;
+  function syncFrame() {
+    if (!line) return;
+    const p = LINES.cg.includes(line) ? 'cg' : 'cc';
+    if (!FR.getAttribute('src')) { FR.onload = frameLoaded; FR.src = `week_seq.html${location.search}#${p}`; return; }
+    if (!frReady) return;
+    const w = FR.contentWindow, d = FR.contentDocument;
+    if (!/cc/.test(w.location.hash) !== (p === 'cg')) w.location.hash = p;
+    clearTimeout(syncT); let k = 0;
+    const pick = () => {
+      if ((/cc/.test(w.location.hash) ? 'cc' : 'cg') !== p) {            // 아래에 저장 안 한 수정이 있어 공장 바꾸기를 취소함 → 위도 아래 라인으로 되돌림
+        const cur = d.querySelector('#ws-kpis .ws-k[aria-pressed="true"]'); if (cur) line = cur.dataset.l; return; }
+      const b = d.querySelector(`#ws-kpis .ws-k[data-l="${line}"]`);
+      if (b) { if (b.getAttribute('aria-pressed') !== 'true') b.click(); fitFrame(); return; }
+      if (++k < 60) syncT = setTimeout(pick, 250); };
+    pick();
   }
 
   async function unlock(pw) {
@@ -228,6 +358,7 @@
       }
       try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ }
       await Promise.all(['cg', 'cc'].map(async (p) => { const sv = await lastSaved(p); X[p].ver = sv; useSaved(p, sv); }));
+      await Promise.all([window.CGCAL && CGCAL.load(pw), window.CCCAL && CCCAL.load(pw)].map((x) => Promise.resolve(x).catch(() => null)));   // 캘린더 = 생산 일정 화면과 같은 자료
       $('ps-lock').hidden = true; $('ps-main').hidden = false;
       drawAll();
     } catch (e) {

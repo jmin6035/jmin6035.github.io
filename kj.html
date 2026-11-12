@@ -6,101 +6,184 @@
 <title>관제</title>
 <meta name="description" content="도금·컬러 전체와 그룹별 판매계획·수주·생산·출하·재고 — 이번 달 실적, 다음 두 달 계획 대비 주문">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611120507">
+<link rel="stylesheet" href="ui/theme.css?v=2611120532">
 <style>
+/* 관제(5차) — 글자 3단계만: 큰 숫자 34 · 제목 18 · 본문 16(표·그래프 라벨·캘린더·범례 모두) / 간격 16px / 모든 글자 가운데 */
 main.wrap { max-width: none; }
-#ui-ctl { display: none !important; }   /* 공통 그룹 상태 띠 — 아래 그룹별 그래프와 같은 내용 */
-:root { --kj-sal: #a9b1bb; --kj-ord: #2f7d8c; --kj-pr: #2a78d6; --kj-sh: #1d9a6c; --kj-ms: #8d99a6; --kj-pd: #52606d; --kj-tk: #1c2430; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --kj-sal: #6b7480; --kj-ord: #4aa3b3; --kj-pr: #3987e5; --kj-sh: #2fb683; --kj-ms: #7d8996; --kj-pd: #b7c2ce; --kj-tk: #eef2f6; } }
-:root[data-theme="dark"] { --kj-sal: #6b7480; --kj-ord: #4aa3b3; --kj-pr: #3987e5; --kj-sh: #2fb683; --kj-ms: #7d8996; --kj-pd: #b7c2ce; --kj-tk: #eef2f6; }
+#ui-ctl, html.v2 #ui-ctl { display: none !important; }   /* 공통 관제 알약 줄 — 이 화면 내용과 겹침 */
+:root { --kj-ac: #2a6fc9; --kj-stk: #4a5561; --kj-ov: #eb6834; --kj-ovt: #c2410c; --kj-tk: #101828; --kj-sl: #98a2b3; --kj-g: 16px; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --kj-ac: #3a7fe0; --kj-stk: #aab3be; --kj-ov: #d95926; --kj-ovt: #f2884f; --kj-tk: #f2f5f8; --kj-sl: #667085; } }
+:root[data-theme="dark"] { --kj-ac: #3a7fe0; --kj-stk: #aab3be; --kj-ov: #d95926; --kj-ovt: #f2884f; --kj-tk: #f2f5f8; --kj-sl: #667085; }
+:root { --kj-pl: color-mix(in srgb, var(--kj-ac) 14%, var(--surface)); --kj-spl: color-mix(in srgb, var(--kj-stk) 12%, var(--surface)); }
+#ct-main, #ct-main * { font-size: 16px; }
+#ct-main { text-align: center; }
+.kj-c { background: var(--surface); border: 1px solid var(--v2-line, var(--line)); border-radius: 10px; padding: var(--kj-g); min-width: 0; }
+#ct-main .kj-c h3 { margin: 0 0 8px; font-size: 18px; font-weight: 700; color: var(--ink); text-align: center; }
+#ct-main .kj-c h3 small, #ct-main .kj-h small { font-size: 16px !important; font-weight: 500 !important; color: var(--ink-2); margin-left: 8px; }
+#ct-main .kj-h { font-size: 18px; font-weight: 700; margin: 28px 0 10px; color: var(--ink); text-align: center; }
+.bad { color: var(--bad) !important; } .ov { color: var(--kj-ovt) !important; }
+.kj-c .na, .kj-c td.na, .kj-k .na { color: var(--ink-2); font-weight: 500; }
 
-/* 달 탭 */
-.kj-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 4px 0 14px; }
-.kj-tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
-.kj-tabs button { font: inherit; font-size: 17px; font-weight: 700; color: var(--ink-2); background: none; border: 0; border-radius: 9px; padding: 8px 22px; cursor: pointer; white-space: nowrap; }
-.kj-tabs button[aria-selected="true"] { background: var(--brand-2); color: #fff; }
-.kj-tabs button:not([aria-selected="true"]):hover { background: var(--tint); color: var(--ink); }
-.kj-tabs button small { font-size: 13.5px; font-weight: 600; margin-left: 6px; opacity: .85; }
-.kj-mode { font-size: 14.5px; color: var(--ink-2); line-height: 1.5; word-break: keep-all; }
-.kj-mode b { color: var(--ink); }
+/* 0. 달 탭 + 기준 한 줄 — 가운데 */
+.kj-top { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 4px 0 var(--kj-g); }
+.kj-tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--v2-line, var(--line)); border-radius: 12px; background: var(--surface); }
+#ct-main .kj-tabs button { font: inherit; font-size: 18px; font-weight: 800; color: var(--ink-2); background: none; border: 0; border-radius: 9px; padding: 9px 28px; cursor: pointer; white-space: nowrap; }
+#ct-main .kj-tabs button span { font-size: 16px; font-weight: 600; }
+#ct-main .kj-tabs button[aria-selected="true"] { background: var(--brand-2); color: #fff; }
+#ct-main .kj-tabs button:not([aria-selected="true"]):hover { background: var(--hover); color: var(--ink); }
+.kj-basis { margin: 0; color: var(--ink-2); word-break: keep-all; }
+.kj-why { margin: 0; font-weight: 700; color: var(--ink); word-break: keep-all; }
 
-/* 결론 카드 */
-.ct-kpis.kj-k4 { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 18px; }
-@media (max-width: 1300px) { .ct-kpis.kj-k4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-a.kj-kl { display: block; color: inherit; text-decoration: none; } a.kj-kl > .ct-kpi { height: 100%; }
-a.kj-kl:hover > .ct-kpi { box-shadow: 0 4px 14px rgba(15, 40, 80, .14); }
-.kj-k4 .ct-kpi .s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kj-wh { display: grid; grid-template-columns: auto auto 1fr; gap: 2px 10px; margin-top: 6px; font-size: 14.5px; line-height: 1.5; font-variant-numeric: tabular-nums; }
-.kj-wh span { color: var(--ink-2); white-space: nowrap; } .kj-wh b { white-space: nowrap; text-align: right; } .kj-wh em { font-style: normal; color: var(--ink-2); white-space: nowrap; }
-.kj-wh b.ov { color: var(--warn); }
+/* 1. 운영 일정 */
+.kj-sch ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.kj-sch li { padding: 4px 8px; border-left: 1px solid var(--v2-line, var(--line)); text-align: center; line-height: 1.45; word-break: keep-all; color: var(--ink); }
+.kj-sch li:first-child { border-left: 0; }
+.kj-sch li b { display: block; white-space: nowrap; } .kj-sch li b span { font-weight: 600; color: var(--ink-2); }
+.kj-sch li.done { color: var(--ink-2); } .kj-sch li.done b { font-weight: 500; }
+.kj-sch li.now { font-weight: 700; } .kj-sch li.now b span { color: var(--brand-2); }
 
-/* 그래프 카드 */
-.kj-sec { font-size: 19px; font-weight: 700; margin: 22px 0 10px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.kj-sec small { font-size: 14.5px; font-weight: 500; color: var(--ink-2); }
-.kj-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+/* 2. 결론 카드 */
+.kj-k4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--kj-g); margin: var(--kj-g) 0; }
+a.kj-kl { display: block; color: inherit; text-decoration: none; min-width: 0; }
+html.v2 main a.kj-kl .ct-kpi.kj-k, .ct-kpi.kj-k { height: 100%; text-align: center; padding: 14px var(--kj-g) !important; border-top-width: 1px !important; }
+a.kj-kl:hover .ct-kpi { border-color: var(--kj-ac) !important; }
+html.v2 main .ct-kpi.kj-k > .l { font-size: 18px !important; color: var(--ink) !important; white-space: nowrap; }
+html.v2 main .ct-kpi.kj-k > .l small { font-size: 16px !important; font-weight: 500; color: var(--ink-2); }
+html.v2 main .ct-kpi.kj-k > .v { font-size: 34px !important; color: var(--ink); margin: 2px 0; }
+html.v2 main .ct-kpi.kj-k > .v small { font-size: 16px !important; }
+html.v2 main .ct-kpi.kj-k > .v.bad { color: var(--bad) !important; } html.v2 main .ct-kpi.kj-k > .v.ov { color: var(--kj-ovt) !important; }
+html.v2 main .ct-kpi.kj-k > .s, .kj-wh { font-size: 16px !important; color: var(--ink-2) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kj-wh { line-height: 1.6; font-variant-numeric: tabular-nums; } .kj-wh b { color: var(--ink); }
+
+/* 범례 한 줄 */
+.kj-lg { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px; margin: 0 0 12px; color: var(--ink-2); }
+.kj-lg span { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.kj-lg i { display: inline-block; width: 16px; height: 14px; border-radius: 3px; }
+.kj-lg i.ov { background: var(--kj-ov); } .kj-lg i.sbg { background: var(--kj-spl); box-shadow: inset 0 0 0 1px var(--kj-stk); } .kj-lg i.ac { background: var(--kj-ac); } .kj-lg i.stk { background: var(--kj-stk); } .kj-lg i.sl { background: var(--kj-sl); }
+.kj-lg i.pl { background: var(--kj-pl); box-shadow: inset 0 0 0 1px var(--kj-ac); } .kj-lg i.e { background: var(--surface); box-shadow: inset 0 0 0 2px var(--bad); } .kj-lg i.q { background: var(--surface); border: 1px dashed var(--ink-2); }
+.kj-lg i.tk { height: 3px; width: 22px; border-radius: 0; background: var(--kj-tk); }
+.kj-lg i.tkd { height: 0; width: 22px; border-radius: 0; border-top: 3px dashed var(--kj-tk); }
+.kj-lg i.cpa { background: color-mix(in srgb, var(--kj-ac) 10%, var(--surface)); box-shadow: inset 0 0 0 1px var(--v2-line, var(--line)); } .kj-lg i.cpl { background: var(--surface); box-shadow: inset 0 0 0 1px var(--v2-line, var(--line)); }
+.kj-lg i.lab { width: 0; height: 0; display: none; }
+.kj-lg i.wst { width: 3px; height: 18px; border-radius: 0; background: color-mix(in srgb, var(--ink) 40%, var(--surface)); }
+.kj-lg.in { margin: 12px 0 0; } .kj-h + .kj-lg.in { margin: 0 0 12px; }
+
+/* 3·4. 그래프 */
+.kj-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--kj-g); }
+.kj-gg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--kj-g); }
 @media (max-width: 1100px) { .kj-two { grid-template-columns: minmax(0, 1fr); } }
-.kj-gg { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; margin-bottom: 14px; }
-@media (max-width: 700px) { .kj-gg { grid-template-columns: minmax(0, 1fr); } }
-.kj-c { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px 10px; min-width: 0; }
-.kj-c .h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 0 4px; }
-.kj-c .h b { font-size: 17px; white-space: nowrap; } .kj-c.big .h b { font-size: 19px; }
-.kj-c .h small { font-size: 13.5px; color: var(--ink-2); font-weight: 500; margin-left: 6px; white-space: nowrap; }
-.kj-c .h .u { font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
-.kj-c .ft { font-size: 14px; color: var(--ink-2); margin: 2px 0 0; line-height: 1.5; word-break: keep-all; }
-.kj-c .ft b { color: var(--ink); font-weight: 700; }
-.kj-ch { width: 100%; min-height: 60px; }
+.kj-ch { width: 100%; }
 .kj-svg { display: block; width: 100%; height: auto; overflow: visible; font-variant-numeric: tabular-nums; }
-.kj-svg text { font-size: 13.5px; fill: var(--ink-2); }
-.kj-svg text.v { font-size: 14px; font-weight: 700; fill: var(--ink); }
-.kj-svg text.c { font-size: 14.5px; font-weight: 700; fill: var(--ink); }
-.kj-svg text.na { font-size: 13.5px; fill: var(--ink-3); }
-.kj-svg .gl { stroke: var(--line); stroke-width: 1; }
-.kj-svg .tk { stroke: var(--kj-tk); stroke-width: 2.5; }
-.kj-svg .cap { stroke: var(--kj-tk); stroke-width: 1.6; stroke-dasharray: 5 3; fill: none; }
+.kj-svg text { fill: var(--ink); pointer-events: none; font-size: 16px; }
+.kj-svg text.l1 { font-weight: 800; } .kj-svg text.l1.bad { fill: var(--bad); } .kj-svg text.l1.ov { fill: var(--kj-ovt); }
+.kj-svg text.l2 { font-weight: 600; fill: var(--ink-2); }
+.kj-svg text.nm { font-weight: 700; }
+.kj-svg text.na { font-weight: 500; fill: var(--ink-2); }
+.kj-svg .base { stroke: var(--ink-2); stroke-width: 1; }
+.kj-svg path { pointer-events: none; }
+.kj-svg .slb, .kj-svg .bp { fill: var(--kj-sl); } .kj-svg .ba { fill: var(--kj-ac); } .kj-svg .bs { fill: var(--kj-stk); } .kj-svg .bo { fill: var(--kj-ov); }
+.kj-svg text.vp { font-weight: 600; fill: var(--ink-2); } .kj-svg text.va { font-weight: 700; } .kj-svg text.pc { font-weight: 800; } .kj-svg text.pc.bad { fill: var(--bad); } .kj-svg text.pc.ov { fill: var(--kj-ovt); }
+.kj-svg .fbg { fill: var(--kj-pl); stroke: var(--kj-ac); stroke-width: 1; } .kj-svg .ffill { fill: var(--kj-ac); }
+.kj-svg .sbg { fill: var(--kj-spl); stroke: var(--kj-stk); stroke-width: 1; } .kj-svg .sfill { fill: var(--kj-stk); } .kj-svg .over { fill: var(--kj-ov); }
+.kj-svg .tk { stroke: var(--kj-tk); stroke-width: 3; pointer-events: none; } .kj-svg .tk.d { stroke-dasharray: 5 3; }
+.kj-svg .hit { fill: transparent; cursor: default; outline: none; }
+.kj-svg .hit:hover, .kj-svg .hit:focus-visible { fill: color-mix(in srgb, var(--ink) 5%, transparent); }
+#kj-tip { position: fixed; z-index: 50; background: var(--surface); border: 1px solid var(--v2-line, var(--line)); border-radius: 8px; box-shadow: 0 6px 20px rgba(16, 24, 40, .16); padding: 10px 14px; font-size: 16px; pointer-events: none; min-width: 200px; text-align: center; }
+#kj-tip .t { font-weight: 700; color: var(--ink-2); margin: 0 0 6px; }
+#kj-tip .r { display: flex; justify-content: center; gap: 10px; align-items: baseline; line-height: 1.6; } #kj-tip .r b { color: var(--ink); white-space: nowrap; } #kj-tip .r span { color: var(--ink-2); }
 
-/* 소재 표 */
-.kj-mt { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.kj-mt th, .kj-mt td { padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; font-size: 16px; }
-.kj-mt th { font-size: 15px; background: var(--sub); color: var(--ink); }
-.kj-mt td.l, .kj-mt th.l { text-align: left; }
-.kj-mt td.bc { width: 30%; min-width: 180px; }
-.kj-mt .nw { color: var(--warn); font-weight: 700; }
-.kj-sb { display: flex; height: 16px; border-radius: 4px; overflow: hidden; background: var(--sub); box-shadow: inset 0 0 0 1px var(--line); }
-.kj-sb i { display: block; height: 100%; }
-.kj-sb i.r { background: var(--kj-pr); } .kj-sb i.o { background: color-mix(in srgb, var(--kj-pr) 35%, var(--surface)); }
-.kj-sbp { display: flex; align-items: center; gap: 10px; } .kj-sbp .kj-sb { flex: 1; } .kj-sbp b { min-width: 46px; text-align: right; }
-.kj-lg { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--ink-2); margin: 10px 0 0; }
-.kj-lg span { white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; } .kj-lg i { display: inline-block; width: 14px; height: 12px; border-radius: 3px; }
-.kj-lg i.r { background: var(--kj-pr); } .kj-lg i.o { background: color-mix(in srgb, var(--kj-pr) 35%, var(--surface)); } .kj-lg i.e { background: var(--sub); box-shadow: inset 0 0 0 1px var(--line); }
-.kj-risk { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 12px 0 0; font-size: 15px; line-height: 1.6; }
-.kj-risk > b { font-size: 15px; color: var(--ink-2); white-space: nowrap; }
-.kj-risk span { white-space: nowrap; } .kj-risk span.bad b { color: var(--bad); } .kj-risk span.warn b { color: var(--warn); } .kj-risk span em { font-style: normal; color: var(--ink-2); }
-.kj-mw { overflow-x: auto; }
+/* 표(매트릭스·소재 표·조치): 모두 가운데 · 16px */
+.kj-tb { padding: 0; overflow: hidden; }
+.kj-c table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+html.v2 body main #ct-main .kj-c table :is(th, td), html.v2 body main #ct-main .kj-c table :is(th, td) small { text-align: center !important; white-space: nowrap; font-size: 16px !important; }
+html.v2 body main #ct-main .kj-mx :is(th, td) { padding: 10px 10px !important; }
+html.v2 body main #ct-main .kj-mx tbody th { font-weight: 600; padding: 10px 12px !important; }
+html.v2 body main .kj-mx .gs { border-left: 1px solid var(--v2-line, var(--line)) !important; }
+html.v2 body main .kj-mx tr.pt { background: color-mix(in srgb, var(--ink) 4%, var(--surface)); } html.v2 body main .kj-mx tr.pt :is(th, td) { font-weight: 700 !important; background: transparent !important; }
+html.v2 body main .kj-mx tr.tot :is(th, td) { font-weight: 800 !important; border-top: 2px solid var(--ink-2) !important; }
+.kj-c td.kp { font-weight: 700; }
+html.v2 body main .kj-mx tbody th, html.v2 body main .kj-mx thead tr:first-child th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface) !important; box-shadow: inset -1px 0 0 var(--v2-line, var(--line)); }
+html.v2 body main .kj-mx thead tr:first-child th:first-child { background: var(--v2-th, var(--sub)) !important; }
+html.v2 body main .kj-mx tr.pt th { background: color-mix(in srgb, var(--ink) 4%, var(--surface)) !important; }
+html.v2 body main .kj-mx td.ov { font-weight: 700; }
+html.v2 body main #ct-main .kj-mx td small.kj-mna { display: block; white-space: normal; font-weight: 500; color: var(--ink-2); }   /* 공장 소재 = 그룹 합 + 미배정(DUMMY/포장재) */
+@media (max-width: 1500px) { html.v2 body main #ct-main .kj-mx :is(th, td) { padding: 9px 3px !important; } html.v2 body main #ct-main .kj-mx tbody th { padding: 9px 8px !important; } html.v2 body main #ct-main .kj-mx thead th { white-space: normal !important; word-break: keep-all; } }
+
+/* 6. 소재 */
+.kj-ms { display: grid; gap: 14px; }
+.kj-ms .row { display: grid; grid-template-columns: 220px minmax(0, 1fr) 260px; align-items: center; gap: var(--kj-g); }
+.kj-ms .nm { text-align: center; white-space: nowrap; line-height: 1.5; } .kj-ms .nm b { display: block; } .kj-ms .nm span { color: var(--ink-2); }
+.kj-ms .bar { display: flex; flex-wrap: nowrap; align-items: stretch; gap: 2px; height: 30px; margin: 0; }
+.kj-ms .bar i { display: flex; align-items: center; justify-content: center; min-width: 4px; border-radius: 4px; overflow: hidden; font-style: normal; font-weight: 600; white-space: nowrap; }
+.kj-ms .bar i span { padding: 0 6px; }
+.kj-ms .bar i.r { background: var(--kj-ac); color: #fff; } .kj-ms .bar i.o { background: var(--kj-pl); box-shadow: inset 0 0 0 1px var(--kj-ac); color: var(--ink); }
+.kj-ms .bar i.e { background: var(--surface); box-shadow: inset 0 0 0 2px var(--bad); color: var(--bad); } .kj-ms .bar i.q { background: var(--surface); border: 1px dashed var(--ink-2); color: var(--ink-2); }
+.kj-ms .bar i:hover, .kj-ms .bar i:focus-visible { filter: brightness(1.06); outline: 2px solid var(--kj-tk); outline-offset: 1px; }
+.kj-ms .bar em { margin: auto; font-style: normal; color: var(--ink-2); }
+.kj-ms .pc { text-align: center; line-height: 1.5; } .kj-ms .pc b { display: block; } .kj-ms .pc span { color: var(--ink-2); white-space: nowrap; }
+.kj-risk { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; margin: 14px 0 0; padding: 12px 0 0; border-top: 1px solid var(--v2-line, var(--line)); color: var(--ink-2); line-height: 1.6; }
+.kj-risk > b { color: var(--ink); } .kj-risk span { white-space: nowrap; }
+.kj-tv { margin: 12px 0 0; } .kj-tv summary { cursor: pointer; font-weight: 600; color: var(--ink-2); text-align: center; } .kj-tv table { margin-top: 8px; }
+
+/* 7. 캘린더 — 16px · 31일이 1920 폭에 들어가게(첫 열 좁게, 칸 여백 최소) */
+html body main table.kj-cal { border-collapse: collapse; table-layout: fixed; width: 100%; min-width: 1560px; font-variant-numeric: tabular-nums; }
+html body main table.kj-cal :is(th, td) { border: 1px solid var(--v2-line, var(--line)); padding: 0 1px; text-align: center; font-size: 16px !important; line-height: 1.2; overflow: hidden; }
+html body main table.kj-cal thead th { height: 44px; background: var(--v2-th, var(--sub)); font-weight: 700; color: var(--ink); }
+.kj-cal thead th b, .kj-cal thead th span { display: block; } .kj-cal thead th span { font-weight: 500; color: var(--ink-2); }
+.kj-cal thead th.we :is(b, span) { color: var(--ink-2); }
+html body main table.kj-cal .lab { width: 92px; position: sticky; left: 0; z-index: 1; background: var(--surface); padding: 2px 4px; }
+html body main table.kj-cal th.kd { width: 46px; font-weight: 700; background: var(--v2-th, var(--sub)); color: var(--ink-2); }
+html body main table.kj-cal.kjpa tbody tr.r1 :is(td, th):not(.lab):not([rowspan]) { height: 34px; border-bottom: 1px dashed var(--v2-line, var(--line)); }
+html body main table.kj-cal.kjpa tbody tr.r2 :is(td, th) { height: 34px; }
+html body main table.kj-cal td.pp { color: var(--ink-2); } html body main table.kj-cal td.aa { font-weight: 800; color: var(--ink); background: color-mix(in srgb, var(--kj-ac) 9%, var(--surface)); }
+html body main table.kj-cal th.kd.ka { color: var(--kj-ac); }
+html body main table.kj-cal :is(.lab.l1, td.o1) { border-bottom: 0 !important; } html body main table.kj-cal :is(.lab.l2, td.o2) { border-top: 0 !important; }
+.kj-lg i.idl { background: #fff2a8; } .kj-lg i.now { background: color-mix(in srgb, var(--kj-ac) 26%, var(--surface)); box-shadow: inset 2px 0 0 var(--kj-ac), inset -2px 0 0 var(--kj-ac); } .kj-lg i.rep { background: #c0392b; }
+html body main table.kj-cal .sumc { width: 72px; font-weight: 700; border-left: 2px solid color-mix(in srgb, var(--ink) 40%, var(--surface)) !important; } .kj-cal td.sumc b { font-weight: 800; }
+html body main table.kj-cal tbody .lab { box-shadow: -12px 0 0 0 var(--surface); } html body main table.kj-cal tr.tot .lab { box-shadow: -12px 0 0 0 color-mix(in srgb, var(--ink) 4%, var(--surface)); }
+html body main table.kj-cal thead .lab { box-shadow: -12px 0 0 0 var(--v2-th, var(--sub)); background: var(--v2-th, var(--sub)); font-weight: 600; white-space: normal; }
+.kj-cal tbody .lab b { display: block; } .kj-cal tbody .lab span { display: block; color: var(--ink-2); white-space: nowrap; } .kj-cal tbody .lab span b { display: inline; color: var(--ink); }
+html body main table.kj-cal tbody tr:not(.sec) td, html body main table.kj-cal tbody tr:not(.sec) th { height: 48px; }
+.kj-cal td.pa span, .kj-cal td.pa b { display: block; } .kj-cal td.pa span { color: var(--ink-2); } .kj-cal td.pa b { color: var(--ink); }
+.kj-cal td.pa { background: color-mix(in srgb, var(--kj-ac) 10%, var(--surface)); } .kj-cal td.pl { background: var(--surface); } .kj-cal td.pl b { font-weight: 600; }
+.kj-cal td.id, .kj-cal td.nd { color: var(--ink-2); }
+html body main table.kj-cal td.idl { background: #fff2a8; color: #5c4a00; font-weight: 700; text-align: center; white-space: nowrap; }
+html body main table.kj-cal td.rep { background: #c0392b; color: #fff; font-weight: 700; text-align: center; white-space: nowrap; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) table.kj-cal td.idl { background: #5c4d0a; color: #fff3b0; } }
+:root[data-theme="dark"] table.kj-cal td.idl { background: #5c4d0a; color: #fff3b0; }
+html body main table.kj-cal tr.sec th { height: 36px; background: var(--v2-th, var(--sub)); text-align: center; font-weight: 700; border-top: 2px solid var(--v2-line, var(--line)); overflow: visible; }
+.kj-cal tr.sec th span { padding: 0 12px; }
+html body main table.kj-cal tr.tot :is(td, th) { background: color-mix(in srgb, var(--ink) 4%, var(--surface)); font-weight: 700; }
+/* 수요일 굵은 선·월요일 묶음 선 없앰(11/12 사용자 '진한 선 왜 넣었냐') · 라인 묶음 끝만 굵게 */
+html body main table.kj-cal :is(td, th):is(.wst, .gsep) { border-left: 1px solid var(--v2-line, var(--line)) !important; }
+html body main table.kj-cal.kjpa tbody tr.r2 > :is(td, th), html body main table.kj-cal:not(.kjpa) tbody tr:not(.sec) > :is(td, th) { border-bottom: 2px solid color-mix(in srgb, var(--ink) 45%, var(--surface)) !important; }
+/* 오늘 = 칸마다 테두리 말고 한 줄 통째로 진한 파랑 바탕 */
+html body main table.kj-cal :is(td, th).now { background: color-mix(in srgb, var(--kj-ac) 26%, var(--surface)) !important; box-shadow: none !important; border-left: 2px solid var(--kj-ac) !important; border-right: 2px solid var(--kj-ac) !important; } html body main table.kj-cal thead th.now { background: var(--kj-ac) !important; } .kj-cal thead th.now :is(b, span) { color: #fff !important; }
+
+/* 8. 조치 */
+html.v2 body main .kj-act td:nth-child(3) { white-space: normal; word-break: keep-all; }
+
+@media (max-width: 1500px) { .kj-k4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kj-sch ol { grid-template-columns: repeat(4, minmax(0, 1fr)); } .kj-sch li:nth-child(4n + 1) { border-left: 0; } .kj-sch li:nth-child(n + 5) { border-top: 1px solid var(--v2-line, var(--line)); padding-top: 8px; } }
 @media (max-width: 700px) {
-  .kj-tabs { width: 100%; } .kj-tabs button { flex: 1; padding: 8px 6px; font-size: 16px; }
-  .ct-kpis.kj-k4 .ct-kpi { padding: 10px 11px; }
-  .kj-k4 .ct-kpi .s { white-space: normal; }
-  .kj-wh { font-size: 14px; gap: 2px 6px; }
-  .kj-risk span { white-space: normal; }
-  .kj-wh { grid-template-columns: auto 1fr; } .kj-wh b { text-align: left; } .kj-wh em { grid-column: 2; margin-top: -4px; }
-  /* 소재 표 → 소재마다 한 덩어리(가로 스크롤 없이) */
-  html body main table.kj-mt thead { display: none; }
-  html body main table.kj-mt tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-  html body main table.kj-mt td { display: flex; justify-content: space-between; gap: 8px; border: 0 !important; padding: 3px 0 !important; font-size: 15px !important; text-align: left !important; }
-  html body main table.kj-mt td.l { grid-column: 1 / -1; font-size: 16px !important; }
-  html body main table.kj-mt td[data-l]::before { content: attr(data-l); color: var(--ink-2); font-weight: 500; font-size: 14px; white-space: nowrap; }
-  html body main table.kj-mt td.bc { grid-column: 1 / -1; width: auto; min-width: 0; } html body main table.kj-mt td.bc .kj-sbp { flex: 1; margin-left: 10px; }
+  :root { --kj-g: 12px; }
+  .kj-tabs { width: 100%; } #ct-main .kj-tabs button { flex: 1; padding: 8px 4px; }
+  .kj-k4 { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .kj-sch ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kj-sch li { border-left: 1px solid var(--v2-line, var(--line)) !important; border-top: 0 !important; } .kj-sch li:nth-child(2n + 1) { border-left: 0 !important; } .kj-sch li:nth-child(n + 3) { border-top: 1px solid var(--v2-line, var(--line)) !important; padding-top: 8px; }
+  .kj-ms .row { grid-template-columns: minmax(0, 1fr); gap: 8px; } .kj-ms .bar i span { display: none; }
+  .kj-risk span, .kj-basis, .kj-why { white-space: normal; }
+  html.v2 main .ct-kpi.kj-k > .s, .kj-wh { white-space: normal !important; word-break: keep-all; }
+  html.v2 main .ct-kpi.kj-k > .l { white-space: normal; }
 }
 </style>
 </head>
 <body>
-<header id="shell" data-page="kj" data-title="관제" data-sub="판매계획 · 수주 · 생산 · 출하 · 재고 — 도금·컬러 전체와 그룹별"></header>
+<header id="shell" data-page="kj" data-title="관제"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보·통합 계획 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611120507"></script>
-<script src="engine/crypto.js?v=2611120507"></script>
-<script src="ui/ct.js?v=2611120507"></script>
-<script src="ui/proccalc.js?v=2611120507"></script>
-<script src="kj.js?v=2611120507"></script>
+<script src="ui/shell.js?v=2611120532"></script>
+<script src="engine/crypto.js?v=2611120532"></script>
+<script src="ui/ct.js?v=2611120532"></script>
+<script src="ui/proccalc.js?v=2611120532"></script>
+<script src="kj.js?v=2611120532"></script>
 </body>
 </html>

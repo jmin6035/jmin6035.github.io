@@ -322,6 +322,18 @@
     O.days.forEach((d) => { const w = wedOf(d); if (!W.length || W[W.length - 1][0] !== w) W.push([w, []]); W[W.length - 1][1].push(d); });
     return W;
   }
+  const GACT = { 도금수출: '수출', 도금국내: '국내', 자동차내수: '자동차', 자동차수출: '자동차' };   // 실적 그룹 이름 → 칸 이름(앞날 칸과 같게)
+  const top = (o, min) => Object.entries(o || {}).filter(([, v]) => v >= min).sort((a, b) => b[1] - a[1]);
+  function pastCell(a, ln, d) {                              // 지난 날 칸 = 앞날 칸과 같은 모양(강종 · 막대 = 완료 · 톤 · 그룹별) — 누르지 않음
+    const st = 'style="background:transparent;cursor:default;color:var(--ink)"';
+    if (!a) return `<button type="button" class="cell pcell" tabindex="-1" ${st} title="${mdw(d)} ${ln} 실적 자료 없음(다음 날 아침 들어옴)"><div class="tv">–</div></button>`;
+    const F = top(a.fam, 0.5), G = top(a.grp, 0.5);
+    return `<button type="button" class="cell pcell" tabindex="-1" ${st} title="${mdw(d)} ${ln} 생산 실적(MES, 더미 제외) ${n0(a.t)}t · ${F.map(([f, v]) => `${f} ${n0(v)}`).join(' · ')} · ${G.map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}">`
+      + `<div class="ct">${F.map(([f]) => famCh(f)).join('')}</div>`
+      + '<div class="bar"><i style="width:100%;background:var(--ink-2)"></i></div>'
+      + `<div class="tv">${n0(a.t)}<small>t 실적</small></div>`
+      + `<div class="gl">${G.map(([g, v]) => `<span>${esc(g)} ${n0(v)}</span>`).join('')}</div></button>`;
+  }
   const famCh = (f) => (f ? `<span class="fam fam-${esc(String(f).split('-')[0].replace(/[^A-Z]/g, ''))}">${esc(f)}</span>` : '');
 
   function summary() {
@@ -392,12 +404,13 @@
     const head = days.map((d) => { const wd = dt(d).getDay(); return `<th class="${nw.includes(d) ? 'nx' : wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}${d === UI.today() ? '<small class="tdy">오늘</small>' : ''}</th>`; }).join('');
     const idx = (d) => O.days.indexOf(d);
     const P = (n) => '<td class="pad" aria-hidden="true"></td>'.repeat(Math.max(0, n));
-    const pad = P(7 - lead - days.length), lp = P(lead);   // 월말 뒤는 빈 칸으로 채워 칸 폭을 7칸에 맞춤
+    const pad = P(7 - lead - days.length);   // 월말 뒤는 빈 칸으로 채워 칸 폭을 7칸에 맞춤
     const pds = Array.from({ length: Math.max(0, lead) }, (_, i) => { const x = dt(w0); x.setDate(x.getDate() + i); return iso(x); });   // 이번 주 지난 날(11/12 사용자: 빈 칸 → 실적)
     const av = (ln, d) => (O.act || {})[`${ln}|${d}`];
     const pTh = pds.map((d) => `<th class="pst">${mdw(d)}<small class="tdy" style="background:var(--sub);color:var(--ink-2)">실적</small></th>`).join('');
-    const pTd = (ln) => pds.map((d) => { const v = av(ln, d); return `<td class="pst" title="${mdw(d)} ${ln} 생산 실적"><div class="pstv">${v == null ? '<span class="muted">–</span>' : `<b>${n0(v)}</b>t`}</div><small class="muted">실적</small></td>`; }).join('');
-    const pSum = pds.map((d) => { const has = LINES.some((l) => av(l, d) != null), v = LINES.reduce((q, l) => q + (av(l, d) || 0), 0); return `<td class="pst" title="${mdw(d)} 생산 실적 합${has ? '' : ' — 아직 실적 자료 없음(다음 날 아침 들어옴)'}">${has ? `<b>${n0(v)}</b>t` : '<span class="muted">–</span>'}</td>`; }).join('');
+    const pTd = (ln) => pds.map((d) => `<td class="pst">${pastCell(av(ln, d), ln, d)}</td>`).join('');
+    const pSum = pds.map((d) => { const has = LINES.some((l) => av(l, d)), v = LINES.reduce((q, l) => q + ((av(l, d) || {}).t || 0), 0); return `<td class="pst" title="${mdw(d)} 1CGL + 2CGL 생산 실적">${has ? `<b>${n0(v)}</b><small>t</small><div class="sub">${LINES.map((l) => n0((av(l, d) || {}).t || 0)).join(' + ')}</div>` : '–'}</td>`; }).join('');
+    const pJg = pds.map((d) => { const has = LINES.some((l) => av(l, d)), v = LINES.reduce((q, l) => q + (((av(l, d) || {}).grp || {}).자가재 || 0), 0); return `<td class="jg pst" title="${mdw(d)} 도금에서 만든 자가재(MES 실적)">${has ? `<div class="jr"><span>도금 실적</span><b>${n0(v)}</b></div>` : '–'}</td>`; }).join('');
     const we = (() => { const x = dt(w0); x.setDate(x.getDate() + 6); return iso(x); })();
     const wl = nw.includes(days[0]) ? ['다음 주', '확정 대상', 'nx'] : days[0] < nw[0] ? ['이번 주', '진행 중', ''] : ['계획', '확정 전', 'pl'];
     const corner = `<th class="wl ${wl[2]}" title="생산주 ${mdw(w0)} ~ ${mdw(we)} · ${wl[0] === '다음 주' ? '이번 수요일에 확정해 저장할 주' : wl[0] === '이번 주' ? '지금 작업 중인 생산주(지난 수요일 확정 대상)' : '아직 확정 전 — 재계획대로 깐 계획'}">${wl[0]}<small>${md(w0)}~${md(we)}</small><small>${wl[1]}</small></th>`;
@@ -407,7 +420,7 @@
       return h - a >= 1 ? { h: h - a, t: (h - a) * t / h } : null;
     };
     const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small title="이 주(${md(days[0])}~${md(days[days.length - 1])}) ${ln} 능력 합 = 재계획 하루 톤 합">능력 ${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t</small>${hr ? `<small class="hs ov" title="${END()}까지 주문을 T/Hr(같은 두께·폭 2026년 실적)로 24시간 이어서 돌리면 가동 가능 시간(24h × 제원치 가동률)보다 ${n1(hr.h)}시간 초과 → 약 ${n0(hr.t)}t 은 ${md(O.days[O.days.length - 1])} 뒤에 생산">${END()} 뒤 ${n0(hr.t)}t</small>` : ''}</th>${pTd(ln)}${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`; }).join('');
-    const jg = lp + days.map((d) => {
+    const jg = pJg + days.map((d) => {
       const j = O.jg[idx(d)], df = j.cumSched - j.cumPlan;
       return `<td class="jg" title="컬러 계획 = 컬러 라인 투입 일정에 맞추려면 이 날까지 도금에서 만들어 둬야 할 자가재 누계(가동계획 기준) · 도금 생산 = 이 캘린더대로 도금에서 만드는 자가재 누계(${md(O.days[0])}부터)"><div class="jr"><span>컬러 계획</span><b>${n0(j.cumPlan)}</b></div><div class="jr"><span>도금 생산</span><b>${n0(j.cumSched)}</b></div><div class="jr ${df < 0 ? 'bad' : 'good'}"><span>${df < 0 ? '부족' : '여유'}</span><b>${n0(Math.abs(df))}</b></div>${j.mark ? `<div class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 도금에서 끝내야 할 자가재 톤">컬러 마감 ${n0(j.mark)}t</div>` : (O.jg.some((x) => x.mark) ? '<div class="mk" style="visibility:hidden">-</div>' : '')}</td>`;
     }).join('');
@@ -426,7 +439,8 @@
       + '<span><i style="background:repeating-linear-gradient(135deg, var(--c-plan) 0 2px, var(--c-fcst) 2px 5px)"></i><b>빗금 = 입고 예정</b>소재 들어올 주문 — 입고 다음 날부터</span>'
       + '<span><i style="background:var(--c-gap);box-shadow:inset 0 0 0 1px var(--line)"></i><b>회색 = 빈칸</b>채울 주문 없는 능력</span>'
       + '<span><i style="background:#fff3bf;box-shadow:inset 0 0 0 1px #f59f00"></i><b>노란 칸 = M/C</b>강종 교체일</span>'
-      + '<span><i style="background:var(--bad)"></i><b>빨간 줄 = 확인 필요</b>현장 강종 ≠ 재계획 · 재질 순서</span></div>'
+      + '<span><i style="background:var(--bad)"></i><b>빨간 줄 = 확인 필요</b>현장 강종 ≠ 재계획 · 재질 순서</span>'
+      + '<span><i style="background:var(--ink-2)"></i><b>회색 칸 = 실적</b>지난 날 MES 생산</span></div>'
       + '<p class="lgn"><b>칸 큰 숫자</b> = 그날 생산 톤(세 색 합) · <b>그 아래</b> = 판매그룹별 톤 · <b>라인 이름 아래</b> = 그 주 능력 · <b>주</b> = 수~화 생산주 · <b>파란 머리</b> = 다음 주 확정 대상</p></div>'
       + moveBar()
       + weeks().map(([w0, ds]) => `<div class="wk">${weekTable(w0, ds, nw)}</div>`).join('') + '</section>';
@@ -737,7 +751,7 @@
     const stale = Math.round((Date.now() - dt(O.asOf).getTime()) / 864e5);
     $('cc-main').innerHTML = (stale >= 2 ? `<div class="card" style="background:var(--warn-bg);color:var(--warn);font-weight:700">자료 기준 ${md(O.asOf)} — ${stale}일 전 자료</div>` : '')
       + calCard() + confirmCard() + riskCard() + fold(grpCard(), `판매그룹별 계획 · 재계획 목표 <small>~${END()} · 톤</small>`) + fold(accCard(), '계획 적중률 <small>계획 ↔ 실제 생산</small>');   // 11/11: 결론(확정·경과·라인 부하)은 맨 위 PS.sum, 세부(그룹별·적중률)는 접기
-    $('cc-main').querySelectorAll('button.cell').forEach((b) => b.onclick = () => openDay(b.dataset.ln, b.dataset.d));
+    $('cc-main').querySelectorAll('button.cell[data-d]').forEach((b) => b.onclick = () => openDay(b.dataset.ln, b.dataset.d));
     $('cc-main').querySelectorAll('#cc-rk button').forEach((b) => b.onclick = () => { rk = b.dataset.rk; try { localStorage.setItem(RK_KEY, rk); } catch (e) { /* 무시 */ } render(); });
     $('cc-save').onclick = save;
     bindRisk();
@@ -747,27 +761,38 @@
     if (window.UI) UI.reveal($('cc-main'));
   }
   const fold = (h, t) => (h ? `<details class="fold ps-fd"><summary>${t}</summary>${h.replace(/^<section class="card">\s*<h2>.*?<\/h2>/, '').replace(/<\/section>$/, '')}</details>` : '');
-  $('cc-dlg').addEventListener('click', (e) => { if (e.target === $('cc-dlg')) $('cc-dlg').close(); });
+  if ($('cc-dlg')) $('cc-dlg').addEventListener('click', (e) => { if (e.target === $('cc-dlg')) $('cc-dlg').close(); });
   const envReady = GP.latest('cg_calendar.enc.json'), lpReady = GP.latest('latest.plan.enc.json').catch(() => null);   // 11/9: lp = 재계획 실적 기준일(t0)
   let busy = false, ready = false;
   async function unlock(pw) {
     if (O || busy || !pw) return; busy = true;
     const env = await envReady;
-    if (!env) { $('cc-msg').textContent = '게시된 자료가 없습니다.'; busy = false; return; }
+    const msg = (t) => { if ($('cc-msg')) $('cc-msg').textContent = t; };
+    if (!env) { msg('게시된 자료가 없습니다.'); busy = false; return; }
     try { O = await GP.decryptJSON(env, pw); PW = pw; }
-    catch (e) { $('cc-msg').textContent = '⚠ 암호가 맞지 않습니다'; busy = false; return; }
+    catch (e) { msg('⚠ 암호가 맞지 않습니다'); busy = false; return; }
     O.base = JSON.parse(JSON.stringify(O.lines));
     const LPd = await lpReady.then((e) => e && GP.decryptJSON(e, pw)).catch(() => null), LPr = (LPd && LPd.result) || {};
     O.planT0 = (LPr.replan || {}).t0 || null;   // 11/9: 재계획 표기 = 실적 기준일
-    O.act = {}; for (const r of LPr.rows || []) if (O.planT0 && r[0] <= O.planT0) O.act[`${r[1]}|${r[0]}`] = (O.act[`${r[1]}|${r[0]}`] || 0) + (+r[4] || 0);   // 11/12 사용자 '하루씩 사라지냐': 이번 주 지난 날 = 실적으로 채움
+    O.act = {};   // 11/12 사용자 '11/11 실적만 써놓지 말고 뭘 생산했는지': 지난 날 = MES 실적(재계획 rows, 실적 기준일까지 · 더미 제외) — 라인·날 × 강종 × 판매그룹
+    for (const r of LPr.rows || []) {
+      if (!O.planT0 || r[0] > O.planT0) continue;
+      const a = (O.act[`${r[1]}|${r[0]}`] = O.act[`${r[1]}|${r[0]}`] || { t: 0, fam: {}, grp: {} }), t = +r[4] || 0, g = GACT[r[3]] || r[3] || '기타';
+      a.t += t; a.fam[r[2]] = (a.fam[r[2]] || 0) + t; a.grp[g] = (a.grp[g] || 0) + t;
+    }
     CONF = await loadConfirm();
     let draft = null; try { draft = localStorage.getItem(MV_KEY()); } catch (e) { /* 무시 */ }
     const same = CONF && CONF.asOf === O.asOf;               // 같은 자료로 저장한 확정본이면 그 수정 내역을 그대로 불러와 이어서 고침(다음 날부터는 계산에 이미 고정돼 들어옴)
     MOVES = draft !== null ? (() => { try { return JSON.parse(draft); } catch (e) { return []; } })() : (same ? CONF.moves : []);
     SAVED = CONF ? JSON.stringify(same ? CONF.moves : []) : null;
     applyMoves(); ready = true;
-    render();
+    if ($('cc-main')) render();
   }
   /* 생산 일정 화면(ct_plan.html)에 붙어 있음 — 암호는 화면 공통 잠금(CT.boot)이 받고, 여기서는 저장된 암호로만 엶(ensure) */
-  window.CGCAL = { ensure: () => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (ready) render(); else unlock(s); } };
+  /* 편성 화면(pyeonseong.js)이 이번 생산주 표를 그대로 씀: load(암호) → week() = 이번 주(수~화) 표 HTML · 칸 = button.cell[data-ln][data-d] */
+  /* raw() = 이번 생산주 자료만(편성 화면이 칸을 직접 그림 — 생산 일정 화면 모양은 그대로) */
+  const raw = () => { const W = O && weeks()[0]; if (!W) return null; const [w0, days] = W, i = (d) => O.days.indexOf(d);
+    return { w0, days, cell: (ln, d) => O.lines[ln][i(d)], act: (ln, d) => (O.act || {})[`${ln}|${d}`] || null, jg: (d) => O.jg[i(d)], over: (ln) => (i(days[days.length - 1]) === O.days.length - 1 ? over(ln, O.days) : null), end: END() }; };
+  window.CGCAL = { raw, load: async (pw) => { await unlock(pw); return ready; }, week: () => { const W = weeks()[0]; return W ? weekTable(W[0], W[1], nextWeek()) : ''; }, items: (ln, d) => { const c = O && O.lines[ln] && O.lines[ln][O.days.indexOf(d)]; return c ? c.items : []; }, stop: (ln, d) => { const c = O.lines[ln][O.days.indexOf(d)]; return !!c && c.cap < 1; }, END: () => (O ? END() : ''),
+    ensure: () => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (ready) render(); else unlock(s); } };
 })();
