@@ -3,7 +3,8 @@
 (function () {
   'use strict';
   /* 11/12 사용자 '전부 진행해서 가상의 사이트를 만들어 봐 — 내가 먼저 보게': 새 양식 미리보기. 주소에 ?ui=v2 → 이 브라우저에서 계속 새 양식(ui/v2.css), ?ui=old → 원래대로. 기본은 원래 양식 */
-  const V2 = (() => { const q = new URLSearchParams(location.search).get('ui'); try { if (q === 'v2') localStorage.setItem('ui-v2', '1'); if (q === 'old') localStorage.removeItem('ui-v2'); return localStorage.getItem('ui-v2') === '1'; } catch (e) { return q === 'v2'; } })();
+  // 11/12 사용자 '본 사이트에 적용' — 새 양식이 기본. ?ui=old = 이전 양식(기억), ?ui=v2 = 새 양식으로 되돌림
+  const V2 = (() => { const q = new URLSearchParams(location.search).get('ui'); try { if (q === 'old') localStorage.setItem('ui-old', '1'); if (q === 'v2') localStorage.removeItem('ui-old'); return localStorage.getItem('ui-old') !== '1'; } catch (e) { return q !== 'old'; } })();
   if (V2) { document.documentElement.classList.add('v2'); const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'ui/v2.css?v=' + Date.now().toString(36).slice(0, -4); document.head.appendChild(l); }
   /* 암호 매번 입력(11/2 사용자 '매번 암호 치고 들어가게'): 브라우저에 암호를 남기지 않음 — 화면을 열 때마다 암호 칸이 뜸.
      shell.js 가 화면 스크립트보다 먼저 실행되므로 여기서 암호 키(…-pw) 저장·읽기를 막고, 예전에 저장된 암호도 지움. 되돌리기 = NO_PW_SAVE = false */
@@ -39,7 +40,8 @@
   const ADMN = '관리';
   /* 11/12 회의: 메뉴 순서 = 보고 순서 ① 계획 → ② 관제 → ③ 편성(docs/16 ★2). 새 양식 미리보기(V2)에서만 맨 위, 기존 메뉴는 '기타'(접힘) 아래 — 기본 화면 메뉴는 그대로 */
   const MV2 = V2 ? [['v1', '계획', 'supply', [['gyehoek', 'gyehoek.html', '일별 가동계획'], ['gyehoek', 'gyehoek.html#mat', '소재']]],
-    ['v2', '관제', 'home', [['kj', 'kj.html', '관제']]], ['v3', '편성', 'weekseq', [['pyeonseong', 'pyeonseong.html', '편성']]]] : [];
+    ['v2', '작업', 'wo', [['weekseq', 'week_seq.html', '작업 순서']]], ['v3', '편성', 'weekseq', [['pyeonseong', 'pyeonseong.html', '편성']]],
+    ['v4', '수주', 'home', [['kj', 'kj.html', '수주']]]] : [];   // 11/12 사용자 '관제 → 수주, 순서 = 계획·작업·편성·수주'
   const ETC = '기타', MENUS = [...MV2, ...MENU];
   const ALL = [...MENUS.flatMap((m) => m[3]), ...ADMIN];
   const DEFV = { home: 'day', suju: 'dash', orders: 'status', prodsum: 'perf', perf: 'ops', issues: 'now' };   // 주소에 #이 없을 때 화면이 여는 하위 화면
@@ -520,7 +522,7 @@
     const pg = (document.getElementById('shell') || {}).dataset || {};
     if (['cgorder', 'ccorder', 'platact', 'coloract', 'status', 'colorstat', 'rolling', 'colorcalc', 'docs', 'decisions', 'health', 'cgtasks'].includes(pg.page)) document.documentElement.classList.add('v2-one');
     const h1r = document.querySelector('.h1row');
-    if (h1r && !document.getElementById('v2-flag')) h1r.insertAdjacentHTML('beforeend', '<a id="v2-flag" class="noprint" href="?ui=old" title="원래 양식으로 돌아가기">새 양식 미리보기 · 원래대로</a>');
+    if (h1r && !document.getElementById('v2-flag')) h1r.insertAdjacentHTML('beforeend', '<a id="v2-flag" class="noprint" href="?ui=old" title="이전 양식으로 보기">이전 양식</a>');
     document.querySelectorAll('main table').forEach((t) => {
       if (t.dataset.v2 === String(t.rows.length)) return; t.dataset.v2 = String(t.rows.length);
       const ncol = Math.max(0, ...[...t.rows].slice(0, 6).map((r) => [...r.cells].reduce((a, c) => a + (c.colSpan || 1), 0)));
