@@ -313,7 +313,9 @@
       cur ? '(소재 ON + 소재 OFF) ÷ 판매계획' : `${mLab(mSel)} 납기 주문 ÷ ${mLab(mSel)} 판매계획`);
     let k2;
     if (cur) { const act = T('pAct'), due = T('pDue');
-      k2 = kc('suju.html#prod', '생산 달성', '월차 대비', shortT(act, due), pc(pctOf(act, due)), `실적 ${n0(act)} / 월차 계획(~${md(A.S.asOf)}) ${n0(due)}t`, `생산 실적 ÷ 1일~${md(A.S.asOf)} 월차 계획`); }
+      // 11/12 사용자 '월 생산량인데 108.8% 맞아?' — 큰 숫자 = 월차 월 계획 대비 누적(한 달 중 얼마), 아래 = 오늘까지 계획 대비
+      const mon = pls.reduce((a, p) => a + LINES[p].reduce((b, l) => b + ((A.S.daily || {})[l] || []).filter((r) => r[0].slice(0, 7) === mSel).reduce((c, r) => c + (+r[1] || 0), 0), 0), 0) || null;
+      k2 = kc('suju.html#prod', '생산 달성', '월차 대비', shortT(act, due), pc(pctOf(act, mon)), `실적 ${n0(act)} / 월차 ${n0(mon)}t · ~${md(A.S.asOf)} 계획 대비 ${pctOf(act, due) == null ? '–' : (+pctOf(act, due)).toFixed(0) + '%'}`, `큰 숫자 = 1일~${md(A.S.asOf)} 실적 ÷ 월차 한 달 계획 · 작은 글씨 = ${md(A.S.asOf)}까지 월차 계획(${n0(due)}t) 대비`); }
     else { const prod = T('pPlan'); k2 = kc('integrated.html', '생산 계획', '', '', prod == null ? '–' : `${n0(prod)}<small>t</small>`, pls.map((p, i) => `${PN[p]} ${n0(PL[i].pPlan)}`).join(' · '), `${mLab(mSel)} 통합 계획(아래 캘린더 합)`); }
     const rl = riskList(mSel);
     const k3 = kc('suju.html#mat', '소재 결품 위험', '', rl.length ? 'bad' : '', `${rl.length}<small>건</small>`, (rl.length ? esc(rl.slice(0, 2).map((x) => x.name).join(' · ')) + (rl.length > 2 ? ` 외 ${rl.length - 2}건` : '') : `${mLab(mSel)} 결품 위험 소재 없음`) + (soonList(mSel).length ? ` · 마감 앞둔 발주 ${soonList(mSel).length}건` : ''), '아래 소재 구역 결품 위험 목록과 같은 목록');
