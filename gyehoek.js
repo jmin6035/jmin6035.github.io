@@ -45,7 +45,7 @@
     const R = LP && (LP.result || LP); let actG = '', at = '';
     if (R && R.rows && R.cal) {
       const t0 = (R.replan || {}).t0 || ''; actG = t0;
-      for (const [d, l, a, , t] of R.rows) { const x = (pl[`${l}|${d}`] = pl[`${l}|${d}`] || { t: 0, al: {}, sub: {} }); x.t += t; x.al[FAM(a)] = (x.al[FAM(a)] || 0) + t; if (/^AL-/.test(a) && t >= 0.5) x.sub[a] = 1; }
+      for (const [d, l, a, gr, t] of R.rows) { const x = (pl[`${l}|${d}`] = pl[`${l}|${d}`] || { t: 0, al: {}, sub: {}, gg: {}, aa: {} }); x.t += t; const gk = gNm(gr); x.gg[gk] = (x.gg[gk] || 0) + t; x.aa[a] = (x.aa[a] || 0) + t; x.al[FAM(a)] = (x.al[FAM(a)] || 0) + t; if (/^AL-/.test(a) && t >= 0.5) x.sub[a] = 1; }
       for (const c of R.cal) ev[`${c.line}|${c.date}`] = c;
       if (PA && PA.asOf && Array.isArray(PA.daily) && t0) for (const r of PA.daily) {   // 재계획 실적일 뒤에 들어온 MES 실적 = 라인 합계를 실적으로(supply.js 와 같게)
         if (!(r.d > t0 && r.d <= PA.asOf)) continue;
@@ -278,13 +278,26 @@
     return h;
   }
   // 칸을 누르면 표 아래 '가동 상세'(가동 캘린더 상세와 같은 카드 — supply.js window.supDet) · 다시 누르거나 닫기 = 접힘
+  // 지난 날(실적) 칸 = 계획 카드 대신 실적 상세(판매그룹·강종/품명 톤 · 가동시간) — 11/12 사용자 '뭔데 이거'(빈 계획 카드)
+  function gNm(g) { return /자동차/.test(g) ? '자동차' : /자가재/.test(g) ? '도금 자가재' : /수출/.test(g) ? '도금수출' : /국내|판매/.test(g) ? '도금국내' : g; }
+  function cNm(g) { return /수출|가전내수/.test(g) ? '컬러수출' : /주문재|계획재|건재/.test(g) ? '컬러건재' : /수요/.test(g) ? '수요개발' : g; }
+  function actDet(l, d) {
+    const kv = (o) => Object.entries(o || {}).filter(([, v]) => v >= 0.5).sort((a, b) => b[1] - a[1]);
+    const tb = (h, rows) => (rows.length ? `<table class="gk-act"><thead><tr><th>${h}</th><th>톤</th></tr></thead><tbody>${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${n0(v)}</td></tr>`).join('')}</tbody></table>` : '');
+    if (/CGL$/.test(l)) { const x = D.pl[`${l}|${d}`] || {}, m = D.dayMin[`${l}|${d}`];
+      if (!(x.t >= 0.5)) return '';
+      return `<div class="gk-actw"><h4>${l} · 실적 ${n0(x.t)}t${m ? ` · 가동 ${(m / 60).toFixed(1)}시간` : ''}</h4><div class="gk-acts">${tb('판매그룹', kv(x.gg))}${tb('강종', kv(x.aa))}</div></div>`; }
+    const v = ((D.BD || {})[d] || {})[l]; if (!v) return '';
+    const g = {}; for (const [k, t] of Object.entries(v[0] || {})) { const c = cNm(k); g[c] = (g[c] || 0) + t; }
+    return `<div class="gk-actw"><h4>${l} · 실적 ${n0(sumV(v[0]))}t · 가동 ${((v[1] || 0) / 60).toFixed(1)}시간</h4><div class="gk-acts">${tb('판매그룹', kv(g))}${tb('품명', (v[2] || []).filter((r) => r[1] >= 0.5))}</div></div>`;
+  }
   let detK = '';
   function detail(td) {
     const el = $('gk-det'), k = td ? td.dataset.c : '';
     document.querySelectorAll('table.gk td.sel').forEach((x) => x.classList.remove('sel'));
     if (!k || k === detK) { detK = ''; el.hidden = true; el.innerHTML = ''; return; }
     detK = k; td.classList.add('sel');
-    const [l, d] = k.split('|'), body = window.supDet ? window.supDet(d, [l]) : null;
+    const [l, d] = k.split('|'), past = /CGL$/.test(l) ? d <= D.actG : d <= D.actC, body = past ? actDet(l, d) : window.supDet ? window.supDet(d, [l]) : null;
     el.innerHTML = `<div class="dethd g"><span class="gk-info">${info(l, d, /class="dt mt fl"/.test(body || ''))}</span><button type="button" class="fold noprint" data-x>닫기</button></div>`
       + (body == null ? '<p class="gk-none">상세 자료를 불러오는 중입니다 — 잠시 뒤 다시 누르세요</p>' : body || '<p class="gk-none">이 날 품목 상세 없음</p>');
     el.hidden = false;
