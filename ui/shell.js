@@ -37,7 +37,11 @@
   ];
   const ADMIN = [['health', 'health.html', '자료 상태'], ['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['docs', 'docs.html', '문서']];
   const ADMN = '관리';
-  const ALL = [...MENU.flatMap((m) => m[3]), ...ADMIN];
+  /* 11/12 회의: 메뉴 순서 = 보고 순서 ① 계획 → ② 관제 → ③ 편성(docs/16 ★2). 새 양식 미리보기(V2)에서만 맨 위, 기존 메뉴는 '기타'(접힘) 아래 — 기본 화면 메뉴는 그대로 */
+  const MV2 = V2 ? [['v1', '계획', 'supply', [['gyehoek', 'gyehoek.html', '일별 가동계획'], ['gyehoek', 'gyehoek.html#mat', '소재']]],
+    ['v2', '관제', 'home', [['kj', 'kj.html', '관제']]], ['v3', '편성', 'weekseq', [['pyeonseong', 'pyeonseong.html', '편성']]]] : [];
+  const ETC = '기타', MENUS = [...MV2, ...MENU];
+  const ALL = [...MENUS.flatMap((m) => m[3]), ...ADMIN];
   const DEFV = { home: 'day', suju: 'dash', orders: 'status', prodsum: 'perf', perf: 'ops', issues: 'now' };   // 주소에 #이 없을 때 화면이 여는 하위 화면
   const NAV = [...ALL.filter((t, k, A) => A.findIndex((u) => u[1].split('#')[0] === t[1].split('#')[0]) === k).map((t) => [t[0], t[1].split('#')[0], t[2]])];
   /* 공개 화면 제한(11/2 사용자 'IT 보안 검토 동안 가동 캘린더·소재 캘린더·재고 추이만 남기고 나머지 숨김').
@@ -127,7 +131,9 @@
   const DOCSP = (pg) => (DOCS.includes(pg) ? 'docs' : pg);
   /* 지금 화면의 메뉴 칸: 화면 id + 주소 # 가 같은 칸 → 없으면 # 없는 칸 → 그 화면의 첫 칸 */
   function curItem(pg) {
-    const hs = (location.hash || '').slice(1) || DEFV[pg] || '', C = ALL.filter((x) => x[0] === DOCSP(pg));
+    const hs = (location.hash || '').slice(1) || DEFV[pg] || '';
+    let C = ALL.filter((x) => x[0] === DOCSP(pg));
+    if (V2 && !C.length) { const f = location.pathname.split('/').pop(); C = MV2.flatMap((m) => m[3]).filter((x) => x[1].split('#')[0] === f); }   // 새 화면(계획·관제)의 data-page 이름이 달라도 주소로 찾음
     return C.find((x) => (x[1].split('#')[1] || '') === hs) || C.find((x) => !x[1].includes('#')) || C[0] || null;
   }
   /* 탭 막대 = 한 줄(11/10 서식 기준): 탭이 많거나 화면이 좁으면 줄을 바꾸지 않고 가로로 밀어 봄 — 지금 탭이 보이게 옮기고, 더 있는 쪽 끝을 흐리게(.more-l · .more-r) */
@@ -145,26 +151,31 @@
     const h = document.getElementById('shell'); if (!h) return;
     const d = h.dataset, esc = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     let open0 = []; try { open0 = JSON.parse(localStorage.getItem(NKEY) || '[]'); } catch (e) { /* 무시 */ }
-    const cur = curItem(d.page), curM = MENU.find((m) => m[3].includes(cur)) || null, inAdm = ADMIN.includes(cur);
+    const cur = curItem(d.page), curM = MENUS.find((m) => m[3].includes(cur)) || null, inAdm = ADMIN.includes(cur);
     curG = curM ? curM[0] : inAdm ? ADMN : '';
     const okT = (t) => !SHOWF || SHOWF.includes(t[1].split('#')[0]);
     const mOK = (m) => m[3].some(okT);
     const only = (t) => (ONLY[t[0]] ? ` data-only="${ONLY[t[0]]}"` : '');
     const mlink = (m, i) => { const t0 = m[3].find(okT);
-      return `<a href="${t0[1]}" class="nv-m"${m === curM ? ' aria-current="page"' : ''}>${icon(m[2])}<span><small class="nv-no">${String(i + 1).padStart(2, '0')}</small>${m[1]}</span></a>`; };
+      return `<a href="${t0[1]}" class="nv-m"${m === curM ? ' aria-current="page"' : ''}>${icon(m[2])}<span>${i == null ? '' : `<small class="nv-no">${String(i + 1).padStart(2, '0')}</small>`}${m[1]}</span></a>`; };
     const link = (x) => `<a href="${x[1]}" data-tab="${tabKey(x)}"${only(x)}>${icon(x[0])}<span>${x[2]}</span></a>`;
     const adm = SHOWF ? [] : ADMIN, aOpen = inAdm || open0.includes(ADMN);
     // 메뉴 밑 세부 탭(11/4 사용자 '탭 밑에 세부탭이 뜨게') — 화면에 들어가지 않고 바로 이동
     const subs = (m) => { const L = m[3].filter((t) => t[3] !== 't' && (t[3] !== 'd' || m === curM) && okT(t));
       return L.length > 1 ? `<div class="nv-sub">${L.map((t) => `<a href="${t[1]}" data-tab="${tabKey(t)}"${only(t)}>${esc(t[2])}</a>`).join('')}</div>` : ''; };
-    const nav = MENU.map((m, i) => (mOK(m) ? mlink(m, i) + subs(m) : '')).join('')
+    const eOpen = (curM && MENU.includes(curM)) || inAdm || open0.includes(ETC);   // V2 '기타': 지금 화면이 그 안이거나 펼쳐 둔 경우만 열림
+    const nav = V2 ? MV2.map((m, i) => mlink(m, i) + subs(m)).join('')
+      + `<div class="nv-sec${eOpen ? ' open' : ''}" data-g="${ETC}"><button type="button" class="nv-grp nv-tg" aria-expanded="${eOpen}"><small class="nv-no">${String(MV2.length + 1).padStart(2, '0')}</small>${ETC}<svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">`
+      + MENU.map((m) => (mOK(m) ? mlink(m, null) + subs(m) : '')).join('') + (adm.length ? `<div class="nv-grp">${ADMN}</div>${adm.map(link).join('')}` : '') + '</div></div>'
+      : MENU.map((m, i) => (mOK(m) ? mlink(m, i) + subs(m) : '')).join('')
       + (adm.length ? `<div class="nv-sec${aOpen ? ' open' : ''}" data-g="${ADMN}"><button type="button" class="nv-grp nv-tg" aria-expanded="${aOpen}"><small class="nv-no">${String(MENU.length + 1).padStart(2, '0')}</small>${ADMN}<span class="nv-n">${adm.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${adm.map(link).join('')}</div></div>` : '');
     // 화면 위 탭: 메뉴 묶음의 칸들. 관리 화면은 같은 파일의 하위 화면이 여럿일 때만(예: 생산 실적 · 가동·휴지 · 제품 재고 · 출하)
     const file = cur ? cur[1].split('#')[0] : '';
     const vis = (curM ? curM[3] : inAdm ? ALL.filter((t) => t[1].split('#')[0] === file) : []).filter(okT);
     const tabs = vis.length > 1 ? `<nav class="ct-tabs noprint" aria-label="${esc(curM ? curM[1] : cur[2])} 탭">${vis.map((t, i) => `<a href="${t[1]}" data-tab="${tabKey(t)}"${only(t)}${t[3] === 'd' ? ` class="dt${vis.findIndex((u) => u[3] === 'd') === i && i ? ' dt0' : ''}"` : ''}>${esc(t[2])}</a>`).join('')}</nav>` : '';   // 세부 화면 탭(.dt) = 작은 글씨 + 첫 칸 앞 구분선(.dt0)
     const title = d.titleAuto != null && cur ? cur[2] : (d.title || document.title);   // data-title-auto: 하위 화면(#)마다 제목 = 메뉴 이름
-    const crumb = curM ? `${String(MENU.indexOf(curM) + 1).padStart(2, '0')} ${curM[1]}` : inAdm ? `${String(MENU.length + 1).padStart(2, '0')} ${ADMN}` : d.crumb;
+    const crumb = V2 && curM && MV2.includes(curM) ? `${String(MV2.indexOf(curM) + 1).padStart(2, '0')} ${curM[1]}` : V2 && (curM || inAdm) ? `${ETC} · ${curM ? curM[1] : ADMN}`
+      : curM ? `${String(MENU.indexOf(curM) + 1).padStart(2, '0')} ${curM[1]}` : inAdm ? `${String(MENU.length + 1).padStart(2, '0')} ${ADMN}` : d.crumb;
     const TH = { auto: '자동', light: '밝게', dark: '어둡게' };
     h.className = 'shell-top';
     h.innerHTML = `<div class="topbar noprint"><button type="button" class="hamb" aria-label="메뉴 열기" aria-expanded="false"><i></i><i></i><i></i></button><a class="brand" href="${HOME}">${MARK}<span class="bt"><b>POSCO STEELEON</b><small>도금·컬러 가동계획</small></span></a><a class="fresh" id="ui-fresh-m" href="health.html" hidden></a></div>
@@ -202,7 +213,7 @@
     addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.body.classList.remove('nav-open'); const hm = h.querySelector('.hamb'); if (hm) hm.setAttribute('aria-expanded', 'false'); } });
     /* 주소 # 가 바뀌면 지금 위치 표시를 다시 — 묶음이 바뀌거나(계획 변경 ↔ 주간 생산 일정) 제목이 # 마다 다르면 머리를 다시 그림 */
     addEventListener('hashchange', () => {
-      const c2 = curItem(d.page), g2 = MENU.find((m) => m[3].includes(c2)), k2 = g2 ? g2[0] : ADMIN.includes(c2) ? ADMN : '';
+      const c2 = curItem(d.page), g2 = MENUS.find((m) => m[3].includes(c2)), k2 = g2 ? g2[0] : ADMIN.includes(c2) ? ADMN : '';
       if (k2 !== curG || d.titleAuto != null) { const nopen = document.body.classList.contains('nav-open'); build(); fresh(); document.body.classList.toggle('nav-open', nopen); return; }
       const kk = c2 ? tabKey(c2) : ''; h.querySelectorAll('a[data-tab]').forEach((a) => (a.dataset.tab === kk ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
       tabsFit(h);
