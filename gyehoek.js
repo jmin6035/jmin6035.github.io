@@ -234,12 +234,11 @@
       for (const [k, ns] of Object.entries(g)) out.push(`${ns.join('·')}C ${k}`);
       return out.join('\n');
     });
-    let nt = '<tr class="nt"><th class="c0" colspan="2">특기사항</th>';
-    for (const r of runs((i) => txt[i] || `_${i}`)) nt += r.k[0] === '_' ? empty(r.i) : `<td class="t${dc(r.i)}" colspan="${r.j - r.i + 1}">${r.k.split('\n').map(esc).join('<br>')}</td>`;
-    const tl = [T.G, T.C].filter((v) => v != null);
-    const tn = [T.G != null ? ['도금', T.G] : null, T.C != null ? ['컬러', T.C] : null].filter(Boolean); if (tn.length > 1) tn.push(['합계', T.G + T.C]);
-    nt += `<td class="tot tt">${tn.map(([k, v]) => `<span>${k}</span> ${n0(v)}`).join('<br>')}</td></tr>`;
-    return `<div class="gk-wrap"><table class="gk">${h}${nt}</tbody></table>${ti >= 0 ? '<i class="gk-tdy" aria-hidden="true"></i>' : ''}</div>`;
+    // 특기사항 행 없앰(11/12 사용자) · 달마다 표 크기가 같게 31일 칸 고정 — 짧은 달은 끝에 빈 칸
+    const pad = 31 - ds.length;
+    if (pad > 0) h = h.replace('<col class="tot">', '<col class="pad">'.repeat(pad) + '<col class="tot">').replace('<th class="tot" rowspan="2">', `<th class="padc" rowspan="2" colspan="${pad}"></th><th class="tot" rowspan="2">`).replace(/<td class="tot/g, `<td class="padc" colspan="${pad}"></td><td class="tot`);
+    void notes;
+    return `<div class="gk-wrap"><table class="gk">${h}</tbody></table>${ti >= 0 ? '<i class="gk-tdy" aria-hidden="true"></i>' : ''}</div>`;
   }
   function legend(V, P) {
     const sw = (c, t) => `<span><i class="${c}"></i>${t}</span>`;
