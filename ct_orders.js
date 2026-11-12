@@ -167,7 +167,8 @@
     if (!PS.line) {
       const mini = lines.map((l) => { const d = psData([l])[0]; if (!d) return ''; const tot = d.cats.reduce((a, c) => a + c.rem, 0);
         return `<button type="button" class="pm" data-l="${l}"><div class="h"><b>${l}</b><span>${n0(d.cats.reduce((a, c) => a + c.n, 0))}건</span></div><div class="v">${n0(tot)}<small>t 미생산</small></div>${segBar(d.cats, false)}<div class="s">${(() => { const g = (k) => (d.cats.find((c) => c.k === k) || { rem: 0 }).rem; return `<span class="nw">매치 전 <b class="bad">${n0(g(K0))}t</b></span> · <span class="nw">작업지시량 <b>${n0(g('작업지시량'))}t</b></span>`; })()}</div></button>`; }).join('');
-      body = (noMini ? '' : `<div class="pms">${mini}</div>`) + psData(lines).map((d) => psCard(d, `${d.nm} 전체 주문진도`)).join('');
+      body = (noMini ? '' : `<div class="pms">${mini}</div>`) + (noMini ? psData(lines).reverse() : psData(lines)).map(   /* 편성 맨 위 = 도금 먼저(11/12 사용자) */
+        (d) => psCard(d, `${d.nm} 전체 주문진도`)).join('');
     } else body = psData([PS.line]).map((d) => psCard(d, `${PS.line} 주문진도`)).join('');
     return `<div class="ps">${body}</div>`;
   }
