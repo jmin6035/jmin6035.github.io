@@ -36,7 +36,7 @@
     { k: 'C수요', pl: 'C', nm: '수요개발', sj: ['수요개발'], od: ['수요개발그룹'], cal: ['수요개발'] },
   ];
   const PN = { G: '도금', C: '컬러' }, LINES = { G: ['1CGL', '2CGL'], C: ['1CCL', '2CCL', '3CCL', '4CCL'] };
-  const FLOW = ['sales', 'ord', 'off', 'base', 'pPlan', 'pAct', 'pDue', 'sPlan', 'sAct', 'sDue', 'stk'];   // 공장 = 그룹 합인 값
+  const FLOW = ['sales', 'ord', 'off', 'offPo', 'offNo', 'gap', 'base', 'pPlan', 'pAct', 'pDue', 'sPlan', 'sAct', 'sDue', 'stk'];   // 공장 = 그룹 합인 값
   let X = null, A = null, mSel = null, bound = false, TIPS = [];
   const LS = 'kj-month';
 
@@ -120,6 +120,17 @@
       const d = pl === 'G' ? r.dept || r.arr || r.due : r.due, m = String(d || '').slice(0, 7), g = GRP.find((x) => x.pl === pl && x.od && x.od.includes(r.grp)); if (!g || !m) continue;
       ordDue[`${g.k}|${m}`] = (ordDue[`${g.k}|${m}`] || 0) + (+r.ordT || 0); }
     const hasOrd = { G: !!(D.cg_order_progress && D.cg_order_progress.rows), C: !!(D.cc_order_progress && D.cc_order_progress.rows) };
+    // 소재 OFF 나눔(11/12 회의): 수주 관제 OFF(suju_build — 마감 생산주(cut)까지 만들 남은 등록 주문 − 소재 매치)와 같은 주문·같은 기준으로 다시 세어 미발주만 뽑음
+    //  도금 미발주 = 주문에 F/H 발주(snap_raw_ask 발주번호)도 소재 연결도 없음(cg_order_progress st '미발주') · 그 밖(포스코 진행·발주 진행 정보 없음 등) = 발주 진행
+    //  컬러 미발주 = 주문에 연결된 소재 발주번호(snap_ord_raw_link)·자가재 계약·배정 소재가 모두 없음 — 컬러는 재고기반 주문이 많아 '발주 확정 누락'이 아니라 공용 재고 매치 대기일 수 있음
+    const wedOf = (d) => { const x = new Date(d.slice(0, 10) + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() - ((x.getUTCDay() + 4) % 7)); return x.toISOString().slice(0, 10); };
+    const addD = (d, n) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+    const cutW = S.cut ? wedOf(S.cut) : null, inCut = (due, sche, back) => { const pd = sche || (due ? addD(due, -back) : null); return !!(cutW && pd && due >= `${M0}-01` && wedOf(pd > S.today ? pd : S.today) <= cutW); };
+    const offNo = {};
+    for (const r of (D.cg_order_progress || {}).rows || []) { const g = GRP.find((x) => x.pl === 'G' && x.od && x.od.includes(r.grp)), rr = Math.max(0, (+r.ordT || 0) - (+r.prodT || 0));
+      if (g && rr > 0.5 && r.st === '미발주' && inCut(r.due || '', r.sche, 7)) offNo[g.k] = (offNo[g.k] || 0) + rr; }
+    for (const r of (D.cc_order_progress || {}).rows || []) { const g = GRP.find((x) => x.pl === 'C' && x.od && x.od.includes(r.grp)), rr = +r.remT || 0, o = rr - Math.min(rr, (+r.mchT || 0) + (+r.woT || 0));
+      if (g && rr > 0.5 && o > 0 && !(r.po || r.self || r.matT > 0.0005) && inCut(r.due || '', r.sche, 10)) offNo[g.k] = (offNo[g.k] || 0) + o; }
     // 통합 계획 일별 재고(stockDay: P.months 첫날부터) · 자가재(self: 강종별 [월-일, …, 재고])
     const d0 = (P.months || [])[0] ? `${P.months[0]}-01` : null;
     const dayIdx = (d) => (d0 ? Math.round((Date.parse(d) - Date.parse(d0)) / 864e5) : -1);
@@ -134,9 +145,12 @@
         const C_ = cal[m], R = C_.grpR[G.k], cur = m === M0, past = (i) => cur && C_.days[i] <= S.asOf;
         const pPlan = sum(R, (r) => r.p), pAct = cur ? sum(R.filter((r, i) => past(i)), (r) => r.a) : null, pDue = cur ? sum(R.filter((r, i) => past(i)), (r) => r.p0) : null;   // 오늘까지 계획 = 월초 계획(지난 날 칸은 실적)
         const i = pmIdx(m), pl = (V.plan || {})[G.k], x = i >= 0 && pl ? pl[i] : null;
-        if (cur) out[m] = { sales: G.self ? null : sum(gs, (g) => g.sales), ord: G.self ? null : sum(gs, (g) => g.orders), off: G.self ? null : Math.max(0, sum(gs, (g) => (g.ordReg || 0) - (g.orders || 0))), base: G.self ? null : (baseG[G.k] != null ? Math.round(baseG[G.k]) : null),
+        if (cur) { const sales = G.self ? null : sum(gs, (g) => g.sales), ord = G.self ? null : sum(gs, (g) => g.orders), off = G.self ? null : Math.max(0, sum(gs, (g) => (g.ordReg || 0) - (g.orders || 0)));
+          const oN = G.self || !hasOrd[G.pl] || off == null ? null : Math.min(off, Math.round(offNo[G.k] || 0));   // 미발주 · 발주 진행 = OFF − 미발주(합 = OFF)
+          out[m] = { sales, ord, off, offNo: oN, offPo: oN == null ? null : off - oN, gap: sales == null || ord == null ? null : sales - ord - (off || 0),   // gap = 미수주(음수 = 판매계획 넘침)
+          base: G.self ? null : (baseG[G.k] != null ? Math.round(baseG[G.k]) : null),
           pPlan, pAct, pDue, sPlan: G.self ? null : one(gs, 'shipMon', 'shipGrp'), sAct: G.self ? null : one(gs, 'shipAct', 'shipGrp'), sDue: G.self ? null : one(gs, 'shipDue', 'shipGrp'),
-          stk: b.begin != null ? b.begin : null, cap: b.target != null ? b.target : null };
+          stk: b.begin != null ? b.begin : null, cap: b.target != null ? b.target : null }; }
         else { const tg = (V.stockTgt || {})[G.k], st = G.self ? selfEnd(m) : stockEnd(G.k, m);
           out[m] = { sales: G.self || !x ? null : x.sales, ord: G.self || !hasOrd[G.pl] ? null : Math.round(ordDue[`${G.k}|${m}`] || 0), base: null, pPlan, pAct: null, pDue: null,
             sPlan: null, sAct: null, sDue: null, stk: st != null ? Math.round(st) : null, cap: st == null ? null : tg && i >= 0 && tg[i] != null ? tg[i] : x ? Math.round(x.target) : null, safety: x ? x.safety : null }; }
@@ -150,7 +164,7 @@
     const T27 = { G수출: [12100 - GM(4600) - GM(5600), 12100], G국내: [GM(4600), 4600], G자동차: [GM(5600), 5600], G자가재: [null, null], C수출: [4910 + 6630, 5070 + 5950], C건재: [9100, 8000], C수요: [300, 300] };
     for (const G of GRP) for (const m of months) { const o = grp[G.k][m], t = T27[G.k]; if (!t) continue; o.matT = t[0]; o.cap = t[1]; }   // 고정 목표 — 재고 계획이 없는 달도 씀
     const DUMMY = { G: 500, C: 0 };   // 공장 소재 목표 중 더미재 몫(그룹 배정 없음): 도금 12,600 = 그룹 12,100 + 더미 500
-    const SELFX = ['sales', 'ord', 'off', 'base', 'sPlan', 'sAct', 'sDue'];   // 자가재가 빠지는 값(판매·수주·출하) — 생산·재고는 자가재 포함
+    const SELFX = ['sales', 'ord', 'off', 'offPo', 'offNo', 'gap', 'base', 'sPlan', 'sAct', 'sDue'];   // 자가재가 빠지는 값(판매·수주·출하) — 생산·재고는 자가재 포함
     // 공장 전체 = 그룹 합(자가재는 판매·수주·출하에서만 빠짐 — 내부 투입) · 공장 소재 = 속보 공장 줄(그룹 합 + 미배정)
     const SR = P.sr || {}, stkOf = (re) => (SR.stock || []).find((x) => re.test(x.name)) || {}, SM = I.stockMax || {};
     const matEnd = (key, m) => { const R = (((V.mat || {})[key] || {}).rows || []), md_ = m.slice(5) + '-'; const L = R.filter((r) => String(r[0]).startsWith(md_)); return L.length ? L[L.length - 1][4] : null; };
@@ -179,7 +193,7 @@
       plant[pl] = out;
     }
     window.KJ_CHECK = chk;
-    return { S, P, I, V, D, M0, months, grp, plant, cal, dept, mat: matMonths(D, months) };
+    return { S, P, I, V, D, M0, months, grp, plant, cal, dept, split: hasOrd.G && hasOrd.C, mat: matMonths(D, months) };
   }
 
   /* 계획 › 소재 탭 '소재 종합'과 같은 계산(gyehoek.js readMat ← supply.js matPlan 소재 유형 캘린더 '입고' 줄 월 합계)
@@ -323,7 +337,7 @@
     const na = (nm, t) => ({ nm, na: t, tip: [[nm, t, '']] });
     if (c.self) T.push(na('수주', '주문 없음'));
     else if (x.sales == null && x.ord == null) T.push(na('수주', '자료 없음'));
-    else if (cur) T.push({ nm: '수주', p: x.sales, a: x.ord, pct: pctOf(x.ord, x.sales), tip: [r('판매계획', x.sales), r('소재 ON(매치 끝난 주문)', x.ord), r('소재 OFF(매치 전 주문)', x.off), ['진도(ON ÷ 판매계획)', P0(pctOf(x.ord, x.sales)), '']] });
+    else if (cur) T.push({ nm: '수주', p: x.sales, a: x.ord, pct: pctOf(x.ord, x.sales), tip: [r('판매계획', x.sales), r('소재 ON(매치 끝난 주문)', x.ord), r('소재 OFF(매치 전 주문)', x.off), ...(x.offNo != null ? [r('OFF 중 발주 진행', x.offPo), r('OFF 중 미발주', x.offNo)] : []), r('미수주(판매계획 − ON − OFF)', x.gap != null && x.gap < 0 ? 0 : x.gap), ['진도(ON ÷ 판매계획)', P0(pctOf(x.ord, x.sales)), '']] });
     else T.push({ nm: '수주', p: x.sales, a: x.ord, pct: pctOf(x.ord, x.sales), tip: [r(`${M} 판매계획`, x.sales), r(`${M} 납기 주문`, x.ord), ['진도', P0(pctOf(x.ord, x.sales)), '']] });
     if (cur) {
       T.push({ nm: '생산', p: x.pPlan, a: x.pAct, pct: pctOf(x.pAct, x.pPlan), pcls: shortT(x.pAct, x.pDue), tip: [r('월 계획', x.pPlan), r('실적', x.pAct), ['진도', P0(pctOf(x.pAct, x.pPlan)), shortT(x.pAct, x.pDue)], r('오늘까지 계획(월초)', x.pDue)] });
@@ -407,8 +421,16 @@
         + (grp ? (x.mat !== undefined ? nb(x.mat) : '') : `<td${span > 1 ? ` rowspan="${span}" class="mspan"` : ''}>${x.mat == null ? '<span class="na">자료 없음</span>' : n0(x.mat)}${x.matNa >= 1 ? `<small class="kj-mna">미배정 ${n0(x.matNa)}</small>` : ''}</td>`)
         + (x.stk == null ? '<td><span class="na">자료 없음</span></td>' : nb(x.stk))
         + `<td class="kp${r != null && r > 100 ? ' ov' : ''}">${r == null ? '–' : P0(r)}${po ? '<small class="kj-mna">제품만</small>' : ''}</td>`; };
+    // 수주 = 판매계획 | 소재 ON | 소재 OFF(발주 진행 · 미발주) | 미수주(판매계획 − ON − OFF) | 진도 — 미발주 1t 이상 · 미수주 판매계획 10% 이상 = 주황 글자
+    //  미수주 음수 = 판매계획 넘침 → '+초과 n' · 공장·합계 줄 = 그룹 합(넘친 그룹은 상계 — 그 양을 작게 표시)
+    const SP = A.split, nQ = SP ? 6 : 5;
+    const miss = (x, grp) => { if (x.gap == null) return nb(null); const g = Math.round(x.gap);
+      if (g < 0) return `<td>+초과 ${n0(-g)}</td>`;
+      const ov = grp ? 0 : Math.round(x.over || 0);
+      return `<td${cl(x.sales && g >= x.sales * 0.1 && 'ov')}>${n0(g)}${ov >= 1 ? `<small class="kj-mna">그룹 초과 ${n0(ov)} 상계</small>` : ''}</td>`; };
+    const offC = (x) => (SP ? `${nb(x.offPo)}${nb(x.offNo, 0, x.offNo >= 1 ? 'ov' : '')}` : nb(x.off));
     const rowCur = (nm, x, cls, grp, self, span, noStk) => `<tr${cl(cls)}><th scope="row">${nm}</th>`
-      + (self ? na(4, '내부 투입 — 주문 없음', 1) : `${nb(x.sales, 1)}${nb(x.ord)}${nb(x.off)}${pc(pctOf(x.ord, x.sales))}`)
+      + (self ? na(nQ, '내부 투입 — 주문 없음', 1) : `${nb(x.sales, 1)}${nb(x.ord)}${offC(x)}${miss(x, grp)}${pc(pctOf(x.ord, x.sales))}`)
       + `${nb(x.pPlan, 1)}${nb(x.pAct)}${pc(pctOf(x.pAct, x.pPlan), shortT(x.pAct, x.pDue))}`
       + (x.sPlan == null ? na(3, self ? '출하 없음' : '자료 없음', 1) : `${nb(x.sPlan, 1)}${nb(x.sAct)}${pc(pctOf(x.sAct, x.sPlan), shortT(x.sAct, x.sDue))}`)
       + stock(x, grp, span, noStk) + '</tr>';
@@ -417,20 +439,21 @@
       + `${nb(x.pPlan, 1)}` + stock(x, grp, span, noStk) + '</tr>';
     const rowOf = cur ? rowCur : rowFut, rows = [];
     for (const p of pls) {
-      const X0 = A.plant[p][mSel], noStk = !cur && X0.mat == null && X0.stk == null, nG = GRP.filter((g) => g.pl === p).length;
+      const X0 = A.plant[p][mSel]; if (cur) X0.over = sum(GRP.filter((g) => g.pl === p), (G) => Math.max(0, -(A.grp[G.k][mSel].gap || 0)));
+      const noStk = !cur && X0.mat == null && X0.stk == null, nG = GRP.filter((g) => g.pl === p).length;
       rows.push(rowOf(`${PN[p]} 전체`, X0, 'pt', false, false, X0.matGrp && !noStk ? 1 : 1 + nG, noStk));   // 그룹 소재가 없으면 공장 칸을 그룹 줄까지 세로로 합침
       for (const G of GRP.filter((g) => g.pl === p)) rows.push(rowOf(G.nm, A.grp[G.k][mSel], '', true, G.self, 1, noStk));
     }
     if (pls.length > 1) { const P = pls.map((p) => A.plant[p][mSel]), T = {};
-      for (const k of [...FLOW, 'mat', 'matCap', 'cap', 'matNa', 'dummy']) T[k] = sum(P, (x) => x[k]);
+      for (const k of [...FLOW, 'mat', 'matCap', 'cap', 'matNa', 'dummy', 'over']) T[k] = sum(P, (x) => x[k]);
       rows.push(rowOf('합계', T, 'tot', false, false, 1, !cur && T.mat == null && T.stk == null)); }
     const STH = '<th class="gs">목표<br><small>소재 + 제품<br>(\'27 판생)</small></th><th>소재</th><th>제품</th><th>비율<br><small>소재+제품<br>÷ 목표</small></th>';
     const hd = cur
-      ? `<tr><th rowspan="2" scope="col">구분</th><th colspan="4" class="gs" scope="colgroup">수주 <small>판매계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">생산 <small>월 계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">출하 <small>월 계획 대비</small></th><th colspan="4" class="gs" scope="colgroup">재고 <small>${md(A.S.asOf)}</small></th></tr>`
-        + `<tr><th class="gs">판매계획</th><th>소재 ON<br><small>매치 끝난 주문</small></th><th>소재 OFF<br><small>매치 전 주문</small></th><th>진도<br><small>ON ÷ 판매계획</small></th><th class="gs">월 계획<br><small>실적 + 남은 계획</small></th><th>실적</th><th>진도</th><th class="gs">월 계획</th><th>실적</th><th>진도</th>${STH}</tr>`
+      ? `<tr><th rowspan="2" scope="col">구분</th><th colspan="${nQ}" class="gs" scope="colgroup">수주 <small>판매계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">생산 <small>월 계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">출하 <small>월 계획 대비</small></th><th colspan="4" class="gs" scope="colgroup">재고 <small>${md(A.S.asOf)}</small></th></tr>`
+        + `<tr><th class="gs">판매계획</th><th>소재 ON<br><small>매치 끝난 주문</small></th>${SP ? '<th>OFF 발주 진행<br><small>발주 · 매치 전</small></th><th>OFF 미발주<br><small>발주 확정 안 함</small></th>' : '<th>소재 OFF<br><small>매치 전 주문</small></th>'}<th>미수주<br><small>판매계획<br>− ON − OFF</small></th><th>진도<br><small>ON ÷ 판매계획</small></th><th class="gs">월 계획<br><small>실적 + 남은 계획</small></th><th>실적</th><th>진도</th><th class="gs">월 계획</th><th>실적</th><th>진도</th>${STH}</tr>`
       : `<tr><th rowspan="2" scope="col">구분</th><th colspan="3" class="gs" scope="colgroup">수주 <small>${mLab(mSel)} 납기</small></th><th rowspan="2" class="gs">생산 계획</th><th colspan="4" class="gs" scope="colgroup">재고 <small>월말 계획</small></th></tr>`
         + `<tr><th class="gs">판매계획</th><th>주문</th><th>진도</th>${STH}</tr>`;
-    const lg = `<div class="kj-lg in">${cur ? '<span><b class="bad">빨강</b>오늘까지 계획보다 모자람(생산·출하)</span>' : ''}<span><b class="ov">주황</b>재고 비율 100% 넘음</span></div>`;
+    const lg = `<div class="kj-lg in">${cur ? '<span><b class="bad">빨강</b>오늘까지 계획보다 모자람(생산·출하)</span>' : ''}<span><b class="ov">주황</b>${cur ? `${SP ? '미발주 있음 · ' : ''}미수주 판매계획의 10% 이상 · ` : ''}재고 비율 100% 넘음</span></div>`;
     return `<h2 class="kj-h">관제 매트릭스 <small>${mLab(mSel)} · 톤</small></h2>${lg}`
       + `<section class="kj-c kj-tb"><div class="ct-wrap"><table class="kj-mx"><thead>${hd}</thead><tbody>${rows.join('')}</tbody></table></div></section>`;
   }
@@ -506,7 +529,10 @@
     const Gs = GRP.filter((G) => inPl(G.pl));
     if (cur) {
       for (const G of Gs) { const x = A.grp[G.k][m]; if (G.self) continue;
-        if (x.ord != null && x.base != null && x.ord + 0.5 < x.base) add(x.ord < x.base * 0.9 ? '경고' : '주의', '수주', `${G.nm} 수주 ${P0(pctOf(x.ord, x.sales))} — 소재 ON ${n0(x.ord)} / 판매계획 ${n0(x.sales)}t · 소재 OFF ${n0(x.off)}t`, x.off >= 1 ? '소재 매치 당김 · 주문 확보 요청' : '주문 확보 요청', nextDl, A.dept[G.k]); }
+        if (x.ord != null && x.base != null && x.ord + 0.5 < x.base) add(x.ord < x.base * 0.9 ? '경고' : '주의', '수주', `${G.nm} 수주 ${P0(pctOf(x.ord, x.sales))} — 소재 ON ${n0(x.ord)} / 판매계획 ${n0(x.sales)}t · 소재 OFF ${n0(x.off)}t`, x.off >= 1 ? '소재 매치 당김' : '주문 확보 요청', nextDl, A.dept[G.k]);
+        // 11/12 회의: 미발주(주문은 있는데 소재 발주 확정 안 함) · 미수주(판매계획 − ON − OFF = 아직 안 들어온 주문) — 매트릭스와 같은 값
+        if (x.offNo >= 1) add('주의', '수주', `${G.nm} 미발주 ${n0(x.offNo)}t — 주문은 등록, 소재 발주 확정 안 됨`, '소재 발주 확정 요청', nextDl, A.dept[G.k]);
+        if (x.gap >= 1 && !(x.off < 1 && x.ord != null && x.base != null && x.ord + 0.5 < x.base)) add(x.sales && x.gap >= x.sales * 0.1 ? '경고' : '주의', '수주', `${G.nm} 미수주 ${n0(x.gap)}t — 판매계획 ${n0(x.sales)} − ON ${n0(x.ord)} − OFF ${n0(x.off)}t`, '주문 확보 요청', nextDl, A.dept[G.k]); }
       for (const G of Gs) { const x = A.grp[G.k][m];
         if (x.pAct != null && x.pDue && x.pAct + 0.5 < x.pDue) add(x.pAct < x.pDue * 0.9 ? '경고' : '주의', '생산', `${G.nm} 생산 ${P0(pctOf(x.pAct, x.pPlan))} — 실적 ${n0(x.pAct)} / 월 계획 ${n0(x.pPlan)}t, 오늘까지 계획 ${n0(x.pDue)}t보다 ${n0(x.pDue - x.pAct)}t 적음`, '생산 순서 당김', null, '수주팀·공정출하'); }
       // 재고: 매트릭스와 같은 값(그룹 실재고 ÷ 재고 목표) — 목표를 넘은 그룹
