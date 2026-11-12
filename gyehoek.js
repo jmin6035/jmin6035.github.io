@@ -136,7 +136,7 @@
         const chgOf = (C, Q, i) => (Q && !C[i].act && differs(C[i], Q[i], P.toneOnly) ? ' chg' : '');
     const empty = (i) => `<td class="e${dc(i)}"></td>`;
     const lab = (s, nm) => {                                               // 합친 칸 이름: 오늘 틀이 가운데를 지나면 넓은 쪽 가운데로
-      const n = s.j - s.i + 1; if (ti < s.i || ti > s.j || n < 3) return `<span>${esc(nm)}</span>`;
+      return `<span>${esc(nm)}</span>`;   // 11/12 사용자 '휴지·수리 가운데 맞춤'
       const a = ti - s.i, b = s.j - ti, c = a >= b ? a / 2 : a + 1 + b / 2;
       return `<span style="position:relative;left:${((c - n / 2) / n * 100).toFixed(1)}%">${esc(nm)}</span>`;
     };
@@ -243,7 +243,7 @@
   function legend(V, P) {
     const sw = (c, t) => `<span><i class="${c}"></i>${t}</span>`;
     return `<div class="gk-lg">${UI.inScope('G') ? sw('kAZ', 'AZ') + sw('kAL', 'AL') + sw('kMAC', 'MACOSTA') : ''}${UI.inScope('C') ? sw('kC', '컬러 가동') : ''}${sw('y', 'M/C · S/D')}${sw('sp', '정지 · 휴지')}${UI.inScope('G') ? sw('hr', '가동시간') : ''}<span class="sep"></span>`
-      + (V.kind !== 'm0' ? sw('a', '실적') : '') + (P ? sw('chg', `${P.lab} 대비 바뀐 칸`) : '') + (V.kind === 'now' ? sw('tdy', '오늘') : '') + '</div>';
+      + (P ? sw('chg', `${P.lab} 대비 바뀐 칸`) : '') + (V.kind === 'now' ? sw('tdy', '오늘') : '') + '</div>';
   }
 
   // 조정 표(화이트보드 '조정(실적반영)'): 판(월차 → 매주 조정 → 지금) × 라인 월 합계, 앞 판 대비 ±. 줄을 누르면 그 판을 위 표로

@@ -180,13 +180,13 @@ html:root body main table.gk.gk td.kAL { background: #dde8f6; } html:root body m
 html:root body main table.gk.gk td.kMAC { background: #d7ede8; color: var(--ink); } html:root body main table.gk.gk td.kMAC.a { background: #aed9cf; color: var(--ink); }
 html:root body main table.gk.gk td.kC { background: #eef1f5; } html:root body main table.gk.gk td.kC.a { background: #d9dfe7; }
 html:root body main table.gk.gk td.y { background: #fbe9a6; color: #5c4a00; font-weight: 700; }
-html:root body main table.gk.gk td.sp { background: #8a96a3; color: #fff; font-weight: 700; }
+html:root body main table.gk.gk td.sp { background: #ffff00; color: #000; font-weight: 700; text-align: center !important; }
 html:root body main table.gk.gk tr.hr > * { background: var(--surface, #fff); color: var(--ink-2); font-weight: 500; }
 html:root body main table.gk.gk tr.hr > th.c1 { color: var(--ink-2); }
 html:root body main table.gk.gk tr.sum > * { background: #f5f7fa; }
 .gk-tdy { box-shadow: inset 0 0 0 2px #2a6fc9 !important; }
 .gk-lg i.kAZ { background: #f7e1cf; } .gk-lg i.kAL { background: #dde8f6; } .gk-lg i.kMAC { background: #d7ede8; } .gk-lg i.kC { background: #eef1f5; }
-.gk-lg i.y { background: #fbe9a6; } .gk-lg i.sp { background: #8a96a3; } .gk-lg i.hr { background: #fff; } .gk-lg i.a { background: #bcd2ef; }
+.gk-lg i.y { background: #fbe9a6; } .gk-lg i.sp { background: #ffff00; } .gk-lg i.hr { background: #fff; } .gk-lg i.a { background: #bcd2ef; }
 /* 조정 표: 판마다 '월 합계 | 앞 판 대비' 두 칸 */
 table.gk-adj th.sub { font-size: 14px !important; font-weight: 600 !important; color: var(--ink-2) !important; }
 table.gk-adj td.df { color: var(--ink-2); } table.gk-adj td.df.dn { color: var(--warn); font-weight: 700; } table.gk-adj td.df.up { color: #2a6fc9; font-weight: 700; }
@@ -389,6 +389,11 @@ table.t.fwt { margin: 4px 0 0; font-size: 13.5px; width: auto; } table.t.fwt td 
 #mt-orders .card .hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-right: 96px; } #mt-orders .card .hd .ct-seg { margin: 0; }
 #mt-orders .sub-i { font-size: 13.5px; color: var(--ink-2); } #mt-orders .hd h2 small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 6px; } #mt-orders table.mt td, #mt-orders table.mt th { white-space: nowrap; }
 .mt-ul { margin: 4px 0 8px; padding-left: 20px; font-size: 13.5px; line-height: 1.7; color: var(--ink-2); }
+/* 11/12 사용자: 실적 칸도 계획과 같은 색 · 점·굵기 없음 */
+html:root body main table.gk.gk td.a { font-weight: inherit; }
+table.gk td.a::before { display: none; }
+html:root body main table.gk.gk td.kAZ.a { background: #f7e1cf; } html:root body main table.gk.gk td.kAL.a { background: #dde8f6; }
+html:root body main table.gk.gk td.kMAC.a { background: #d7ede8; } html:root body main table.gk.gk td.kC.a { background: #eef1f5; }
 </style>
 </head>
 <body>
