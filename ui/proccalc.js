@@ -20,9 +20,9 @@
     /* ---------- 저장 상태 ---------- */
     function defaults() {
       const { D } = ctx();
-      return { today: D.today, supBasis: D.supplierBasis || '', safetyC: 7, safetyG: 5, dueLead: 7, sup: D.suppliers.map((s) => ({ ...s, on: true, memo: '' })), arr: [], orders: [], dec: {} };
+      return { today: D.today, supBasis: D.supplierBasis || '', safetyC: (D.safety && D.safety.C) || 7, safetyG: (D.safety && D.safety.G) || 1,   /* 도금 투입 여유 = 팀 리드타임 표 1일(11/9 회의 — 예전 5일) */ dueLead: 7, sup: D.suppliers.map((s) => ({ ...s, on: true, memo: '' })), arr: [], orders: [], dec: {} };
     }
-    function load() { const { D } = ctx(); try { const x = JSON.parse(localStorage.getItem(ST_KEY) || 'null'); if (x && x.sup) { const o = { ...defaults(), ...x, today: D.today }; if ((D.supplierBasis || '') !== (x.supBasis || '')) { o.sup = defaults().sup; o.supBasis = D.supplierBasis || ''; } if (o.safetyC == null) { o.safetyC = 7; o.safetyG = 5; } return o; } } catch (e) { /* 무시 */ } return defaults(); }
+    function load() { const { D } = ctx(); try { const x = JSON.parse(localStorage.getItem(ST_KEY) || 'null'); if (x && x.sup) { const o = { ...defaults(), ...x, today: D.today }; if ((D.supplierBasis || '') !== (x.supBasis || '')) { o.sup = defaults().sup; o.supBasis = D.supplierBasis || ''; } if (o.safetyC == null) { o.safetyC = 7; o.safetyG = 1; } if (o.safetyG === 5) o.safetyG = 1;   /* 예전 기본값 5일로 저장된 설정 → 11/9 회의 1일 */ return o; } } catch (e) { /* 무시 */ } return defaults(); }
     function save() { const { S } = ctx(); try { localStorage.setItem(ST_KEY, JSON.stringify(S)); } catch (e) { /* 무시 */ } }
 
     /* ---------- 계산 ---------- */
