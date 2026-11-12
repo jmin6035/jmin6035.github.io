@@ -4,7 +4,7 @@
         한 달 = 한 표(1~31일 + 계), 머리 2줄(날짜·요일, 토·일·공휴일 노랑 바탕 빨강 굵게), 얇은 회색 격자 · 가운데 정렬
         도금 라인: 첫 강종 행 → 이벤트 행(M/C·S/D 노랑) → 다음 강종 행 → 가동시간 행(초록). 강종 = 그 달에 먼저 나온 순, 칸 색 AZ 주황 · AL 파랑 · MACOSTA 보라
         여러 날 정지(정기수리·수리·휴지) = 직전 강종 행에 남색 합친 칸 '이름 (N일)'. 컬러 라인 = 톤 행(회청) + 이벤트 행. 도금·컬러 합계 행, 맨 아래 특기사항(계 = 도금/컬러/총합)
-        지난 날 = 실적(한 단계 진한 색 + 왼쪽 위 점), 오늘 = 굵은 틀, ◥ = 앞 판 대비 바뀐 앞날 칸. 칸을 누르면 판마다 그 칸 값 + 도금은 소재(F/H) 발주 마감·발주 상태
+        지난 날 = 실적(한 단계 진한 색 + 왼쪽 위 점), 오늘 = 굵은 틀, ◥ = 앞 판 대비 바뀐 앞날 칸. 칸을 누르면 표 아래 가동 상세(가동 캘린더와 같은 카드, 머리 = 판마다 그 칸 값 + 도금 소재 발주 상태)
         가동시간: 지난 날 = MES 실적 가동 분(plating_actual.dayMin), 앞날 = 24 − 재계획 cal 의 정지 분(blackout + M/C·재가동 분, 엔진 switchDummy·restart)
         특기사항: AL-STS(임)·AL-LG 생산 날(재계획 rows), 실적 S/D 겸 M/C 날(plating_actual.mc), 컬러 시험·샘플(통합 colorDown)
      ② 조정 표(화이트보드 '조정(실적반영)') — 판 × 라인 월 합계, 앞 판 대비 ±. 줄을 누르면 그 판을 ① 표로
@@ -258,13 +258,13 @@
     return `<h3 class="gk-adjh">판별 월 생산 합계 <small>톤</small></h3><div class="gk-adjw"><table class="gk-adj"><thead><tr><th rowspan="2">판</th>${cols.map(([n]) => `<th colspan="2" class="bl${/합계/.test(n) ? ' sm' : ''}">${n}</th>`).join('')}</tr><tr>${cols.map(([n]) => `<th class="sub bl${/합계/.test(n) ? ' sm' : ''}">월 합계</th><th class="sub${/합계/.test(n) ? ' sm' : ''}">월차 대비</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
 
-  // 누른 칸 한 줄: 판마다 그 칸(월차 → 매주 조정 → 지금) + 도금은 그 날 소재(F/H) 발주 마감과 발주 상태
-  function info(l, d) {
+  // 누른 칸 한 줄(가동 상세 머리): 판마다 그 칸(월차 → 매주 조정 → 지금) + 도금은 그 날 소재(F/H) 발주 마감과 발주 상태
+  function info(l, d, noMat) {
     const CH = chain(), C = CH.map((V) => V.get(l, d)), last = C[C.length - 1], first = C[0];
     const tx = (c) => (c.stop ? c.stop : `${n0(c.t)}t${c.mc ? ' M/C' : c.fam ? ' ' + c.fam : ''}`);
     let h = `<b>${md(d)}(${WD[wd(d)]}) ${l}</b> ` + CH.map((V, i) => `<span class="${i === CH.length - 1 ? 'nw' : ''}">${esc(V.lab.replace(/ \d+:\d+$/, ''))} ${esc(tx(C[i]))}</span>`).join('<i>→</i>');
     if (CH.length > 1) { const df = Math.round(last.t - first.t); h += ` <em class="${df <= -0.5 ? 'dn' : ''}">(${sg(df)}t)</em>`; }
-    if (/CGL$/.test(l) && D.LT && !last.act && last.t >= 0.5) {
+    if (!noMat && /CGL$/.test(l) && D.LT && !last.act && last.t >= 0.5) {   // 상세 카드에 품목별 발주 마감·판정이 있으면 머리에서는 뺌(중복)
       const sf = ((D.LT.fixed || []).find((f) => f[0] === 'safety.G') || [])[2] || 0, T = Object.fromEntries((D.LT.types || []).map((t) => [t[0], t[1]]));
       const M = D.MATS[last.fam === 'AL' ? 'G:H' : 'G:F'], lt = M && M.lt ? M.lt : T['P-FH'], dl = lt != null ? add(d, -(sf + lt)) : '';
       if (dl) {
@@ -275,7 +275,22 @@
         h += `<span class="mt">${esc(M ? M.name : 'F/H')} 발주 마감 ${md(dl)} <b class="${s[0]}">${s[1]}</b></span>`;
       }
     }
-    $('gk-info').innerHTML = h;
+    return h;
+  }
+  // 칸을 누르면 표 아래 '가동 상세'(가동 캘린더 상세와 같은 카드 — supply.js window.supDet) · 다시 누르거나 닫기 = 접힘
+  let detK = '';
+  function detail(td) {
+    const el = $('gk-det'), k = td ? td.dataset.c : '';
+    document.querySelectorAll('table.gk td.sel').forEach((x) => x.classList.remove('sel'));
+    if (!k || k === detK) { detK = ''; el.hidden = true; el.innerHTML = ''; return; }
+    detK = k; td.classList.add('sel');
+    const [l, d] = k.split('|'), body = window.supDet ? window.supDet(d, [l]) : null;
+    el.innerHTML = `<div class="dethd g"><span class="gk-info">${info(l, d, /class="dt mt fl"/.test(body || ''))}</span><button type="button" class="fold noprint" data-x>닫기</button></div>`
+      + (body == null ? '<p class="gk-none">상세 자료를 불러오는 중입니다 — 잠시 뒤 다시 누르세요</p>' : body || '<p class="gk-none">이 날 품목 상세 없음</p>');
+    el.hidden = false;
+    el.querySelector('[data-x]').onclick = () => detail(null);
+    if (UI.reveal) UI.reveal(el);
+    const r = el.getBoundingClientRect(); if (r.top > innerHeight - 120) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function render() {
@@ -286,14 +301,12 @@
     if (CH.length > 1) h += `<div class="gk-ver" role="group" aria-label="판">${CH.map((x, i) => `${i ? '<i>→</i>' : ''}<button type="button" data-i="${i}" aria-pressed="${i === si}">${esc(x.lab)}</button>`).join('')}</div>`;
     if (V.toneOnly) h += '<p class="gk-none">월차 강종·M/C·정지 자료 없음 — 톤만</p>';
     h += table(ds, V, P);
-    h += legend(V, P) + '<div class="gk-info" id="gk-info"></div>';
+    h += legend(V, P) + '<div class="det gk-det" id="gk-det" hidden></div>';
     if (CH.length > 1) h += adjTable(CH, ds, si);
     h += '</section>';
     el.innerHTML = h;
-    el.querySelectorAll('table.gk td[data-c]').forEach((td) => td.onclick = () => {
-      el.querySelectorAll('table.gk td.sel').forEach((x) => x.classList.remove('sel')); td.classList.add('sel');
-      const [l, d] = td.dataset.c.split('|'); info(l, d);
-    });
+    detK = '';
+    el.querySelectorAll('table.gk td[data-c]').forEach((td) => td.onclick = () => detail(td));
     const pick = (i) => { vSel[mon] = i; render(); };
     el.querySelectorAll('.gk-ver button').forEach((b) => b.onclick = () => pick(+b.dataset.i));
     el.querySelectorAll('table.gk-adj tbody tr').forEach((tr) => { tr.onclick = () => pick(+tr.dataset.i); tr.onkeydown = (e) => { if (e.key === 'Enter') pick(+tr.dataset.i); }; });

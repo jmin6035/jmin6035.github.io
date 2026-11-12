@@ -100,7 +100,15 @@ table.gk td.d:hover { filter: brightness(.95); }
 .gk-lg i.chg { background: #fff; } .gk-lg i.chg::after { content: ''; position: absolute; top: 0; right: 0; border-top: 8px solid #000; border-left: 8px solid transparent; }
 .gk-lg i.tdy { background: #fff; box-shadow: inset 0 0 0 2px #000; }
 .gk-lg .sep { width: 1px; height: 16px; background: var(--line); }
-.gk-info { min-height: 24px; margin: 10px 2px 0; font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; text-align: center; }
+.gk-info { font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; text-align: center; font-weight: 500; }
+/* 칸을 누르면 펼치는 가동 상세(가동 캘린더 상세와 같은 카드) — 머리 = 판별 값 · 소재 발주 상태, 가운데 정렬 */
+.gk-det { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.gk-det .dethd { align-items: center; margin: 0; padding: 8px 12px; border-left-width: 4px; background: var(--surface-2); border-radius: 0 8px 8px 0; }
+.gk-det .card { margin: 0; box-shadow: none; border: 1px solid var(--line); }
+.gk-det :is(table.dt th, table.dt td, h3, .why) { text-align: center; }
+.gk-det table.dt td small.spec { display: block; font-size: 13.5px; color: var(--ink-2); }
+.gk-det .flw { justify-content: center; }
+.gk-det[hidden] { display: none; }
 .gk-info i { font-style: normal; color: var(--ink-3); margin: 0 6px; } .gk-info span.nw { font-weight: 800; } .gk-info .mt b.ok { color: var(--good); } .gk-info .mt b.bad { color: var(--bad); }
 .gk-info b { font-weight: 800; } .gk-info em { font-style: normal; font-weight: 800; } .gk-info em.dn { color: var(--warn); } .gk-info .mt { color: var(--ink-2); margin-left: 14px; }
 
@@ -110,7 +118,7 @@ table.gk td.d:hover { filter: brightness(.95); }
 @media print {
   @page { size: A4 landscape; margin: 7mm; }
   html, body, main.wrap { background: #fff !important; }
-  .gk-bar, .gk-adjw, .gk-ver, .gk-info, #gk-tab, #gk-mat, #ui-ctl, footer.foot, #shell, #v2-flag, .noprint, .gk-card .unit, .gk-card > button, .gk-card [data-noexport] { display: none !important; }
+  .gk-bar, .gk-adjw, .gk-ver, .gk-info, .gk-det, #gk-tab, #gk-mat, #ui-ctl, footer.foot, #shell, #v2-flag, .noprint, .gk-card .unit, .gk-card > button, .gk-card [data-noexport] { display: none !important; }
   html body main section.card.gk-card { border: 0 !important; outline: 0 !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
   .gk-card::before, .gk-card > h2::before { display: none !important; }
   .gk-card > h2 { font-size: 14pt; margin: 0 0 3mm; padding: 0 !important; border: 0 !important; }
@@ -416,7 +424,7 @@ table.t.fwt { margin: 4px 0 0; font-size: 13.5px; width: auto; } table.t.fwt td 
 <script src="engine/crypto.js?v=2611120206"></script>
 <script src="ui/cal.js?v=2611120206"></script>
 <script src="ui/proccalc.js?v=2611120206"></script>
-<script src="supply.js?v=2611120206"></script>
-<script src="gyehoek.js?v=2611121900"></script>
+<script src="supply.js?v=2611122100"></script>
+<script src="gyehoek.js?v=2611122100"></script>
 </body>
 </html>
