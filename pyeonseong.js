@@ -211,7 +211,7 @@
     const r = c.hAvail >= 1 ? (c.hrs || 0) / c.hAvail : null;
     return cellH({ ln, d: c.d, fl: !!c.flag, band: c.event ? ev : '', mc, t: fill, chips: famC(c.fam),
       pct: pctB(r, `시간 부하 = 칸 주문을 실적 T/Hr(같은 두께·폭)로 돌리는 시간 ${n1(c.hrs)}h ÷ 가동 가능 시간 ${n1(c.hAvail)}h`),
-      st: [['지시', c.conf], ['소재', c.plan], ['입고예정', c.fcst]], G: c.grp,
+      st: [['작업대기', c.conf], ['지시대기', c.plan], ['입고예정', c.fcst]], G: c.grp,
       wn: [c.flag && (c.flagS || c.flag), c.gap >= 0.5 && `빈칸 ${n0(c.gap)}t`, c.lateE && `출항일 초과 ${c.lateE}건`, c.late - c.lateE > 0 && `납기 초과 ${c.late - c.lateE}건`],
       tip: `${ln} ${mdw(c.d)} · 생산 ${n0(fill)}t / 능력 ${n0(cap)}t${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
   }
@@ -277,7 +277,7 @@
     });
   }
   // 펼침 목록 = 칸 숫자와 같은 자료(도금: 작업지시 MES 순서 → 1010 순서안 → 재질·폭 순 · 컬러: 작업대기(이어 돌린 뒤) → 지시대기 → 도료 미입고 → 계획편성)
-  const KC = { 확정: ['작업지시', 'k1'], 편성: ['소재 있음', 'k2'], 예상: ['입고 예정', 'k3'], 작업대기: ['작업대기', 'w1'], 지시대기: ['지시대기', 'w2'], '부자재 입고대기': ['도료 미입고', 'w3'], 계획편성: ['계획편성', 'w4'] };
+  const KC = { 확정: ['작업대기', 'k1'], 편성: ['지시대기', 'k2'], 예상: ['입고예정', 'k3'], 작업대기: ['작업대기', 'w1'], 지시대기: ['지시대기', 'w2'], '부자재 입고대기': ['도료 미입고', 'w3'], 계획편성: ['계획편성', 'w4'] };
   const chip = (t, c) => (t ? `<span class="cp${c ? ' ' + c : ''}">${esc(t)}</span>` : '');
   const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E 극저', GREL: 'Gr.E 저탄', GRB: 'Gr.B' };
   const dayItems = (p, l, d) => { const C = CAL[p](); if (p === 'cc') { const R = C.raw(), x = R && ccFlow(R).F[l][d]; return x ? x.items : []; } return C.items(l, d); };
