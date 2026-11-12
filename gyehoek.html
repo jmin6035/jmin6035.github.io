@@ -456,6 +456,26 @@ html body main #m4 table.m4-cl tbody td { font-size: 14px !important; }
 #m4 .m4-cl td span.w5 { font-size: 13.5px; letter-spacing: -.9px; font-weight: 700; }   /* 5자리(10,000t 넘는 발주)도 한 칸에 */
 details.m4-lt { padding: 14px 20px; } details.m4-lt > summary { cursor: pointer; font-weight: 700; color: var(--ink-2); font-size: 15px; }
 details.m4-lt[open] > summary { margin-bottom: 12px; } details.m4-lt #gk-lt { margin: 0; }
+
+/* 11/13 사용자 '이 색감 그대로'(보내준 엑셀 가동계획): 흰 칸 · 검은 가는 선 · 주말 머리 노랑 · 라인·강종 이름 칸 연두 · AZ 살구 · AL 파랑 · MACOSTA 보라(흰 글자) · M/C·S/D 노랑 · 여러 날 정지 남색(흰 글자) */
+html:root body main table.gk.gk :is(td, th) { border-color:#808080 !important; color:#000; }
+html:root body main table.gk.gk thead th { background:#fff !important; color:#000 !important; font-weight:700; }
+html:root body main table.gk.gk thead th.we { background:#ffff00 !important; color:#c00000 !important; font-weight:800; }
+html:root body main table.gk.gk :is(th.c0, th.c1) { background:#ebf1de !important; color:#000 !important; font-weight:700; }
+html:root body main table.gk.gk :is(td.kAZ, td.kAZ.a) { background:#fcd5b4 !important; color:#000 !important; }
+html:root body main table.gk.gk :is(td.kAL, td.kAL.a) { background:#95b3d7 !important; color:#000 !important; }
+html:root body main table.gk.gk :is(td.kMAC, td.kMAC.a) { background:#8064a2 !important; color:#fff !important; }
+html:root body main table.gk.gk :is(td.kC, td.kC.a) { background:#dce6f1 !important; color:#000 !important; }
+html:root body main table.gk.gk td.y { background:#ffff00 !important; color:#1f3864 !important; font-weight:800; }
+html:root body main table.gk.gk td.sp { background:#1f3864 !important; color:#fff !important; font-weight:800; }
+html:root body main table.gk.gk tr.hr > * { background:#fff !important; color:#000 !important; font-weight:500; }
+html:root body main table.gk.gk tr.hr > th.c1 { background:#ebf1de !important; }
+html:root body main table.gk.gk tr.sum > * { background:#f2f2f2 !important; color:#000 !important; font-weight:800; }
+html:root body main table.gk.gk td.tot { color:#000; }
+.gk-past { background: rgba(0,0,0,.07) !important; }
+.gk-tdy { box-shadow: inset 0 0 0 2px #1f3864 !important; }
+.gk-lg i.kAZ { background:#fcd5b4; } .gk-lg i.kAL { background:#95b3d7; } .gk-lg i.kMAC { background:#8064a2; } .gk-lg i.kC { background:#dce6f1; }
+.gk-lg i.y { background:#ffff00; } .gk-lg i.sp { background:#1f3864; }
 </style>
 </head>
 <body>
