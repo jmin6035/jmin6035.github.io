@@ -6,7 +6,7 @@
 <title>관제</title>
 <meta name="description" content="도금·컬러 전체와 그룹별 판매계획·수주·생산·출하·재고 — 이번 달 실적, 다음 두 달 계획 대비 주문">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611120544">
+<link rel="stylesheet" href="ui/theme.css?v=2611120551">
 <style>
 /* 관제(5차) — 글자 3단계만: 큰 숫자 34 · 제목 18 · 본문 16(표·그래프 라벨·캘린더·범례 모두) / 간격 16px / 모든 글자 가운데 */
 main.wrap { max-width: none; }
@@ -106,6 +106,7 @@ html.v2 body main .kj-mx tbody th, html.v2 body main .kj-mx thead tr:first-child
 html.v2 body main .kj-mx thead tr:first-child th:first-child { background: var(--v2-th, var(--sub)) !important; }
 html.v2 body main .kj-mx tr.pt th { background: color-mix(in srgb, var(--ink) 4%, var(--surface)) !important; }
 html.v2 body main .kj-mx td.ov { font-weight: 700; }
+.kj-none { margin: 0 0 12px; color: var(--ink-2); font-weight: 600; }
 html.v2 body main #ct-main .kj-mx td small.kj-mna { display: block; white-space: normal; font-weight: 500; color: var(--ink-2); }   /* 공장 소재 = 그룹 합 + 미배정(DUMMY/포장재) */
 @media (max-width: 1500px) { html.v2 body main #ct-main .kj-mx :is(th, td) { padding: 9px 3px !important; } html.v2 body main #ct-main .kj-mx tbody th { padding: 9px 8px !important; } html.v2 body main #ct-main .kj-mx thead th { white-space: normal !important; word-break: keep-all; } }
 
@@ -180,10 +181,10 @@ html.v2 body main .kj-act td:nth-child(3) { white-space: normal; word-break: kee
 <header id="shell" data-page="kj" data-title="관제"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보·통합 계획 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611120544"></script>
-<script src="engine/crypto.js?v=2611120544"></script>
-<script src="ui/ct.js?v=2611120544"></script>
-<script src="ui/proccalc.js?v=2611120544"></script>
-<script src="kj.js?v=2611120544"></script>
+<script src="ui/shell.js?v=2611120551"></script>
+<script src="engine/crypto.js?v=2611120551"></script>
+<script src="ui/ct.js?v=2611120551"></script>
+<script src="ui/proccalc.js?v=2611120551"></script>
+<script src="kj.js?v=2611120551"></script>
 </body>
 </html>

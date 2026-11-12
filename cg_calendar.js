@@ -777,8 +777,8 @@
     O.act = {};   // 11/12 사용자 '11/11 실적만 써놓지 말고 뭘 생산했는지': 지난 날 = MES 실적(재계획 rows, 실적 기준일까지 · 더미 제외) — 라인·날 × 강종 × 판매그룹
     for (const r of LPr.rows || []) {
       if (!O.planT0 || r[0] > O.planT0) continue;
-      const a = (O.act[`${r[1]}|${r[0]}`] = O.act[`${r[1]}|${r[0]}`] || { t: 0, fam: {}, grp: {} }), t = +r[4] || 0, g = GACT[r[3]] || r[3] || '기타';
-      a.t += t; a.fam[r[2]] = (a.fam[r[2]] || 0) + t; a.grp[g] = (a.grp[g] || 0) + t;
+      const a = (O.act[`${r[1]}|${r[0]}`] = O.act[`${r[1]}|${r[0]}`] || { t: 0, fam: {}, grp: {}, x: {} }), t = +r[4] || 0, g = GACT[r[3]] || r[3] || '기타';
+      a.t += t; a.fam[r[2]] = (a.fam[r[2]] || 0) + t; a.grp[g] = (a.grp[g] || 0) + t; a.x[`${g}|${r[2]}`] = (a.x[`${g}|${r[2]}`] || 0) + t;   // x = 그룹 × 강종(편성 화면 지난 날 펼침)
     }
     CONF = await loadConfirm();
     let draft = null; try { draft = localStorage.getItem(MV_KEY()); } catch (e) { /* 무시 */ }

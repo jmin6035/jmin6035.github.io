@@ -186,7 +186,7 @@
         for (let i = 0; i < ds.length; i++) {
           const c = C[i], t = inStop[i] ? '' : c.mc ? 'M/C' : c.sd ? 'S/D' : '';
           if (c.mc && c.sd) notes[i].push(`${l} S/D`);
-          if (V.kind === 'now' && c.t >= 0.5) for (const a of Object.keys((D.pl[`${l}|${ds[i]}`] || {}).sub || {})) notes[i].push(a === 'AL-STS' ? 'AL-STS (임)' : a);
+          if (V.kind === 'now' && c.t >= 0.5) for (const a of Object.keys((D.pl[`${l}|${ds[i]}`] || {}).sub || {})) notes[i].push(a === 'AL-STS' ? 'STS(임)' : a);
           ev += t ? `<td class="y${dc(i)}" data-c="${l}|${ds[i]}">${t}</td>` : empty(i);
         }
         ev += '<td class="tot">-</td></tr>';
@@ -237,7 +237,8 @@
     let nt = '<tr class="nt"><th class="c0" colspan="2">특기사항</th>';
     for (const r of runs((i) => txt[i] || `_${i}`)) nt += r.k[0] === '_' ? empty(r.i) : `<td class="t${dc(r.i)}" colspan="${r.j - r.i + 1}">${r.k.split('\n').map(esc).join('<br>')}</td>`;
     const tl = [T.G, T.C].filter((v) => v != null);
-    nt += `<td class="tot tt">${tl.map(n0).join('<br>')}${tl.length > 1 ? '<br>' + n0(tl[0] + tl[1]) : ''}</td></tr>`;
+    const tn = [T.G != null ? ['도금', T.G] : null, T.C != null ? ['컬러', T.C] : null].filter(Boolean); if (tn.length > 1) tn.push(['합계', T.G + T.C]);
+    nt += `<td class="tot tt">${tn.map(([k, v]) => `<span>${k}</span> ${n0(v)}`).join('<br>')}</td></tr>`;
     return `<div class="gk-wrap"><table class="gk">${h}${nt}</tbody></table>${ti >= 0 ? '<i class="gk-tdy" aria-hidden="true"></i>' : ''}</div>`;
   }
   function legend(V, P) {
@@ -254,7 +255,7 @@
     // 판마다 '월 합계 | 앞 판 대비' 두 칸(11/12 사용자 '조정 이해가 안 된다 — 칸 구분')
     const rows = CH.map((V, i) => `<tr class="${i === si ? 'on' : ''}" data-i="${i}" tabindex="0"><th>${esc(V.lab)}</th>${A[i].map((v, j) => { const df = i ? Math.round(v - A[i - 1][j]) : null, sm = /합계/.test(cols[j][0]) ? ' sm' : '';
       return `<td class="bl${sm}"><b>${n0(v)}</b></td><td class="df${sm}${df != null && df <= -0.5 ? ' dn' : df != null && df >= 0.5 ? ' up' : ''}">${df == null ? '–' : df === 0 ? '0' : sg(df)}</td>`; }).join('')}</tr>`).join('');
-    return `<h3 class="gk-adjh">판별 월 생산 합계 <small>톤 · 앞 판 대비 = 바로 위 판과의 차이 · 줄을 누르면 그 판을 위 표로</small></h3><div class="gk-adjw"><table class="gk-adj"><thead><tr><th rowspan="2">판</th>${cols.map(([n]) => `<th colspan="2" class="bl${/합계/.test(n) ? ' sm' : ''}">${n}</th>`).join('')}</tr><tr>${cols.map(([n]) => `<th class="sub bl${/합계/.test(n) ? ' sm' : ''}">월 합계</th><th class="sub${/합계/.test(n) ? ' sm' : ''}">앞 판 대비</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    return `<h3 class="gk-adjh">판별 월 생산 합계 <small>톤</small></h3><div class="gk-adjw"><table class="gk-adj"><thead><tr><th rowspan="2">판</th>${cols.map(([n]) => `<th colspan="2" class="bl${/합계/.test(n) ? ' sm' : ''}">${n}</th>`).join('')}</tr><tr>${cols.map(([n]) => `<th class="sub bl${/합계/.test(n) ? ' sm' : ''}">월 합계</th><th class="sub${/합계/.test(n) ? ' sm' : ''}">앞 판 대비</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
 
   // 누른 칸 한 줄: 판마다 그 칸(월차 → 매주 조정 → 지금) + 도금은 그 날 소재(F/H) 발주 마감과 발주 상태
