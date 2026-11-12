@@ -9,64 +9,126 @@
 <link rel="stylesheet" href="ui/theme.css?v=2611120206">
 <style>
 main.wrap { max-width: none; }
-/* 편성 흐름 ① 주문 마감 → ② 소재 매치 → ③ 라인 배분 → ④ 작업 순서 */
-.ps-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 16px; }
-.ps-st { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 12px 16px; min-width: 0; }
-.ps-st .l { font-size: 15px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
-.ps-st .l i { font-style: normal; display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--brand-2); color: #fff; font-size: 13.5px; margin-right: 6px; }
-.ps-st .v { font-size: 24px; font-weight: 800; letter-spacing: -.3px; white-space: nowrap; margin-top: 4px; }
-.ps-st .v small { font-size: 15px; font-weight: 600; color: var(--ink-2); margin-left: 2px; }
-.ps-st .s { font-size: 14.5px; color: var(--ink-2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* 라인 배분 표 */
-.ps-tw { overflow-x: auto; }
-table.ps-sum { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-table.ps-sum :is(th, td) { padding: 10px 12px; text-align: center; white-space: nowrap; border-bottom: 1px solid var(--line); font-size: 16px; }
-table.ps-sum thead th { font-size: 15px; font-weight: 700; background: var(--sub); }
-table.ps-sum thead th.pl { font-size: 14.5px; color: var(--ink-2); font-weight: 600; }
-table.ps-sum tbody th { font-size: 15px; font-weight: 700; color: var(--ink-2); text-align: left; }
-table.ps-sum .ln { cursor: pointer; }
-table.ps-sum .ln.on { box-shadow: inset 0 -3px 0 var(--brand-2); color: var(--brand-2); }
-table.ps-sum td.ln.on { box-shadow: none; background: color-mix(in srgb, var(--brand-2) 7%, transparent); }
-table.ps-sum td b { font-size: 18px; }
-table.ps-sum td .st { display: inline-block; border-radius: 6px; padding: 1px 8px; font-size: 14.5px; font-weight: 700; background: var(--grid); color: var(--ink-2); }
-/* 작업 순서 목록 */
+html.v2 #ui-ctl { display: none !important; }   /* 11/12: 공통 관제 알약 줄은 편성과 상관없어 숨김 */
+/* 막대·묶음 띠 한 색(브랜드 파랑, dataviz validate_palette.js 통과: 밝은 #1f6aa8 · 어두운 #3d8bd9) · 바탕 칸 = 같은 파랑 옅게 */
+#ps-main, #ps-tip { --pc: #1f6aa8; --pc-on: #ffffff; --pc-t: color-mix(in srgb, var(--pc) 13%, var(--surface)); }
+:root[data-theme="dark"] :is(#ps-main, #ps-tip) { --pc: #3d8bd9; --pc-on: #0b0f15; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(#ps-main, #ps-tip) { --pc: #3d8bd9; --pc-on: #0b0f15; } }
+#ps-main .card > h2 small { font-size: 15px; color: var(--ink-2); font-weight: 500; }
+/* ① 주문 마감 → ② 소재 매치 → ③ 라인 배분 → ④ 작업 순서 */
+.ps-flow { display: grid; grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr) 28px minmax(0, 1fr); align-items: stretch; margin: 0 0 16px; }
+.ps-st { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px 18px; min-width: 0; text-align: center; }
+.ps-st .l { font-size: 16px; font-weight: 700; color: var(--ink-2); white-space: nowrap; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ps-st .l i { font-style: normal; display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--pc); color: var(--pc-on); font-size: 15px; font-weight: 800; }
+.ps-st .v { font-size: 30px; font-weight: 800; letter-spacing: -.5px; white-space: nowrap; margin-top: 6px; line-height: 1.2; }
+.ps-st .v small { font-size: 17px; font-weight: 700; color: var(--ink-2); margin-left: 2px; }
+.ps-st .s { font-size: 15px; color: var(--ink-2); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ps-ar { display: grid; place-items: center; color: var(--ink-2); }
+.ps-ar svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+/* 라인 배분: 라인마다 가로 막대(작업 가능 시간 대비 배분 시간) — 한 색, 값은 막대 끝 */
+.ps-mt { display: grid; grid-template-columns: 110px 96px minmax(0, 1fr) 120px 120px; column-gap: 0; align-items: center; }
+.ps-mt .hd { font-size: 15px; font-weight: 700; color: var(--ink-2); padding: 0 0 8px; white-space: nowrap; text-align: center; border-bottom: 1px solid var(--line); }
+.ps-mt .pg { font-size: 16px; font-weight: 800; text-align: center; line-height: 1.4; white-space: nowrap; align-self: stretch; display: grid; place-content: center; border-bottom: 1px solid var(--line); }
+.ps-mt .pg span { display: block; font-weight: 500; color: var(--ink-2); font-size: 15px; }
+.ps-mr { display: contents; cursor: pointer; }
+.ps-mr > * { padding: 8px 0; }
+.ps-mr.le > * { border-bottom: 1px solid var(--line); }
+.ps-mr .nm { font-size: 16px; font-weight: 800; white-space: nowrap; text-align: center; }
+.ps-mr .nm span { display: inline-block; padding: 2px 10px; border-radius: 6px; }
+.ps-mr.on .nm span { background: var(--pc); color: var(--pc-on); }
+.ps-mr .bx { min-width: 0; padding-left: 12px; padding-right: 12px; }
+.ps-tk { position: relative; height: 24px; border-radius: 0 4px 4px 0; background: var(--pc-t); outline: none; }
+.ps-tk:focus-visible { box-shadow: 0 0 0 2px var(--pc); }
+.ps-fl { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0; background: var(--pc); min-width: 2px; }
+.ps-mr:hover .ps-fl, .ps-tk:focus .ps-fl { filter: brightness(1.15); }
+.ps-lb { position: absolute; top: 50%; transform: translateY(-50%); font-size: 15px; white-space: nowrap; color: var(--ink-2); padding-left: 10px; font-variant-numeric: tabular-nums; }
+.ps-lb.in { color: var(--pc-on); padding: 0 10px 0 0; transform: translate(-100%, -50%); }
+.ps-lb i { font-style: normal; }
+.ps-lb b { font-size: 15px; font-weight: 800; color: var(--ink); margin-right: 8px; }
+.ps-lb.in b { color: var(--pc-on); }
+.ps-stp { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.ps-mr .c { font-size: 16px; text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ps-mr .c b { font-weight: 800; }
+#ps-lines.seg button { font-size: 16px !important; font-weight: 700; }
+html.v2 main #ps-main .card > h2 small { font-size: 15px !important; }
+.ps-note { font-size: 15px; color: var(--ink-2); margin: 12px 0 0; word-break: keep-all; }
+details.ps-tv { margin-top: 10px; }
+details.ps-tv summary { font-size: 15px; font-weight: 700; color: var(--ink-2); cursor: pointer; }
+table.ps-sum { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; margin-top: 8px; }
+table.ps-sum :is(th, td) { padding: 9px 12px; text-align: center; white-space: nowrap; border-bottom: 1px solid var(--line); font-size: 16px; }
+table.ps-sum thead th { font-size: 15px; background: var(--sub); }
+#ps-tip { position: fixed; z-index: 50; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.14); padding: 10px 12px; font-size: 15px; line-height: 1.55; min-width: 220px; }
+#ps-tip .h { font-weight: 800; margin-bottom: 2px; }
+#ps-tip .r { display: flex; justify-content: space-between; gap: 16px; white-space: nowrap; } #ps-tip .r span { color: var(--ink-2); } #ps-tip .r b { font-variant-numeric: tabular-nums; }
+/* 작업 순서 */
 .ps-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 0 0 12px; }
-.ps-bar .seg button { font-weight: 700; }
-.ps-ver { font-size: 14.5px; color: var(--ink-2); white-space: nowrap; }
+.ps-ver { font-size: 15px; color: var(--ink-2); white-space: nowrap; }
 .ps-ver b { color: var(--ink); }
+.ps-key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 15px; color: var(--ink-2); margin: 0 0 10px; }
+.ps-key > span { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.ps-key .kb { width: 5px; height: 18px; border-radius: 3px; background: var(--pc); }
 .ps-go { margin-left: auto; font-size: 15px; font-weight: 700; white-space: nowrap; }
 table.ps-seq { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
+html.v2 body main table.ps-seq:not(.v2-grid) :is(td, th) { padding: 9px 12px !important; font-size: 16px !important; line-height: 1.5 !important; }
 table.ps-seq :is(th, td) { padding: 9px 12px; border-bottom: 1px solid var(--line); font-size: 16px; text-align: center; vertical-align: middle; line-height: 1.5; }
 table.ps-seq thead th { font-size: 15px; font-weight: 700; background: var(--sub); white-space: nowrap; position: sticky; top: 0; z-index: 2; }
-table.ps-seq td.no { font-weight: 800; }
-table.ps-seq td.cn { white-space: nowrap; font-weight: 700; letter-spacing: -.2px; overflow: hidden; text-overflow: ellipsis; }
+table.ps-seq td.no { position: relative; white-space: nowrap; font-weight: 600; padding-left: 18px !important; }
+table.ps-seq td.no::before { content: none; position: absolute; left: 4px; width: 6px; top: -1px; bottom: -1px; background: var(--pc); }
+table.ps-seq tr.b1 td.no::before { content: ""; }
+table.ps-seq tr.bs td.no::before { top: 6px; border-radius: 3px 3px 0 0; }
+table.ps-seq tr.be td.no::before { bottom: 6px; border-radius: 0 0 3px 3px; }
+table.ps-seq td.cn { white-space: nowrap; letter-spacing: -.2px; overflow: hidden; text-overflow: ellipsis; }
 table.ps-seq td.sz, table.ps-seq td.t { white-space: nowrap; }
-table.ps-seq :is(td, th).wy { text-align: left; word-break: keep-all; }
-html.v2 body main table.ps-seq thead th.v2-l { text-align: left !important; }
-table.ps-seq tr.dh td { background: var(--tint-2); text-align: left; font-size: 16px; padding: 10px 12px; border-top: 2px solid var(--line); }
-table.ps-seq tr.dh b { margin-right: 14px; white-space: nowrap; }
+html.v2 body main #ps-list table.ps-seq :is(td, th) { text-align: center !important; }
+table.ps-seq td.wy { word-break: keep-all; }
+.wy .bn { display: inline-block; font-weight: 800; white-space: nowrap; margin-right: 8px; padding: 0 8px; border-radius: 5px; background: var(--pc-t); color: var(--ink); }
+.wy .sm { font-weight: 600; } .wy .ch { color: var(--ink-2); }
+/* 지시됨 = 진한 글자 + '지시' 배지 · 앞으로 = 보통 */
+table.ps-seq tr.j.fx td { font-weight: 800; color: var(--ink); }
+table.ps-seq tr.j.fx { background: color-mix(in srgb, var(--brand-2) 6%, transparent); }
+table.ps-seq tr.j:not(.fx) td { font-weight: 400; }
+table.ps-seq tr.j:not(.fx) .wy .sm { font-weight: 600; }
+.ps-fx { display: inline-block; margin-left: 6px; border-radius: 5px; padding: 0 6px; font-size: 15px; font-weight: 800; background: var(--ink); color: var(--surface); line-height: 1.45; vertical-align: 1px; }
+table.ps-seq tr.dh td { background: var(--tint-2); font-size: 16px; padding: 10px 12px; border-top: 2px solid var(--line); }
+table.ps-seq tr.dh b { margin-right: 14px; white-space: nowrap; font-size: 17px; }
 table.ps-seq tr.dh span { color: var(--ink-2); white-space: nowrap; }
+table.ps-seq tr.cut td { padding: 0 !important; border-bottom: 0; height: 0; }
+table.ps-seq tr.cut td div { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 8px 12px; font-size: 15px; font-weight: 800; color: var(--ink); border-top: 3px solid var(--ink); background: var(--surface); white-space: nowrap; }
+table.ps-seq tr.cut td div span { font-weight: 500; color: var(--ink-2); }
 .cp { display: inline-block; border-radius: 5px; padding: 0 7px; font-size: 15px; font-weight: 700; white-space: nowrap; background: var(--tint-2); color: var(--ink); margin: 1px 2px; }
 .cp.al { background: var(--gt-g); color: var(--gc-g); } .cp.cl { background: var(--gt-c); color: var(--gc-c); } .cp.wr { background: var(--warn-bg); color: var(--warn); }
-.wy .sm { font-weight: 700; } .wy .ch { color: var(--ink-2); font-size: 14.5px; }
 .ps-empty { padding: 18px 4px; color: var(--ink-2); font-size: 16px; }
-@media (max-width: 1100px) { .ps-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-/* 좁은 화면: 한 작업 = 한 묶음(순번·계약 → 사양 → 톤 → 이유) */
+@media (max-width: 1100px) {
+  .ps-flow { grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr); row-gap: 10px; }
+  .ps-flow .ps-ar:nth-of-type(2) { display: none; }
+  .ps-st .v { font-size: 26px; }
+}
 @media (max-width: 760px) {
-  .ps-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .ps-st { padding: 10px 12px; } .ps-st .v { font-size: 20px; } .ps-st .v small { font-size: 14px; } .ps-st .s { font-size: 13.5px; }
+  .ps-flow { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
+  .ps-flow .ps-ar, .ps-flow .ps-ar:nth-of-type(2) { display: grid; height: 22px; }
+  .ps-ar svg { transform: rotate(90deg); width: 18px; height: 18px; }
+  .ps-st { padding: 10px 14px; }
+  .ps-st .v { font-size: 24px; margin-top: 2px; } .ps-st .v small { font-size: 15px; }
+  .ps-st .s { white-space: normal; }
+  .ps-mt { grid-template-columns: 62px minmax(0, 1fr) 70px; }
+  .ps-mr .bx { padding-left: 4px; padding-right: 4px; }
+  .ps-mt .pg, .ps-mt .hd.h0, .ps-mt .hd.h3, .ps-mr .c.c3, .ps-mt .hd .hx { display: none; }
+  .ps-mr .nm span { padding: 2px 6px; }
+  .ps-lb b { margin-right: 4px; }
   .ps-go { margin-left: 0; }
   table.ps-seq, table.ps-seq tbody { display: block; width: 100%; }
   table.ps-seq thead, table.ps-seq colgroup { display: none; }
-  table.ps-seq tr { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 9px 4px; border-bottom: 1px solid var(--line); }
-  table.ps-seq td { display: block; padding: 0; border: 0; text-align: left; }
+  table.ps-seq tr { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 2px 10px; padding: 9px 4px 9px 16px; border-bottom: 1px solid var(--line); position: relative; }
+  table.ps-seq tr.b1 { box-shadow: inset 6px 0 0 var(--pc); }
+  table.ps-seq td { display: block; padding: 0; border: 0; }
+  table.ps-seq td.no::before { display: none; }
+  html.v2 body main table.ps-seq:not(.v2-grid) tbody td { padding: 0 !important; border: 0 !important; }
   table.ps-seq tr.dh { background: var(--tint-2); border-top: 2px solid var(--line); padding: 9px 8px; }
   table.ps-seq tr.dh td { padding: 0; border: 0; background: none; }
-  table.ps-seq td.cn { flex: 1 1 auto; min-width: 0; }
-  table.ps-seq td.sp { flex: 1 1 100%; }
-  table.ps-seq td.wy { flex: 1 1 100%; }
-  html.v2 body main table.ps-seq:not(.v2-grid) tbody td { padding: 0 !important; border: 0 !important; text-align: left !important; }
-  html.v2 body main table.ps-seq:not(.v2-grid) tbody td.no::after { content: '.'; }
+  table.ps-seq tr.cut { padding: 0; border: 0; } table.ps-seq tr.cut td { flex: 1 1 100%; } table.ps-seq tr.cut td div { white-space: normal; }
+  table.ps-seq td.wy, table.ps-seq td.sp { flex: 1 1 100%; }
+  table.ps-seq td.wy { order: 9; white-space: normal !important; min-width: 0; overflow-wrap: anywhere; }
+  table.ps-seq td.cn { flex: 0 1 auto; }
 }
 </style>
 </head>
@@ -80,16 +142,21 @@ table.ps-seq tr.dh span { color: var(--ink-2); white-space: nowrap; }
   </section>
   <div id="ps-main" hidden>
     <div class="ps-flow" id="ps-flow"></div>
-    <section class="card" id="ps-sumc"><h2>라인 배분</h2><div class="ps-tw"><table class="ps-sum" id="ps-sum"></table></div></section>
-    <section class="card" id="ps-seqc"><h2>작업 순서</h2>
+    <section class="card" id="ps-sumc"><h2>라인 배분 <small>막대 = 작업 가능 시간 중 배분된 작업 시간</small></h2><div class="ps-mt" id="ps-mt" role="list"></div>
+      <p class="ps-note" id="ps-note"></p>
+      <details class="ps-tv"><summary>표로 보기</summary><div style="overflow-x:auto"><table class="ps-sum" id="ps-sum"></table></div></details></section>
+    <section class="card" id="ps-seqc"><h2>작업 순서 <small>보기 전용</small></h2>
       <div class="ps-bar"><div class="seg" id="ps-lines"></div><span class="ps-ver" id="ps-ver"></span><a class="ps-go" id="ps-go" href="week_seq.html">작업 순서 화면에서 수정 →</a></div>
+      <div class="ps-key" id="ps-key"></div>
       <div id="ps-list"></div>
     </section>
   </div>
+  <div id="ps-tip" hidden></div>
 </main>
-<footer class="foot"><div class="wrap"><span>자료 = 작업 순서 화면과 같은 게시본(최근 저장·확정본, 없으면 초안) · 보기 전용</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<footer class="foot"><div class="wrap"><span>자료 = 작업 순서 화면과 같은 게시본(최근 저장·확정본, 없으면 초안) · 소재 며칠분 = 주문진도와 같은 자료 · 보기 전용</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611120206"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
+<script src="ui/ct.js?v=2611120206"></script>
 <script src="pyeonseong.js?v=2611120206"></script>
 </body>
 </html>
