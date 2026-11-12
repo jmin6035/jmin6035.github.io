@@ -41,6 +41,11 @@ main.wrap { max-width: none; }
 .kj-sch li b { display: block; white-space: nowrap; } .kj-sch li b span { font-weight: 600; color: var(--ink-2); }
 .kj-sch li.done { color: var(--ink-2); } .kj-sch li.done b { font-weight: 500; }
 .kj-sch li.now { font-weight: 700; } .kj-sch li.now b span { color: var(--brand-2); }
+/* 운영 일정 구분(11/12 사용자 '색을 넣든 더 구분되게'): 완료 = 회색 바탕 · 진행 중 = 파랑 바탕+위 굵은 선 · 앞으로 = 흰 바탕+위 옅은 선 */
+.kj-sch ol { gap: 6px; } .kj-sch li { border: 0 !important; border-radius: 8px; padding: 8px 8px 10px; border-top: 4px solid var(--v2-line, var(--line)) !important; background: var(--surface); }
+.kj-sch li.done { background: color-mix(in srgb, var(--ink) 6%, var(--surface)); border-top-color: color-mix(in srgb, var(--ink) 25%, var(--surface)) !important; }
+.kj-sch li.now { background: color-mix(in srgb, var(--kj-ac) 14%, var(--surface)); border-top-color: var(--kj-ac) !important; }
+.kj-sch li:not(.done):not(.now) { border-top-color: color-mix(in srgb, var(--kj-ac) 35%, var(--surface)) !important; box-shadow: inset 0 0 0 1px var(--v2-line, var(--line)); }
 
 /* 2. 결론 카드 */
 .kj-k4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--kj-g); margin: var(--kj-g) 0; }
