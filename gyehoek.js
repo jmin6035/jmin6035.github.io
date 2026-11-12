@@ -38,7 +38,7 @@
   // ---------- 자료: 가동 캘린더(supply.js prep·live)와 같은 칸 ----------
   async function load(pw) {
     const get = async (n) => { try { const e = await GP.latest(n); return e ? await GP.decryptJSON(e, pw) : null; } catch (x) { return null; } };
-    const [W, LP, CA, PA, SJ, LT, HI, MO] = await Promise.all(['integrated.enc.json', 'latest.plan.enc.json', 'color_actual.enc.json', 'plating_actual.enc.json', 'suju.enc.json', 'leadtime.enc.json', 'gyehoek_hist.enc.json', 'mat_order.enc.json'].map(get));
+    const [W, LP, CA, PA, SJ, LT, HI, MO, AD] = await Promise.all(['integrated.enc.json', 'latest.plan.enc.json', 'color_actual.enc.json', 'plating_actual.enc.json', 'suju.enc.json', 'leadtime.enc.json', 'gyehoek_hist.enc.json', 'mat_order.enc.json', 'act_detail.enc.json'].map(get));
     if (!W) throw new Error('integrated');
     await UI.ready(); today = UI.today(W.asOf && add(String(W.asOf).slice(0, 10), 1));
     const pl = {}, ev = {}, co = {}, cdn = {}, p0 = {};
@@ -67,7 +67,7 @@
     if (SJ && SJ.daily && SJ.month) for (const [l, rows] of Object.entries(SJ.daily)) for (const r of rows) p0[`${l}|${r[0]}`] = +r[1] || 0;
     const ms = [today.slice(0, 7), mAdd(today.slice(0, 7), 1), mAdd(today.slice(0, 7), 2)];
     const MATS = Object.fromEntries((((MO || {}).groups || {}).mats || []).filter((m) => m.plant === 'G').map((m) => [m.key, m]));
-    D = { W, pl, ev, co, BD, actG, actC, cdn, cdx, dayMin, gsd, SW, p0, m0: SJ && SJ.month, at, ms, LT, H: HI && Array.isArray(HI.vers) ? HI : null, MATS };
+    D = { W, pl, ev, co, BD, actG, actC, cdn, cdx, dayMin, gsd, SW, p0, m0: SJ && SJ.month, at, ms, LT, H: HI && Array.isArray(HI.vers) ? HI : null, MATS, AD: AD && AD.days ? AD : null };
     mon = ms[0];
   }
 
@@ -281,10 +281,16 @@
   // 지난 날(실적) 칸 = 계획 카드 대신 실적 상세(판매그룹·강종/품명 톤 · 가동시간) — 11/12 사용자 '뭔데 이거'(빈 계획 카드)
   function gNm(g) { return /자동차/.test(g) ? '자동차' : /자가재/.test(g) ? '도금 자가재' : /수출/.test(g) ? '도금수출' : /국내|판매/.test(g) ? '도금국내' : g; }
   function cNm(g) { return /수출|가전내수/.test(g) ? '컬러수출' : /주문재|계획재|건재/.test(g) ? '컬러건재' : /수요/.test(g) ? '수요개발' : g; }
+  // 지난 날 = 계약별 실적 표(act_detail.enc.json — 앞날 계획 카드와 같은 칸, supply.js window.supAct). 그 날 자료가 없으면 아래 요약(판매그룹·강종/품명 톤)
   function actDet(l, d) {
+    const G = /CGL$/.test(l), rows = D.AD && (D.AD.days[d] || {})[l];
+    if (rows && rows.length && window.supAct) {
+      const t = G ? (D.pl[`${l}|${d}`] || {}).t || 0 : sumV((((D.BD || {})[d] || {})[l] || [])[0]), m = G ? (D.dayMin[d] || {})[l] : ((((D.BD || {})[d] || {})[l] || [])[1]);
+      return window.supAct(l, d, rows, `${l} · 실적 ${n0(t)}t${m ? ` · 가동 ${(m / 60).toFixed(1)}시간` : ''}`, D.AD.entFrom);
+    }
     const kv = (o) => Object.entries(o || {}).filter(([, v]) => v >= 0.5).sort((a, b) => b[1] - a[1]);
     const tb = (h, rows) => (rows.length ? `<table class="gk-act"><thead><tr><th>${h}</th><th>톤</th></tr></thead><tbody>${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td>${n0(v)}</td></tr>`).join('')}</tbody></table>` : '');
-    if (/CGL$/.test(l)) { const x = D.pl[`${l}|${d}`] || {}, m = D.dayMin[`${l}|${d}`];
+    if (/CGL$/.test(l)) { const x = D.pl[`${l}|${d}`] || {}, m = (D.dayMin[d] || {})[l];
       if (!(x.t >= 0.5)) return '';
       return `<div class="gk-actw"><h4>${l} · 실적 ${n0(x.t)}t${m ? ` · 가동 ${(m / 60).toFixed(1)}시간` : ''}</h4><div class="gk-acts">${tb('판매그룹', kv(x.gg))}${tb('강종', kv(x.aa))}</div></div>`; }
     const v = ((D.BD || {})[d] || {})[l]; if (!v) return '';

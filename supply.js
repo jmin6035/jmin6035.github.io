@@ -589,6 +589,27 @@
     return (UI.inScope('G') ? ['1CGL', '2CGL'].filter(on).map(pcard).join('') : '') + (UI.inScope('C') ? ['1CCL', '2CCL', '3CCL', '4CCL'].filter(on).map(ccard).join('') : '');
   }
   window.supDet = (d, ls) => (D ? detG(d, ls) : null);
+  // 지난 날 실적 카드(계획 화면 gyehoek.js) — 위 계획 카드와 같은 표·칸(품명·구분 | 고객·지역 | 톤 | 소재 | 일정). rows = act_detail.enc.json 의 그 날·라인 계약 행
+  // 일정 = 소재 입고(구매: 입고 원장 실입고일 / 자가재: 도금 생산일) → 생산(실적) → 납기(·출항). 생산이 납기보다 늦으면 납기 칩에 'n일 지남'
+  window.supAct = (l, d, rows, head, entFrom) => {
+    const ix = Object.fromEntries(['grp', 'name', 'spec', 'cus', 'dst', 't', 'n', 'kind', 'sup', 'in0', 'in1', 'due', 'ship'].map((k, i) => [k, i]));
+    const M = new Map();                                                 // 보이는 값이 같은 계약은 한 줄(톤·코일 합)
+    for (const r of rows || []) { const k = [ix.grp, ix.name, ix.spec, ix.cus, ix.dst, ix.kind, ix.sup, ix.in0, ix.in1, ix.due, ix.ship].map((i) => r[i] || '').join('|'), z = M.get(k); if (z) { z[ix.t] += r[ix.t]; z[ix.n] += r[ix.n]; } else M.set(k, r.slice()); }
+    const R = [...M.values()].filter((r) => r[ix.t] >= 0.05).sort((a, b) => b[ix.t] - a[ix.t]), N = 15, more = R.slice(N);
+    const G = /CGL$/.test(l), rng = (a, b) => (a ? md(a) + (b && b !== a ? `~${md(b)}` : '') : '-');
+    const tr = (r) => {
+      const self = r[ix.kind] === '자가재', due = r[ix.due], late = due && due < d ? diff(d, due) : 0;
+      const steps = [[self ? '도금 생산' : '소재 입고', r[ix.in0] ? rng(r[ix.in0], r[ix.in1]) : r[ix.kind] && entFrom ? `${md(entFrom)} 이전` : '-', r[ix.in1] || null],
+        [`${G ? '도금' : '컬러'} 생산(실적)`, md(d), d, 'now']];
+      if (due || !r[ix.ship]) steps.push([late ? `납기 · ${late}일 지남` : '납기', due ? md(due) : '-', due || null, late ? 'done late' : '']);
+      if (r[ix.ship]) steps.push(['출항', md(r[ix.ship]), r[ix.ship]]);
+      const mat = r[ix.kind] ? `<small class="kd2 ${self ? 'self' : 'buy'}">${r[ix.kind]}</small> ${esc(self ? (G ? '' : '도금 코일') : r[ix.sup])}` : '<span class="muted">미확인</span>';
+      return `<tr><td><b>${esc(r[ix.name])}</b> <small>${esc(r[ix.grp] || '-')}</small></td><td>${esc([r[ix.cus], r[ix.dst]].filter(Boolean).join(' · ') || '-')}<small class="spec">${esc(r[ix.spec] || '')}</small></td><td class="r">${n0(r[ix.t])}</td><td>${mat}</td><td>${flowHtml(steps)}</td></tr>`;
+    };
+    const mt = more.reduce((a, r) => a + r[ix.t], 0);
+    return `<section class="card rv wide" data-noexport data-dom="${G ? 'G' : 'C'}"><h3>${esc(head)}</h3>
+      <div class="scroll"><table class="dt mt fl"><thead><tr><th>품명 · 구분</th><th>고객·지역</th><th class="r">톤</th><th>소재</th><th>일정 (소재 → 생산 → 납기)</th></tr></thead><tbody>${R.slice(0, N).map(tr).join('')}</tbody></table></div>${more.length ? `<div class="why">외 ${more.length}건 ${n0(mt)}t</div>` : ''}</section>`;
+  };
 
   // ---------- 날짜 상세 ----------
   function pick(d, mode = 'g', auto = false) {
