@@ -33,7 +33,7 @@
     { k: 'C수요', pl: 'C', nm: '수요개발', sj: ['수요개발'], od: ['수요개발그룹'], cal: ['수요개발'] },
   ];
   const PN = { G: '도금', C: '컬러' }, LINES = { G: ['1CGL', '2CGL'], C: ['1CCL', '2CCL', '3CCL', '4CCL'] };
-  const FLOW = ['sales', 'ord', 'base', 'pPlan', 'pAct', 'pDue', 'sPlan', 'sAct', 'sDue', 'stk'];   // 공장 = 그룹 합인 값
+  const FLOW = ['sales', 'ord', 'off', 'base', 'pPlan', 'pAct', 'pDue', 'sPlan', 'sAct', 'sDue', 'stk'];   // 공장 = 그룹 합인 값
   let X = null, A = null, mSel = null, bound = false, TIPS = [];
   const LS = 'kj-month';
 
@@ -106,7 +106,7 @@
         const C_ = cal[m], R = C_.grpR[G.k], cur = m === M0, past = (i) => cur && C_.days[i] <= S.asOf;
         const pPlan = sum(R, (r) => r.p), pAct = cur ? sum(R.filter((r, i) => past(i)), (r) => r.a) : null, pDue = cur ? sum(R.filter((r, i) => past(i)), (r) => r.p) : null;
         const i = pmIdx(m), pl = (V.plan || {})[G.k], x = i >= 0 && pl ? pl[i] : null;
-        if (cur) out[m] = { sales: G.self ? null : sum(gs, (g) => g.sales), ord: G.self ? null : sum(gs, (g) => g.orders), base: G.self ? null : (baseG[G.k] != null ? Math.round(baseG[G.k]) : null),
+        if (cur) out[m] = { sales: G.self ? null : sum(gs, (g) => g.sales), ord: G.self ? null : sum(gs, (g) => g.orders), off: G.self ? null : Math.max(0, sum(gs, (g) => (g.ordReg || 0) - (g.orders || 0))), base: G.self ? null : (baseG[G.k] != null ? Math.round(baseG[G.k]) : null),
           pPlan, pAct, pDue, sPlan: G.self ? null : one(gs, 'shipMon', 'shipGrp'), sAct: G.self ? null : one(gs, 'shipAct', 'shipGrp'), sDue: G.self ? null : one(gs, 'shipDue', 'shipGrp'),
           stk: b.begin != null ? b.begin : null, cap: b.target != null ? b.target : null };
         else { const tg = (V.stockTgt || {})[G.k], st = G.self ? selfEnd(m) : stockEnd(G.k, m);
@@ -123,15 +123,15 @@
       const Gs = GRP.filter((g) => g.pl === pl), ms = stkOf(pl === 'G' ? /^도금 소재/ : /^컬러 소재/), pd = stkOf(pl === 'G' ? /^도금 제품\(판매재\)/ : /^컬러 제품/), out = {};
       for (const m of months) {
         const o = {};
-        for (const k of FLOW) o[k] = sum(Gs.filter((G) => !(G.self && ['sales', 'ord', 'base', 'sPlan', 'sAct', 'sDue', 'stk'].includes(k))), (G) => grp[G.k][m][k]);
+        for (const k of FLOW) o[k] = sum(Gs.filter((G) => !(G.self && ['sales', 'ord', 'off', 'base', 'sPlan', 'sAct', 'sDue', 'stk'].includes(k))), (G) => grp[G.k][m][k]);
         o.stkMiss = m === M0 ? [] : Gs.filter((G) => !G.self && grp[G.k][m].stk == null).map((G) => G.nm);
         if (o.stkMiss.length === Gs.filter((G) => !G.self).length) o.stk = null;
         o.mat = m === M0 ? ms.current : matEnd(pl === 'G' ? 'FH' : 'CMAT', m);
         o.matCap = o.mat == null ? null : ms.target || SM[pl === 'G' ? '도금 소재(F/H)' : '컬러 소재'];
-        o.cap = o.stk == null ? null : pd.target || SM[pl === 'G' ? '도금 제품(판매재)' : '컬러 제품'];
+        o.cap = o.stk == null ? null : sum(Gs.filter((G) => !G.self && grp[G.k][m].cap != null), (G) => grp[G.k][m].cap);   // 제품 목표 = 그룹 목표 합(11/12 사용자 '상한 말고 목표')
         out[m] = o;
         // 그룹 합 = 전체(눈으로 확인하는 숫자가 서로 맞는지 화면이 스스로 검사)
-        for (const k of FLOW) { const s = sum(Gs.filter((G) => !(G.self && ['sales', 'ord', 'base', 'sPlan', 'sAct', 'sDue', 'stk'].includes(k))), (G) => grp[G.k][m][k]); const ok = s == null ? o[k] == null || k === 'stk' : Math.abs(s - o[k]) < 0.5; console.assert(ok, `관제 그룹 합 ≠ 전체: ${pl} ${m} ${k}`); chk.push({ pl, m, k, ok }); }
+        for (const k of FLOW) { const s = sum(Gs.filter((G) => !(G.self && ['sales', 'ord', 'off', 'base', 'sPlan', 'sAct', 'sDue', 'stk'].includes(k))), (G) => grp[G.k][m][k]); const ok = s == null ? o[k] == null || k === 'stk' : Math.abs(s - o[k]) < 0.5; console.assert(ok, `관제 그룹 합 ≠ 전체: ${pl} ${m} ${k}`); chk.push({ pl, m, k, ok }); }
         // 생산 계획 = 라인 합(캘린더 합계 행)과 같은지
         const lp = sum(LINES[pl], (l) => sum(cal[m].lineR[l], (r) => r.p)), ok2 = lp == null ? o.pPlan == null : Math.abs(lp - o.pPlan) < 1; console.assert(ok2, `관제 생산 계획 그룹 합 ≠ 라인 합: ${pl} ${m}`); chk.push({ pl, m, k: 'pPlan=line', ok: ok2, line: lp, grp: o.pPlan });
       }
@@ -222,8 +222,8 @@
 
   // 그래프 범례 — 막대 모양 + 글자 색 뜻 + 눈금선 두 가지
   function legend(cur) {
-    return `<div class="kj-lg" aria-label="범례"><span><i class="sl"></i>${cur ? '판매계획 · 월 계획 · 상한' : '판매계획 · 생산 계획 · 상한'}</span><span><i class="ac"></i>${cur ? '확정 주문 · 실적' : '납기 주문'}</span><span><i class="stk"></i>재고</span><span><i class="ov"></i>상한 초과</span>`
-      + (cur ? '<span><b class="bad">빨강 %</b>오늘 기준보다 늦음</span>' : '') + '<span><b class="ov">주황 %</b>상한 초과</span></div>';
+    return `<div class="kj-lg" aria-label="범례"><span><i class="sl"></i>${cur ? '판매계획 · 월 계획 · 목표' : '판매계획 · 생산 계획 · 목표'}</span><span><i class="ac"></i>${cur ? '확정 주문 · 실적' : '납기 주문'}</span><span><i class="stk"></i>재고</span><span><i class="ov"></i>목표 초과</span>`
+      + (cur ? '<span><b class="bad">빨강 %</b>오늘까지 계획보다 늦음(생산·출하)</span>' : '') + '<span><b class="ov">주황 %</b>목표 초과</span></div>';
   }
 
   /* 1. 운영 일정 — 12·1월은 같은 월 일정을 준용(운영 일정 근거 = 수주팀 PDF 월 주기 일정, 달별 일정 없음) */
@@ -240,9 +240,9 @@
     const kc = (h, t, sub, cls, v, s, tip) => `<a class="kj-kl" href="${h}" title="${esc(tip)} — 누르면 자세히"><div class="ct-kpi kj-k"><div class="l">${t}${sub ? ` <small>${sub}</small>` : ''}</div><div class="v ${cls}">${v}</div><div class="s">${s}</div></div></a>`;
     const pc = (v) => (v == null ? '–' : `${(+v).toFixed(1)}<small>%</small>`);
     const sales = T('sales'), ord = T('ord'), base = T('base');
-    const k1 = kc(cur ? 'suju.html#order' : 'cg_order.html', '수주 진도', '판매계획 대비', cur ? shortT(ord, base) : '', pc(pctOf(ord, sales)),
-      sales == null ? '판매계획 미수령' : `${cur ? '확정' : '주문'} ${n0(ord)} / 판매계획 ${n0(sales)}t${cur ? ` · 오늘 기준 ${n0(base)}t` : ''}`,
-      cur ? `확정 주문 ÷ 판매계획 · 빨강 = 오늘 기준(1일~${md(A.S.cut)} 편성량)보다 모자람` : `${mLab(mSel)} 납기 주문 ÷ ${mLab(mSel)} 판매계획`);
+    const k1 = kc(cur ? 'suju.html#order' : 'cg_order.html', '수주 진도', '판매계획 대비', '', pc(pctOf(ord, sales)),
+      sales == null ? '판매계획 미수령' : `${cur ? '소재 ON' : '주문'} ${n0(ord)} / 판매계획 ${n0(sales)}t`,
+      cur ? '소재 ON(소재 매치 끝난 주문) ÷ 판매계획' : `${mLab(mSel)} 납기 주문 ÷ ${mLab(mSel)} 판매계획`);
     let k2;
     if (cur) { const act = T('pAct'), due = T('pDue');
       k2 = kc('suju.html#prod', '생산 달성', '오늘까지 계획 대비', shortT(act, due), pc(pctOf(act, due)), `실적 ${n0(act)} / 오늘까지 계획 ${n0(due)}t`, `생산 실적 ÷ 1일~${md(A.S.asOf)} 계획(아래 캘린더와 같은 값)`); }
@@ -251,8 +251,8 @@
     const k3 = kc('suju.html#mat', '소재 결품 위험', '', rl.length ? 'bad' : '', `${rl.length}<small>건</small>`, (rl.length ? esc(rl.map((x) => x.name).join(' · ')) : `${mLab(mSel)} 결품 위험 소재 없음`) + (soonList(mSel).length ? ` · 마감 앞둔 발주 ${soonList(mSel).length}건` : ''), '아래 소재 구역 결품 위험 목록과 같은 목록');
     // 창고 재고: 소재 · 제품 + 상한('27 판생 월말 최대) — 자료가 없으면 상한도 쓰지 않음
     const mc = T('mat'), mC = T('matCap'), pcur = T('stk'), pC = T('cap'), tot = mc != null && pcur != null ? mc + pcur : null;
-    const line = (nm, v, c) => (v == null ? `<div>${nm} <span class="na">자료 없음</span></div>` : `<div>${nm} <b>${n0(v)}</b> / 상한 ${n0(c)} <b class="${overT(v, c)}">(${Math.round(v / c * 100)}%)</b></div>`);
-    const k4 = `<a class="kj-kl" href="suju.html#stock" title="상한 = '27 판생 월말 최대(계획 규칙) · 도금 자가재 제외 — 누르면 자세히"><div class="ct-kpi kj-k"><div class="l">창고 재고${cur ? '' : ' <small>월말 계획</small>'}</div><div class="v ${overT(tot, (mC || 0) + (pC || 0))}">${tot == null ? '–' : `${n0(tot)}<small>t</small>`}</div>`
+    const line = (nm, v, c) => (v == null ? `<div>${nm} <span class="na">자료 없음</span></div>` : `<div>${nm} <b>${n0(v)}</b> / 목표 ${n0(c)} <b class="${overT(v, c)}">(${Math.round(v / c * 100)}%)</b></div>`);
+    const k4 = `<a class="kj-kl" href="suju.html#stock" title="목표 = 소재: '27 판생 월말 최대 · 제품: 그룹 재고 목표 합(도금 자가재 제외) — 누르면 자세히"><div class="ct-kpi kj-k"><div class="l">창고 재고${cur ? '' : ' <small>월말 계획</small>'}</div><div class="v ${overT(tot, (mC || 0) + (pC || 0))}">${tot == null ? '–' : `${n0(tot)}<small>t</small>`}</div>`
       + `<div class="kj-wh">${mc == null && pcur == null ? `<div class="na">${mLab(mSel)} 월말 재고 계획 없음</div>` : line('소재', mc, mC) + line('제품', pcur, pC)}</div></div></a>`;
     return `<div class="kj-k4">${k1}${k2}${k3}${k4}</div>`;
   }
@@ -269,13 +269,13 @@
     const na = (nm, t) => ({ nm, na: t, tip: [[nm, t, '']] });
     if (c.self) T.push(na('수주', '주문 없음'));
     else if (x.sales == null && x.ord == null) T.push(na('수주', '자료 없음'));
-    else if (cur) T.push({ nm: '수주', p: x.sales, a: x.ord, pct: pctOf(x.ord, x.sales), pcls: shortT(x.ord, x.base), tip: [r('판매계획', x.sales), r('확정 주문', x.ord), ['진도', P0(pctOf(x.ord, x.sales)), shortT(x.ord, x.base)], r('오늘 기준(오늘까지 확정 필요)', x.base)] });
+    else if (cur) T.push({ nm: '수주', p: x.sales, a: x.ord, pct: pctOf(x.ord, x.sales), tip: [r('판매계획', x.sales), r('소재 ON(매치 끝난 주문)', x.ord), r('소재 OFF(매치 전 주문)', x.off), ['진도(ON ÷ 판매계획)', P0(pctOf(x.ord, x.sales)), '']] });
     else T.push({ nm: '수주', p: x.sales, a: x.ord, pct: pctOf(x.ord, x.sales), tip: [r(`${M} 판매계획`, x.sales), r(`${M} 납기 주문`, x.ord), ['진도', P0(pctOf(x.ord, x.sales)), '']] });
     if (cur) {
       T.push({ nm: '생산', p: x.pPlan, a: x.pAct, pct: pctOf(x.pAct, x.pPlan), pcls: shortT(x.pAct, x.pDue), tip: [r('월 계획', x.pPlan), r('실적', x.pAct), ['진도', P0(pctOf(x.pAct, x.pPlan)), shortT(x.pAct, x.pDue)], r('오늘까지 계획', x.pDue)] });
       T.push(x.sPlan == null ? na('출하', c.self ? '출하 없음' : '자료 없음') : { nm: '출하', p: x.sPlan, a: x.sAct, pct: pctOf(x.sAct, x.sPlan), pcls: shortT(x.sAct, x.sDue), tip: [r('월 계획', x.sPlan), r('실적', x.sAct), ['진도', P0(pctOf(x.sAct, x.sPlan)), shortT(x.sAct, x.sDue)], r('오늘까지 계획', x.sDue)] });
     } else T.push(x.pPlan == null ? na('생산', '자료 없음') : { nm: '생산', p: x.pPlan, a: null, tip: [r(`${M} 생산 계획`, x.pPlan)] });
-    const cn = c.grp ? '목표' : '상한', st = (nm, v, cp) => (v == null ? na(nm, '자료 없음')
+    const cn = '목표', st = (nm, v, cp) => (v == null ? na(nm, '자료 없음')
       : { nm, p: cp, a: v, stock: true, pct: pctOf(v, cp), pcls: overT(v, cp), tip: [r(cn, cp), r(cur ? `재고 ${md(A.S.asOf)}` : '월말 재고 계획', v), [`${cn} 대비`, P0(pctOf(v, cp)), overT(v, cp)]] });
     if (!c.grp) T.push(st('소재 재고', x.mat, x.matCap));
     T.push(st('제품 재고', x.stk, x.cap));
@@ -338,10 +338,13 @@
     const na = (n, txt, gs) => `<td colspan="${n}"${cl('na', gs && 'gs')}>${txt}</td>`;
     const nb = (v, gs, cls, empty) => `<td${cl(gs && 'gs', cls)}>${v == null ? `<span class="na">${empty || '자료 없음'}</span>` : n0(v)}</td>`;
     const pc = (v, cls) => `<td${cl('kp', cls)}>${v == null ? '–' : P0(v)}</td>`;
-    const stock = (x, grp, span) => (grp ? '' : x.mat == null ? `<td colspan="2" rowspan="${span || 1}" class="na gs">자료 없음</td>` : `<td rowspan="${span || 1}" class="gs mspan ${overT(x.mat, x.matCap)}">${n0(x.mat)}</td><td rowspan="${span || 1}" class="mspan">${n0(x.matCap)}</td>`)
-      + (x.stk == null ? na(2, '자료 없음', 1) : `${nb(x.stk, 1, overT(x.stk, x.cap))}${nb(x.cap)}`);
+    // 재고 = 목표 | 소재 | 제품 (11/12 사용자 '목표가 얼마인데 소재는 얼마 있고 제품은 얼마 있고') — 공장 목표 = 소재 목표 + 제품 목표(그룹 합) · 소재는 공장 단위라 공장 칸을 그룹 줄까지 세로로 합침
+    const stock = (x, grp, span) => { const tg = grp ? x.cap : (x.matCap != null || x.cap != null ? (x.matCap || 0) + (x.cap || 0) : null);
+      return `<td class="gs">${tg == null ? '<span class="na">–</span>' : n0(tg)}</td>`
+        + (grp ? '' : `<td rowspan="${span || 1}" class="mspan ${overT(x.mat, x.matCap)}">${x.mat == null ? '<span class="na">자료 없음</span>' : n0(x.mat)}</td>`)
+        + (x.stk == null ? '<td><span class="na">자료 없음</span></td>' : nb(x.stk, 0, overT(x.stk, x.cap))); };
     const rowCur = (nm, x, cls, grp, self, span) => `<tr${cl(cls)}><th scope="row">${nm}</th>`
-      + (self ? na(4, '내부 투입 — 주문 없음', 1) : `${nb(x.sales, 1)}${nb(x.base)}${nb(x.ord)}${pc(pctOf(x.ord, x.sales), shortT(x.ord, x.base))}`)
+      + (self ? na(4, '내부 투입 — 주문 없음', 1) : `${nb(x.sales, 1)}${nb(x.ord)}${nb(x.off)}${pc(pctOf(x.ord, x.sales))}`)
       + `${nb(x.pPlan, 1)}${nb(x.pAct)}${pc(pctOf(x.pAct, x.pPlan), shortT(x.pAct, x.pDue))}`
       + (x.sPlan == null ? na(3, self ? '출하 없음' : '자료 없음', 1) : `${nb(x.sPlan, 1)}${nb(x.sAct)}${pc(pctOf(x.sAct, x.sPlan), shortT(x.sAct, x.sDue))}`)
       + stock(x, grp, span) + '</tr>';
@@ -357,13 +360,13 @@
       for (const k of [...FLOW, 'mat', 'matCap', 'cap']) T[k] = sum(P, (x) => x[k]);
       rows.push(rowOf('합계', T, 'tot')); }
     const hd = cur
-      ? `<tr><th rowspan="2" scope="col">구분</th><th colspan="4" class="gs" scope="colgroup">수주 <small>판매계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">생산 <small>월 계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">출하 <small>월 계획 대비</small></th><th colspan="4" class="gs" scope="colgroup">재고 <small>${md(A.S.asOf)}</small></th></tr>`
-        + `<tr><th class="gs">판매계획<br><small>월 목표</small></th><th>오늘 기준<br><small>~${md(A.S.cut)} 확정 필요</small></th><th>확정<br><small>소재 매치 끝난 주문</small></th><th>진도<br><small>확정 ÷ 판매계획</small></th><th class="gs">월 계획</th><th>실적</th><th>진도</th><th class="gs">월 계획</th><th>실적</th><th>진도</th><th class="gs">소재</th><th>상한</th><th>제품</th><th title="공장 = 상한 · 그룹 = 재고 목표">상한·<wbr>목표</th></tr>`
-      : `<tr><th rowspan="2" scope="col">구분</th><th colspan="3" class="gs" scope="colgroup">수주 <small>${mLab(mSel)} 납기</small></th><th rowspan="2" class="gs">생산 계획</th><th colspan="4" class="gs" scope="colgroup">재고 <small>월말 계획</small></th></tr>`
-        + `<tr><th class="gs">판매계획</th><th>주문</th><th>진도</th><th class="gs">소재</th><th>상한</th><th>제품</th><th title="공장 = 상한 · 그룹 = 재고 목표">상한·목표</th></tr>`;
-    const lg = cur ? '<div class="kj-lg in"><span><b class="bad">빨강</b>오늘 기준보다 모자람</span><span><b class="ov">주황</b>상한·목표 초과</span><span>소재 재고 = 공장 단위</span></div>'
-      : '<div class="kj-lg in"><span><b class="ov">주황</b>상한·목표 초과</span><span>소재 재고 = 공장 단위</span><span>출하 = 다음 달 출하 계획은 판매계획과 같아 따로 안 씀</span></div>';
-    return `<h2 class="kj-h">관제 매트릭스 <small>${mLab(mSel)} · 톤 · 공장 전체 = 그룹 합(제품 재고는 도금 자가재 제외) · 상한 = 공장 창고, 목표 = 그룹</small></h2>${lg}`
+      ? `<tr><th rowspan="2" scope="col">구분</th><th colspan="4" class="gs" scope="colgroup">수주 <small>판매계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">생산 <small>월 계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">출하 <small>월 계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">재고 <small>${md(A.S.asOf)}</small></th></tr>`
+        + `<tr><th class="gs">판매계획</th><th>소재 ON<br><small>매치 끝난 주문</small></th><th>소재 OFF<br><small>매치 전 주문</small></th><th>진도<br><small>ON ÷ 판매계획</small></th><th class="gs">월 계획</th><th>실적</th><th>진도</th><th class="gs">월 계획</th><th>실적</th><th>진도</th><th class="gs">목표<br><small>공장 = 소재 + 제품</small></th><th>소재</th><th>제품</th></tr>`
+      : `<tr><th rowspan="2" scope="col">구분</th><th colspan="3" class="gs" scope="colgroup">수주 <small>${mLab(mSel)} 납기</small></th><th rowspan="2" class="gs">생산 계획</th><th colspan="3" class="gs" scope="colgroup">재고 <small>월말 계획</small></th></tr>`
+        + `<tr><th class="gs">판매계획</th><th>주문</th><th>진도</th><th class="gs">목표<br><small>공장 = 소재 + 제품</small></th><th>소재</th><th>제품</th></tr>`;
+    const lg = cur ? '<div class="kj-lg in"><span><b class="bad">빨강</b>오늘까지 계획보다 모자람(생산·출하)</span><span><b class="ov">주황</b>목표 초과</span><span>소재 재고 = 공장 단위</span></div>'
+      : '<div class="kj-lg in"><span><b class="ov">주황</b>목표 초과</span><span>소재 재고 = 공장 단위</span><span>출하 = 다음 달 출하 계획은 판매계획과 같아 따로 안 씀</span></div>';
+    return `<h2 class="kj-h">관제 매트릭스 <small>${mLab(mSel)} · 톤 · 공장 전체 = 그룹 합(제품 재고는 도금 자가재 제외)</small></h2>${lg}`
       + `<section class="kj-c kj-tb"><div class="ct-wrap"><table class="kj-mx"><thead>${hd}</thead><tbody>${rows.join('')}</tbody></table></div></section>`;
   }
 
@@ -403,7 +406,19 @@
     // 맨 오른쪽 '계' = 월 계획 합(위) · 실적 합(아래, 이번 달만 — 오늘까지 계획보다 적으면 빨강)
     const totOf = (R) => { const mp = sum(R, (r) => r.p) || 0, ca = sum(R, (r) => r.a), cp = sum(R.filter((r, i) => days[i] <= asOf), (r) => r.p);
       return cur ? `<td class="pa sumc" title="월 계획 ${n0(mp)}t · 실적(~${md(asOf)}) ${n0(ca)}t · 오늘까지 계획 ${n0(cp)}t"><span>${n0(mp)}</span><b class="${shortT(ca, cp)}">${n0(ca)}</b></td>` : `<td class="pl sumc"><b>${n0(mp)}</b></td>`; };
-    const rowOf = (nm, R, key, cls = '', isGrp) => `<tr class="${cls}">${labOf(nm, R)}${R.map((r, i) => cell(r, days[i], key, isGrp)).join('')}${totOf(R)}</tr>`;
+    // 라인 행: 이어지는 휴지·수리 날은 한 칸으로 묶고 가운데에 이름(휴지 = 노랑 · 수리 = 빨강) — 11/12 사용자 '휴 휴 휴 하지 말고 하나로'
+    const rowOf = (nm, R, key, cls = '', isGrp) => {
+      const H = R.map((r, i) => cell(r, days[i], key, isGrp)), off = H.map((h) => { const m_ = !isGrp && /^<td class="id[^"]*"[^>]*>(휴|수리)<\/td>$/.exec(h); return m_ ? m_[1] : null; });
+      let out = '';
+      for (let i = 0; i < H.length;) {
+        if (!off[i]) { out += H[i]; i++; continue; }
+        let j = i; while (j + 1 < H.length && off[j + 1] === off[i]) j++;
+        const e0 = ev[key + '|' + days[i]];
+        const lab = off[i] === '휴' ? '휴지' : (e0 && /정기/.test(e0) ? '정기수리' : '수리');
+        out += `<td colspan="${j - i + 1}" class="${off[i] === '휴' ? 'idl' : 'rep'}${dow(days[i]) === 3 ? ' wst' : ''}" title="${md(days[i])}~${md(days[j])} ${lab}">${j > i ? `${lab} ${+days[i].slice(8)}~${+days[j].slice(8)}일` : lab}</td>`;
+        i = j + 1;
+      }
+      return `<tr class="${cls}">${labOf(nm, R)}${out}${totOf(R)}</tr>`; };
     const sumR = (Rs) => days.map((d, i) => ({ p: sum(Rs, (R) => R[i].p), a: cur && d <= asOf ? sum(Rs, (R) => R[i].a) : null }));
     const sec = (t) => `<tr class="sec"><th colspan="${nd + 2}" scope="rowgroup"><span>${t}</span></th></tr>`;
     let body = '';
@@ -424,15 +439,14 @@
     const Gs = GRP.filter((G) => inPl(G.pl));
     if (cur) {
       for (const G of Gs) { const x = A.grp[G.k][m]; if (G.self) continue;
-        if (x.ord != null && x.base != null && x.ord + 0.5 < x.base) add(x.ord < x.base * 0.9 ? '경고' : '주의', '수주', `${G.nm} 수주 ${P0(pctOf(x.ord, x.sales))} — 확정 ${n0(x.ord)} / 판매계획 ${n0(x.sales)}t, 오늘 기준 ${n0(x.base)}t보다 ${n0(x.base - x.ord)}t 모자람`, '주문 확보 요청', nextDl, A.dept[G.k]);
-        else if (x.ord != null && x.base && x.ord > x.base * 1.5) add('주의', '수주', `${G.nm} 확정 ${n0(x.ord)}t > 오늘 기준 편성 ${n0(x.base)}t`, '편성 반영 확인', nextDl, '수주팀'); }
+        if (x.ord != null && x.base != null && x.ord + 0.5 < x.base) add(x.ord < x.base * 0.9 ? '경고' : '주의', '수주', `${G.nm} 수주 ${P0(pctOf(x.ord, x.sales))} — 소재 ON ${n0(x.ord)} / 판매계획 ${n0(x.sales)}t · 소재 OFF ${n0(x.off)}t`, x.off >= 1 ? '소재 매치 당김 · 주문 확보 요청' : '주문 확보 요청', nextDl, A.dept[G.k]); }
       for (const G of Gs) { const x = A.grp[G.k][m];
         if (x.pAct != null && x.pDue && x.pAct + 0.5 < x.pDue) add(x.pAct < x.pDue * 0.9 ? '경고' : '주의', '생산', `${G.nm} 생산 ${P0(pctOf(x.pAct, x.pPlan))} — 실적 ${n0(x.pAct)} / 월 계획 ${n0(x.pPlan)}t, 오늘까지 계획 ${n0(x.pDue)}t보다 ${n0(x.pDue - x.pAct)}t 적음`, '생산 순서 당김', null, '수주팀·공정출하'); }
       // 재고: 매트릭스와 같은 값(그룹 실재고 ÷ 재고 목표) — 목표를 넘은 그룹
       for (const G of Gs) { const x = A.grp[G.k][m]; if (x.stk != null && x.cap && x.stk > x.cap) add('주의', '재고', `${G.nm} 재고 ${n0(x.stk)}t — 목표 ${n0(x.cap)}t의 ${P0(pctOf(x.stk, x.cap))}`, G.self ? '컬러 투입 당김 검토' : '출하 당김 · 생산 조정 검토', null, G.self ? '수주팀' : A.dept[G.k]); }
-      // 창고 상한: 카드·매트릭스와 같은 값(소재 + 제품 / 상한 합)
+      // 창고: 카드·매트릭스와 같은 값(소재 + 제품 / 목표 합)
       for (const p of pls) { const x = A.plant[p][m], v = (x.mat || 0) + (x.stk || 0), c = (x.matCap || 0) + (x.cap || 0);
-        if (c && v > c) add('주의', '재고', `${PN[p]} 창고 ${n0(v)}t — 상한 ${n0(c)}t의 ${P0(pctOf(v, c))} (소재 ${n0(x.mat)} · 제품 ${n0(x.stk)})`, '출하 당김 · 입고 조정', null, '수주팀·판생'); }
+        if (c && v > c) add('주의', '재고', `${PN[p]} 창고 ${n0(v)}t — 목표 ${n0(c)}t의 ${P0(pctOf(v, c))} (소재 ${n0(x.mat)} · 제품 ${n0(x.stk)})`, '출하 당김 · 입고 조정', null, '수주팀·판생'); }
     } else {
       for (const p of pls) { const P = A.plant[p][m], pp = pctOf(P.ord, P.sales); if (pp == null) continue;
         for (const G of Gs.filter((g) => g.pl === p && !g.self)) { const x = A.grp[G.k][m], gp = pctOf(x.ord, x.sales);

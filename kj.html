@@ -139,6 +139,10 @@ html body main table.kj-cal tbody tr:not(.sec) td, html body main table.kj-cal t
 .kj-cal td.pa span, .kj-cal td.pa b { display: block; } .kj-cal td.pa span { color: var(--ink-2); } .kj-cal td.pa b { color: var(--ink); }
 .kj-cal td.pa { background: color-mix(in srgb, var(--kj-ac) 10%, var(--surface)); } .kj-cal td.pl { background: var(--surface); } .kj-cal td.pl b { font-weight: 600; }
 .kj-cal td.id, .kj-cal td.nd { color: var(--ink-2); }
+html body main table.kj-cal td.idl { background: #fff2a8; color: #5c4a00; font-weight: 700; text-align: center; white-space: nowrap; }
+html body main table.kj-cal td.rep { background: #c0392b; color: #fff; font-weight: 700; text-align: center; white-space: nowrap; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) table.kj-cal td.idl { background: #5c4d0a; color: #fff3b0; } }
+:root[data-theme="dark"] table.kj-cal td.idl { background: #5c4d0a; color: #fff3b0; }
 html body main table.kj-cal tr.sec th { height: 36px; background: var(--v2-th, var(--sub)); text-align: center; font-weight: 700; border-top: 2px solid var(--v2-line, var(--line)); overflow: visible; }
 .kj-cal tr.sec th span { padding: 0 12px; }
 html body main table.kj-cal tr.tot :is(td, th) { background: color-mix(in srgb, var(--ink) 4%, var(--surface)); font-weight: 700; }
