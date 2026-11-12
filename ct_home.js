@@ -113,6 +113,25 @@
     // 11/11 사용자 '주요 원인 더 잘 보이게': 원인 이름 칩 · 톤 굵게 · 언제 풀리나(다음 생산일·입고 예정일) 칸으로 나눔 — 원인 2개까지(ui/ctl.js UI.causeHtml, 관제판과 같은 모양)
     const rkLeg = `<span class="hm-lg">${[['var(--good)', '정상'], ['#c9a227', '점검'], ['#e07b39', '지연 예상'], ['var(--bad)', '납기 지남'], ['#9aa5b1', '종결 확인']].map(([c, t]) => `<span><i style="background:${c}"></i>${t}</span>`).join('')}</span>`;
     const rkTbl = RK ? `<div class="ct-wrap"><table class="ct-t hm-rk"><colgroup><col style="width:92px"><col style="width:88px"><col style="width:150px"><col style="width:84px"><col style="width:60px"><col></colgroup><thead><tr><th>그룹</th><th class="r">미결</th><th>상태</th><th class="r">위험</th><th class="r">비율</th><th>주요 원인 <small>· 언제 풀리나</small></th></tr></thead><tbody>${RKG.slice(0, 9).map((g) => { const tn = UI.riskTone(g.risk, g.t); return `<tr onclick="location.href='risk.html'" style="cursor:pointer"><td class="nw"><span class="cdot ${tn}"></span><b>${esc(g.g)}</b></td><td class="r">${n0(g.t)}t</td><td>${rkBar(g)}</td><td class="r"><b class="${tn}">${n0(g.risk)}t</b></td><td class="r"><b class="${tn}">${Math.round(g.risk / g.t * 100)}%</b></td><td class="hm-w">${g.cz ? UI.causeHtml(RK, g.cz, 2, 2) : esc(g.msg)}</td></tr>`; }).join('') || '<tr><td colspan="6">위험 없음</td></tr>'}</tbody></table></div>` : null;
+    // 새 양식(?ui=v2, 11/12): 그룹 = 공통 순서(도금 → 컬러 → 수요개발), 칸 = 그룹 | 미결 | 위험 | 비율 | 주요 원인(1개) | 언제 풀리나 — 나머지 원인은 줄 눌러 펼침. 상태 막대·원인 칩 없음
+    const V2 = !!(window.UI && UI.v2);
+    const RKNM = { 자가재: '도금 자가재', 건재수출: '컬러건재수출', 가전수출: '컬러가전수출', 가전내수: '컬러가전내수' };
+    const RKO = ['도금수출', '도금국내', '자동차', '자가재', '건재수출', '가전수출', '가전내수', '컬러건재', '수요개발'];
+    const rkTbl2 = RK && V2 ? (() => {
+      const oi = (g) => { const i = RKO.indexOf(g.g); return i < 0 ? (g.pl === 'G' ? 50 : 80) : i; };
+      const gs = RK.groups.filter((g) => (rsc === 'all' || g.pl === rsc) && g.t >= 0.5).sort((a, b) => oi(a) - oi(b));
+      const cn = (c) => (RK.causeNm || {})[c] || c;
+      const when = (it) => { const w = (it || []).filter((x) => x[0] && x[1] >= 0.5)[0]; return !w ? '–' : w[3] ? esc(w[0]) : `<span class="k2-m0">${esc(w[0])}</span>`; };   // 날짜 없는 몫(입고 예정일 지남·적합 소재 없음 등)은 회색   // 가장 큰 몫이 풀리는 때(다음 생산일·입고 예정일)
+      const itTip = (it) => (it || []).filter((x) => x[0] && x[1] >= 0.5).map((x) => `${x[0]} ${n0(x[1])}t · ${x[2]}건`).join('\n');
+      const row = (g, i) => {
+        const tn = UI.riskTone(g.risk, g.t), cz = (g.cz || []).filter((z) => z[1] >= 0.5), z = cz[0], has = g.risk >= 0.5;
+        const det = cz.map((y, j) => `<div class="k2-dr"><b>${esc(cn(y[0]))}</b><span class="n">${j ? `${n0(y[1])}t` : ''}</span><span>${esc((y[4] || []).filter((x) => x[0] && x[1] >= 0.5).slice(0, 4).map((x) => `${x[0]} ${n0(x[1])}t`).join(' · '))}</span><span class="k2-dd">${esc((RK.dept || {})[y[0]] || '')}</span></div>`).join('');
+        return `<tr class="k2-rk${cz.length ? ' ck' : ''}" data-r="${i}" tabindex="0" title="${esc(cz.length ? '눌러서 원인 전체 보기' : '')}"><td><span class="k2-car">${cz.length ? '▸' : ''}</span><b>${esc(RKNM[g.g] || g.g)}</b></td><td class="n">${n0(g.t)}t</td><td class="n"><b class="${has ? tn : ''}">${n0(g.risk)}t</b></td><td class="n">${g.t ? Math.round(g.risk / g.t * 100) : 0}%</td>`
+          + `<td>${z ? `<span title="${esc((RK.causeDef || {})[z[0]] || '')}">${esc(cn(z[0]))}</span> <b class="k2-t">${n0(z[1])}t</b>${cz.length > 1 ? ` <span class="k2-m">외 ${cz.length - 1}</span>` : ''}` : '–'}</td><td title="${esc(z ? itTip(z[4]) : '')}">${z ? when(z[4]) : '–'}</td></tr>`
+          + (cz.length ? `<tr class="k2-det" data-r="${i}" hidden><td colspan="6">${det}<a class="k2-go" href="risk.html">납기 위험 화면에서 주문 보기 →</a></td></tr>` : '');
+      };
+      return `<div class="ct-wrap"><table class="ct-t k2-rkt"><colgroup><col style="width:170px"><col style="width:110px"><col style="width:110px"><col style="width:80px"><col style="width:330px"><col></colgroup><thead><tr><th>그룹</th><th class="n">미결</th><th class="n">위험</th><th class="n">비율</th><th>주요 원인</th><th>언제 풀리나</th></tr></thead><tbody>${gs.map(row).join('') || '<tr><td colspan="6">미결 주문 없음</td></tr>'}</tbody></table></div>`;
+    })() : null;
     const K = [
       RKT ? { label: '납기 위험', v: n0(RKT.will + RKT.past), unit: 't', sub: `미결 ${n0(RKT.t)}t 중 ${RKT.t ? Math.round((RKT.will + RKT.past) / RKT.t * 100) : 0}% · 납기 지남 ${n0(RKT.past)} · 지연 예상 ${n0(RKT.will)}`, tone: RKT.will + RKT.past >= 0.5 ? 'bad' : 'ok', href: 'risk.html' }
         : { label: '납기 지연 예상', v: n0(risk.length), unit: '건', sub: `${n0(T(risk))}t · 점검 ${warn.length}건 · 이미 지난 ${n0(overdue.length)}건 별도`, tone: risk.length ? 'bad' : 'ok', href: 'risk.html' },
@@ -166,7 +185,7 @@
       const st0 = actOn(x, lf), stopD = x.pl === 'C' && (cdown[`${x.line}|${addD(lf, 1)}`] || 0) >= 1380;
       const dnT = x.pl === 'C' && (W.colorDown || []).find((r) => r[0] === asOf && r[1] === x.line && r[2] !== 'test' && +r[3] >= 1380);   // 11/10 점검: 상태 = 오늘(계획 수리·휴지 종일이면 그것) — 4CCL 11/9 수리 종일인데 어제 생산으로 '가동'
       const status = dnT ? [({ repair: '수리', plan: '계획 휴지', sd: 'S/D' })[dnT[2]] || '휴지', 'na'] : st0 > 0.5 ? ['가동', 'ok'] : stopD || (cdown[`${x.line}|${lf}`] || 0) >= 1380 ? ['휴지', 'na'] : ['정지', 'bad'];
-      let big, bigU = '%', sub, max, act, mark, markL, diffT = null, tn = '';
+      let big, bigU = '%', sub, max, act, mark, markL, diffT = null, tn = '', mpV = null, elV = null;
       if (view === 'month') {
         if (x.pl === 'G') {
           act = x.actual || 0; mark = x.sched || 0; max = Math.max(x.month || 0, act); markL = '일정 누계';
@@ -177,7 +196,7 @@
           const run = chartDays.filter((d) => (cdown[`${x.line}|${d}`] || 0) < 1380);                    // 계획 휴지 날 빼고 경과(휴지 많은 라인을 고르게 경과로 나누면 과소평가)
           const el = run.length ? run.filter((d) => d <= lf).length / run.length : 0;
           act = x.actual || 0; max = Math.max(mp, act); mark = mp * el; markL = `경과 ${Math.round(el * 100)}%`;
-          big = mp ? Math.round(act / mp * 100) : null; diffT = act - mark;
+          big = mp ? Math.round(act / mp * 100) : null; diffT = act - mark; mpV = mp; elV = el;
           tn = big == null ? '' : big >= el * 100 ? 'ok' : big >= el * 100 - 10 ? 'warn' : 'bad';
           sub = mp ? `실적 ${n0(act)} / 월 계획 ${n0(mp)}t · 가동일 경과 ${Math.round(el * 100)}%` : '이번 달 계획 없음';
         }
@@ -200,7 +219,7 @@
       }
       const stopDays = x.pl === 'C' ? Array.from({ length: ndays }, (_, i) => `${mon}-${String(i + 1).padStart(2, '0')}`).filter((d) => (cdown[`${x.line}|${d}`] || 0) >= 1380).length : 0;
       const foot = x.pl === 'G' ? `현재 ${x.fam || '-'}${x.next ? ` · 다음 ${md(x.next[0])} ${x.next[1]}` : ''}` : `${+mon.slice(5)}월 계획 휴지 ${stopDays}일`;
-      return { x, dd, status, big, bigU, sub, max, act, mark, markL, diffT, tn, foot };
+      return { x, dd, status, big, bigU, sub, max, act, mark, markL, diffT, tn, foot, mpV, elV };
     });
     const bar = (r) => {
       if (!r.max || r.mark == null) return `<div class="ln-bar e"><span>${!r.max ? '계획 없음' : '일 계획 기록 없음 · 진도는 월간'}</span></div><div class="ln-bl"><span></span><span></span></div>`;
@@ -249,7 +268,22 @@
     };
     const card = (r) => `<a class="ln-c ${r.tn}" href="ct_prod.html#perf"><div class="ln-h"><b>${r.x.line}</b><span class="ln-st ${r.status[1]}">${r.status[0]}</span><span class="ln-big">${r.big == null ? '<small>집계 전</small>' : `${r.big}<small>${r.bigU}</small>`}</span></div>`
       + `<div class="ln-sub">${esc(r.sub)}${r.diffT != null ? ` <b class="${r.diffT >= 0 ? 'pos' : 'neg'}">${sig(r.diffT)}t</b>` : ''}</div>${runLine(r)}${bar(r)}${spark(r)}<div class="ln-ft">${esc(r.foot)}</div></a>`;
+    // 새 양식(?ui=v2): 진도 기준은 공장 머리에 한 번, 카드 = 라인·상태·진도율 한 줄 → 실적·기준·차이 세 칸(같은 자리 같은 크기) → 막대·일별 그래프
+    const cardV2 = (r) => {
+      const C = r.x.pl === 'C' && r.mpV != null;
+      const cells = C ? [['실적', `${n0(r.act)}t`], ['월 계획', `${n0(r.mpV)}t`], ['가동일 경과', `${Math.round(r.elV * 100)}%`]]
+        : [['실적', `${n0(r.act || 0)}t`], ['기준', r.mark != null ? `${n0(r.mark)}t` : '–'], ['차이', r.diffT != null ? `<span class="${r.diffT < -0.5 ? 'neg' : ''}">${sig(r.diffT)}t</span>` : '–']];
+      return `<a class="ln-c k2-lc ${r.tn}" href="ct_prod.html#perf" title="${esc(r.sub)}"><div class="ln-h"><b>${r.x.line}</b><span class="ln-st ${r.status[1]}">${r.status[0]}</span><span class="ln-big">${r.big == null ? '<small>집계 전</small>' : `${r.big}<small>${r.bigU}</small>`}</span></div>`
+        + `<div class="k2-lv">${cells.map(([l, v]) => `<span><i>${l}</i><b>${v}</b></span>`).join('')}</div>${runLine(r)}${bar(r)}${spark(r)}<div class="ln-ft">${esc(r.foot)}</div></a>`;
+    };
+    const plantV2 = (pl, nm) => {
+      const rs = LN.filter((r) => r.x.pl === pl); if (!rs.length) return '';
+      const pa = rs.reduce((a, r) => a + (r.act || 0), 0), pm = rs.reduce((a, r) => a + (r.mark || 0), 0), hp = pm ? Math.round(pa / pm * 100) : null;
+      const basis = pl === 'G' ? '진도 = 실적 ÷ 일정 누계(오늘까지 재계획 일정)' : '진도 = 실적 ÷ 월 계획 · 가동일 경과율과 비교(계획 휴지일 제외)';
+      return `<div class="ln-pl"><div class="ln-ph k2-ph"><b>${nm}</b><span>${basis}</span>${hp != null ? `<span class="k2-pt">실적 ${n0(pa)}t · ${pl === 'G' ? '기준' : '경과 기준'} ${n0(pm)}t · <b class="${tone(hp)}">${hp}%</b></span>` : ''}</div><div class="ln-grid n${rs.length}">${rs.map(cardV2).join('')}</div></div>`;
+    };
     const plant = (pl, nm) => {
+      if (V2 && view === 'month') return plantV2(pl, nm);
       const rs = LN.filter((r) => r.x.pl === pl);
       if (!rs.length) return '';
       const pa = rs.reduce((a, r) => a + (r.act || 0), 0), pm = rs.reduce((a, r) => a + (r.mark || 0), 0), pmax = rs.reduce((a, r) => a + (r.max || 0), 0);
@@ -258,14 +292,16 @@
       const lbl = view === 'month' ? (pl === 'G' ? '일정 누계' : '가동일 경과 기준') : '계획';
       return `<div class="ln-pl"><div class="ln-ph"><b>${nm}</b><span>실적 ${n0(pa)}t${pm ? ` / ${lbl} ${n0(pm)}t · <b class="${tone(hp)}">${hp}%</b>` : ''}</span></div><div class="ln-grid n${rs.length}">${rs.map(card).join('')}</div></div>`;
     };
-    const lineSec = `<section class="card ln-sec"><h2>라인별 진도 <small>${pLbl} · 공장 → 라인 · 막대 = 기간 실적(▼ 계획), 아래 = 일별 실적과 계획</small></h2>${leg}${plant('G', '도금 공장')}${plant('C', '컬러 공장')}</section>`;
+    const lineSec = V2 ? `<section class="card ln-sec k2-ls"><h2 title="막대 = 이번 달 실적(▼ 기준), 아래 = 일별 실적과 계획">라인별 진도 <small>${pLbl}</small></h2>${leg}${plant('G', '도금')}${plant('C', '컬러')}</section>` : `<section class="card ln-sec"><h2>라인별 진도 <small>${pLbl} · 공장 → 라인 · 막대 = 기간 실적(▼ 계획), 아래 = 일별 실적과 계획</small></h2>${leg}${plant('G', '도금 공장')}${plant('C', '컬러 공장')}</section>`;
 
     // ⑤-1 오늘·내일 라인별 생산 계약(11/5 사용자 '오늘 내일 생산계획도 실 계약을 보여줘야'): 도금 = 생산 캘린더(확정·편성·예상), 컬러 = 생산 캘린더(작업지시·계획 편성)
     const CG = D.cg_calendar || {}, CC = D.cc_calendar || {};
     const KO = { 확정: 0, 작업지시: 0, 작업대기량: 0, 작업대기: 0, 편성: 1, 지시대기: 1, 예상: 2, '부자재 입고대기': 2, '계획 편성': 3, 계획편성: 3 };   // 11/5 컬러 캘린더 구분명(작업대기량·지시대기·부자재 입고대기·계획편성) 추가
+    const GNM2 = { 수출: '도금수출', 국내: '도금국내', 자가재: '도금 자가재' }, CNM2 = { 건재수출: '컬러건재수출', 가전수출: '컬러가전수출', 가전내수: '컬러가전내수', 주문재: '컬러건재 주문재', 계획재: '컬러건재 계획재' };   // 새 양식 그룹 이름(표시만)
     const conDay = (d) => ['1CGL', '2CGL', '1CCL', '2CCL', '3CCL', '4CCL'].filter((ln) => CT.inScope(/CGL/.test(ln) ? 'G' : 'C')).map((ln) => {
       const pl = /CGL/.test(ln) ? 'G' : 'C', src = pl === 'G' ? CG : CC, cell = ((src.lines || {})[ln] || []).find((x) => x.d === d);
-      if (!cell) return `<tr class="cd-h"><td colspan="9"><b>${ln}</b> <span class="cd-s">생산 캘린더에 ${md(d)} 칸 없음(${md(src.asOf)} 기준)</span></td></tr>`;
+      const CS = V2 ? 7 : 9;
+      if (!cell) return `<tr class="cd-h"><td colspan="${CS}"><b>${ln}</b> <span class="cd-s">생산 캘린더에 ${md(d)} 칸 없음(${md(src.asOf)} 기준)</span></td></tr>`;
       const by = new Map();
       for (const it of cell.items || []) {
         const k = it.con ? `${it.kind}|${it.con}` : `${it.kind}|${it.grp}`;
@@ -274,6 +310,14 @@
       }
       const rows = [...by.values()].sort((a, b) => (KO[a.kind] ?? 9) - (KO[b.kind] ?? 9) || String(a.start || a.seq || '').localeCompare(String(b.start || b.seq || '')) || b.t - a.t);
       const tot = rows.reduce((a, x) => a + x.t, 0), kinds = {}; for (const x of rows) kinds[x.kind] = (kinds[x.kind] || 0) + x.t;
+      if (V2) {   // 새 양식: 라인 머리 = 라인·강종·총 톤(구분별 톤은 title), 줄 = 구분 | 주문번호(아래 납기) | 판매그룹 | 고객사·목적지 | 강종·사양 | 두께×폭 | 톤
+        const hd = `<tr class="cd-h"><td colspan="7" title="${esc(cell.stop ? '' : Object.entries(kinds).map(([k, v]) => `${k} ${n0(v)}t`).join(' · ') + (cell.cap ? ` · 능력 ${n0(cell.cap)}t` : '') + (pl === 'C' && (cell.planItems || []).length ? ` · 품명 ${cell.planItems.map((p_) => `${p_[0]} ${n0(p_[1])}t`).join(' · ')}` : ''))}"><b>${ln}</b>${pl === 'G' && cell.fam ? ` <span class="k2-fam">${esc(cell.fam)}</span>` : ''}${cell.event ? ` <span class="cd-e">${esc(cell.event)}</span>` : ''}<span class="k2-tot">${cell.stop ? '정지' : `${n0(tot)}t`}</span></td></tr>`;
+        if (!rows.length) return hd + `<tr><td colspan="7" class="cd-none">${cell.why ? esc(cell.why) : '배정된 계약 없음'}</td></tr>`;
+        return hd + rows.map((x) => `<tr title="${esc([x.need ? `필요 ${md(x.need)}` : '', x.start ? `시작 ${UI.fmtDateTime(x.start)}` : ''].filter(Boolean).join(' · '))}"><td><span class="cd-k k${KO[x.kind] ?? 9}">${esc(x.kind)}</span></td><td class="id">${x.con ? esc(x.con) : '<span class="cd-s">주문 연결 전</span>'}${x.due ? `<small class="k2-sm">납기 ${md(x.due)}</small>` : ''}</td>`
+          + `<td>${esc((pl === 'G' ? GNM2 : CNM2)[x.grp] || x.grp || '')}</td><td class="w">${esc([x.cus, x.dst].filter(Boolean).join(' · ') || (pl === 'C' && !x.con ? '판매그룹 편성 물량' : ''))}</td>`
+          + `<td>${esc(pl === 'G' ? [x.fam, x.grade].filter(Boolean).join(' ') : [x.item, x.color].filter(Boolean).join(' · '))}</td>`
+          + `<td class="n">${x.thk != null ? `${(+x.thk).toFixed(2)}×${n0(x.wdt)}` : ''}</td><td class="n"><b>${n1(x.t)}</b></td></tr>`).join('');
+      }
       const head = `<tr class="cd-h"><td colspan="9"><b>${ln}</b>${pl === 'G' && cell.fam ? ` <span class="cd-f">${esc(cell.fam)}</span>` : ''}${cell.event ? ` <span class="cd-e">${esc(cell.event)}</span>` : ''}`
         + ` <span class="cd-s">${cell.stop ? '정지' : `${n0(tot)}t · ${Object.entries(kinds).map(([k, v]) => `${k} ${n0(v)}`).join(' · ')}`}${cell.cap ? ` · 능력 ${n0(cell.cap)}t` : ''}${pl === 'C' && (cell.planItems || []).length ? ` · 품명 ${cell.planItems.map((p_) => `${p_[0]} ${n0(p_[1])}t`).join(' · ')}` : ''}</span></td></tr>`;
       if (!rows.length) return head + `<tr><td colspan="9" class="cd-none">${cell.why ? esc(cell.why) : '배정된 계약 없음'}</td></tr>`;
@@ -285,9 +329,10 @@
     }).join('');
     const conSec = view === 'day' ? (() => {
       const d0 = asOf, d1 = addD(asOf, 1);
-      const tbl = (d) => `<div class="ct-wrap cd-wrap" data-d="${d}"${d === d0 ? '' : ' hidden'}><table class="ct-t cd-t"><thead><tr><th>구분</th><th>주문번호</th><th>판매그룹</th><th>고객사 · 목적지</th><th>강종 · 사양</th><th class="r">두께×폭</th><th class="r">톤</th><th>납기 · 필요일</th><th>시작</th></tr></thead><tbody>${conDay(d)}</tbody></table></div>`;
+      const tbl = (d) => V2 ? `<div class="ct-wrap cd-wrap" data-d="${d}"${d === d0 ? '' : ' hidden'}><table class="ct-t cd-t k2-cd"><colgroup><col style="width:96px"><col style="width:200px"><col style="width:150px"><col><col style="width:150px"><col style="width:120px"><col style="width:90px"></colgroup><thead><tr><th>구분</th><th>주문번호</th><th>판매그룹</th><th>고객사 · 목적지</th><th>강종 · 사양</th><th class="n">두께×폭</th><th class="n">톤</th></tr></thead><tbody>${conDay(d)}</tbody></table></div>`
+        : `<div class="ct-wrap cd-wrap" data-d="${d}"${d === d0 ? '' : ' hidden'}><table class="ct-t cd-t"><thead><tr><th>구분</th><th>주문번호</th><th>판매그룹</th><th>고객사 · 목적지</th><th>강종 · 사양</th><th class="r">두께×폭</th><th class="r">톤</th><th>납기 · 필요일</th><th>시작</th></tr></thead><tbody>${conDay(d)}</tbody></table></div>`;
       return `<section class="card"><h2>오늘·내일 라인별 생산 계약 <small>생산 캘린더 ${md(CG.asOf || CC.asOf)} 기준</small></h2>`
-        + `<p class="ct-note">확정·작업지시 = 현장 지시 · 편성 = 소재 있는 주문 · 예상 = 2주 안 입고 소재 · 계획 편성 = 컬러 판매그룹 편성(주문 연결 전)</p><div class="seg ct-seg cd-seg" role="group"><button type="button" data-d="${d0}" aria-pressed="true">오늘 ${md(d0)}(${wd(d0)})</button><button type="button" data-d="${d1}" aria-pressed="false">내일 ${md(d1)}(${wd(d1)})</button></div>${tbl(d0)}${tbl(d1)}</section>`;
+        + `${V2 ? '' : '<p class="ct-note">확정·작업지시 = 현장 지시 · 편성 = 소재 있는 주문 · 예상 = 2주 안 입고 소재 · 계획 편성 = 컬러 판매그룹 편성(주문 연결 전)</p>'}<div class="seg ct-seg cd-seg" role="group"${V2 ? ' title="확정·작업지시 = 현장 지시 · 편성 = 소재 있는 주문 · 예상 = 2주 안 입고 소재 · 계획 편성 = 컬러 판매그룹 편성(주문 연결 전)"' : ''}><button type="button" data-d="${d0}" aria-pressed="true">오늘 ${md(d0)}(${wd(d0)})</button><button type="button" data-d="${d1}" aria-pressed="false">내일 ${md(d1)}(${wd(d1)})</button></div>${tbl(d0)}${tbl(d1)}</section>`;
     })() : '';
 
     // ⑤ 기간 전망: 당일(오늘·내일) · 7일(일별) · 30일(주별)
@@ -308,9 +353,10 @@
       const allPast = ds.every(pastD), somePast = ds.some(pastD);
       const lbl = ds.length > 1 ? `${md(ds[0])}~${md(ds[ds.length - 1])}` : `${md(ds[0])} <small class="ct-wd">${wd(ds[0])}${ds[0] === asOf ? ' · 오늘' : ''}</small>`;
       const tag = allPast ? ' <small class="ct-wd">실적</small>' : somePast ? ' <small class="ct-wd">실적+계획</small>' : '';
+      if (V2) return `<tr><td><b>${lbl}</b>${tag}</td>${CT.inScope('G') ? `<td class="n">${n0(sum('G', gT))}</td>` : ''}${CT.inScope('C') ? `<td class="n">${n0(sum('C', cT))}</td>` : ''}<td class="n" title="${o.length}건">${o.length ? `${n0(T(o))}t` : '–'}</td><td class="n">${r.length ? `<b class="ct-neg">${r.length}건</b>` : allPast ? '<span class="ct-wd">지남</span>' : '–'}</td><td title="${esc(es.join(' · '))}">${esc(es.slice(0, 2).join(' · '))}${es.length > 2 ? ` <span class="k2-m">외 ${es.length - 2}</span>` : ''}</td></tr>`;
       return `<tr><td class="nw"><b>${lbl}</b>${tag}</td>${CT.inScope('G') ? `<td class="r">${n0(sum('G', gT))}</td>` : ''}${CT.inScope('C') ? `<td class="r">${n0(sum('C', cT))}</td>` : ''}<td class="r">${o.length ? `${o.length}건 · ${n0(T(o))}t` : '-'}</td><td class="r">${r.length ? `<b class="ct-neg">${r.length}</b>` : allPast ? '<span class="ct-wd">지남</span>' : '-'}</td><td class="w">${esc(es.slice(0, 3).join(' · '))}${es.length > 3 ? ` 외 ${es.length - 3}` : ''}</td></tr>`;
     };
-    const fc = `<table class="ct-t ct-fc"><thead><tr><th>${view === 'month' ? '주(수~화)' : '날짜'}</th>${CT.inScope('G') ? '<th class="r">도금 t</th>' : ''}${CT.inScope('C') ? '<th class="r">컬러 t</th>' : ''}<th class="r">생산 필요 주문</th><th class="r">지연 예상</th><th>주요 일정</th></tr></thead><tbody>${buckets.map(fRow).join('')}</tbody></table>`;
+    const fc = V2 ? `<table class="ct-t ct-fc k2-fc"><colgroup><col style="width:190px">${CT.inScope('G') ? '<col style="width:110px">' : ''}${CT.inScope('C') ? '<col style="width:110px">' : ''}<col style="width:150px"><col style="width:110px"><col></colgroup><thead><tr><th>${view === 'month' ? '주(수~화)' : '날짜'}</th>${CT.inScope('G') ? '<th class="n">도금 t</th>' : ''}${CT.inScope('C') ? '<th class="n">컬러 t</th>' : ''}<th class="n">생산 필요 주문</th><th class="n">지연 예상</th><th>주요 일정</th></tr></thead><tbody>${buckets.map(fRow).join('')}</tbody></table>` : `<table class="ct-t ct-fc"><thead><tr><th>${view === 'month' ? '주(수~화)' : '날짜'}</th>${CT.inScope('G') ? '<th class="r">도금 t</th>' : ''}${CT.inScope('C') ? '<th class="r">컬러 t</th>' : ''}<th class="r">생산 필요 주문</th><th class="r">지연 예상</th><th>주요 일정</th></tr></thead><tbody>${buckets.map(fRow).join('')}</tbody></table>`;
 
     // ⑥ (접힘) 수주 이행 흐름 — 도금·컬러 따로, 출하 확인 불가 분리
     const flow = (pl, nm) => {
@@ -333,6 +379,21 @@
 
     if (dry) return { K, conSec: typeof conSec === 'string' ? conSec : '' };
     const Dd = render(D, 'day', true), Dw = render(D, 'week', true);
+    // 새 양식 결론 카드(?ui=v2): 다섯 장 모두 [작은 머리 → 같은 크기 숫자 → 한 줄 설명]. 긴 설명은 title
+    const kpiV2 = () => {
+      const strip = (s) => String(s || '').replace(/<[^>]+>/g, '');
+      const cell = (lab, k) => `<span class="k2-c ${k.tone || ''}"><i>${lab}</i><b>${k.v}<u>${esc(k.v === '-' ? '' : k.unit || '')}</u></b></span>`;
+      const top3 = lateM.slice().sort((x, y) => (y.lateT || 0) - (x.lateT || 0));
+      const C = [
+        [K[0], [['지연 예상 + 납기 지남', K[0]]], RKT ? `미결 ${n0(RKT.t)}t 중 ${RKT.t ? Math.round((RKT.will + RKT.past) / RKT.t * 100) : 0}%` : `${n0(T(risk))}t`],
+        [K[1], [['발주 마감 지난 부족', K[1]]], top3.length ? `${top3.length}종 · ${top3[0].name}${top3.length > 1 ? ' 외' : ''}` : '없음'],
+        [K[2], [['금일', Dd.K[2]], ['7일', Dw.K[2]], ['월간', K[2]]], `월간 ${n0(act)} / ${n0(plan)}t`],
+        [K[3], [['금일', Dd.K[3]], ['7일', Dw.K[3]], ['월간', K[3]]], `월간 ${n0(shA)} / ${n0(shP)}t`],
+        [K[4], [['판정 불가 주문', K[4]]], `출하 실적 없음 ${noShip.length}건 별도`],
+      ];
+      return `<div class="ct-kpis k2-kp">${C.filter(([k, cs]) => k && cs.every(([, x]) => x)).map(([k, cs, s]) => `<a href="${k.href}" class="ct-kpi k2-k" title="${esc(strip(k.sub))}"><div class="l">${esc(k.label === '생산 진도율' ? '생산 진도' : k.label)}</div><div class="k2-n">${cs.map(([l, x]) => cell(l, x)).join('')}</div><div class="s">${esc(s)}</div></a>`).join('')}</div>`;
+    };
+    const kHtml = V2 ? kpiV2() : null;
     [2, 3].forEach((i) => {   // 납기 위험·소재 부족·자료 확인은 기간과 무관(같은 값) → 한 값만
  const ks = [['금일', Dd.K[i]], ['7일', Dw.K[i]], ['월간', K[i]]];
       if (!K[i] || ks.some(([, k]) => !k)) return;
@@ -342,18 +403,18 @@
     const warnSrc = badSrc.length ? `<p class="ct-srcw">자료 확인 필요: ${badSrc.map((x) => `<b>${esc(x.name)}</b> ${esc(x.tip || '')}`).join(' · ')}</p>` : '';
     const fold = (title, sub, body, open) => `<details class="fold ct-f"${open ? ' open' : ''}><summary>${title}${sub ? ` <small>${sub}</small>` : ''}</summary>${body}</details>`;
     const defs = `<ul class="ct-ul">`
-      + `<li><b>납기 위험</b> = 지연 예상 + 납기 지남(미결 주문, 납기 60일 넘게 지난 미종결 제외) — 납기 위험 화면과 같은 판정${RK ? `(${md(RK.asOf)})` : ''}. 그룹 색: 위험 ÷ 미결 30% 이상 빨강 · 15% 이상 주황</li>`
-      + `<li><b>주요 원인</b> = 위험 톤이 큰 원인 2개, 옆 = 언제 풀리나(다음 생산일·입고 예정일)${RK ? `<ul>${Object.entries(RK.causeNm || {}).map(([k, v]) => `<li><b>${esc(v)}</b>${(RK.causeDef || {})[k] ? ` = ${esc(RK.causeDef[k])}` : ''} → ${esc((RK.dept || {})[k] || '')}</li>`).join('')}</ul>` : ''}</li>`
+      + `<li><b>납기 위험</b> = 지연 예상 + 납기 지남(미결 주문, 납기 60일 넘게 지난 미종결 제외) — 납기 위험 화면과 같은 판정${RK ? `(${md(RK.asOf)})` : ''}. ${V2 ? '위험 숫자 색' : '그룹 색'}: 위험 ÷ 미결 30% 이상 빨강 · 15% 이상 주황</li>`
+      + `<li><b>주요 원인</b> = ${V2 ? '위험 톤이 가장 큰 원인(나머지는 줄을 눌러 펼침), 언제 풀리나 = 그 원인 중 가장 큰 몫의 다음 생산일·입고 예정일' : '위험 톤이 큰 원인 2개, 옆 = 언제 풀리나(다음 생산일·입고 예정일)'}${RK ? `<ul>${Object.entries(RK.causeNm || {}).map(([k, v]) => `<li><b>${esc(v)}</b>${(RK.causeDef || {})[k] ? ` = ${esc(RK.causeDef[k])}` : ''} → ${esc((RK.dept || {})[k] || '')}</li>`).join('')}</ul>` : ''}</li>`
       + `<li><b>생산 진도</b> = ${view === 'month' ? '라인 실적 ÷ 일정 누계(도금 = 재계획 일정, 컬러 = 월 계획)' : '하루가 끝난 날의 도금 실적 ÷ 그날 아침 계획(컬러는 지난 날 일 계획 기록이 없어 월간에서)'} · 98% 이상 정상 · 90% 이상 주의</li>`
       + `<li><b>출하 미달</b> = ${view === 'month' ? '판매그룹 출하 실적 ÷ 오늘까지 기준(월 계획 × 그룹 월중 출하 실적 패턴) — 판매그룹 관제판과 같은 값' : '전날까지 MES 출하 실적 vs 하루 출고 계획(재고 추이와 같은 값)'}</li>`
       + `<li><b>소재 부족</b> = 발주 마감이 지난 부족(소재 화면과 같은 값)</li></ul>`;
     const conFold = (Dd.conSec || '') && Dd.conSec.replace(/^<section class="card"><h2>오늘·내일 라인별 생산 계약 <small>/, '<details class="fold ct-f"><summary>오늘·내일 라인별 생산 계약 <small>').replace(/<\/small><\/h2>/, '</small></summary>').replace(/<\/section>$/, '</details>');
     main.innerHTML = warnSrc
       + `<div class="ct-bar"><span class="ct-per"><span class="ct-note"><b>${pLbl}</b> · ${SCN} · 기준 ${md(asOf)}</span></span><a class="ct-note" href="board.html">판매그룹별 생산·출하·재고 → 관제판</a></div>`
-      + CT.kpis(K)
-      + (rkTbl ? `<section class="card ct-act"><h2>판매그룹별 납기 위험 <small>위험 많은 순 · <a href="risk.html">납기 위험 화면 →</a></small>${rkLeg}</h2>${rkTbl}</section>` : `<section class="card ct-act"><h2>우선 조치 10건 <small>납기 지연 예상 → 마감 빠른 순</small></h2>${actTbl}</section>`)
+      + (kHtml || CT.kpis(K))
+      + (rkTbl2 ? `<section class="card ct-act k2-rks"><h2>판매그룹별 납기 위험 <small><a href="risk.html">납기 위험 화면 →</a></small></h2>${rkTbl2}</section>` : rkTbl ? `<section class="card ct-act"><h2>판매그룹별 납기 위험 <small>위험 많은 순 · <a href="risk.html">납기 위험 화면 →</a></small>${rkLeg}</h2>${rkTbl}</section>` : `<section class="card ct-act"><h2>우선 조치 10건 <small>납기 지연 예상 → 마감 빠른 순</small></h2>${actTbl}</section>`)
       + lineSec
-      + conFold + (false ? '' : `<section class="card"><h2>${view === 'week' ? '이번 주' : `${+asOf.slice(5, 7)}월`} 생산 계획 <small>${pLbl} · 지난 날 = 실적, 오늘부터 = 계획 · 생산 필요일이 그날인 주문${view === 'month' ? ' · 수요일 시작 주' : ''}</small></h2><div class="ct-wrap">${fc}</div></section>`)
+      + conFold + (false ? '' : `<section class="card"><h2>${view === 'week' ? '이번 주' : `${+asOf.slice(5, 7)}월`} 생산 계획 <small${V2 ? ` title="지난 날 = 실적, 오늘부터 = 계획 · 생산 필요 주문 = 생산 필요일이 그 기간인 주문${view === 'month' ? ' · 수요일 시작 주' : ''}"` : ''}>${V2 ? `${md(p0)}~${md(p1)}` : pLbl}${V2 ? '' : ` · 지난 날 = 실적, 오늘부터 = 계획 · 생산 필요일이 그날인 주문${view === 'month' ? ' · 수요일 시작 주' : ''}`}</small></h2><div class="ct-wrap">${fc}</div></section>`)
       + fold('주문 진행 현황', cnt, `${flow('G', '도금')}${flow('C', '컬러')}`)
       + fold('기준·자료 상태', `자료 ${src.length}개 중 ${badSrc.length ? `확인 필요 ${badSrc.length}` : '모두 최신'}${exc.length ? ` · 자료 확인 필요 ${nd.length}건` : ''}`, `${CT.basis(src)}${defs}${exc.length ? `<div class="ct-flh">자료 확인 필요 <small>${exc.length}종 · ${nd.length}건</small></div><ul class="ct-ul">${exc.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}`);
 
@@ -366,7 +427,8 @@
     };
     main.querySelectorAll('.ct-pseg button').forEach((bt) => bt.onclick = () => { if (bt.dataset.v !== view) location.hash = bt.dataset.v; });   // 11/11 회의 '금일·7일·월간 따로 하지 말고 한 화면에서': 기간만 바꿈(주소 #day·#week·#month 그대로)
     main.querySelectorAll('.cd-seg button').forEach((bt) => bt.onclick = () => { main.querySelectorAll('.cd-seg button').forEach((x) => x.setAttribute('aria-pressed', String(x === bt))); main.querySelectorAll('.cd-wrap').forEach((w) => { w.hidden = w.dataset.d !== bt.dataset.d; }); });
-    main.querySelectorAll('tr.ck').forEach((tr) => tr.onclick = () => open1(top[+tr.dataset.i]));
+    main.querySelectorAll('tr.ck:not(.k2-rk)').forEach((tr) => tr.onclick = () => open1(top[+tr.dataset.i]));
+    main.querySelectorAll('tr.k2-rk.ck').forEach((tr) => { tr.onclick = () => { const d = tr.nextElementSibling; if (d && d.classList.contains('k2-det')) { d.hidden = !d.hidden; tr.classList.toggle('on', !d.hidden); } }; });
     CT.keyRows(main);
   }
 

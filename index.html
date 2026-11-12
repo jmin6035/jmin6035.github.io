@@ -104,6 +104,57 @@ details.ct-f { display: block; } details.ct-f .ct-basis { margin: 4px 14px 8px; 
 table.hm-rk td { padding-top: 9px; padding-bottom: 9px; vertical-align: middle; } table.hm-rk tr:hover td { background: color-mix(in srgb, var(--brand-2) 6%, transparent); }
 
 /* 11/12 금일·7일·월간 한 카드 */ .kp3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: 100%; } .kp3 > span { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; } .kp3 i { font-style: normal; font-size: 13.5px; color: var(--ink-2); font-weight: 600; } .kp3 b { font-size: 22px; } .kp3 em { font-style: normal; white-space: nowrap; } .kp3 u { text-decoration: none; font-size: 13.5px; color: var(--ink-2); margin-left: 2px; } .kp3 .bad b { color: var(--bad); } .kp3 .warn b { color: var(--warn); } .kp3 .ok b { color: var(--good); }
+
+/* 새 양식(?ui=v2) — 통합 관제 전용 */
+html.v2 .k2-kp { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+html.v2 .k2-k { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px !important; min-width: 0; }
+html.v2 .k2-k > .l { font-size: 15px !important; color: var(--ink) !important; }
+html.v2 .k2-n { display: flex; gap: 10px; }
+html.v2 .k2-c { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+html.v2 .k2-c i { font-style: normal; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.v2 .k2-c b { font-size: 26px; font-weight: 800; line-height: 1.15; letter-spacing: -.4px; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
+html.v2 .k2-c b u { text-decoration: none; font-size: 14px; font-weight: 600; color: var(--ink-2); margin-left: 2px; letter-spacing: 0; }
+html.v2 .k2-c.bad b { color: var(--bad); } html.v2 .k2-c.warn b { color: var(--warn); }
+html.v2 .k2-k > .s { margin: auto 0 0 !important; padding-top: 8px; border-top: 1px solid var(--v2-line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 1700px) { html.v2 .k2-c b { font-size: 23px; } html.v2 .k2-n { gap: 6px; } }
+@media (max-width: 1250px) { html.v2 .k2-kp { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { html.v2 .k2-kp { grid-template-columns: 1fr; } html.v2 .k2-c b { font-size: 24px; } }
+
+html.v2 table.k2-rkt { table-layout: fixed; width: 100%; max-width: 1100px; }
+html.v2 table.k2-rkt td { padding: 11px 12px !important; vertical-align: middle; }
+html.v2 table.k2-rkt tr.k2-rk.ck { cursor: pointer; } html.v2 table.k2-rkt tr.k2-rk:hover td { background: color-mix(in srgb, var(--brand-2) 5%, transparent); }
+html.v2 .k2-car { display: inline-block; width: 16px; color: var(--ink-3); font-size: 12px; transition: transform .15s; } html.v2 tr.k2-rk.on .k2-car { transform: rotate(90deg); }
+html.v2 table.k2-rkt b.bad { color: var(--bad); } html.v2 table.k2-rkt b.warn { color: var(--warn); } html.v2 table.k2-rkt b.ok { color: var(--ink); }
+html.v2 table.k2-rkt td:nth-child(5) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } html.v2 .k2-m0 { color: var(--ink-2); }
+html.v2 table.k2-cd td { font-weight: 400 !important; } html.v2 table.k2-cd td.id { font-weight: 600 !important; } html.v2 table.k2-cd td b { font-weight: 700; }
+html.v2 .k2-t { font-weight: 800; font-variant-numeric: tabular-nums; margin-left: 4px; } html.v2 .k2-m { color: var(--ink-3); font-size: 13.5px; margin-left: 4px; }
+html.v2 tr.k2-det > td { background: var(--v2-th) !important; padding: 10px 12px 12px 40px !important; border-top: 0 !important; }
+html.v2 .k2-dr { display: grid; grid-template-columns: 170px 90px minmax(0, 1fr) auto; gap: 12px; padding: 4px 0; font-size: 14px; align-items: baseline; }
+html.v2 .k2-dr .n { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; } html.v2 .k2-dr .k2-dd { color: var(--ink-2); font-size: 13.5px; white-space: nowrap; }
+html.v2 .k2-go { display: inline-block; margin-top: 6px; font-size: 13.5px; }
+
+html.v2 .k2-ls .ln-c { border-top: 1px solid var(--v2-line) !important; gap: 10px; padding: 14px 16px; }
+html.v2 .k2-ls .ln-c.ok .ln-big { color: var(--ink); } html.v2 .k2-ls .ln-c.warn .ln-big { color: var(--warn); } html.v2 .k2-ls .ln-c.bad .ln-big { color: var(--bad); }
+html.v2 .k2-ls .ln-st { font-size: 13px; padding: 0 8px; }
+html.v2 .k2-ls .ln-bl { display: none; }
+html.v2 .k2-ls .ln-bar { height: 10px; } html.v2 .k2-ls .ln-bar i.ok { background: var(--brand-2, #1f5fae); }
+html.v2 .k2-lv { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 8px 0; border-top: 1px solid var(--v2-line); border-bottom: 1px solid var(--v2-line); }
+html.v2 .k2-lv span { display: flex; flex-direction: column; min-width: 0; } html.v2 .k2-lv i { font-style: normal; font-size: 13.5px; color: var(--ink-2); }
+html.v2 .k2-lv b { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; } html.v2 .k2-lv .neg { color: var(--bad); }
+@media (max-width: 640px) { html.v2 .k2-ls .ch-c:not(.today):not(:first-child):not(:last-child) .ch-x { visibility: hidden; } }
+html.v2 .k2-ph { gap: 6px 14px; margin-bottom: 10px; } html.v2 .k2-ph > b { font-size: 17px; } html.v2 .k2-ph .k2-pt { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--ink); }
+html.v2 .k2-ph b.ok { color: var(--ink) !important; }
+
+html.v2 table.k2-cd, html.v2 table.k2-fc { table-layout: fixed; width: 100%; max-width: 1300px; }
+html.v2 table.k2-cd { min-width: 1060px; } html.v2 table.k2-fc { min-width: 760px; } html.v2 table.k2-rkt { min-width: 900px; }
+html.v2 table.k2-cd td { padding: 8px 12px !important; vertical-align: top; } html.v2 table.k2-cd td.id { font-variant-numeric: tabular-nums; }
+html.v2 .k2-sm { display: block; font-size: 13.5px; color: var(--ink-2); font-weight: 500; }
+html.v2 table.k2-cd tr.cd-h td { background: var(--v2-th) !important; padding: 10px 12px !important; }
+html.v2 .k2-fam { margin-left: 8px; font-size: 14px; font-weight: 700; color: var(--ink-2); } html.v2 .k2-tot { float: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+html.v2 .cd-k.k0 { background: transparent; color: var(--brand-2, #1f5fae); border-color: currentColor; }
+html.v2 details.ct-f .ct-fs { background: var(--surface) !important; border: 1px solid var(--v2-line) !important; }
+html.v2 table.k2-fc td { padding: 10px 12px !important; }
+html.v2 table.k2-cd td.w, html.v2 table.k2-fc td { overflow: hidden; text-overflow: ellipsis; }
 </style>
 </head>
 <body>
