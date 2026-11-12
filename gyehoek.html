@@ -401,6 +401,62 @@ html:root body main table.gk.gk :is(td.kAZ, td.kAL, td.kMAC, td.kC, td.kX, td.kA
 .gk-lg i.kAZ, .gk-lg i.kAL, .gk-lg i.kMAC, .gk-lg i.kC { background: #fff; }
 .gk-lg i.pst { background: rgba(110, 122, 138, .13); }
 </style>
+<style>
+/* 계획 > 소재(11/12 시안4, mat_v2.js): 소재 현황 표 + 발주·입고 캘린더 */
+#m4 { --m4-in: var(--brand-2); --m4-po: color-mix(in srgb, var(--brand-2) 34%, var(--surface)); --m4-no: var(--bad); --m4-ord: var(--warn); --m4-inb: var(--good); --m4-past: color-mix(in srgb, var(--surface-2) 70%, var(--surface)); }
+#m4 .card.m4 { padding: 20px 22px; }
+#m4 .m4-h { font-size: 19px; font-weight: 800; margin: 0 0 4px; text-align: center; display: block; }
+#m4 .m4-q { text-align: center; font-size: 14px; color: var(--ink-2); margin-bottom: 14px; }
+#m4 .m4-sc { overflow-x: auto; }
+#m4 table { border-collapse: collapse; width: 100%; table-layout: fixed; font-variant-numeric: tabular-nums; }
+#m4 th, #m4 td { text-align: center; padding: 0; }
+/* ① 소재 현황 */
+.m4-mx :is(th, td) { font-size: 15px; height: 44px; border-bottom: 1px solid var(--grid); color: var(--ink); }
+.m4-mx thead th { font-size: 14px; color: var(--ink-2); font-weight: 700; height: 34px; background: var(--th); }
+.m4-mx thead th.gq { color: var(--ink); font-size: 15px; font-weight: 800; background: color-mix(in srgb, var(--brand-2) 8%, var(--surface)); border-bottom: 2px solid var(--surface); }
+.m4-mx :is(th.sl, td.stk) { border-left: 2px solid var(--line); }
+.m4-mx tbody th { font-weight: 800; }
+.m4-mx td.c-in { color: var(--m4-in); font-weight: 700; } .m4-mx td.c-no { color: var(--bad); font-weight: 800; } .m4-mx td.mu { color: var(--ink-3); }
+.m4-mx td.stk { font-weight: 800; line-height: 1.25; } .m4-mx td.stk small { display: block; font-size: 13.5px; font-weight: 500; color: var(--ink-3); }
+.m4-mx td.jdc { padding: 0 10px; }
+.m4-mx tr.gt > * { background: var(--surface-2); font-weight: 800; font-size: 16px; border-top: 2px solid var(--line); }
+.m4-mx tr.gt th { color: var(--brand-2); }
+.m4-mx tr.calm > :is(th, td:not(.stk):not(.jdc)) { color: var(--ink-2); } .m4-mx tr.calm th { font-weight: 700; }
+.m4-mx tr.calm td.c-in { color: color-mix(in srgb, var(--m4-in) 75%, var(--ink-2)); }
+.m4-pw { display: flex; align-items: center; gap: 12px; padding: 0 14px; } .m4-pw .m4-sb { flex: 1; } .m4-pw b { width: 46px; text-align: right; }
+.m4-sb { display: flex; height: 12px; border-radius: 6px; background: var(--surface-2); overflow: hidden; gap: 2px; } .m4-sb i { display: block; height: 100%; }
+:is(.m4-sb, .m4-lg) i.in { background: var(--m4-in); } :is(.m4-sb, .m4-lg) i.po { background: var(--m4-po); } :is(.m4-sb, .m4-lg) i.no { background: var(--m4-no); }
+.m4-jd { display: inline-block; font-weight: 800; border-radius: 12px; padding: 4px 12px; font-size: 14.5px; white-space: nowrap; }
+.m4-jd.bad { background: var(--bad-bg); color: var(--bad); } .m4-jd.warn { background: var(--warn-bg); color: var(--warn); } .m4-jd:is(.ok, .na) { color: var(--ink-3); font-weight: 600; }
+.m4-jdn { color: var(--bad); font-weight: 800; }
+.m4-lg { display: flex; justify-content: center; gap: 20px; font-size: 14px; color: var(--ink-2); margin-top: 12px; align-items: center; }
+.m4-lg i { display: inline-block; width: 30px; height: 14px; border-radius: 4px; vertical-align: -2px; margin-right: 6px; }
+/* ② 발주 · 입고 캘린더 */
+.m4-cl { min-width: 1480px; }
+.m4-cl thead th { background: var(--th); height: 40px; font-size: 13.5px; font-weight: 700; line-height: 1.15; color: var(--ink); }
+.m4-cl thead th small { display: block; font-size: 12px; color: var(--ink-3); }
+.m4-cl thead th.we { color: var(--bad); } .m4-cl thead th.ps { opacity: .7; }
+.m4-cl thead th.td { background: var(--brand-2); color: var(--on-brand, #fff); opacity: 1; } .m4-cl thead th.td small { color: inherit; opacity: .85; }
+.m4-cl tbody th.nm { font-size: 15px; font-weight: 800; border-bottom: 2px solid var(--line); color: var(--ink); }
+.m4-cl tbody td { height: 34px; border-left: 1px solid var(--grid); border-bottom: 1px solid var(--grid); font-size: 13.5px; }
+.m4-cl tbody td.ps { background: var(--m4-past); } .m4-cl tbody td.ps span { opacity: .6; }
+.m4-cl tbody td.td { box-shadow: inset 2px 0 0 var(--brand-2), inset -2px 0 0 var(--brand-2); }
+.m4-cl tr.r1 td { border-bottom: 1px dashed var(--grid); } .m4-cl tr.r2 :is(td, th) { border-bottom: 2px solid var(--line); }
+.m4-cl th.kd { font-size: 13.5px; } .m4-cl th.kd i { font-style: normal; font-weight: 800; padding: 1px 9px; border-radius: 10px; font-size: 13.5px; }
+.m4-cl th.kd i.po { color: var(--m4-ord); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--m4-ord) 50%, var(--surface)); } .m4-cl th.kd i.ib { color: var(--on-brand, #fff); background: var(--m4-inb); }
+.m4-cl td span { display: block; font-weight: 800; white-space: nowrap; cursor: pointer; letter-spacing: -.2px; }
+.m4-cl td span.po { color: var(--m4-ord); } .m4-cl td span.ib { color: var(--m4-inb); } .m4-cl td span.po.late { color: var(--bad); }
+.m4-cl td.tt { font-weight: 800; background: var(--th); }
+.m4-cl tr.sec th { text-align: left; padding: 8px 14px; background: color-mix(in srgb, var(--brand-2) 8%, var(--surface)); color: var(--brand-2); font-size: 14.5px; font-weight: 800; }
+.m4-cl tr.fold td { text-align: left; padding: 0 14px; color: var(--ink-2); font-weight: 700; font-size: 14px; height: 38px; border-left: 0; }
+.m4-cl tr.fold small { color: var(--ink-3); margin-left: 8px; font-size: 13.5px; font-weight: 500; }
+html body main #m4 table.m4-cl :is(td, th).gsep:not(.tt) { border-left: 1px solid var(--grid) !important; }   /* 공통 월 구분선이 요일 '월'을 달로 읽어 생기는 굵은 선 지움 */
+html body main #m4 table.m4-cl :is(td, th) { padding: 0 !important; }
+html body main #m4 table.m4-cl tbody td { font-size: 14px !important; }
+#m4 .m4-cl td span.w5 { font-size: 13.5px; letter-spacing: -.9px; font-weight: 700; }   /* 5자리(10,000t 넘는 발주)도 한 칸에 */
+details.m4-lt { padding: 14px 20px; } details.m4-lt > summary { cursor: pointer; font-weight: 700; color: var(--ink-2); font-size: 15px; }
+details.m4-lt[open] > summary { margin-bottom: 12px; } details.m4-lt #gk-lt { margin: 0; }
+</style>
 </head>
 <body>
 <header id="shell" data-page="gyehoek" data-crumb="계획" data-title="계획" data-sub="일별 가동계획 · 소재"></header>
@@ -420,13 +476,13 @@ html:root body main table.gk.gk :is(td.kAZ, td.kAL, td.kMAC, td.kC, td.kX, td.kA
       <p class="gk-none" id="gk-matnone" hidden></p>
       <div id="gk-matbody">
         <section class="card" id="s-msum"></section>
-        <section class="card" id="gk-msum"></section>
-        <section class="card matcal"><h2>소재 캘린더<span class="unit">톤</span></h2>
+        <div id="m4"><section class="card m4" id="m4-sum"></section><section class="card m4" id="m4-cal"></section></div>
+        <section class="card matcal" hidden><h2>소재 캘린더<span class="unit">톤</span></h2>
           <div class="calw" id="s-calw3"><table class="sc tc" id="s-cal3"></table></div>
           <div class="lg"><span><i style="background:var(--pt-ord)"></i>발주</span><span><i style="background:var(--bad-bg)"></i>마감 지난 발주</span><span><i style="background:var(--pt-inb)"></i>입고(기발주)</span><span><i style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--good)"></i>입고(새 발주분)</span><span><i style="background:var(--pt-use)"></i>생산 투입</span></div>
         </section>
         <div class="det" id="s-det2"></div>
-        <section class="card" id="gk-lt"></section>
+        <details class="card m4-lt"><summary>리드타임 보기</summary><section id="gk-lt"></section></details>
       </div>
     </div>
   </div>
@@ -438,7 +494,8 @@ html:root body main table.gk.gk :is(td.kAZ, td.kAL, td.kMAC, td.kC, td.kX, td.kA
 <script src="engine/crypto.js?v=2611120206"></script>
 <script src="ui/cal.js?v=2611120206"></script>
 <script src="ui/proccalc.js?v=2611120206"></script>
-<script src="supply.js?v=2611122100"></script>
-<script src="gyehoek.js?v=2611122100"></script>
+<script src="supply.js?v=2611122300"></script>
+<script src="gyehoek.js?v=2611122300"></script>
+<script src="mat_v2.js?v=2611122300"></script>
 </body>
 </html>
