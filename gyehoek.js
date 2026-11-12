@@ -350,85 +350,14 @@
   let rsT = 0; addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { if (D && tab === 'plan') snap(); }, 150); });
   addEventListener('beforeprint', () => { if (D && tab === 'plan') snap(); });
 
-  // ---------- 소재 종합: 아래 소재 캘린더(supply.js, 소재 유형별)의 '입고' 줄을 그대로 모아 가로 막대로 — 종합 필요 = 캘린더 '입고' 줄 월 합계(같은 정의)
-  //   입고 완료 = 지난 날 입고 실적(MES), 발주 = 기발주 입고 예정, 미발주 = 새로 발주해야 들어올 분. 길이 = 그 달 들어와야 할 양
-  const num = (s) => +String(s).replace(/,/g, '');
-  function readMat() {
-    const out = [], by = {};
-    let pl = '', ty = '';
-    document.querySelectorAll('#s-cal3 tbody tr').forEach((tr) => {
-      if (tr.classList.contains('sec')) { pl = tr.dataset.dom; return; }
-      const tn = tr.querySelector('.tn'); if (tn && tn.textContent.trim()) ty = tn.textContent.trim();
-      if (!tr.classList.contains('m-inb') || !ty) return;
-      const r = { name: ty, rec: 0, ord: 0, nw: 0, need: 0 };
-      tr.querySelectorAll('td.v[data-d]').forEach((td) => {
-        if (td.dataset.d.slice(0, 7) !== mon) return;
-        const tt = td.getAttribute('title') || '', t = num(td.textContent);
-        let m;
-        if (/실적/.test(tt)) r.rec += t;
-        else if ((m = tt.match(/기발주 ([\d,]+)t · 새 발주분 ([\d,]+)t/))) { r.ord += num(m[1]); r.nw += num(m[2]); }
-        else r.ord += t;
-      });
-      r.need = r.rec + r.ord + r.nw;
-      if (r.need >= 0.5) { if (!by[pl]) out.push((by[pl] = { pl, rows: [] })); by[pl].rows.push(r); }
-    });
-    return out;
-  }
-  let matKey = '';
-  function matChart() {
-    const P = readMat(), el = $('gk-msum'), M = +mon.slice(5);
-    const key = JSON.stringify(P) + mon; if (key === matKey) return; matKey = key;
-    if (!P.length) { el.innerHTML = `<h2>${M}월 소재 종합<span class="unit">톤</span></h2><p class="gk-none">이 달 들어와야 할 소재 없음</p>`; return; }
-    const mx = Math.max(1, ...P.flatMap((p) => p.rows.map((r) => r.need)));
-    const pc = (r) => (r.need ? Math.min(Math.round((r.rec + r.ord) / r.need * 100), r.nw >= 0.5 ? 99 : 100) : 100), cl = (v) => (v < 90 ? 'lo' : v < 100 ? 'mid' : '');   // 미발주가 남으면 100% 아님
-    const nums = (r) => `<span class="r">입고 <b>${n0(r.rec)}</b></span><span class="o">발주 <b>${n0(r.ord)}</b></span><span class="n${r.nw >= 0.5 ? ' on' : ''}">미발주 <b>${n0(r.nw)}</b></span>`;
-    const panel = (p) => {
-      const T = p.rows.reduce((a, r) => ({ need: a.need + r.need, rec: a.rec + r.rec, ord: a.ord + r.ord, nw: a.nw + r.nw }), { need: 0, rec: 0, ord: 0, nw: 0 }), tp = pc(T);
-      const rows = p.rows.map((r, i) => { const w = (v) => (v / mx * 100).toFixed(2) + '%', v = pc(r);
-        return `<div class="mz-r" tabindex="0" data-p="${p.pl}" data-i="${i}"><div class="nm">${esc(r.name)}</div><div class="bar"><div class="trk" style="width:${w(r.need)}">${[['r', r.rec], ['o', r.ord], ['n', r.nw]].filter(([, x]) => x >= 0.5).map(([k, x]) => `<i class="${k}" style="flex:${x} 0 0"></i>`).join('')}</div></div>`
-          + `<div class="v"><span class="nd">필요 <b>${n0(r.need)}</b></span>${nums(r)}<em class="${cl(v)}">${v}%</em></div></div>`; }).join('');
-      return `<div class="mz-p"><h3>${p.pl === 'G' ? '도금 소재 (F/H)' : '컬러 구매 소재'}<span class="nd">필요 <b>${n0(T.need)}</b></span>${nums(T)}<em class="${cl(tp)}">${tp}%</em></h3>${rows}</div>`;
-    };
-    el.innerHTML = `<h2>${M}월 소재 종합<span class="unit">톤</span></h2>`
-      + `<div class="mz-grid">${P.map(panel).join('')}</div>`
-      + `<div class="mz-lg"><span><i class="r"></i>입고 완료</span><span><i class="o"></i>발주(입고 예정)</span><span><i class="n"></i>미발주</span></div>`;
-    const tipEl = $('gk-tip');
-    const show = (e, r) => {
-      tipEl.textContent = '';
-      const hd = document.createElement('div'); hd.className = 'h'; hd.textContent = `${r.name} · ${M}월`; tipEl.appendChild(hd);
-      [['필요', r.need, ''], ['입고 완료', r.rec, 'var(--m-rec)'], ['발주(입고 예정)', r.ord, 'var(--m-ord)'], ['미발주', r.nw, 'var(--m-nw)'], ['확보율', null, '']].forEach(([k, v, c]) => {
-        const rw = document.createElement('div'); rw.className = 'rw'; const i = document.createElement('i'); i.style.background = c || 'transparent'; const s = document.createElement('span'); s.textContent = k; const b = document.createElement('b'); b.textContent = v == null ? pc(r) + '%' : n0(v) + 't';
-        rw.append(i, s, b); tipEl.appendChild(rw); });
-      tipEl.hidden = false;
-      const R = e.target.getBoundingClientRect(), x = e.clientX || R.left + R.width / 2, y = e.clientY || R.top;
-      const tw = tipEl.offsetWidth, th = tipEl.offsetHeight;
-      tipEl.style.left = Math.min(innerWidth - tw - 8, Math.max(8, x + 14)) + 'px'; tipEl.style.top = Math.max(8, (y + th + 20 > innerHeight ? y - th - 12 : y + 16)) + 'px';
-    };
-    el.querySelectorAll('.mz-r').forEach((row) => {
-      const r = P.find((p) => p.pl === row.dataset.p).rows[+row.dataset.i];
-      row.addEventListener('pointermove', (e) => show(e, r)); row.addEventListener('focus', (e) => show(e, r));
-      row.addEventListener('pointerleave', () => { tipEl.hidden = true; }); row.addEventListener('blur', () => { tipEl.hidden = true; });
-    });
-  }
-  // 소재 캘린더 손질: 1일부터 보이게(가로 스크롤 처음으로) · 지난 날 빈 '생산 투입' 칸 = '실적 없음' 한 칸
-  function calFix() {
-    const T = $('s-cal3'); if (!T || !T.tBodies[0]) return;
-    T.querySelectorAll('tr.m-use').forEach((tr) => {
-      const E = [...tr.querySelectorAll('td.e.past')]; if (E.length < 2 || tr.dataset.fx) return;
-      const run = []; for (const td of E) { if (run.length && run[run.length - 1].nextElementSibling !== td) break; run.push(td); }
-      if (run.length < 2) return;
-      run[0].colSpan = run.length; run[0].classList.add('nx'); run[0].innerHTML = '<span>실적 없음</span>';
-      run.slice(1).forEach((td) => td.remove()); tr.dataset.fx = '1';
-    });
-    const w = $('s-calw3'); if (w && w.offsetParent) { w.style.maxWidth = ''; w.scrollLeft = 0; }   // supply.js 는 오늘 앞 2일로 밀어 둠 → 1일부터
-  }
+  // 소재 현황 · 발주·입고 캘린더 = mat_v2.js(11/12 시안4 — 예전 '소재 종합'·소재 캘린더 3줄을 대체)
   // 소재 리드타임(발주 → 입고, 리드타임 화면과 같은 값) — 공장별 짧게
   function leadTable() {
-    const L = D.LT, el = $('gk-lt'); if (!L || !L.types) { el.hidden = true; return; }
+    const L = D.LT, el = $('gk-lt'); if (!L || !L.types) { el.closest('details').hidden = true; return; }
     const pt = {}; (L.sup || []).forEach((s) => { (pt[s[3]] = pt[s[3]] || new Set()).add(s[0]); });
     const grp = { G: [], C: [] }; L.types.forEach((t) => { const ps = pt[t[0]]; (ps && ps.has('G') && !ps.has('C') ? grp.G : grp.C).push(t); });
     const tb = (pl, T) => `<div><h3 style="margin:0 0 8px;font-size:16px;font-weight:800">${PN[pl]} 소재</h3><table class="t lt"><thead><tr><th>소재 유형</th><th>발주 → 입고</th><th>발주 방식</th></tr></thead><tbody>${T.sort((a, b) => a[1] - b[1]).map((t) => `<tr><td><b>${esc(t[0])}</b></td><td><b>${t[1]}</b>일</td><td>${esc(t[2])}</td></tr>`).join('')}</tbody></table></div>`;
-    el.innerHTML = `<h2>소재 리드타임 <span class="tag" style="font-size:14px;font-weight:600;color:var(--ink-2)">고치기는 <a href="leadtime.html">리드타임</a></span></h2><div class="lt-l">${grp.G.length ? tb('G', grp.G) : ''}${tb('C', grp.C)}</div>`;
+    el.innerHTML = `<p style="margin:0 0 10px;font-size:14px;color:var(--ink-2)">발주 → 입고 일수 · 고치기는 <a href="leadtime.html">리드타임</a></p><div class="lt-l">${grp.G.length ? tb('G', grp.G) : ''}${tb('C', grp.C)}</div>`;
   }
 
   // ---------- 소재 탭: supply.js 의 월 탭(#s-mon, 숨김)을 위 월 선택과 맞춤 ----------
@@ -436,7 +365,6 @@
     const b = document.querySelector(`#s-mon button[data-m="${mon}"]`);
     $('gk-matnone').hidden = !!b || !document.querySelector('#s-mon button');
     $('gk-matbody').hidden = !b && !!document.querySelector('#s-mon button');
-    if (b) matKey = '';
     if (!b) { const last = document.querySelector('#s-mon button:last-child'); $('gk-matnone').textContent = `${+mon.slice(5)}월 소재 캘린더는 아직 없습니다 — 소재 계획은 ${last ? last.textContent : ''}까지`; return; }
     if (b.getAttribute('aria-pressed') !== 'true') b.click();
   }
@@ -467,8 +395,6 @@
   addEventListener('hashchange', () => { if (D) setTab(location.hash === '#mat' ? 'mat' : 'plan'); });
   $('gk-print').onclick = () => window.print();
   new MutationObserver(() => { if (D && tab === 'mat') matSync(); }).observe($('s-mon'), { childList: true });
-  let mcT = 0; new MutationObserver(() => { clearTimeout(mcT); mcT = setTimeout(() => { if (D) { calFix(); matChart(); setTimeout(calFix, 600); } }, 60); }).observe($('s-cal3'), { childList: true });   // supply.js 가 400ms 뒤 한 번 더 '오늘 앞 2일'로 밈 → 그 뒤 다시 1일로
-  let cfT = 0; new ResizeObserver(() => { clearTimeout(cfT); cfT = setTimeout(() => { if (D && tab === 'mat') calFix(); }, 500); }).observe($('gk-mat'));
   $('f').addEventListener('submit', () => { const v = $('pw').value; if (v) setTimeout(() => open(v), 0); });
   let s = null; try { s = localStorage.getItem(KEY); } catch (x) { /* 무시 */ }
   if (s) open(s);
