@@ -266,7 +266,7 @@
     $('s-det2').innerHTML = `<div class="dethd m"><span>${esc(c)} ${k === 'ord' ? '발주' : k === 'inb' ? '입고' : '생산 투입'} · ${when} <small>${TPL[R.plant]} — 업체·양·일정과 무엇을 만들려고 쓰는지. 업체·수량을 바꾸려면 <a href="procure.html">소재 발주</a></small></span></div>
       <section class="card wide"><div class="scroll"><table class="t mt"><thead><tr><th class="l">소재</th><th class="l">업체</th><th>톤</th><th>발주 마감</th><th>상태</th><th>입고 필요일</th><th>첫 사용일</th><th class="l" title="발주 실적·입고 예정 = 발주에 걸린 계약의 판매그룹 → 목적지 · 톤 / 새로 낼 발주 = 그 주 생산 계획 용도">무엇을 위해 <small>판매그룹 → 목적지 · 톤</small></th></tr></thead><tbody>${rows || '<tr><td colspan="8">없음</td></tr>'}</tbody>
       <tfoot><tr><td class="l"><b>합계</b></td><td></td><td><b>${n0(sumT(L))}</b></td><td colspan="5"></td></tr></tfoot></table></div>
-      <p class="small">발주 마감 = 입고 필요일 − 업체 리드타임(팀 리드타임 표). 입고 필요일 = 첫 사용일 − 투입 여유(컬러 7일 · 도금 5일). 양은 재고·기발주를 먼저 쓰고 모자라는 만큼을 27년 배정 비중대로 나눈 것.</p></section>`;
+      <p class="small">발주 마감 = 입고 필요일 − 업체 리드타임(팀 리드타임 표). 입고 필요일 = 첫 사용일 − 투입 여유(컬러 7일 · 도금 1일). 양은 재고·기발주를 먼저 쓰고 모자라는 만큼을 27년 배정 비중대로 나눈 것.</p></section>`;
     $('s-det2').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -558,9 +558,10 @@
 
   // ---------- 일정 흐름(칩 → 칩): 지난 날짜 = 완료(회색 ✓), 오늘 생산 = 강조 ----------
   const flowHtml = (steps) => `<div class="flw">${steps.map(([lb, v, dt, cl], i) => `${i ? '<i>›</i>' : ''}<span class="fs ${cl || ''} ${dt && dt < today && !cl ? 'done' : ''}"><small>${esc(lb)}</small><b>${v}</b></span>`).join('')}</div>`;
-  // 도금 소재(F/H): 강종 → 소재 코드, 입고 필요 = 생산일 − 투입 여유 5일, 발주 마감 = 입고 필요 − 업체 유형별 리드타임(27년 배정 업체)
+  // 도금 소재(F/H): 강종 → 소재 코드, 입고 필요 = 생산일 − 투입 여유(팀 리드타임 표 1일 — 11/9 회의, 예전 5일), 발주 마감 = 입고 필요 − 업체 유형별 리드타임(27년 배정 업체)
+  const SAFE_G = 1;
   function matG(r, d) {
-    const a = r[0] || '', code = /STS/.test(a) ? 'N' : /^AL/.test(a) ? 'H' : 'F', need = add(d, -5);
+    const a = r[0] || '', code = /STS/.test(a) ? 'N' : /^AL/.test(a) ? 'H' : 'F', need = add(d, -SAFE_G);
     if (code === 'N') return { what: '도금용 SUS', steps: [['포스코 지급(임가공)', '-', null]], st: ['info', '발주 대상 아님'] };
     const P = MP && MP.P, nm = P ? (P.matCode || {})[code] || code : code;
     const sups = P ? P.suppliers.filter((x) => x.plant === 'G' && x.code === code && (x.share || 0) > 0) : [];
