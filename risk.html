@@ -78,6 +78,26 @@ html body .rk table.rk-mt .rk-ot tr.og-i td { text-align: left !important; white
 .rk-chip.rk-oc b { font-variant-numeric: tabular-nums; }
 @media (max-width: 900px) { .rk-osub { display: none; } html body .rk table.rk-mt tr.rk-d > td { padding: 6px 6px 16px; } }
 @media (max-width: 1200px) { .rk-og { grid-template-columns: 1fr; gap: 18px; } }
+/* 새 양식(?ui=v2): 한 칸 한 값 · 머리글과 본문 같은 정렬 · 빨강은 위험 숫자에만 */
+html.v2 .rk table.v2t { width: 100%; max-width: 1180px; table-layout: fixed; border-collapse: collapse; }
+html.v2 .rk table.v2t th, html.v2 .rk table.v2t td { text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.v2 .rk table.v2t :is(th, td).n { text-align: right !important; font-variant-numeric: tabular-nums; }
+html.v2 .rk .mu { color: var(--ink-2); font-weight: 400; }
+html.v2 .rk .rk-bad { color: var(--bad); font-weight: 700; }
+html.v2 .rk tr.rk2-x { cursor: pointer; } html.v2 .rk tr.rk2-x:hover > td { background: color-mix(in srgb, var(--brand-2) 6%, transparent); }
+html.v2 .rk tr.rk2-x i.ch { display: inline-block; width: 16px; color: var(--ink-2); font-style: normal; transition: transform .15s; } html.v2 .rk tr.rk2-x.on i.ch { transform: rotate(90deg); }
+html.v2 .rk tr.rk2-x.on > td { font-weight: 700; }
+html.v2 .rk tr.rk2-sub > td { white-space: normal !important; overflow: visible; padding: 6px 12px 18px 28px !important; }
+html.v2 .rk tr.rk2-sub > td > div { line-height: 1.7; } html.v2 .rk tr.rk2-sub .mu { margin-right: 8px; }
+html.v2 .rk .rk2-l2 { display: block; font-size: 13.5px; line-height: 1.3; }
+html.v2 .rk table.rk2-o { max-width: 900px; }
+html.v2 .rk .rk2-dg { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; } .rk2-dg > div { min-width: 0; }
+html.v2 .rk .rk2-dg table.v2t td:nth-child(2) { white-space: normal !important; overflow: visible; }
+html.v2 .rk .rk2-dg table.v2t:not(:has(colgroup)) { table-layout: auto; }
+html.v2 .rk .rk2-h { font-size: 15px; font-weight: 700; margin: 4px 0 8px; }
+html.v2 .rk details.rk-more table.v2t { table-layout: auto; max-width: none; }
+@media (max-width: 1500px) { html.v2 .rk .rk2-dg { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { html.v2 .rk table.rk2-g { min-width: 900px; } html.v2 .rk table.rk2-m { min-width: 860px; } html.v2 .rk table.rk2-o { min-width: 600px; } }
 </style>
 </head>
 <body>
