@@ -2,6 +2,9 @@
    페이지: <header id="shell" data-page="procure" data-crumb="소재" data-title="소재 발주 검토" data-sub="..."></header> */
 (function () {
   'use strict';
+  /* 11/12 사용자 '전부 진행해서 가상의 사이트를 만들어 봐 — 내가 먼저 보게': 새 양식 미리보기. 주소에 ?ui=v2 → 이 브라우저에서 계속 새 양식(ui/v2.css), ?ui=old → 원래대로. 기본은 원래 양식 */
+  const V2 = (() => { const q = new URLSearchParams(location.search).get('ui'); try { if (q === 'v2') localStorage.setItem('ui-v2', '1'); if (q === 'old') localStorage.removeItem('ui-v2'); return localStorage.getItem('ui-v2') === '1'; } catch (e) { return q === 'v2'; } })();
+  if (V2) { document.documentElement.classList.add('v2'); const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'ui/v2.css?v=' + Date.now().toString(36).slice(0, -4); document.head.appendChild(l); }
   /* 암호 매번 입력(11/2 사용자 '매번 암호 치고 들어가게'): 브라우저에 암호를 남기지 않음 — 화면을 열 때마다 암호 칸이 뜸.
      shell.js 가 화면 스크립트보다 먼저 실행되므로 여기서 암호 키(…-pw) 저장·읽기를 막고, 예전에 저장된 암호도 지움. 되돌리기 = NO_PW_SAVE = false */
   const NO_PW_SAVE = false;   // 11/2 회의 뒤 사용자 '비밀번호 매번 치는거 해제' — 다시 켜려면 true
@@ -476,7 +479,7 @@
     const tb = document.querySelector('.topbar'); stkTop = tb && getComputedStyle(tb).position === 'sticky' ? tb.offsetHeight : 0;
     document.querySelectorAll('main table').forEach((t) => {
       if (!t.tHead || !t.tHead.rows.length || !t.offsetParent || t.closest('.ch, .ln-c, .ct-panel, dialog, [data-nostick]')) return;
-      const long = t.offsetHeight > innerHeight * 0.9;
+      const long = t.offsetHeight > innerHeight * (V2 ? 0.45 : 0.9);
       const boxes = []; let mode = 'css';
       for (let e = t.parentElement; e && e !== document.body && mode !== 'no'; e = e.parentElement) {
         const cs = getComputedStyle(e), ox = cs.overflowX, oy = cs.overflowY, mine = !!e.dataset.stkBox;
@@ -497,7 +500,27 @@
     stkMove();
   }
   UI.stickyHeads = stickyHeads;
-  let tidyT = 0; const tidySoon = () => { clearTimeout(tidyT); tidyT = setTimeout(() => { tidyTables(); try { stickyHeads(); } catch (e) { /* 무시 */ } }, 120); };
+  if (V2) document.addEventListener('toggle', () => tidySoon(), true);   // 접힌 칸을 펼치면 그 안 표도 머리줄 고정·양식 적용
+  /* 새 양식(V2): 숫자 칸 오른쪽 정렬 표시(n), 날짜 열이 많은 격자 표(캘린더)는 양식 적용 제외(v2-grid), 한 공장만 다루는 화면은 머리 전환 단추 숨김, 미리보기 표시 */
+  const NUMRE = /^[−\-+▲▼△▽±]?\s?[\d][\d,]*(\.\d+)?\s?(t|%|%p|건|일|h|개|천t|톤|t\/h|만)?$/;
+  function v2Tidy() {
+    if (!V2) return;
+    const pg = (document.getElementById('shell') || {}).dataset || {};
+    if (['cgorder', 'ccorder', 'platact', 'coloract', 'status', 'colorstat', 'rolling', 'colorcalc', 'docs', 'decisions', 'health', 'cgtasks'].includes(pg.page)) document.documentElement.classList.add('v2-one');
+    const h1r = document.querySelector('.h1row');
+    if (h1r && !document.getElementById('v2-flag')) h1r.insertAdjacentHTML('beforeend', '<a id="v2-flag" class="noprint" href="?ui=old" title="원래 양식으로 돌아가기">새 양식 미리보기 · 원래대로</a>');
+    document.querySelectorAll('main table').forEach((t) => {
+      if (t.dataset.v2 === String(t.rows.length)) return; t.dataset.v2 = String(t.rows.length);
+      const ncol = Math.max(0, ...[...t.rows].slice(0, 6).map((r) => [...r.cells].reduce((a, c) => a + (c.colSpan || 1), 0)));
+      if (ncol >= 16) { t.classList.add('v2-grid'); return; }
+      const numCol = new Map();
+      [...(t.tBodies[0] || { rows: [] }).rows].forEach((r) => { let k = 0; [...r.cells].forEach((c) => { const txt = c.textContent.replace(/\s+/g, ' ').trim(); const isN = txt && NUMRE.test(txt.replace(/ /g, '')); if (isN) c.classList.add('n'); if (txt) { const m = numCol.get(k) || [0, 0]; m[0] += isN ? 1 : 0; m[1]++; numCol.set(k, m); } k += c.colSpan || 1; }); });
+      // 칸 바탕 빨강·주황 옅은 색칠 → 바탕 없애고 글자 색으로(빨강 = 결품·지연 칸만 글자색)
+      [...(t.tBodies[0] || { rows: [] }).rows].forEach((r) => [...r.cells].forEach((c) => { const m = getComputedStyle(c).backgroundColor.match(/[\d.]+/g); if (!m || m.length < 4) return; let [R, G, B, A] = m.map(Number); if (R <= 1 && G <= 1 && B <= 1) { R *= 255; G *= 255; B *= 255; } if (A > 0 && A < 0.4 && R > 150 && R - B > 60) { c.style.setProperty('background', 'transparent', 'important'); c.classList.add(G < 100 ? 'v2-r' : 'v2-o'); } }));
+      if (t.tHead) { const last = t.tHead.rows[t.tHead.rows.length - 1]; let k = 0; if (last) [...last.cells].forEach((c) => { const m = numCol.get(k); if ((c.colSpan || 1) === 1 && m && m[0] / m[1] >= 0.6) c.classList.add('n'); k += c.colSpan || 1; }); }
+    });
+  }
+  let tidyT = 0; const tidySoon = () => { clearTimeout(tidyT); tidyT = setTimeout(() => { tidyTables(); try { v2Tidy(); } catch (e) { /* 무시 */ } try { stickyHeads(); } catch (e) { /* 무시 */ } }, 120); };
   const boot = () => { build(); fresh(); watchExport(); ctlStrip(); tidySoon(); try { new MutationObserver(tidySoon).observe(document.querySelector('main') || document.body, { childList: true, subtree: true }); } catch (e) { /* 무시 */ } addEventListener('resize', () => { document.querySelectorAll('main table[data-tidy]').forEach((t) => delete t.dataset.tidy); tidySoon(); }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 
