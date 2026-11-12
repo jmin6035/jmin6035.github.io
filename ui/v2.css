@@ -41,12 +41,12 @@ html.v2 body main table:not(.v2-grid) thead :is(th, td) small { font-size: 14px 
 html.v2 body main table:not(.v2-grid) tbody :is(td, th) { font-size: 16px !important; padding: 10px 12px !important; text-align: center !important; line-height: 1.5 !important; vertical-align: middle !important; }
 html.v2 body main table:not(.v2-grid) tbody :is(td, th) :is(small, .s, .sub, .muted) { font-size: 14px !important; }
 html.v2 body main table:not(.v2-grid) :is(td, th).n { text-align: center !important; font-variant-numeric: tabular-nums !important; }
-html.v2 body main table:not(.v2-grid) :is(td, th).v2-l { text-align: left !important; }
+html.v2 body main table:not(.v2-grid) :is(td, th).v2-l { text-align: center !important;   /* 11/12 사용자: 왼쪽·오른쪽 섞기 금지 — 모두 가운데 */ }
 html.v2 body main table:not(.v2-grid) tbody tr + tr > :is(td, th) { border-top: 1px solid var(--v2-line); }
 html.v2 body main table:not(.v2-grid) tfoot :is(td, th) { font-size: 16px !important; font-weight: 800 !important; text-align: center !important; }
 /* 캘린더 격자: 글자 15px · 가운데 */
 html.v2 body main table.v2-grid :is(td, th) { font-size: 15px !important; text-align: center !important; }
-html.v2 body main table.v2-grid :is(td, th):first-child { text-align: left !important; }
+html.v2 body main table.v2-grid :is(td, th):first-child { text-align: center !important; }
 /* 칸 배경 색칠 걷기(빨강·주황 바탕) — 상태는 글자 색으로 */
 html.v2 body main table:not(.v2-grid) tbody :is(td, th):is(.bad, .warn, .neg, .hot) { background: transparent !important; }
 /* 머리줄 고정 상자가 막히지 않게 */
