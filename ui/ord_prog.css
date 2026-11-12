@@ -33,3 +33,9 @@ table.pdt tr.lv0 td { border-bottom: 2px solid var(--line); } table.pdt tr.mu td
 @media (max-width: 640px) { .pms { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pts, .pts.p5, .pts.p6, .pts.p7 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pt .v { font-size: 21px; } .pm .v { font-size: 20px; } table.pl-t th:last-child, table.pl-t td.mu2 { display: none; } .sb.tall span { font-size: 0; } }
 /* 서식 통일(11/10): 타일 세부 낱말 중간 줄바꿈 없음 */
 .gq .nw { white-space: nowrap; } .pt .s, .pt .gq { word-break: keep-all; }
+/* 11/12 납기 달 탭(주문진도 · 편성 맨 위 같음) */
+.ps-mon { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 0 0 14px; flex-wrap: wrap; }
+.ps-mon button { font: inherit; font-size: 15px; font-weight: 700; color: var(--ink-2); background: var(--surface, #fff); border: 1px solid var(--line); border-radius: 8px; padding: 6px 16px; cursor: pointer; }
+.ps-mon button small { font-size: 13.5px; font-weight: 500; margin-left: 4px; }
+.ps-mon button.on { background: var(--brand, #244f7c); border-color: var(--brand, #244f7c); color: #fff; }
+.ps-mon > span { font-size: 14px; color: var(--ink-3); margin-left: 8px; }
