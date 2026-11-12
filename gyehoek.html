@@ -395,6 +395,11 @@ html:root body main table.gk.gk td.a { font-weight: inherit; }
 table.gk td.a::before { display: none; }
 html:root body main table.gk.gk td.kAZ.a { background: #f7e1cf; } html:root body main table.gk.gk td.kAL.a { background: #dde8f6; }
 html:root body main table.gk.gk td.kMAC.a { background: #d7ede8; } html:root body main table.gk.gk td.kC.a { background: #eef1f5; }
+/* 11/12 사용자: 지난 날 = 음영, 앞날 = 흰 바탕(강종 색 없음) — 휴지·수리 노랑, M/C 칸은 그대로 */
+html:root body main table.gk.gk :is(td.kAZ, td.kAL, td.kMAC, td.kC, td.kX, td.kAZ.a, td.kAL.a, td.kMAC.a, td.kC.a) { background: #fff; color: var(--ink); }
+.gk-past { position: absolute; z-index: 3; pointer-events: none; background: rgba(110, 122, 138, .13); }
+.gk-lg i.kAZ, .gk-lg i.kAL, .gk-lg i.kMAC, .gk-lg i.kC { background: #fff; }
+.gk-lg i.pst { background: rgba(110, 122, 138, .13); }
 </style>
 </head>
 <body>
