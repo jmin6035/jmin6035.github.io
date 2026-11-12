@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>관제</title>
+<meta name="description" content="도금·컬러 전체와 그룹별 판매계획·수주·생산·출하·재고 — 이번 달 실적, 다음 두 달 계획 대비 주문">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
+<link rel="stylesheet" href="ui/theme.css?v=2611120206">
+<style>
+main.wrap { max-width: none; }
+#ui-ctl { display: none !important; }   /* 공통 그룹 상태 띠 — 아래 그룹별 그래프와 같은 내용 */
+:root { --kj-sal: #a9b1bb; --kj-ord: #2f7d8c; --kj-pr: #2a78d6; --kj-sh: #1d9a6c; --kj-ms: #8d99a6; --kj-pd: #52606d; --kj-tk: #1c2430; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --kj-sal: #6b7480; --kj-ord: #4aa3b3; --kj-pr: #3987e5; --kj-sh: #2fb683; --kj-ms: #7d8996; --kj-pd: #b7c2ce; --kj-tk: #eef2f6; } }
+:root[data-theme="dark"] { --kj-sal: #6b7480; --kj-ord: #4aa3b3; --kj-pr: #3987e5; --kj-sh: #2fb683; --kj-ms: #7d8996; --kj-pd: #b7c2ce; --kj-tk: #eef2f6; }
+
+/* 달 탭 */
+.kj-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 4px 0 14px; }
+.kj-tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.kj-tabs button { font: inherit; font-size: 17px; font-weight: 700; color: var(--ink-2); background: none; border: 0; border-radius: 9px; padding: 8px 22px; cursor: pointer; white-space: nowrap; }
+.kj-tabs button[aria-selected="true"] { background: var(--brand-2); color: #fff; }
+.kj-tabs button:not([aria-selected="true"]):hover { background: var(--tint); color: var(--ink); }
+.kj-tabs button small { font-size: 13.5px; font-weight: 600; margin-left: 6px; opacity: .85; }
+.kj-mode { font-size: 14.5px; color: var(--ink-2); line-height: 1.5; word-break: keep-all; }
+.kj-mode b { color: var(--ink); }
+
+/* 결론 카드 */
+.ct-kpis.kj-k4 { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 18px; }
+@media (max-width: 1300px) { .ct-kpis.kj-k4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+a.kj-kl { display: block; color: inherit; text-decoration: none; } a.kj-kl > .ct-kpi { height: 100%; }
+a.kj-kl:hover > .ct-kpi { box-shadow: 0 4px 14px rgba(15, 40, 80, .14); }
+.kj-k4 .ct-kpi .s { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kj-wh { display: grid; grid-template-columns: auto auto 1fr; gap: 2px 10px; margin-top: 6px; font-size: 14.5px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.kj-wh span { color: var(--ink-2); white-space: nowrap; } .kj-wh b { white-space: nowrap; text-align: right; } .kj-wh em { font-style: normal; color: var(--ink-2); white-space: nowrap; }
+.kj-wh b.ov { color: var(--warn); }
+
+/* 그래프 카드 */
+.kj-sec { font-size: 19px; font-weight: 700; margin: 22px 0 10px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.kj-sec small { font-size: 14.5px; font-weight: 500; color: var(--ink-2); }
+.kj-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 1100px) { .kj-two { grid-template-columns: minmax(0, 1fr); } }
+.kj-gg { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; margin-bottom: 14px; }
+@media (max-width: 700px) { .kj-gg { grid-template-columns: minmax(0, 1fr); } }
+.kj-c { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px 10px; min-width: 0; }
+.kj-c .h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 0 4px; }
+.kj-c .h b { font-size: 17px; white-space: nowrap; } .kj-c.big .h b { font-size: 19px; }
+.kj-c .h small { font-size: 13.5px; color: var(--ink-2); font-weight: 500; margin-left: 6px; white-space: nowrap; }
+.kj-c .h .u { font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
+.kj-c .ft { font-size: 14px; color: var(--ink-2); margin: 2px 0 0; line-height: 1.5; word-break: keep-all; }
+.kj-c .ft b { color: var(--ink); font-weight: 700; }
+.kj-ch { width: 100%; min-height: 60px; }
+.kj-svg { display: block; width: 100%; height: auto; overflow: visible; font-variant-numeric: tabular-nums; }
+.kj-svg text { font-size: 13.5px; fill: var(--ink-2); }
+.kj-svg text.v { font-size: 14px; font-weight: 700; fill: var(--ink); }
+.kj-svg text.c { font-size: 14.5px; font-weight: 700; fill: var(--ink); }
+.kj-svg text.na { font-size: 13.5px; fill: var(--ink-3); }
+.kj-svg .gl { stroke: var(--line); stroke-width: 1; }
+.kj-svg .tk { stroke: var(--kj-tk); stroke-width: 2.5; }
+.kj-svg .cap { stroke: var(--kj-tk); stroke-width: 1.6; stroke-dasharray: 5 3; fill: none; }
+
+/* 소재 표 */
+.kj-mt { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.kj-mt th, .kj-mt td { padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--line); white-space: nowrap; font-size: 16px; }
+.kj-mt th { font-size: 15px; background: var(--sub); color: var(--ink); }
+.kj-mt td.l, .kj-mt th.l { text-align: left; }
+.kj-mt td.bc { width: 30%; min-width: 180px; }
+.kj-mt .nw { color: var(--warn); font-weight: 700; }
+.kj-sb { display: flex; height: 16px; border-radius: 4px; overflow: hidden; background: var(--sub); box-shadow: inset 0 0 0 1px var(--line); }
+.kj-sb i { display: block; height: 100%; }
+.kj-sb i.r { background: var(--kj-pr); } .kj-sb i.o { background: color-mix(in srgb, var(--kj-pr) 35%, var(--surface)); }
+.kj-sbp { display: flex; align-items: center; gap: 10px; } .kj-sbp .kj-sb { flex: 1; } .kj-sbp b { min-width: 46px; text-align: right; }
+.kj-lg { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14px; color: var(--ink-2); margin: 10px 0 0; }
+.kj-lg span { white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; } .kj-lg i { display: inline-block; width: 14px; height: 12px; border-radius: 3px; }
+.kj-lg i.r { background: var(--kj-pr); } .kj-lg i.o { background: color-mix(in srgb, var(--kj-pr) 35%, var(--surface)); } .kj-lg i.e { background: var(--sub); box-shadow: inset 0 0 0 1px var(--line); }
+.kj-risk { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 12px 0 0; font-size: 15px; line-height: 1.6; }
+.kj-risk > b { font-size: 15px; color: var(--ink-2); white-space: nowrap; }
+.kj-risk span { white-space: nowrap; } .kj-risk span.bad b { color: var(--bad); } .kj-risk span.warn b { color: var(--warn); } .kj-risk span em { font-style: normal; color: var(--ink-2); }
+.kj-mw { overflow-x: auto; }
+@media (max-width: 700px) {
+  .kj-tabs { width: 100%; } .kj-tabs button { flex: 1; padding: 8px 6px; font-size: 16px; }
+  .ct-kpis.kj-k4 .ct-kpi { padding: 10px 11px; }
+  .kj-k4 .ct-kpi .s { white-space: normal; }
+  .kj-wh { font-size: 14px; gap: 2px 6px; }
+  .kj-risk span { white-space: normal; }
+  .kj-wh { grid-template-columns: auto 1fr; } .kj-wh b { text-align: left; } .kj-wh em { grid-column: 2; margin-top: -4px; }
+  /* 소재 표 → 소재마다 한 덩어리(가로 스크롤 없이) */
+  html body main table.kj-mt thead { display: none; }
+  html body main table.kj-mt tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  html body main table.kj-mt td { display: flex; justify-content: space-between; gap: 8px; border: 0 !important; padding: 3px 0 !important; font-size: 15px !important; text-align: left !important; }
+  html body main table.kj-mt td.l { grid-column: 1 / -1; font-size: 16px !important; }
+  html body main table.kj-mt td[data-l]::before { content: attr(data-l); color: var(--ink-2); font-weight: 500; font-size: 14px; white-space: nowrap; }
+  html body main table.kj-mt td.bc { grid-column: 1 / -1; width: auto; min-width: 0; } html body main table.kj-mt td.bc .kj-sbp { flex: 1; margin-left: 10px; }
+}
+</style>
+</head>
+<body>
+<header id="shell" data-page="kj" data-title="관제" data-sub="판매계획 · 수주 · 생산 · 출하 · 재고 — 도금·컬러 전체와 그룹별"></header>
+<main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
+<footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보·통합 계획 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2611120206"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script src="ui/ct.js?v=2611120206"></script>
+<script src="ui/proccalc.js?v=2611120206"></script>
+<script src="kj.js?v=2611121400"></script>
+</body>
+</html>
