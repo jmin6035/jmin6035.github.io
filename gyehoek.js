@@ -251,9 +251,10 @@
     const cols = ['G', 'C'].filter((p) => UI.inScope(p)).flatMap((pc) => [...LINES[pc].map((l) => [l, [l]]), [`${PN[pc]} 합계`, LINES[pc]]]);
     const val = (V, ls) => ls.reduce((a, l) => a + lineSum(V, l, ds), 0);
     const A = CH.map((V) => cols.map(([, ls]) => val(V, ls)));
-    const rows = CH.map((V, i) => `<tr class="${i === si ? 'on' : ''}" data-i="${i}" tabindex="0"><th>${esc(V.lab)}</th>${A[i].map((v, j) => { const df = i ? Math.round(v - A[i - 1][j]) : null;
-      return `<td class="${/합계/.test(cols[j][0]) ? 'sm' : ''}"><b>${n0(v)}</b>${df != null ? `<em class="${df <= -0.5 ? 'dn' : df >= 0.5 ? 'up' : ''}">${sg(df)}</em>` : ''}</td>`; }).join('')}</tr>`).join('');
-    return `<div class="gk-adjw"><table class="gk-adj"><thead><tr><th>조정</th>${cols.map(([n], j) => `<th class="${/합계/.test(n) ? 'sm' : ''}">${n}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    // 판마다 '월 합계 | 앞 판 대비' 두 칸(11/12 사용자 '조정 이해가 안 된다 — 칸 구분')
+    const rows = CH.map((V, i) => `<tr class="${i === si ? 'on' : ''}" data-i="${i}" tabindex="0"><th>${esc(V.lab)}</th>${A[i].map((v, j) => { const df = i ? Math.round(v - A[i - 1][j]) : null, sm = /합계/.test(cols[j][0]) ? ' sm' : '';
+      return `<td class="bl${sm}"><b>${n0(v)}</b></td><td class="df${sm}${df != null && df <= -0.5 ? ' dn' : df != null && df >= 0.5 ? ' up' : ''}">${df == null ? '–' : df === 0 ? '0' : sg(df)}</td>`; }).join('')}</tr>`).join('');
+    return `<h3 class="gk-adjh">판별 월 생산 합계 <small>톤 · 앞 판 대비 = 바로 위 판과의 차이 · 줄을 누르면 그 판을 위 표로</small></h3><div class="gk-adjw"><table class="gk-adj"><thead><tr><th rowspan="2">판</th>${cols.map(([n]) => `<th colspan="2" class="bl${/합계/.test(n) ? ' sm' : ''}">${n}</th>`).join('')}</tr><tr>${cols.map(([n]) => `<th class="sub bl${/합계/.test(n) ? ' sm' : ''}">월 합계</th><th class="sub${/합계/.test(n) ? ' sm' : ''}">앞 판 대비</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
   }
 
   // 누른 칸 한 줄: 판마다 그 칸(월차 → 매주 조정 → 지금) + 도금은 그 날 소재(F/H) 발주 마감과 발주 상태
