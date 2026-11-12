@@ -160,14 +160,14 @@
     const lines = allLines(); if (PS.line && !lines.includes(PS.line)) PS.line = '';
     return lines.length ? `<div class="seg ct-seg ps-seg" role="group" aria-label="라인">${[['', '전체']].concat(lines.map((l) => [l, l])).map(([k, n]) => `<button type="button" data-l="${k}" aria-pressed="${PS.line === k}">${n}</button>`).join('')}</div>` : '';
   }
-  function progSum() {
+  function progSum(noMini) {   // noMini = 라인별 '미생산' 카드 줄 뺌(편성 화면 맨 위 — 11/12 사용자 '미생산 이것들은 빼고')
     const lines = allLines();
     if (!lines.length) return '';
     let body = '';
     if (!PS.line) {
       const mini = lines.map((l) => { const d = psData([l])[0]; if (!d) return ''; const tot = d.cats.reduce((a, c) => a + c.rem, 0);
         return `<button type="button" class="pm" data-l="${l}"><div class="h"><b>${l}</b><span>${n0(d.cats.reduce((a, c) => a + c.n, 0))}건</span></div><div class="v">${n0(tot)}<small>t 미생산</small></div>${segBar(d.cats, false)}<div class="s">${(() => { const g = (k) => (d.cats.find((c) => c.k === k) || { rem: 0 }).rem; return `<span class="nw">매치 전 <b class="bad">${n0(g(K0))}t</b></span> · <span class="nw">작업지시량 <b>${n0(g('작업지시량'))}t</b></span>`; })()}</div></button>`; }).join('');
-      body = `<div class="pms">${mini}</div>` + psData(lines).map((d) => psCard(d, `${d.nm} 전체 주문진도`)).join('');
+      body = (noMini ? '' : `<div class="pms">${mini}</div>`) + psData(lines).map((d) => psCard(d, `${d.nm} 전체 주문진도`)).join('');
     } else body = psData([PS.line]).map((d) => psCard(d, `${PS.line} 주문진도`)).join('');
     return `<div class="ps">${body}</div>`;
   }
@@ -277,14 +277,14 @@
     $('ot-qf').onsubmit = (e) => { e.preventDefault(); TK.q = $('ot-q').value.trim(); find(); };
     $('ot-q').oninput = (e) => { TK.q = e.target.value.trim(); clearTimeout(drawTrack.t); drawTrack.t = setTimeout(find, 200); };
     find();
-    const bindPS = () => {
-      const re = () => { const y = scrollY; $('co-ps').innerHTML = progSum(); bindPS(); scrollTo(0, y); };
-      document.querySelectorAll('.ps-seg button, .pm').forEach((bt) => (bt.onclick = () => { const y = scrollY; PS.line = bt.dataset.l; PS.open = ''; TK.open = null; drawTrack(); scrollTo(0, y); }));
-      document.querySelectorAll('#co-ps [data-ex]').forEach((el) => { const go = () => { PS.open = PS.open === el.dataset.ex ? '' : el.dataset.ex; re(); const e = document.querySelector('.ps-exp'); if (e && PS.open) e.scrollIntoView({ block: 'nearest' }); };
-        el.onclick = go; el.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } }; });
-      document.querySelectorAll('#co-ps th[data-xs] button').forEach((b) => (b.onclick = () => { const x = b.parentNode.dataset.xs; if (PS.sk === x) PS.dir = -PS.dir; else { PS.sk = x; PS.dir = x === 'due' ? 1 : -1; } re(); }));
-    };
     $('co-ps').innerHTML = progSum(); bindPS();
+  }
+  function bindPS(noMini) {
+    const re = () => { const y = scrollY; $('co-ps').innerHTML = progSum(noMini); bindPS(noMini); scrollTo(0, y); };
+    document.querySelectorAll('.ps-seg button, .pm').forEach((bt) => (bt.onclick = () => { const y = scrollY; PS.line = bt.dataset.l; PS.open = ''; TK.open = null; drawTrack(); scrollTo(0, y); }));
+    document.querySelectorAll('#co-ps [data-ex]').forEach((el) => { const go = () => { PS.open = PS.open === el.dataset.ex ? '' : el.dataset.ex; re(); const e = document.querySelector('.ps-exp'); if (e && PS.open) e.scrollIntoView({ block: 'nearest' }); };
+      el.onclick = go; el.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } }; });
+    document.querySelectorAll('#co-ps th[data-xs] button').forEach((b) => (b.onclick = () => { const x = b.parentNode.dataset.xs; if (PS.sk === x) PS.dir = -PS.dir; else { PS.sk = x; PS.dir = x === 'due' ? 1 : -1; } re(); }));
   }
 
   /* ---------- #cal 납기 캘린더(11/11 사용자 전면 개편) ----------
@@ -408,6 +408,12 @@
     else { $('ct-main').innerHTML = basis + '<div class="rk" id="ot" style="margin-top:12px"></div>'; drawTrack(); }
     document.title = `${v === 'cal' ? '납기 캘린더' : '주문진도'} · 주문·납기`;
   }
-  CT.onView(() => { if (D0) { CT.panel(null); render(D0); } });
-  CT.boot(['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'risk.enc.json'], render);
+  CT.onView(() => { if (D0 && $('ct-main')) { CT.panel(null); render(D0); } });
+  const FILES = ['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'risk.enc.json'];
+  /* 편성 화면(pyeonseong.js)이 맨 위에 '컬러·도금 전체 주문진도'를 그대로 씀: CTORD.mount(host, D) — D = FILES 복호화(CT.boot 와 같은 이름) · 라인별 미생산 카드는 뺌 */
+  window.CTORD = { FILES, mount(host, D) {
+    D0 = D; M = CT.orders(D); CT.D = D; L = M.all.filter((o) => CT.inScope(o.pl)); byId = Object.fromEntries(M.all.map((o) => [o.id, o]));
+    host.innerHTML = `<div id="co-ps">${progSum(true)}</div>`; bindPS(true);
+  } };
+  if ($('ct-main')) CT.boot(FILES, render);
 })();

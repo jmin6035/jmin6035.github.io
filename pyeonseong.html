@@ -4,46 +4,57 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>편성</title>
-<meta name="description" content="이번 생산주 라인별 편성(지난 날 = 실적) — 칸을 누르면 그날 작업 순서 · 아래 = 작업 순서 수정">
+<meta name="description" content="맨 위 = 컬러·도금 전체 주문진도 · 이번 주 + 다음 주 라인별 편성(지난 날 = 실적) — 칸을 누르면 그날 작업 순서 · 아래 = 작업 순서 수정">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611120648">
+<link rel="stylesheet" href="ui/theme.css?v=2611120650">
+<link rel="stylesheet" href="ui/ord_prog.css?v=2611120650">
 <style>
 main.wrap { max-width: none; }
 html.v2 #ui-ctl { display: none !important; }   /* 11/12: 공통 관제 알약 줄은 편성과 상관없어 숨김 */
-/* 11/12 사용자 '편성 더 이쁘게 간략하게': 위 = 이번 생산주(수~화) 라인별 캘린더(생산 일정 화면과 같은 칸 — cg_calendar·cc_calendar 그대로) · 칸 누르면 그날 작업 순서 · 아래 = 작업 순서 수정
-   글자 3단계: 큰 톤 20px · 본문 16px · 보조 14px — 모두 가운데 */
+/* 11/12 사용자 '편성 더 이쁘게 간략하게' → '맨 위에 주문진도 그대로(미생산 빼고) · 편성은 2주치로, 칸 줄여서':
+   맨 위 = 주문진도 화면 '컬러·도금 전체 주문진도'(ct_orders.js CTORD · ui/ord_prog.css 같이 씀) · 가운데 = 이번 주 + 다음 주(수~화 14일) 라인별 캘린더 · 칸 누르면 그날 작업 순서 · 아래 = 작업 순서 수정
+   편성 표 글자 2단계: 큰 톤·라인 16px 굵게 · 나머지 14px · 칸 안 여백 6px · 줄바꿈 허용 — 1920 폭에서 가로 스크롤 없음 */
 #ps-main { font-size: 16px; text-align: center; }
 :root { --c-conf: #2e7d32; --c-plan: #3774a1; --c-fcst: #8fb8dc; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-conf: #4caf50; --c-plan: #5b9bd0; --c-fcst: #2f4f6c; } }
 :root[data-theme="dark"] { --c-conf: #4caf50; --c-plan: #5b9bd0; --c-fcst: #2f4f6c; }
+/* 주문진도(주문진도 화면과 같은 모양 — 그 화면 본문 = 왼쪽 정렬 16px) */
+#ps-ordc { text-align: left; }
+#ps-ordc .mu { color: var(--ink-2); }
+#ps-ordc .ps-et th button { all: unset; cursor: pointer; display: inline-flex; gap: 3px; align-items: center; min-height: 30px; } #ps-ordc .ps-et th button:focus-visible { outline: 2px solid var(--brand-2, #1f5fae); outline-offset: 2px; } #ps-ordc .ps-et th i { font-style: normal; font-size: 13.5px; color: var(--brand-2, #1f5fae); min-width: 9px; }
+#ps-ordc .ps { margin: 0; } #ps-ordc .pc:last-child { margin-bottom: 0; }
 #ps-main .card > h2 { font-size: 16px !important; font-weight: 800; text-align: center; justify-content: center; }
 html.v2 main #ps-main .xbtn { font-size: 14px !important; }
 .ps-line { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 22px; margin: 4px 0 16px; font-size: 16px; color: var(--ink-2); }
 .ps-line b { color: var(--ink); font-weight: 800; } .ps-line .ar { color: var(--ink-3); }
-/* 캘린더 — 표 양식은 생산 일정 화면과 같고 칸 안은 편성 화면용(pyeonseong.js cellH — 도금·컬러·지난 날 한 양식). 막대 없음, 글자만 · 20/16/14 · 모두 가운데 · 빨강 = 확인 필요 줄에만 */
+/* 캘린더 — 표 양식은 생산 일정 화면과 같고 칸 안은 편성 화면용(pyeonseong.js cellH — 도금·컬러·지난 날 한 양식). 막대 없음, 글자만 · 16/14 · 모두 가운데 · 빨강 = 확인 필요 줄에만 */
 :root { --c-ov: #c2410c; --c-act: #5b6573; --c-today: color-mix(in srgb, var(--brand-2) 7%, var(--surface)); --c-past: color-mix(in srgb, var(--ink) 4%, var(--surface)); --c-mc: #ffe066; --c-rule: color-mix(in srgb, var(--ink) 30%, var(--surface)); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-ov: #ff8c42; --c-act: #8a96a3; --c-mc: #8a6d00; } }
 :root[data-theme="dark"] { --c-ov: #ff8c42; --c-act: #8a96a3; --c-mc: #8a6d00; }
 .wk { overflow-x: auto; }
-table.psw { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1000px; table-layout: fixed; font-variant-numeric: tabular-nums; }
-html body main #ps-main table.psw :is(th, td) { font-size: 16px !important; padding: 0 !important; border: 0; border-right: 1px solid var(--grid); text-align: center !important; line-height: 1.4 !important; white-space: nowrap; }
+table.psw { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; table-layout: fixed; font-variant-numeric: tabular-nums; }
+html body main #ps-main table.psw :is(th, td) { font-size: 14px !important; padding: 0 !important; border: 0; border-right: 1px solid var(--grid); text-align: center !important; line-height: 1.35 !important; white-space: normal; word-break: keep-all; }
 html body main #ps-main table.psw tbody td { vertical-align: top !important; height: 1px; }
-html body main #ps-main table.psw tr > :first-child { width: 112px; border-left: 1px solid var(--grid); }
+html body main #ps-main table.psw tr > :first-child { width: 104px; border-left: 1px solid var(--grid); }
+html body main #ps-main table.psw thead tr:not(.wh) > :first-child { width: auto; border-left: 0; }   /* 둘째 머리줄 첫 칸 = 날짜(모서리 칸은 첫 줄 rowspan) */
+html body main #ps-main table.psw :is(th, td).wb { border-left: 2px solid var(--c-rule) !important; }   /* 이번 주 | 다음 주 */
 html body main #ps-main table.psw tbody tr > * { border-top: 1px solid var(--grid); }
 html body main #ps-main table.psw tbody tr.ln + tr > *, html body main #ps-main table.psw tbody tr:first-child > * { border-top: 2px solid var(--c-rule); }
 html body main #ps-main table.psw tbody tr:last-child > * { border-bottom: 1px solid var(--grid); }
 /* 머리: 오늘 = 진한 파랑·흰 글자, 나머지 = 옅게 · 날짜 = 누르면 그날 모든 라인 작업 순서 */
-html body main #ps-main table.psw thead th { background: var(--sub) !important; color: var(--ink) !important; font-weight: 800 !important; padding: 9px 4px !important; vertical-align: middle !important; }
+html body main #ps-main table.psw thead th { background: var(--sub) !important; color: var(--ink) !important; font-weight: 800 !important; padding: 6px !important; vertical-align: middle !important; }
+html body main #ps-main table.psw thead tr.wh th { background: var(--tint-2) !important; border-bottom: 1px solid var(--grid); }
+html body main #ps-main table.psw thead tr.wh th small { display: inline; margin-left: 6px; }
 html body main #ps-main table.psw thead th.td { background: var(--brand) !important; color: #fff !important; }
 html body main #ps-main table.psw thead th.cn { background: var(--tint-2) !important; }
-html body main #ps-main table.psw thead th small { display: inline-block; margin-left: 6px; font-size: 14px !important; font-weight: 600 !important; color: var(--ink-2) !important; }
-html body main #ps-main table.psw thead th.cn small { display: block; margin: 0; }
+html body main #ps-main table.psw thead th small { display: block; margin: 0; font-size: 14px !important; font-weight: 600 !important; color: var(--ink-2) !important; }
 html body main #ps-main table.psw thead th.td small { color: #fff !important; opacity: .9; }
 html body main #ps-main table.psw thead th.dk { cursor: pointer; }
 html body main #ps-main table.psw thead th.dk:hover, html body main #ps-main table.psw thead th.dk:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
 html body main #ps-main table.psw thead th.dk.on { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; box-shadow: inset 0 -3px 0 var(--brand-2); }
 /* 행 머리 */
-html body main #ps-main table.psw tbody th { background: var(--tint-2) !important; font-weight: 800 !important; padding: 10px 4px !important; vertical-align: middle !important; }
+html body main #ps-main table.psw tbody th { background: var(--tint-2) !important; font-weight: 800 !important; padding: 6px !important; vertical-align: middle !important; }
+html body main #ps-main table.psw tbody tr.ln th { font-size: 16px !important; }
 html body main #ps-main table.psw tbody th small { display: block; font-size: 14px !important; font-weight: 600 !important; color: var(--ink-2); }
 html body main #ps-main table.psw tbody th small.ovt { color: var(--c-ov); font-weight: 800 !important; }
 /* 열 바탕: 오늘 = 옅은 파랑 · 지난 날 = 옅은 회색 */
@@ -51,7 +62,7 @@ table.psw td.td { background: var(--c-today); }
 table.psw td.pst { background: var(--c-past); }
 html body main #ps-main table.psw .pad { background: transparent !important; border: 0 !important; }
 /* 칸 */
-button.cell { position: relative; display: flex; flex-direction: column; align-items: stretch; width: 100%; height: 100%; min-height: 150px; border: 0; padding: 0; margin: 0; background: transparent; color: var(--ink); font: inherit; text-align: center; cursor: pointer; }
+button.cell { position: relative; display: flex; flex-direction: column; align-items: stretch; width: 100%; height: 100%; min-height: 96px; border: 0; padding: 0; margin: 0; background: transparent; color: var(--ink); font: inherit; text-align: center; cursor: pointer; }
 tr.idle button.cell { min-height: 0; }
 button.cell:hover { background: color-mix(in srgb, var(--brand-2) 6%, transparent); }
 button.cell.pcell { cursor: default; } button.cell.pcell:hover { background: transparent; }
@@ -59,33 +70,34 @@ button.cell.on { box-shadow: inset 0 0 0 3px var(--brand-2); }
 button.cell.fl { box-shadow: inset 4px 0 0 var(--bad); }
 button.cell.fl.on { box-shadow: inset 4px 0 0 var(--bad), inset 0 0 0 3px var(--brand-2); }
 button.cell.stp { justify-content: center; align-items: center; } button.cell.stp:hover { background: transparent; }
-button.cell.stp .off { font-size: 16px; font-weight: 800; color: var(--ink-3); padding: 12px; }
+button.cell.stp .off { font-size: 14px; font-weight: 800; color: var(--ink-3); padding: 6px; }
 .band { flex: 0 0 24px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; line-height: 24px; background: var(--tint-2); color: var(--ink-2); }
 .band.mc { background: var(--c-mc); color: #2b1a00; }
 :root[data-theme="dark"] .band.mc { color: #fff6d6; } @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .band.mc { color: #fff6d6; } }
-.bd { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px; }
-.r1 { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-height: 28px; }
-.tv { font-size: 20px; font-weight: 800; line-height: 1.2; color: var(--ink); }
+.bd { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px; }
+.r1 { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 2px 6px; }
+.tv { font-size: 16px; font-weight: 800; line-height: 1.3; color: var(--ink); }
 .tv small { font-size: 14px; font-weight: 600; color: var(--ink-2); margin-left: 1px; }
-.rmn { font-size: 14px; font-weight: 700; color: var(--ink-2); margin-right: 6px; }
-.pc { font-size: 14px; font-weight: 700; color: var(--ink-2); }
-.pc.ov { color: var(--c-ov); font-weight: 800; }
-.fam, .ac { display: inline-block; border-radius: 6px; padding: 0 7px; font-size: 14px; font-weight: 800; line-height: 1.6; white-space: nowrap; background: var(--tint-2); color: var(--ink-2); }
+.rmn { font-size: 14px; font-weight: 700; color: var(--ink-2); margin-right: 4px; }
+.ld { font-size: 14px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.ld.ov { color: var(--c-ov); font-weight: 800; }
+.fam, .ac { display: inline-block; border-radius: 6px; padding: 0 5px; font-size: 14px; font-weight: 800; line-height: 1.6; white-space: nowrap; background: var(--tint-2); color: var(--ink-2); }
 .ac { background: var(--c-act); color: #fff; }
 .fam-AL { background: #e6f0fb; color: #1d5a96; } .fam-AZ { background: #eef6e8; color: #3d6b1f; } .fam-MAC { background: #f3ecfb; color: #5b2f8f; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fam-AL { background: #1d3550; color: #9cc6f0; } :root:not([data-theme="light"]) .fam-AZ { background: #23381a; color: #b5dc95; } :root:not([data-theme="light"]) .fam-MAC { background: #34244a; color: #d2b6f2; } }
 :root[data-theme="dark"] .fam-AL { background: #1d3550; color: #9cc6f0; } :root[data-theme="dark"] .fam-AZ { background: #23381a; color: #b5dc95; } :root[data-theme="dark"] .fam-MAC { background: #34244a; color: #d2b6f2; }
-/* ② 상태 톤 · ③ 그룹 톤 — 16px 한 줄(넘치면 항목 단위로 줄바꿈) */
-.ln2 { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 14px; font-size: 16px; line-height: 1.45; }
-.ln2 span { white-space: nowrap; }
+/* ② 상태 톤 · ③ 그룹 톤 — 14px(넘치면 항목·낱말 단위로 줄바꿈) */
+.ln2 { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 8px; font-size: 14px; line-height: 1.35; }
+.ln2 span { white-space: normal; word-break: keep-all; }
 .ln2.ss { color: var(--ink); font-weight: 600; } .ln2.gl { color: var(--ink-2); }
-.sn { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 6px; font-size: 14px; line-height: 1.45; color: var(--ink-2); }
-.sn span { white-space: nowrap; } .sn.pls span + span::before { content: '+'; margin-right: 6px; color: var(--ink-3); }
+.sn { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 4px; font-size: 14px; line-height: 1.35; color: var(--ink-2); }
+.sn span { white-space: nowrap; } .sn.pls span + span::before { content: '+'; margin-right: 4px; color: var(--ink-3); }
 .wn { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: auto; padding-top: 2px; }
-.wc { display: inline-block; border-radius: 6px; padding: 0 7px; font-size: 14px; font-weight: 700; line-height: 1.6; white-space: normal; word-break: keep-all; background: var(--warn-bg); color: var(--warn); }
+.wc { display: inline-block; border-radius: 6px; padding: 0 5px; font-size: 14px; font-weight: 700; line-height: 1.6; white-space: normal; word-break: keep-all; background: var(--warn-bg); color: var(--warn); }
 /* 하루 합 */
-html body main #ps-main table.psw tr.dsum td { padding: 12px !important; vertical-align: middle !important; }
+html body main #ps-main table.psw tr.dsum td { padding: 6px !important; vertical-align: middle !important; }
 table.psw tr.dsum .sn { margin-top: 2px; }
+.r1 .rmn, tr.dsum .rmn { display: block; flex-basis: 100%; margin: 0; }   /* '오늘 남은' = 톤 위 한 줄 */
 .ps-lg { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 16px; font-size: 14px; color: var(--ink-2); margin: 0 0 10px; }
 .ps-lg span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .ps-lg i { display: inline-block; width: 18px; height: 10px; border-radius: 3px; } .ps-lg i.ln { width: 4px; height: 16px; border-radius: 2px; }
@@ -128,6 +140,7 @@ i.kd.w1 { background: #44546a; } i.kd.w2 { background: #e0a800; color: #2b1a00; 
       <p class="hint" id="ps-msg"></p></div>
   </section>
   <div id="ps-main" hidden>
+    <section class="card" id="ps-ordc" hidden><div id="ps-ord"></div></section>
     <div class="ps-line" id="ps-line"></div>
     <section class="card" id="ps-cgc"><h2>도금</h2>
       <div class="ps-lg"><span><i style="background:var(--c-mc)"></i>M/C</span><span><i class="ln" style="background:var(--bad)"></i>확인 필요</span><span><i style="background:var(--c-past);outline:1px solid var(--line)"></i>지난 날 = 실적</span></div>
@@ -141,11 +154,12 @@ i.kd.w1 { background: #44546a; } i.kd.w2 { background: #e0a800; color: #2b1a00; 
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611120648"></script>
-<script src="engine/crypto.js?v=2611120648"></script>
-<script src="ui/ct.js?v=2611120648"></script>
-<script src="cg_calendar.js?v=2611120648"></script>
-<script src="cc_calendar.js?v=2611120648"></script>
-<script src="pyeonseong.js?v=2611120648"></script>
+<script src="ui/shell.js?v=2611120650"></script>
+<script src="engine/crypto.js?v=2611120650"></script>
+<script src="ui/ct.js?v=2611120650"></script>
+<script src="ct_orders.js?v=2611120650"></script>
+<script src="cg_calendar.js?v=2611120650"></script>
+<script src="cc_calendar.js?v=2611120650"></script>
+<script src="pyeonseong.js?v=2611120650"></script>
 </body>
 </html>
