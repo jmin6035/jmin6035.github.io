@@ -518,7 +518,11 @@
   /* 새 양식(V2): 숫자 칸 오른쪽 정렬 표시(n), 날짜 열이 많은 격자 표(캘린더)는 양식 적용 제외(v2-grid), 한 공장만 다루는 화면은 머리 전환 단추 숨김, 미리보기 표시 */
   const NUMRE = /^[−\-+▲▼△▽±]?\s?[\d][\d,]*(\.\d+)?\s?(t|%|%p|건|일|h|개|천t|톤|t\/h|만)?$/;
   function v2Tidy() {
-    if (!V2) return;
+    if (!V2) {   // 11/13 사용자 '되돌리는 기능은 왜 없냐' — 이전 양식에서도 새 양식으로 돌아가는 단추
+      const h0 = document.querySelector('.h1row');
+      if (h0 && !document.getElementById('v2-back')) h0.insertAdjacentHTML('beforeend', '<a id="v2-back" class="noprint" href="?ui=v2" title="새 양식으로 돌아가기" style="margin-left:14px;align-self:center;font-size:14px;font-weight:700;color:#fff;background:#1f5fae;border-radius:999px;padding:4px 14px;text-decoration:none">새 양식으로</a>');
+      return;
+    }
     const pg = (document.getElementById('shell') || {}).dataset || {};
     if (['cgorder', 'ccorder', 'platact', 'coloract', 'status', 'colorstat', 'rolling', 'colorcalc', 'docs', 'decisions', 'health', 'cgtasks'].includes(pg.page)) document.documentElement.classList.add('v2-one');
     const h1r = document.querySelector('.h1row');
