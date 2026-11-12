@@ -39,19 +39,31 @@
     const cells = fixed[ln].map((c) => Object.assign({}, c, { items: c.items.slice() }));
     let rest = seq.map((p) => Object.assign({}, p));
     const out = [];
+    let carry = [];                                           // 고정(작업지시·순서안)도 시간 넘치면 뒤쪽부터 다음 날 앞으로(11/12 사용자)
     cells.forEach((c, di) => {
       const d = O.days[di], keep = [];
-      let left = c.cap - c.items.reduce((a, i) => a + i.t, 0);
+      if (carry.length) c.items = carry.map((x) => Object.assign({}, x, { day: d, carried: 1 })).concat(c.items);
+      carry = [];
+      { const tq = (p) => tphOf(ln, p), HH = c.hAvail != null ? c.hAvail : (c.cap >= 1 ? 24 : 0);
+        let h = c.items.reduce((a, i) => a + i.t / tq(i), 0);
+        while (h > HH + 0.05 && c.items.length) {
+          const it = c.items[c.items.length - 1], over = (h - HH) * tq(it);
+          if (over < it.t - 0.05) { carry.unshift(Object.assign({}, it, { t: r1(over) })); it.t = r1(it.t - over); h = HH; }
+          else { carry.unshift(c.items.pop()); h -= it.t / tq(it); }
+        } }
+      /* 11/12 사용자 '넘치면 다음 날로 넘겨야지' — 하루 채우기 = 시간 기준(주문마다 실적 T/Hr, 같은 두께·폭). 가동 가능 시간 다 차면 나머지는 다음 날로 */
+      const tp = (p) => tphOf(ln, p), H = c.hAvail != null ? c.hAvail : (c.cap >= 1 ? 24 : 0);
+      let leftH = H - c.items.reduce((a, i) => a + i.t / tp(i), 0);
       for (const p of rest) {
-        if (left < 0.5 || !fits(p, c, d)) { keep.push(p); continue; }
-        const t = Math.min(left, p.t);
+        if (leftH * tp(p) < 0.5 || !fits(p, c, d)) { keep.push(p); continue; }
+        const t = Math.min(leftH * tp(p), p.t);
         if (t < p.t - 0.05) keep.push(Object.assign({}, p, { t: r1(p.t - t) }));
         const x = Object.assign({}, p, { t: r1(t), day: d });
-        c.items.push(x); out.push(x); left -= t;
+        c.items.push(x); out.push(x); leftH -= t / tp(p);
       }
       rest = keep;
     });
-    rest.forEach((p) => out.push(Object.assign(p, { day: null })));
+    carry.concat(rest).forEach((p) => out.push(Object.assign(p, { day: null })));
     return { cells, seq: out, out: rest };
   }
   function simulate(moves) {
@@ -164,6 +176,7 @@
     c.late = c.items.filter((i) => i.late).length;
     c.lateE = c.items.filter((i) => i.late && i.exp && (i.dept || i.arr)).length;   // 출항일 넘김(필요 생산일 = 출항 − 1일, 10/29)
     c.hrs = r1(c.items.reduce((s, i) => s + i.t / tphOf(c.line, i), 0));   // 이 칸 주문을 T/Hr(같은 두께·폭 2026년 실적)로 돌리는 시간
+    if (c.hAvail != null) { const lh = c.hAvail - c.hrs; c.gap = lh >= 0.5 && fill > 0 ? r1(lh * fill / Math.max(0.1, c.hrs)) : lh >= 0.5 ? r1(c.cap - fill) : 0; }   // 빈칸 = 남은 가동 시간 × 그날 평균 속도(시간 기준 채우기와 맞춤)
     c.mvIn = c.items.filter((i) => i.moved).length;
     c.flag = c.flag0; c.flagS = c.flagS0; c.why = c.why0;
     const seq = c.items.filter((i) => i.kind !== '확정' && i.grade);   // 날짜 안 순서(재질 차례)대로 이었을 때 바로 못 잇는 짝이 남으면 = 사이에 다른 재질이 필요
