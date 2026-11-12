@@ -440,7 +440,7 @@
       body += sec(`${PN[p]} · 그룹`) + GRP.filter((G) => G.pl === p).map((G) => rowOf(G.nm, grpR[G.k], G.k, '', true)).join('');
     }
     const hd = `<tr><th class="lab" scope="col">구분</th><th class="kd" scope="col"></th>${days.map((d) => `<th scope="col" class="${dow(d) === 0 || dow(d) === 6 ? 'we' : ''}${dow(d) === 3 ? ' wst' : ''}${d === td ? ' now' : ''}"><b>${+d.slice(8)}</b><span>${'일월화수목금토'[dow(d)]}</span></th>`).join('')}<th scope="col" class="sumc"><b>계</b><span>월 합</span></th></tr>`;
-    const lg = `<div class="kj-lg in"><span><i class="idl"></i>휴지</span><span><i class="rep"></i>수리</span><span><i class="wst"></i>생산주 시작(수)</span></div>`;
+    const lg = `<div class="kj-lg in"><span><i class="idl"></i>휴지</span><span><i class="rep"></i>수리</span><span><i class="now"></i>오늘</span></div>`;
     return `<h2 class="kj-h">일별 계획 캘린더 <small>${mLab(m)} · 톤</small></h2>${lg}`
       + `<section class="kj-c kj-tb"><div class="ct-wrap kj-calw"><table class="kj-cal v2-grid${two ? ' kjpa' : ''}"><thead>${hd}</thead><tbody>${body}</tbody></table></div></section>`;
   }

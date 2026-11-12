@@ -138,7 +138,7 @@ html body main table.kj-cal.kjpa tbody tr.r2 :is(td, th) { height: 34px; }
 html body main table.kj-cal td.pp { color: var(--ink-2); } html body main table.kj-cal td.aa { font-weight: 800; color: var(--ink); background: color-mix(in srgb, var(--kj-ac) 9%, var(--surface)); }
 html body main table.kj-cal th.kd.ka { color: var(--kj-ac); }
 html body main table.kj-cal :is(.lab.l1, td.o1) { border-bottom: 0 !important; } html body main table.kj-cal :is(.lab.l2, td.o2) { border-top: 0 !important; }
-.kj-lg i.idl { background: #fff2a8; } .kj-lg i.rep { background: #c0392b; }
+.kj-lg i.idl { background: #fff2a8; } .kj-lg i.now { background: color-mix(in srgb, var(--kj-ac) 26%, var(--surface)); box-shadow: inset 2px 0 0 var(--kj-ac), inset -2px 0 0 var(--kj-ac); } .kj-lg i.rep { background: #c0392b; }
 html body main table.kj-cal .sumc { width: 72px; font-weight: 700; border-left: 2px solid color-mix(in srgb, var(--ink) 40%, var(--surface)) !important; } .kj-cal td.sumc b { font-weight: 800; }
 html body main table.kj-cal tbody .lab { box-shadow: -12px 0 0 0 var(--surface); } html body main table.kj-cal tr.tot .lab { box-shadow: -12px 0 0 0 color-mix(in srgb, var(--ink) 4%, var(--surface)); }
 html body main table.kj-cal thead .lab { box-shadow: -12px 0 0 0 var(--v2-th, var(--sub)); background: var(--v2-th, var(--sub)); font-weight: 600; white-space: normal; }
@@ -154,8 +154,11 @@ html body main table.kj-cal td.rep { background: #c0392b; color: #fff; font-weig
 html body main table.kj-cal tr.sec th { height: 36px; background: var(--v2-th, var(--sub)); text-align: center; font-weight: 700; border-top: 2px solid var(--v2-line, var(--line)); overflow: visible; }
 .kj-cal tr.sec th span { padding: 0 12px; }
 html body main table.kj-cal tr.tot :is(td, th) { background: color-mix(in srgb, var(--ink) 4%, var(--surface)); font-weight: 700; }
-html body main table.kj-cal .wst { border-left: 3px solid color-mix(in srgb, var(--ink) 40%, var(--surface)) !important; }
-html body main table.kj-cal .now { box-shadow: inset 0 0 0 2px var(--kj-ac); } .kj-cal thead th.now b { color: var(--kj-ac); }
+/* 수요일 굵은 선·월요일 묶음 선 없앰(11/12 사용자 '진한 선 왜 넣었냐') · 라인 묶음 끝만 굵게 */
+html body main table.kj-cal :is(td, th):is(.wst, .gsep) { border-left: 1px solid var(--v2-line, var(--line)) !important; }
+html body main table.kj-cal.kjpa tbody tr.r2 > :is(td, th), html body main table.kj-cal:not(.kjpa) tbody tr:not(.sec) > :is(td, th) { border-bottom: 2px solid color-mix(in srgb, var(--ink) 45%, var(--surface)) !important; }
+/* 오늘 = 칸마다 테두리 말고 한 줄 통째로 진한 파랑 바탕 */
+html body main table.kj-cal :is(td, th).now { background: color-mix(in srgb, var(--kj-ac) 26%, var(--surface)) !important; box-shadow: none !important; border-left: 2px solid var(--kj-ac) !important; border-right: 2px solid var(--kj-ac) !important; } html body main table.kj-cal thead th.now { background: var(--kj-ac) !important; } .kj-cal thead th.now :is(b, span) { color: #fff !important; }
 
 /* 8. 조치 */
 html.v2 body main .kj-act td:nth-child(3) { white-space: normal; word-break: keep-all; }
