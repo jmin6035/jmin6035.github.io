@@ -238,11 +238,12 @@
     const pad = 31 - ds.length;
     if (pad > 0) h = h.replace('<col class="tot">', '<col class="pad">'.repeat(pad) + '<col class="tot">').replace('<th class="tot" rowspan="2">', `<th class="padc" rowspan="2" colspan="${pad}"></th><th class="tot" rowspan="2">`).replace(/<td class="tot/g, `<td class="padc" colspan="${pad}"></td><td class="tot`);
     void notes;
-    return `<div class="gk-wrap"><table class="gk">${h}</tbody></table>${ti >= 0 ? '<i class="gk-tdy" aria-hidden="true"></i>' : ''}</div>`;
+    const np = ds.filter((d) => d < today).length;   // 11/12 사용자 '지난 날은 음영, 미래는 흰색' — 지난 날 열 위에 회색 막(합친 칸도 끊지 않음)
+    return `<div class="gk-wrap"><table class="gk">${h}</tbody></table>${np ? `<i class="gk-past" data-n="${np}" aria-hidden="true"></i>` : ''}${ti >= 0 ? '<i class="gk-tdy" aria-hidden="true"></i>' : ''}</div>`;
   }
   function legend(V, P) {
     const sw = (c, t) => `<span><i class="${c}"></i>${t}</span>`;
-    return `<div class="gk-lg">${UI.inScope('G') ? sw('kAZ', 'AZ') + sw('kAL', 'AL') + sw('kMAC', 'MACOSTA') : ''}${UI.inScope('C') ? sw('kC', '컬러 가동') : ''}${sw('y', 'M/C · S/D')}${sw('sp', '정지 · 휴지')}${UI.inScope('G') ? sw('hr', '가동시간') : ''}<span class="sep"></span>`
+    return `<div class="gk-lg">${sw('pst', '지난 날')}${sw('y', 'M/C · S/D')}${sw('sp', '정지 · 휴지')}${UI.inScope('G') ? sw('hr', '가동시간') : ''}<span class="sep"></span>`
       + (P ? sw('chg', `${P.lab} 대비 바뀐 칸`) : '') + (V.kind === 'now' ? sw('tdy', '오늘') : '') + '</div>';
   }
 
@@ -335,6 +336,9 @@
   function snap() {
     document.querySelectorAll('.gk-wrap').forEach((w) => {
       const th = w.querySelector('thead th.dn.tdy'), fr = w.querySelector('.gk-tdy'), tb = w.querySelector('table.gk');
+      const ps = w.querySelector('.gk-past'), tb0 = w.querySelector('table.gk');
+      if (ps && tb0) { const D0 = [...w.querySelectorAll('thead tr:first-child th.dn')], n = +ps.dataset.n, W0 = w.getBoundingClientRect(), T0 = tb0.getBoundingClientRect(), a0 = D0[0].getBoundingClientRect(), b0 = D0[n - 1].getBoundingClientRect(), h0 = tb0.querySelector('thead').getBoundingClientRect();
+        Object.assign(ps.style, { left: (a0.left - W0.left - w.clientLeft + w.scrollLeft) + 'px', top: (h0.bottom - W0.top - w.clientTop + w.scrollTop) + 'px', width: (b0.right - a0.left) + 'px', height: (T0.bottom - h0.bottom) + 'px' }); }
       if (th && fr) { const a = th.getBoundingClientRect(), W = w.getBoundingClientRect(), T = tb.getBoundingClientRect(); Object.assign(fr.style, { left: (a.left - W.left - w.clientLeft + w.scrollLeft) + 'px', top: (T.top - W.top - w.clientTop + w.scrollTop) + 'px', width: a.width + 'px', height: T.height + 'px' }); }   // 소수점 픽셀까지(offsetLeft 반올림 → 칸 선과 어긋남, 11/12 사용자)
       if (!w.offsetParent || w.scrollWidth <= w.clientWidth + 1) return;
       const days = [...w.querySelectorAll('thead tr:first-child th.dn')], ti = days.findIndex((x) => x.classList.contains('tdy'));
