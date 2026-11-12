@@ -193,13 +193,13 @@
     h += `<h2 class="kj-h">${pls.map((p) => PN[p]).join(' · ')} 전체</h2>` + legend(cur) + '<div class="kj-two">'
       + pls.map((p) => { const id = CH.push({ x: A.plant[p][mSel], big: true, name: `${PN[p]} 전체` }) - 1;
         return `<section class="kj-c big"><h3>${PN[p]} 전체</h3><div class="kj-ch" data-ch="${id}"></div></section>`; }).join('') + '</div>';
-    h += `<h2 class="kj-h">그룹별 <small>그룹 7개 같은 축</small></h2><div class="kj-gg">` + pls.flatMap((p) => GRP.filter((g) => g.pl === p)).map((G) => { const id = CH.push({ x: A.grp[G.k][mSel], big: false, name: G.nm, self: !!G.self, grp: true }) - 1;
+    h += `<h2 class="kj-h">그룹별 <small>${mLab(mSel)} · 톤</small></h2><div class="kj-gg">` + pls.flatMap((p) => GRP.filter((g) => g.pl === p)).map((G) => { const id = CH.push({ x: A.grp[G.k][mSel], big: false, name: G.nm, self: !!G.self, grp: true }) - 1;
         return `<section class="kj-c"><h3>${esc(G.nm)}</h3><div class="kj-ch" data-ch="${id}"></div></section>`; }).join('') + '</div>';
     h += matrix(cur, pls) + matSec(pls) + calendar(cur, pls) + actions(cur, pls);
     m.innerHTML = h;
     m.querySelectorAll('.kj-tabs button').forEach((b) => (b.onclick = () => { mSel = b.dataset.m; try { localStorage.setItem(LS, mSel); } catch (e) { /* 무시 */ } draw(); }));
     // 같은 축: 전체 두 그래프끼리 · 그룹 그래프끼리
-    for (const big of [true, false]) { const L = CH.filter((c) => c.big === big), mx = Math.max(1, ...L.flatMap((c) => cols(c, cur).flatMap((k) => [k.bg, k.fill, k.tick])).filter((v) => v != null && !isNaN(v))); L.forEach((c) => (c.mx = mx)); }
+    { const L = CH.filter((c) => c.big), mx = Math.max(1, ...L.flatMap((c) => cols(c, cur).flatMap((k) => [k.p, k.a])).filter((v) => v != null && !isNaN(v))); L.forEach((c) => (c.mx = mx)); }   // 전체 두 그래프만 같은 축(그룹은 % 로 비교)
     // 그룹 그래프 한 줄 수: 글자(16px)가 기둥 칸에 들어가는 가장 많은 수(4 → 3 → 2 → 1)
     const gg = m.querySelector('.kj-gg'), gW = gg.clientWidth, gap = parseFloat(getComputedStyle(gg).columnGap) || 16, pad = 34;
     const gc = CH.filter((c) => !c.big), nCol = [4, 3, 2].find((n) => [0, 1].some((l) => gc.every((c) => chart(c, cur, (gW - gap * (n - 1)) / n - pad, l, true)))) || 1;   // 한 줄에 많이(두 줄 글자까지 허용)
@@ -207,8 +207,8 @@
     const els = [...m.querySelectorAll('[data-ch]')];
     for (const big of [true, false]) {   // 같은 묶음은 같은 단계로
       const E = els.filter((el) => CH[+el.dataset.ch].big === big), W = (el) => el.clientWidth || 400;
-      const lv = [0, 1].find((l) => E.every((el) => chart(CH[+el.dataset.ch], cur, W(el), l, true))) ?? 2;
-      E.forEach((el) => { el.innerHTML = chart(CH[+el.dataset.ch], cur, W(el), lv); if (lv >= 2) { const h3 = el.parentNode.querySelector('h3'); if (h3 && !h3.querySelector('small')) h3.insertAdjacentHTML('beforeend', ' <small>천t</small>'); } });
+      const lv = [0, 1, 2].find((l) => E.every((el) => chart(CH[+el.dataset.ch], cur, W(el), l, true))) ?? 2;
+      E.forEach((el) => { el.innerHTML = chart(CH[+el.dataset.ch], cur, W(el), lv); if (lv >= 1) { const h3 = el.parentNode.querySelector('h3'); if (h3 && !h3.querySelector('small')) h3.insertAdjacentHTML('beforeend', ' <small>천t</small>'); } });
     }
     bindTips(m);
     m.querySelectorAll('.kj-ms .bar i span').forEach((sp) => { if (sp.offsetWidth > sp.parentNode.clientWidth - 4) sp.style.visibility = 'hidden'; });
@@ -219,9 +219,8 @@
 
   // 그래프 범례 — 막대 모양 + 글자 색 뜻 + 눈금선 두 가지
   function legend(cur) {
-    return `<div class="kj-lg" aria-label="범례"><span><i class="sl"></i>판매계획</span><span><i class="pl"></i>계획</span><span><i class="ac"></i>${cur ? '실적 · 확정 주문' : '납기 주문'}</span><span><i class="stk"></i>재고</span><span><i class="sbg"></i>상한 · 목표</span><span><i class="ov"></i>상한 초과</span>`
-      + (cur ? '<span><i class="tkd"></i>기준선(오늘까지 확정 필요)</span><span><i class="tk"></i>오늘까지 계획</span><span><b class="bad">빨강 %</b>오늘 기준보다 모자람</span>' : '')
-      + '<span><b class="ov">주황 %</b>재고 상한 초과</span></div>';
+    return `<div class="kj-lg" aria-label="범례"><span><i class="sl"></i>${cur ? '판매계획 · 월 계획 · 상한' : '판매계획 · 생산 계획 · 상한'}</span><span><i class="ac"></i>${cur ? '확정 주문 · 실적' : '납기 주문'}</span><span><i class="stk"></i>재고</span><span><i class="ov"></i>상한 초과</span>`
+      + (cur ? '<span><b class="bad">빨강 %</b>오늘 기준보다 늦음</span>' : '') + '<span><b class="ov">주황 %</b>상한 초과</span></div>';
   }
 
   /* 1. 운영 일정 — 12·1월은 같은 월 일정을 준용(운영 일정 근거 = 수주팀 PDF 월 주기 일정, 달별 일정 없음) */
@@ -260,65 +259,56 @@
      눈금: 수주 = 점선(기준선 = 오늘까지 확정 필요), 생산·출하 = 실선(오늘까지 계획) · 기둥 위 = %(16px) + 값(16px) · 아래 = 이름(16px) ---------- */
   let MC = null;
   const tw = (t, sz = 16, wt = 700) => { if (!MC) MC = document.createElement('canvas').getContext('2d'); MC.font = `${wt} ${sz}px ${getComputedStyle(document.body).fontFamily}`; return MC.measureText(t).width; };
+  // 기둥 묶음(화이트보드 그림 그대로): 항목마다 회색 = 계획·판매계획·상한, 파랑 = 실적·주문, 진회색 = 재고(상한 넘으면 주황). 막대 위 숫자 하나씩, 아래 이름 · 진도 %
   function cols(c, cur) {
     const x = c.x || {}, T = [], M = mLab(mSel);
-    const r = (k, v, cls) => [k, v == null ? '자료 없음' : typeof v === 'string' ? v : `${n0(v)}t`, cls || ''];
+    const r = (k, v, cls) => [k, v == null ? '자료 없음' : `${n0(v)}t`, cls || ''];
     const na = (nm, t) => ({ nm, na: t, tip: [[nm, t, '']] });
-    if (c.self) { T.push(na('판매계획', '없음'), na('수주', '주문 없음')); }
-    else {
-      T.push(x.sales == null ? na('판매계획', '미수령') : { nm: '판매계획', sl: true, bg: x.sales, tip: [r(`${M} 판매계획`, x.sales)] });
-      if (cur) T.push({ nm: '수주', fill: x.ord, tick: x.base, dash: true, pct: pctOf(x.ord, x.sales), pcls: shortT(x.ord, x.base), tip: [r('확정 주문', x.ord), r('판매계획', x.sales), ['진도(판매계획 대비)', P0(pctOf(x.ord, x.sales)), shortT(x.ord, x.base)], r('기준선(오늘까지 확정 필요)', x.base)] });
-      else T.push(x.ord == null ? na('수주', '자료 없음') : !(x.ord >= 0.5) ? na('수주', '주문 없음') : { nm: '수주', fill: x.ord, pct: pctOf(x.ord, x.sales), tip: [r(`${M} 납기 주문`, x.ord), ['판매계획 대비', P0(pctOf(x.ord, x.sales)), '']] });
-    }
+    if (c.self) T.push(na('수주', '주문 없음'));
+    else if (x.sales == null && x.ord == null) T.push(na('수주', '자료 없음'));
+    else if (cur) T.push({ nm: '수주', p: x.sales, a: x.ord, pct: pctOf(x.ord, x.sales), pcls: shortT(x.ord, x.base), tip: [r('판매계획', x.sales), r('확정 주문', x.ord), ['진도', P0(pctOf(x.ord, x.sales)), shortT(x.ord, x.base)], r('오늘 기준(오늘까지 확정 필요)', x.base)] });
+    else T.push({ nm: '수주', p: x.sales, a: x.ord, pct: pctOf(x.ord, x.sales), tip: [r(`${M} 판매계획`, x.sales), r(`${M} 납기 주문`, x.ord), ['진도', P0(pctOf(x.ord, x.sales)), '']] });
     if (cur) {
-      T.push({ nm: '생산', bg: x.pPlan, fill: x.pAct, tick: x.pDue, pct: pctOf(x.pAct, x.pPlan), pcls: shortT(x.pAct, x.pDue), tip: [r('생산 실적', x.pAct), r('월 계획', x.pPlan), ['진도(월 계획 대비)', P0(pctOf(x.pAct, x.pPlan)), shortT(x.pAct, x.pDue)], r('오늘까지 계획', x.pDue)] });
-      T.push(x.sPlan == null ? na('출하', c.self ? '출하 없음' : '자료 없음') : { nm: '출하', bg: x.sPlan, fill: x.sAct, tick: x.sDue, pct: pctOf(x.sAct, x.sPlan), pcls: shortT(x.sAct, x.sDue), tip: [r('출하 실적', x.sAct), r('월 계획', x.sPlan), ['진도(월 계획 대비)', P0(pctOf(x.sAct, x.sPlan)), shortT(x.sAct, x.sDue)], r('오늘까지 계획', x.sDue)] });
-    } else {
-      T.push(x.pPlan == null ? na('생산', '자료 없음') : { nm: '생산', bg: x.pPlan, plan: true, tip: [r(`${M} 생산 계획`, x.pPlan)] });
-    }
+      T.push({ nm: '생산', p: x.pPlan, a: x.pAct, pct: pctOf(x.pAct, x.pPlan), pcls: shortT(x.pAct, x.pDue), tip: [r('월 계획', x.pPlan), r('실적', x.pAct), ['진도', P0(pctOf(x.pAct, x.pPlan)), shortT(x.pAct, x.pDue)], r('오늘까지 계획', x.pDue)] });
+      T.push(x.sPlan == null ? na('출하', c.self ? '출하 없음' : '자료 없음') : { nm: '출하', p: x.sPlan, a: x.sAct, pct: pctOf(x.sAct, x.sPlan), pcls: shortT(x.sAct, x.sDue), tip: [r('월 계획', x.sPlan), r('실적', x.sAct), ['진도', P0(pctOf(x.sAct, x.sPlan)), shortT(x.sAct, x.sDue)], r('오늘까지 계획', x.sDue)] });
+    } else T.push(x.pPlan == null ? na('생산', '자료 없음') : { nm: '생산', p: x.pPlan, a: null, tip: [r(`${M} 생산 계획`, x.pPlan)] });
     const cn = c.grp ? '목표' : '상한', st = (nm, v, cp) => (v == null ? na(nm, '자료 없음')
-      : { nm, stock: true, bg: cp, fill: v, pct: pctOf(v, cp), pcls: overT(v, cp), tip: [r(cur ? `${nm} (${md(A.S.asOf)})` : `${nm} (월말 계획)`, v), r(cn, cp), [`${cn} 대비`, P0(pctOf(v, cp)), overT(v, cp)]] });
-    if (!c.grp) T.push(st('소재 재고', x.mat, x.matCap));   // 그룹별 소재 재고는 나눌 자료가 없음(매트릭스 '–')
+      : { nm, p: cp, a: v, stock: true, pct: pctOf(v, cp), pcls: overT(v, cp), tip: [r(cn, cp), r(cur ? `재고 ${md(A.S.asOf)}` : '월말 재고 계획', v), [`${cn} 대비`, P0(pctOf(v, cp)), overT(v, cp)]] });
+    if (!c.grp) T.push(st('소재 재고', x.mat, x.matCap));
     T.push(st('제품 재고', x.stk, x.cap));
     return T;
   }
-  // lv = 글자 줄이기 단계(글자 크기는 그대로): 0 '실적 / 계획t' 한 줄 · 1 두 줄로 · 2 천 톤(소수 한 자리) + 이름 두 줄(휴대폰)
+  // lv: 0 = 막대마다 숫자(톤) · 1 = 숫자를 천 톤(소수 한 자리) · 2 = 파랑 막대 숫자만(천 톤) — 두 숫자 사이는 막대 간격을 벌려 띄움
   function chart(c, cur, W, lv, probe) {
-    const C = cols(c, cur), n = C.length, slot = W / n, BW = Math.min(44, Math.round(slot * 0.42)), IN = 5, mx = c.mx || Math.max(1, ...C.flatMap((k) => [k.bg, k.fill, k.tick]).filter((v) => v != null && !isNaN(v)));
-    const nmL = lv >= 2 ? 2 : 1, H = (c.big ? 260 : 236) + (lv >= 1 ? 20 : 0) + (nmL - 1) * 20, T = 52 + (lv === 1 ? 20 : 0), y0 = H - 14 - nmL * 20, Y = (v) => T + (y0 - T) * (1 - Math.max(0, v) / mx);
-    const nf = (v) => (lv >= 2 ? (v / 1000).toFixed(1) : n0(v)), u = lv >= 2 ? '' : 't';
-    const BX = [], txt = (cls, x, y, t) => { const w = tw(t, 16, 700); BX.push([x - w / 2, x + w / 2, y - 14, y + 3]); return `<text class="${cls}" x="${x}" y="${y}" text-anchor="middle">${t}</text>`; };
-    const col = (cx, w, y1, y2, cls, round) => { const h = y2 - y1; if (h <= 0.3) return ''; const r = round ? Math.min(4, h / 2) : 0, x = cx - w / 2;
-      return `<path class="${cls}" d="M${x} ${y2}V${y1 + r}Q${x} ${y1} ${x + r} ${y1}H${x + w - r}Q${x + w} ${y1} ${x + w} ${y1 + r}V${y2}Z"/>`; };
-    let g = '', hits = '';
+    const C = cols(c, cur), n = C.length, slot = W / n, BW = Math.max(14, Math.min(34, Math.round(slot * 0.24)));
+    const mx = c.mx || Math.max(1, ...C.flatMap((k) => [k.p, k.a]).filter((v) => v != null && !isNaN(v)));
+    const H = c.big ? 300 : 250, T = 30, y0 = H - 56, Y = (v) => T + (y0 - T) * (1 - Math.min(Math.max(0, v), mx) / mx);
+    const nf = (v) => (lv >= 1 ? (v / 1000).toFixed(1) : n0(v));
+    const BX = [], txt = (cls, x, y, t, wt = 700) => { const w = tw(t, 16, wt); BX.push([x - w / 2, x + w / 2]); return `<text class="${cls}" x="${x}" y="${y}" text-anchor="middle">${t}</text>`; };
+    const bar = (cx, y1, cls) => { const h = y0 - y1; if (h <= 0.3) return ''; const r = Math.min(4, h / 2), x = cx - BW / 2;
+      return `<path class="${cls}" d="M${x} ${y0}V${y1 + r}Q${x} ${y1} ${x + r} ${y1}H${x + BW - r}Q${x + BW} ${y1} ${x + BW} ${y1 + r}V${y0}Z"/>`; };
+    let g = '', hits = '', fit = true;
     C.forEach((k, i) => {
       const cx = slot * i + slot / 2, id = probe ? 0 : TIPS.push({ t: `${c.name} · ${k.nm}`, rows: k.tip }) - 1;
-      if (k.na) g += txt('na', cx, y0 - 10, lv >= 2 ? '–' : k.na);
+      if (k.na) g += `<text class="na" x="${cx}" y="${y0 - 10}" text-anchor="middle">${k.na}</text>`;
       else {
-        const pre = k.stock ? 's' : 'f';
-        if (k.bg != null) g += col(cx, BW, Y(k.bg), y0, k.sl ? 'slb' : `${pre}bg`, true);
-        if (k.fill != null && k.fill > 0) {
-          const w = k.bg != null ? BW - IN * 2 : BW;
-          if (k.stock && k.bg != null && k.fill > k.bg) g += col(cx, w, Y(k.bg), y0, 'sfill', false) + col(cx, w, Y(k.fill), Y(k.bg) - 2, 'over', true);   // 상한 넘친 부분만 주황(2px 틈)
-          else g += col(cx, w, Y(k.fill), y0, `${pre}fill`, true);
-        }
-        if (k.tick != null && k.tick > 0) g += `<line class="tk${k.dash ? ' d' : ''}" x1="${cx - BW / 2 - 6}" x2="${cx + BW / 2 + 6}" y1="${Y(k.tick)}" y2="${Y(k.tick)}"/>`;
-        const top = Math.min(...[k.bg, k.fill, k.tick].filter((v) => v != null).map(Y));
-        const both = k.fill != null && k.bg != null && !k.plan && !k.sl;
-        const L = [];   // 아래 → 위
-        if (k.sl || k.plan) L.push(`${nf(k.bg)}${u}`);
-        else if (both && lv === 0) L.push(`${nf(k.fill)} / ${nf(k.bg)}${u}`);
-        else if (both && lv === 1) L.push(`/ ${nf(k.bg)}${u}`, nf(k.fill));
-        else L.push(`${nf(k.fill)}${both || lv >= 2 ? '' : u}`);
-        L.forEach((t, j) => { g += txt('l2', cx, top - 8 - j * 20, t); });
-        if (!k.sl && !k.plan && k.pct != null) g += txt(`l1 ${k.pcls || ''}`, cx, top - 10 - L.length * 20, P0(k.pct));
+        const two = k.a != null, lw = two && k.p != null && lv < 2 ? Math.max(tw(nf(k.p), 16, 600), tw(nf(k.a))) : 0, GAP = Math.max(4, lw + 10 - BW);   // 두 숫자가 안 겹치게 막대 사이를 벌림
+        const xp = two ? cx - BW / 2 - GAP / 2 : cx, xa = cx + BW / 2 + GAP / 2;
+        const aCls = k.stock ? (k.p && k.a > k.p ? 'bo' : 'bs') : 'ba';
+        if (k.p != null) g += bar(xp, Y(k.p), 'bp');
+        if (two) g += bar(xa, Y(k.a), aCls);
+        BX.length = 0;
+        if (k.p != null && !(two && lv >= 2)) g += txt('vp', xp, Y(k.p) - 8, nf(k.p), 600);
+        if (two) g += txt('va', xa, Y(k.a) - 8, nf(k.a));
+        if (BX.length === 2 && BX[0][1] + 6 > BX[1][0]) fit = false;
+        if (BX.some((b) => b[0] < slot * i + 2 || b[1] > slot * (i + 1) - 2)) fit = false;
       }
-      const nm = nmL === 2 && k.nm.includes(' ') ? k.nm.split(' ') : nmL === 2 && k.nm.length > 3 ? [k.nm.slice(0, 2), k.nm.slice(2)] : [k.nm];
-      nm.forEach((t, j) => { g += txt('nm', cx, y0 + 24 + j * 20, t); });
+      g += `<text class="nm" x="${cx}" y="${y0 + 24}" text-anchor="middle">${k.nm}</text>`;
+      if (k.pct != null) g += `<text class="pc ${k.pcls || ''}" x="${cx}" y="${y0 + 46}" text-anchor="middle">${P0(k.pct)}</text>`;
       hits += `<rect class="hit" data-tip="${id}" tabindex="0" role="img" aria-label="${esc(k.nm)}" x="${slot * i + 1}" y="0" width="${slot - 2}" height="${H}"/>`;
     });
+    if (probe) return fit;
     g += `<line class="base" x1="0" x2="${W}" y1="${y0}" y2="${y0}"/>`;
-    if (probe) return BX.every((a, i) => a[0] >= 0 && a[1] <= W && a[2] >= 0 && BX.every((b, j) => j <= i || a[1] + 18 <= b[0] || b[1] + 18 <= a[0] || a[3] <= b[2] || b[3] <= a[2]));
     return `<svg class="kj-svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="group" aria-label="${esc(c.name)} — ${C.map((k) => k.nm).join(' · ')}">${hits}${g}</svg>`;
   }
 
