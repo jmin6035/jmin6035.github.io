@@ -168,7 +168,7 @@
         const inStop = ds.map(() => false); SR.forEach((r) => { for (let x = r.i; x <= r.j; x++) inStop[x] = true; });
         const nR = fams.length + 2;
         const famRow = (f, first) => {
-          let r = `<tr class="gr">${first ? `<th class="c0" rowspan="${nR}">${l}</th>` : ''}<th class="c1">${FN[f] || (f === 'X' ? '톤' : f)}</th>`, tot = 0;
+          let r = `<tr class="gr${first ? ' ls' : ''}">${first ? `<th class="c0 lnG" rowspan="${nR}">${l}</th>` : ''}<th class="c1">${FN[f] || (f === 'X' ? '톤' : f)}</th>`, tot = 0;
           for (let i = 0; i < ds.length; i++) {
             const s = SR.find((x) => x.i === i);
             if (s && s.f === f) {
@@ -190,7 +190,7 @@
           ev += t ? `<td class="y${dc(i)}" data-c="${l}|${ds[i]}">${t}</td>` : empty(i);
         }
         ev += '<td class="tot">-</td></tr>';
-        let hr = '<tr class="hr"><th class="c1">가동시간</th>', hs = 0;
+        let hr = '<tr class="hr le"><th class="c1">가동시간</th>', hs = 0;
         for (let i = 0; i < ds.length; i++) { const v = Math.round(hrs(l, ds[i], C[i]) * 10) / 10; hs += v; hr += `<td class="${dc(i).trim()}">${hfmt(v)}</td>`; }
         hr += `<td class="tot">${hfmt(hs)}</td></tr>`;
         h += famRow(fams[0], true) + ev + fams.slice(1).map((f) => famRow(f, false)).join('') + hr;
@@ -202,14 +202,14 @@
       const day = ds.map(() => 0);
       for (const l of LINES.C) {
         const C = ds.map((d) => V.get(l, d)), Q = P ? ds.map((d) => P.get(l, d)) : null;
-        let r = `<tr class="cr"><th class="c0" rowspan="2">${l}</th><th class="c1">생산</th>`, tot = 0;
+        let r = `<tr class="cr ls"><th class="c0 lnC" rowspan="2">${l}</th><th class="c1">생산</th>`, tot = 0;
         for (let i = 0; i < ds.length; i++) {
           const v = C[i].stop ? 0 : Math.round(C[i].t); tot += v; day[i] += v;
           r += v ? `<td class="d kC${C[i].act ? ' a' : ''}${chgOf(C, Q, i)}${dc(i)}" data-c="${l}|${ds[i]}">${n0(v)}</td>` : empty(i);
         }
         h += r + `<td class="tot">${n0(tot)}</td></tr>`;
         const stopKey = (i) => C[i].stop, SR = runs(stopKey);
-        let ev = '<tr class="ev"><th class="c1"></th>';
+        let ev = '<tr class="ev le"><th class="c1"></th>';
         for (let i = 0; i < ds.length; i++) {
           const z = D.cdx[`${l}|${ds[i]}`] || {};
           for (const k of Object.keys(CN)) if (z[k]) notes[i].push(`${l[0]}C ${CN[k]}`);

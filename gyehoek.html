@@ -49,13 +49,13 @@ table.gk-adj td em.dn { color: var(--warn); }
 .gk-wrap { overflow-x: auto; background: #fff; border: 1px solid #bfbfbf; position: relative; }
 .gk-tdy { position: absolute; top: 0; z-index: 4; pointer-events: none; box-shadow: inset 0 0 0 3px #000; }
 table.gk { width: 100%; min-width: 1560px; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; background: #fff; }
-table.gk col.c0 { width: 42px; } table.gk col.c1 { width: 80px; } table.gk col.tot { width: 64px; }
+table.gk col.c0 { width: 64px; } table.gk col.c1 { width: 80px; } table.gk col.tot { width: 64px; }
 html:root body main table.gk.gk :is(td, th) { height: 28px; padding: 0 1px !important; font-size: 14px !important; line-height: 1.15 !important; text-align: center !important; vertical-align: middle !important; letter-spacing: -0.2px; color: #000; background: #fff; border: 0; border-right: 1px solid #bfbfbf; border-bottom: 1px solid #bfbfbf; white-space: nowrap; overflow: hidden; position: relative; font-weight: 400; }
 html:root body main table.gk.gk thead th { height: 24px; font-weight: 700; position: sticky; z-index: 3; }
 html:root body main table.gk.gk thead :is(th.c0, th.c1) { z-index: 5; }
 html:root body main table.gk.gk thead th.we { background: #ffff00 !important; color: #ff0000 !important; font-weight: 800; }
 html:root body main table.gk.gk :is(th.c0, th.c1) { font-weight: 700; position: sticky; z-index: 2; }
-html:root body main table.gk.gk th.c0 { left: 0; } html:root body main table.gk.gk th.c1 { left: 42px; }
+html:root body main table.gk.gk th.c0 { left: 0; } html:root body main table.gk.gk th.c1 { left: 64px; }
 html:root body main table.gk.gk th.tot, html:root body main table.gk.gk td.tot { font-weight: 700; }
 html:root body main table.gk.gk td.tot.red { color: #ff0000; font-weight: 800; }
 /* 강종 · 컬러 가동 칸(지난 날 = 실적: 한 단계 진하게 + 굵게 + 왼쪽 위 점) */
@@ -68,6 +68,13 @@ html:root body main table.gk.gk td.kC { background: #d6dce4; } html:root body ma
 html:root body main table.gk.gk td.a { font-weight: 700; }
 table.gk td.a::before { content: ''; position: absolute; left: 2px; top: 2px; width: 4px; height: 4px; border-radius: 50%; background: #000; opacity: .7; }
 /* 이벤트(M/C·S/D) 노랑 · 여러 날 정지 남색 합친 칸 · 가동시간 초록 · 합계 회색 · 특기사항 */
+/* 라인 구분(11/12 사용자 '라인별로 구분 더 잘되게'): 라인 묶음 끝 굵은 선 · 라인 이름 칸 크게·바탕 · 합계 줄 위 굵은 선 */
+html:root body main table.gk.gk tr.le > :is(td, th) { border-bottom: 3px solid #3a434d !important; }
+html:root body main table.gk.gk th.c0.lnG, html:root body main table.gk.gk th.c0.lnC { font-size: 17px !important; font-weight: 800; border-bottom: 3px solid #3a434d !important; border-right: 2px solid #3a434d !important; }
+html:root body main table.gk.gk th.c0.lnG { background: #deebf7 !important; } html:root body main table.gk.gk th.c0.lnC { background: #ededed !important; }
+html:root body main table.gk.gk th.c1 { border-right: 2px solid #3a434d !important; }
+html:root body main table.gk.gk tr.sum > :is(td, th) { background: #f2f2f2; font-weight: 800; border-bottom: 3px solid #3a434d !important; }
+html:root body main table.gk.gk tr.hr > :is(td, th) { font-size: 13.5px !important; }
 html:root body main table.gk.gk td.y { background: #ffff00; font-weight: 800; cursor: pointer; }
 html:root body main table.gk.gk td.sp { background: #1f3864; color: #fff; font-weight: 800; cursor: pointer; }
 html:root body main table.gk.gk tr.hr > * { background: #e2efda; }
