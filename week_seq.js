@@ -232,7 +232,8 @@
   function jobRow(l, v, days, n) {
     const x = v.x, bad = CK && CK.some((c) => c.id === x.id && c.l === l && c.lv === 'bad');
     const due = plant === 'cg' ? x.dlv : x.due;
-    const tag = plant === 'cg' ? (x.issued ? '<span class="cp fx" title="작업지시 완료(1030)">지시</span>' : '') : '';   // 11/10 사용자 '1030 #순번 · 1020 미확정 표시 지워라'
+    const tag = plant === 'cg' ? (x.issued ? '<span class="cp fx" title="작업지시 완료(1030)">지시</span>' : '')
+      : (x.fixed ? '<span class="cp kw" title="MES 1030 확정 작업지시 — 작업대기">작업대기</span>' : '<span class="cp kj" title="MES 1020 소재 매치 — 작업지시 확정 전">지시대기</span>');   // 11/12 사용자 '납기 옆에 작업대기/지시대기 구분'   // 11/10 사용자 '1030 #순번 · 1020 미확정 표시 지워라'
     const sub = plant === 'cg' ? `${x.n > 1 ? x.n + '코일 · ' : ''}소재 ${esc(x.raws[0])}${x.n > 1 ? ' 외' : ''}${x.req ? ' · 예정 ' + md(x.req) : ''}` : `<b title="품명(제품 코드 ${esc(x.pdt)})">${esc(x.item || x.pdt)}</b>${x.ready && x.ready > TODAY ? '<div class="wr" title="도료·PF 입고 뒤">' + md(x.ready) + '부터 가능</div>' : ''}`;
     const lsel = plant === 'cc' ? `<select data-a="line" data-i="${v.i}" title="다른 라인으로">${LINES.cc.map((y) => `<option${y === l ? ' selected' : ''}>${y}</option>`).join('')}</select>` : '';
     return `<tr class="j${x.fixed || x.issued ? ' fx' : ''}${hl === x.id ? ' hl' : bad ? ' bad' : ''}" draggable="true" data-i="${v.i}" data-id="${esc(x.id)}">`
