@@ -392,44 +392,45 @@
   }
 
   /* ---------- 7. 일별 계획 캘린더: 라인 · 그룹 × 날짜 — 칸 위 계획, 아래 실적(지난 날) ---------- */
+  // 일별 계획 캘린더 — 이번 달 = 줄마다 '계획' 행(위)·'실적' 행(아래)으로 칸을 나눔(11/12 사용자 '위에 계획 밑에 실적, 옆에 계획·실적') · 빨강 없음
+  //  라인이 안 도는 날은 이어지는 날을 한 칸으로 묶어 가운데에 이름(휴지 = 노랑 · 수리 = 진회색), 계획·실적 두 행을 세로로 합침
   function calendar(cur, pls) {
     const S = A.S, m = mSel, { days, lineR, grpR, ev } = A.cal[m], nd = days.length;
     const dow = (d) => new Date(d + 'T00:00:00Z').getUTCDay(), td = S.today, asOf = S.asOf;
-    const nf = (v) => String(Math.round(v));
-    // 라인 행 = 가동이 없으면 '휴'(정지 사유가 있으면 '수리') · 그룹 행 = 그 그룹 생산이 없으면 '–'
-    const cell = (r, d, key, isGrp) => { const c = (d === td ? ' now' : '') + (dow(d) === 3 ? ' wst' : ''), e = ev[key + '|' + d], off = isGrp ? `<td class="id${c}">–</td>` : `<td class="id${c}"${e ? ` title="${esc(e)}"` : ''}>${e && /수리|S\/D/.test(e) ? '수리' : '휴'}</td>`;
-      if (cur && d <= asOf) { if (r.a == null) return `<td class="nd${c}">–</td>`; if (!(r.a > 0.5) && !(r.p > 0.5)) return off;
-        return `<td class="pa${c}" title="${md(d)} 계획 ${n0(r.p)}t · 실적 ${n0(r.a)}t"><span>${nf(r.p || 0)}</span><b class="${r.a + 0.5 < (r.p || 0) * 0.9 ? 'bad' : ''}">${nf(r.a)}</b></td>`; }
-      return r.p > 0.5 ? `<td class="pl${c}" title="${md(d)} 계획 ${n0(r.p)}t"><b>${nf(r.p)}</b></td>` : off; };
-    const labOf = (nm, R) => { const mp = sum(R, (r) => r.p), ca = sum(R, (r) => r.a), cp = sum(R.filter((r, i) => days[i] <= asOf), (r) => r.p);
-      return `<th scope="row" class="lab"><b>${esc(nm)}</b></th>`; };
-    // 맨 오른쪽 '계' = 월 계획 합(위) · 실적 합(아래, 이번 달만 — 오늘까지 계획보다 적으면 빨강)
-    const totOf = (R) => { const mp = sum(R, (r) => r.p) || 0, ca = sum(R, (r) => r.a), cp = sum(R.filter((r, i) => days[i] <= asOf), (r) => r.p);
-      return cur ? `<td class="pa sumc" title="월 계획 ${n0(mp)}t · 실적(~${md(asOf)}) ${n0(ca)}t · 오늘까지 계획 ${n0(cp)}t"><span>${n0(mp)}</span><b class="${shortT(ca, cp)}">${n0(ca)}</b></td>` : `<td class="pl sumc"><b>${n0(mp)}</b></td>`; };
-    // 라인 행: 이어지는 휴지·수리 날은 한 칸으로 묶고 가운데에 이름(휴지 = 노랑 · 수리 = 빨강) — 11/12 사용자 '휴 휴 휴 하지 말고 하나로'
+    const nf = (v) => String(Math.round(v)), done = (d) => cur && d <= asOf;
+    const cc = (d) => (d === td ? ' now' : '') + (dow(d) === 3 ? ' wst' : '');
+    // 그 날 라인이 안 돌면 '휴' 또는 '수리'(정지 사유) — 그룹 행은 없음
+    const offOf = (r, d, key, isGrp) => { if (isGrp) return null; const e = ev[key + '|' + d];
+      const run = done(d) ? (r.a > 0.5 || r.p > 0.5) : r.p > 0.5; if (run) return null; return e && /수리|S\/D/.test(e) ? (/정기/.test(e) ? '정기수리' : '수리') : '휴지'; };
+    const two = cur;   // 이번 달만 실적 행
     const rowOf = (nm, R, key, cls = '', isGrp) => {
-      const H = R.map((r, i) => cell(r, days[i], key, isGrp)), off = H.map((h) => { const m_ = !isGrp && /^<td class="id[^"]*"[^>]*>(휴|수리)<\/td>$/.exec(h); return m_ ? m_[1] : null; });
-      let out = '';
-      for (let i = 0; i < H.length;) {
-        if (!off[i]) { out += H[i]; i++; continue; }
-        let j = i; while (j + 1 < H.length && off[j + 1] === off[i]) j++;
-        const e0 = ev[key + '|' + days[i]];
-        const lab = off[i] === '휴' ? '휴지' : (e0 && /정기/.test(e0) ? '정기수리' : '수리');
-        out += `<td colspan="${j - i + 1}" class="${off[i] === '휴' ? 'idl' : 'rep'}${dow(days[i]) === 3 ? ' wst' : ''}" title="${md(days[i])}~${md(days[j])} ${lab}">${j > i ? `${lab} ${+days[i].slice(8)}~${+days[j].slice(8)}일` : lab}</td>`;
-        i = j + 1;
+      const off = R.map((r, i) => offOf(r, days[i], key, isGrp)), P = [], Q = [];
+      for (let i = 0; i < nd;) {
+        if (off[i]) { let j = i; while (j + 1 < nd && off[j + 1] === off[i]) j++;
+          const lab = off[i], t = j > i ? `${lab} ${+days[i].slice(8)}~${+days[j].slice(8)}일` : lab;
+          P.push(`<td colspan="${j - i + 1}" class="${lab === '휴지' ? 'idl' : 'rep'} o1${dow(days[i]) === 3 ? ' wst' : ''}" title="${md(days[i])}~${md(days[j])} ${lab}">${t}</td>`);
+          if (two) Q.push(`<td colspan="${j - i + 1}" class="${lab === '휴지' ? 'idl' : 'rep'} o2${dow(days[i]) === 3 ? ' wst' : ''}"></td>`); i = j + 1; continue; }
+        const r = R[i], d = days[i];
+        P.push(`<td class="${done(d) ? 'pp' : 'pl'}${cc(d)}">${r.p > 0.5 ? nf(r.p) : '–'}</td>`);
+        if (two) Q.push(`<td class="aa${cc(d)}">${done(d) ? (r.a == null ? '–' : r.a > 0.5 ? nf(r.a) : '–') : ''}</td>`);
+        i++;
       }
-      return `<tr class="${cls}">${labOf(nm, R)}${out}${totOf(R)}</tr>`; };
-    const sumR = (Rs) => days.map((d, i) => ({ p: sum(Rs, (R) => R[i].p), a: cur && d <= asOf ? sum(Rs, (R) => R[i].a) : null }));
-    const sec = (t) => `<tr class="sec"><th colspan="${nd + 2}" scope="rowgroup"><span>${t}</span></th></tr>`;
+      const mp = sum(R, (r) => r.p) || 0, ca = sum(R, (r) => r.a) || 0;
+      const nmC = `<th scope="row" class="lab${two ? ' l1' : ''}"><b>${esc(nm)}</b></th>`;
+      if (!two) return `<tr class="${cls}">${nmC}<th class="kd">계획</th>${P.join('')}<td class="pl sumc"><b>${n0(mp)}</b></td></tr>`;
+      return `<tr class="${cls} r1">${nmC}<th class="kd">계획</th>${P.join('')}<td class="pp sumc"><b>${n0(mp)}</b></td></tr>`
+        + `<tr class="${cls} r2"><th scope="row" class="lab l2"></th><th class="kd ka">실적</th>${Q.join('')}<td class="aa sumc"><b>${n0(ca)}</b></td></tr>`; };
+    const sumR = (Rs) => days.map((d, i) => ({ p: sum(Rs, (R) => R[i].p), a: done(d) ? sum(Rs, (R) => R[i].a) : null }));
+    const sec = (t) => `<tr class="sec"><th colspan="${nd + 3}" scope="rowgroup"><span>${t}</span></th></tr>`;
     let body = '';
     for (const p of pls) {
       body += sec(`${PN[p]} · 라인`) + LINES[p].map((l) => rowOf(l, lineR[l], l)).join('') + rowOf(`${PN[p]} 합계`, sumR(LINES[p].map((l) => lineR[l])), '', 'tot');
       body += sec(`${PN[p]} · 그룹`) + GRP.filter((G) => G.pl === p).map((G) => rowOf(G.nm, grpR[G.k], G.k, '', true)).join('');
     }
-    const hd = `<tr><th class="lab" scope="col">구분</th>${days.map((d) => `<th scope="col" class="${dow(d) === 0 || dow(d) === 6 ? 'we' : ''}${dow(d) === 3 ? ' wst' : ''}${d === td ? ' now' : ''}"><b>${+d.slice(8)}</b><span>${'일월화수목금토'[dow(d)]}</span></th>`).join('')}<th scope="col" class="sumc"><b>계</b><span>${cur ? '계획·실적' : '계획'}</span></th></tr>`;
-    const lg = `<div class="kj-lg in">${cur ? `<span><i class="cpa"></i>위 계획 · 아래 실적</span><span><b class="bad">빨강</b>계획의 90% 미만</span><span>계 = 월 계획 · 실적(~${md(asOf)})</span>` : '<span><i class="cpl"></i>계획 톤</span><span>계 = 월 계획 합</span>'}<span><i class="wst"></i>생산주 시작(수)</span></div>`;
+    const hd = `<tr><th class="lab" scope="col">구분</th><th class="kd" scope="col"></th>${days.map((d) => `<th scope="col" class="${dow(d) === 0 || dow(d) === 6 ? 'we' : ''}${dow(d) === 3 ? ' wst' : ''}${d === td ? ' now' : ''}"><b>${+d.slice(8)}</b><span>${'일월화수목금토'[dow(d)]}</span></th>`).join('')}<th scope="col" class="sumc"><b>계</b><span>월 합</span></th></tr>`;
+    const lg = `<div class="kj-lg in"><span><i class="idl"></i>휴지</span><span><i class="rep"></i>수리</span><span><i class="wst"></i>생산주 시작(수)</span></div>`;
     return `<h2 class="kj-h">일별 계획 캘린더 <small>${mLab(m)} · 톤</small></h2>${lg}`
-      + `<section class="kj-c kj-tb"><div class="ct-wrap kj-calw"><table class="kj-cal v2-grid"><thead>${hd}</thead><tbody>${body}</tbody></table></div></section>`;
+      + `<section class="kj-c kj-tb"><div class="ct-wrap kj-calw"><table class="kj-cal v2-grid${two ? ' kjpa' : ''}"><thead>${hd}</thead><tbody>${body}</tbody></table></div></section>`;
   }
 
   /* ---------- 8. 조치할 사항 — 그 달 것만 · 숫자는 매트릭스와 같은 값 · '→ 할 일'까지 · 모두 펼침 ---------- */

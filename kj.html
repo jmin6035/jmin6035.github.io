@@ -125,13 +125,20 @@ html.v2 body main .kj-mx td.ov { font-weight: 700; }
 .kj-tv { margin: 12px 0 0; } .kj-tv summary { cursor: pointer; font-weight: 600; color: var(--ink-2); text-align: center; } .kj-tv table { margin-top: 8px; }
 
 /* 7. 캘린더 — 16px · 31일이 1920 폭에 들어가게(첫 열 좁게, 칸 여백 최소) */
-html body main table.kj-cal { border-collapse: collapse; table-layout: fixed; width: 100%; min-width: 1421px; font-variant-numeric: tabular-nums; }
-html body main table.kj-cal :is(th, td) { border: 1px solid var(--v2-line, var(--line)); padding: 0 2px; text-align: center; font-size: 16px !important; line-height: 1.2; overflow: hidden; }
+html body main table.kj-cal { border-collapse: collapse; table-layout: fixed; width: 100%; min-width: 1560px; font-variant-numeric: tabular-nums; }
+html body main table.kj-cal :is(th, td) { border: 1px solid var(--v2-line, var(--line)); padding: 0 1px; text-align: center; font-size: 16px !important; line-height: 1.2; overflow: hidden; }
 html body main table.kj-cal thead th { height: 44px; background: var(--v2-th, var(--sub)); font-weight: 700; color: var(--ink); }
 .kj-cal thead th b, .kj-cal thead th span { display: block; } .kj-cal thead th span { font-weight: 500; color: var(--ink-2); }
 .kj-cal thead th.we :is(b, span) { color: var(--ink-2); }
-html body main table.kj-cal .lab { width: 112px; position: sticky; left: 0; z-index: 1; background: var(--surface); padding: 2px 4px; }
-html body main table.kj-cal .sumc { width: 76px; font-weight: 700; border-left: 2px solid color-mix(in srgb, var(--ink) 40%, var(--surface)) !important; } .kj-cal td.sumc b { font-weight: 800; }
+html body main table.kj-cal .lab { width: 92px; position: sticky; left: 0; z-index: 1; background: var(--surface); padding: 2px 4px; }
+html body main table.kj-cal th.kd { width: 46px; font-weight: 700; background: var(--v2-th, var(--sub)); color: var(--ink-2); }
+html body main table.kj-cal.kjpa tbody tr.r1 :is(td, th):not(.lab):not([rowspan]) { height: 34px; border-bottom: 1px dashed var(--v2-line, var(--line)); }
+html body main table.kj-cal.kjpa tbody tr.r2 :is(td, th) { height: 34px; }
+html body main table.kj-cal td.pp { color: var(--ink-2); } html body main table.kj-cal td.aa { font-weight: 800; color: var(--ink); background: color-mix(in srgb, var(--kj-ac) 9%, var(--surface)); }
+html body main table.kj-cal th.kd.ka { color: var(--kj-ac); }
+html body main table.kj-cal :is(.lab.l1, td.o1) { border-bottom: 0 !important; } html body main table.kj-cal :is(.lab.l2, td.o2) { border-top: 0 !important; }
+.kj-lg i.idl { background: #fff2a8; } .kj-lg i.rep { background: #c0392b; }
+html body main table.kj-cal .sumc { width: 72px; font-weight: 700; border-left: 2px solid color-mix(in srgb, var(--ink) 40%, var(--surface)) !important; } .kj-cal td.sumc b { font-weight: 800; }
 html body main table.kj-cal tbody .lab { box-shadow: -12px 0 0 0 var(--surface); } html body main table.kj-cal tr.tot .lab { box-shadow: -12px 0 0 0 color-mix(in srgb, var(--ink) 4%, var(--surface)); }
 html body main table.kj-cal thead .lab { box-shadow: -12px 0 0 0 var(--v2-th, var(--sub)); background: var(--v2-th, var(--sub)); font-weight: 600; white-space: normal; }
 .kj-cal tbody .lab b { display: block; } .kj-cal tbody .lab span { display: block; color: var(--ink-2); white-space: nowrap; } .kj-cal tbody .lab span b { display: inline; color: var(--ink); }
