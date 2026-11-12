@@ -13,18 +13,21 @@
 main.wrap { max-width: none; }
 :root {
   --k-al: #74b7ff; --k-al-a: #4687d8; --k-az: #f37a4e; --k-az-a: #d35d31; --k-mac: #00c7a6; --k-mac-a: #00aa8a;
-  --k-cc: #b6c6d7; --k-cc-a: #7b95b0; --k-mc: #ccb501; --k-mc-a: #b09900; --k-stop: #4e5661; --k-stop-ink: #ffffff; --k-idle: #edf0f4;
+  --k-cc: #b6c6d7; --k-cc-a: #7b95b0; --k-mc: #f2c94c; --k-mc-a: #dcae1d; --k-stop: #c93636; --k-stop-ink: #ffffff; --k-idle: #e9edf2; --k-idle-ink: #3a434d;
+  --k-b-al: #2f6db8; --k-b-az: #b5471d; --k-b-mac: #00806a; --k-b-ink: #ffffff;
   --k-ink: #0f1720; --k-dot: #0f1720; --k-sum: #f1f4f8; --k-tdy: #0f1720;
-  --m-rec: #005bac; --m-ord: #8db8e8; --m-trk: #005bac;
+  --m-rec: #005bac; --m-ord: #8db8e8; --m-nw: #c9d0d8;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --k-al: #23436c; --k-al-a: #2d6fbe; --k-az: #632914; --k-az-a: #a33000; --k-mac: #00493b; --k-mac-a: #007559;
-  --k-cc: #303942; --k-cc-a: #586b80; --k-mc: #524806; --k-mc-a: #8e7700; --k-stop: #969fab; --k-stop-ink: #0e1116; --k-idle: #1c2024;
-  --k-ink: #f2f5f8; --k-dot: #f2f5f8; --k-sum: #1e252e; --k-tdy: #f2f5f8; --m-rec: #5d9be6; --m-ord: #2d4e78; --m-trk: #5d9be6; } }
+  --k-cc: #303942; --k-cc-a: #586b80; --k-mc: #6b5a00; --k-mc-a: #8e7700; --k-stop: #b33a3a; --k-stop-ink: #ffffff; --k-idle: #262c33; --k-idle-ink: #c3cbd4;
+  --k-b-al: #5d9be6; --k-b-az: #f08a5d; --k-b-mac: #2fc7a6; --k-b-ink: #0e1116;
+  --k-ink: #f2f5f8; --k-dot: #f2f5f8; --k-sum: #1e252e; --k-tdy: #f2f5f8; --m-rec: #5d9be6; --m-ord: #2d4e78; --m-nw: #3a424c; } }
 :root[data-theme="dark"] {
   --k-al: #23436c; --k-al-a: #2d6fbe; --k-az: #632914; --k-az-a: #a33000; --k-mac: #00493b; --k-mac-a: #007559;
-  --k-cc: #303942; --k-cc-a: #586b80; --k-mc: #524806; --k-mc-a: #8e7700; --k-stop: #969fab; --k-stop-ink: #0e1116; --k-idle: #1c2024;
-  --k-ink: #f2f5f8; --k-dot: #f2f5f8; --k-sum: #1e252e; --k-tdy: #f2f5f8; --m-rec: #5d9be6; --m-ord: #2d4e78; --m-trk: #5d9be6; }
+  --k-cc: #303942; --k-cc-a: #586b80; --k-mc: #6b5a00; --k-mc-a: #8e7700; --k-stop: #b33a3a; --k-stop-ink: #ffffff; --k-idle: #262c33; --k-idle-ink: #c3cbd4;
+  --k-b-al: #5d9be6; --k-b-az: #f08a5d; --k-b-mac: #2fc7a6; --k-b-ink: #0e1116;
+  --k-ink: #f2f5f8; --k-dot: #f2f5f8; --k-sum: #1e252e; --k-tdy: #f2f5f8; --m-rec: #5d9be6; --m-ord: #2d4e78; --m-nw: #3a424c; }
 html.v2 #ui-ctl { display: none !important; }   /* 공통 '관제' 알약 줄 — 이 화면과 상관없음 */
 
 /* 위 줄: 달 · 실적 기준 · 인쇄 */
@@ -35,23 +38,34 @@ html.v2 #ui-ctl { display: none !important; }   /* 공통 '관제' 알약 줄 �
 .gk-bar .pbtn:hover { border-color: var(--brand-2); color: var(--brand-2); }
 .gk-card { padding-bottom: 16px; }
 .gk-card > h2 { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.gk-card > h2 .tag { font-size: 14px; font-weight: 600; color: var(--ink-2); }
+/* 판 고르기: 월차 → 매주 조정 → 지금 */
+.gk-ver { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 14px; }
+.gk-ver button { font: inherit; font-size: 15px; font-weight: 700; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 14px; cursor: pointer; white-space: nowrap; }
+.gk-ver button[aria-pressed="true"] { color: var(--surface); background: var(--ink); border-color: var(--ink); }
+.gk-ver button:hover:not([aria-pressed="true"]) { border-color: var(--brand-2); color: var(--brand-2); }
+.gk-ver i { font-style: normal; font-size: 15px; color: var(--ink-3); }
+.gk-none { font-size: 15px; color: var(--ink-2); margin: 0 0 10px; text-align: center; }
 
-/* 조정 한 줄: 라인별 월차 합 → 지금 전망 */
-.gk-adj { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 12px; margin: 0 0 14px; }
-.gk-adj > b { font-size: 15px; font-weight: 800; white-space: nowrap; grid-row: span 2; align-self: stretch; display: flex; align-items: center; padding-right: 12px; border-right: 1px solid var(--line); }
-.gk-adj > div { display: flex; flex-wrap: wrap; gap: 8px; }
-.gk-adj span { display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap; font-size: 15px; padding: 5px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-variant-numeric: tabular-nums; color: var(--ink-2); }
-.gk-adj span b { color: var(--ink); font-weight: 800; }
-.gk-adj span.t { background: var(--k-sum); }
-.gk-adj span em { font-style: normal; font-weight: 800; color: var(--ink); }
-.gk-adj span em.dn { color: var(--warn); }
+/* 조정 표: 판 × 라인 월 합계(앞 판 대비 ±) — 줄을 누르면 그 판 */
+.gk-adjw { overflow-x: auto; margin-top: 18px; }
+table.gk-adj { width: 100%; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; table-layout: fixed; min-width: 860px; }
+html:root body main table.gk-adj :is(th, td) { text-align: center !important; padding: 8px 6px !important; border-bottom: 1px solid var(--grid); white-space: nowrap; font-size: 16px !important; }
+html:root body main table.gk-adj thead th { font-size: 15px !important; font-weight: 800; color: var(--ink-2); background: var(--surface-2); border-bottom: 1px solid var(--line); }
+table.gk-adj thead th:first-child, table.gk-adj tbody th { width: 140px; }
+table.gk-adj tbody th { font-weight: 800; color: var(--ink); }
+table.gk-adj tbody tr { cursor: pointer; } table.gk-adj tbody tr:hover > * { background: var(--surface-2); }
+table.gk-adj tbody tr.on > * { background: var(--k-sum); box-shadow: inset 0 2px 0 var(--ink), inset 0 -2px 0 var(--ink); }
+table.gk-adj :is(td, th).sm { background: var(--k-sum); }
+table.gk-adj td b { font-weight: 700; } table.gk-adj td.sm b { font-weight: 800; }
+table.gk-adj td em { display: block; font-style: normal; font-weight: 800; font-size: 15px; margin-top: 2px; color: var(--ink); }
+table.gk-adj td em.dn { color: var(--warn); }
 
 /* 표 */
 .gk-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
-table.gk { width: 100%; min-width: 1560px; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
-table.gk col.lb { width: 92px; } table.gk col.tot { width: 84px; }
-html:root body main table.gk.gk :is(td, th) { height: 52px; padding: 0 1px !important; font-size: 16px !important; line-height: 1.1 !important; text-align: center !important; vertical-align: middle !important; letter-spacing: -0.2px; color: var(--k-ink); border-right: 1px solid var(--grid); border-bottom: 1px solid var(--grid); white-space: nowrap; overflow: hidden; position: relative; }
+table.gk { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
+table.gk col.lb { width: 92px; } table.gk col.tot { width: 92px; }
+.gk-wrap + .gk-wrap { margin-top: 12px; }
+html:root body main table.gk.gk :is(td, th) { height: 52px; padding: 0 6px !important; font-size: 16px !important; line-height: 1.1 !important; text-align: center !important; vertical-align: middle !important; letter-spacing: 0; color: var(--k-ink); border-right: 1px solid var(--grid); border-bottom: 1px solid var(--grid); white-space: nowrap; overflow: hidden; position: relative; }
 html:root body main table.gk.gk thead th { height: 50px; background: var(--surface-2); font-weight: 800; }
 table.gk thead th b { display: block; font-size: 16px; } table.gk thead th span { display: block; font-size: 13.5px; font-weight: 600; margin-top: 2px; color: var(--ink-2); }
 html:root body main table.gk.gk thead th.we, html:root body main table.gk.gk thead th.we :is(b, span) { color: var(--ink-3) !important; }
@@ -71,12 +85,18 @@ table.gk td.a { font-weight: 800; }
 table.gk td.a.fAL { background: var(--k-al-a); } table.gk td.a.fAZ { background: var(--k-az-a); } table.gk td.a.fMAC { background: var(--k-mac-a); } table.gk td.a.fC { background: var(--k-cc-a); } table.gk td.a.mc { background: var(--k-mc-a); }
 table.gk td.a::before { content: ''; position: absolute; left: 3px; top: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--k-dot); opacity: .8; }
 table.gk td.jn { border-right-color: transparent; }   /* 같은 강종이 이어지면 한 덩어리 */
-html:root body main table.gk.gk td.w4 { font-size: 15px !important; letter-spacing: -0.6px; }
 table.gk td small { display: block; font-size: 13.5px; font-weight: 700; line-height: 1; margin-top: 2px; letter-spacing: 0; }
-html:root body main table.gk.gk td.stp { font-size: 15px !important; font-weight: 700; color: var(--k-stop-ink); background: var(--k-stop); overflow: visible; }
-html:root body main table.gk.gk td.idle { font-size: 15px !important; font-weight: 600; color: var(--ink-2); background: var(--k-idle); overflow: visible; }
-table.gk td:is(.stp, .idle) span { position: sticky; left: 100px; right: 92px; padding: 0 6px; }
-table.gk td.chg::after { content: ''; position: absolute; top: 0; right: 0; border-top: 10px solid var(--k-dot); border-left: 10px solid transparent; }
+html:root body main table.gk.gk td.stp { font-weight: 800; color: var(--k-stop-ink); background: var(--k-stop); cursor: pointer; }
+html:root body main table.gk.gk td.idle { font-weight: 700; color: var(--k-idle-ink); background: var(--k-idle); cursor: pointer; }
+table.gk td.wide > span { position: sticky; left: 92px; right: 92px; padding: 0 6px; }
+/* 강종 묶음 띠(도금 라인 바로 밑): 이어지는 같은 강종 = 한 띠, 이름 가운데 */
+html:root body main table.gk.gk tr.fband > * { height: 26px; font-size: 13.5px !important; font-weight: 800; letter-spacing: .02em; border-bottom: 1px solid var(--grid); border-right: 0; padding: 0 !important; color: var(--k-b-ink); }
+html:root body main table.gk.gk tr.fband > th.lb { border-right: 2px solid var(--line); }
+html:root body main table.gk.gk tr.fband > td.tot { border-left: 2px solid var(--line); }
+table.gk tr.fband td.bAL { background: var(--k-b-al); } table.gk tr.fband td.bAZ { background: var(--k-b-az); } table.gk tr.fband td.bMAC { background: var(--k-b-mac); }
+table.gk tr.fband td:is(.bAL, .bAZ, .bMAC) { box-shadow: inset 2px 0 0 var(--surface); }
+table.gk tr.g > * { border-bottom: 0 !important; }
+table.gk td.chg::after { content: ''; position: absolute; top: 0; right: 0; border-top: 12px solid var(--k-dot); border-left: 12px solid transparent; }
 table.gk :is(td, th).tdy { box-shadow: inset 2px 0 0 var(--k-tdy), inset -2px 0 0 var(--k-tdy); }
 table.gk thead th.tdy { box-shadow: inset 2px 0 0 var(--k-tdy), inset -2px 0 0 var(--k-tdy), inset 0 2px 0 var(--k-tdy); }
 table.gk tbody tr:last-child :is(td, th).tdy { box-shadow: inset 2px 0 0 var(--k-tdy), inset -2px 0 0 var(--k-tdy), inset 0 -2px 0 var(--k-tdy); }
@@ -84,7 +104,7 @@ table.gk td.sel { outline: 3px solid var(--brand-2); outline-offset: -3px; }
 table.gk td.d:hover { filter: brightness(.96); }
 
 /* 범례 · 누른 칸 한 줄 */
-.gk-lg { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin: 12px 2px 0; font-size: 14px; color: var(--ink-2); }
+.gk-lg { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 18px; margin: 12px 2px 0; font-size: 15px; color: var(--ink-2); }
 .gk-lg span { white-space: nowrap; display: inline-flex; align-items: center; }
 .gk-lg i { display: inline-block; width: 18px; height: 14px; border-radius: 3px; margin-right: 6px; position: relative; }
 .gk-lg i.fAL { background: var(--k-al); } .gk-lg i.fAZ { background: var(--k-az); } .gk-lg i.fMAC { background: var(--k-mac); } .gk-lg i.fC { background: var(--k-cc); }
@@ -93,21 +113,17 @@ table.gk td.d:hover { filter: brightness(.96); }
 .gk-lg i.chg { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); } .gk-lg i.chg::after { content: ''; position: absolute; top: 0; right: 0; border-top: 8px solid var(--k-dot); border-left: 8px solid transparent; }
 .gk-lg i.tdy { background: var(--surface); box-shadow: inset 0 0 0 2px var(--k-tdy); }
 .gk-lg .sep { width: 1px; height: 16px; background: var(--line); }
-.gk-info { min-height: 24px; margin: 10px 2px 0; font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.gk-info { min-height: 24px; margin: 10px 2px 0; font-size: 16px; color: var(--ink); font-variant-numeric: tabular-nums; text-align: center; }
+.gk-info i { font-style: normal; color: var(--ink-3); margin: 0 6px; } .gk-info span.nw { font-weight: 800; } .gk-info .mt b.ok { color: var(--good); } .gk-info .mt b.bad { color: var(--bad); }
 .gk-info b { font-weight: 800; } .gk-info em { font-style: normal; font-weight: 800; } .gk-info em.dn { color: var(--warn); } .gk-info .mt { color: var(--ink-2); margin-left: 14px; }
-details.gk-m0 { margin-top: 14px; } details.gk-m0 > summary { cursor: pointer; font-size: 15px; font-weight: 700; color: var(--ink-2); padding: 4px 2px; }
-details.gk-m0 > summary:hover { color: var(--brand-2); } details.gk-m0[open] > summary { margin-bottom: 8px; }
 
 @media (max-width: 700px) {
   .gk-bar .meta { white-space: normal; }
-  .gk-adj { grid-template-columns: 1fr; } .gk-adj > b { grid-row: auto; border-right: 0; padding: 0; }
-  table.gk col.lb { width: 78px; } table.gk col.tot { width: 72px; } table.gk { min-width: 1580px; }
-  table.gk td:is(.stp, .idle) span { left: 84px; right: 78px; }
 }
 @media print {
   @page { size: A4 landscape; margin: 7mm; }
   html, body, main.wrap { background: #fff !important; }
-  .gk-bar, .gk-adj, details.gk-m0, .gk-info, #gk-tab, #gk-mat, #ui-ctl, footer.foot, #shell, #v2-flag, .noprint, .gk-card .unit, .gk-card > button, .gk-card [data-noexport] { display: none !important; }
+  .gk-bar, .gk-adjw, .gk-ver, .gk-info, #gk-tab, #gk-mat, #ui-ctl, footer.foot, #shell, #v2-flag, .noprint, .gk-card .unit, .gk-card > button, .gk-card [data-noexport] { display: none !important; }
   html body main section.card.gk-card { border: 0 !important; outline: 0 !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
   .gk-card::before, .gk-card > h2::before { display: none !important; }
   .gk-card > h2 { font-size: 14pt; margin: 0 0 3mm; padding: 0 !important; border: 0 !important; }
@@ -116,45 +132,50 @@ details.gk-m0 > summary:hover { color: var(--brand-2); } details.gk-m0[open] > s
   table.gk col.lb { width: 17mm; } table.gk col.tot { width: 16mm; }
   html:root body main table.gk.gk :is(td, th), html:root body main table.gk.gk :is(th.lb, .tot) { height: 16mm; font-size: 8.4pt !important; letter-spacing: -0.3px !important; position: relative !important; }
   html:root body main table.gk.gk thead th { height: 11mm; }
-  html:root body main table.gk.gk :is(td.w4, tr.sum > *) { font-size: 7.6pt !important; letter-spacing: -0.5px !important; }
+  html:root body main table.gk.gk :is(td.w4, tr.sum > *) { font-size: 7.4pt !important; letter-spacing: -0.5px !important; }
+  html:root body main table.gk.gk :is(td, th) { padding: 0 1px !important; }
+  html:root body main table.gk.gk tr.fband > * { height: 5mm; font-size: 7pt !important; }
+  table.gk { min-width: 0 !important; }
   html:root body main table.gk.gk :is(td.stp, td.idle) { font-size: 9pt !important; }
   html:root body main table.gk.gk :is(thead th b) { font-size: 8.6pt !important; } html:root body main table.gk.gk :is(thead th span, td small) { font-size: 6.6pt !important; }
-  table.gk td:is(.stp, .idle) span { position: static !important; }
+  table.gk td.wide > span { position: static !important; }
   table.gk th, table.gk td, .gk-lg i { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .gk-lg { font-size: 8.5pt; margin-top: 3mm; }
 }
 
 /* 소재 탭: 종합 그래프(dataviz 가로 막대) · 리드타임 */
 #s-msum, #gk-mat .sbar { display: none !important; }
-.mz-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 32px; } .mz-grid > * { min-width: 0; }
-@media (max-width: 1100px) { .mz-grid { grid-template-columns: minmax(0, 1fr); } }
-.mz-p h3 { margin: 0 0 10px; font-size: 16px; font-weight: 800; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
-.mz-p h3 span { font-size: 15px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; } .mz-p h3 span b { color: var(--ink); font-weight: 800; }
-.mz-r { display: grid; grid-template-columns: 150px minmax(0, 1fr) 196px; align-items: center; gap: 12px; padding: 7px 0; outline: none; border-radius: 6px; }
+.mz-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; } .mz-grid > * { min-width: 0; }
+.mz-p h3 { margin: 0 0 10px; font-size: 16px; font-weight: 800; display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.mz-p h3 > span, .mz-r .v > span { font-size: 15px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mz-p h3 > span b, .mz-r .v > span b { color: var(--ink); font-weight: 800; font-size: 16px; }
+.mz-p h3 > span.r b, .mz-r .v > span.r b { color: var(--m-rec); } .mz-p h3 > span.n.on b, .mz-r .v > span.n.on b { color: var(--bad); }
+.mz-p h3 em, .mz-r .v em { font-style: normal; font-weight: 800; font-size: 16px; color: var(--ink); min-width: 48px; display: inline-block; text-align: center; }
+.mz-p h3 em.lo, .mz-r .v em.lo { color: var(--bad); } .mz-p h3 em.mid, .mz-r .v em.mid { color: var(--warn); }
+.mz-r { display: grid; grid-template-columns: 110px minmax(160px, 1fr) 600px; align-items: center; gap: 14px; padding: 7px 4px; outline: none; border-radius: 6px; }
+.mz-r .v { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)) 56px; }
+@media (max-width: 1500px) { .mz-r { grid-template-columns: 100px minmax(120px, 1fr) 540px; } }
 .mz-r:hover, .mz-r:focus-visible { background: var(--surface-2); }
-.mz-r .nm { font-size: 15px; font-weight: 700; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mz-r .nm { font-size: 16px; font-weight: 800; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mz-r .bar { position: relative; height: 22px; }
 .mz-r .trk { position: absolute; left: 0; top: 0; bottom: 0; display: flex; gap: 2px; }
 .mz-r .trk i { display: block; height: 100%; min-width: 0; }
-.mz-r .trk i.r { background: var(--m-rec); } .mz-r .trk i.o { background: var(--m-ord); }
-.mz-r .trk i.n { background: var(--surface); box-shadow: inset 0 0 0 1px var(--m-trk); }
+.mz-r .trk i.r { background: var(--m-rec); } .mz-r .trk i.o { background: var(--m-ord); } .mz-r .trk i.n { background: var(--m-nw); }
 .mz-r .trk i:last-child { border-radius: 0 4px 4px 0; }
-.mz-r .v { font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: center; color: var(--ink-2); }
-.mz-r .v b { font-weight: 800; color: var(--ink); } .mz-r .v em { font-style: normal; font-weight: 800; margin-left: 8px; color: var(--ink); display: inline-block; min-width: 46px; }
-.mz-r .v em.lo { color: var(--bad); } .mz-r .v em.mid { color: var(--warn); }
-@media (max-width: 700px) { .mz-r { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; } .mz-r .bar { grid-column: 1 / -1; grid-row: 2; } }
-.mz-lg { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 14px 0 0; font-size: 14px; color: var(--ink-2); }
+.mz-r .v { display: flex; align-items: baseline; justify-content: center; gap: 12px; white-space: nowrap; }
+@media (max-width: 700px) { html body .mz-r { grid-template-columns: minmax(0, 1fr); gap: 6px; } html body .mz-r .v { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.mz-lg { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin: 14px 0 0; font-size: 15px; color: var(--ink-2); }
 .mz-lg span { display: inline-flex; align-items: center; white-space: nowrap; }
 .mz-lg i { display: inline-block; width: 18px; height: 12px; margin-right: 6px; border-radius: 2px; }
-.mz-lg i.r { background: var(--m-rec); } .mz-lg i.o { background: var(--m-ord); } .mz-lg i.n { background: var(--surface); box-shadow: inset 0 0 0 1px var(--m-trk); }
-details.mz-tv { margin-top: 10px; } details.mz-tv > summary { cursor: pointer; font-size: 15px; font-weight: 700; color: var(--ink-2); padding: 4px 0; }
-details.mz-tv table { width: 100%; margin-top: 8px; }
+.mz-lg i.r { background: var(--m-rec); } .mz-lg i.o { background: var(--m-ord); } .mz-lg i.n { background: var(--m-nw); }
 .gk-tip { position: fixed; z-index: 50; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; box-shadow: 0 6px 20px rgba(0,0,0,.12); font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; min-width: 190px; }
 .gk-tip .h { font-size: 15px; font-weight: 800; color: var(--ink); margin-bottom: 6px; }
 .gk-tip .rw { display: flex; align-items: center; gap: 8px; line-height: 1.6; } .gk-tip .rw b { margin-left: auto; color: var(--ink); font-size: 15px; font-weight: 800; }
 .gk-tip .rw i { width: 12px; height: 3px; border-radius: 2px; }
-.lt-l { display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; } @media (max-width: 1100px) { .lt-l { grid-template-columns: 1fr; } }
-html:root body main table.t.lt { width: 100%; }
+.lt-l { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 16px 40px; align-items: start; }
+html:root body main table.t.lt { width: 100%; table-layout: fixed; }
+html:root body main table.t.lt :is(th, td):nth-child(1) { width: 26%; } html:root body main table.t.lt :is(th, td):nth-child(2) { width: 18%; }
+html:root body main table.t.lt td:nth-child(3) { white-space: normal !important; word-break: keep-all; line-height: 1.45; }
 html:root body main #s-cal3 thead th:is(.sat, .sun) { background: var(--surface-2) !important; color: var(--ink-3) !important; }
 html body main #s-cal3 :is(td, th), html body main #s-cal3 .tn, html body main #s-cal3 .kd { font-size: 15px !important; text-align: center !important; }
 html body main #s-cal3 :is(td, th).lb { text-align: center !important; padding: 0 4px !important; }
@@ -162,7 +183,7 @@ html body main #s-cal3 :is(td, th).lb { text-align: center !important; padding: 
 <style>
 /* 소재 탭 = 소재 관제(matcal.html)의 소재 캘린더·월별 소재 입고 계획 서식 그대로 */
 /* 캘린더 */
-.calw { overflow: auto; max-height: calc(100vh - 110px); border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }   /* 표 안 세로 스크롤 → 날짜 머리줄 고정 */
+.calw { overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }   /* 표 안 세로 스크롤 → 날짜 머리줄 고정 */
 table.sc { border-collapse: separate; border-spacing: 0; font-size: 13.5px; font-variant-numeric: tabular-nums; min-width: 1500px; width: 100%; }
 table.sc th, table.sc td { border-right: 1px solid var(--grid); border-bottom: 1px solid var(--grid); padding: 5px 3px; text-align: center; white-space: nowrap; min-width: 40px; }
 table.sc thead th { position: sticky; top: 0; z-index: 3; background: var(--tint-2); font-weight: 700; cursor: pointer; }
@@ -295,6 +316,8 @@ table.sc tr.sec[data-dom="G"] td.lb { box-shadow: inset 4px 0 0 #2a78d6; } table
 #s-cal3 tr.m-inb td.v { background: var(--pt-inb); color: var(--pt-inbT); font-weight: 800; }
 #s-cal3 tr.m-inb td.v.nw { background: var(--surface); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--good) 60%, transparent); }
 #s-cal3 tr.m-use td.v { background: var(--pt-use); color: var(--ink-2); font-weight: 600; }
+#s-cal3 tr.m-use td.nx { color: var(--ink-2); font-weight: 600; background: repeating-linear-gradient(135deg, var(--pt-act) 0 6px, var(--surface) 6px 12px); }
+#s-cal3 tr.m-use td.nx span { padding: 0 8px; }
 #s-cal3 .tn { font-size: 13.5px; font-weight: 800; color: var(--ink); }
 #s-cal3 tr.mt-r.first > * { border-top: 2px solid var(--line); }
 table.sc td.est { opacity: .7; }
@@ -317,6 +340,10 @@ table.sc td.dl { outline: 2px solid var(--bad); outline-offset: -2px; }
 
 /* 소재 캘린더 왼쪽 칸이 첫 날짜 칸과 겹치던 것(10/21) — 고정 폭(표 고정 배치는 첫 줄 폭을 따름) */
 :is(#s-cal3, #s-cal2) thead th.lb, :is(#s-cal3, #s-cal2) td.lb { width: 196px; min-width: 196px; max-width: 196px; box-sizing: border-box; overflow: hidden; white-space: nowrap; }
+/* 11/12: 한 달(1~31일)이 1920 폭에 다 들어가게 — supply.js 가 넣는 표 최소 폭(1,760px)을 풀고 왼쪽 칸을 줄임. 좁으면 가로 스크롤(1일부터) */
+html body main table#s-cal3 { min-width: 1540px !important; width: 100% !important; }
+html body main #s-cal3 :is(thead th.lb, td.lb) { width: 150px; min-width: 150px; max-width: 150px; }
+html body main #s-cal3 .lb .tn { min-width: 64px; }
 #s-cal3 .lb { position: sticky; left: 0; z-index: 3; background: var(--surface); box-shadow: 2px 0 0 var(--line); }
 #s-cal3 thead .lb { z-index: 5; background: var(--th); }
 #s-cal3 .lb .tn { min-width: 98px; }
@@ -346,7 +373,7 @@ table.t.fwt { margin: 4px 0 0; font-size: 13.5px; width: auto; } table.t.fwt td 
   </section>
   <div id="main" hidden>
     <div class="tabs big" id="gk-tab" role="tablist"><button type="button" data-t="plan" aria-pressed="true">일별 가동계획</button><button type="button" data-t="mat" aria-pressed="false">소재</button></div>
-    <div class="gk-bar"><div class="seg" id="gk-mon" role="group" aria-label="월"></div><span class="meta" id="gk-meta"></span><span class="sp"></span><button type="button" class="pbtn noprint" id="gk-print">인쇄</button></div>
+    <div class="gk-bar"><div class="seg" id="gk-mon" role="group" aria-label="월"></div><span class="sp"></span><button type="button" class="pbtn noprint" id="gk-print">인쇄</button></div>
     <div id="gk-plan"></div>
     <div id="gk-mat" hidden>
       <div class="sbar"><span id="s-meta"></span><div class="tabs" id="s-mon" role="group" aria-label="월"></div></div>
@@ -355,9 +382,9 @@ table.t.fwt { margin: 4px 0 0; font-size: 13.5px; width: auto; } table.t.fwt td 
       <div id="gk-matbody">
         <section class="card" id="s-msum"></section>
         <section class="card" id="gk-msum"></section>
-        <section class="card matcal"><h2>소재 캘린더 <small>칸을 누르면 업체·양·용도</small><span class="unit">톤</span></h2>
+        <section class="card matcal"><h2>소재 캘린더<span class="unit">톤</span></h2>
           <div class="calw" id="s-calw3"><table class="sc tc" id="s-cal3"></table></div>
-          <div class="lg"><span><i style="background:var(--pt-ord)"></i>발주</span><span><i style="background:var(--bad-bg)"></i>마감 지난 발주(오늘 칸)</span><span><i style="background:var(--pt-inb)"></i>입고(기발주)</span><span><i style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--good)"></i>입고 — 새로 발주할 분</span><span><i style="background:var(--pt-use)"></i>생산 투입</span></div>
+          <div class="lg"><span><i style="background:var(--pt-ord)"></i>발주</span><span><i style="background:var(--bad-bg)"></i>마감 지난 발주</span><span><i style="background:var(--pt-inb)"></i>입고(기발주)</span><span><i style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--good)"></i>입고(새 발주분)</span><span><i style="background:var(--pt-use)"></i>생산 투입</span></div>
         </section>
         <div class="det" id="s-det2"></div>
         <section class="card" id="gk-lt"></section>
@@ -373,6 +400,6 @@ table.t.fwt { margin: 4px 0 0; font-size: 13.5px; width: auto; } table.t.fwt td 
 <script src="ui/cal.js?v=2611120206"></script>
 <script src="ui/proccalc.js?v=2611120206"></script>
 <script src="supply.js?v=2611120206"></script>
-<script src="gyehoek.js?v=2611121400"></script>
+<script src="gyehoek.js?v=2611121800"></script>
 </body>
 </html>
