@@ -243,7 +243,7 @@
   }
   function legend(V, P) {
     const sw = (c, t) => `<span><i class="${c}"></i>${t}</span>`;
-    return `<div class="gk-lg">${sw('pst', '지난 날')}${sw('y', 'M/C · S/D')}${sw('sp', '정지 · 휴지')}${UI.inScope('G') ? sw('hr', '가동시간') : ''}<span class="sep"></span>`
+    return `<div class="gk-lg">${UI.inScope('G') ? sw('kAZ', 'AZ') + sw('kAL', 'AL') + sw('kMAC', 'MACOSTA') : ''}${UI.inScope('C') ? sw('kC', '컬러 가동') : ''}${sw('pst', '지난 날')}${sw('y', 'M/C · S/D')}${sw('sp', '정지 · 휴지')}${UI.inScope('G') ? sw('hr', '가동시간') : ''}<span class="sep"></span>`
       + (P ? sw('chg', `${P.lab} 대비 바뀐 칸`) : '') + (V.kind === 'now' ? sw('tdy', '오늘') : '') + '</div>';
   }
 
