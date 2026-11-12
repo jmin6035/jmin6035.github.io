@@ -519,6 +519,10 @@
       // 칸 바탕 빨강·주황 옅은 색칠 → 바탕 없애고 글자 색으로(빨강 = 결품·지연 칸만 글자색)
       [...(t.tBodies[0] || { rows: [] }).rows].forEach((r) => [...r.cells].forEach((c) => { const m = getComputedStyle(c).backgroundColor.match(/[\d.]+/g); if (!m || m.length < 4) return; let [R, G, B, A] = m.map(Number); if (R <= 1 && G <= 1 && B <= 1) { R *= 255; G *= 255; B *= 255; } if (A > 0 && A < 0.4 && R > 150 && R - B > 60) { c.style.setProperty('background', 'transparent', 'important'); c.classList.add(G < 100 ? 'v2-r' : 'v2-o'); } }));
       if (t.tHead) { const last = t.tHead.rows[t.tHead.rows.length - 1]; let k = 0; if (last) [...last.cells].forEach((c) => { const m = numCol.get(k); if ((c.colSpan || 1) === 1 && m && m[0] / m[1] >= 0.6) c.classList.add('n'); k += c.colSpan || 1; }); }
+      // 정렬(11/12 사용자 '가운데 맞춤 안 된 것'): 기본 가운데, 글자가 긴 열(평균 14자 넘음)만 왼쪽
+      const lens = new Map(); [...(t.tBodies[0] || { rows: [] }).rows].forEach((r) => { let k = 0; [...r.cells].forEach((c) => { if ((c.colSpan || 1) === 1) { const L = c.textContent.replace(/\s+/g, ' ').trim().length; const m = lens.get(k) || [0, 0]; m[0] += L; m[1]++; lens.set(k, m); } k += c.colSpan || 1; }); });
+      const longCol = new Set([...lens.entries()].filter(([, m]) => m[1] && m[0] / m[1] > 14).map(([k]) => k));
+      [...t.rows].forEach((r) => { let k = 0; [...r.cells].forEach((c) => { if ((c.colSpan || 1) === 1 && longCol.has(k)) c.classList.add('v2-l'); k += c.colSpan || 1; }); });
     });
   }
   let tidyT = 0; const tidySoon = () => { clearTimeout(tidyT); tidyT = setTimeout(() => { tidyTables(); try { v2Tidy(); } catch (e) { /* 무시 */ } try { stickyHeads(); } catch (e) { /* 무시 */ } }, 120); };
