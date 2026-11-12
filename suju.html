@@ -201,6 +201,66 @@ html body main table.ct-t.sj-wo { width: 100%; table-layout: fixed; min-width: 9
 .sj-mt2 td.dcol { min-width: 150px; } .sj-dv b { font-size: 18px; white-space: nowrap; } html body main .sj-dv b small { display: inline !important; font-size: 13.5px; margin-left: 1px; } .sj-dv .sj-bar { margin: 4px 0 0; height: 7px; }
 .sj-ln td.nm { white-space: nowrap; } html body main .sj-ln td.sj-cb { width: auto; min-width: 90px; } html body main .sj-ln td.nx { white-space: normal !important; word-break: keep-all; min-width: 110px; } html body main .sj-ln th, html body main .sj-ln td { padding-left: 7px !important; padding-right: 7px !important; }
 @media (max-width: 700px) { .ct-kpi .l { white-space: normal; } .sj-sch2 .cap { flex-wrap: wrap; } .sj-mb { flex-basis: 100%; order: 3; } }
+/* ── 새 양식(?ui=v2) 종합 관제판 — 한 칸 값 하나 · 병합 없음 · 상태 배지 1개 · 색은 숫자 글자에만 ── */
+html.v2 .sj2-sch h2 small { margin-left: 8px; }
+html.v2 .sj2-sch ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); border-top: 1px solid var(--v2-line); }
+html.v2 .sj2-sch li { padding: 10px 12px; border-left: 1px solid var(--v2-line); font-size: 14px; line-height: 1.45; word-break: keep-all; }
+html.v2 .sj2-sch li:first-child { border-left: 0; padding-left: 0; }
+html.v2 .sj2-sch li .h { display: flex; justify-content: space-between; gap: 6px; margin: 0 0 2px; white-space: nowrap; } html.v2 .sj2-sch li .h b { font-size: 15px; color: var(--ink); }
+html.v2 .sj2-sch li .h span { font-size: 13.5px; color: var(--ink-2); } html.v2 .sj2-sch li .t { color: var(--ink); }
+html.v2 .sj2-sch li.done :is(b, .t, span) { color: var(--ink-3, var(--ink-2)) !important; font-weight: 500; }
+html.v2 .sj2-sch li.now .h span { color: var(--warn); font-weight: 700; } html.v2 .sj2-sch li.now .t { font-weight: 700; }
+html.v2 .sj2-dl { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--v2-line); font-size: 14.5px; }
+html.v2 .sj2-dl > b { color: var(--ink-2); font-size: 14px; } html.v2 .sj2-dl .d { font-weight: 700; } html.v2 .sj2-dl .dd { font-weight: 800; color: var(--brand-2); } html.v2 .sj2-dl .mu { color: var(--ink-2); font-size: 14px; }
+@media (max-width: 1300px) { html.v2 .sj2-sch ol { grid-template-columns: repeat(4, minmax(0, 1fr)); } html.v2 .sj2-sch li:nth-child(4n + 1) { border-left: 0; padding-left: 0; } html.v2 .sj2-sch li:nth-child(n + 5) { border-top: 1px solid var(--v2-line); } }
+@media (max-width: 700px) { html.v2 .sj2-sch ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } html.v2 .sj2-sch li { border-left: 1px solid var(--v2-line) !important; padding-left: 12px !important; border-top: 0 !important; } html.v2 .sj2-sch li:nth-child(2n + 1) { border-left: 0 !important; padding-left: 0 !important; } html.v2 .sj2-sch li:nth-child(n + 3) { border-top: 1px solid var(--v2-line) !important; } }
+@media (max-width: 700px) { html.v2 .sj2-k .ct-kpi .s.s { white-space: normal; } html.v2 .sj2-mx col.c-nm { width: 132px; } html.v2 body main .sj2-mx tr.sj2-cb td.nm { padding-left: 12px !important; } html.v2 .sj2-mx td.nm .cv { margin-right: 6px; } }
+html.v2 .sj2-k { margin-bottom: 18px; } html.v2 .sj2-k .ct-kpi { padding: 14px 18px; } html.v2 .sj2-k .ct-kpi .s { margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 매트릭스 */
+html.v2 .sj2-mxw { overflow-x: auto; }
+html.v2 body main table.ct-t.sj2-mx { table-layout: fixed; width: 100%; min-width: 1360px; max-width: 1580px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+html.v2 .sj2-mx col.c-nm { width: 176px; } html.v2 .sj2-mx col.c-n { width: 86px; } html.v2 .sj2-mx col.c-p { width: 86px; } html.v2 .sj2-mx col.c-d { width: 70px; } html.v2 .sj2-mx col.c-st { width: 132px; }
+html.v2 body main table.sj2-mx :is(th, td) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.v2 body main table.sj2-mx thead tr.g th { color: var(--ink) !important; font-size: 14.5px !important; } html.v2 .sj2-mx thead tr.g th small { margin-left: 6px; color: var(--ink-2); }
+html.v2 body main table.sj2-mx :is(th, td).bk { border-left: 2px solid var(--v2-line) !important; }
+html.v2 body main table.sj2-mx :is(th, td).sx { border-left: 2px solid var(--v2-line) !important; }
+html.v2 body main table.sj2-mx td.nm { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+html.v2 body main table.sj2-mx thead th.nm { position: sticky; left: 0; z-index: 2; }
+html.v2 .sj2-mx td.pc { font-weight: 700; } html.v2 body main .sj2-mx td.mu { color: var(--ink-3, var(--ink-2)) !important; font-weight: 400; }
+html.v2 .sj2-mx tr.sj2-g { cursor: pointer; } html.v2 .sj2-mx tr.sj2-g:hover td { background: color-mix(in srgb, var(--brand-2) 5%, var(--surface)); }
+html.v2 .sj2-mx tr.sj2-g:focus-visible { outline: 2px solid var(--brand-2); outline-offset: -2px; }
+html.v2 .sj2-mx td.nm .cv { display: inline-block; width: 7px; height: 7px; border-right: 2px solid var(--ink-3, var(--ink-2)); border-bottom: 2px solid var(--ink-3, var(--ink-2)); transform: rotate(-45deg); margin: 0 10px 2px 0; transition: transform .15s; }
+html.v2 .sj2-mx tr.open td.nm .cv { transform: rotate(45deg); }
+html.v2 .sj2-mx td.sx .ct-b { font-size: 13.5px; padding: 2px 9px; }
+html.v2 body main .sj2-mx tr.sj2-cb td { color: var(--ink-2); font-size: 14px !important; background: color-mix(in srgb, var(--ink) 2.5%, var(--surface)); }
+html.v2 body main .sj2-mx tr.sj2-cb td.nm { padding-left: 29px !important; } html.v2 body main .sj2-mx tr.sj2-cb td.pc { color: inherit; }
+html.v2 body main .sj2-mx tr.sj2-cb td :is(b) { color: var(--ink-2); }
+
+html.v2 body main .sj2-mx tr.sj2-sub td { background: var(--v2-th); font-weight: 700; color: var(--ink); } html.v2 .sj2-mx tr.sj2-sub small { font-weight: 500; color: var(--ink-2); margin-left: 4px; }
+html.v2 body main .sj2-mx tr.sj2-sub.tot td { border-top: 2px solid var(--ink-2) !important; }
+html.v2 body main table.sj2-mx td.xr { color: var(--bad) !important; } html.v2 body main table.sj2-mx td.xo { color: var(--warn) !important; }   /* 빨강 = 모자람(부족·미달) · 주황 = 주의·초과 — 글자만 */
+html.v2 body main .sj2-mx tr.sj2-dt td { background: color-mix(in srgb, var(--brand-2) 4%, var(--surface)); white-space: normal; padding: 10px 16px 12px 40px !important; }
+html.v2 .sj2-dt .w { position: sticky; left: 40px; max-width: 900px; } html.v2 .sj2-dt .mt { font-size: 13.5px; color: var(--ink-2); margin: 0 0 4px; }
+html.v2 .sj2-dt ul { margin: 0; padding: 0; list-style: none; } html.v2 .sj2-dt li { font-size: 14.5px; line-height: 1.7; } html.v2 .sj2-dt li > span { display: inline-block; min-width: 76px; font-weight: 700; }
+html.v2 .sj2-dt .ac { font-size: 13.5px; color: var(--ink-2); margin-top: 4px; } html.v2 .sj2-dt p { margin: 0; }
+/* 조치 표 */
+html.v2 body main table.ct-t.sj2-act { table-layout: fixed; width: 100%; min-width: 760px; }
+html.v2 body main table.sj2-act td.wrap { white-space: normal !important; word-break: keep-all; }
+html.v2 body main table.sj2-act td { vertical-align: middle; }
+/* 일별 계획 캘린더 — 구성 유지, 띠·빗금·파랑 칸 걷고 글자·간격만 */
+html.v2 .sj2-clg { font-size: 13.5px; color: var(--ink-2); margin: 0 0 10px; line-height: 1.6; }
+html.v2 body main table.sj-cal thead th { background: var(--v2-th); height: 44px; }
+html.v2 body main table.sj-cal .lab { width: 180px; padding: 4px 12px; }
+html.v2 .sj-cal td.lab b { font-size: 14.5px; } html.v2 .sj-cal td.lab span { margin-top: 1px; color: var(--ink-2); font-weight: 500; } html.v2 .sj-cal td.lab span b { display: inline; font-size: 13.5px; color: var(--ink); font-weight: 700; } html.v2 .sj-cal td.lab span b.neg { color: var(--bad); }
+html.v2 body main table.sj-cal tr.r2 td { height: 48px; }
+html.v2 body main table.sj-cal tr.sec td { background: var(--v2-th); color: var(--ink); font-size: 14px !important; height: 34px; padding: 0 12px; border-top: 2px solid var(--v2-line); }
+html.v2 body main table.sj-cal tr.sec td { overflow: visible; } html.v2 .sj-cal tr.sec td .sl { position: sticky; left: 12px; }   /* 가로로 밀어도 구역 이름이 보이게 */
+html.v2 body main table.sj-cal tr.tot td, html.v2 body main table.sj-cal tr.tot td.lab { background: color-mix(in srgb, var(--ink) 3%, var(--surface)); }
+html.v2 .sj-cal td.id { background: none; color: var(--ink-3, var(--ink-2)); font-size: 13.5px; }
+html.v2 .sj-cal tr.wk td:not(.lab) { font-weight: 600; background: none !important; box-shadow: none !important; color: var(--ink-2); height: 34px; }
+html.v2 .sj-cal tr.wk td.w2 { color: var(--brand-2); font-weight: 800; } html.v2 .sj-cal tr.wk td.w0 { color: var(--ink-3, var(--ink-2)); font-weight: 500; }
+html.v2 body main table.sj-cal .now { box-shadow: inset 0 0 0 2px var(--brand-2); } html.v2 .sj-cal thead th.now b { color: var(--brand-2); }
+html.v2 body main table.sj-cal .wst { border-left: 2px solid color-mix(in srgb, var(--ink) 35%, var(--surface)) !important; }
 </style>
 </head>
 <body>
