@@ -37,16 +37,16 @@ table.gk td.tot, table.gk th.tot { position: sticky; right: 0; z-index: 2; font-
 table.gk tr.sum :is(td, th) { font-weight: 800; background: var(--surface-2); color: var(--ink); }
 table.gk tr.sum th.g1 { background: var(--surface-2); }
 /* 칸 바탕: 강종(도금) · 가동(컬러) · M/C · 정지 — 계획 = 옅게, 실적 = 진하게 */
-table.gk td.fAL { background: color-mix(in srgb, var(--gk-al) 13%, var(--surface)); }
-table.gk td.fAZ { background: color-mix(in srgb, var(--gk-az) 15%, var(--surface)); }
-table.gk td.fMAC { background: color-mix(in srgb, var(--gk-mac) 15%, var(--surface)); }
-table.gk td.fC { background: color-mix(in srgb, var(--gk-cc) 14%, var(--surface)); }
+table.gk td.fAL { background: color-mix(in srgb, var(--gk-al) 23%, var(--surface)); }
+table.gk td.fAZ { background: color-mix(in srgb, var(--gk-az) 25%, var(--surface)); }
+table.gk td.fMAC { background: color-mix(in srgb, var(--gk-mac) 25%, var(--surface)); }
+table.gk td.fC { background: color-mix(in srgb, var(--gk-cc) 24%, var(--surface)); }
 table.gk td.mc { background: color-mix(in srgb, var(--gk-mc) 42%, var(--surface)); color: #3d2900; font-weight: 800; }
 table.gk td.a { font-weight: 800; color: var(--ink); }
-table.gk td.a.fAL { background: color-mix(in srgb, var(--gk-al) 30%, var(--surface)); }
-table.gk td.a.fAZ { background: color-mix(in srgb, var(--gk-az) 32%, var(--surface)); }
-table.gk td.a.fMAC { background: color-mix(in srgb, var(--gk-mac) 32%, var(--surface)); }
-table.gk td.a.fC { background: color-mix(in srgb, var(--gk-cc) 30%, var(--surface)); }
+table.gk td.a.fAL { background: color-mix(in srgb, var(--gk-al) 50%, var(--surface)); }
+table.gk td.a.fAZ { background: color-mix(in srgb, var(--gk-az) 52%, var(--surface)); }
+table.gk td.a.fMAC { background: color-mix(in srgb, var(--gk-mac) 52%, var(--surface)); }
+table.gk td.a.fC { background: color-mix(in srgb, var(--gk-cc) 50%, var(--surface)); }
 html body main table.gk td.w4 { letter-spacing: -0.9px !important; font-size: 14px !important; }
 table.gk td.a.mc { background: color-mix(in srgb, var(--gk-mc) 70%, var(--surface)); }
 table.gk td.stp { font-weight: 700; color: var(--ink-2); background: color-mix(in srgb, var(--ink) 7%, var(--surface)); }
@@ -61,7 +61,7 @@ table.gk.adj td[data-c] { cursor: pointer; }
 table.gk td.sel { outline: 2px solid var(--ink); outline-offset: -2px; }
 .gk-lg { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin: 10px 2px 0; font-size: 14px; color: var(--ink-2); }
 .gk-lg i { display: inline-block; width: 18px; height: 13px; border-radius: 3px; margin-right: 6px; vertical-align: -2px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent); }
-.gk-lg i.fAL { background: color-mix(in srgb, var(--gk-al) 22%, var(--surface)); } .gk-lg i.fAZ { background: color-mix(in srgb, var(--gk-az) 24%, var(--surface)); } .gk-lg i.fMAC { background: color-mix(in srgb, var(--gk-mac) 24%, var(--surface)); }
+.gk-lg i.fAL { background: color-mix(in srgb, var(--gk-al) 32%, var(--surface)); } .gk-lg i.fAZ { background: color-mix(in srgb, var(--gk-az) 34%, var(--surface)); } .gk-lg i.fMAC { background: color-mix(in srgb, var(--gk-mac) 34%, var(--surface)); }
 .gk-lg i.fC { background: color-mix(in srgb, var(--gk-cc) 18%, var(--surface)); } .gk-lg i.mc { background: color-mix(in srgb, var(--gk-mc) 55%, var(--surface)); }
 .gk-lg i.hv { background: color-mix(in srgb, var(--ink) 55%, var(--surface)); } .gk-lg i.lt { background: color-mix(in srgb, var(--ink) 7%, var(--surface)); }
 .gk-lg i.chg { position: relative; background: var(--surface); } .gk-lg i.chg::after { content: ''; position: absolute; top: 0; right: 0; border-top: 8px solid var(--brand-2); border-left: 8px solid transparent; }
