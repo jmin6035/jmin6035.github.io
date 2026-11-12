@@ -427,7 +427,7 @@
     const STH = '<th class="gs">목표<br><small>소재 + 제품<br>(\'27 판생)</small></th><th>소재</th><th>제품</th><th>비율<br><small>소재+제품<br>÷ 목표</small></th>';
     const hd = cur
       ? `<tr><th rowspan="2" scope="col">구분</th><th colspan="4" class="gs" scope="colgroup">수주 <small>판매계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">생산 <small>월 계획 대비</small></th><th colspan="3" class="gs" scope="colgroup">출하 <small>월 계획 대비</small></th><th colspan="4" class="gs" scope="colgroup">재고 <small>${md(A.S.asOf)}</small></th></tr>`
-        + `<tr><th class="gs">판매계획</th><th>소재 ON<br><small>매치 끝난 주문</small></th><th>소재 OFF<br><small>매치 전 주문</small></th><th>진도<br><small>ON ÷ 판매계획</small></th><th class="gs">월 계획</th><th>실적</th><th>진도</th><th class="gs">월 계획</th><th>실적</th><th>진도</th>${STH}</tr>`
+        + `<tr><th class="gs">판매계획</th><th>소재 ON<br><small>매치 끝난 주문</small></th><th>소재 OFF<br><small>매치 전 주문</small></th><th>진도<br><small>ON ÷ 판매계획</small></th><th class="gs">월 계획<br><small>실적 + 남은 계획</small></th><th>실적</th><th>진도</th><th class="gs">월 계획</th><th>실적</th><th>진도</th>${STH}</tr>`
       : `<tr><th rowspan="2" scope="col">구분</th><th colspan="3" class="gs" scope="colgroup">수주 <small>${mLab(mSel)} 납기</small></th><th rowspan="2" class="gs">생산 계획</th><th colspan="4" class="gs" scope="colgroup">재고 <small>월말 계획</small></th></tr>`
         + `<tr><th class="gs">판매계획</th><th>주문</th><th>진도</th>${STH}</tr>`;
     const lg = `<div class="kj-lg in">${cur ? '<span><b class="bad">빨강</b>오늘까지 계획보다 모자람(생산·출하)</span>' : ''}<span><b class="ov">주황</b>재고 비율 100% 넘음</span></div>`;
@@ -467,7 +467,7 @@
     const cc = (d) => (d === td ? ' now' : '') + (dow(d) === 3 ? ' wst' : '');
     // 그 날 라인이 안 돌면 '휴' 또는 '수리'(정지 사유) — 그룹 행은 없음
     const offOf = (r, d, key, isGrp) => { if (isGrp) return null; const e = ev[key + '|' + d];
-      const run = done(d) ? (r.a > 0.5 || r.p > 0.5) : r.p > 0.5; if (run) return null; return e && /수리|S\/D/.test(e) ? (/정기/.test(e) ? '정기수리' : '수리') : '휴지'; };
+      const run = done(d) ? (r.a > 0.5 || r.p > 0.5 || r.p0 > 0.5) : r.p > 0.5; if (run) return null; return e && /수리|S\/D/.test(e) ? (/정기/.test(e) ? '정기수리' : '수리') : '휴지'; };
     const two = cur;   // 이번 달만 실적 행
     const rowOf = (nm, R, key, cls = '', isGrp) => {
       const off = R.map((r, i) => offOf(r, days[i], key, isGrp)), P = [], Q = [];
@@ -476,17 +476,17 @@
           const lab = off[i], t = j > i ? `${lab} ${+days[i].slice(8)}~${+days[j].slice(8)}일` : lab;
           P.push(`<td colspan="${j - i + 1}" class="${lab === '휴지' ? 'idl' : 'rep'} o1${dow(days[i]) === 3 ? ' wst' : ''}" title="${md(days[i])}~${md(days[j])} ${lab}">${t}</td>`);
           if (two) Q.push(`<td colspan="${j - i + 1}" class="${lab === '휴지' ? 'idl' : 'rep'} o2${dow(days[i]) === 3 ? ' wst' : ''}"></td>`); i = j + 1; continue; }
-        const r = R[i], d = days[i];
-        P.push(`<td class="${done(d) ? 'pp' : 'pl'}${cc(d)}">${r.p > 0.5 ? nf(r.p) : '–'}</td>`);
+        const r = R[i], d = days[i], pv = done(d) && r.p0 != null ? r.p0 : r.p;   // 지난 날 계획 행 = 월초 계획(실적 행과 겹치지 않게)
+        P.push(`<td class="${done(d) ? 'pp' : 'pl'}${cc(d)}">${pv > 0.5 ? nf(pv) : '–'}</td>`);
         if (two) Q.push(`<td class="aa${cc(d)}">${done(d) ? (r.a == null ? '–' : r.a > 0.5 ? nf(r.a) : '–') : ''}</td>`);
         i++;
       }
-      const mp = sum(R, (r) => r.p) || 0, ca = sum(R, (r) => r.a) || 0;
+      const mp = sum(R.map((r, i) => (done(days[i]) && r.p0 != null ? r.p0 : r.p)), (v) => v) || 0, ca = sum(R, (r) => r.a) || 0;
       const nmC = `<th scope="row" class="lab${two ? ' l1' : ''}"><b>${esc(nm)}</b></th>`;
       if (!two) return `<tr class="${cls}">${nmC}<th class="kd">계획</th>${P.join('')}<td class="pl sumc"><b>${n0(mp)}</b></td></tr>`;
       return `<tr class="${cls} r1">${nmC}<th class="kd">계획</th>${P.join('')}<td class="pp sumc"><b>${n0(mp)}</b></td></tr>`
         + `<tr class="${cls} r2"><th scope="row" class="lab l2"></th><th class="kd ka">실적</th>${Q.join('')}<td class="aa sumc"><b>${n0(ca)}</b></td></tr>`; };
-    const sumR = (Rs) => days.map((d, i) => ({ p: sum(Rs, (R) => R[i].p), a: done(d) ? sum(Rs, (R) => R[i].a) : null }));
+    const sumR = (Rs) => days.map((d, i) => ({ p: sum(Rs, (R) => R[i].p), p0: done(d) ? sum(Rs, (R) => (R[i].p0 != null ? R[i].p0 : R[i].p)) : null, a: done(d) ? sum(Rs, (R) => R[i].a) : null }));
     const sec = (t) => `<tr class="sec"><th colspan="${nd + 3}" scope="rowgroup"><span>${t}</span></th></tr>`;
     let body = '';
     for (const p of pls) {
