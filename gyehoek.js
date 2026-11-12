@@ -82,7 +82,7 @@
   const mdA = (s) => (s ? `${+s.slice(5, 7)}/${+s.slice(8, 10)}${s.length > 10 ? ' ' + s.slice(11, 16) : ''}` : '');
   function chain() {                                                     // 이 달의 판 목록(앞 → 뒤)
     const V = ((D.H && D.H.vers) || []).filter((v) => v.mon === mon).map((v) => ({
-      id: v.id, kind: v.kind, lab: v.kind === 'm0' ? `월차 ${mdA(v.at).split(' ')[0]}` : v.lab, at: v.at,
+      id: v.id, kind: v.kind, lab: v.kind === 'm0' ? `11월 첫 계획 ${mdA(v.at).split(' ')[0]}` : v.lab, at: v.at,
       get: (l, d) => { const x = v.c[`${l}|${d}`] || [0, '', '휴지'], G = /CGL$/.test(l);
         return { t: x[0], fam: G ? x[1] || 'AL' : null, mc: x[2] === 'M', stop: x[2] === 'M' ? '' : x[2], act: G ? !!v.aG && d <= v.aG : !!v.aC && d <= v.aC }; } }));
     if (!V.some((v) => v.kind === 'm0') && D.m0 === mon)                 // 월차 판을 못 찾은 달: 수주 관제 월초 톤만(강종·M/C·정지 없음)
@@ -260,7 +260,7 @@
     const key = JSON.stringify(P) + mon; if (key === matKey) return; matKey = key;
     if (!P.length) { el.innerHTML = `<h2>${M}월 소재 종합<span class="unit">톤</span></h2><p class="gk-none">이 달 들어와야 할 소재 없음</p>`; return; }
     const mx = Math.max(1, ...P.flatMap((p) => p.rows.map((r) => r.need)));
-    const pc = (r) => (r.need ? Math.round((r.rec + r.ord) / r.need * 100) : 100), cl = (v) => (v < 90 ? 'lo' : v < 100 ? 'mid' : '');
+    const pc = (r) => (r.need ? Math.min(Math.round((r.rec + r.ord) / r.need * 100), r.nw >= 0.5 ? 99 : 100) : 100)   // 미발주가 남으면 100% 아님, cl = (v) => (v < 90 ? 'lo' : v < 100 ? 'mid' : '');
     const nums = (r) => `<span class="r">입고 <b>${n0(r.rec)}</b></span><span class="o">발주 <b>${n0(r.ord)}</b></span><span class="n${r.nw >= 0.5 ? ' on' : ''}">미발주 <b>${n0(r.nw)}</b></span>`;
     const panel = (p) => {
       const T = p.rows.reduce((a, r) => ({ need: a.need + r.need, rec: a.rec + r.rec, ord: a.ord + r.ord, nw: a.nw + r.nw }), { need: 0, rec: 0, ord: 0, nw: 0 }), tp = pc(T);
