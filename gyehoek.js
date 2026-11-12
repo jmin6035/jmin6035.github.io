@@ -335,13 +335,14 @@
   function snap() {
     document.querySelectorAll('.gk-wrap').forEach((w) => {
       const th = w.querySelector('thead th.dn.tdy'), fr = w.querySelector('.gk-tdy'), tb = w.querySelector('table.gk');
-      if (th && fr) { const x = th.offsetLeft; Object.assign(fr.style, { left: x + 'px', width: th.offsetWidth + 'px', height: tb.offsetHeight + 'px' }); }
+      if (th && fr) { const a = th.getBoundingClientRect(), W = w.getBoundingClientRect(), T = tb.getBoundingClientRect(); Object.assign(fr.style, { left: (a.left - W.left - w.clientLeft + w.scrollLeft) + 'px', top: (T.top - W.top - w.clientTop + w.scrollTop) + 'px', width: a.width + 'px', height: T.height + 'px' }); }   // 소수점 픽셀까지(offsetLeft 반올림 → 칸 선과 어긋남, 11/12 사용자)
       if (!w.offsetParent || w.scrollWidth <= w.clientWidth + 1) return;
       const days = [...w.querySelectorAll('thead tr:first-child th.dn')], ti = days.findIndex((x) => x.classList.contains('tdy'));
       w.scrollLeft = ti < 0 ? 0 : Math.round(Math.max(0, ti - 2) * days[0].getBoundingClientRect().width);
     });
   }
   if (document.fonts) document.fonts.ready.then(() => { if (D && tab === 'plan') snap(); });
+  if (window.ResizeObserver) new ResizeObserver(() => { if (D && tab === 'plan') snap(); }).observe(document.body);   // 표 너비가 늦게 바뀌어도 오늘 틀 다시 맞춤
   let rsT = 0; addEventListener('resize', () => { clearTimeout(rsT); rsT = setTimeout(() => { if (D && tab === 'plan') snap(); }, 150); });
   addEventListener('beforeprint', () => { if (D && tab === 'plan') snap(); });
 
