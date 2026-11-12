@@ -12,19 +12,19 @@
    색(dataviz validate_palette.js --pairs all 통과, CVD 6~8 경고는 칸 안 강종·M/C 글자로 보완): AL 파랑 · AZ 주황 · MAC 초록(청록 쪽), 계획 = 밝기 0.77(띠 상한), 실적 = 0.62~0.68 */
 main.wrap { max-width: none; }
 :root {
-  --k-al: #74b7ff; --k-al-a: #4687d8; --k-az: #f37a4e; --k-az-a: #d35d31; --k-mac: #00c7a6; --k-mac-a: #00aa8a;
-  --k-cc: #b6c6d7; --k-cc-a: #7b95b0; --k-mc: #f2c94c; --k-mc-a: #dcae1d; --k-stop: #c93636; --k-stop-ink: #ffffff; --k-idle: #e9edf2; --k-idle-ink: #3a434d;
-  --k-b-al: #2f6db8; --k-b-az: #b5471d; --k-b-mac: #00806a; --k-b-ink: #ffffff;
+  --k-al: #74b7ff; --k-al-a: #4687d8; --k-az: #f5a66a; --k-az-a: #e8863a; --k-mac: #00c7a6; --k-mac-a: #00aa8a; --k-az-ink: #2b1400;
+  --k-cc: #b6c6d7; --k-cc-a: #7b95b0; --k-mc: #f2c94c; --k-mc-a: #dcae1d; --k-stop: #a8202e; --k-stop-ink: #ffffff; --k-idle: #e9edf2; --k-idle-ink: #3a434d;
+  --k-b-al: #2f6db8; --k-b-az: #c46a1c; --k-b-mac: #00806a; --k-b-ink: #ffffff;
   --k-ink: #0f1720; --k-dot: #0f1720; --k-sum: #f1f4f8; --k-tdy: #0f1720;
   --m-rec: #005bac; --m-ord: #8db8e8; --m-nw: #c9d0d8;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --k-al: #23436c; --k-al-a: #2d6fbe; --k-az: #632914; --k-az-a: #a33000; --k-mac: #00493b; --k-mac-a: #007559;
+  --k-al: #23436c; --k-al-a: #2d6fbe; --k-az: #632914; --k-az-a: #a33000; --k-mac: #00493b; --k-mac-a: #007559; --k-az-ink: #ffffff;
   --k-cc: #303942; --k-cc-a: #586b80; --k-mc: #6b5a00; --k-mc-a: #8e7700; --k-stop: #b33a3a; --k-stop-ink: #ffffff; --k-idle: #262c33; --k-idle-ink: #c3cbd4;
   --k-b-al: #5d9be6; --k-b-az: #f08a5d; --k-b-mac: #2fc7a6; --k-b-ink: #0e1116;
   --k-ink: #f2f5f8; --k-dot: #f2f5f8; --k-sum: #1e252e; --k-tdy: #f2f5f8; --m-rec: #5d9be6; --m-ord: #2d4e78; --m-nw: #3a424c; } }
 :root[data-theme="dark"] {
-  --k-al: #23436c; --k-al-a: #2d6fbe; --k-az: #632914; --k-az-a: #a33000; --k-mac: #00493b; --k-mac-a: #007559;
+  --k-al: #23436c; --k-al-a: #2d6fbe; --k-az: #632914; --k-az-a: #a33000; --k-mac: #00493b; --k-mac-a: #007559; --k-az-ink: #ffffff;
   --k-cc: #303942; --k-cc-a: #586b80; --k-mc: #6b5a00; --k-mc-a: #8e7700; --k-stop: #b33a3a; --k-stop-ink: #ffffff; --k-idle: #262c33; --k-idle-ink: #c3cbd4;
   --k-b-al: #5d9be6; --k-b-az: #f08a5d; --k-b-mac: #2fc7a6; --k-b-ink: #0e1116;
   --k-ink: #f2f5f8; --k-dot: #f2f5f8; --k-sum: #1e252e; --k-tdy: #f2f5f8; --m-rec: #5d9be6; --m-ord: #2d4e78; --m-nw: #3a424c; }
@@ -83,6 +83,7 @@ table.gk td.fAL { background: var(--k-al); } table.gk td.fAZ { background: var(-
 table.gk td.mc { background: var(--k-mc); }
 table.gk td.a { font-weight: 800; }
 table.gk td.a.fAL { background: var(--k-al-a); } table.gk td.a.fAZ { background: var(--k-az-a); } table.gk td.a.fMAC { background: var(--k-mac-a); } table.gk td.a.fC { background: var(--k-cc-a); } table.gk td.a.mc { background: var(--k-mc-a); }
+table.gk td.fAZ { color: var(--k-az-ink); } /* 밝은 주황 위 흰 글자 대비 부족 → 진한 글자(어두운 화면은 흰 글자) */
 table.gk td.a::before { content: ''; position: absolute; left: 3px; top: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--k-dot); opacity: .8; }
 table.gk td.jn { border-right-color: transparent; }   /* 같은 강종이 이어지면 한 덩어리 */
 table.gk td small { display: block; font-size: 13.5px; font-weight: 700; line-height: 1; margin-top: 2px; letter-spacing: 0; }
