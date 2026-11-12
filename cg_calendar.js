@@ -790,6 +790,9 @@
   }
   /* 생산 일정 화면(ct_plan.html)에 붙어 있음 — 암호는 화면 공통 잠금(CT.boot)이 받고, 여기서는 저장된 암호로만 엶(ensure) */
   /* 편성 화면(pyeonseong.js)이 이번 생산주 표를 그대로 씀: load(암호) → week() = 이번 주(수~화) 표 HTML · 칸 = button.cell[data-ln][data-d] */
-  window.CGCAL = { load: async (pw) => { await unlock(pw); return ready; }, week: () => { const W = weeks()[0]; return W ? weekTable(W[0], W[1], nextWeek()) : ''; }, items: (ln, d) => { const c = O && O.lines[ln] && O.lines[ln][O.days.indexOf(d)]; return c ? c.items : []; }, stop: (ln, d) => { const c = O.lines[ln][O.days.indexOf(d)]; return !!c && c.cap < 1; }, END: () => (O ? END() : ''),
+  /* raw() = 이번 생산주 자료만(편성 화면이 칸을 직접 그림 — 생산 일정 화면 모양은 그대로) */
+  const raw = () => { const W = O && weeks()[0]; if (!W) return null; const [w0, days] = W, i = (d) => O.days.indexOf(d);
+    return { w0, days, cell: (ln, d) => O.lines[ln][i(d)], act: (ln, d) => (O.act || {})[`${ln}|${d}`] || null, jg: (d) => O.jg[i(d)], over: (ln) => (i(days[days.length - 1]) === O.days.length - 1 ? over(ln, O.days) : null), end: END() }; };
+  window.CGCAL = { raw, load: async (pw) => { await unlock(pw); return ready; }, week: () => { const W = weeks()[0]; return W ? weekTable(W[0], W[1], nextWeek()) : ''; }, items: (ln, d) => { const c = O && O.lines[ln] && O.lines[ln][O.days.indexOf(d)]; return c ? c.items : []; }, stop: (ln, d) => { const c = O.lines[ln][O.days.indexOf(d)]; return !!c && c.cap < 1; }, END: () => (O ? END() : ''),
     ensure: () => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (ready) render(); else unlock(s); } };
 })();

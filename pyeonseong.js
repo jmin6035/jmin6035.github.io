@@ -141,11 +141,108 @@
     P.forEach((p) => LINES[p].forEach((l) => { tA += lineSum(p, l).t; sim(p, l).forEach((q) => { if (q.k === 'j' && done(p, q.x)) nF++; }); }));
     $('ps-line').innerHTML = `<span>주문 마감 <b>${dnm(addD(D0.week, -7))}</b></span><span class="ar">→</span><span>다음 <b>${dnm(D0.week)}</b></span><span>작업 순서 배분 <b>${n0(tA)}t</b></span><span>지시 <b>${n0(nF)}건</b></span>`;
   }
-  // 캘린더(생산 일정 화면과 같은 표) — 칸 누르면 그날 작업 순서
+  // 캘린더 — 표 양식(행 = 라인·하루 합·자가재, 열 = 수~화)은 생산 일정 화면과 같고, 칸 안은 편성 화면용으로 다시 그림(11/12 사용자 '안에 꾸미는 거 더 디벨롭')
   const CAL = { cg: () => window.CGCAL, cc: () => window.CCCAL };
+  /* 칸 3단: ① 큰 톤 + 강종 + 능력 대비 % ② 상태 막대 + 작은 숫자 ③ 그룹 누적 막대 + 그룹 톤 → 맨 아래 경고 칩 */
+  const gk = (g) => (/자동차/.test(g) ? 3 : /자가재/.test(g) ? 4 : /수출/.test(g) ? 1 : /국내|내수/.test(g) ? 2 : 0);   // 그룹 색 4개 고정(수출·국내·자동차·자가재) — 컬러 건재·가전 수출 = 수출, 내수 = 국내
+  const gcol = (p, g) => `var(--g${gk(g)})`;
+  const DOWS = '일월화수목금토';
+  const mdw = (d) => `${md(d)}(${DOWS[new Date(d + 'T00:00:00Z').getUTCDay()]})`;
+  const sumv = (o) => Object.values(o || {}).reduce((s, v) => s + (+v || 0), 0);
+  const famC = (f) => (f ? `<span class="fam fam-${esc(String(f).split('-')[0].replace(/[^A-Z]/g, ''))}">${esc(f)}</span>` : '');
+  const dots = (a) => a.filter(Boolean).map((x) => `<span>${x}</span>`).join('');
+  function grpBlock(p, G) {                                       // 그룹 누적 막대 1줄 + 톤 한 줄(큰 순 3개)
+    const E = Object.entries(G || {}).filter(([, v]) => v >= 0.5).sort((a, b) => b[1] - a[1]), T = E.reduce((s, [, v]) => s + v, 0);
+    if (!T) return '';
+    const K = (g) => gk(g) || 9;
+    return `<div class="gb">${E.slice().sort((a, b) => K(a[0]) - K(b[0]) || b[1] - a[1]).map(([g, v]) => `<i style="width:${(100 * v / T).toFixed(1)}%;background:${gcol(p, g)}"></i>`).join('')}</div>`
+      + `<div class="sn gn">${E.slice(0, 3).map(([g, v]) => `<span style="--gc:${gcol(p, g)}">${esc(g)} ${n0(v)}</span>`).join('')}</div>`;
+  }
+  const pctB = (r, tip) => (r == null ? '' : `<span class="pc${r > 1.005 ? ' ov' : r < 0.8 ? ' lo' : ''}" title="${esc(tip)}">${Math.round(r * 100)}%</span>`);
+  const warnB = (a) => (a.filter(Boolean).length ? `<div class="wn">${a.filter(Boolean).map((x) => `<span class="wc">⚠ ${x}</span>`).join('')}</div>` : '');
+  const btn = (cls, ln, d, tip, inner, past) => `<button type="button" class="cell${cls}"${past ? ' tabindex="-1"' : ` data-ln="${ln}" data-d="${d}"`} title="${esc(tip)}">${inner}</button>`;
+  function cgCell(c, ln) {
+    const fill = c.conf + c.plan + c.fcst, cap = c.cap || 0, base = Math.max(cap, fill) || 1, w = (v) => `${(100 * v / base).toFixed(1)}%`;
+    const mc = /M\/C/.test(c.event || ''), ev = String(c.event || '').replace(/\s*\(([^)]*)\)/, ' $1');
+    if (cap < 1) return btn(' stp', ln, c.d, `${ln} ${mdw(c.d)} ${c.event || '정지'}`, `<div class="band">${esc(ev || '정지')}</div>`);
+    const tip = `${ln} ${mdw(c.d)} · 생산 ${n0(fill)}t / 능력 ${n0(cap)}t · 작업지시 ${n0(c.conf)} · 소재 있음 ${n0(c.plan)} · 입고 예정 ${n0(c.fcst)}${c.gap ? ` · 빈칸 ${n0(c.gap)}` : ''}${c.hAvail ? ` · 시간 부하 ${Math.round(100 * (c.hrs || 0) / c.hAvail)}%(실적 T/Hr)` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''}`;
+    return btn(`${c.flag ? ' fl' : ''}`, ln, c.d, tip,
+      (c.event ? `<div class="band${mc ? ' mc' : ''}">${esc(ev)}</div>` : '')
+      + `<div class="bd"><div class="r1"><span class="tv">${n0(fill)}<small>t</small></span>${famC(c.fam)}${pctB(c.hAvail >= 1 ? (c.hrs || 0) / c.hAvail : null, `능력 대비 부하 = 칸 주문을 실적 T/Hr(같은 두께·폭)로 돌리는 시간 ${n1(c.hrs)}h ÷ 가동 가능 시간 ${n1(c.hAvail)}h`)}</div>`
+      + `<div class="sb"><i class="c" style="width:${w(c.conf)}"></i><i class="p" style="width:${w(c.plan)}"></i><i class="f" style="width:${w(c.fcst)}"></i></div>`
+      + `<div class="sn">${dots([c.conf >= 0.5 && `지시 ${n0(c.conf)}`, c.plan >= 0.5 && `소재 ${n0(c.plan)}`, c.fcst >= 0.5 && `입고예정 ${n0(c.fcst)}`, c.gap && `빈칸 ${n0(c.gap)}`]).replace(/<\/span>$/, 't</span>')}</div>`
+      + grpBlock('cg', c.grp)
+      + (c.flag ? `<div class="fx">${esc(c.flagS || c.flag)}</div>` : '')
+      + (c.mvIn || c.mvOut ? `<div class="sn mv">${dots([c.mvIn && `전입 ${c.mvIn}`, c.mvOut && `전출 ${c.mvOut}`])}</div>` : '')
+      + warnB([c.lateE && `출항일 초과 ${c.lateE}건`, c.late - c.lateE > 0 && `납기 초과 ${c.late - c.lateE}건`]) + '</div>');
+  }
+  function cgPast(a, ln, d) {
+    if (!a) return btn(' pcell', ln, d, `${ln} ${mdw(d)} 실적 자료 없음(다음 날 아침 들어옴)`, '<div class="bd"><div class="r1"><span class="tv">–</span><span class="ac">실적</span></div></div>', 1);
+    const F = Object.entries(a.fam || {}).filter(([, v]) => v >= 0.5).sort((x, y) => y[1] - x[1]);
+    return btn(' pcell', ln, d, `${ln} ${mdw(d)} 생산 실적(MES, 더미 제외) ${n0(a.t)}t`,
+      `<div class="bd"><div class="r1"><span class="tv">${n0(a.t)}<small>t</small></span>${F.map(([f]) => famC(f)).join('')}<span class="ac">실적</span></div><div class="sb"><i class="a" style="width:100%"></i></div>${grpBlock('cg', a.grp)}</div>`, 1);
+  }
+  function ccCell(c, ln, KD) {
+    if (c.stop) return btn(' stp', ln, c.d, `${ln} ${mdw(c.d)} 정지(휴지·수리)`, '<div class="band">정지</div>');
+    const K = c.k || {}, base = c.capH || 24, w = (v) => `${(100 * v / base).toFixed(1)}%`, G = {};
+    (c.items || []).forEach((i) => { G[i.grp || '기타'] = (G[i.grp || '기타'] || 0) + (+i.t || 0); });
+    const woH = (K['작업대기'] || [0, 0])[1], pulled = c.woShort > 0 && woH - c.woC >= 0.3;
+    const tip = `${ln} ${mdw(c.d)} · 가용 ${n1(c.capH)}h(24시간 − 계획 휴지) · 편성 ${n1(c.usedH)}h${c.woCarry ? ` · 이어짐 ${n1(c.woCarry)}h = 다음 작업대기 계약이 길어 칸만 다음 날 — 현장은 이어서 작업(부족 아님)` : ''}${c.lockT ? ` · 확정본 ${n1(c.lockT)}t` : ''}${pulled ? ` · 앞 날 이어짐을 당겨 돌리면 이 날 작업대기 ${n1(c.woC)}h` : ''}`;
+    const red = c.woShort > 0 || (c.short > 0 && !c.woCarry);
+    return btn(red ? ' fl' : '', ln, c.d, tip,
+      `<div class="bd"><div class="r1"><span class="tv">${n0(c.cap)}<small>t</small></span>${pctB(c.capH ? c.usedH / c.capH : null, `편성 ${n1(c.usedH)}h / 가용 ${n1(c.capH)}h`)}</div>`
+      + `<div class="sb">${KD.map(([k, , cl]) => (K[k] ? `<i class="${cl}" style="width:${w(K[k][1])}"></i>` : '')).join('')}${c.woCarry ? `<i class="kc" style="width:${w(c.woCarry)}"></i>` : ''}</div>`
+      + `<div class="sn">${dots([...KD.filter(([k]) => K[k] && K[k][1] >= 0.05).map(([k, nm]) => `${nm} ${n1(K[k][1])}`), c.woCarry && `이어짐 ${n1(c.woCarry)}`]).replace(/<\/span>$/, 'h</span>')}${c.lockT ? `<span>확정본 ${n1(c.lockT)}t</span>` : ''}</div>`
+      + grpBlock('cc', G)
+      + warnB([c.woShort > 0 && `작업대기 부족 ${n1(c.woShort)}h`, !(c.woShort > 0) && c.short > 0 && !c.woCarry && `빈 시간 ${n1(c.short)}h`, c.overH && `확정본 넘침 ${n1(c.overH)}h`]) + '</div>');
+  }
+  function ccPast(a, ln, d) {
+    if (!a) return btn(' pcell', ln, d, `${ln} ${mdw(d)} 실적 자료 없음(다음 날 아침 들어옴)`, '<div class="bd"><div class="r1"><span class="tv">–</span><span class="ac">실적</span></div></div>', 1);
+    if (!a.t) return btn(' pcell stp', ln, d, `${ln} ${mdw(d)} 생산 없음`, '<div class="band">비가동</div>', 1);
+    const P = (a.pr || []).filter(([, v]) => v >= 0.5).slice(0, 1);
+    return btn(' pcell', ln, d, `${ln} ${mdw(d)} 생산 실적(MES) ${n0(a.t)}t · ${n1(a.h)}h · 품명 ${(a.pr || []).map(([q, v]) => `${q} ${n0(v)}`).join(' · ')}`,
+      `<div class="bd"><div class="r1"><span class="tv">${n0(a.t)}<small>t</small></span>${P.map(([q]) => `<span class="fam">${esc(q)}</span>`).join('')}<span class="ac">실적</span></div><div class="sb"><i class="a" style="width:100%"></i></div><div class="sn"><span>${n1(a.h)}h</span></div>${grpBlock('cc', a.grp)}</div>`, 1);
+  }
+  function grid(p) {
+    const C = CAL[p](), R = C && C.raw && C.raw(); if (!R) return '';
+    const { w0, days } = R, today = UI.today(), LN = LINES[p];
+    const pds = []; for (let d = w0; d < days[0]; d = addD(d, 1)) pds.push(d);
+    const pad = Math.max(0, 7 - pds.length - days.length), padTd = '<td class="pad" aria-hidden="true"></td>'.repeat(pad);
+    const tdc = (d, x) => `${d === today ? 'td' : ''}${x ? ' ' + x : ''}`.trim();
+    const head = `<th class="cn">이번 주<small>${md(w0)}~${md(addD(w0, 6))}</small></th>` + pds.map((d) => `<th class="pst">${mdw(d)}<small>실적</small></th>`).join('')
+      + days.map((d) => `<th class="${tdc(d)}">${mdw(d)}${d === today ? '<small>오늘</small>' : ''}</th>`).join('') + padTd.replace(/td/g, 'th');
+    const C1 = (ln, d) => R.cell(ln, d), ftot = (c) => (p === 'cg' ? c.conf + c.plan + c.fcst : c.cap || 0);
+    const pastT = (ln, d) => { const a = R.act(ln, d); return a ? a.t || 0 : null; };
+    const rows = LN.map((ln) => {
+      const cs = days.map((d) => C1(ln, d)), idle = cs.every((c) => (p === 'cg' ? (c.cap || 0) < 1 : c.stop)) && pds.every((d) => !pastT(ln, d));
+      const sub = p === 'cg' ? `능력 ${n0(cs.reduce((s, c) => s + (c.cap || 0), 0))}t` : `${n0(cs.reduce((s, c) => s + (c.cap || 0), 0))}t · ${n0(cs.reduce((s, c) => s + (c.usedH || 0), 0))}h`;
+      const ov = p === 'cg' && R.over(ln);
+      return `<tr class="ln${idle ? ' idle' : ''}"><th>${ln}<small>${sub}</small>${ov ? `<small class="ovt" title="${R.end}까지 주문을 실적 T/Hr로 24시간 이어 돌리면 가동 가능 시간을 ${n1(ov.h)}시간 넘음">${R.end} 뒤 ${n0(ov.t)}t</small>` : ''}</th>`
+        + pds.map((d) => `<td class="pst">${p === 'cg' ? cgPast(R.act(ln, d), ln, d) : ccPast(R.act(ln, d), ln, d)}</td>`).join('')
+        + days.map((d) => `<td class="${tdc(d)}">${p === 'cg' ? cgCell(C1(ln, d), ln) : ccCell(C1(ln, d), ln, R.KD)}</td>`).join('') + padTd + '</tr>';
+    }).join('');
+    const parts = (f) => dots(LN.map((l) => { const v = f(l); return v >= 0.5 ? `${l} ${n0(v)}` : ''; }));
+    const sumCell = (v, f) => `<div class="tv">${n0(v)}<small>t</small></div><div class="sn pls">${parts(f)}</div>`;
+    const wk = days.reduce((s, d) => s + LN.reduce((q, l) => q + ftot(C1(l, d)), 0), 0);
+    const tot = `<tr class="dsum"><th>하루 합<small>주 ${n0(wk)}t</small></th>`
+      + pds.map((d) => { const has = LN.some((l) => pastT(l, d) != null); return `<td class="pst">${has ? sumCell(LN.reduce((s, l) => s + (pastT(l, d) || 0), 0), (l) => pastT(l, d) || 0) : '<div class="tv">–</div>'}</td>`; }).join('')
+      + days.map((d) => `<td class="${tdc(d)}">${sumCell(LN.reduce((s, l) => s + ftot(C1(l, d)), 0), (l) => ftot(C1(l, d)))}</td>`).join('') + padTd + '</tr>';
+    let jg = '';
+    if (p === 'cg') {
+      const J = days.map((d) => R.jg(d)), mx = Math.max(1, ...J.map((j) => Math.max(j.cumPlan, j.cumSched)));
+      const mb = (v, cl) => `<div class="mb"><i class="${cl}" style="width:${(100 * v / mx).toFixed(1)}%"></i></div>`;
+      jg = `<tr class="jg"><th title="컬러에 보낼 자가재(도금 → 컬러) 누계 — 컬러 계획(필요) vs 도금 생산(이 캘린더)">자가재<small>누계 t</small></th>`
+        + pds.map((d) => { const has = LINES.cg.some((l) => R.act(l, d)), v = LINES.cg.reduce((q, l) => q + (((R.act(l, d) || {}).grp || {}).자가재 || 0), 0); return `<td class="pst" title="${mdw(d)} 도금에서 만든 자가재(MES 실적)">${has ? `<div class="jl"><span>도금 실적</span><b>${n0(v)}</b></div>` : '–'}</td>`; }).join('')
+        + days.map((d, k) => { const j = J[k], df = j.cumSched - j.cumPlan;
+          return `<td class="${tdc(d)}" title="컬러 계획 = 컬러 투입 일정에 맞추려면 이 날까지 도금에서 만들어 둬야 할 자가재 누계 · 도금 생산 = 이 캘린더대로 만드는 자가재 누계">`
+            + `<div class="jl"><span>컬러 계획</span><b>${n0(j.cumPlan)}</b></div>${mb(j.cumPlan, 'jp')}<div class="jl"><span>도금 생산</span><b>${n0(j.cumSched)}</b></div>${mb(j.cumSched, 'js')}`
+            + `<div class="jd ${df < 0 ? 'ng' : 'ok'}">${df < 0 ? '부족' : '여유'} ${n0(Math.abs(df))}</div>${j.mark ? `<div class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 도금에서 끝내야 할 자가재 톤">컬러 마감 ${n0(j.mark)}t</div>` : ''}</td>`; }).join('') + padTd + '</tr>';
+    }
+    return `<table class="psw v2-grid"><thead><tr>${head}</tr></thead><tbody>${rows}${tot}${jg}</tbody></table>`;
+  }
   function drawCal(p) {
     const host = $('ps-cal-' + p), C = CAL[p]();
-    host.innerHTML = (C && C.week()) || '<p class="ps-empty">캘린더 자료 없음</p>';
+    host.innerHTML = (C && (C.raw ? grid(p) : C.week())) || '<p class="ps-empty">캘린더 자료 없음</p>';
     host.querySelectorAll('button.cell[data-d]').forEach((b) => {
       const on = SEL[p] && SEL[p].l === b.dataset.ln && SEL[p].d === b.dataset.d;
       b.classList.toggle('on', !!on); b.setAttribute('aria-expanded', on ? 'true' : 'false');
