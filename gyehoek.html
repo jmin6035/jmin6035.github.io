@@ -183,6 +183,19 @@ html:root body main table.gk.gk tr.sum > * { background: #f5f7fa; }
 table.gk-adj th.sub { font-size: 14px !important; font-weight: 600 !important; color: var(--ink-2) !important; }
 table.gk-adj td.df { color: var(--ink-2); } table.gk-adj td.df.dn { color: var(--warn); font-weight: 700; } table.gk-adj td.df.up { color: #2a6fc9; font-weight: 700; }
 table.gk-adj :is(td, th).bl { border-left: 1px solid var(--line) !important; }
+/* 라인·공장 구분 진하게(11/12 사용자) · 31일 고정 빈 칸 */
+html:root body main table.gk.gk tr.le > :is(td, th), html:root body main table.gk.gk th.c0.lnG, html:root body main table.gk.gk th.c0.lnC { border-bottom: 2px solid #4a5561 !important; }
+html:root body main table.gk.gk th.c0 { border-right: 2px solid #4a5561 !important; }
+html:root body main table.gk.gk tr.sum > :is(td, th) { border-top: 2px solid #4a5561 !important; border-bottom: 4px solid #1f2933 !important; }
+html:root body main table.gk.gk td.padc, html:root body main table.gk.gk th.padc { background: var(--surface-2, #f5f7fa) !important; border: 0 !important; }
+html:root body main table.gk.gk td.tot, html:root body main table.gk.gk th.tot { border-left: 2px solid #4a5561 !important; }
+/* 소재 종합 칸 줄임(11/12 사용자 '너무 크다') */
+.mz-grid { gap: 10px !important; }
+.mz-r { padding: 1px 4px !important; gap: 10px !important; min-height: 0 !important; }
+.mz-r .bar { height: 14px !important; }
+.mz-r :is(.nm, .v, .v *) { line-height: 1.25 !important; }
+.mz-p h3 { margin: 0 0 4px !important; padding-bottom: 4px !important; }
+.mz-r .v > span, .mz-r .v > span b, .mz-r .v em { font-size: 15px !important; }
 </style>
 <style>
 /* 소재 탭 = 소재 관제(matcal.html)의 소재 캘린더·월별 소재 입고 계획 서식 그대로 */
