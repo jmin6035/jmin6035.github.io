@@ -23,7 +23,12 @@
      원본 전체 = 잔여 있음 + 1,000kg 이하(제외) + 잔여 없음(제외). 매치있음 = 매치량>0(이미 생산에 쓴 소재 제외), 아래 작업 상태 4줄은 안 끝난 작업지시(PF_CC_WORK_ORD) 기준.
      작업가능일 = 매치된 소재로 만들 수 있는 양(주문별 min(잔여, 매치)) ÷ 라인 하루 능력 */
   const CAPC = { '1CCL': 480, '2CCL': 400, '3CCL': 200, '4CCL': 250 }, CAPG = { '1CGL': 719, '2CGL': 927 };
-  let PS = { line: '', open: '', sk: '', dir: 1 };
+  let PS = { line: '', open: '', sk: '', dir: 1, mon: '' };
+  /* 11/12 사용자 '주문진도도 월마다 나눠, 11월 이전은 11월로' — 납기 달 묶음: 이번 달(지난 납기·납기 없음 포함) · 다음 달 · 그다음 달 · 그 뒤 · 전체 */
+  const addM_ = (ym, k) => { const d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + k, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+  const monNow = () => String((M && M.asOf) || CT.today && CT.today() || '').slice(0, 7);
+  const monOf = (due) => { const c = monNow(), m = String(due || '').slice(0, 7); return !m || m <= c ? c : m >= addM_(c, 3) ? 'later' : m; };
+  const inMon = (due) => !PS.mon || PS.mon === 'all' || monOf(due) === PS.mon;
   /* 주문진도 단계(11/5 사용자): 주문 총량 → 소재 매치 전 → 소재 매치 후(→ 컬러는 부원료 발주라 부자재 대기 같이) → 작업 대기 → 작업지시량.
      '도금도 컬러랑 동일하게 단어 매칭' — 도금의 소재 매치 = 소재(F/H) 입고 완료, 작업지시량 = 현장 작업지시 목록에 오른 주문. 주문마다 한 칸, 합 = 총량 */
   const K0 = '소재 매치 전', KP = '소재 매치 후';
@@ -65,7 +70,7 @@
     const cl = sel.filter((l) => CAPC[l]), gl = sel.filter((l) => CAPG[l]);
     if (cc && cl.length) {
       const shut = new Set((M.C || M.all || []).filter((o) => o.pl === 'C' && o.closed).map((o) => o.src));   // 전량 출하·잔량 미생산 마감(MES 종결 전) — 아래 목록과 같게 뺌
-      const R0 = (cc.rows || []).filter((r) => cl.includes(r.line)), R = R0.filter((r) => !shut.has(r) && !r.dummy), cap = cl.reduce((a, l) => a + CAPC[l], 0);
+      const R0 = (cc.rows || []).filter((r) => cl.includes(r.line)), R = R0.filter((r) => !shut.has(r) && !r.dummy && inMon(r.due)), cap = cl.reduce((a, l) => a + CAPC[l], 0);
       const ex = cl.reduce((a, l) => { const e = (cc.excl || {})[l] || {}; return { zero: a.zero + ((e.zero || [])[0] || 0), small: a.small + ((e.small || [])[0] || 0), zT: a.zT + ((e.zero || [])[1] || 0), sT: a.sT + ((e.small || [])[1] || 0) }; }, { zero: 0, small: 0, zT: 0, sT: 0 });
       const can = R.filter((r) => r.mchT > 0.0005).reduce((a, r) => a + Math.min(+r.remT || 0, +r.mchT || 0), 0);
       const exA = (k) => cl.reduce((a, l) => { const e = (((cc.excl || {})[l] || {})[k]) || []; return a.map((v, i) => v + (+e[i] || 0)); }, [0, 0, 0, 0, 0]);
@@ -74,7 +79,7 @@
     if (gl.length && (D0 || {}).cg_order_progress) {
       // 11/9 도금도 컬러와 같게: 주문잔여량 1,000kg 넘는 것(계약번호 5번째 T·Q 는 포함)
       const tq = (o) => /^[TQ]$/.test(String(o.id || '').charAt(4));
-      const G = (M.G || []).filter((o) => gl.includes(o.line)), R = G.filter((o) => !o.closed && ((o.remT || 0) > 1 || (tq(o) && (o.remT || 0) > 0.0005))), capL = Object.fromEntries((((D0 || {}).cg_order_progress || {}).cover || {}).lines?.filter((x) => x.specDay).map((x) => [x.line, x.specDay]) || []), cap = gl.reduce((a, l) => a + (capL[l] || CAPG[l]), 0);   // 11/9: 하루 능력 = 재계획 하루 톤(도금 주문진도와 같은 값) — 고정 927t 였음
+      const G = (M.G || []).filter((o) => gl.includes(o.line) && inMon(o.due)), R = G.filter((o) => !o.closed && ((o.remT || 0) > 1 || (tq(o) && (o.remT || 0) > 0.0005))), capL = Object.fromEntries((((D0 || {}).cg_order_progress || {}).cover || {}).lines?.filter((x) => x.specDay).map((x) => [x.line, x.specDay]) || []), cap = gl.reduce((a, l) => a + (capL[l] || CAPG[l]), 0);   // 11/9: 하루 능력 = 재계획 하루 톤(도금 주문진도와 같은 값) — 고정 927t 였음
       const gSmall = G.filter((o) => !o.closed && (o.remT || 0) > 0.0005 && (o.remT || 0) <= 1 && !tq(o));
       const can = R.filter((o) => catG(o) !== K0).reduce((a, o) => a + o.remT, 0);
       out.push({ pl: 'G', nm: '도금', R, cap, can, ex: { zero: G.length - R.length - gSmall.length, small: gSmall.length, zT: 0, sT: gSmall.reduce((a, o) => a + (o.remT || 0), 0) }, all: G, cats: CFG.G.leaves.map(([k, c, t]) => { const rs = R.filter((o) => catG(o) === k); return { k, c, t, n: rs.length, rem: rs.reduce((a, o) => a + (o.remT || 0), 0), rs }; }) });
@@ -161,6 +166,7 @@
     return lines.length ? `<div class="seg ct-seg ps-seg" role="group" aria-label="라인">${[['', '전체']].concat(lines.map((l) => [l, l])).map(([k, n]) => `<button type="button" data-l="${k}" aria-pressed="${PS.line === k}">${n}</button>`).join('')}</div>` : '';
   }
   function progSum(noMini) {   // noMini = 라인별 '미생산' 카드 줄 뺌(편성 화면 맨 위 — 11/12 사용자 '미생산 이것들은 빼고')
+    if (!PS.mon) PS.mon = monNow();
     const lines = allLines();
     if (!lines.length) return '';
     let body = '';
@@ -168,9 +174,11 @@
       const mini = lines.map((l) => { const d = psData([l])[0]; if (!d) return ''; const tot = d.cats.reduce((a, c) => a + c.rem, 0);
         return `<button type="button" class="pm" data-l="${l}"><div class="h"><b>${l}</b><span>${n0(d.cats.reduce((a, c) => a + c.n, 0))}건</span></div><div class="v">${n0(tot)}<small>t 미생산</small></div>${segBar(d.cats, false)}<div class="s">${(() => { const g = (k) => (d.cats.find((c) => c.k === k) || { rem: 0 }).rem; return `<span class="nw">매치 전 <b class="bad">${n0(g(K0))}t</b></span> · <span class="nw">작업지시량 <b>${n0(g('작업지시량'))}t</b></span>`; })()}</div></button>`; }).join('');
       body = (noMini ? '' : `<div class="pms">${mini}</div>`) + (noMini ? psData(lines).reverse() : psData(lines)).map(   /* 편성 맨 위 = 도금 먼저(11/12 사용자) */
-        (d) => psCard(d, `${d.nm} 전체 주문진도`)).join('');
+        (d) => psCard(d, `${d.nm} ${PS.mon === 'all' ? '전체' : PS.mon === 'later' ? `${+addM_(monNow(), 3).slice(5)}월 이후 납기` : PS.mon === monNow() ? `${+PS.mon.slice(5)}월까지 납기` : `${+PS.mon.slice(5)}월 납기`} 주문진도`)).join('');
     } else body = psData([PS.line]).map((d) => psCard(d, `${PS.line} 주문진도`)).join('');
-    return `<div class="ps">${body}</div>`;
+    const c = monNow(), MB = [[c, `${+c.slice(5)}월 <small>지난 납기 포함</small>`], [addM_(c, 1), `${+addM_(c, 1).slice(5)}월`], [addM_(c, 2), `${+addM_(c, 2).slice(5)}월`], ['later', `${+addM_(c, 3).slice(5)}월~`], ['all', '전체']].filter(([k]) => k !== 'later' || [...(((D0 || {}).cc_order_progress || {}).rows || []), ...((M && M.G) || [])].some((r) => monOf(r.due) === 'later'));   // 그 뒤 납기가 없으면 탭 숨김
+    const tabs = `<div class="ps-mon" role="tablist" aria-label="납기 달">${MB.map(([k, t]) => `<button type="button" role="tab" data-mon="${k}" aria-selected="${PS.mon === k}" class="${PS.mon === k ? 'on' : ''}">${t}</button>`).join('')}<span>납기 기준</span></div>`;
+    return `<div class="ps">${tabs}${body}</div>`;
   }
   /* 첫 화면 결론(11/11 사용자 '들어가자마자 문제·할 일'): 도금·컬러 각각 지연 예상·납기 경과 톤 → 이번 주 할 일(소재·부자재·편성·이번 주 납기) */
   function concl(A, LN) {
@@ -282,6 +290,7 @@
   }
   function bindPS(noMini) {
     const re = () => { const y = scrollY; $('co-ps').innerHTML = progSum(noMini); bindPS(noMini); scrollTo(0, y); };
+    document.querySelectorAll('#co-ps .ps-mon button').forEach((b) => (b.onclick = () => { PS.mon = b.dataset.mon; PS.open = ''; re(); }));
     document.querySelectorAll('.ps-seg button, .pm').forEach((bt) => (bt.onclick = () => { const y = scrollY; PS.line = bt.dataset.l; PS.open = ''; TK.open = null; drawTrack(); scrollTo(0, y); }));
     document.querySelectorAll('#co-ps [data-ex]').forEach((el) => { const go = () => { PS.open = PS.open === el.dataset.ex ? '' : el.dataset.ex; re(); const e = document.querySelector('.ps-exp'); if (e && PS.open) e.scrollIntoView({ block: 'nearest' }); };
       el.onclick = go; el.onkeydown = (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } }; });
