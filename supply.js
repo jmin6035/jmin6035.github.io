@@ -121,7 +121,7 @@
     if (!P) return null;
     const MV = Object.fromEntries(UI.matView(MO).map((m) => [m.key, m]));   // 11/10: 발주 마감·부족 시작 = 소재 관제와 같은 값(mat_order)
     const t0 = P.today && P.today < today ? P.today : today;   // 11/7 점검: 재고는 자료일(11/5 아침 = 11/4 마감) 기준 → 그날부터 소요를 빼야 함(오늘부터 빼면 이틀치 사용이 빠짐)
-    const ds = D.days.filter((d) => d >= t0), out = [];
+    const ds = (D.matDays || D.days).filter((d) => d >= t0), out = [];   // 계획 > 소재: 통합 계획(12/31) 너머 달도 재고를 굴림(matExtend)
     const keys = [...new Set(P.units.map((u) => `${u.plant}:${u.code}`))];
     for (const k of keys) {
       const [plant, code] = k.split(':');
@@ -299,11 +299,26 @@
     const i = diff(d, D.days[0]); const v = (OD[g] || [])[i]; return { t: v || 0, act: false };
   }
   function tabs() {
-    $('s-mon').innerHTML = D.months.map((m) => `<button type="button" data-m="${m}" aria-pressed="${m === mon}">${+m.slice(5)}월</button>`).join('');
-    $('s-mon').querySelectorAll('button').forEach((b) => b.onclick = () => { mon = b.dataset.m; tabs(); progress(); cal(); if (PAGE === 'matcal') monthSum(); });
+    $('s-mon').innerHTML = (D.matMonths || D.months).map((m) => `<button type="button" data-m="${m}" aria-pressed="${m === mon}">${+m.slice(5)}월</button>`).join('');
+    $('s-mon').querySelectorAll('button').forEach((b) => b.onclick = () => { mon = b.dataset.m; tabs(); if (!D.months.includes(mon)) { cal(); return; } progress(); cal(); if (PAGE === 'matcal') monthSum(); });
+  }
+  // 11/12 사용자 '1월껀 왜 없지': 통합 계획(가동·자가재)은 12/31까지지만 소재 수요(procure: 도금 = 일별 계획 ~2/28, 컬러 = 월 소재량)·MES 기발주는 그 너머도 있음
+  // → 계획 > 소재(gyehoek)만 이번 달 + 2달까지 소재 달을 늘림(가동 캘린더 등 다른 화면은 그대로). 늘린 달은 소재 유형 캘린더만 그림
+  function matExtend(P) {
+    if (PAGE !== 'gyehoek' || !P) return;
+    const last = (P.units || []).reduce((a, u) => Object.keys(u.days || {}).reduce((x, d) => (d > x ? d : x), a), '');
+    const mAdd = (m, k) => { const x = new Date(m + '-01T00:00:00'); x.setMonth(x.getMonth() + k); return x.toLocaleDateString('sv-SE').slice(0, 7); };
+    const lim = mAdd(today.slice(0, 7), 2), ms = [...D.months], ds = [...D.days];
+    for (let m = mAdd(ms[ms.length - 1], 1); m <= lim && m <= last.slice(0, 7); m = mAdd(m, 1)) { ms.push(m); for (let d = m + '-01'; d.slice(0, 7) === m; d = add(d, 1)) ds.push(d); }
+    D.matMonths = ms; D.matDays = ds;
   }
   const kt = (v) => { const a = Math.abs(v) / 1000; return (v < -0.5 ? '−' : '') + (a >= 1 ? a.toFixed(1) : a.toFixed(2)); };   // 재고 표 천t(사용자 10/21: 5자리 넘침 → 한 달 한 화면 유지)
   function cal() {
+    if (!D.months.includes(mon)) {                                       // 통합 계획 너머 달(matExtend) — 소재 유형 캘린더만
+      const ds = (D.matDays || []).filter((d) => d.slice(0, 7) === mon);
+      typeCal(ds, `<thead><tr><th class="lb">구분</th>${ds.map((d) => `<th data-d="${d}" class="">${+d.slice(8)}</th>`).join('')}<th class="tot">계</th></tr></thead>`);
+      return;
+    }
     const ds = D.days.filter((d) => d.slice(0, 7) === mon);
     const head = `<thead><tr><th class="lb">구분</th>${ds.map((d) => `<th data-d="${d}" class="${wd(d) === 6 ? 'sat' : wd(d) === 0 ? 'sun' : ''} ${d === today ? 'today tb' : ''}">${+d.slice(8)} <span style="font-weight:500;font-size:13.5px">${WD[wd(d)]}</span></th>`).join('')}<th class="tot">계</th></tr></thead>`;
     const H = { a: '', b: '' }; let tg = 'a', ci = 0;
@@ -977,8 +992,8 @@
     let MOx = null;
     if (document.getElementById('s-ojudge')) { try { const me = await GP.latest('mat_order.enc.json'); MOx = me ? await GP.decryptJSON(me, pw) : null; orderJudge(MOx); } catch (e) { orderJudge(null); } }
     if (!render.sub) { render.sub = true; UI.onScope(() => { if (!D) return; if (document.getElementById('s-ojudge')) orderJudge(MOx); weekBox(); progress(); monthSum(); cal(); }); }   // 11/11 사용자 '도금·컬러·전체를 눌러도 표가 안 바뀜'
-    try { const pe = await GP.latest('procure.enc.json'); const P = pe ? await GP.decryptJSON(pe, pw) : null; PM = P ? prepMat(P, MOx) : null; MP = P ? matPlan(P, MOx) : null; } catch (e) { PM = null; MP = null; }
-    window.SupMat = { MP, PM, today, sumT, typeDetail };   // 계획 > 소재(mat_v2.js)가 같은 값을 읽음
+    try { const pe = await GP.latest('procure.enc.json'); const P = pe ? await GP.decryptJSON(pe, pw) : null; matExtend(P); PM = P ? prepMat(P, MOx) : null; MP = P ? matPlan(P, MOx) : null; } catch (e) { PM = null; MP = null; }
+    window.SupMat = { MP, PM, today, sumT, typeDetail, ext: (D.matMonths || []).filter((m) => !D.months.includes(m)) };   // ext = 통합 계획 너머 소재 달(matExtend)   // 계획 > 소재(mat_v2.js)가 같은 값을 읽음
     mon = D.months.includes(today.slice(0, 7)) ? today.slice(0, 7) : D.months[0];
     const LV = D.live || {};
     $('s-meta').innerHTML = LV.pl ? `실적 ~${md(LV.pl.actTo || LV.pl.t0)} · 재계획 ${esc(UI.fmtDateTime(LV.pl.at))}` : `기준 <b>기준 계획</b> · 계산 ${esc(UI.fmtDateTime(W.built))} · 실적 ~${esc(UI.fmtDate(W.asOf))}`;

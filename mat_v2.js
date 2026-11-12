@@ -98,7 +98,7 @@
           + (i === 0 ? `<td class="stk" rowspan="${C.rows.length}"${C.names.length ? ` title="${esc(C.names.join(' · '))} 재고(${C.rows.length > 1 ? '같은 소재 코드를 쓰는 유형 공용' : '소재 코드 기준'})"` : ''}>${C.stock == null ? '–' : n0(C.stock)}${C.rows.length > 1 ? `<small>${esc(C.names.join(' · '))} 공용</small>` : ''}</td><td class="jdc" rowspan="${C.rows.length}">${judge(C)}</td>` : '') + '</tr>';
       });
     }
-    return `<h2 class="m4-h">${M}월 소재 현황</h2><div class="m4-q">톤 · 기준 ${md(R.today)} · 확인할 소재가 각 묶음 맨 위 · 판정 = 지금 재고 + 기발주 입고 − 생산 투입(추가 발주 없음)</div>`
+    return `<h2 class="m4-h">${M}월 소재 현황</h2><div class="m4-q">톤 · 기준 ${md(R.today)}${(window.SupMat.ext || []).includes(R.mon) ? ' · 필요 = 도금 재계획 · 컬러 3개월 계획' : ''} · 확인할 소재가 각 묶음 맨 위 · 판정 = 지금 재고 + 기발주 입고 − 생산 투입(추가 발주 없음)</div>`
       + `<div class="m4-sc"><table class="m4-mx"><colgroup><col style="width:150px"><col><col><col><col><col style="width:28%"><col style="width:210px"><col style="width:150px"></colgroup>`
       + `<thead><tr><th rowspan="2">소재</th><th colspan="5" class="gq">① 이달 필요한 만큼 확보했나</th><th colspan="2" class="gq sl">② 지금 재고로 버티나</th></tr>`
       + `<tr><th>이달 필요</th><th>입고 완료</th><th>발주(입고 예정)</th><th>미발주</th><th>확보율</th><th class="sl">지금 재고</th><th>판정</th></tr></thead><tbody>${b}</tbody></table></div>`
