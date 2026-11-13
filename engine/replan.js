@@ -61,6 +61,64 @@
     return lock;
   };
 
+  /* 11/13 사용자 승인: 2CGL MAC 월 1회 창 + AL-STS 칸 — cglplan/macrule.py 와 같은 규칙(params.js macRule, 재계획 옵션 macRule 로 켬)
+     ① MAC: from 부터 그 라인 강종 = MAC 창(매달 day일 ~ day+len−1일)이면 MAC, 아니면 AL — 다른 M/C 금지(M/C 고정 lock 으로)
+     ② AL-STS: from 부터 칸 날짜(MAC→AL 복귀 뒤 gap일·정지 날 뺌)에만, 칸당 cap t 이하 ③ AL-STS 지연 기준 = 칸 끝(행에는 원래 납기) */
+  const MR = (GP.macRule = {});
+  MR.months = (a, b) => { const out = []; let y = +a.slice(0, 4), m = +a.slice(5, 7); while (`${y}-${String(m).padStart(2, '0')}` <= b.slice(0, 7)) { out.push(`${y}-${String(m).padStart(2, '0')}`); if (m === 12) { y++; m = 1; } else m++; } return out; };
+  MR.windows = (rule, D1) => MR.months(rule.from, D1).map((m) => { const s = `${m}-${String(+((rule.dayOf || {})[m] || rule.day || 11)).padStart(2, '0')}`; return [s, GP.addDays(s, rule.len)]; });
+  MR.setup = function (P, H, act, rule, MO, notes) {
+    const l = rule.line, t0 = act.t0, D1 = H.D1, fam = rule.fam, base = rule.base, mac = rule.mac !== false;
+    const lock = mac ? (MO.lock = MO.lock || {}) : (MO.lock || {});
+    const k = lock[l] || { from: GP.addDays(t0, 1), days: {} }, W = MR.windows(rule, D1);
+    if (mac) {
+      const want = (d) => (W.some(([s, e]) => s <= d && d < e) ? fam : base);
+      const st0 = GP.addDays(MO.freezeUntil || t0, 1), start = rule.from > st0 ? rule.from : st0;
+      const days = {}; for (const [d, f] of Object.entries(k.days)) if (d < rule.from) days[d] = f;
+      let prev = null;
+      for (const d of GP.dateRange(start, D1)) { if (GP.isBlackout(P, l, d)) continue; const w = want(d); if (w !== prev) days[d] = w; prev = w; }
+      lock[l] = { from: k.from, days, to: D1 };
+      notes.push(`${l} MAC 월 1회 규칙(${GP.md(rule.from)}~): ` + W.filter(([s, e]) => e > t0).map(([s, e]) => `${GP.md(s)}~${GP.md(GP.addDays(e, -1))}`).join(', ') + ' — 그 외 M/C 없음');
+    }
+    if (rule.sts === false) return [];
+    let st = act.state[l]; const rets = [], ld = (lock[l] || {}).days || {};
+    for (const d of Object.keys(ld).sort()) { const f = ld[d]; if (st === fam && f === base) rets.push(d); st = f; }
+    const gapd = new Set(); for (const r of rets) for (let i = 0; i < (+rule.gap || 0); i++) gapd.add(GP.addDays(r, i));
+    const made = {}; for (const [d, ln, a, c, t] of act.rows) if (ln === l && a === rule.alloy) made[d] = (made[d] || 0) + t;
+    const slots = [];
+    for (const m of MR.months(rule.from, D1)) for (const [a, b] of rule.slots) {
+      const s0 = `${m}-${String(a).padStart(2, '0')}`, s1 = `${m}-${String(b).padStart(2, '0')}`;
+      const ds = GP.dateRange(s0, s1 < D1 ? s1 : D1).filter((d) => d > t0 && !gapd.has(d) && !GP.isBlackout(P, l, d));
+      if (ds.length) slots.push({ from: s0, to: s1, days: ds, cap: Math.max(0, rule.cap - Object.entries(made).filter(([d]) => s0 <= d && d <= s1).reduce((p, [, v]) => p + v, 0)) });
+    }
+    const day = {}; slots.forEach((s, i) => s.days.forEach((d) => { day[d] = i; }));
+    MO.slots = { line: l, alloy: rule.alloy, from: rule.from, day, cap: slots.map((s) => s.cap) };
+    notes.push(`${l} ${rule.alloy} 칸: ` + slots.map((s) => `${GP.md(s.days[0])}~${GP.md(s.days[s.days.length - 1])}(${GP.fmt(s.cap)}t)`).join(', ') + ` — MAC→AL 복귀 뒤 ${rule.gap}일 금지`);
+    return slots;
+  };
+  MR.slotDue = (slots, due, rel) => { const ends = [...new Set(slots.filter((s) => !rel || s.to >= rel).map((s) => s.to))].sort(); const le = ends.filter((e) => e <= due); return le.length ? le[le.length - 1] : ends.length ? ends[0] : due; };
+  MR.remap = function (rem, slots, rule) {
+    const ref = {};
+    const out = rem.map((b) => {
+      if (!(slots.length && b.alloy === rule.alloy && b.orig > 1e-6)) return b;
+      const r = MR.slotDue(slots, b.due, b.rel), k = `${b.cls}|${b.due}`;
+      ref[k] = k in ref && ref[k] > r ? ref[k] : r;
+      return r !== b.due ? Object.assign({}, b, { due: r, due0: b.due }) : b;
+    });
+    return { rem: out, ref };
+  };
+  MR.summary = function (rows, items, t0, rule, slots, ref) {
+    const tot = {}, res = {}, day = {};
+    for (const it of items || []) { if (it.alloy !== rule.alloy || it.dest === '생산 완료') continue; const k = `${it.cls}|${it.due}`; tot[k] = (tot[k] || 0) + it.tons; if (it.src !== '주문') res[k] = (res[k] || 0) + it.tons; }
+    for (const [d, l, a, c, t, du] of rows) {
+      if (a !== rule.alloy || d <= t0) continue;
+      const k = `${c}|${du}`, x = (day[`${d}|${l}`] = day[`${d}|${l}`] || [0, 0]);
+      x[0] += t; x[1] += t * (tot[k] > 0 ? (res[k] || 0) / tot[k] : 1);
+    }
+    return { line: rule.line, alloy: rule.alloy, slots: slots.map((s) => [s.days[0], s.days[s.days.length - 1], GP.round(s.cap, 1)]), ref,
+      days: Object.keys(day).sort().map((k) => { const [d, l] = k.split('|'); return [d, l, GP.round(day[k][0], 1), GP.round(day[k][1], 1)]; }) };
+  };
+
   /* R: 기준 계획 결과, act: {t0, rows, state, extraDown, notes}. 반환: 같은 형식의 결과(과거=실적 + 미래=재계획) */
   GP.DEPTS_ALL = ['도금수출', '자동차수출', '도금국내', '자동차내수', '자가재'];   // report.js DEPTS 와 같은 순서(워커엔 report.js 없음)
   GP.replan = function (highs, R, act, opts = {}, log) {
@@ -69,7 +127,7 @@
     const done = {};
     for (const [d, l, a, c, t, du] of act.rows) done[`${c}|${a}|${du}`] = (done[`${c}|${a}|${du}`] || 0) + t;
     const over = [];
-    const rem = R.buckets.map((b) => {
+    let rem = R.buckets.map((b) => {
       const k = `${b.cls}|${b.alloy}|${b.due}`, left = b.orig - (done[k] || 0);
       if (left < -0.5) over.push(`${b.cls} ${b.alloy} ${GP.md(b.due)} +${GP.fmt(-left)}t`);
       return Object.assign({}, b, { orig: Math.max(0, left) });
@@ -95,6 +153,12 @@
     }
     const MO = { t0: act.t0, init: act.state, freezeUntil: fu, baseState, allowLate: O.allowLate, maxLate: O.maxLate, lateW: O.lateW, shortW: O.shortW, stabW: O.stabW, stabW2: O.stabW2, extraDown: XD };
     if (O.lockMC) MO.lock = GP.mcLock(P, H, R, act, lockNotes);
+    let rule = O.macRule, slots = [], stsRef = {};
+    if (rule === true) rule = O.macRule = P.macRule || GP.DEFAULT_PARAMS.macRule;
+    if (rule && (rule.mac !== false || rule.sts !== false)) {           // 11/13 사용자: 2CGL MAC 월 1회 창 + AL-STS 칸
+      slots = MR.setup(P, H, act, rule, MO, lockNotes);
+      const m = MR.remap(rem, slots, rule); rem = m.rem; stsRef = m.ref;
+    }
     log && log(`실적 ${GP.fmt(GP.sum(act.rows, (r) => r[4]))}t 반영(~${GP.md(act.t0)}), 남은 수요 ${GP.fmt(GP.sum(rem, (b) => b.orig))}t, 강종 동결 ~${MO.freezeUntil ? GP.md(MO.freezeUntil) : '없음'}`);
     const PS = Object.assign({}, P, { timeLimit1: O.timeLimit, timeLimit2: O.timeLimit, phase2Mode: O.phase2Mode });
     let milp, proposal = null;
@@ -157,6 +221,7 @@
       removed: before.filter((x) => !after.includes(x)), added: after.filter((x) => !before.includes(x)),
       over, shortBy, late: milp.late, baseMC: R.milp && R.milp.K, options: O, lockMC: !!MO.lock, lockNotes, proposal, optimal: !!(milp.optimal1 && milp.optimal2 && milp.phase2Exact),
     };
+    if (slots.length) replan.sts = MR.summary(rows, R.items, act.t0, rule, slots, stsRef);
     // 계획 대비 실적(대시보드): 라인×일, 부서 누계
     replan.vsPlan = [];
     for (const d of GP.dateRange(H.D0, act.t0)) if (inwin(d)) for (const l of P.lines) replan.vsPlan.push([d, l, GP.round(planDay[`${l}|${d}`] || 0, 1), GP.round(actDay[`${l}|${d}`] || 0, 1)]);
@@ -169,7 +234,8 @@
      재계획 MILP 의 지연 값에는 자가재 반순 납기(가중 0.01)도 섞여 있어 화면에는 이 값을 씀 */
   GP.dueLate = function (R) {
     const t0 = (R && R.replan && R.replan.t0) || '';
-    return GP.sum((R && R.rows || []).filter((r) => r[0] > t0 && r[0] > r[5]), (r) => r[4] * GP.diffDays(r[0], r[5]));
+    const S = (R && R.replan && R.replan.sts) || {}, ref = S.ref || {}, du = (r) => (r[2] === S.alloy && ref[`${r[3]}|${r[5]}`]) || r[5];   // AL-STS = 칸 끝 기준(11/13)
+    return GP.sum((R && R.rows || []).filter((r) => r[0] > t0 && r[0] > du(r)), (r) => r[4] * GP.diffDays(r[0], du(r)));
   };
   /* 화면·보고 공용 문구: M/C 고정 상태와 이동 제안 */
   GP.lockLines = function (rp) {

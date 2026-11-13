@@ -148,7 +148,7 @@
   const DOWS = '일월화수목금토';
   const mdw = (d) => `${md(d)}(${DOWS[new Date(d + 'T00:00:00Z').getUTCDay()]})`;
   const tsum = (a) => a.reduce((s, i) => s + (+i.t || 0), 0);
-  const famC = (f) => (f ? `<span class="fam fam-${esc(String(f).split('-')[0].replace(/[^A-Z]/g, ''))}">${esc(f)}</span>` : '');
+  const famC = (f) => (f ? `<span class="fam fam-${f === 'AL-STS' ? 'STS' : esc(String(f).split('-')[0].replace(/[^A-Z]/g, ''))}">${esc(f)}</span>` : '');
   const spans = (a) => a.filter(Boolean).map((x) => `<span>${x}</span>`).join('');
 
   /* 컬러 '이어짐' 없앰: 작업대기를 끊지 않고 이어 돌림(현장 방식) — 칸 편성 규칙(계약이 그날 남은 시간보다 길면 다음 날)이 남긴 빈 시간을
@@ -204,18 +204,20 @@
       + (o.band ? `<div class="band${o.mc ? ' mc' : ''}">${esc(o.band)}</div>` : '')
       + `<div class="bd"><div class="r1"><span class="tv">${o.t == null ? '–' : `${n0(o.t)}<small>t</small>`}</span>${o.chips || ''}</div>`
       + (o.pct || wn.length ? `<div class="wn">${o.pct || ''}${wn.slice(0, 1).map((x) => `<span class="wc">${esc(x)}</span>`).join('')}</div>` : '')
+      + (o.sts ? `<div class="wn"><span class="wst">${esc(o.sts)}</span></div>` : '')
       + '</div></button>';
   }
-  function cgCell(c, ln, rem) {
+  function cgCell(c, ln, rem, st) {                         // st = 그날 AL-STS {t, res}(재계획 — cg_calendar.js raw().sts, 11/13)
     const fill = c.conf + c.plan + c.fcst, cap = c.cap || 0;
     const mc = /M\/C/.test(c.event || ''), ev = String(c.event || '').replace(/\s*\(([^)]*)\)/, ' $1');
     if (cap < 1) return cellH({ ln, d: c.d, off: String(c.event || '').replace(/\s*\(.*\)$/, '') || '정지', tip: `${ln} ${mdw(c.d)} ${c.event || '정지'}` });   // 01 일별 가동계획과 같은 이름(정기수리·수리·휴지)
     const r = c.hAvail >= 1 ? (c.hrs || 0) / c.hAvail : null;
-    return cellH({ ln, d: c.d, rem, fl: !!c.flag, band: c.event ? ev : '', mc, t: fill, chips: famC(c.fam),
+    const sr = st ? Math.min(st.res || 0, st.t) : 0;
+    return cellH({ ln, d: c.d, rem, fl: !!c.flag, band: c.event ? ev : '', mc, t: fill, chips: famC(c.fam) + (st && c.fam !== 'AL-STS' ? famC('AL-STS') : ''),
       pct: pctB(r, `이 날 배정 주문을 실적 속도(같은 두께·폭 T/Hr)로 돌리면 ${n1(c.hrs)}시간 — 가동 가능 ${n1(c.hAvail)}시간을 넘어 다음 날로 밀림`, (c.hrs || 0) - c.hAvail),
       st: [['작업대기', c.conf], ['지시대기', c.plan], ['입고예정', c.fcst]], G: c.grp,
-      wn: [c.flag && (c.flagS || c.flag), c.gap >= 0.5 && c.hAvail - (c.hrs || 0) >= 0.5 && `빈 시간 ${n1((c.hAvail - (c.hrs || 0)) / (c.eff || 1))}h`,   /* 11/13 점검: '빈칸 Xt'(남은 시간 × 평균 속도)는 계획 톤과 안 맞아 보임 → 컬러와 같은 '빈 시간' */ c.lateE && `출항일 초과 ${c.lateE}건`, c.late - c.lateE > 0 && `납기 초과 ${c.late - c.lateE}건`],
-      tip: `${ln} ${mdw(c.d)} · 생산 ${n0(fill)}t / 능력 ${n0(cap)}t · 작업대기 ${n0(c.conf)} · 지시대기 ${n0(c.plan)} · 입고예정 ${n0(c.fcst)} · ${Object.entries(regroup(c.grp)).filter(([, v]) => v >= 0.5).map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
+      sts: sr >= 0.5 ? `AL-STS 예약 ${n0(sr)}t(D-3 확정)` : '', wn: [c.flag && (c.flagS || c.flag), c.gap >= 0.5 && c.hAvail - (c.hrs || 0) >= 0.5 && `빈 시간 ${n1((c.hAvail - (c.hrs || 0)) / (c.eff || 1))}h`,   /* 11/13 점검: '빈칸 Xt'(남은 시간 × 평균 속도)는 계획 톤과 안 맞아 보임 → 컬러와 같은 '빈 시간' */ c.lateE && `출항일 초과 ${c.lateE}건`, c.late - c.lateE > 0 && `납기 초과 ${c.late - c.lateE}건`],
+      tip: `${ln} ${mdw(c.d)}${st ? ` · AL-STS ${n0(st.t)}t${sr >= 0.5 ? ` (예약 ${n0(sr)}${st.t - sr >= 0.5 ? ` · 주문 ${n0(st.t - sr)}` : ''} — 주문 D-3 확정)` : ' (주문)'}` : ''} · 생산 ${n0(fill)}t / 능력 ${n0(cap)}t · 작업대기 ${n0(c.conf)} · 지시대기 ${n0(c.plan)} · 입고예정 ${n0(c.fcst)} · ${Object.entries(regroup(c.grp)).filter(([, v]) => v >= 0.5).map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
   }
   function ccCell(x, ln, KD, rem) {
     const c = x.c;
@@ -258,7 +260,7 @@
         const idle = W.every((d) => kind(d) === 'pad' || (kind(d) === 'pst' ? !pastT(ln, d) : (p === 'cg' ? (R.cell(ln, d).cap || 0) < 1 : R.cell(ln, d).stop)));
         return `<tr class="ln${idle ? ' idle' : ''}"><th>${ln}<small>${n0(wT(ln, W))}t</small></th>`
           + W.map((d) => (kind(d) === 'pad' ? pad() : kind(d) === 'pst' ? `<td class="pst">${pastCell(p, R.act(ln, d), ln, d)}</td>`
-            : `<td class="${tdc(d)}">${p === 'cg' ? cgCell(R.cell(ln, d), ln, d === today) : ccCell(FL[ln][d], ln, R.KD, d === today)}</td>`)).join('') + '</tr>';
+            : `<td class="${tdc(d)}">${p === 'cg' ? cgCell(R.cell(ln, d), ln, d === today, R.sts && R.sts(ln, d)) : ccCell(FL[ln][d], ln, R.KD, d === today)}</td>`)).join('') + '</tr>';
       }).join('');
       const sumT = (d) => LN.reduce((s, l) => s + dayT(l, d), 0);
       const tot = `<tr class="dsum"><th>합계<small>${n0(LN.reduce((s, l) => s + wT(l, W), 0))}t</small></th>`

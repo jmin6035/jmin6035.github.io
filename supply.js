@@ -88,7 +88,7 @@
           else if (v >= 0.5) pl[k] = { t: v, fam: FAM((ev[k] || {}).fam || 'AL'), ev: '', bo: 0, mcd: 0, cls: {}, items: [], why: [], act: true, lineOnly: true }; }
         if (r.d > actTo) actTo = r.d;
       }
-      D.pl = pl;
+      D.pl = pl; D.sts = OPT.sts(R);                                   // AL-STS 날별 톤·예약(11/13) — 가동 캘린더 청록 칸
       D.dayMin = (PA && PA.dayMin) || {}; D.SW = (R.P || {}).switchDummy || {};   // 가동시간 줄(01 과 같은 정의): 지난 날 = MES 실적 가동 분, 앞날 = 24 − 계획 정지 분
       const kst = LP.savedAt ? new Date(new Date(LP.savedAt).getTime() + 9 * 36e5).toISOString().slice(0, 16).replace('T', ' ') : '';   // 한국 시각
       info.pl = { t0, actTo, at: kst, notes: (R.replan || {}).notes || [] };
@@ -374,7 +374,7 @@
     const cellOf = (l, d) => {
       const G = /CGL$/.test(l), x = (G ? D.pl : D.co)[`${l}|${d}`], s = stopAt[`${l}|${d}`], t = x ? x.t || 0 : 0, mc = G && isMC(x), al = {};
       if (G && t >= 0.5 && !s) { const a0 = x.al || {}, s0 = Object.values(a0).reduce((p, v) => p + v, 0); if (s0 >= 0.5) for (const [f, v] of Object.entries(a0)) al[f] = v * t / s0; else al[x.fam || 'AL'] = t; }   // MES 실적 날 = 계획 강종 비율로 나눔(01 과 같게)
-      return { t: s || t < 0.5 ? 0 : t, act: !!(x && x.act), fam: G ? (x && x.fam) || null : null, al, mc, sd: G && !mc && /S\/D/.test((x && x.ev) || ''), stop: s ? s[0] : '', stopTip: s ? s[1] : '', evTip: mc ? x.ev.split(' · ')[0] : '', x };
+      return { t: s || t < 0.5 ? 0 : t, act: !!(x && x.act), fam: G ? (x && x.fam) || null : null, al, mc, sd: G && !mc && /S\/D/.test((x && x.ev) || ''), stop: s ? s[0] : '', stopTip: s ? s[1] : '', evTip: mc ? x.ev.split(' · ')[0] : '', x, sts: G ? (D.sts || {})[`${l}|${d}`] : null };
     };
     const VV = { kind: 'now', lab: '지금', get: cellOf };
     const M0 = D.M0 && D.M0[mon];                                        // 월차 판(01 '월차' 판과 같은 자료) — ◥ = 월차 대비 바뀐 앞날 칸
