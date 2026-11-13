@@ -106,9 +106,11 @@
       const cp = A.campaigns.find((q) => q.line === l && q.start <= d && d <= q.end);
       const next = A.events.find((e) => e.line === l && e.date > d);
       const sdNext = P.shutdowns.find((q) => q.line === l && q.start > d);
-      const monthPlan = GP.sum(R.rows.filter((r) => r[1] === l && A.mIdx(r[0]) === mi), (r) => r[4]);
       const t0_ = (R.replan || {}).t0 || d, dA = d < t0_ ? d : t0_;   // 진도 = 실적(재계획 기준일까지) ÷ 월 계획(지금 계획의 그 달 합 = 실적 + 앞날 계획) — 11/13 사용자 결정
-      const toDate = GP.sum(R.rows.filter((r) => r[1] === l && A.mIdx(r[0]) === mi && r[0] <= dA), (r) => r[4]);
+      // 11/13 사용자 '모든 화면 같은 값': 날마다 강종 계열(AZ·AL·MAC)별 정수 반올림 뒤 더함 = 01 일별 가동계획 칸·계
+      const dayT = {}; for (const r of R.rows) if (r[1] === l && A.mIdx(r[0]) === mi) { const f = /^AZ/.test(r[2]) ? 'AZ' : /^MAC/.test(r[2]) ? 'MAC' : 'AL', z = (dayT[r[0]] = dayT[r[0]] || {}); z[f] = (z[f] || 0) + r[4]; }
+      const dayR = (z) => { const t = Object.values(z).reduce((a, v) => a + v, 0); return t < 0.5 ? 0 : Object.values(z).reduce((a, v) => a + (v >= 0.5 ? Math.round(v) : 0), 0); };
+      const monthPlan = Object.values(dayT).reduce((a, z) => a + dayR(z), 0), toDate = Object.entries(dayT).reduce((a, [dd, z]) => a + (dd <= dA ? dayR(z) : 0), 0);
       const M0 = A.m0 && A.m0[`${yy}-${String(mm).padStart(2, '0')}`], m0To = M0 ? Object.entries(M0).reduce((a, [k, v]) => { const [ll, dd] = k.split('|'); return a + (ll === l && dd <= dA && dd.slice(0, 7) === `${yy}-${String(mm).padStart(2, '0')}` ? v[0] || 0 : 0); }, 0) : 0;
       const vsM0 = m0To > 0 ? Math.round(toDate / m0To * 100) : null;
       const deps = Object.entries(byDep[l] || {}).sort((a, b) => b[1] - a[1]);
@@ -266,7 +268,8 @@
     const t0 = (R.replan || {}).t0 || '', FN = { MAC: 'MACOSTA' }, daySum = ds.map(() => 0), ti = ds.indexOf(today);
     let h = OPT.head(ds, today, '', '', ti) + '<tbody>';
     for (const l of P.lines) {
-      const fams = GP.famOrder(P, l);
+      const f0 = GP.famOrder(P, l), fd = (f) => { const i = ds.findIndex((d) => (fam[`${l}|${d}|${f}`] || 0) >= 0.5); return i < 0 ? 99 : i; };
+      const fams = f0.slice().sort((a, b) => fd(a) - fd(b) || f0.indexOf(a) - f0.indexOf(b));   // 11/13: 강종 줄 = 그 달 먼저 생산하는 순(01 일별 가동계획과 같게 — 2CGL AL 위)
       const deps = GP.DEPTS.filter((c) => ds.some((d) => (dep[`${l}|${d}|${c}`] || 0) > 0.5));
       const hasStop = ds.some((d) => { const x = mix(l, d); return x && (x.sm + x.dm + x.gap) >= 30; });
       const rows = fams.slice(0, 1).map((f) => ({ kind: 'fam', f })).concat([{ kind: 'ev' }], fams.slice(1).map((f) => ({ kind: 'fam', f })), deps.map((c) => ({ kind: 'dep', c })), [{ kind: 'hrs' }], hasStop ? [{ kind: 'stop' }] : []);

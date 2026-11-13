@@ -292,32 +292,31 @@
   UI.empty = (why, when) => `<p class="empty">${String(why || '자료 없음').replace(/</g, '&lt;')}${when ? ` <span>${String(when).replace(/</g, '&lt;')}</span>` : ''}</p>`;
   UI.rate = (pct) => (pct == null || pct === '' || isNaN(+pct) ? '' : +pct >= 98 ? 'ok' : +pct >= 90 ? 'warn' : 'bad');
   /* 생산 진도 한 기준(11/13 사용자 결정 — 모든 화면 같은 식, 원자료 = 수주 관제 자료 suju.json 의 lines·daily):
-     월 계획 = 우리 계획 '지금' 판의 그 달 합계(지난 날 실적 + 앞날 현재 계획 = lines[].planNow) — 재계획 때마다 바뀜
+     월 계획 = 우리 계획 '지금' 판의 그 달 합계(지난 날 실적 + 앞날 현재 계획 = daily 일별 정수 합 = lines[].planNow) — 재계획 때마다 바뀜
      달성 % (큰 숫자) = 그 달 실적 ÷ 월 계획 · 월차 대비 % (작은 글씨) = 실적 ÷ 전일까지 월차(그 달 첫 판) 계획 누계
      UI.prodMon(S, lines?, d0?, d1?) → { act, mon, due0, mon0, pct, pct0, days:[첫날, 끝날], by:{라인:{…}} } — d0·d1 을 주면 그 기간(전일까지)만(mon = 그 기간 현재 계획) */
   UI.prodMon = (S, lines, d0, d1) => {
     if (!S || !S.daily) return null;
     const asOf = S.asOf, LS = lines || Object.keys(S.daily), by = {}, o = { act: 0, mon: 0, due0: 0, mon0: 0, days: [] };
-    const ds = new Set();
+    const ds = new Set(), R = (v) => Math.round(+v || 0);   // 11/13 사용자 '모든 화면 같은 값': 일별 값을 정수 t 로 반올림한 뒤 더한다(표 칸 합 = 계 = 카드, 01 일별 가동계획 계 기준)
     for (const l of LS) {
-      const rows = S.daily[l] || [], ln = (S.lines || []).find((x) => x.line === l) || {};
+      const rows = S.daily[l] || [];
       const inR = (d) => (!d0 || d >= d0) && (!d1 || d <= d1);
-      const past = rows.filter((r) => r[0] <= asOf && inR(r[0]));
+      const past = rows.filter((r) => r[0] <= asOf && inR(r[0])), cur = rows.filter((r) => inR(r[0]));
       past.forEach((r) => ds.add(r[0]));
-      const x = { act: !d0 && !d1 && ln.actual != null ? +ln.actual : past.reduce((a, r) => a + (+r[3] || 0), 0), due0: past.reduce((a, r) => a + (+r[1] || 0), 0),
-        mon0: rows.filter((r) => inR(r[0])).reduce((a, r) => a + (+r[1] || 0), 0),
-        mon: d0 || d1 ? rows.filter((r) => inR(r[0])).reduce((a, r) => a + (r[0] <= asOf ? +r[3] || 0 : +r[2] || 0), 0) : (ln.planNow != null ? +ln.planNow : rows.reduce((a, r) => a + (r[0] <= asOf ? +r[3] || 0 : +r[2] || 0), 0)) };
+      const x = { act: past.reduce((a, r) => a + R(r[3]), 0), due0: past.reduce((a, r) => a + R(r[1]), 0),
+        mon0: cur.reduce((a, r) => a + R(r[1]), 0), mon: cur.reduce((a, r) => a + R(r[0] <= asOf ? r[3] : r[2]), 0) };
       by[l] = x; for (const k of ['act', 'mon', 'due0', 'mon0']) o[k] += x[k];
     }
     const pc = (a, b) => (b ? a / b * 100 : null);
     for (const x of [o, ...Object.values(by)]) { x.pct = pc(x.act, x.mon); x.pct0 = pc(x.act, x.due0); }
     o.days = [...ds].sort(); o.by = by; o.asOf = asOf; return o;
   };
-  /* 판매그룹 생산 진도(같은 정의, suju.json gdaily = [날짜, 계획(지난 날 = 월차, 앞날 = 지금 계획), 실적]) — keys = 수주 관제 그룹 키 하나 또는 여럿(합) */
+  /* 판매그룹 생산 진도(같은 정의, suju.json gdaily = [날짜, 계획(지난 날 = 월차, 앞날 = 지금 계획), 실적]) — keys = 수주 관제 그룹 키 하나 또는 여럿(합), 일별 값 정수 반올림 뒤 합 */
   UI.grpMon = (S, keys) => {
     if (!S || !S.gdaily) return null;
-    const o = { act: 0, mon: 0, due0: 0 };
-    for (const k of [].concat(keys)) for (const r of S.gdaily[k] || []) { const past = r[0] <= S.asOf; o.act += past ? +r[2] || 0 : 0; o.due0 += past ? +r[1] || 0 : 0; o.mon += past ? +r[2] || 0 : +r[1] || 0; }
+    const o = { act: 0, mon: 0, due0: 0 }, R = (v) => Math.round(+v || 0);
+    for (const k of [].concat(keys)) for (const r of S.gdaily[k] || []) { const past = r[0] <= S.asOf; o.act += past ? R(r[2]) : 0; o.due0 += past ? R(r[1]) : 0; o.mon += past ? R(r[2]) : R(r[1]); }
     o.pct = o.mon ? o.act / o.mon * 100 : null; o.pct0 = o.due0 ? o.act / o.due0 * 100 : null; return o;
   };
 

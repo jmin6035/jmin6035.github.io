@@ -218,8 +218,8 @@ html.v2 #s-calleg .v2-mc { text-decoration: underline 2px var(--warn); text-unde
 .glegend .sw.idsw { background: repeating-linear-gradient(135deg, #c9cfd7 0 3px, var(--surface) 3px 6px); box-shadow: inset 0 0 0 1px var(--line); }
 .glegend .sw.tbsw { background: color-mix(in srgb, var(--brand-2) 25%, var(--surface)); box-shadow: inset 0 0 0 2px var(--brand-2); } .glegend .sw.mesw { background: var(--surface); box-shadow: inset 0 0 0 2px var(--ink-3); } .glegend .sw.wesw { background: color-mix(in srgb, var(--ink) 12%, var(--surface)); }
 .glegend .sw.hiw { background: color-mix(in srgb, #f2b705 30%, var(--surface)); } .glegend .sw.hi2w { background: color-mix(in srgb, #e8590c 30%, var(--surface)); }
-/* 상세 표 톤 오른쪽 정렬 */
-html body main .det table.dt.fl td.r, html body main .det table.dt.fl th.r { text-align: right !important; }
+/* 상세 표(가동 상세·소재 상세) 글자·숫자 모두 가운데 정렬(docs/16 규칙 13, 11/13 검토 상6) */
+html body main .det table.dt td, html body main .det table.dt th { text-align: center !important; } html body main .det table.dt td .flw { justify-content: center; }
 /* 결론 줄(첫 화면) */
 .concl { display: grid; gap: 8px; margin: 2px 0 14px; }
 .cc-r { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; padding: 10px 14px; border-radius: 10px; font-size: 14.5px; line-height: 1.5; background: var(--surface-2); border-left: 5px solid var(--ink-3); }
@@ -289,7 +289,7 @@ html:root body main table.gk.shp td[data-d] { cursor: pointer; }
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2611120206"></script>
+<script src="ui/shell.js?v=2611141500"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
 <script src="ui/cal.js?v=2611120206"></script>
 <script src="ui/proccalc.js?v=2611120206"></script>

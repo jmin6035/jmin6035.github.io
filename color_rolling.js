@@ -1,4 +1,4 @@
-/* 컬러 가동 현황 — 월간 계획 vs 롤링(11/9 사용자 승인): published/color_rolling.enc.json(tools/color_rolling.py)
+/* 컬러 가동 현황 — 월 계획 vs 롤링(11/9 사용자 승인): published/color_rolling.enc.json(tools/color_rolling.py)
    그룹별 진도 막대(실적 · 확정 작업지시 · 남은 배치 vs 월 계획) → 알람 → 라인×날짜 원본·롤링 */
 (function () {
   'use strict';
@@ -20,19 +20,25 @@
     el.hidden = false;
     $('r-meta').textContent = `확정 창 ${md(R.window[0])}~${md(R.window[1])} · 작업지시 ${String(R.woNow || '').slice(5).replace('-', '/')} · 확정 ${fmt(R.conf.t)}t${R.actTo ? ` · 실적 = MES ~${md(R.actTo)}${R.actTo >= R.asOf ? '(오늘 진행분 포함)' : ''}` : ''}`;   // 11/10 점검: 실적 6,104(오늘 진행분 포함) vs 다른 화면 ~11/8 5,921 — 기준일 표시
     $('r-tabs').innerHTML = R.months.map((m, i) => `<button type="button" data-m="${i}" aria-pressed="${i === mi}">${+m.slice(5)}월</button>`).join('');
-    const m = R.months[mi], G = R.groups.filter((x) => x.ym === m && (x.plan > 0.5 || x.act + x.conf + x.roll > 0.5));
+    const m = R.months[mi];
+    // 11/13 사용자 결정: 월 계획 = 지금 판의 그 달 합(지난 날 실적 + 앞날 계획 = 01 컬러 합계 계) — 롤링 원본(고정 판) 대신. 비교용 월차(그 달 첫 판)는 합계 줄에만
+    const GP_ = window.CSGRP ? window.CSGRP(m) : null;
+    const G = (GP_ ? CG.map((g) => { const x = R.groups.find((y) => y.ym === m && y.g === g) || { g, ym: m, act: 0, conf: 0, roll: 0 }; const plan = GP_[g] || 0, diff = x.act + x.conf + x.roll - plan; return Object.assign({}, x, { plan, diff, pct: plan ? diff / plan * 100 : null }); }) : R.groups.filter((x) => x.ym === m))
+      .filter((x) => x.plan > 0.5 || x.act + x.conf + x.roll > 0.5);
     const sum = (k) => G.reduce((s, x) => s + x[k], 0);
     const tot = { g: '합계', plan: sum('plan'), act: sum('act'), conf: sum('conf'), roll: sum('roll') }; tot.diff = tot.act + tot.conf + tot.roll - tot.plan; tot.pct = tot.plan ? tot.diff / tot.plan * 100 : 0;
+    const M0 = (window.CSM0 || {})[m];
+    if (M0) tot.m0 = Object.entries(M0).reduce((a, [k, v]) => a + (/CCL\|/.test(k) && k.slice(5, 12) === m && !(v[2] && v[2] !== 'M') && v[0] >= 0.5 ? Math.round(v[0]) : 0), 0);
     const bar = (x) => {
       const got = x.act + x.conf + x.roll, mx = Math.max(x.plan, got, 1), w = (v) => v / mx * 100;
       const seg = (v, cls, nm) => (v > 0.5 ? `<i class="${cls}" style="width:${w(v)}%" title="${nm} ${fmt(v)}t">${w(v) > 9 ? fmt(v) : ''}</i>` : '');
       const bad = Math.abs(x.diff) >= 10 && Math.abs(x.pct || 0) > 5;
       return `<div class="rg-row${x.g === '합계' ? ' rg-tot' : ''}"><div class="rg-n">${x.g === '합계' ? '' : `<i style="background:${GVAR[x.g]}"></i>`}<b>${esc(GL(x.g))}</b></div>
-        <div class="rg-bar">${seg(x.act, 'a', '실적')}${seg(x.conf, 'c', '확정 작업지시')}${seg(x.roll, 'p', '남은 배치')}<u style="left:${w(x.plan)}%" title="월간 계획(고정) ${fmt(x.plan)}t"></u></div>
-        <div class="rg-t"><b>${fmt(got)} / ${fmt(x.plan)}t</b><span class="st ${bad ? (x.diff < 0 ? 'bad' : 'warn') : 'good'}">${x.diff > 0 ? '+' : ''}${fmt(x.diff)}t${x.pct == null ? '' : ` · ${x.diff > 0 ? '+' : ''}${(+x.pct).toFixed(1)}%`}</span></div>
-        <div class="rg-p" title="진도 = 실적 ÷ 월간 계획(고정)">${x.plan ? `진도 ${Math.round(x.act / x.plan * 100)}%` : ''}</div></div>`;
+        <div class="rg-bar">${seg(x.act, 'a', '실적')}${seg(x.conf, 'c', '확정 작업지시')}${seg(x.roll, 'p', '남은 배치')}<u style="left:${w(x.plan)}%" title="월 계획 ${fmt(x.plan)}t"></u></div>
+        <div class="rg-t"><b>${fmt(got)} / ${fmt(x.plan)}t</b>${x.m0 ? `<small class="rg-m0" title="월차 = 그 달 첫 게시 계획(01 판별 표 월차) — 비교용">월차 ${fmt(x.m0)}</small>` : ''}<span class="st ${bad ? (x.diff < 0 ? 'bad' : 'warn') : 'good'}">${x.diff > 0 ? '+' : ''}${fmt(x.diff)}t${x.pct == null ? '' : ` · ${x.diff > 0 ? '+' : ''}${(+x.pct).toFixed(1)}%`}</span></div>
+        <div class="rg-p" title="진도 = 실적 ÷ 월 계획(지금 판 그 달 합)">${x.plan ? `진도 ${Math.round(x.act / x.plan * 100)}%` : ''}</div></div>`;
     };
-    $('r-groups').innerHTML = `<div class="rg-leg"><span><i class="a"></i>실적</span><span><i class="c"></i>확정 작업지시</span><span><i class="p"></i>남은 배치</span><span><u></u>월간 계획(고정)</span></div>`
+    $('r-groups').innerHTML = `<div class="rg-leg"><span><i class="a"></i>실적</span><span><i class="c"></i>확정 작업지시</span><span><i class="p"></i>남은 배치</span><span><u></u>월 계획(지금 판 합)</span></div>`
       + G.map(bar).join('') + bar(tot);
     const A = R.alarms.filter((a) => a.ym === m);
     $('r-alarms').innerHTML = A.length ? A.map((a) => `<li><span class="st ${KIND[a.kind][1]}">${KIND[a.kind][0]}</span><b class="ra-k">${esc(a.g ? GL(a.g) : a.l)}</b><span class="ra-t">${esc(a.text)}${a.offset ? `<small> · ${esc(a.offset)}</small>` : ''}</span></li>`).join('')
@@ -50,13 +56,13 @@
     for (const l of LINES) {
       const C = {}; for (const c of R.cells[l] || []) if (c[0].startsWith(m)) { C[c[0]] = c.slice(); if (window.CSPLAN) C[c[0]][1] = window.CSPLAN(l, c[0]); }   // 월간 계획 = 가동 현황 표와 같은 자료
       const s0 = ds.reduce((s, d) => s + (C[d] && C[d][1] >= 0.5 ? Math.round(C[d][1]) : 0), 0), s1 = ds.reduce((s, d) => s + (C[d] && C[d][2] >= 0.5 ? Math.round(C[d][2]) : 0), 0);   // 계 = 보이는 칸(정수) 합
-      h += `<tr class="r-dep"><th class="c0 lnC le" rowspan="2">${l}</th><th class="c1">월간 계획</th>`
+      h += `<tr class="r-dep"><th class="c0 lnC le" rowspan="2">${l}</th><th class="c1">월 계획</th>`
         + ds.map((d) => { const c = C[d]; return `<td>${c && c[1] >= 0.5 ? fmt(c[1]) : ''}</td>`; }).join('') + `<td class="tot">${fmt(s0)}</td></tr>`;
       h += `<tr class="r-fam le"><th class="c1">롤링</th>` + ds.map((d) => {
         const c = C[d]; if (!c) return '<td></td>';
         const [, o, v, k, fr, cf] = c, df = v - o;
         const cls = [v >= 0.5 ? 'kC' : '', (k === 'c' || k === 'w') && cf >= 0.5 ? 'k-c' : '', k !== 'a' && k !== 's' && Math.abs(df) >= 30 ? (df > 0 ? 'up' : 'dn') : ''].filter(Boolean).join(' ');
-        const tip = `${md(d)} ${l} · 월간 계획 ${fmt(o)}t → 롤링 ${fmt(v)}t` + (k === 'a' ? ' (실적)' : cf >= 0.5 ? ` (확정 작업지시 ${fmt(cf)}t${v - cf >= 0.5 ? ` + 계획 ${fmt(v - cf)}t` : ''})` : '') + (fr >= 60 ? ` · 빈 시간 ${(fr / 60).toFixed(1)}h` : '');
+        const tip = `${md(d)} ${l} · 월 계획 ${fmt(o)}t → 롤링 ${fmt(v)}t` + (k === 'a' ? ' (실적)' : cf >= 0.5 ? ` (확정 작업지시 ${fmt(cf)}t${v - cf >= 0.5 ? ` + 계획 ${fmt(v - cf)}t` : ''})` : '') + (fr >= 60 ? ` · 빈 시간 ${(fr / 60).toFixed(1)}h` : '');
         return `<td class="${cls}" title="${esc(tip)}">${v >= 0.5 ? fmt(v) : ''}</td>`;
       }).join('') + `<td class="tot">${fmt(s1)}</td></tr>`;
     }
