@@ -7,6 +7,7 @@
 <meta name="description" content="컬러·도금 판매계획·수주·생산·소재·재고 통합 관제(월 기준) — 수주팀 화면 양식">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/theme.css?v=2611120206">
+<link rel="stylesheet" href="ui/optable.css?v=2611140100">
 <style>
 main.wrap { max-width: none; }
 #ui-ctl { display: none !important; }   /* 포털 공통 그룹 상태 띠 — ① 그룹 매트릭스와 같은 내용이라 이 탭에서만 숨김 */
@@ -274,6 +275,14 @@ html.v2 body main table.sj-cal .now, html.v2 body main table.sj-cal thead th.now
 html.v2 body main table.sj-cal td.mc { background: #ffff00; color: #1f3864; font-weight: 800; } html.v2 .sj-cal td.mc span, html.v2 .sj-cal td.mc b { color: #1f3864; display: block; }
 html.v2 body main table.sj-cal td.stp { background: #1f3864; color: #fff; font-weight: 700; white-space: nowrap; }
 html.v2 .sj-k { display: inline-block; padding: 0 6px; font-weight: 700; } html.v2 .sj-k.mc { background: #ffff00; color: #1f3864; } html.v2 .sj-k.stp { background: #1f3864; color: #fff; }
+/* 11/13 일별 계획 캘린더 = 01 표 모양(ui/optable.css) — 이 화면만의 칸: 생산주 줄(마감 상태 색) · 실적 미달 빨강 글자 */
+html:root body main table.gk.sjc td.lo { color: #c00000 !important; font-weight: 800; }
+html:root body main table.gk.sjc tr.wk > td { font-size: 13.5px !important; font-weight: 700; }
+html:root body main table.gk.sjc tr.wk > td.w0 { color: #595959 !important; } html:root body main table.gk.sjc tr.wk > td.w1 { background: #dce6f1 !important; color: #1f3864 !important; }
+html:root body main table.gk.sjc tr.wk > td.w2 { box-shadow: inset 0 0 0 2px #1f3864; color: #1f3864 !important; font-weight: 800; } html:root body main table.gk.sjc tr.wk > td.w3 { color: #595959 !important; }
+.gk-lg i.w1 { background: #dce6f1; } .gk-lg i.w2 { box-shadow: inset 0 0 0 2px #1f3864; } .gk-lg i.w3 { background: #fff; }
+.gk-lg b.neg { color: #c00000; }
+html:root body main table.gk.sjc tr.wk > td > span { position: relative; z-index: 5; background: inherit; padding: 0 6px; }   /* 오늘 틀이 글자를 가르지 않게(01 정지 칸과 같게) */
 </style>
 </head>
 <body>
@@ -283,6 +292,7 @@ html.v2 .sj-k { display: inline-block; padding: 0 6px; font-weight: 700; } html.
 <script src="ui/shell.js?v=2611120206"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
 <script src="ui/ct.js?v=2611120206"></script>
-<script src="suju.js?v=2611120206"></script>
+<script src="ui/optable.js?v=2611140100"></script>
+<script src="suju.js?v=2611140100"></script>
 </body>
 </html>

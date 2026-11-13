@@ -75,8 +75,6 @@
     const fams = [...new Set(L.flatMap((l) => P.lineFamilies[l]))];
     const leg = fams.map((f) => `<span><i class="sw" style="background:${famVar(f)}"></i>${f}</span>`).join('') + '<span><i class="sw" style="background:var(--mc)"></i>M/C·재가동</span><span><i class="sw" style="background:var(--down)"></i>설비정지·실적 미달</span><span><i class="sw" style="background:var(--sd)"></i>정기수리</span>';
     $('d-legend').innerHTML = leg;
-    $('g-legend').className = 'xl-lg';
-    $('g-legend').innerHTML = [...new Set(L.flatMap((l) => GP.famOrder(P, l)))].map((f) => `<span><i class="x${f}"></i>${f === 'MAC' ? 'MACOSTA' : f}</span>`).join('') + '<span><i class="xpast"></i>지난 날(실적)</span><span><i class="xy"></i>M/C</span><span><i class="xsp"></i>정기수리</span><span><i class="xtdy"></i>오늘</span>';   // 표에는 강종 색을 안 씀(사용자 10/21) — 강종은 줄 이름 글자로
     $('g-tabs').innerHTML = H.ym.map(([, m], i) => `<button type="button" data-g="${i}">${m}월</button>`).join('');
     const today = localToday(), ti = A.mIdx(today);
     renderGantt(gMonth == null ? (ti >= 0 ? ti : 0) : Math.min(gMonth, H.ym.length - 1));
@@ -263,47 +261,47 @@
     const fam = {}, dep = {};
     for (const [d, l, a, c, t] of R.rows) { if (A.mIdx(d) !== mi) continue; fam[`${l}|${d}|${FAM[a]}`] = (fam[`${l}|${d}|${FAM[a]}`] || 0) + t; dep[`${l}|${d}|${c}`] = (dep[`${l}|${d}|${c}`] || 0) + t; }
     const today = localToday();
-    // 11/13 사용자 '01 양식으로 통일': 01 일별 가동계획 엑셀 색감(ui/theme.css 가동표 공통 서식) — 주말·공휴일 머리 노랑/빨강, 이름 칸 연두, 강종 칸 색, M/C 노랑, 정기수리 남색, 지난 날 음영, 오늘 남색 틀, 숫자 쉼표, 도금 합계 줄
-    const HOL = new Set(['2026-12-25', '2027-01-01']), red = (d) => /[토일]/.test(GP.weekday(d)) || HOL.has(d), xd = (d) => (d < today ? ' xpast' : '') + (d === today ? ' xtdy' : '');
-    const t0 = (R.replan || {}).t0 || '', FN = { MAC: 'MACOSTA' }, daySum = ds.map(() => 0);
-    let h = `<colgroup><col class="cc0"><col class="cc1">${ds.map(() => '<col>').join('')}<col class="ctot"></colgroup>` + '<thead><tr><th class="c0 xnm" rowspan="2">라인</th><th class="c1 xnm" rowspan="2">구분</th>' + ds.map((d) => `<th class="${red(d) ? 'xwe' : ''}${d === today ? ' xtdy' : ''}">${+d.slice(8)}</th>`).join('') + '<th class="tot xtot" rowspan="2">계</th></tr><tr>'
-      + ds.map((d) => `<th class="wk${red(d) ? ' xwe' : ''}${d === today ? ' xtdy' : ''}">${GP.weekday(d)}</th>`).join('') + '</tr></thead><tbody>';
+    // 11/13 사용자 '생긴 걸 똑같이(01 과)': 01 일별 가동계획 표와 같은 모양(ui/optable.js·css — 머리 2줄·왼쪽 두 칸·강종 줄 → M/C 줄 → 다음 강종 줄·정기수리 남색 합친 칸·
+    //   가동시간 줄·도금 합계 줄·지난 날 덮개·오늘 틀·범례 아래). 이 화면만의 줄(부서별 톤·비가동)은 가동시간 줄 앞뒤에 그대로
+    const t0 = (R.replan || {}).t0 || '', FN = { MAC: 'MACOSTA' }, daySum = ds.map(() => 0), ti = ds.indexOf(today);
+    let h = OPT.head(ds, today, '', '', ti) + '<tbody>';
     for (const l of P.lines) {
       const fams = GP.famOrder(P, l);
       const deps = GP.DEPTS.filter((c) => ds.some((d) => (dep[`${l}|${d}|${c}`] || 0) > 0.5));
       const hasStop = ds.some((d) => { const x = mix(l, d); return x && (x.sm + x.dm + x.gap) >= 30; });
-      const rows = fams.map((f) => ({ kind: 'fam', f })).concat(deps.map((c) => ({ kind: 'dep', c })), [{ kind: 'hrs' }], hasStop ? [{ kind: 'stop' }] : []);
+      const rows = fams.slice(0, 1).map((f) => ({ kind: 'fam', f })).concat([{ kind: 'ev' }], fams.slice(1).map((f) => ({ kind: 'fam', f })), deps.map((c) => ({ kind: 'dep', c })), [{ kind: 'hrs' }], hasStop ? [{ kind: 'stop' }] : []);
       const sdIdx = ds.map((d, i) => (A.calBy[`${l}|${d}`].blackout ? i : -1)).filter((i) => i >= 0);
+      let sdRow = 0;                                                     // 정기수리 칸 = 직전 생산 강종 줄(01 과 같게)
+      if (sdIdx.length) { for (let i = sdIdx[0] - 1; i >= 0; i--) { const f = fams.find((x) => (fam[`${l}|${ds[i]}|${x}`] || 0) >= 0.5); if (f) { sdRow = rows.findIndex((r) => r.kind === 'fam' && r.f === f); break; } } }
       rows.forEach((r, ri) => {
-        h += `<tr class="r-${r.kind}${ri === 0 ? ' first' : ''}${ri === rows.length - 1 ? ' xend' : ''}">`;
-        if (ri === 0) h += `<th class="c0 line xnm xend" rowspan="${rows.length}">${l}</th>`;
-        h += `<th class="c1 xnm">${r.kind === 'fam' ? FN[r.f] || r.f : r.kind === 'dep' ? DSHORT[r.c] : r.kind === 'hrs' ? '가동시간(h)' : '비가동(h)'}</th>`;
+        const rc = r.kind === 'fam' ? 'gr' : r.kind === 'ev' ? 'ev' : r.kind === 'hrs' || r.kind === 'stop' ? 'hr' : 'dp';
+        h += `<tr class="${rc} r-${r.kind}${ri === rows.length - 1 ? ' le' : ''}">`;
+        if (ri === 0) h += `<th class="c0 lnG" rowspan="${rows.length}">${l}</th>`;
+        h += `<th class="c1">${r.kind === 'fam' ? FN[r.f] || r.f : r.kind === 'dep' ? DSHORT[r.c] : r.kind === 'ev' ? '' : r.kind === 'hrs' ? '가동시간' : '비가동'}</th>`;
         let tot = 0;
         ds.forEach((d, i) => {
-          if (sdIdx.includes(i)) {
-            if (ri === 0 && i === sdIdx[0]) { const sd = P.shutdowns.find((x) => x.line === l && x.start <= d && d <= x.end); h += `<td class="sdblock xsp${sdIdx.length === 1 ? ' one' : ''}" colspan="${sdIdx.length}" rowspan="${rows.length}" title="정기수리${sd ? ` ${GP.md(sd.start)}~${GP.md(sd.end)}` : ''}">정기수리 (${sdIdx.length}일)</td>`; }
+          if (sdIdx.includes(i) && ri === sdRow) {
+            if (i === sdIdx[0]) { const sd = P.shutdowns.find((x) => x.line === l && x.start <= d && d <= x.end); h += `<td class="sp" colspan="${sdIdx.length}" data-d="${d}" title="정기수리${sd ? ` ${GP.md(sd.start)}~${GP.md(sd.end)}` : ''}"><span>정기수리${sdIdx.length > 1 ? ` (${sdIdx.length}일)` : ''}</span></td>`; }
             return;
           }
-          const c = A.calBy[`${l}|${d}`];
-          let v = 0, txt = '';
-          if (r.kind === 'fam') { v = Math.round(fam[`${l}|${d}|${r.f}`] || 0); const mm = GP.isSwitch(c) && /\((.+)→/.exec(c.event); txt = v >= 1 ? GP.fmt(v) : (mm && mm[1] === r.f && c.event.startsWith('M/C') ? 'M/C' : ''); daySum[i] += v; }
+          const c = A.calBy[`${l}|${d}`], sd = sdIdx.includes(i);
+          let v = 0, txt = '', cls = '';
+          if (r.kind === 'fam') { v = sd ? 0 : Math.round(fam[`${l}|${d}|${r.f}`] || 0); txt = v >= 1 ? GP.fmt(v) : ''; daySum[i] += v; if (v >= 1) cls = `d k${r.f}`; }
+          else if (r.kind === 'ev') { if (!sd && GP.isSwitch(c) && /^M\/C/.test(c.event || '')) { txt = 'M/C'; cls = 'y'; } }
           else if (r.kind === 'dep') { v = Math.round(dep[`${l}|${d}|${r.c}`] || 0); txt = v >= 1 ? GP.fmt(v) : ''; }   // 11/13: 숫자 쉼표(01 과 같게)
           else if (r.kind === 'hrs') { const u = hrsOf(l, d, c, t0) ; txt = u > 0 ? hfmt(u) : ''; }
           else { const x = mix(l, d), m0 = x ? Math.min(x.sm + x.dm + x.gap, 1440 - x.run) : 0; txt = m0 >= 30 ? hfmt(m0 / 60) : ''; }   // 비가동 = 24h − 가동시간을 넘지 않게(MES 정지 기록이 작업시간과 겹치는 날 25h 넘던 것)
           tot += v;
           const xm = (r.kind === 'hrs' || r.kind === 'stop') ? mix(l, d) : null;
-          const cls = [r.kind === 'fam' && v >= 1 ? `x${r.f}` : '', txt === 'M/C' ? 'xy' : ''].filter(Boolean).join(' ') + xd(d);
           h += `<td class="${cls}" data-d="${d}"${xm ? ` title="${esc(mixTxt(xm))}"` : ''}>${txt}</td>`;
         });
-        h += `<td class="tot xtot">${r.kind === 'hrs' || r.kind === 'stop' ? '' : GP.fmt(tot)}</td></tr>`;
+        h += `<td class="tot">${r.kind === 'ev' ? '-' : r.kind === 'hrs' || r.kind === 'stop' ? '' : GP.fmt(tot)}</td></tr>`;
       });
     }
-    h += `<tr class="xsum"><th class="c0" colspan="2">도금 합계</th>${ds.map((d, i) => `<td class="${xd(d).trim()}">${daySum[i] ? GP.fmt(daySum[i]) : ''}</td>`).join('')}<td class="tot xtot">${GP.fmt(daySum.reduce((a, v) => a + v, 0))}</td></tr>`;
-    $('g-table').innerHTML = h + '</tbody>';
-    { const r0 = $('g-table').tHead && $('g-table').tHead.rows[0]; if (r0) $('g-table').style.setProperty('--h1', r0.getBoundingClientRect().height + 'px'); }   // 둘째 머리줄(요일) 고정 위치 = 첫 줄 높이
-    // 모바일 등 좁은 화면: 오늘(없으면 1일) 열이 보이게 가로 스크롤
-    const wrap = document.querySelector('.gtable-wrap'), ti = ds.indexOf(today);
-    if (wrap && wrap.scrollWidth > wrap.clientWidth) { const hs = $('g-table').querySelectorAll('thead tr:first-child th'), th = hs[2 + Math.max(0, ti - 1)], stick = hs[0].offsetWidth + hs[1].offsetWidth; wrap.scrollLeft = ti > 0 && th ? th.getBoundingClientRect().left - $('g-table').getBoundingClientRect().left - stick : 0; }   // 고정 열(라인·구분) 폭만큼 빼서 칸이 잘리지 않게
+    h += `<tr class="sum"><th class="c0" colspan="2">도금 합계</th>${ds.map((d, i) => `<td>${daySum[i] ? GP.fmt(daySum[i]) : ''}</td>`).join('')}<td class="tot">${GP.fmt(daySum.reduce((a, v) => a + v, 0))}</td></tr>`;
+    $('g-table').innerHTML = OPT.wrap(OPT.pad31(h, ds.length) + '</tbody>', ds.filter((d) => d < today).length, ti);
+    $('g-legend').className = 'gk-lg';
+    $('g-legend').innerHTML = OPT.lg([...[...new Set(P.lines.flatMap((l) => GP.famOrder(P, l)))].map((f) => [`k${f}`, f === 'MAC' ? 'MACOSTA' : f]), ds.some((d) => d < today) && ['pst', '지난 날'], ['y', 'M/C'], ['sp', '정기수리'], ['sep'], ti >= 0 && ['tdy', '오늘']]).replace(/^<div class="gk-lg">|<\/div>$/g, '');
   }
   $('g-tabs').onclick = (ev) => { if (ev.target.dataset.g != null) renderGantt(+ev.target.dataset.g); };
   $('g-table').addEventListener('click', (ev) => { const td = ev.target.closest('td[data-d]'); if (!td || !R) return; $('d-date').value = td.dataset.d; renderNow(); $('d-now').scrollIntoView({ behavior: 'smooth', block: 'center' }); });   // 칸을 누르면 그날 라인 현황(컬러 가동 현황과 같음)
