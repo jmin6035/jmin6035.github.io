@@ -271,9 +271,13 @@
       // 11/13 사용자: 'n건 Xt' 한 덩어리 대신 지시·대기 나눠 표기(도금 = 1030 지시 / 소재 들어온 대기, 컬러 = 1030 작업대기 / 1020 지시대기)
       const isW = (x) => (plant === 'cg' ? !!x.issued : !!x.fixed), jA = js.filter((q) => isW(q.x)), jB = js.filter((q) => !isW(q.x)), tt = (a) => n0(a.reduce((s, q) => s + q.x.t, 0));
       const [nA, nB] = plant === 'cg' ? ['지시', '대기'] : ['작업대기', '지시대기'];
-      return `<button type="button" class="ws-k" data-l="${l}" aria-pressed="${l === line}"><div class="ln">${l}</div><div class="v2"><i>${nA}</i><span>${jA.length}<small>건</small></span><span>${tt(jA)}<small>t</small></span><i>${nB}</i><span>${jB.length}<small>건</small></span><span>${tt(jB)}<small>t</small></span></div>`
-        + `<div class="b">생산 <b>${hrs(run)}</b> · 전환 휴지 <b>${hrs(ch)}</b></div><div class="b">계획·직접 휴지 <b>${hrs(pl)}</b>${wt ? ` · 기다림 <b>${hrs(wt)}</b>` : ''}</div>`
-        + `<div class="b">${left >= 0 ? `남는 시간 <b>${hrs(left)}</b>` : `<span class="w">기간 끝 ${hrs(-left)} 넘침</span>`} · 점검 ${nb ? `<span class="w">위반 ${nb}</span>` : '<span class="ok">위반 0</span>'}</div></button>`;   // 11/13 사용자 '오늘 n건 부분 삭제'
+      // 11/13 사용자 '크게 · 좌우로 나눠 · 점검 위반이 뭔데': 왼쪽 = 지시/대기 건·톤, 오른쪽 = 시간 · 규칙 어긋남(종류별 건수)
+      const bk = {}; CKA.filter((c) => c.l === l && c.lv === 'bad').forEach((c) => { bk[c.kind] = (bk[c.kind] || 0) + 1; });
+      const bTxt = Object.entries(bk).sort((a, b) => b[1] - a[1]).map(([k, c]) => `<span class="nw">${esc(k)} <b>${c}</b></span>`).join(' · ');
+      return `<button type="button" class="ws-k" data-l="${l}" aria-pressed="${l === line}"><div class="ln">${l}</div><div class="kb"><div class="v2"><i>${nA}</i><span>${jA.length}<small>건</small></span><span>${tt(jA)}<small>t</small></span><i>${nB}</i><span>${jB.length}<small>건</small></span><span>${tt(jB)}<small>t</small></span></div>`
+        + `<div class="kr"><div class="b">생산 <b>${hrs(run)}</b></div><div class="b">전환 휴지 <b>${hrs(ch)}</b></div><div class="b">계획 휴지 <b>${hrs(pl)}</b>${wt ? ` · 기다림 <b>${hrs(wt)}</b>` : ''}</div>`
+        + `<div class="b">${left >= 0 ? `남는 시간 <b>${hrs(left)}</b>` : `<span class="w">기간 끝 ${hrs(-left)} 넘침</span>`}</div></div></div>`
+        + `<div class="kc" title="작업 순서가 편성 규칙(납기·소재 입고·라인·강종·후처리 간격 등)에 어긋난 작업 수 — 아래 '점검'을 누르면 목록">${nb ? `<span class="w">규칙 어긋남 ${nb}건</span> — ${bTxt}` : '<span class="ok">규칙 어긋남 없음</span>'}</div></button>`;
     }).join('');
     $('ws-kpis').querySelectorAll('.ws-k').forEach((b) => (b.onclick = () => { line = b.dataset.l; draw(); }));
     // 순서 표(요일별)
@@ -303,7 +307,7 @@
     });
     days.filter((x) => !shown.has(x)).forEach((x) => { h += dayHead(x); });
     if (!ev.length) h += `<tr><td colspan="7" class="muted">이 라인에 기간 안 작업이 없습니다${D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}. 오른쪽 빠진 작업에서 넣을 수 있습니다.</td></tr>`;
-    $('ws-tbl').innerHTML = `<colgroup><col style="width:30px"><col style="width:44px"><col style="width:118px"><col style="width:196px"><col><col style="width:${plant === 'cc' ? 104 : 134}px"><col style="width:${plant === 'cc' ? 176 : 150}px"></colgroup>` + h;
+    $('ws-tbl').innerHTML = `<colgroup><col style="width:30px"><col style="width:44px"><col style="width:118px"><col style="width:196px"><col><col style="width:${plant === 'cc' ? 150 : 170}px"><col style="width:${plant === 'cc' ? 360 : 280}px"></colgroup>` + h;
     drawPool(); drawCk(); bind(); fit();
   }
   // 본문이 좁으면(820px 미만) 묶음 배치(.cmp) · 날짜 머리줄 고정 위치 = 위 막대 높이
