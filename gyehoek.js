@@ -38,7 +38,7 @@
   // ---------- 자료: 가동 캘린더(supply.js prep·live)와 같은 칸 ----------
   async function load(pw) {
     const get = async (n) => { try { const e = await GP.latest(n); return e ? await GP.decryptJSON(e, pw) : null; } catch (x) { return null; } };
-    const [W, LP, CA, PA, SJ, LT, HI, MO, AD] = await Promise.all(['integrated.enc.json', 'latest.plan.enc.json', 'color_actual.enc.json', 'plating_actual.enc.json', 'suju.enc.json', 'leadtime.enc.json', 'gyehoek_hist.enc.json', 'mat_order.enc.json', 'act_detail.enc.json'].map(get));
+    const [W, LP, CA, PA, SJ, LT, HI, MO, AD, PT] = await Promise.all(['integrated.enc.json', 'latest.plan.enc.json', 'color_actual.enc.json', 'plating_actual.enc.json', 'suju.enc.json', 'leadtime.enc.json', 'gyehoek_hist.enc.json', 'mat_order.enc.json', 'act_detail.enc.json', 'portal.enc.json'].map(get));
     if (!W) throw new Error('integrated');
     await UI.ready(); today = UI.today(W.asOf && add(String(W.asOf).slice(0, 10), 1));
     const pl = {}, ev = {}, co = {}, cdn = {}, p0 = {};
@@ -67,7 +67,8 @@
     if (SJ && SJ.daily && SJ.month) for (const [l, rows] of Object.entries(SJ.daily)) for (const r of rows) p0[`${l}|${r[0]}`] = +r[1] || 0;
     const ms = [today.slice(0, 7), mAdd(today.slice(0, 7), 1), mAdd(today.slice(0, 7), 2)];
     const MATS = Object.fromEntries((((MO || {}).groups || {}).mats || []).filter((m) => m.plant === 'G').map((m) => [m.key, m]));
-    D = { W, pl, ev, co, BD, actG, actC, cdn, cdx, dayMin, gsd, SW, p0, m0: SJ && SJ.month, at, ms, LT, H: HI && Array.isArray(HI.vers) ? HI : null, MATS, AD: AD && AD.days ? AD : null };
+    D = { W, pl, ev, co, BD, actG, actC, cdn, cdx, dayMin, gsd, SW, p0, m0: SJ && SJ.month, at, ms, LT, H: HI && Array.isArray(HI.vers) ? HI : null, MATS, AD: AD && AD.days ? AD : null,
+      SR: PT && Array.isArray(PT.lines) ? { m: String((PT.lines.find((x) => x.asOf) || {}).asOf || '').slice(0, 7), v: Object.fromEntries(PT.lines.filter((x) => x.month > 0).map((x) => [x.line, x.month])) } : null };   // 판매생산속보 월차계획(라인별, 이번 달) — 11/13 사용자 '월차 대비에 판생 월차 추가'
     mon = ms[0];
   }
 
@@ -256,7 +257,10 @@
     const rows = CH.map((V, i) => `<tr class="${i === si ? 'on' : ''}" data-i="${i}" tabindex="0"><th>${esc(V.lab)}</th>${A[i].map((v, j) => { const df = i ? Math.round(v - A[0][j]) : null,   // 월차(첫 판) 대비(11/12 사용자)
       sm = /합계/.test(cols[j][0]) ? ' sm' : '';
       return `<td class="bl${sm}"><b>${n0(v)}</b></td><td class="df${sm}${df != null && df <= -0.5 ? ' dn' : df != null && df >= 0.5 ? ' up' : ''}">${df == null ? '–' : df === 0 ? '0' : sg(df)}</td>`; }).join('')}</tr>`).join('');
-    return `<h3 class="gk-adjh">판별 월 생산 합계 <small>톤</small></h3><div class="gk-adjw"><table class="gk-adj"><thead><tr><th rowspan="2">판</th>${cols.map(([n]) => `<th colspan="2" class="bl${/합계/.test(n) ? ' sm' : ''}">${n}</th>`).join('')}</tr><tr>${cols.map(([n]) => `<th class="sub bl${/합계/.test(n) ? ' sm' : ''}">월 합계</th><th class="sub${/합계/.test(n) ? ' sm' : ''}">월차 대비</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    const SRm = D.SR && D.SR.m === ds[0].slice(0, 7) && Object.keys(D.SR.v).length ? D.SR.v : null;
+    const srRow = SRm ? `<tr class="sr"><th>판생 월차 <small>판매생산속보</small></th>${cols.map(([n, ls], j) => { const ok = ls.every((l) => SRm[l] != null), v = ok ? ls.reduce((a, l) => a + SRm[l], 0) : null, df = v == null ? null : Math.round(v - A[0][j]), sm = /합계/.test(n) ? ' sm' : '';
+      return `<td class="bl${sm}"><b>${v == null ? '–' : n0(v)}</b></td><td class="df${sm}${df != null && df <= -0.5 ? ' dn' : df != null && df >= 0.5 ? ' up' : ''}">${df == null ? '–' : df === 0 ? '0' : sg(df)}</td>`; }).join('')}</tr>` : '';
+    return `<h3 class="gk-adjh">판별 월 생산 합계 <small>톤</small></h3><div class="gk-adjw"><table class="gk-adj"><thead><tr><th rowspan="2">판</th>${cols.map(([n]) => `<th colspan="2" class="bl${/합계/.test(n) ? ' sm' : ''}">${n}</th>`).join('')}</tr><tr>${cols.map(([n]) => `<th class="sub bl${/합계/.test(n) ? ' sm' : ''}">월 합계</th><th class="sub${/합계/.test(n) ? ' sm' : ''}">월차 대비</th>`).join('')}</tr></thead><tbody>${rows}${srRow}</tbody></table></div>`;
   }
 
   // 누른 칸 한 줄(가동 상세 머리): 판마다 그 칸(월차 → 매주 조정 → 지금) + 도금은 그 날 소재(F/H) 발주 마감과 발주 상태
