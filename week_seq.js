@@ -258,7 +258,7 @@
     else { v.className = 'ws-ver'; v.textContent = `초안 · ${UI.fmtDateTime(D.built)} 자료`; }
     $('ws-plant').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.p === plant)));
     // 라인 요약(결론): 점검 위반은 늘 계산(자세한 목록은 '점검'을 눌렀을 때만), 오늘 순서 앞 3건
-    const CKA = CK || checks(), today = dayOf(Math.max(W0, tms(D.now ? String(D.now).replace('T', ' ') : iso(W0))));
+    const CKA = CK || checks();
     $('ws-kpis').innerHTML = LINES[plant].map((l) => {
       const ev = sim(l), js = ev.filter((q) => q.k === 'j' && q.s < W1);
       // 11/13 점검: 기간(시작 ~ 기간 끝) 안에 든 시간만 셈 → 생산 + 전환 휴지 + 계획·직접 휴지 + 기다림 + 남는 시간 = 기간(빈 틈도 남는 시간에 들어감)
@@ -268,12 +268,12 @@
       const wt = ev.filter((q) => q.k === 'w').reduce((s, q) => s + clip(q.s, q.e), 0);
       const end = ev.length ? Math.max(...ev.map((q) => q.e2 || q.e)) : F0, left = end > W1 ? W1 - end : Math.max(0, W1 - F0) - run - ch - pl - wt;
       const nb = CKA.filter((c) => c.l === l && c.lv === 'bad').length;
-      const tj = ev.filter((q) => q.k === 'j' && dayOf(q.s) === today).slice(0, 3), nT = ev.filter((q) => q.k === 'j' && dayOf(q.s) === today).length;
-      const spc = (x) => (plant === 'cg' ? `${(+x.thick).toFixed(2)}×${n0(x.width)} ${esc(x.al || '')}` : `${esc(x.item || '')} ${esc(x.code || x.color || '')}`);
-      const td = tj.length ? `<div class="td"><em>오늘 ${md(today)} · ${nT}건</em>${tj.map((q) => `<div title="${esc(conOf(q.x))}"><b>${hhmm(q.s)}</b>${esc(q.x.con || q.x.id)} · ${spc(q.x)}</div>`).join('')}</div>` : `<div class="td"><em>오늘 ${md(today)}</em><div>${D.lines[l] && D.lines[l].stop ? esc(D.lines[l].stop.note || '휴지') : '작업 없음'}</div></div>`;
-      return `<button type="button" class="ws-k" data-l="${l}" aria-pressed="${l === line}"><div class="ln">${l}</div><div class="v">${js.length}<small>건</small> ${n0(js.reduce((s, q) => s + q.x.t, 0))}<small>t</small></div>`
+      // 11/13 사용자: 'n건 Xt' 한 덩어리 대신 지시·대기 나눠 표기(도금 = 1030 지시 / 소재 들어온 대기, 컬러 = 1030 작업대기 / 1020 지시대기)
+      const isW = (x) => (plant === 'cg' ? !!x.issued : !!x.fixed), jA = js.filter((q) => isW(q.x)), jB = js.filter((q) => !isW(q.x)), tt = (a) => n0(a.reduce((s, q) => s + q.x.t, 0));
+      const [nA, nB] = plant === 'cg' ? ['지시', '대기'] : ['작업대기', '지시대기'];
+      return `<button type="button" class="ws-k" data-l="${l}" aria-pressed="${l === line}"><div class="ln">${l}</div><div class="v2"><i>${nA}</i><span>${jA.length}<small>건</small></span><span>${tt(jA)}<small>t</small></span><i>${nB}</i><span>${jB.length}<small>건</small></span><span>${tt(jB)}<small>t</small></span></div>`
         + `<div class="b">생산 <b>${hrs(run)}</b> · 전환 휴지 <b>${hrs(ch)}</b></div><div class="b">계획·직접 휴지 <b>${hrs(pl)}</b>${wt ? ` · 기다림 <b>${hrs(wt)}</b>` : ''}</div>`
-        + `<div class="b">${left >= 0 ? `남는 시간 <b>${hrs(left)}</b>` : `<span class="w">기간 끝 ${hrs(-left)} 넘침</span>`} · 점검 ${nb ? `<span class="w">위반 ${nb}</span>` : '<span class="ok">위반 0</span>'}</div>${td}</button>`;
+        + `<div class="b">${left >= 0 ? `남는 시간 <b>${hrs(left)}</b>` : `<span class="w">기간 끝 ${hrs(-left)} 넘침</span>`} · 점검 ${nb ? `<span class="w">위반 ${nb}</span>` : '<span class="ok">위반 0</span>'}</div></button>`;   // 11/13 사용자 '오늘 n건 부분 삭제'
     }).join('');
     $('ws-kpis').querySelectorAll('.ws-k').forEach((b) => (b.onclick = () => { line = b.dataset.l; draw(); }));
     // 순서 표(요일별)
