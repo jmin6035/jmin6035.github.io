@@ -82,7 +82,7 @@
   const nums = (r) => `<td>${n0(r.need)}</td><td class="c-in">${n0(r.rec)}</td><td>${n0(r.ord)}</td><td class="${r.nw >= 0.5 ? 'c-no' : 'mu'}">${r.nw >= 0.5 ? n0(r.nw) : '–'}</td><td class="pc">${bar(r)}</td>`;
   function judge(C) {
     if (C.st === 'na') return '<span class="m4-jd na" title="이 소재 코드의 재고 자료 없음">–</span>';
-    if (C.st === 'bad') return `<span class="m4-jd bad" title="${esc(`${md(C.day)} 재고가 0 아래로(추가 발주 없음 가정 · 기발주 입고 반영)`)}">${md(C.day)} 바닥</span>`;
+    if (C.st === 'bad') return `<span class="m4-jd bad" title="${esc(`${md(C.day)} 부터 재고 부족(추가 발주 없음 가정 · 기발주 입고 반영)`)}">${md(C.day)}부터 부족</span>`;
     if (C.st === 'warn') return `<span class="m4-jd warn" title="${esc(`${md(C.day)} 재고 ${n0(C.v2)}t < 다음 이틀 투입 ${n0(C.n2)}t`)}">${md(C.day)} 빠듯</span>`;
     return `<span class="m4-jd ok"${C.min ? ` title="${esc(`말일까지 최저 ${md(C.min.d)} ${n0(C.min.v)}t`)}"` : ''}>충분</span>`;
   }
