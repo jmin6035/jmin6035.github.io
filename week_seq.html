@@ -244,6 +244,9 @@ table.t.cond.wb-t { margin: 4px 0; } table.t.cond.wb-t td.num { text-align: righ
 .ws-k .td { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); font-size: 13.5px; line-height: 1.6; }
 .ws-k .td > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); } .ws-k .td > div b { color: var(--ink); font-variant-numeric: tabular-nums; margin-right: 4px; } .ws-k .td em { font-style: normal; font-weight: 700; color: var(--ink-2); }
 .ws-k .ok { color: var(--good); font-weight: 700; }
+/* 11/13 서식 통일(04 수주 카드 기준): 라인 카드 가운데 · 보조 글 15px · 공통 관제 알약 줄 숨김(01·04 와 같게) */
+html.v2 #ui-ctl { display: none !important; }
+.ws-k { text-align: center; } .ws-k .b { font-size: 15px; } .ws-k .td { font-size: 15px; } .ws-k .ln { font-size: 18px; }
 #ws-fold { margin-top: 18px; } #ws-fold h3 { font-size: 16px; margin: 16px 0 8px; } #ws-fold h4 { font-size: 15px; margin: 12px 0 6px; } #ws-fold h4 small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 6px; }
 #ws-fold .card { box-shadow: none; border: 0; padding: 0; margin: 0 0 12px; background: none; }
 .ws-ul { margin: 6px 0 8px 18px; padding: 0; font-size: 14px; line-height: 1.7; }
@@ -277,7 +280,6 @@ table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px 
       <button type="button" class="btn" id="ws-chk">점검</button>
       <button type="button" class="btn" id="ws-reset">초안으로 되돌리기</button>
       <select id="ws-vers" aria-label="저장 버전"></select>
-      <span class="ws-hint">확정하면 생산 일정에 반영(다음 갱신 때) · 저장은 반영 안 됨</span>
       <span class="ws-res" id="ws-res"></span>
     </div>
     <div id="ws-miss"></div>
@@ -294,6 +296,6 @@ table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px 
 <footer class="foot"><div class="wrap"><span>대상: 컬러 = 작업지시 편성 대상(소재 매치)·확정 대기열 · 도금 = 지시된 코일(생산 전) + 소재 들어온 작업 · 시간 = 기존 속도(t/h) · 휴지 = 전환 기준표(1년 실적)·휴지계획 · 저장 = 공유 저장소(암호화, 버전 이력)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611120206"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
-<script src="week_seq.js?v=2611120206"></script>
+<script src="week_seq.js?v=2611131600"></script>
 </body>
 </html>

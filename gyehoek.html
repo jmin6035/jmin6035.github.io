@@ -399,7 +399,7 @@ html:root body main table.gk.gk td.kMAC.a { background: #d7ede8; } html:root bod
 html:root body main table.gk.gk :is(td.kAZ, td.kAL, td.kMAC, td.kC, td.kX, td.kAZ.a, td.kAL.a, td.kMAC.a, td.kC.a) { background: #fff; color: var(--ink); }
 .gk-past { position: absolute; z-index: 3; pointer-events: none; background: rgba(110, 122, 138, .13); }
 .gk-lg i.kAZ, .gk-lg i.kAL, .gk-lg i.kMAC, .gk-lg i.kC { background: #fff; }
-.gk-lg i.pst { background: rgba(110, 122, 138, .13); }
+.gk-lg i.pst { background: rgba(0, 0, 0, .07); box-shadow: inset 0 0 0 1px #808080; }   /* 실제 덮개(.gk-past)와 같은 색 */
 </style>
 <style>
 /* 계획 > 소재(11/12 시안4, mat_v2.js): 소재 현황 표 + 발주·입고 캘린더 */
@@ -445,7 +445,7 @@ html:root body main table.gk.gk :is(td.kAZ, td.kAL, td.kMAC, td.kC, td.kX, td.kA
 .m4-cl th.kd { font-size: 13.5px; } .m4-cl th.kd i { font-style: normal; font-weight: 800; padding: 1px 9px; border-radius: 10px; font-size: 13.5px; }
 .m4-cl th.kd i.po { color: var(--m4-ord); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--m4-ord) 50%, var(--surface)); } .m4-cl th.kd i.ib { color: var(--on-brand, #fff); background: var(--m4-inb); }
 .m4-cl td span { display: block; font-weight: 800; white-space: nowrap; cursor: pointer; letter-spacing: -.2px; }
-.m4-cl td span.po { color: var(--m4-ord); } .m4-cl td span.ib { color: var(--m4-inb); } .m4-cl td span.po.late { color: var(--bad); }
+.m4-cl td span.po { color: var(--m4-ord); } .m4-cl td span.ib { color: var(--m4-inb); } .m4-cl td span.po.late { color: var(--bad); } .m4-cl td span.ib.nd { color: var(--bad); text-decoration: underline dotted; }   /* 미발주 입고 필요(아직 발주 안 함) */
 .m4-cl td.tt { font-weight: 800; background: var(--th); }
 .m4-cl tr.sec th { text-align: left; padding: 8px 14px; background: color-mix(in srgb, var(--brand-2) 8%, var(--surface)); color: var(--brand-2); font-size: 14.5px; font-weight: 800; }
 .m4-cl tr.fold td { text-align: left; padding: 0 14px; color: var(--ink-2); font-weight: 700; font-size: 14px; height: 38px; border-left: 0; }
@@ -476,8 +476,13 @@ html:root body main table.gk.gk td.tot { color:#000; }
 .gk-tdy { box-shadow: inset 0 0 0 2px #1f3864 !important; }
 .gk-lg i.kAZ { background:#fcd5b4; } .gk-lg i.kAL { background:#95b3d7; } .gk-lg i.kMAC { background:#8064a2; } .gk-lg i.kC { background:#dce6f1; }
 .gk-lg i.y { background:#ffff00; } .gk-lg i.sp { background:#1f3864; }
+.gk-lg i.tdy { background: #fff !important; box-shadow: inset 0 0 0 2px #1f3864 !important; }   /* 범례 '오늘' = 실제 틀(#1f3864)과 같은 색 */
 /* 11/13 사용자 '겹친다': 합친 정지 칸 글자를 오늘 틀 위로(글자 뒤 바탕을 칸 색으로 덮음) */
 html:root body main table.gk.gk td.sp span { position: relative; z-index: 5; background: #1f3864; padding: 0 6px; }
+/* 11/13 통일: 소재 캘린더 머리도 01 가동표와 같게 — 주말·공휴일 노랑/빨강 · 오늘 남색 틀(채움 없음) */
+html body main #m4 table.m4-cl thead th.we { background: #ffff00 !important; color: #c00000 !important; } html body main #m4 table.m4-cl thead th.we small { color: #c00000 !important; }
+html body main #m4 table.m4-cl thead th.td { background: #fff !important; color: #000 !important; box-shadow: inset 0 0 0 2px #1f3864 !important; } html body main #m4 table.m4-cl thead th.td small { color: #1f3864 !important; opacity: 1; }
+html body main #m4 table.m4-cl tbody td.td { box-shadow: inset 2px 0 0 #1f3864, inset -2px 0 0 #1f3864 !important; }
 table.gk-adj tr.sr > * { background: #fff8e1 !important; border-top: 2px solid #c9d1db; } table.gk-adj tr.sr th small { display: block; font-size: 13.5px; font-weight: 500; color: var(--ink-2); }   /* 판생 월차(참고 줄) */
 </style>
 </head>
@@ -518,7 +523,7 @@ table.gk-adj tr.sr > * { background: #fff8e1 !important; border-top: 2px solid #
 <script src="ui/cal.js?v=2611120206"></script>
 <script src="ui/proccalc.js?v=2611120206"></script>
 <script src="supply.js?v=2611132000"></script>
-<script src="gyehoek.js?v=2611122300"></script>
-<script src="mat_v2.js?v=2611132000"></script>
+<script src="gyehoek.js?v=2611131600"></script>
+<script src="mat_v2.js?v=2611131600"></script>
 </body>
 </html>

@@ -242,9 +242,9 @@
     const np = ds.filter((d) => d < today).length;   // 11/12 사용자 '지난 날은 음영, 미래는 흰색' — 지난 날 열 위에 회색 막(합친 칸도 끊지 않음)
     return `<div class="gk-wrap"><table class="gk">${h}</tbody></table>${np ? `<i class="gk-past" data-n="${np}" aria-hidden="true"></i>` : ''}${ti >= 0 ? '<i class="gk-tdy" aria-hidden="true"></i>' : ''}</div>`;
   }
-  function legend(V, P) {
-    const sw = (c, t) => `<span><i class="${c}"></i>${t}</span>`;
-    return `<div class="gk-lg">${UI.inScope('G') ? sw('kAZ', 'AZ') + sw('kAL', 'AL') + sw('kMAC', 'MACOSTA') : ''}${UI.inScope('C') ? sw('kC', '컬러 가동') : ''}${sw('pst', '지난 날')}${sw('y', 'M/C · S/D')}${sw('sp', '정지 · 휴지')}${UI.inScope('G') ? sw('hr', '가동시간') : ''}<span class="sep"></span>`
+  function legend(V, P, ds) {   // 11/13 점검: 지난 날이 없는 달은 '지난 날' 범례 뺌 · 가동시간 줄은 색이 없어 범례 뺌
+    const sw = (c, t) => `<span><i class="${c}"></i>${t}</span>`, hasPast = (ds || []).some((d) => d < today);
+    return `<div class="gk-lg">${UI.inScope('G') ? sw('kAZ', 'AZ') + sw('kAL', 'AL') + sw('kMAC', 'MACOSTA') : ''}${UI.inScope('C') ? sw('kC', '컬러 가동') : ''}${hasPast ? sw('pst', '지난 날') : ''}${sw('y', 'M/C · S/D')}${sw('sp', '정지 · 휴지')}<span class="sep"></span>`
       + (P ? sw('chg', `${P.lab} 대비 바뀐 칸`) : '') + (V.kind === 'now' ? sw('tdy', '오늘') : '') + '</div>';
   }
 
@@ -268,7 +268,7 @@
     const CH = chain(), C = CH.map((V) => V.get(l, d)), last = C[C.length - 1], first = C[0];
     const tx = (c) => (c.stop ? c.stop : `${n0(c.t)}t${c.mc ? ' M/C' : c.fam ? ' ' + c.fam : ''}`);
     let h = `<b>${md(d)}(${WD[wd(d)]}) ${l}</b> ` + CH.map((V, i) => `<span class="${i === CH.length - 1 ? 'nw' : ''}">${esc(V.lab.replace(/ \d+:\d+$/, ''))} ${esc(tx(C[i]))}</span>`).join('<i>→</i>');
-    if (CH.length > 1) { const df = Math.round(last.t - first.t); h += ` <em class="${df <= -0.5 ? 'dn' : ''}">(${sg(df)}t)</em>`; }
+    if (CH.length > 1) { const df = Math.round(last.t - first.t); h += ` <em class="${df <= -0.5 ? 'dn' : ''}">(월차 대비 ${sg(df)}t)</em>`; }
     if (!noMat && /CGL$/.test(l) && D.LT && !last.act && last.t >= 0.5) {   // 상세 카드에 품목별 발주 마감·판정이 있으면 머리에서는 뺌(중복)
       const sf = ((D.LT.fixed || []).find((f) => f[0] === 'safety.G') || [])[2] || 0, T = Object.fromEntries((D.LT.types || []).map((t) => [t[0], t[1]]));
       const M = D.MATS[last.fam === 'AL' ? 'G:H' : 'G:F'], lt = M && M.lt ? M.lt : T['P-FH'], dl = lt != null ? add(d, -(sf + lt)) : '';
@@ -325,7 +325,7 @@
     if (CH.length > 1) h += `<div class="gk-ver" role="group" aria-label="판">${CH.map((x, i) => `${i ? '<i>→</i>' : ''}<button type="button" data-i="${i}" aria-pressed="${i === si}">${esc(x.lab)}</button>`).join('')}</div>`;
     if (V.toneOnly) h += '<p class="gk-none">월차 강종·M/C·정지 자료 없음 — 톤만</p>';
     h += table(ds, V, P);
-    h += legend(V, P) + '<div class="det gk-det" id="gk-det" hidden></div>';
+    h += legend(V, P, ds) + '<div class="det gk-det" id="gk-det" hidden></div>';
     if (CH.length > 1) h += adjTable(CH, ds, si);
     h += '</section>';
     el.innerHTML = h;

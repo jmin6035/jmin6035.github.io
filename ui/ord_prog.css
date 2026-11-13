@@ -46,3 +46,9 @@ table.pdt tr.lv0 td { border-bottom: 2px solid var(--line); } table.pdt tr.mu td
 .lg2 .lg2r table.pos-t th:first-child, .lg2 .lg2r table.pos-t td:first-child { width: 150px; }
 table.pl-t td.mu2 { min-width: 0; }
 @media (max-width: 1400px) { .lg2 { grid-template-columns: minmax(0, 1fr); } }
+/* 11/13 서식 통일(04 수주 결론 카드 기준): 제목·카드 가운데 · 카드 이름 16px · 값 30px · 색 띠는 위쪽 */
+.pch { justify-content: center; text-align: center; } .pch b { font-size: 18px; } .pch span { font-size: 14.5px; color: var(--ink-2); }
+.pt { text-align: center; border-left: 0; border-top: 4px solid var(--line); }
+.pt.ok { border-top-color: #0ca30c; } .pt.bad { border-top-color: #d03b3b; } .pt.warn { border-top-color: #eda100; }
+.pt .k { font-size: 16px; color: var(--ink); } .pt .v { font-size: 30px; } .pt .s, .pt .gq { font-size: 14.5px; }
+.pm { text-align: center; } .pm .h { justify-content: center; gap: 8px; }
