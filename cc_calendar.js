@@ -88,9 +88,11 @@
     const nx = (() => { const x = dt(wedOf(O.asOf)); x.setDate(x.getDate() + 7); return iso(x); })(), we = (() => { const x = dt(w0); x.setDate(x.getDate() + 6); return iso(x); })();
     const wl = w0 === nx ? ['다음 주', 'nx'] : w0 < nx ? ['이번 주', ''] : ['계획', 'pl'];
     const head = `<th class="wl ${wl[1]}" title="생산주 ${mdw(w0)} ~ ${mdw(we)}">${wl[0]}<small>${md(w0)}~${md(we)}</small></th>` + pds.map((d) => `<th class="pst">${mdw(d)}<small class="tdy" style="background:var(--sub);color:var(--ink-2)">실적</small></th>`).join('') + days.map((d) => { const wd = dt(d).getDay(); return `<th class="${wd === 0 || wd === 6 || d === '2026-12-25' || d === '2027-01-01' ? 'we' : ''}${d === UI.today() ? ' tdy' : ''}">${mdw(d)}${d === UI.today() ? '<small class="tdy">오늘</small>' : ''}</th>`; }).join('') + pad.replace(/td/g, 'th');
-    const rows = LINES.map((ln) => `<tr><th>${ln}<small title="이 주 ${ln} 생산 톤 · 편성 시간">${n0(sum(days, (d) => O.lines[ln][idx(d)].cap))}t · ${n0(sum(days, (d) => O.lines[ln][idx(d)].usedH))}h</small></th>${pds.map((d) => `<td class="pst">${pastCell(ln, d)}</td>`).join('')}${days.map((d) => `<td${d === UI.today() ? ' class="tdy"' : ''}>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`).join('');
-    const sd = (d) => sum(LINES, (l) => O.lines[l][idx(d)].cap);
-    const tot = `<tr class="dsum"><th title="네 라인 하루 생산 톤 합">하루 합<small>주 ${n0(sum(days, sd))}t</small></th>${pds.map((d) => `<td class="pst" title="${mdw(d)} 네 라인 생산 실적"><b>${n0(sum(LINES, (l) => actT(l, d)))}</b><small>t</small></td>`).join('')}${days.map((d) => `<td><b>${n0(sd(d))}</b><small>t</small></td>`).join('')}${pad}</tr>`;
+    // 11/13 검토 상3·상4: 주 합 = 보이는 7칸(지난 날 = 실적, 오늘부터 = 계획 톤) 정수 합 — 머리 기간(생산주)과 같은 날들, 편성 시간은 풍선으로
+    const lv = (ln, d) => (pds.includes(d) ? Math.round(actT(ln, d)) : (O.lines[ln][idx(d)].stop ? 0 : Math.round(O.lines[ln][idx(d)].cap || 0))), wkD = pds.concat(days), wkL = (ln) => wkD.reduce((s, d) => s + lv(ln, d), 0);
+    const rows = LINES.map((ln) => `<tr><th>${ln}<small title="${md(wkD[0])}~${md(wkD[wkD.length - 1])} ${ln} 7칸 합(지난 날 = 실적, 오늘부터 = 계획 톤) · ${md(days[0])}~ 편성 시간 ${n0(sum(days, (d) => O.lines[ln][idx(d)].usedH))}h">주 ${n0(wkL(ln))}t</small></th>${pds.map((d) => `<td class="pst">${pastCell(ln, d)}</td>`).join('')}${days.map((d) => `<td${d === UI.today() ? ' class="tdy"' : ''}>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`).join('');
+    const sd = (d) => sum(LINES, (l) => lv(l, d));
+    const tot = `<tr class="dsum"><th title="네 라인 하루 생산 톤 합 · 주 = ${md(wkD[0])}~${md(wkD[wkD.length - 1])} 7칸 합(지난 날 = 실적)">하루 합<small>주 ${n0(sum(LINES, wkL))}t</small></th>${pds.map((d) => `<td class="pst" title="${mdw(d)} 네 라인 생산 실적"><b>${n0(sd(d))}</b><small>t</small></td>`).join('')}${days.map((d) => `<td><b>${n0(sd(d))}</b><small>t</small></td>`).join('')}${pad}</tr>`;
     return `<table class="cg"><thead><tr>${head}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
   }
 
@@ -110,7 +112,7 @@
     const bw = wk(B), sw = wk(S), ks = [...new Set([...Object.keys(bw), ...Object.keys(sw)])].sort();
     const rows = ks.map((k) => `<tr><td class="nw">${md(k)}~ 주</td><td class="num">${n0(bw[k] || 0)}</td><td class="num">${n0(sw[k] || 0)}</td></tr>`).join('');
     return '<section class="card"><h2>소재 들어오는 양 <small>주별 · 톤</small></h2>'
-      + `<div class="mt" style="margin:0 0 12px"><div><div class="s">구매 소재 재고</div><b class="v">${n0(M.buyStock)}t</b></div><div><div class="s">구매 소재 입고 예정 ~${END()}</div><b class="v">${n0(M.buySoon)}t</b></div>`
+      + `<div class="mt" style="margin:0 0 12px" title="재고 = MES 컬러 소재 재고(투입 가능 재고구분) — 01 소재(MES 소재재고 목록 전체)·소재 관제(판생속보 창고)와 출처 다름"><div><div class="s">구매 소재 재고 <small>MES 투입 가능</small></div><b class="v">${n0(M.buyStock)}t</b></div><div><div class="s">구매 소재 입고 예정 ~${END()}</div><b class="v">${n0(M.buySoon)}t</b></div>`
       + `<div title="컬러 소재 창고의 자사(도금) 소재 중 사용가능·작업지시대기·가공대기 재고 — 관제의 '도금 자가재 재고'(판생 속보, 도금 쪽 자가재 제품 재고 전체)와 범위가 다름"><div class="s">자가재 재고(컬러 소재 창고 · 투입 가능)</div><b class="v">${n0(M.selfStock)}t</b></div><div><div class="s">도금 자가재 생산 ~${END()}</div><b class="v">${n0(M.selfCg)}t</b></div></div>`
       + (rows ? `<table class="it" style="max-width:520px"><thead><tr><th>주</th><th class="num">구매 소재 입고 예정</th><th class="num">도금 자가재 생산</th></tr></thead><tbody>${rows}</tbody></table>` : '')
       + '</section>';

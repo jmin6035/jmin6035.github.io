@@ -291,7 +291,7 @@
 
   // 그래프 범례 — 막대 모양 + 글자 색 뜻 + 눈금선 두 가지
   function legend(cur) {
-    return `<div class="kj-lg" aria-label="범례"><span><i class="sl"></i>${cur ? '판매계획 · 월 계획 · 목표' : '판매계획 · 생산 계획 · 목표'}</span><span><i class="ac"></i>${cur ? '주문(소재 ON + OFF) · 실적' : '납기 주문'}</span><span><i class="stk"></i>재고</span><span><i class="ov"></i>목표 초과</span>`
+    return `<div class="kj-lg" aria-label="범례"><span><i class="sl"></i>${cur ? '판매계획 · 월 계획 · 목표' : '판매계획 · 생산 계획 · 목표'}</span><span><i class="ac"></i>${cur ? '주문(소재 ON + OFF) · 실적' : '납기 주문'}</span><span><i class="stk"></i>재고${cur ? ' <small title="소재 재고 = 판매생산속보 창고 재고(소재 관제와 같은 값) — 01 소재의 지금 재고(MES 소재재고 목록)와 출처 다름">(판생속보 창고)</small>' : ''}</span><span><i class="ov"></i>목표 초과</span>`
       + (cur ? '<span><b class="bad">빨강 %</b>오늘까지 계획보다 늦음(생산·출하)</span>' : '') + '<span><b class="ov">주황 %</b>목표 초과</span></div>';
   }
 

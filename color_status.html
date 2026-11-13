@@ -6,11 +6,11 @@
 <title>컬러 가동 현황</title>
 <meta name="description" content="컬러 1~4CCL 가동계획 조회 — 도금 가동 현황과 같은 양식">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="style.css?v=2611130326">
-<link rel="stylesheet" href="dashboard.css?v=2611130326">
-<link rel="stylesheet" href="ui/theme.css?v=2611130326">
-<link rel="stylesheet" href="ui/optable.css?v=2611130326">
-<link rel="stylesheet" href="ui/bridge.css?v=2611130326">
+<link rel="stylesheet" href="style.css?v=2611120206">
+<link rel="stylesheet" href="dashboard.css?v=2611120206">
+<link rel="stylesheet" href="ui/theme.css?v=2611132301">
+<link rel="stylesheet" href="ui/optable.css?v=2611140100">
+<link rel="stylesheet" href="ui/bridge.css?v=2611120206">
 <style>/* 11/10 점검: 한 달(31일)이 한 화면에 — 26일에서 잘리던 것 */ html body main.wrap table.gtable { min-width: 1150px !important; width: 100%; } html body main.wrap .gtable th, html body main.wrap .gtable td { min-width: 0 !important; padding: 6px 1px; } .load-row .n.neg { color: var(--bad); font-weight: 800; }
 .gtable td.idle { background: color-mix(in srgb, var(--sd) 55%, transparent); } .gtable td[data-d] { cursor: pointer; } .gtable tr.r-fam td { font-weight: 800; }/* 기준일 라인 현황 카드 */
 .ln-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
@@ -36,7 +36,7 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 .gm-t { display: flex; flex-direction: column; text-align: right; } .gm-t b { font-size: 17px; font-variant-numeric: tabular-nums; } .gm-t span { font-size: 13.5px; }
 .gm-tot { border-bottom: 0; } .gm-sum { display: flex; gap: 18px; font-size: 14px; color: var(--ink-2); }
 @media (max-width: 760px) { .gm-row { grid-template-columns: 1fr; gap: 6px; } .gm-t { text-align: left; flex-direction: row; gap: 10px; } }
-/* 월간 계획 vs 롤링 */
+/* 월 계획 vs 롤링 */
 .r-top { align-items: start; margin-bottom: 14px; } .r-h3 { margin: 0 0 8px; font-size: 16px; }
 .rg-leg { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13.5px; color: var(--ink-2); margin-bottom: 6px; } .rg-leg i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
 .rg-leg u { display: inline-block; width: 2px; height: 12px; background: var(--ink); margin-right: 5px; vertical-align: -2px; }
@@ -45,7 +45,7 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 .rg-bar { position: relative; display: flex; height: 26px; gap: 2px; } .rg-bar u { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); border-radius: 1px; }
 .rg-bar i, .rg-leg i { font-style: normal; display: flex; align-items: center; justify-content: center; font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; border-radius: 4px; }
 .rg-bar i.a, .rg-leg i.a { background: var(--brand-2); color: var(--on-brand, #fff); } .rg-bar i.c, .rg-leg i.c { background: color-mix(in srgb, var(--brand-2) 45%, var(--surface)); color: var(--ink); } .rg-bar i.p, .rg-leg i.p { background: var(--grid); color: var(--ink); }
-.rg-t { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; } .rg-t b { font-size: 15px; font-variant-numeric: tabular-nums; } .rg-t .st { font-size: 13.5px; }
+.rg-t { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; } .rg-t b { font-size: 15px; font-variant-numeric: tabular-nums; } .rg-t .st { font-size: 13.5px; } .rg-t .rg-m0 { font-size: 13.5px; color: var(--ink-3); }
 .rg-p { grid-column: 1; grid-row: 2; font-size: 13.5px; color: var(--ink-2); padding-left: 19px; }
 .rg-tot { border-bottom: 0; } .rg-tot .rg-n b { font-size: 15px; }
 .r-alarms { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -92,7 +92,7 @@ html:root body main table.r-table.xl.xl.xl td.up { color: #1e7b3a !important; fo
 
     <section class="card" id="r-sec" hidden>
       <div class="head-row">
-        <h2><span style="white-space:nowrap">월간 계획 vs 롤링</span> <small class="muted" id="r-meta"></small></h2>
+        <h2><span style="white-space:nowrap">월 계획 vs 롤링</span> <small class="muted" id="r-meta"></small></h2>
         <div class="tabs" id="r-tabs"></div>
       </div>
       <div class="row2 r-top">
@@ -100,7 +100,7 @@ html:root body main table.r-table.xl.xl.xl td.up { color: #1e7b3a !important; fo
         <div><h3 class="r-h3">알람</h3><ul class="r-alarms" id="r-alarms"></ul></div>
       </div>
       <div id="r-table"></div>
-      <p class="hint" title="월 계획 = 3개월 통합 계획이 그 달 그룹에 잡은 양(TF 월 생산량). 남은 배치 = 내일부터 휴지 고정·휴지 집약 없이 다시 배치. 차이 ±5% 초과 시 알람">월간 계획 = 가동 현황 계획(고정) · 롤링 = 실적 + 확정 작업지시(굵은 숫자) + 남은 배치 · <b style="color:var(--good)">초록 글자</b>/<b style="color:var(--bad)">빨강 글자</b> = 월간 계획보다 30t 넘게 많음/적음</p>
+      <p class="hint" title="월 계획 = 지금 판의 그 달 합(지난 날 실적 + 앞날 계획, 01 컬러 합계 계와 같은 값). 월차 = 그 달 첫 게시 계획(비교용). 남은 배치 = 내일부터 휴지 고정·휴지 집약 없이 다시 배치. 차이 ±5% 초과 시 알람">월 계획 = 지금 판 그 달 합(01 컬러 합계 계) · 롤링 = 실적 + 확정 작업지시(굵은 숫자) + 남은 배치 · <b style="color:var(--good)">초록 글자</b>/<b style="color:var(--bad)">빨강 글자</b> = 월 계획보다 30t 넘게 많음/적음</p>
     </section>
 
     <section class="card">
@@ -149,10 +149,10 @@ html:root body main table.r-table.xl.xl.xl td.up { color: #1e7b3a !important; fo
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <footer class="wrap foot">조회 전용 · 원자료: 통합 가동계획(컬러 판매계획·계획재 운영안·MES 월차·실적)</footer>
 
-<script src="ui/shell.js?v=2611130326"></script>
-<script src="engine/crypto.js?v=2611130326"></script>
-<script src="ui/optable.js?v=2611130326"></script>
-<script src="color_status.js?v=2611130326"></script>
-<script src="color_rolling.js?v=2611130326"></script>
+<script src="ui/shell.js?v=2611141500"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script src="ui/optable.js?v=2611140100"></script>
+<script src="color_status.js?v=2611141500"></script>
+<script src="color_rolling.js?v=2611141500"></script>
 </body>
 </html>

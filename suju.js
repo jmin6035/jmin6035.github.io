@@ -199,24 +199,26 @@
         const r = R[i], past = r.d <= D.asOf, e = evOf(ln, r);
         P += `<td class="${e ? 'y' : ''}" title="${md(r.d)}${e ? ' ' + esc(e) : ''} 계획 ${n0(r.p)}t${past ? ` · 실적 ${r.a == null ? '-' : n0(r.a)}t` : ''}">${r.p > 0.5 ? nf(r.p) : ''}</td>`;
         Q += past && r.a != null && r.a > 0.5 ? `<td class="${r.a + 0.5 < r.p ? 'lo' : ''}">${nf(r.a)}</td>` : '<td></td>'; }
-      const mp = R.reduce((s_, r) => s_ + (r.p || 0), 0), cp = R.reduce((s_, r) => s_ + (r.d <= D.asOf ? r.p || 0 : 0), 0), ca = R.reduce((s_, r) => s_ + (r.a || 0), 0);
+      // 11/13 사용자 '모든 화면 같은 값': 계획 줄 계 = 월 계획(지난 날 실적 + 앞날 계획 = 01 계·04 수주와 같은 값)
+      const mp = R.reduce((s_, r) => s_ + ((r.d <= D.asOf ? r.a : r.p) || 0), 0), cp = R.reduce((s_, r) => s_ + (r.d <= D.asOf ? r.p || 0 : 0), 0), ca = R.reduce((s_, r) => s_ + (r.a || 0), 0);
       const tt = ` title="${sub ? esc(sub) + ' · ' : ''}월 계획 ${n0(mp)}t · 1일~${md(D.asOf)} 계획 ${n0(cp)}t → 실적 ${n0(ca)}t"`;
       const c0 = kind === 'sum' ? 'c0' : kind === 'ln' ? `c0 ${/CGL$/.test(ln) ? 'lnG' : 'lnC'} le` : 'c0 le';
       return `<tr class="${kind === 'sum' ? 'sum s1' : ''}"><th class="${c0}" rowspan="2"${tt.replace('title="', `title="${esc(nm)} · `)}>${esc(OPT.short(nm))}</th><th class="c1">계획</th>${P}<td class="tot">${n0(mp)}</td></tr>`
         + `<tr class="${kind === 'sum' ? 'sum s2' : 'le'}"><th class="c1">실적</th>${Q}<td class="tot${ca + 0.5 < cp ? ' lo' : ''}"${tt}>${n0(ca)}</td></tr>`; };
-    const lineR = (l) => (D.daily[l] || []).map(([d, p0, p, a]) => ({ d, p: d <= D.asOf ? p0 : p, a: d <= D.asOf ? a : null }));
+    const RD = (v) => (v == null ? v : Math.round(+v || 0));   // 일별 값 = 정수 반올림 뒤 더함(칸 합 = 계)
+    const lineR = (l) => (D.daily[l] || []).map(([d, p0, p, a]) => ({ d, p: RD(d <= D.asOf ? p0 : p), a: d <= D.asOf ? RD(a) : null }));
     const sumR = (Ls) => days.map((d, i) => { const xs = Ls.map((R) => R[i]).filter(Boolean); return { d, p: xs.reduce((s_, x) => s_ + (x.p || 0), 0), a: d <= D.asOf && xs.some((x) => x.a != null) ? xs.reduce((s_, x) => s_ + (x.a || 0), 0) : null }; });
     const plantBlock = (pl, nm, lines) => { if (!inPl(pl)) return ''; const Rs = lines.map(lineR); return sec(`${nm} · 라인`) + lines.map((l, i) => rowOf(l, LC[l], Rs[i], 'ln', l)).join('') + rowOf(`${nm} 합계`, '', sumR(Rs), 'sum'); };
     body += plantBlock('G', '도금', ['1CGL', '2CGL']) + plantBlock('C', '컬러', ['1CCL', '2CCL', '3CCL', '4CCL']);
     const GN = Object.fromEntries((D.groups || []).map((g) => [g.key, g.name])), GC = ['건재수출', '가전수출', '가전내수', '주문재', '계획재', '수요개발'], GG = ['도금수출', '도금국내', '자동차', '자가재'];
     const gk = (ks) => ks.filter((g) => (D.gdaily || {})[g] && D.gdaily[g].some((r) => r[1] > 0.5 || r[2] > 0.5));
-    const gR = (g) => D.gdaily[g].map(([d, p, a]) => ({ d, p, a: d <= D.asOf ? (a == null ? 0 : a) : null }));
+    const gR = (g) => D.gdaily[g].map(([d, p, a]) => ({ d, p: RD(p), a: d <= D.asOf ? RD(a == null ? 0 : a) : null }));
     if (D.gdaily) {
       if (inPl('G')) body += sec('도금 · 그룹') + gk(GG).map((g) => rowOf(GN[g] || g, '', gR(g))).join('');
       if (inPl('C')) body += sec('컬러 · 그룹') + gk(GC).map((g) => rowOf(GN[g] || g, '', gR(g))).join('');
     }
     const ti = days.indexOf(td), np = days.filter((d) => d <= D.asOf).length;
-    const lg = OPT.lg([['y', 'M/C · S/D'], ['sp', '정지 · 휴지'], np && ['pst', '지난 날'], ['sep'], ti >= 0 && ['tdy', '오늘'], ['sep'], ['w1', '확정된 생산주'], ['w2', '수주 중'], ['w3', '마감 전'], [null, '<b class="neg">빨강</b> = 실적이 계획 미달 · 지난 날 계획 = 월차']]);
+    const lg = OPT.lg([['y', 'M/C · S/D'], ['sp', '정지 · 휴지'], np && ['pst', '지난 날'], ['sep'], ti >= 0 && ['tdy', '오늘'], ['sep'], ['w1', '확정된 생산주'], ['w2', '수주 중'], ['w3', '마감 전'], [null, '<b class="neg">빨강</b> = 실적이 계획 미달 · 지난 날 계획 = 월차 · 계획 계 = 월 계획(실적 + 앞날 계획)']]);
     return card(3, `${+D.month.slice(5)}월 일별 계획 캘린더`, '', OPT.wrap(OPT.pad31(OPT.head(days, td, '', '', ti) + `<tbody>${body}`, nd) + '</tbody>', np, ti, 'sjc') + lg, 'sj2-calc', true);
   }
 
@@ -308,7 +310,10 @@
     // 섹션별 셀(그룹 줄 = 그룹 자기 값 · 합으로만 있는 값은 '–')
     const ordCells = (g) => (g.base == null ? `${nb(g.sales, 'bk', g.salesSrc)}${na('주문 받지 않는 그룹(계획 생산)')}${na()}${na()}${na()}`
       : `${nb(g.sales, 'bk', g.salesSrc)}${nb(g.base)}<td class="n" title="등록 주문(소재 매치 전 포함) ${T(g.ordReg)}t"><b>${T(g.orders)}</b></td>${nb(g.gap, g.gap > 0 ? 'xr' : '')}`
-        + (g.progGrp ? `<td class="n pc mu" title="그룹 자체 ${pct(g.prog)} · 판정은 아래 3그룹 합 줄">${pct(g.prog)}</td>` : pc(g.prog, pcl(g.progSt), `확정 ÷ 기준선 · ${g.progSt || ''}`)));
+        + (g.progGrp ? `<td class="n pc mu" title="그룹 자체 ${pct(g.prog)} · 판정은 아래 3그룹 합 줄">${pct(g.prog)}</td>`
+          // 11/13: 확정이 기준선의 150% 넘음 = 앞날 계획에 이 그룹 편성이 거의 없음(기준선 = 실적뿐) — % 로 쓰면 381.9% 처럼 읽혀 '편성 부족'으로 표시
+          : g.progSt === '확인' ? `<td class="n pc xo" title="${esc(`확정 ${T(g.orders)}t > 기준선(~${md(D.cut)} 계획 편성) ${T(g.base)}t — 앞날 계획에 편성 없는 주문 ${T(g.orders - g.base)}t, 편성 확인 · 확정률 ${pct(g.prog)} 은 계산 안 함`)}">편성 부족</td>`
+          : pc(g.prog, pcl(g.progSt), `확정 ÷ 기준선 · ${g.progSt || ''}`)));
     const prodCells = (g) => { const x = GM(g);
       return `${nb(x.mon, 'bk', `월 계획 = 지금 계획의 이달 합계(지난 날 실적 + 앞날 계획) · 그룹 월 계획(판매 + 목표 − 기초) ${T(g.planMon)}t${g.achGrp ? `(${g.achGrp})` : ''}`)}<td class="n">${T(x.act)}</td>`
         + (x.mon ? pc(mv(g), pcl(mSt(g), mGap(g) > 5), `실적 ${T(x.act)}t ÷ 월 계획 ${T(x.mon)}t · ~${md(D.asOf)} 월차 계획 ${T(x.due0)}t 대비 ${pct(x.pct0)}`) : na('이달 계획 없음')); };
@@ -331,10 +336,11 @@
       return `<tr class="sj2-cb" title="${esc(M.map((x) => x.name).join(' + '))}"><td class="nm">${esc(key)}</td>${ord}`
         + (g.achGrp === key ? (() => { const x = UI.grpMon(D, M.map((y) => y.key)); return `${nb(x.mon, 'bk')}${nb(x.act)}${pc(x.pct, '', `~${md(D.asOf)} 월차 대비 ${pct(x.pct0)}`)}`; })() : '<td class="bk"></td><td></td><td></td>') + (g.shipGrp === key ? shipCells(g, true) : '<td class="bk"></td><td></td><td></td>')
         + (g.stockGrp === key ? stkCells(g, true, caps) : '<td class="bk"></td><td></td>') + '<td class="sx"></td></tr>'; };
-    const sub = (nm, L, cls) => { const s = (k) => L.reduce((a, g) => a + (g[k] || 0), 0), dm = L.filter((g) => g.base != null), b = dm.reduce((a, g) => a + g.base, 0), o = dm.reduce((a, g) => a + g.orders, 0), gp = dm.reduce((a, g) => a + (g.gap || 0), 0);
+    // 11/13: 소계 확정 = 그룹마다 기준선까지만 더함(기준선 넘는 주문이 다른 그룹 부족을 가리지 않게 — 컬러 소계 87.9% 인데 부족 5,283t 이던 것) → 기준선 − 확정 = 부족
+    const sub = (nm, L, cls) => { const s = (k) => L.reduce((a, g) => a + (g[k] || 0), 0), dm = L.filter((g) => g.base != null), b = dm.reduce((a, g) => a + g.base, 0), o = dm.reduce((a, g) => a + Math.min(g.orders, g.base), 0), oX = dm.reduce((a, g) => a + Math.max(0, g.orders - g.base), 0), gp = dm.reduce((a, g) => a + (g.gap || 0), 0);
       const GX = UI.grpMon(D, L.map((g) => g.key)), pv = b ? o / b * 100 : null, a = GX.act;
       const pmS = GX.mon, shU = [...new Map(L.filter((g) => g.shipMon != null).map((g) => [g.shipGrp || g.key, g])).values()], shM = shU.reduce((x, g) => x + g.shipMon, 0), shA = shU.reduce((x, g) => x + g.shipAct, 0);
-      return `<tr class="sj2-sub ${cls}"><td class="nm">${nm}</td>${nb(s('sales'), 'bk')}${nb(b)}${nb(o)}${nb(gp, gp > 0 ? 'xr' : '')}${pc(pv, pv != null && pv < 90 ? 'xr' : '', '확정 ÷ 기준선')}`
+      return `<tr class="sj2-sub ${cls}"><td class="nm">${nm}</td>${nb(s('sales'), 'bk')}${nb(b)}${nb(o, '', `그룹별 기준선까지 확정 합${oX >= 0.5 ? ` · 기준선 넘는 확정 ${T(oX)}t 제외(전체 확정 ${T(o + oX)}t)` : ''}`)}${nb(gp, gp > 0 ? 'xr' : '')}${pc(pv, pv != null && pv < 90 ? 'xr' : '', '확정(그룹별 기준선까지) ÷ 기준선 = 1 − 부족 ÷ 기준선')}`
         + `${nb(pmS, 'bk')}${nb(a)}${pc(pmS ? a / pmS * 100 : null, '', `실적 ÷ 월 계획 · ~${md(D.asOf)} 월차 대비 ${pct(GX.pct0)}`)}${nb(shM, 'bk')}${nb(shA)}${pc(shM ? shA / shM * 100 : null, '', '출하 실적 ÷ 월 계획')}<td class="bk"></td><td></td><td class="sx"></td></tr>`; };
     let body = '';
     for (const p of ['G', 'C']) { const L = G.filter((g) => g.plant === p); if (!L.length) continue;

@@ -273,10 +273,14 @@
         return `<div class="ch-c${z.d === asOf ? ' today' : ''}${z.past ? '' : ' fut'}${inP && view !== 'month' ? ' sel' : ''}${off ? ' off' : ''}${off && gEv(z.d) ? ' sd' : ''}" title="${esc(tip)}"><div class="ch-v${lo ? ' lo' : ''}">${many ? '' : val}</div><div class="ch-b">${body}</div>`
           + `<div class="ch-x">${showD ? `${+z.d.slice(5, 7)}/${+z.d.slice(8)}<small>${z.d === asOf ? '오늘' : wd(z.d)}</small>` : ''}</div></div>`;
       }).join('');
-      return `<div class="ch${many ? ' many' : ''}"><div class="ch-in">${grid}<div class="ch-cols" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${cols}</div></div></div>`;
+      // 11/13 검토(규칙 27): 정기수리·S/D 여러 날 = 아래쪽 남색 띠 하나 + '정기수리 n일'(01 일별 가동계획 남색 합친 칸과 같은 뜻) — 꽉 찬 남색 기둥은 생산 많은 날로 읽힘
+      const sdRuns = []; r.dd.forEach((z, i) => { const e = !z.past || z.stop ? gEv(z.d) : null, on = e && (z.past ? z.stop : !z.p); if (!on) return; const L = sdRuns[sdRuns.length - 1]; if (L && L.i1 === i - 1 && L.e === e) L.i1 = i; else sdRuns.push({ i0: i, i1: i, e }); });
+      const sdl = sdRuns.map((q) => { const k = q.i1 - q.i0 + 1, nm = /정기/.test(q.e) ? '정기수리' : /S\/D/.test(q.e) ? 'S/D' : /수리/.test(q.e) ? '수리' : '휴지';
+        return `<div class="ch-sdl" style="left:calc(${q.i0 / n * 100}% + 1px);width:calc(${k / n * 100}% - 2px)" title="${esc(`${md(r.dd[q.i0].d)}~${md(r.dd[q.i1].d)} ${q.e}`)}">${k >= 3 ? `${nm} ${k}일` : nm}</div>`; }).join('');
+      return `<div class="ch${many ? ' many' : ''}"><div class="ch-in">${grid}<div class="ch-cols" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${cols}</div>${sdl}</div></div>`;
     };
     // 11/10: 범례는 라인 카드마다(6번) 말고 '라인별 진도' 머리 아래 한 번
-    const leg = `<div class="ch-leg"><span><b class="k a"></b>실적</span><span><b class="k lo"></b>계획 95% 미만</span><span><b class="k p"></b>그날 계획</span><span><b class="k f"></b>앞으로 계획</span>${RUN ? '<span><b class="k r"></b>오늘 진행 중</span>' : ''}<span><b class="k o"></b>휴지·정비</span>${Object.keys(gStop).some((k) => k.slice(k.indexOf('|') + 1, k.indexOf('|') + 8) === asOf.slice(0, 7)) ? '<span><b class="k sd"></b>정기수리·S/D</span>' : ''}<span class="u">단위 t</span></div>`;
+    const leg = `<div class="ch-leg"><span><b class="k a"></b>실적</span><span><b class="k lo"></b>계획 95% 미만</span><span><b class="k p"></b>그날 계획</span><span><b class="k f"></b>앞으로 계획</span>${RUN ? '<span><b class="k r"></b>오늘 진행 중</span>' : ''}<span><b class="k o"></b>휴지·정비</span>${Object.keys(gStop).some((k) => k.slice(k.indexOf('|') + 1, k.indexOf('|') + 8) === asOf.slice(0, 7)) ? '<span><b class="k sd"></b>정기수리·S/D(정지)</span>' : ''}<span class="u">단위 t</span></div>`;
     const runLine = (r) => {                                                                      // 오늘 진행분(07시~ 마감 전) — 진도율에는 안 넣고 참고로(11/5 사용자 '화면에 보여줘')
       if (!RUN || RUN.d <= lastFull(r.x)) return '';
       const t = +(RUN.lines || {})[r.x.line] || 0, p = futPlan(r.x, RUN.d);
@@ -410,7 +414,7 @@
         [K[0], [['지연 예상 + 납기 지남', K[0]]], RKT ? `미결 ${n0(RKT.t)}t 중 ${RKT.t ? Math.round((RKT.will + RKT.past) / RKT.t * 100) : 0}%` : `${n0(T(risk))}t`],
         [K[1], [['발주 마감 지난 부족', K[1]]], top3.length ? `${top3.length}종 · ${top3[0].name}${top3.length > 1 ? ' 외' : ''}` : '없음'],
         [K[2], [['어제', Dd.K[2]], ['이번 주', Dw.K[2]], [`${+asOf.slice(5, 7)}월`, K[2]]], PMv ? `월 계획 ${n0(plan)}t 중 ${n0(act)}t · 월차 대비 ${pr0 == null ? '–' : pr0 + '%'}` : `월간 ${n0(act)} / ${n0(plan)}t`],
-        [K[3], [[shDue ? `~${md(shDue)}` : '오늘까지', K[3]]], `실적 ${n0(shA)} / 오늘까지 기준 ${n0(shP)}t`],
+        [K[3], [[`그룹별 미달 합${shDue ? ` ~${md(shDue)}` : ''}`, K[3]]], `미달 그룹만 더함 · 초과 ${n0(Math.max(0, shA - shP + shipGap))}t 별도`],   // 11/13 검토: 두 숫자 차(5,083)와 카드(6,109)가 다른 이유 = 그룹별 미달만 더함
         [K[4], [['판정 불가 주문', K[4]]], `출하 실적 없음 ${noShip.length}건 별도`],
       ];
       return `<div class="ct-kpis k2-kp">${C.filter(([k, cs]) => k && cs.every(([, x]) => x)).map(([k, cs, s]) => `<a href="${k.href}" class="ct-kpi k2-k" title="${esc(strip(k.sub))}"><div class="l">${esc(k.label === '생산 진도율' ? '생산 진도' : k.label)}</div><div class="k2-n">${cs.map(([l, x]) => cell(l, x)).join('')}</div><div class="s">${esc(s)}</div></a>`).join('')}</div>`;

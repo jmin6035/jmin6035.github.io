@@ -6,7 +6,7 @@
 <title>통합 관제</title>
 <meta name="description" content="납기 위험 · 생산·출하 진도 · 라인별 실적">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611130326">
+<link rel="stylesheet" href="ui/theme.css?v=2611120206">
 <style>
 main.wrap { max-width: none; }
 .ct-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 12px; } .ct-bar .ct-seg { margin: 0; } .ct-bar .ct-note { margin: 0; }
@@ -76,7 +76,8 @@ main.wrap { max-width: none; }
 .ch-na { font-style: normal; font-size: 13.5px; line-height: 1.25; color: var(--ink-3); text-align: center; padding-bottom: 4px; }
 .ch-x { position: absolute; bottom: -38px; left: -6px; right: -6px; text-align: center; font-size: 13.5px; color: var(--ink-2); line-height: 1.25; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ch-x small { display: block; font-size: 13.5px; color: var(--ink-2); } .ch-c.today .ch-x { color: var(--warn); font-weight: 700; } .ch-c.today .ch-x small { color: var(--warn); }
-.ch-c.off.sd { background: #1f3864; } .ch-c.sd .ch-na { color: #fff; } .ch-leg .k.sd { background: #1f3864; border: 1px solid #1f3864; }
+.ch-c.off.sd { background: none; } .ch-c.sd .ch-na { visibility: hidden; } .ch-leg .k.sd { background: #1f3864; border: 1px solid #1f3864; }
+.ch-sdl { position: absolute; bottom: 0; height: 30px; display: flex; align-items: center; justify-content: center; background: #1f3864; color: #fff; font-size: 13.5px; font-weight: 700; border-radius: 3px; white-space: nowrap; overflow: hidden; z-index: 1; }
 .ch.many .ch-cols { gap: 2px; } .ch.many .ch-v { font-size: 11.5px; letter-spacing: -.3px; } .ch-c.sel { background: rgba(31,95,174,.08); } .ch-c.off { background: repeating-linear-gradient(135deg, rgba(120,130,145,.16) 0 4px, transparent 4px 8px); } .ch-leg .k.o { background: repeating-linear-gradient(135deg, rgba(120,130,145,.45) 0 3px, transparent 3px 6px); border: 1px solid var(--line); } .ch.many .ch-na { font-size: 0; }
 .ch-c:last-child .ch-x { left: auto; right: -4px; text-align: right; } .ch-c:first-child .ch-x { right: auto; left: -4px; text-align: left; }
 .ct-act .ct-t td { padding-top: 7px !important; padding-bottom: 7px !important; }
@@ -162,10 +163,10 @@ html.v2 table.k2-cd td.w, html.v2 table.k2-fc td { overflow: hidden; text-overfl
 <header id="shell" data-page="home" data-title="통합 관제" data-sub="납기 위험 · 생산·출하 진도 · 라인별 실적"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
 <footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611130326"></script>
-<script src="engine/crypto.js?v=2611130326"></script>
-<script src="ui/ct.js?v=2611130326"></script>
-<script src="ui/ctl.js?v=2611130326"></script>
-<script src="ct_home.js?v=2611130326"></script>
+<script src="ui/shell.js?v=2611141500"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script src="ui/ct.js?v=2611120206"></script>
+<script src="ui/ctl.js?v=2611120206"></script>
+<script src="ct_home.js?v=2611141500"></script>
 </body>
 </html>

@@ -23,9 +23,16 @@
   const dnTxt = (l, d) => (dn[`${l}|${d}`] || []).map((x) => `${KN[x[0]]} ${fmt(x[1])}분`).join(', ');
 
   const tot = (c) => sum(Object.values(c.g));
-  const monT = (m, l) => sum(O.color.filter((c) => c.d.startsWith(m) && (!l || c.l === l)), tot);
+  // 11/13 사용자 '모든 화면 같은 값': 칸(라인·날) = 정수 반올림, 월 합 = 칸 합(01 일별 가동계획 계와 같은 값). 그룹 = 칸 정수를 그룹 비율로 나눔(큰 나머지 순 — 그룹 합 = 칸)
+  const cellR = (c) => { const t = tot(c); return t < 0.5 ? 0 : Math.round(t); };
+  const cellG = (c) => { const T = cellR(c), E = Object.entries(c.g || {}).filter(([, v]) => v > 0), o = {}; let k = T;
+    for (const [g, v] of E) { o[g] = Math.floor(v); k -= o[g]; }
+    for (const [g] of E.slice().sort((a, b) => (b[1] - Math.floor(b[1])) - (a[1] - Math.floor(a[1])))) { if (k <= 0) break; o[g]++; k--; }
+    for (const [g] of E.slice().sort((a, b) => o[a[0]] - o[b[0]])) { while (k < 0 && o[g] > 0) { o[g]--; k++; } }
+    return o; };
+  const monT = (m, l) => sum(O.color.filter((c) => c.d.startsWith(m) && (!l || c.l === l)), cellR);
   const cap = (m, l) => ((O.colorLines[m] || {})[l] || {}).plan || 0;
-  const placed = (m, l) => ((O.colorLines[m] || {})[l] || {}).placed || 0;
+  const placed = (m, l) => (O.color.some((c) => c.d.startsWith(m)) ? monT(m, l) : ((O.colorLines[m] || {})[l] || {}).placed || 0);   // 편성 = 지난 날 실적 + 앞날 계획 칸 합(= 월 계획)
   const load = (m, l) => (cap(m, l) ? placed(m, l) / cap(m, l) : 0);
   const unT = (m) => sum(O.colorUnplaced.filter((u) => !m || u.ym === m), (u) => u.t);
   const daysOf = (m) => { const [y, mo] = m.split('-').map(Number); const n = new Date(y, mo, 0).getDate(); return Array.from({ length: n }, (_, i) => `${m}-${String(i + 1).padStart(2, '0')}`); };
@@ -33,7 +40,8 @@
 
   function render() {
     by = {}; for (const c of O.color) by[`${c.l}|${c.d}`] = c;
-    window.CSPLAN = (l, d) => { const c = by[`${l}|${d}`]; return c ? tot(c) : 0; };   // 11/13: '월간 계획 vs 롤링' 표의 월간 계획 줄 = 아래 월별 가동계획 표와 같은 값(같은 라인 합이 두 값이던 것)
+    window.CSPLAN = (l, d) => { const c = by[`${l}|${d}`]; return c ? tot(c) : 0; };
+    window.CSGRP = (m) => { const o = {}; for (const c of O.color) if (c.d.startsWith(m)) for (const [g, v] of Object.entries(cellG(c))) o[g] = (o[g] || 0) + v; return o; };   // 그룹 월 계획(칸 정수 나눔 합 = 01 컬러 합계 계)   // 11/13: '월간 계획 vs 롤링' 표의 월간 계획 줄 = 아래 월별 가동계획 표와 같은 값(같은 라인 합이 두 값이던 것)
     if (window.CSROLL) window.CSROLL();
     { const ms = [...new Set(Object.keys(O.colorLines || {}).concat(O.color.map((c) => String(c.d).slice(0, 7))))].filter((m) => /^\d{4}-\d{2}$/.test(m)).sort();   // 11/9: 달 목록·계획 기간 = 자료
       if (ms.length) { MONTHS = ms; D0 = ms[0] + '-01'; D1 = daysOf(ms[ms.length - 1]).pop(); } }
@@ -138,7 +146,7 @@
       const gs = c ? Object.entries(c.g).filter(([, v]) => v > 0.5).sort((a, b) => b[1] - a[1]) : [];
       const pa = {}; if (c) for (const r of c.rows) pa[r[1]] = (pa[r[1]] || 0) + (+r[5] || 0);
       const items = Object.entries(pa).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `<li><span>${esc(k)}</span><b>${fmt(v)}t</b></li>`).join('');
-      const toDate = sum(O.color.filter((x) => x.l === l && x.d.startsWith(m) && x.d <= d && x.act), tot), mPlan = O.color.filter((x) => x.l === l && x.d.startsWith(m)).reduce((a, x) => a + Math.round(tot(x)), 0), mc = cap(m, l);   // 월 계획 = 아래 표 '생산' 계(칸 정수 합)   // 11/10 점검: 진도 = 실적(MES)만 — 오늘 계획을 더해 3,585(실적 3,360)로 보이던 것
+      const toDate = O.color.filter((x) => x.l === l && x.d.startsWith(m) && x.d <= d && x.act).reduce((a, x) => a + Math.round(tot(x)), 0), mPlan = O.color.filter((x) => x.l === l && x.d.startsWith(m)).reduce((a, x) => a + Math.round(tot(x)), 0), mc = cap(m, l);   // 월 계획·실적 = 아래 표 '생산' 칸 정수 합(11/13 사용자: 일별 반올림 뒤 합 = 01 계)   // 11/10 점검: 진도 = 실적(MES)만 — 오늘 계획을 더해 3,585(실적 3,360)로 보이던 것
       const hd = new Set((O.colorDown || []).filter((x) => x[1] === l && HARD.includes(x[2])).map((x) => x[0])), nd1 = (x) => new Date(Date.parse(x + 'T00:00:00Z') + 864e5).toISOString().slice(0, 10);
       let runEnd = null; if (hd.has(d)) { runEnd = d; while (hd.has(nd1(runEnd))) runEnd = nd1(runEnd); }   // 진행 중인 수리·계획휴지의 끝
       const ck = (dnP[`${l}|${d}`] || []).find((x) => HARD.includes(x[0]));
@@ -168,7 +176,7 @@
   $('d-date').onchange = () => O && renderNow();
 
   function renderDept() {
-    const t = {}; for (const c of O.color) for (const [g, v] of Object.entries(c.g)) { const k = `${g}|${c.d.slice(0, 7)}`; t[k] = (t[k] || 0) + v; }
+    const t = {}; for (const c of O.color) for (const [g, v] of Object.entries(cellG(c))) { const k = `${g}|${c.d.slice(0, 7)}`; t[k] = (t[k] || 0) + v; }
     const un = {}; for (const u of O.colorUnplaced) un[u.g] = (un[u.g] || 0) + u.t;
     const rows = CG.map((g) => { const v = MONTHS.map((m) => t[`${g}|${m}`] || 0); return { g, v, s: sum(v), u: un[g] || 0 }; });
     const mx = Math.max(...rows.map((r) => r.s + r.u), 1);
@@ -208,7 +216,7 @@
   async function unlock(pw) {
     if (!env) env = await envReady;
     GP.latest('gyehoek_hist.enc.json').then((e) => (e ? GP.decryptJSON(e, pw) : null)).then((h) => {   // 월차 = 그 달 첫 게시 계획(01 '월차' 판)
-      if (!h || !Array.isArray(h.vers)) return; window.CSM0 = {}; for (const v of h.vers) if (v.kind === 'm0' && v.c) window.CSM0[v.mon] = v.c; if (O) renderNow(); }).catch(() => {});
+      if (!h || !Array.isArray(h.vers)) return; window.CSM0 = {}; for (const v of h.vers) if (v.kind === 'm0' && v.c) window.CSM0[v.mon] = v.c; if (O) renderNow(); if (window.CSROLL) window.CSROLL(); }).catch(() => {});
     try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } await overlayActual(pw); render(); document.dispatchEvent(new CustomEvent('cgl-pw', { detail: pw })); }   // 월간 계획 vs 롤링(color_rolling.js)
     catch (e) { $('d-unlock').hidden = false; $('d-unlock-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; }
   }
