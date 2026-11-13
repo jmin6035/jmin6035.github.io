@@ -96,20 +96,45 @@
       + `<td class="n">${can}</td></tr>`
       + `<tr class="dt ${fc}" hidden><td colspan="9">${detailV2(x)}</td></tr>`;
   }
+  /* 주문 상세(11/13 사용자 '구분이라도 좀 더 잘되게 · 정리 좀 잘해봐라' — 도금 주문진도와 같은 양식): 판정 한 줄 → ① 주문 | ② 납기 → ③ 흐름(소재 → 매치 → 작업 지시 → 생산 → 출하) */
+  const dI = (k, v, cls) => (v ? `<div class="dx-i"><div class="k">${k}</div><div class="v${cls ? ' ' + cls : ''}">${v}</div></div>` : '');
+  const dS = (nm, st, word, v, lines = []) => `<div class="dx-s ${st}"><div class="h">${nm}${word ? `<span class="w">${word}</span>` : ''}</div><div class="v">${v}</div>${lines.filter(Boolean).map((l) => (typeof l === 'string' ? `<div class="l">${l}</div>` : `<div class="l ${l[1]}">${l[0]}</div>`)).join('')}</div>`;
   function detailV2(x) {
-    const it = (k, v) => (v ? `<div><dt>${k}</dt><dd>${v}</dd></div>` : '');
-    return '<dl class="dtg">'
-      + it('고객사 · 담당', [x.cus && esc(x.cus), x.man && `담당 ${esc(x.man)}`].filter(Boolean).join(' · '))
-      + it('라인 · 용도', [x.line, x.usg && `용도 ${esc(x.usg)}`, x.exp === true ? '수출' : x.exp === false ? '내수' : ''].filter(Boolean).join(' · '))
-      + it('품명 · 도료', [x.pdtNm && esc(x.pdtNm), x.pdt && esc(x.pdt), x.top && `상도 ${esc(x.top)}`, x.pri && `Primer ${esc(x.pri)}`, x.back && `Back ${esc(x.back)}`].filter(Boolean).join(' · '))
-      + it('규격', x.spec ? spk(x.spec) : '')
-      + it('납기', [`${md(x.due) || '-'}`, x.dueOrig && x.dueOrig !== x.due && `원래 ${md(x.dueOrig)}`].filter(Boolean).join(' · '))
-      + it('주문 · 생산', `주문 ${n1(x.ordT)}t · 생산 ${n1(x.prodT)}t · 미생산 ${n1(x.remT)}t${x.fwdT ? ` · 출하 ${n1(x.fwdT)}t${x.fwdLast ? ` ${md(x.fwdLast)}` : ''}` : ''}`)
-      + it('매치 · 지시', `매치 ${n1(x.mchT || 0)}t${x.woT ? ` · 지시 ${n1(x.woT)}t` : ''}`)
-      + it('작업 예정 · 가동 가능', [x.sche && `예정 ${md(x.sche)}`, x.can && `가동 가능 ${md(x.can)}${x.canBy ? ` (${esc(x.canBy)})` : ''}`].filter(Boolean).join(' · '))
-      + `<div class="wide"><dt>소재 연결</dt><dd>${matCell(x)}</dd></div>`
-      + it('참고', x.note ? esc(x.note) : '')
-      + '</dl>';
+    const a = O.asOf, ordT = x.ordT || 0, rem = x.remT || 0, done = rem <= 0.5;
+    const V = [];
+    if (x.st === '소재 없음') V.push(['bad', '소재 없음 — 규격 재고·발주·자가재 모두 없음 → 소재 발주 필요']);
+    if (x.lateDue) V.push(['bad', `납기 ${dPast(x.due)}일 지남 · 미생산 ${n1(rem)}t`]);
+    if (x.stale) V.push(['warn', `납기 60일 넘게 지남 · MES 종결 확인`]);
+    if (x.lateCan) V.push(['warn', `가동 가능 ${md(x.can)} — 납기보다 늦음(${String(x.canBy || '').replace('입고예정일', '').replace('생산일', '')})`]);
+    if (!V.length) V.push(['ok', `${x.st}${x.sche ? ` · 작업 예정 ${md(x.sche)}` : ''}`]);
+    const tone = V.some((v) => v[0] === 'bad') ? 'bad' : V.some((v) => v[0] === 'warn') ? 'warn' : 'ok';
+    const chips = [x.pdtNm && `<b>${esc(x.pdtNm)}</b>${x.pdt ? ` ${esc(x.pdt)}` : ''}`, x.top && `상도 <b>${esc(x.top)}</b>`, x.pri && `P ${esc(x.pri)}`, x.back && `B ${esc(x.back)}`].filter(Boolean).map((t) => `<span class="dx-c">${t}</span>`).join('');
+    const o1 = '<section class="dx"><h4>주문</h4><div class="dx-g">'
+      + dI('고객사', esc(x.cus || '-')) + dI('담당', esc(x.man || '-'))
+      + dI('라인 · 용도', `${esc(x.line || '-')}<div class="s">${[x.usg && `용도 ${esc(x.usg)}`, x.exp === true ? '수출' : x.exp === false ? '내수' : ''].filter(Boolean).join(' · ') || '&nbsp;'}</div>`)
+      + dI('규격', x.spec ? spk(x.spec) : '-')
+      + dI('품명 · 도료', chips ? `<div class="dx-cs">${chips}</div>` : '-')
+      + dI('두께 × 폭', x.thk != null ? `${(+x.thk).toFixed(2)} × ${n0(x.wdt)}` : '-', 'big')
+      + dI('주문', `${n1(ordT)}t`, 'big')
+      + '</div></section>';
+    const o2 = '<section class="dx"><h4>납기</h4><div class="dx-g c2">'
+      + dI('납기', `${md(x.due) || '-'}${x.lateDue ? `<div class="s neg">${dPast(x.due)}일 지남</div>` : ''}`, `big${x.lateDue ? ' neg' : ''}`)
+      + (x.dueOrig && x.dueOrig !== x.due ? dI('원래 납기', md(x.dueOrig), 'big') : '')
+      + dI('가동 가능', !x.can ? '-' : x.can <= a ? '준비 끝' : `${md(x.can)}${x.canBy ? `<div class="s${x.lateCan ? ' neg' : ''}">${esc(String(x.canBy).replace('입고예정일', '').replace('생산일', ''))}${x.lateCan ? ' · 납기 뒤' : ''}</div>` : ''}`, `big${x.lateCan ? ' neg' : ''}`)
+      + '</div></section>';
+    const p = x.po;
+    const mSt = x.st === '소재 없음' ? 'bad' : x.st === '입고 대기' ? 'cur' : 'done';
+    const s1 = x.route === '재고기반' ? dS('소재', mSt, '재고기반', x.matT > 0.0005 ? `${n1(x.matT)}t` : '없음', ['규격 맞는 재고'])
+      : x.self ? dS('소재', mSt, '자가재', x.selfSt && x.selfSt.prodT ? `${n1(x.selfSt.prodT)}t` : '-', [`도금 ${esc(x.self)}`, x.selfSt && `${esc(x.selfSt.st || '')}${x.selfSt.sche ? ` · 예정 ${md(x.selfSt.sche)}` : ''}`, p && `발주 입고 ${n1(p.entT)} / ${n1(p.t)}t`])
+      : p ? dS('소재', mSt, '소재발주', `${n1(p.entT)}<small> / ${n1(p.t)}t</small>`, [`발주 ${esc(p.no)}${p.sup ? ` · ${esc(p.sup)}` : ''}`, p.ordDt && `발주 ${md(p.ordDt)}${p.dle ? ` · 인도기한 ${md(p.dle)}` : ''}`, p.entFirst && `첫 입고 ${md(p.entFirst)}`, p.stock && `재고 ${n1(p.stock)}t`])
+      : dS('소재', 'bad', esc(x.route || '-'), '미연결', ['소재 발주 연결 없음']);
+    const s2c = dS('매치', x.st === '매치 완료' ? 'done' : x.mchT > 0.0005 ? 'cur' : 'todo', x.st === '매치 완료' ? '끝' : x.mchT > 0.0005 ? '일부' : '전', x.mchT > 0.0005 ? `${n1(x.mchT)}t` : '0');
+    const s3 = dS('작업 지시', x.woT > 0.0005 ? 'cur' : x.sche ? 'cur' : 'todo', x.woT > 0.0005 ? '지시' : x.sche ? '예정' : '전', x.sche ? md(x.sche) : x.woT > 0.0005 ? `${n1(x.woT)}t` : '-', [x.sche && x.woT > 0.0005 && `지시 ${n1(x.woT)}t`, x.sche && '작업 예정일']);
+    const s4 = dS('생산', done ? 'done' : x.lateDue ? 'bad' : x.prodT > 0.5 ? 'cur' : 'todo', done ? '끝' : x.prodT > 0.5 ? '진행' : '전', `${n1(x.prodT || 0)}<small> / ${n1(ordT)}t</small>`, [!done && [`미생산 ${n1(rem)}t`, x.lateDue ? 'neg' : 'wn']]);
+    const fDone = ordT && (x.fwdT || 0) >= ordT - 0.5;
+    const s5 = dS('출하', fDone ? 'done' : (x.fwdT || 0) >= 0.5 ? 'cur' : 'todo', fDone ? '끝' : (x.fwdT || 0) >= 0.5 ? '일부' : '전', (x.fwdT || 0) >= 0.5 ? `${n1(x.fwdT)}t` : '-', [x.fwdLast && `마지막 ${md(x.fwdLast)}`]);
+    return `<div class="dx-v ${tone}">${V.map((v) => `<span class="${v[0]}">${esc(v[1])}</span>`).join('')}</div><div class="dx-top">${o1}${o2}</div>`
+      + `<section class="dx dx-fl"><h4>소재 → 생산 → 출하</h4><div class="dx-f">${s1}${s2c}${s3}${s4}${s5}</div>${x.note ? `<div class="dx-n">${esc(x.note)}</div>` : ''}</section>`;
   }
   const COLS2 = '<colgroup>' + [112, 236, null, 128, 72, 138, 146, 160, 170].map((w) => `<col${w ? ` style="width:${w}px"` : ''}>`).join('') + '</colgroup>';
   const HEAD2 = '<thead><tr><th>상태</th><th>계약번호-행</th><th title="품명 약호 · 상도 도료">품명 · 도료</th><th class="n">두께×폭</th><th class="n">주문 t</th><th title="지남 = 납기 경과">납기</th><th class="n" title="매치 t · 미생산 t(주문 − 생산)">매치 · 미생산</th><th class="n" title="작업 예정일">생산(예정)</th><th class="n" title="도료·PF·잉크·라미 입고 중 가장 늦은 날">가동 가능</th></tr></thead>';

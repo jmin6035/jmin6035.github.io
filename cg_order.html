@@ -199,13 +199,44 @@ html.v2 table.od2 .dd { margin-left: 6px; font-size: 14px; font-weight: 700; col
 html.v2 table.od2 .mu { color: var(--ink-2); }
 html.v2 .st2 { display: inline-block; font-size: 13.5px; font-weight: 700; line-height: 1.5; padding: 1px 8px; border-radius: 6px; background: var(--sub); color: var(--ink-2); }
 html.v2 .st2.w { background: var(--warn-bg); color: var(--warn); } html.v2 .st2.ok { background: var(--good-bg); color: var(--good); }
-html.v2 table.od2 tr.dt > td { white-space: normal; background: var(--surface-2); padding: 12px 16px 14px 24px !important; border-top: 0 !important; }
-html.v2 .dtg { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px 28px; margin: 0; }
-html.v2 .dtg > div { min-width: 0; } html.v2 .dtg dd { white-space: normal !important; }
-html.v2 .dtg dt { font-size: 13.5px; color: var(--ink-2); font-weight: 700; } html.v2 .dtg dd { margin: 2px 0 0; font-size: 14.5px; line-height: 1.5; word-break: keep-all; overflow-wrap: anywhere; }
-html.v2 .dtg .wide { grid-column: span 2; } html.v2 .dtg .phl { font-weight: 400; margin-left: 6px; }
-html.v2 .dtg .pbar { max-width: 360px; } html.v2 .dtg .rem { color: var(--warn); }
-@media (max-width: 700px) { html.v2 .dtg .wide { grid-column: auto; } html.v2 .og2 .og-h, html.v2 details.sg2 > summary { grid-template-columns: minmax(0, 1fr) 64px 112px; } html.v2 :is(.og-h, details.sg2 > summary) > :is(.c2, .c4, .c5, .c6) { display: none; } html.v2 details.sg2 .sn { white-space: normal; overflow-wrap: anywhere; } }
+/* 주문 상세(11/13 사용자 '구분이라도 좀 더 잘되게 · 정리 좀 잘해봐라'): 판정 한 줄 → ① 주문 | ② 납기·선적 → ③ 흐름(왼→오). 문제 단계만 색 */
+html.v2 table.od2 tr.dt > td { white-space: normal; background: var(--surface-2); padding: 14px 18px 16px !important; border-top: 0 !important; text-align: left; }
+html.v2 .dx-v { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 0 0 12px; padding: 9px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--ink-3); font-size: 16px; font-weight: 700; line-height: 1.45; }
+html.v2 .dx-v.bad { border-left-color: var(--bad); } html.v2 .dx-v.warn { border-left-color: var(--warn); } html.v2 .dx-v.ok { border-left-color: var(--good); }
+html.v2 .dx-v .bad { color: var(--bad); } html.v2 .dx-v .warn { color: var(--warn); } html.v2 .dx-v .ok { color: var(--ink); }
+html.v2 .dx-top { display: grid; grid-template-columns: minmax(0, 2.5fr) minmax(0, 1fr); gap: 12px; margin-bottom: 12px; }
+html.v2 .dx { min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 16px 14px; }
+html.v2 .dx > h4 { margin: 0 0 10px; padding-bottom: 7px; border-bottom: 1px solid var(--line); font-size: 15px; font-weight: 800; color: var(--ink); text-align: left; letter-spacing: 0; }
+html.v2 .dx-g { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 18px; }
+html.v2 .dx-g.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html.v2 .dx-i { min-width: 0; text-align: center; }
+html.v2 .dx-i > .k { font-size: 13.5px; font-weight: 700; color: var(--ink-2); margin-bottom: 3px; }
+html.v2 .dx-i > .v { font-size: 16px; font-weight: 700; line-height: 1.4; color: var(--ink); word-break: keep-all; overflow-wrap: anywhere; }
+html.v2 .dx-i > .v.big { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; }
+html.v2 .dx-i .s { font-size: 14px; font-weight: 400; color: var(--ink-2); margin-top: 1px; }
+html.v2 :is(.dx-i > .v.neg, .dx-i .s.neg) { color: var(--bad); } html.v2 .dx-i .s.neg { font-weight: 700; }
+html.v2 .dx-cs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+html.v2 .dx-c { display: inline-block; padding: 1px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); font-size: 15px; font-weight: 400; white-space: nowrap; }
+html.v2 .dx-f { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0 34px; }
+html.v2 .dx-s { position: relative; min-width: 0; text-align: center; border-top: 4px solid var(--line); padding-top: 8px; }
+html.v2 .dx-s + .dx-s::before { content: '→'; position: absolute; left: -27px; top: 26px; font-size: 20px; font-weight: 700; color: var(--ink-3); }
+html.v2 .dx-s .h { font-size: 15px; font-weight: 800; color: var(--ink); }
+html.v2 .dx-s .h .w { margin-left: 6px; padding: 0 7px; border-radius: 5px; font-size: 13.5px; font-weight: 700; background: var(--sub); color: var(--ink-2); }
+html.v2 .dx-s .v { margin: 5px 0 4px; font-size: 21px; font-weight: 800; line-height: 1.3; font-variant-numeric: tabular-nums; color: var(--ink); }
+html.v2 .dx-s .v small { font-size: 15px; font-weight: 700; color: var(--ink-2); }
+html.v2 .dx-s .l { font-size: 15px; line-height: 1.55; color: var(--ink); overflow-wrap: anywhere; }
+html.v2 .dx-s .l.neg { color: var(--bad); font-weight: 700; } html.v2 .dx-s .l.wn { color: var(--warn); font-weight: 700; }
+html.v2 .dx-s .l .sub, html.v2 .dx-s .l .pn { font-size: 14px; }
+html.v2 .dx-s.done { border-top-color: var(--ink-3); } html.v2 .dx-s.done .h .w { background: var(--good-bg); color: var(--good); }
+html.v2 .dx-s.cur { border-top-color: var(--brand); } html.v2 .dx-s.cur .h .w { background: var(--tint); color: var(--brand); }
+html.v2 .dx-s.warn { border-top-color: var(--warn); } html.v2 .dx-s.warn .h .w { background: var(--warn-bg); color: var(--warn); }
+html.v2 .dx-s.bad { border-top-color: var(--bad); } html.v2 .dx-s.bad .h .w { background: var(--bad-bg); color: var(--bad); } html.v2 .dx-s.bad .v { color: var(--bad); }
+html.v2 .dx-s.todo { border-top-style: dashed; } html.v2 .dx-s.todo .v { color: var(--ink-2); }
+html.v2 .dx-n { margin-top: 12px; font-size: 14px; color: var(--ink-2); text-align: center; }
+html.v2 .dx-s .pbar { max-width: 230px; margin: 4px auto 0; } html.v2 .dx-s .pbar.ph { margin-top: 2px; } html.v2 .dx-s .pbar.ph span { font-size: 13.5px; font-weight: 400; }
+@media (max-width: 1100px) { html.v2 .dx-top { grid-template-columns: minmax(0, 1fr); } html.v2 .dx-f { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; } html.v2 .dx-s + .dx-s::before { display: none; } }
+@media (max-width: 700px) { html.v2 .dx-g { grid-template-columns: repeat(2, minmax(0, 1fr)); } html.v2 table.od2 tr.dt > td { padding: 10px 8px !important; } }
+@media (max-width: 700px) { html.v2 .og2 .og-h, html.v2 details.sg2 > summary { grid-template-columns: minmax(0, 1fr) 64px 112px; } html.v2 :is(.og-h, details.sg2 > summary) > :is(.c2, .c4, .c5, .c6) { display: none; } html.v2 details.sg2 .sn { white-space: normal; overflow-wrap: anywhere; } }
 </style>
 </head>
 <body>
@@ -224,6 +255,6 @@ html.v2 .dtg .pbar { max-width: 360px; } html.v2 .dtg .rem { color: var(--warn);
 <script src="ui/shell.js?v=2611141500"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
 <script src="ui/spec_ko.js?v=2611120206"></script>
-<script src="cg_order.js?v=2611120206"></script>
+<script src="cg_order.js?v=2611131800"></script>
 </body>
 </html>

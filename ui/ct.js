@@ -91,7 +91,8 @@
       const first = pt.findIndex((v, i) => i < 5 && v >= 0.05);
       st = fill(first).map((v, i) => (i < 5 && pt[i] >= 0.05 ? 'cur' : v)); if (pt[5] >= 0.5) st[5] = 'in';
       cur = Object.entries(s).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([nm, t]) => `${nm} ${CT.n1(t)}t`).join(' · ');
-    } else if (x.runSt === 'done') { st = fill(5); st[4] = 'cur'; if (pt[5] >= 0.5) st[5] = 'in'; pre = '포스코 생산 끝 · 입고 전'; }
+    } else if ((x.entT || 0) >= 0.5) { st = fill(5); st[5] = 'in'; pre = '포스코 생산 끝 · 입고 중'; }   // 11/13: 입고가 시작됐는데 '포스코 접수 전'으로 나오던 것
+    else if (x.runSt === 'done') { st = fill(5); st[4] = 'cur'; if (pt[5] >= 0.5) st[5] = 'in'; pre = '포스코 생산 끝 · 입고 전'; }
     else if (x.runRow) { st = fill(1); st[0] = 'cur'; pre = '포스코 착수 전'; }
     else { st = fill(0); pre = x.purT ? '포스코 접수 전' : '미발주'; }
     return { pt, st, pre, cur };
