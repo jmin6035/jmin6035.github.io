@@ -52,3 +52,6 @@ table.pl-t td.mu2 { min-width: 0; }
 .pt.ok { border-top-color: #0ca30c; } .pt.bad { border-top-color: #d03b3b; } .pt.warn { border-top-color: #eda100; }
 .pt .k { font-size: 16px; color: var(--ink); } .pt .v { font-size: 30px; } .pt .s, .pt .gq { font-size: 14.5px; }
 .pm { text-align: center; } .pm .h { justify-content: center; gap: 8px; }
+/* 11/13 사용자: 펼친 목록 넓게 — 담당·목적지·소재 상황 칸, 화면 폭 다 씀 */
+.ps-et table { width: 100%; } .ps-et table td, .ps-et table th { font-size: 14.5px; padding: 6px 10px; text-align: center; }
+.ps-et table td.tl { white-space: normal !important; min-width: 140px; max-width: 330px; } .ps-et table td .bad { color: var(--bad, #c0392b); font-weight: 700; }
