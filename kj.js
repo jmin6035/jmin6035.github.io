@@ -285,8 +285,7 @@
     }
     bindTips(m);
     m.querySelectorAll('.kj-ms .bar i span').forEach((sp) => { if (sp.offsetWidth > sp.parentNode.clientWidth - 4) sp.style.visibility = 'hidden'; });
-    const cw = m.querySelector('.kj-calw'), cn = cw && cw.querySelector('th.now');   // 캘린더: 오늘 칸이 보이게
-    if (cn && cw.scrollWidth > cw.clientWidth) cw.scrollLeft = Math.max(0, cn.offsetLeft - cw.clientWidth / 2);
+    OPT.snap();                                                          // 캘린더: 오늘 틀·지난 날 덮개 자리 · 좁은 화면이면 오늘 칸이 보이게(ui/optable.js)
     if (!bound) { bound = true; let rt = null, w0 = innerWidth; addEventListener('resize', () => { if (innerWidth === w0) return; w0 = innerWidth; clearTimeout(rt); rt = setTimeout(draw, 250); }); }
   }
 
@@ -489,44 +488,45 @@
   /* ---------- 7. 일별 계획 캘린더: 라인 · 그룹 × 날짜 — 칸 위 계획, 아래 실적(지난 날) ---------- */
   // 일별 계획 캘린더 — 이번 달 = 줄마다 '계획' 행(위)·'실적' 행(아래)으로 칸을 나눔(11/12 사용자 '위에 계획 밑에 실적, 옆에 계획·실적') · 빨강 없음
   //  라인이 안 도는 날은 이어지는 날을 한 칸으로 묶어 가운데에 이름(휴지 = 노랑 · 수리 = 진회색), 계획·실적 두 행을 세로로 합침
+  // 11/13 사용자 '생긴 걸 똑같이(01 과)': 표 모양 = 01 일별 가동계획(ui/optable.js·css — 머리 2줄(날짜/요일)·왼쪽 두 칸 연두·라인 묶음 굵은 선·합계 줄·
+  //   정지 남색 합친 칸 '휴지 (N일)'·M/C·S/D 노랑·지난 날 덮개·오늘 틀·범례 아래·숫자 없는 칸 빈 칸). 줄 구성(계획·실적 두 줄)은 이 화면 그대로
   function calendar(cur, pls) {
     const S = A.S, m = mSel, { days, lineR, grpR, ev } = A.cal[m], nd = days.length;
-    const dow = (d) => new Date(d + 'T00:00:00Z').getUTCDay(), td = S.today, asOf = S.asOf;
+    const td = S.today, asOf = S.asOf;
     const nf = (v) => n0(Math.round(v)), done = (d) => cur && d <= asOf;   // 숫자 쉼표(01 가동표와 같게)
-    const cc = (d) => (d === td ? ' now' : '') + (dow(d) === 3 ? ' wst' : '') + (done(d) ? ' pst' : '');
-    const mcOf = (key, d) => { const e = ev[key + '|' + d]; return e && /^M\/C|재가동/.test(e) ? ' mc' : ''; };   // M/C·S/D 재가동 날 = 노랑(01 과 같게)
-    // 그 날 라인이 안 돌면 '휴' 또는 '수리'(정지 사유) — 그룹 행은 없음
+    const mcOf = (key, d) => { const e = ev[key + '|' + d]; return e && /^M\/C|재가동/.test(e) ? ' y' : ''; };   // M/C·S/D 재가동 날 = 노랑(01 과 같게)
+    // 그 날 라인이 안 돌면 '휴지' 또는 '수리'(정지 사유) — 그룹 행은 없음
     const offOf = (r, d, key, isGrp) => { if (isGrp) return null; const e = ev[key + '|' + d];
       const run = done(d) ? (r.a > 0.5 || r.p > 0.5 || r.p0 > 0.5) : r.p > 0.5; if (run) return null; return e && /수리|S\/D/.test(e) ? (/정기/.test(e) ? '정기수리' : '수리') : '휴지'; };
     const two = cur;   // 이번 달만 실적 행
-    const rowOf = (nm, R, key, cls = '', isGrp) => {
+    const rowOf = (nm, R, key, kind, isGrp) => {                         // kind = 'ln'(라인) · 'sum'(합계) · ''(그룹)
       const off = R.map((r, i) => offOf(r, days[i], key, isGrp)), P = [], Q = [];
       for (let i = 0; i < nd;) {
         if (off[i]) { let j = i; while (j + 1 < nd && off[j + 1] === off[i]) j++;
-          const lab = off[i], t = lab + (j > i ? ` (${j - i + 1}일)` : '');   // 01 가동표와 같은 이름 '휴지 (N일)' · 남색 칸
-          P.push(`<td colspan="${j - i + 1}" class="stp o1${dow(days[i]) === 3 ? ' wst' : ''}" title="${md(days[i])}~${md(days[j])} ${lab}">${t}</td>`);
-          if (two) Q.push(`<td colspan="${j - i + 1}" class="stp o2${dow(days[i]) === 3 ? ' wst' : ''}"></td>`); i = j + 1; continue; }
-        const r = R[i], d = days[i], pv = done(d) && r.p0 != null ? r.p0 : r.p;   // 지난 날 계획 행 = 월초 계획(실적 행과 겹치지 않게)
-        P.push(`<td class="${done(d) ? 'pp' : 'pl'}${cc(d)}${isGrp ? '' : mcOf(key, d)}"${isGrp || !mcOf(key, d) ? '' : ` title="${esc(ev[key + '|' + d])}"`}>${pv > 0.5 ? nf(pv) : '–'}</td>`);
-        if (two) Q.push(`<td class="aa${cc(d)}">${done(d) ? (r.a == null ? '–' : r.a > 0.5 ? nf(r.a) : '–') : ''}</td>`);
+          const lab = off[i], t = lab + (j > i ? ` (${j - i + 1}일)` : '');   // 01 가동표와 같은 이름 '휴지 (N일)' · 남색 합친 칸(계획 줄)
+          P.push(`<td colspan="${j - i + 1}" class="sp" title="${md(days[i])}~${md(days[j])} ${lab}"><span>${t}</span></td>`);
+          for (let x = i; x <= j; x++) Q.push('<td></td>'); i = j + 1; continue; }
+        const r = R[i], d = days[i], pv = done(d) && r.p0 != null ? r.p0 : r.p, mc = isGrp ? '' : mcOf(key, d);   // 지난 날 계획 행 = 월초 계획(실적 행과 겹치지 않게)
+        P.push(`<td class="${mc.trim()}"${mc ? ` title="${esc(ev[key + '|' + d])}"` : ''}>${pv > 0.5 ? nf(pv) : ''}</td>`);
+        if (two) Q.push(`<td>${done(d) && r.a != null && r.a > 0.5 ? nf(r.a) : ''}</td>`);
         i++;
       }
       const mp = sum(R, (r) => r.p) || 0, ca = sum(R, (r) => r.a) || 0;   // 계 = 월 계획(지금 판: 지난 날 실적 + 앞날 계획 — 매트릭스와 같은 값) · 실적 줄 계 = 실적
-      const nmC = `<th scope="row" class="lab${two ? ' l1' : ''}"><b>${esc(nm)}</b></th>`;
-      if (!two) return `<tr class="${cls}">${nmC}<th class="kd">계획</th>${P.join('')}<td class="pl sumc"><b>${n0(mp)}</b></td></tr>`;
-      return `<tr class="${cls} r1">${nmC}<th class="kd">계획</th>${P.join('')}<td class="pp sumc"><b>${n0(mp)}</b></td></tr>`
-        + `<tr class="${cls} r2"><th scope="row" class="lab l2"></th><th class="kd ka">실적</th>${Q.join('')}<td class="aa sumc"><b>${n0(ca)}</b></td></tr>`; };
+      const c0 = kind === 'sum' ? 'c0' : kind === 'ln' ? `c0 ${key && /CGL$/.test(key) ? 'lnG' : 'lnC'} le` : 'c0 le';
+      if (!two) return `<tr class="${kind === 'sum' ? 'sum' : 'le'}"><th scope="row" class="${c0}">${esc(nm)}</th><th class="c1">계획</th>${P.join('')}<td class="tot">${n0(mp)}</td></tr>`;
+      return `<tr class="${kind === 'sum' ? 'sum s1' : ''}"><th scope="row" class="${c0}" rowspan="2" title="${esc(nm)}">${esc(OPT.short(nm))}</th><th class="c1">계획</th>${P.join('')}<td class="tot">${n0(mp)}</td></tr>`
+        + `<tr class="${kind === 'sum' ? 'sum s2' : 'le'}"><th class="c1">실적</th>${Q.join('')}<td class="tot">${n0(ca)}</td></tr>`; };
     const sumR = (Rs) => days.map((d, i) => ({ p: sum(Rs, (R) => R[i].p), p0: done(d) ? sum(Rs, (R) => (R[i].p0 != null ? R[i].p0 : R[i].p)) : null, a: done(d) ? sum(Rs, (R) => R[i].a) : null }));
-    const sec = (t) => `<tr class="sec"><th colspan="${nd + 3}" scope="rowgroup"><span>${t}</span></th></tr>`;
+    const sec = (t) => `<tr class="sec"><th colspan="34" scope="rowgroup">${t}</th></tr>`;   // 34 = 왼쪽 2 + 31일 칸(짧은 달은 빈 칸) + 계
     let body = '';
     for (const p of pls) {
-      body += sec(`${PN[p]} · 라인`) + LINES[p].map((l) => rowOf(l, lineR[l], l)).join('') + rowOf(`${PN[p]} 합계`, sumR(LINES[p].map((l) => lineR[l])), '', 'tot');
+      body += sec(`${PN[p]} · 라인`) + LINES[p].map((l) => rowOf(l, lineR[l], l, 'ln')).join('') + rowOf(`${PN[p]} 합계`, sumR(LINES[p].map((l) => lineR[l])), '', 'sum');
       body += sec(`${PN[p]} · 그룹`) + GRP.filter((G) => G.pl === p).map((G) => rowOf(G.nm, grpR[G.k], G.k, '', true)).join('');
     }
-    const hd = `<tr><th class="lab" scope="col">구분</th><th class="kd" scope="col"></th>${days.map((d) => `<th scope="col" class="${dow(d) === 0 || dow(d) === 6 || HOL.has(d) ? 'we' : ''}${dow(d) === 3 ? ' wst' : ''}${d === td ? ' now' : ''}"><b>${+d.slice(8)}</b><span>${'일월화수목금토'[dow(d)]}</span></th>`).join('')}<th scope="col" class="sumc"><b>계</b><span>월 계획</span></th></tr>`;
-    const lg = `<div class="kj-lg in"><span><i class="mc"></i>M/C · S/D</span><span><i class="stp"></i>정지 · 휴지</span><span><i class="now"></i>오늘</span>${cur ? `<span>지난 날 계획 칸 = 월차(${md(String(S.planStartAt || '').slice(0, 10) || `${m}-01`)} 판)</span>` : ''}</div>`;
-    return `<h2 class="kj-h">일별 계획 캘린더 <small>${mLab(m)} · 톤</small></h2>${lg}`
-      + `<section class="kj-c kj-tb"><div class="ct-wrap kj-calw"><table class="kj-cal v2-grid${two ? ' kjpa' : ''}"><thead>${hd}</thead><tbody>${body}</tbody></table></div></section>`;
+    const ti = days.indexOf(td), np = cur ? days.filter((d) => d <= asOf).length : 0;
+    const lg = OPT.lg([['y', 'M/C · S/D'], ['sp', '정지 · 휴지'], np && ['pst', '지난 날'], ['sep'], ti >= 0 && ['tdy', '오늘'], cur && [null, `지난 날 계획 칸 = 월차(${md(String(S.planStartAt || '').slice(0, 10) || `${m}-01`)} 판)`]]);
+    return `<h2 class="kj-h">일별 계획 캘린더 <small>${mLab(m)} · 톤</small></h2>`
+      + `<section class="kj-cg">${OPT.wrap(OPT.pad31(OPT.head(days, td, '', '', ti) + `<tbody>${body}`, nd) + '</tbody>', np, ti, 'kjc')}${lg}</section>`;
   }
 
   /* ---------- 8. 조치할 사항 — 그 달 것만 · 숫자는 매트릭스와 같은 값 · '→ 할 일'까지 · 모두 펼침 ---------- */

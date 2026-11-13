@@ -319,15 +319,18 @@
     const G = groupsOf(A.filter((o) => past(o) || o.due <= CT.addD(w0, 13))), pls = plOrder();
     const sec = (d0, lab, first) => {
       const days = Array.from({ length: 7 }, (_, i) => CT.addD(d0, i)), d1 = days[6], inW = (o) => o.due >= d0 && o.due <= d1;
-      const hd = `<tr class="dc-h"><th class="l">${lab}</th><th class="dc-pc"${first ? ' title="오늘 전에 납기가 지났는데 생산이 남은 주문"' : ''}>${first ? '지난 납기' : ''}</th>${days.map((d) => { const w = new Date(d + 'T00:00:00Z').getUTCDay();
-        return `<th class="${d === asOf ? 'dc-td' : ''}${w === 0 || w === 6 ? ' dc-we' : ''}${d < asOf ? ' dc-ps' : ''}">${md(d)} <span>${DW[w]}</span>${d === asOf ? '<em>오늘</em>' : ''}</th>`; }).join('')}<th class="dc-sum">주 합계</th></tr>`;
-      const line = (X, key, nm, cls) => `<tr class="${cls || ''}"><td class="l nm">${nm}</td>${first ? cell(X.filter(past), `${key}~past~`, 'dc-pc') : '<td class="dc-c dc-pc"></td>'}${days.map((d) => cell(X.filter((o) => o.due === d), `${key}~${d}~${d}`, d === asOf ? 'dc-td' : '')).join('')}${cell(X.filter(inW), `${key}~${d0}~${d1}`, 'dc-sum')}</tr>`;
+      // 11/13 사용자 '생긴 걸 똑같이(01 과)': 머리 2줄(날짜 / 요일, 주말·공휴일 노랑·빨강) · 이름 칸 연두 · 회색 가는 선 · 계 줄 회색 바탕 · 오늘 남색 틀 · 지난 날 음영(ct_orders.html 서식)
+      const we = (d) => { const w = new Date(d + 'T00:00:00Z').getUTCDay(); return w === 0 || w === 6 || d === '2026-12-25' || d === '2027-01-01'; };
+      const hd = `<tr class="dc-h"><th class="l" rowspan="2">${lab}</th><th class="dc-pc" rowspan="2"${first ? ' title="오늘 전에 납기가 지났는데 생산이 남은 주문"' : ''}>${first ? '지난 납기' : ''}</th>${days.map((d) => `<th class="dn${d === asOf ? ' dc-td' : ''}${we(d) ? ' we' : ''}">${md(d)}</th>`).join('')}<th class="dc-sum" rowspan="2">주 합계</th></tr>`
+        + `<tr class="dc-h2">${days.map((d) => `<th class="dw${d === asOf ? ' dc-td' : ''}${we(d) ? ' we' : ''}">${DW[new Date(d + 'T00:00:00Z').getUTCDay()]}</th>`).join('')}</tr>`;
+      const line = (X, key, nm, cls) => `<tr class="${cls || ''}"><td class="l nm">${nm}</td>${first ? cell(X.filter(past), `${key}~past~`, 'dc-pc') : '<td class="dc-c dc-pc"></td>'}${days.map((d) => cell(X.filter((o) => o.due === d), `${key}~${d}~${d}`, d === asOf ? 'dc-td' : d < asOf ? 'dc-ps' : '')).join('')}${cell(X.filter(inW), `${key}~${d0}~${d1}`, 'dc-sum')}</tr>`;
       let body = '';
       for (const p of pls) { const gs = G.filter((g) => g.pl === p && g.X.some((o) => inW(o) || (first && past(o)))); if (!gs.length) continue;
         body += line(gs.flatMap((g) => g.X), 'P~' + p, `<b>${p === 'G' ? '도금' : '컬러'} 계</b>`, 'dc-pl') + gs.map((g) => line(g.X, 'G~' + g.k, esc(g.g))).join(''); }
       return hd + (body || '<tr><td class="l nm">납기 주문 없음</td><td colspan="9"></td></tr>');
     };
-    return `<div class="scroll"><table class="dc-t">${sec(wk[0], '이번 주', true)}${sec(wk[1], '다음 주', false)}</table></div>`;
+    return `<div class="scroll"><table class="dc-t">${sec(wk[0], '이번 주', true)}${sec(wk[1], '다음 주', false)}</table></div>`
+      + '<div class="gk-lg"><span><i class="pst"></i>지난 날</span><span><i class="we"></i>주말</span><span class="sep"></span><span><i class="tdy"></i>오늘</span><span><b class="dc-r">빨강</b>&nbsp;= 그중 납기 위험 톤</span></div>';
   }
   function weekKpi(A, nm, d0, d1, past) {
     const X = A.filter((o) => (past ? o.due < M.asOf : o.due >= d0 && o.due <= d1)), a = tot(X), pls = plOrder();

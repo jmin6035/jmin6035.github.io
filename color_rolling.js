@@ -44,26 +44,24 @@
   function renderTable(m) {
     const n = new Date(+m.slice(0, 4), +m.slice(5), 0).getDate(), ds = Array.from({ length: n }, (_, i) => `${m}-${String(i + 1).padStart(2, '0')}`);
     const today = R.asOf;
-    // 11/13 가동표 통일(01 엑셀 색감 — ui/theme.css 가동표 공통 서식): 주말·공휴일 머리 노랑/빨강 · 이름 칸 연두 · 롤링 생산 칸 컬러 가동 색 · 지난 날 음영 · 오늘 남색 틀 · 숫자 쉼표
-    const HOL = new Set(['2026-12-25', '2027-01-01']), red = (d) => /[토일]/.test(wd(d)) || HOL.has(d), xd = (d) => (d < today ? ' xpast' : '') + (d === today ? ' xtdy' : '');
-    let h = `<colgroup><col class="cc0"><col class="cc1">${ds.map(() => '<col>').join('')}<col class="ctot"></colgroup><thead><tr><th class="c0 xnm" rowspan="2">라인</th><th class="c1 xnm" rowspan="2">구분</th>`
-      + ds.map((d) => `<th class="${red(d) ? 'xwe' : ''}${d === today ? ' xtdy' : ''}">${+d.slice(8)}</th>`).join('') + '<th class="tot xtot" rowspan="2">계</th></tr><tr>'
-      + ds.map((d) => `<th class="wk${red(d) ? ' xwe' : ''}${d === today ? ' xtdy' : ''}">${wd(d)}</th>`).join('') + '</tr></thead><tbody>';
+    // 11/13 사용자 '생긴 걸 똑같이(01 과)': 01 일별 가동계획 표와 같은 모양(ui/optable.js·css — 머리 2줄·왼쪽 두 칸·라인 묶음 굵은 선·컬러 가동 색·지난 날 덮개·오늘 틀·범례 아래)
+    const ti = ds.indexOf(today);
+    let h = OPT.head(ds, today, '', '', ti) + '<tbody>';
     for (const l of LINES) {
       const C = {}; for (const c of R.cells[l] || []) if (c[0].startsWith(m)) { C[c[0]] = c.slice(); if (window.CSPLAN) C[c[0]][1] = window.CSPLAN(l, c[0]); }   // 월간 계획 = 가동 현황 표와 같은 자료
       const s0 = ds.reduce((s, d) => s + (C[d] && C[d][1] >= 0.5 ? Math.round(C[d][1]) : 0), 0), s1 = ds.reduce((s, d) => s + (C[d] && C[d][2] >= 0.5 ? Math.round(C[d][2]) : 0), 0);   // 계 = 보이는 칸(정수) 합
-      h += `<tr class="r-dep first"><th class="c0 line xnm xend" rowspan="2">${l}</th><th class="c1 xnm">월간 계획</th>`
-        + ds.map((d) => { const c = C[d]; return `<td class="${xd(d).trim()}">${c && c[1] >= 0.5 ? fmt(c[1]) : ''}</td>`; }).join('') + `<td class="tot xtot">${fmt(s0)}</td></tr>`;
-      h += `<tr class="r-fam xend"><th class="c1 xnm">롤링</th>` + ds.map((d) => {
-        const c = C[d]; if (!c) return `<td class="${xd(d).trim()}"></td>`;
+      h += `<tr class="r-dep"><th class="c0 lnC le" rowspan="2">${l}</th><th class="c1">월간 계획</th>`
+        + ds.map((d) => { const c = C[d]; return `<td>${c && c[1] >= 0.5 ? fmt(c[1]) : ''}</td>`; }).join('') + `<td class="tot">${fmt(s0)}</td></tr>`;
+      h += `<tr class="r-fam le"><th class="c1">롤링</th>` + ds.map((d) => {
+        const c = C[d]; if (!c) return '<td></td>';
         const [, o, v, k, fr, cf] = c, df = v - o;
-        const cls = [v >= 0.5 ? 'xC' : '', (k === 'c' || k === 'w') && cf >= 0.5 ? 'k-c' : '', k !== 'a' && k !== 's' && Math.abs(df) >= 30 ? (df > 0 ? 'up' : 'dn') : ''].filter(Boolean).join(' ') + xd(d);
+        const cls = [v >= 0.5 ? 'kC' : '', (k === 'c' || k === 'w') && cf >= 0.5 ? 'k-c' : '', k !== 'a' && k !== 's' && Math.abs(df) >= 30 ? (df > 0 ? 'up' : 'dn') : ''].filter(Boolean).join(' ');
         const tip = `${md(d)} ${l} · 월간 계획 ${fmt(o)}t → 롤링 ${fmt(v)}t` + (k === 'a' ? ' (실적)' : cf >= 0.5 ? ` (확정 작업지시 ${fmt(cf)}t${v - cf >= 0.5 ? ` + 계획 ${fmt(v - cf)}t` : ''})` : '') + (fr >= 60 ? ` · 빈 시간 ${(fr / 60).toFixed(1)}h` : '');
         return `<td class="${cls}" title="${esc(tip)}">${v >= 0.5 ? fmt(v) : ''}</td>`;
-      }).join('') + `<td class="tot xtot">${fmt(s1)}</td></tr>`;
+      }).join('') + `<td class="tot">${fmt(s1)}</td></tr>`;
     }
-    $('r-table').innerHTML = h + '</tbody>';
-    { const r0 = $('r-table').tHead && $('r-table').tHead.rows[0]; if (r0) $('r-table').style.setProperty('--h1', r0.getBoundingClientRect().height + 'px'); }
+    $('r-table').innerHTML = OPT.wrap(OPT.pad31(h, ds.length) + '</tbody>', ds.filter((d) => d < today).length, ti, 'r-table')
+      + OPT.lg([['kC', '롤링 생산'], ds.some((d) => d < today) && ['pst', '지난 날'], ['sep'], ti >= 0 && ['tdy', '오늘']]);
   }
 
   document.addEventListener('click', (ev) => { const b = ev.target.closest('#r-tabs button'); if (b) { mi = +b.dataset.m; render(); } });

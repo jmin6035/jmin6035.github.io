@@ -6,10 +6,11 @@
 <title>도금 가동 현황</title>
 <meta name="description" content="도금 1·2CGL 가동계획 조회 전용 대시보드">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="style.css?v=2611130307">
-<link rel="stylesheet" href="dashboard.css?v=2611130307">
-<link rel="stylesheet" href="ui/theme.css?v=2611130307">
-<link rel="stylesheet" href="ui/bridge.css?v=2611130307">
+<link rel="stylesheet" href="style.css?v=2611120206">
+<link rel="stylesheet" href="dashboard.css?v=2611120206">
+<link rel="stylesheet" href="ui/theme.css?v=2611132301">
+<link rel="stylesheet" href="ui/optable.css?v=2611140100">
+<link rel="stylesheet" href="ui/bridge.css?v=2611120206">
 <style>
 /* 기준일 라인 현황 카드 */
 .ln-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
@@ -36,6 +37,7 @@ html:root body main table.gtable.xl col.cc0 { width: 56px; } html:root body main
 html:root body main table.gtable.xl.xl.xl tr.r-hrs > td, html:root body main table.gtable.xl.xl.xl tr.r-stop > td { font-size: 13.5px !important; }
 html:root body main table.gtable.xl.xl.xl tr.r-dep > th.c1 { font-weight: 500 !important; }
 html:root body main table.gtable.xl.xl.xl tr.xsum > th { text-align: center !important; }
+html:root body main table.gk.gk tr.dp > th.c1 { font-weight: 500; }   /* 부서 줄 이름 = 보통 굵기(강종 줄과 구분) */
 </style>
 </head>
 <body class="dash">
@@ -66,9 +68,8 @@ html:root body main table.gtable.xl.xl.xl tr.xsum > th { text-align: center !imp
         <h2>월별 가동계획</h2>
         <div class="tabs" id="g-tabs"></div>
       </div>
-      <div class="glegend" id="g-legend"></div>
-      <div class="gtable-wrap"><table class="gtable xl" id="g-table"></table></div>
-      <p class="hint">숫자 단위: 톤. 강종 행 = 당일 생산 강종과 물량, 부서 행 = 당일 부서별 물량. 노란색 = 강종 전환(M/C)·정기수리 후 재가동, 회색 = 정기수리.</p>
+      <div id="g-table"></div>
+      <div class="gk-lg" id="g-legend"></div>
     </section>
 
     <div class="two">
@@ -112,13 +113,14 @@ html:root body main table.gtable.xl.xl.xl tr.xsum > th { text-align: center !imp
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <footer class="wrap foot">조회 전용.</footer>
 
-<script src="ui/shell.js?v=2611130307"></script>
-<script src="engine/params.js?v=2611130307"></script>
-<script src="engine/util.js?v=2611130307"></script>
-<script src="engine/replan.js?v=2611130307"></script>
-<script src="engine/report.js?v=2611130307"></script>
-<script src="engine/gantt.js?v=2611130307"></script>
-<script src="engine/crypto.js?v=2611130307"></script>
-<script src="dashboard.js?v=2611130307"></script>
+<script src="ui/shell.js?v=2611120206"></script>
+<script src="engine/params.js?v=2611120206"></script>
+<script src="engine/util.js?v=2611120206"></script>
+<script src="engine/replan.js?v=2611120206"></script>
+<script src="engine/report.js?v=2611120206"></script>
+<script src="engine/gantt.js?v=2611120206"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script src="ui/optable.js?v=2611140100"></script>
+<script src="dashboard.js?v=2611140100"></script>
 </body>
 </html>

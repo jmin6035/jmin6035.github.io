@@ -1,0 +1,70 @@
+/* ══ 가동표 공통 모양(11/13 사용자 '표양식 맞추라니까 … 생긴 걸 똑같이 맞추라고. 다른 캘린더 형식들도') ══
+   기준 = 01 일별 가동계획(gyehoek.html) 표 — 이 파일 하나가 원본. 01·월간 가동은 ui/optable.js 가 같은 함수로 표를 그리고,
+   다른 '라인(구분) × 날짜' 표(수주·수주 관제 캘린더, 가동 현황, 소재 캘린더, 다시 계산)는 같은 class 를 붙여 이 서식을 씀.
+   표 class="gk" · 왼쪽 두 칸 th.c0(라인)·th.c1(강종·구분) 연두 · 머리 2줄 th.dn(날짜)/th.dw(요일), 주말·공휴일 .we 노랑·빨강 · 계 th/td.tot
+   칸: td.kAZ/kAL/kMAC 강종 · td.kC 컬러 가동 · td.y M/C·S/D·청소(노랑·남색 글자) · td.sp 여러 날 정지(남색 합친 칸) · tr.hr 가동시간 · tr.sum 합계
+   라인 묶음 끝 tr.le(굵은 선) · 지난 날 = 표 위 덮개 .gk-past · 오늘 = 표 위 틀 .gk-tdy (OPT.snap 이 자리 맞춤) · 범례 .gk-lg = 표 아래 가운데 */
+.gk-wrap { overflow-x: auto; background: #fff; border: 1px solid #bfbfbf; position: relative; }
+.gk-tdy { position: absolute; top: 0; z-index: 4; pointer-events: none; box-shadow: inset 0 0 0 2px #1f3864 !important; }
+.gk-past { position: absolute; z-index: 3; pointer-events: none; background: rgba(0, 0, 0, .07) !important; }
+table.gk { width: 100%; min-width: 1560px; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; background: #fff; }
+table.gk col.c0 { width: 64px; } table.gk col.c1 { width: 80px; } table.gk col.tot { width: 96px; }
+html:root body main table.gk.gk :is(td, th) { height: 28px; padding: 0 1px !important; font-size: 14px !important; line-height: 1.15 !important; text-align: center !important; vertical-align: middle !important; letter-spacing: -0.2px; color: #000; background: #fff; border: 0; border-right: 1px solid #808080 !important; border-bottom: 1px solid #808080 !important; white-space: nowrap; overflow: hidden; position: relative; font-weight: 400; box-shadow: none; border-radius: 0; }
+html:root body main table.gk.gk thead :is(th, td) { height: 24px; font-weight: 700; position: sticky; z-index: 3; background: #fff !important; color: #000 !important; }
+html:root body main table.gk.gk thead :is(th.c0, th.c1) { z-index: 5; }
+html:root body main table.gk.gk thead :is(th, td).we { background: #ffff00 !important; color: #c00000 !important; font-weight: 800; }
+html:root body main table.gk.gk :is(th.c0, th.c1) { font-weight: 700; position: sticky; z-index: 2; background: #ebf1de !important; color: #000 !important; }
+html:root body main table.gk.gk th.c0 { left: 0; border-right: 2px solid #4a5561 !important; } html:root body main table.gk.gk th.c1 { left: 64px; }
+html:root body main table.gk.gk th.c0[rowspan] { white-space: normal !important; word-break: keep-all; }   /* 긴 이름은 두 줄 */
+html:root body main table.gk.gk :is(th.c0, th.c1) small { display: block; font-size: 13.5px !important; font-weight: 500; color: #000; }
+html:root body main table.gk.gk :is(th.tot, td.tot) { font-weight: 700; color: #000; border-left: 2px solid #4a5561 !important; }
+html:root body main table.gk.gk td.tot.red { color: var(--ink); font-weight: 700; }
+html:root body main table.gk.gk td.d { cursor: pointer; }
+html:root body main table.gk.gk td.d:hover { filter: brightness(.95); }
+/* 강종 · 컬러 가동 칸(지난 날도 같은 색 — 지난 날은 표 위 음영 덮개) */
+html:root body main table.gk.gk :is(td.kAZ, td.kAZ.a) { background: #fcd5b4 !important; color: #000 !important; }
+html:root body main table.gk.gk :is(td.kAL, td.kAL.a) { background: #95b3d7 !important; color: #000 !important; }
+html:root body main table.gk.gk :is(td.kMAC, td.kMAC.a) { background: #8064a2 !important; color: #fff !important; }
+html:root body main table.gk.gk :is(td.kC, td.kC.a) { background: #dce6f1 !important; color: #000 !important; }
+html:root body main table.gk.gk td.kX { background: #fff; }
+html:root body main table.gk.gk td.a { font-weight: inherit; }
+/* 31일 고정 빈 칸(가동시간 줄은 흰 칸 — 01 그대로) */
+html:root body main table.gk.gk :is(td, th).padc { background: var(--surface-2, #f5f7fa) !important; border: 0 !important; }
+/* M/C·S/D·청소 노랑 · 여러 날 정지 남색 합친 칸 · 가동시간 줄 · 합계 줄 */
+html:root body main table.gk.gk :is(td, th).y { background: #ffff00 !important; color: #1f3864 !important; font-weight: 800; cursor: pointer; }
+html:root body main table.gk.gk :is(td, th).sp { background: #1f3864 !important; color: #fff !important; font-weight: 800; cursor: pointer; text-align: center !important; }
+html:root body main table.gk.gk td.sp span { position: relative; z-index: 5; background: #1f3864; padding: 0 6px; }
+html:root body main table.gk.gk :is(tr.ev, tr.hr) > * { height: 24px; }
+html:root body main table.gk.gk tr.ev td.tot { color: #000; font-weight: 400; }
+html:root body main table.gk.gk tr.hr > * { font-size: 13.5px !important; background: #fff !important; color: #000 !important; font-weight: 500; }
+html:root body main table.gk.gk tr.hr > th.c1 { background: #ebf1de !important; }
+html:root body main table.gk.gk tr.sum > :is(td, th) { background: #f2f2f2 !important; color: #000 !important; font-weight: 800; border-top: 2px solid #4a5561 !important; border-bottom: 4px solid #1f2933 !important; }
+html:root body main table.gk.gk tr.sum td { letter-spacing: -0.6px; }
+/* 두 줄 합계(계획·실적 / 출하·재고): 두 줄이 한 묶음 — 위 굵은 선, 아래 이중 굵은 선 */
+html:root body main table.gk.gk tr.sum.s1 > :is(td, th):not([rowspan]) { border-bottom: 1px solid #808080 !important; }
+html:root body main table.gk.gk tr.sum.s2 > :is(td, th) { border-top: 0 !important; }
+html:root body main table.gk.gk tr.sum > th.c0[rowspan] { border-bottom: 4px solid #1f2933 !important; }
+/* 구분 띠(예: 도금 · 라인) — 라인 이름 칸과 같은 연두, 한 줄 */
+html:root body main table.gk.gk tr.sec > th { height: 24px; background: #ebf1de !important; color: #000 !important; font-weight: 800; border-top: 2px solid #4a5561 !important; position: static; }
+/* 라인 구분: 라인 묶음 끝 굵은 선 · 라인 이름 칸 크게 */
+html:root body main table.gk.gk tr.le > :is(td, th), html:root body main table.gk.gk th.c0:is(.lnG, .lnC, .le) { border-bottom: 2px solid #4a5561 !important; }
+html:root body main table.gk.gk th.c0:is(.lnG, .lnC) { font-size: 16px !important; font-weight: 800; }
+/* 앞 판 대비 바뀐 칸(오른쪽 위 세모) · 누른 칸 */
+table.gk td.chg::after { content: ''; position: absolute; top: 0; right: 0; border-top: 9px solid #000; border-left: 9px solid transparent; }
+html:root body main table.gk.gk tr > td.w5 { font-size: 13.5px !important; letter-spacing: -1.2px; font-weight: 600; }   /* 다섯 자리(10,000 넘는 값)도 한 칸에 */
+table.gk td.sel { outline: 3px solid #0070c0; outline-offset: -3px; }
+/* 범례: 표 아래 가운데, 칸 색과 같은 네모 */
+.gk-lg { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 18px; margin: 12px 2px 0; font-size: 15px; color: var(--ink-2); }
+.gk-lg span { white-space: nowrap; display: inline-flex; align-items: center; }
+.gk-lg i { display: inline-block; width: 18px; height: 14px; border-radius: 3px; margin-right: 6px; position: relative; box-shadow: inset 0 0 0 1px #bfbfbf; background: #fff; }
+.gk-lg i.kAZ { background: #fcd5b4; } .gk-lg i.kAL { background: #95b3d7; } .gk-lg i.kMAC { background: #8064a2; } .gk-lg i.kC { background: #dce6f1; }
+.gk-lg i.y { background: #ffff00; } .gk-lg i.sp { background: #1f3864; } .gk-lg i.hr { background: #fff; } .gk-lg i.we { background: #ffff00; }
+.gk-lg i.pst { background: rgba(0, 0, 0, .07); box-shadow: inset 0 0 0 1px #808080; }
+.gk-lg i.chg { background: #fff; } .gk-lg i.chg::after { content: ''; position: absolute; top: 0; right: 0; border-top: 8px solid #000; border-left: 8px solid transparent; }
+.gk-lg i.tdy { background: #fff !important; box-shadow: inset 0 0 0 2px #1f3864 !important; }
+.gk-lg .sep { width: 1px; height: 16px; background: var(--line); }
+.gk-lg b { font-weight: 800; color: var(--ink); }
+@media print {
+  .gk-tdy { display: none !important; }
+  table.gk th, table.gk td, .gk-lg i { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

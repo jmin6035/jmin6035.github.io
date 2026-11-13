@@ -6,10 +6,11 @@
 <title>컬러 가동 현황</title>
 <meta name="description" content="컬러 1~4CCL 가동계획 조회 — 도금 가동 현황과 같은 양식">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="style.css?v=2611130307">
-<link rel="stylesheet" href="dashboard.css?v=2611130307">
-<link rel="stylesheet" href="ui/theme.css?v=2611130307">
-<link rel="stylesheet" href="ui/bridge.css?v=2611130307">
+<link rel="stylesheet" href="style.css?v=2611120206">
+<link rel="stylesheet" href="dashboard.css?v=2611120206">
+<link rel="stylesheet" href="ui/theme.css?v=2611132301">
+<link rel="stylesheet" href="ui/optable.css?v=2611140100">
+<link rel="stylesheet" href="ui/bridge.css?v=2611120206">
 <style>/* 11/10 점검: 한 달(31일)이 한 화면에 — 26일에서 잘리던 것 */ html body main.wrap table.gtable { min-width: 1150px !important; width: 100%; } html body main.wrap .gtable th, html body main.wrap .gtable td { min-width: 0 !important; padding: 6px 1px; } .load-row .n.neg { color: var(--bad); font-weight: 800; }
 .gtable td.idle { background: color-mix(in srgb, var(--sd) 55%, transparent); } .gtable td[data-d] { cursor: pointer; } .gtable tr.r-fam td { font-weight: 800; }/* 기준일 라인 현황 카드 */
 .ln-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
@@ -64,6 +65,8 @@ html:root body main table.gtable.xl.xl.xl tr.r-hrs > td, html:root body main tab
 html:root body main table.gtable.xl.xl.xl tr.r-dep > th.c1 { font-weight: 500 !important; }
 html:root body main table.gtable.xl.xl.xl tr.xsum > th { text-align: center !important; }
 html:root body main table.r-table.xl.xl.xl td.k-c { font-weight: 800 !important; }
+html:root body main table.gk.gk tr.dp > th.c1 { font-weight: 500; }   /* 그룹 줄 이름 = 보통 굵기 */
+html:root body main table.gk.r-table td.k-c { font-weight: 800; } html:root body main table.gk.gk.r-table td.up.up.up { color: #1e7b3a !important; font-weight: 800; } html:root body main table.gk.gk.r-table td.dn.dn.dn { color: #c00000 !important; font-weight: 800; }
 html:root body main table.r-table.xl.xl.xl td.up { color: #1e7b3a !important; font-weight: 800 !important; } html:root body main table.r-table.xl.xl.xl td.dn { color: #c00000 !important; font-weight: 800 !important; }
 </style>
 </head>
@@ -96,7 +99,7 @@ html:root body main table.r-table.xl.xl.xl td.up { color: #1e7b3a !important; fo
         <div id="r-groups"></div>
         <div><h3 class="r-h3">알람</h3><ul class="r-alarms" id="r-alarms"></ul></div>
       </div>
-      <div class="gtable-wrap"><table class="gtable r-table xl" id="r-table"></table></div>
+      <div id="r-table"></div>
       <p class="hint" title="월 계획 = 3개월 통합 계획이 그 달 그룹에 잡은 양(TF 월 생산량). 남은 배치 = 내일부터 휴지 고정·휴지 집약 없이 다시 배치. 차이 ±5% 초과 시 알람">월간 계획 = 가동 현황 계획(고정) · 롤링 = 실적 + 확정 작업지시(굵은 숫자) + 남은 배치 · <b style="color:var(--good)">초록 글자</b>/<b style="color:var(--bad)">빨강 글자</b> = 월간 계획보다 30t 넘게 많음/적음</p>
     </section>
 
@@ -105,8 +108,8 @@ html:root body main table.r-table.xl.xl.xl td.up { color: #1e7b3a !important; fo
         <h2>월별 가동계획</h2>
         <div class="tabs" id="g-tabs"></div>
       </div>
-      <div class="glegend" id="g-legend"></div>
-      <div class="gtable-wrap"><table class="gtable xl" id="g-table"></table></div>
+      <div id="g-table"></div>
+      <div class="gk-lg" id="g-legend"></div>
       <p class="hint">숫자 단위: 톤. 라인 행 = 당일 라인 생산 합계, 그룹 행 = 당일 판매 그룹별 물량, 가동시간 = 작업 + 정지(색상교체·청소 등) 시간. 과거 일자 = MES 실적(사내 PC 가 매일 계획과 같은 그룹으로 분류 — 계획재·건재 주문재·건재수출·가전수출·가전내수·수요개발). 건재 주문재 = 판매계획의 '주문재'(컬러건재 국내 고객 주문 생산, 계획재 아님). 휴지(h) = 그날 휴지 시간, 칸 색 = 휴지 종류(범례, 여러 개면 가장 긴 것 — 마우스를 올리면 전부), 블록 = 종일 정지(종류·기간·시간), 옅은 회색 = 가동 없음. 칸 선택 시 당일 품목 표시.</p>
     </section>
 
@@ -146,9 +149,10 @@ html:root body main table.r-table.xl.xl.xl td.up { color: #1e7b3a !important; fo
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <footer class="wrap foot">조회 전용 · 원자료: 통합 가동계획(컬러 판매계획·계획재 운영안·MES 월차·실적)</footer>
 
-<script src="ui/shell.js?v=2611130307"></script>
-<script src="engine/crypto.js?v=2611130307"></script>
-<script src="color_status.js?v=2611130307"></script>
-<script src="color_rolling.js?v=2611130307"></script>
+<script src="ui/shell.js?v=2611120206"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script src="ui/optable.js?v=2611140100"></script>
+<script src="color_status.js?v=2611140100"></script>
+<script src="color_rolling.js?v=2611140100"></script>
 </body>
 </html>
