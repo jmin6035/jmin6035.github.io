@@ -337,15 +337,13 @@
   }
   const GACT = { 도금수출: '수출', 도금국내: '국내', 자동차내수: '자동차', 자동차수출: '자동차' };   // 실적 그룹 이름 → 칸 이름(앞날 칸과 같게)
   const top = (o, min) => Object.entries(o || {}).filter(([, v]) => v >= min).sort((a, b) => b[1] - a[1]);
-  function pastCell(a, ln, d) {                              // 지난 날 칸 = 앞날 칸과 같은 모양(강종 · 막대 = 완료 · 톤 · 그룹별) — 누르지 않음
-    const st = 'style="background:transparent;cursor:default;color:var(--ink)"';
-    if (!a) return `<button type="button" class="cell pcell" tabindex="-1" ${st} title="${mdw(d)} ${ln} 실적 자료 없음(다음 날 아침 들어옴)"><div class="tv">–</div></button>`;
+  function pastCell(a, ln, d) {                              // 지난 날 칸 = 앞날 칸과 같은 양식(강종 칩 + 톤 · 막대 = 실적 · 판매그룹 톤) — 누르지 않음
+    if (!a) return `<button type="button" class="cell sc pcell" tabindex="-1" title="${mdw(d)} ${ln} 실적 자료 없음(다음 날 아침 들어옴)"><div class="sc-r1"><span class="tv">–</span></div></button>`;
     const F = top(a.fam, 0.5), G = top(a.grp, 0.5);
-    return `<button type="button" class="cell pcell" tabindex="-1" ${st} title="${mdw(d)} ${ln} 생산 실적(MES, 더미 제외) ${n0(a.t)}t · ${F.map(([f, v]) => `${f} ${n0(v)}`).join(' · ')} · ${G.map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}">`
-      + `<div class="ct">${F.map(([f]) => famCh(f)).join('')}</div>`
-      + '<div class="bar"><i style="width:100%;background:var(--ink-2)"></i></div>'
-      + `<div class="tv">${n0(a.t)}<small>t 실적</small></div>`
-      + `<div class="gl">${G.map(([g, v]) => `<span>${esc(g)} ${n0(v)}</span>`).join('')}</div></button>`;
+    return `<button type="button" class="cell sc pcell" tabindex="-1" title="${mdw(d)} ${ln} 생산 실적(MES, 더미 제외) ${n0(a.t)}t · ${F.map(([f, v]) => `${f} ${n0(v)}`).join(' · ')} · ${G.map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}">`
+      + `<div class="sc-r1"><span class="sc-ch">${F.slice(0, 2).map(([f]) => famCh(f)).join('')}</span><span class="tv">${n0(a.t)}<small>t</small></span></div>`
+      + '<div class="sc-bar"><i class="sk0" style="width:100%"></i></div><div class="sc-h"><b>실적</b></div>'
+      + `<div class="gl">${G.slice(0, 3).map(([g, v]) => `<span>${esc(g)} ${n0(v)}</span>`).join('')}</div></button>`;
   }
   const famCh = (f) => (f ? `<span class="fam fam-${esc(String(f).split('-')[0].replace(/[^A-Z]/g, ''))}">${esc(f)}</span>` : '');
 
@@ -395,23 +393,38 @@
     return `<h4>도금 캘린더</h4><ul class="ps-ul"><li>하루 능력 = 재계획 하루 톤(속도 = 2026.1월~ 실적 하루 생산량) · 강종 = 최신 재계획</li><li>채우는 순서 = MES 작업지시 → 1010 순서안 → 필요 생산일 빠른 순(수출 출항 − 1일 · 내수 납기 − 1일)</li><li><b>작업지시</b> = MES 작업지시 확정(1030) — 현장에 내려간 코일(컬러 캘린더 '작업대기'와 같은 뜻) · <b>소재 있음</b> = 소재가 들어온 주문 · <b>입고 예정</b> = 소재 입고 예정 — 입고 다음 날부터 생산</li><li><b>넘침</b> = 칸 주문을 아래 t/hr 로 24시간 이어 돌릴 때 가동 가능 시간(24h × 제원치 가동률)을 넘는 양</li><li>주 = 생산주 수~화(작업 순서 화면과 같음) · 다음 주 확정 = 매주 수요일 오전 다음 생산주(수~화) 저장 → 다음 날부터 준수율</li><li>자료 ${esc(O.asOf)} · ${O.planT0 ? `재계획(실적 ~${md(O.planT0)})` : esc(O.planSrc || '')} · 계산 ${esc(O.built || '')}</li><li>시간당 생산량 = 같은 두께(0.1mm)·폭(100mm) 최근 2026년 실적</li></ul><div class="ps-spw">${tb}</div>`;
   }
 
+  /* 칸 한 양식(11/13 사용자 '도금이랑 컬러 양식 똑같이 · S/D·청소 같이 넣어 · 시간/뭐 생산하는지 구분'): 컬러 캘린더와 같은 구조
+     ① 강종 칩 + 그날 톤(크게) ② 시간 막대(하루 24h = 작업지시·소재 있음·입고 예정 · 노랑 = 정지(M/C 등) · 빗금 회색 = 오늘 지난 시간 · 흰 = 빈 시간) + '가동 / 가용 h' + 정지 칩
+     ③ 판매그룹 톤 ④ 경고. 시간 = 주문 톤 ÷ 실적 T/Hr ÷ 가동률(제원치 평균 손실) → 하루를 다 채우면 가동 = 가용 = 24h − 정지 */
+  const effOf = (c) => c.eff || 0.955;
+  const stopsOf = (c) => (c.stops || []).map(([k, h]) => [k === 'M/C' && c.event ? c.event : k, h]);
   function cell(c, ln) {
-    const cap = c.cap || 0, fill = c.conf + c.plan + c.fcst, base = Math.max(cap, fill) || 1;
-    const w = (v) => `${(100 * v / base).toFixed(1)}%`;
+    const cap = c.cap || 0, fill = c.conf + c.plan + c.fcst, e = effOf(c), dl = c.dayLeft != null ? c.dayLeft : 1;
+    const ST = stopsOf(c), stopH = ST.reduce((a, x) => a + x[1], 0), big = ST.some(([k]) => /M\/C|S\/D/.test(k));
+    if (cap < 1) return `<button type="button" class="cell sc stp" data-ln="${ln}" data-d="${c.d}" title="${ln} ${mdw(c.d)} ${esc(c.event || '정지')} — 하루 종일"><div class="sc-r1"><span class="sc-off">${esc(c.event || '정지')}</span></div><div class="sc-h">정지 24h</div></button>`;
+    const kh = { 확정: 0, 편성: 0, 예상: 0 };
+    c.items.forEach((i) => { kh[i.kind] += i.t / tphOf(ln, i) / e; });
+    const run = kh.확정 + kh.편성 + kh.예상, avail = (c.hAvail || 0) / e, past = Math.max(0, 24 * (1 - dl)), empty = avail - run;
+    const w = (v) => `${Math.max(0, 100 * v / 24).toFixed(2)}%`;
     const gs = Object.entries(c.grp || {}).filter(([, v]) => v >= 1).slice(0, 3).map(([g, v]) => `<span>${esc(g)} ${n0(v)}</span>`).join('');
-    const mc = /M\/C/.test(c.event || '');   // 11/13 가동표 통일: M/C = 노랑(남색 글자), 하루 종일 정지 = 남색(흰 글자) — 01 일별 가동계획과 같은 색
-    const tag = cap < 1 ? `<span class="ev ev-sp">${esc(c.event || '정지')}</span>` : c.event ? `<span class="ev${mc ? ' ev-mc' : ''}">${esc(c.event)}</span>` : '';   // 정지 칸은 사유(정기수리 등) 그대로
-    return `<button type="button" class="cell${mc ? ' mc' : ''}${cap < 1 ? ' sp' : ''}${c.flag ? ' fl' : ''}" data-ln="${ln}" data-d="${c.d}">`
-      + `<div class="ct">${cap < 1 ? '' : famCh(c.fam)}${tag}</div>`
-      + `<div class="bar" title="막대 = 하루 능력 ${n0(cap)}t · 초록 작업지시 ${n0(c.conf)} · 파랑 소재 있음 ${n0(c.plan)} · 빗금 입고 예정 ${n0(c.fcst)}${c.gap ? ` · 회색 빈칸 ${n0(c.gap)}` : ''}"><i class="c" style="width:${w(c.conf)}"></i><i class="p" style="width:${w(c.plan)}"></i><i class="f" style="width:${w(c.fcst)}"></i></div>`
-      + `<div class="tv" title="그날 생산 톤 = 작업지시 ${n0(c.conf)} + 소재 있음 ${n0(c.plan)} + 입고 예정 ${n0(c.fcst)} (능력 ${n0(cap)}t)">${n0(fill)}<small>t</small>${c.gap ? ` <small style="color:var(--bad);font-weight:800">빈칸 ${n0(c.gap)}</small>` : ''}</div>`
-      + `<div class="gl" title="판매그룹별 생산 톤(큰 순 3개)">${gs}</div>`
+    const tip = `${ln} ${mdw(c.d)} · 생산 ${n0(fill)}t(작업지시 ${n0(c.conf)} · 소재 있음 ${n0(c.plan)} · 입고 예정 ${n0(c.fcst)}) · 가동 ${n1(run)}h / 가용 ${n1(avail)}h${ST.length ? ` · 정지 ${ST.map(([k, h]) => `${k} ${n1(h)}h`).join(' · ')}` : ''}${past >= 0.05 ? ` · 오늘 지난 ${n1(past)}h` : ''} · 시간 = 톤 ÷ 실적 T/Hr(같은 두께·폭) ÷ 가동률 ${Math.round(e * 100)}%`;
+    return `<button type="button" class="cell sc${big ? ' mc' : ''}${c.flag ? ' fl' : ''}" data-ln="${ln}" data-d="${c.d}" title="${esc(tip)}">`
+      + `<div class="sc-r1"><span class="sc-ch">${famCh(c.fam)}</span><span class="tv">${n0(fill)}<small>t</small></span></div>`
+      + `<div class="sc-bar">${past >= 0.05 ? `<i class="spa" style="width:${w(past)}"></i>` : ''}${ST.map(([, h]) => `<i class="sst" style="width:${w(h * dl)}"></i>`).join('')}<i class="sk1" style="width:${w(kh.확정)}"></i><i class="sk2" style="width:${w(kh.편성)}"></i><i class="sk3" style="width:${w(kh.예상)}"></i></div>`
+      + `<div class="sc-h"><b>${n1(run)}</b> / ${n1(avail)}h${ST.map(([k, h]) => ` <span class="sc-st">${esc(k)} ${n1(h)}h</span>`).join('')}</div>`
+      + `<div class="gl">${gs}</div>`
       + (c.flag ? `<div class="fg">⚠ ${esc(c.flagS || c.flag)}</div>` : '')
+      + (empty >= 0.5 ? `<div class="sh" title="${esc(c.why || '넣을 주문·소재 없음')}">빈 시간 ${n1(empty)}h</div>` : '')
       + (c.late ? `<div class="lt" title="이 날 생산 시 출항일(수출) · 납기(내수) 미준수 주문 — 필요 생산일 = 출항 − 1일 · 납기 − 1일">${[c.lateE ? `출항일 초과 ${c.lateE}건` : '', c.late - c.lateE ? `납기 초과 ${c.late - c.lateE}건` : ''].filter(Boolean).join(' · ')}</div>` : '')
       + (c.mvIn || c.mvOut ? `<div class="mvc">이동${c.mvIn ? ` 전입 ${c.mvIn}` : ''}${c.mvOut ? ` 전출 ${c.mvOut}` : ''}</div>` : '')
       + '</button>';
   }
 
+  /* 범례 — 컬러 캘린더와 같은 모양·같은 색(칸 막대 색 그대로) */
+  const UI_LEG = (K, chip) => '<div class="lgx"><div class="lg2">' + K.map(([c, b, t]) => `<span><i class="${c}"></i><b>${b}</b>${t}</span>`).join('')
+    + '<span><i class="sst"></i><b>노랑 = 정지</b>M/C·S/D·청소 등 하루 안 몇 시간</span><span><i class="spa"></i><b>빗금 회색</b>오늘 이미 지난 시간</span><span><i class="sgap"></i><b>흰 칸 = 빈 시간</b>넣을 일 없음</span>'
+    + '<span><i style="background:#1f3864"></i><b>남색 칸 = 하루 종일 정지</b>정기수리·휴지</span><span><i style="background:#ffff00;box-shadow:inset 0 0 0 1px #808080"></i><b>노란 칸 = M/C·S/D 날</b></span><span><i class="sk0"></i><b>음영 칸 = 실적</b>지난 날 MES 생산</span><span><i style="background:var(--bad)"></i><b>빨간 줄 = 확인 필요</b></span></div>'
+    + `<p class="lgn"><b>칸</b> = ${chip} 칩 · <b>큰 숫자</b> = 그날 톤 · <b>막대·'가동 / 가용 h'</b> = 하루 24h 중 가동 시간(가용 = 24h − 정지) · <b>아래</b> = 판매그룹별 톤 · <b>주</b> = 수~화 생산주</p></div>`;
   const HOL = new Set(['2026-12-25', '2027-01-01']);   // 공휴일(머리 노랑·빨강 — 01 과 같게)
   function weekTable(w0, days, nw) {
     const lead = Math.round((dt(days[0]) - dt(w0)) / 864e5);   // 생산주(수~화) 앞쪽 지난 날 = 빈 칸
@@ -447,15 +460,7 @@
     const nw = nextWeek();
     const ex = O.expNeed && O.expNeed.due ? ` · 배선 없는 수출 ${O.expNeed.due}건은 납기 − 1일` : '';
     return `<section class="card"><h2>라인별 ~${END()} <small title="하루 능력 = 재계획 하루 톤(속도 = 2026.1월~ 실적 하루 생산량, 가동 현황·가동 캘린더·주문진도와 같은 값) · 강종 = 최신 재계획 · 채우는 순서 = 작업지시 → 1010 순서안 → 필요 생산일 빠른 순(수출 출항 − 1일 · 내수 납기 − 1일${ex})">칸을 누르면 그날 작업 순서</small></h2>`
-      + '<div class="lgx"><div class="lg2">'
-      + '<span><i style="background:var(--c-conf)"></i><b>초록 = 작업지시</b>MES 작업지시 확정 — 현장에 내려간 코일</span>'
-      + '<span><i style="background:var(--c-plan)"></i><b>파랑 = 소재 있음</b>소재가 들어와 계획에 넣은 주문</span>'
-      + '<span><i style="background:repeating-linear-gradient(135deg, var(--c-plan) 0 2px, var(--c-fcst) 2px 5px)"></i><b>빗금 = 입고 예정</b>소재 들어올 주문 — 입고 다음 날부터</span>'
-      + '<span><i style="background:var(--c-gap);box-shadow:inset 0 0 0 1px var(--line)"></i><b>회색 = 빈칸</b>채울 주문 없는 능력</span>'
-      + '<span><i style="background:#ffff00;box-shadow:inset 0 0 0 1px #bfbfbf"></i><b>노란 칸 = M/C</b>강종 교체일</span><span><i style="background:#1f3864"></i><b>남색 칸 = 정지</b>정기수리 등 하루 종일</span>'
-      + '<span><i style="background:var(--bad)"></i><b>빨간 줄 = 확인 필요</b>현장 강종 ≠ 재계획 · 재질 순서</span>'
-      + '<span><i style="background:#ededed;box-shadow:inset 0 0 0 1px #bfbfbf"></i><b>음영 칸 = 실적</b>지난 날 MES 생산</span></div>'
-      + '<p class="lgn"><b>칸 큰 숫자</b> = 그날 생산 톤(세 색 합) · <b>그 아래</b> = 판매그룹별 톤 · <b>라인 이름 아래</b> = 그 주 재계획 톤 · <b>주</b> = 수~화 생산주 · <b>머리 노랑</b> = 주말 · <b>남색 틀</b> = 오늘</p></div>'
+      + UI_LEG([['sk1', '작업지시', 'MES 작업지시 확정(1030) — 현장에 내려간 코일'], ['sk2', '소재 있음', '소재가 들어와 계획에 넣은 주문'], ['sk3', '입고 예정', '소재 들어올 주문 — 입고 다음 날부터']], '강종')
       + moveBar()
       + weeks().map(([w0, ds]) => `<div class="wk">${weekTable(w0, ds, nw)}</div>`).join('') + '</section>';
   }
