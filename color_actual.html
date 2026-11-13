@@ -31,6 +31,9 @@ td.pbar i { display: block; height: 100%; border-radius: 6px; transform-origin: 
 details.tv { margin-top: 12px; } details.tv summary { cursor: pointer; color: var(--brand-2); font-weight: 600; font-size: 15px; }
 .tipbox { position: fixed; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; font-size: 14.5px; line-height: 1.55; box-shadow: var(--shadow-up); z-index: 40; display: none; }
 @media (max-width: 1700px) { html body main #ca-stop table.t th, html body main #ca-stop table.t td { padding-left: 4px; padding-right: 4px; } html body main #ca-line table.t th, html body main #ca-line table.t td { padding-left: 7px; padding-right: 7px; } }   /* 휴지 구성 표 오른쪽 끝 잘림 */
+/* 11/13: 진도 = 실적 ÷ 월 계획 + 작은 글씨 월차 대비(04 수주 '생산 달성'과 같은 형식) · 막대 값 글자 흰 테(기준선과 겹침 방지) */
+td.pbar small.mvs { display: block; font-size: 13.5px; color: var(--ink-2); margin-top: 2px; } td.pbar small.mvs b.r-bad { color: var(--bad); } td.pbar small.mvs b.r-warn { color: var(--warn); } td.pbar small.mvs b.r-ok { color: var(--good); }
+.cv text.bv { paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
 </style>
 </head>
 <body data-plant="C">
@@ -50,6 +53,6 @@ details.tv { margin-top: 12px; } details.tv summary { cursor: pointer; color: va
 <div class="tipbox" id="ca-tip" role="tooltip"></div>
 <script src="ui/shell.js?v=2611120206"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
-<script src="actual.js?v=2611120206"></script>
+<script src="actual.js?v=2611132301"></script>
 </body>
 </html>

@@ -6,7 +6,7 @@
 <title>생산 일정</title>
 <meta name="description" content="도금·컬러 라인별 2주 생산 일정 — 이번 주 부하·넘침, 다음 주 확정, 라인 부하, 계획 변경">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611120206">
+<link rel="stylesheet" href="ui/theme.css?v=2611132301">
 <style>
 main.wrap { max-width: none; }
 .card .hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-right: 96px; }
@@ -215,6 +215,21 @@ table.cg thead th.wl small { font-size: 13.5px; font-weight: 600; }
 .sh { white-space: normal; word-break: keep-all; line-height: 1.35; } .sh small { display: block; font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
 
 /* 11/12 사용자: 이번 주 지난 날 = 실적(회색) */ table.cg th.pst, table.cg td.pst { background: var(--sub); color: var(--ink-2); } table.cg td.pst .pstv { font-size: 15px; } table.cg td.pst b { color: var(--ink); }
+/* 11/13 가동표 통일(01 일별 가동계획 엑셀 색감): 머리 흰색 · 주말·공휴일 노랑/빨강 · 라인 이름 칸 연두 · 강종 칩 AZ 살구 · AL 파랑 · MACOSTA 보라(흰 글자) · M/C 노랑(남색 글자) · 하루 종일 정지 남색(흰 글자) · 회색 선 · 지난 날 음영 · 오늘 남색 틀 · 하루 합 줄 #f2f2f2 */
+html:root body main table.cg.cg :is(th, td) { border-color: #808080 !important; }
+html:root body main table.cg.cg thead th { background: #fff !important; color: #000 !important; }
+html:root body main table.cg.cg thead th small:not(.tdy) { color: #000 !important; opacity: 1; }
+html:root body main table.cg.cg thead th.we { background: #ffff00 !important; color: #c00000 !important; } html:root body main table.cg.cg thead th.we small:not(.tdy) { color: #c00000 !important; }
+html:root body main table.cg.cg thead th.tdy { box-shadow: inset 2px 0 0 #1f3864, inset -2px 0 0 #1f3864, inset 0 2px 0 #1f3864 !important; }
+html:root body main table.cg.cg td.tdy { box-shadow: inset 2px 0 0 #1f3864, inset -2px 0 0 #1f3864 !important; } html:root body main table.cg.cg td.tdy > button.cell { box-shadow: none; }
+html:root body main table.cg.cg tbody th { background: #ebf1de !important; color: #000 !important; } html:root body main table.cg.cg tbody th small { color: #000 !important; }
+html:root body main table.cg.cg tr.dsum td { background: #f2f2f2 !important; color: #000; }
+html:root body main table.cg.cg td.pst, html:root body main table.cg.cg th.pst { background-image: linear-gradient(rgba(0, 0, 0, .07), rgba(0, 0, 0, .07)) !important; }
+html:root body main :is(.fam-AZ, .ps-i.fam-AZ) { background: #fcd5b4 !important; color: #000 !important; } html:root body main .fam-AL { background: #95b3d7 !important; color: #000 !important; } html:root body main .fam-MAC { background: #8064a2 !important; color: #fff !important; }
+html:root body main button.cell.mc { background: #ffff00 !important; }
+html:root body main .ev.ev-mc { background: #ffff00 !important; color: #1f3864 !important; box-shadow: inset 0 0 0 1px #1f3864; }
+html:root body main :is(button.cell.sp, button.cell.stp) { background: #1f3864 !important; color: #fff !important; }
+html:root body main :is(button.cell.sp, button.cell.stp) :is(*, .ev) { color: #fff !important; background-color: transparent !important; }
 </style>
 </head>
 <body>
@@ -239,8 +254,8 @@ table.cg thead th.wl small { font-size: 13.5px; font-weight: 600; }
 <script src="ui/shell.js?v=2611120206"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
 <script src="ui/ct.js?v=2611120206"></script>
-<script src="ct_plan.js?v=2611120206"></script>
-<script src="cg_calendar.js?v=2611120206"></script>
-<script src="cc_calendar.js?v=2611120206"></script>
+<script src="ct_plan.js?v=2611132301"></script>
+<script src="cg_calendar.js?v=2611132301"></script>
+<script src="cc_calendar.js?v=2611132301"></script>
 </body>
 </html>

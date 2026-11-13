@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="style.css?v=2611120206">
 <link rel="stylesheet" href="dashboard.css?v=2611120206">
-<link rel="stylesheet" href="ui/theme.css?v=2611120206">
+<link rel="stylesheet" href="ui/theme.css?v=2611132301">
 <link rel="stylesheet" href="ui/bridge.css?v=2611120206">
 <style>/* 11/10 점검: 한 달(31일)이 한 화면에 — 26일에서 잘리던 것 */ html body main.wrap table.gtable { min-width: 1150px !important; width: 100%; } html body main.wrap .gtable th, html body main.wrap .gtable td { min-width: 0 !important; padding: 6px 1px; } .load-row .n.neg { color: var(--bad); font-weight: 800; }
 .gtable td.idle { background: color-mix(in srgb, var(--sd) 55%, transparent); } .gtable td[data-d] { cursor: pointer; } .gtable tr.r-fam td { font-weight: 800; }/* 기준일 라인 현황 카드 */
@@ -57,6 +57,14 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 @media (max-width: 760px) { #r-sec .head-row { flex-wrap: wrap; } #r-sec h2 { flex-basis: 100%; flex-wrap: wrap; } #r-sec h2 small { display: block; flex-basis: 100%; margin-left: 0; white-space: normal; margin-top: 2px; } .rg-row { grid-template-columns: 1fr; row-gap: 4px; } .rg-t { align-items: flex-start; flex-direction: row; gap: 10px; } .rg-p { grid-row: auto; padding-left: 0; } }
 #d-load { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 28px; } #d-load > .hint { grid-column: 1 / -1; }   /* 월별 부하: 라인 4개 나란히 */
 .hbtn { padding: 0; }   /* 옛 style.css 의 button 안쪽 여백이 '?' 를 아래로 밀던 것 */
+/* 11/13 가동표 통일(01 엑셀 색감 — ui/theme.css 가동표 공통 서식) */
+html:root body main table.gtable.xl { min-width: 1400px !important; table-layout: fixed; width: 100%; }
+html:root body main table.gtable.xl col.cc0 { width: 56px; } html:root body main table.gtable.xl col.cc1 { width: 92px; } html:root body main table.gtable.xl col.ctot { width: 72px; }
+html:root body main table.gtable.xl.xl.xl tr.r-hrs > td, html:root body main table.gtable.xl.xl.xl tr.r-stop > td { font-size: 13.5px !important; }
+html:root body main table.gtable.xl.xl.xl tr.r-dep > th.c1 { font-weight: 500 !important; }
+html:root body main table.gtable.xl.xl.xl tr.xsum > th { text-align: center !important; }
+html:root body main table.r-table.xl.xl.xl td.k-c { font-weight: 800 !important; }
+html:root body main table.r-table.xl.xl.xl td.up { color: #1e7b3a !important; font-weight: 800 !important; } html:root body main table.r-table.xl.xl.xl td.dn { color: #c00000 !important; font-weight: 800 !important; }
 </style>
 </head>
 <body class="dash">
@@ -88,8 +96,8 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
         <div id="r-groups"></div>
         <div><h3 class="r-h3">알람</h3><ul class="r-alarms" id="r-alarms"></ul></div>
       </div>
-      <div class="gtable-wrap"><table class="gtable r-table" id="r-table"></table></div>
-      <p class="hint" title="월 계획 = 3개월 통합 계획이 그 달 그룹에 잡은 양(TF 월 생산량). 남은 배치 = 내일부터 휴지 고정·휴지 집약 없이 다시 배치. 차이 ±5% 초과 시 알람">월간 계획 = 가동 현황 계획(고정) · 롤링 = 실적 + 확정 작업지시(파란 칸) + 남은 배치 · 녹색/빨강 = 월간 계획보다 30t 넘게 많음/적음 · 굵은 테두리 날짜 = 확정 창</p>
+      <div class="gtable-wrap"><table class="gtable r-table xl" id="r-table"></table></div>
+      <p class="hint" title="월 계획 = 3개월 통합 계획이 그 달 그룹에 잡은 양(TF 월 생산량). 남은 배치 = 내일부터 휴지 고정·휴지 집약 없이 다시 배치. 차이 ±5% 초과 시 알람">월간 계획 = 가동 현황 계획(고정) · 롤링 = 실적 + 확정 작업지시(굵은 숫자) + 남은 배치 · <b style="color:var(--good)">초록 글자</b>/<b style="color:var(--bad)">빨강 글자</b> = 월간 계획보다 30t 넘게 많음/적음</p>
     </section>
 
     <section class="card">
@@ -98,7 +106,7 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
         <div class="tabs" id="g-tabs"></div>
       </div>
       <div class="glegend" id="g-legend"></div>
-      <div class="gtable-wrap"><table class="gtable" id="g-table"></table></div>
+      <div class="gtable-wrap"><table class="gtable xl" id="g-table"></table></div>
       <p class="hint">숫자 단위: 톤. 라인 행 = 당일 라인 생산 합계, 그룹 행 = 당일 판매 그룹별 물량, 가동시간 = 작업 + 정지(색상교체·청소 등) 시간. 과거 일자 = MES 실적(사내 PC 가 매일 계획과 같은 그룹으로 분류 — 계획재·건재 주문재·건재수출·가전수출·가전내수·수요개발). 건재 주문재 = 판매계획의 '주문재'(컬러건재 국내 고객 주문 생산, 계획재 아님). 휴지(h) = 그날 휴지 시간, 칸 색 = 휴지 종류(범례, 여러 개면 가장 긴 것 — 마우스를 올리면 전부), 블록 = 종일 정지(종류·기간·시간), 옅은 회색 = 가동 없음. 칸 선택 시 당일 품목 표시.</p>
     </section>
 
@@ -140,7 +148,7 @@ i.hatch { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(-
 
 <script src="ui/shell.js?v=2611120206"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
-<script src="color_status.js?v=2611120206"></script>
-<script src="color_rolling.js?v=2611120206"></script>
+<script src="color_status.js?v=2611132301"></script>
+<script src="color_rolling.js?v=2611132301"></script>
 </body>
 </html>

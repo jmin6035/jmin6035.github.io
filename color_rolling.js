@@ -28,11 +28,11 @@
       const seg = (v, cls, nm) => (v > 0.5 ? `<i class="${cls}" style="width:${w(v)}%" title="${nm} ${fmt(v)}t">${w(v) > 9 ? fmt(v) : ''}</i>` : '');
       const bad = Math.abs(x.diff) >= 10 && Math.abs(x.pct || 0) > 5;
       return `<div class="rg-row${x.g === '합계' ? ' rg-tot' : ''}"><div class="rg-n">${x.g === '합계' ? '' : `<i style="background:${GVAR[x.g]}"></i>`}<b>${esc(GL(x.g))}</b></div>
-        <div class="rg-bar">${seg(x.act, 'a', '실적')}${seg(x.conf, 'c', '확정 작업지시')}${seg(x.roll, 'p', '남은 배치')}<u style="left:${w(x.plan)}%" title="월 계획 ${fmt(x.plan)}t"></u></div>
+        <div class="rg-bar">${seg(x.act, 'a', '실적')}${seg(x.conf, 'c', '확정 작업지시')}${seg(x.roll, 'p', '남은 배치')}<u style="left:${w(x.plan)}%" title="월간 계획(고정) ${fmt(x.plan)}t"></u></div>
         <div class="rg-t"><b>${fmt(got)} / ${fmt(x.plan)}t</b><span class="st ${bad ? (x.diff < 0 ? 'bad' : 'warn') : 'good'}">${x.diff > 0 ? '+' : ''}${fmt(x.diff)}t${x.pct == null ? '' : ` · ${x.diff > 0 ? '+' : ''}${(+x.pct).toFixed(1)}%`}</span></div>
-        <div class="rg-p" title="진도 = 실적 ÷ 월 계획">${x.plan ? `진도 ${Math.round(x.act / x.plan * 100)}%` : ''}</div></div>`;
+        <div class="rg-p" title="진도 = 실적 ÷ 월간 계획(고정)">${x.plan ? `진도 ${Math.round(x.act / x.plan * 100)}%` : ''}</div></div>`;
     };
-    $('r-groups').innerHTML = `<div class="rg-leg"><span><i class="a"></i>실적</span><span><i class="c"></i>확정 작업지시</span><span><i class="p"></i>남은 배치</span><span><u></u>월 계획</span></div>`
+    $('r-groups').innerHTML = `<div class="rg-leg"><span><i class="a"></i>실적</span><span><i class="c"></i>확정 작업지시</span><span><i class="p"></i>남은 배치</span><span><u></u>월간 계획(고정)</span></div>`
       + G.map(bar).join('') + bar(tot);
     const A = R.alarms.filter((a) => a.ym === m);
     $('r-alarms').innerHTML = A.length ? A.map((a) => `<li><span class="st ${KIND[a.kind][1]}">${KIND[a.kind][0]}</span><b class="ra-k">${esc(a.g ? GL(a.g) : a.l)}</b><span class="ra-t">${esc(a.text)}${a.offset ? `<small> · ${esc(a.offset)}</small>` : ''}</span></li>`).join('')
@@ -40,24 +40,27 @@
     renderTable(m);
   }
 
+  window.CSROLL = () => { if (R) render(); };
   function renderTable(m) {
     const n = new Date(+m.slice(0, 4), +m.slice(5), 0).getDate(), ds = Array.from({ length: n }, (_, i) => `${m}-${String(i + 1).padStart(2, '0')}`);
-    const [w0, w1] = R.window, today = R.asOf;
-    let h = `<colgroup><col class="cc0"><col class="cc1">${ds.map(() => '<col>').join('')}<col class="ctot"></colgroup><thead><tr><th class="c0" rowspan="2">라인</th><th class="c1" rowspan="2">구분</th>`
-      + ds.map((d) => `<th class="${d === today ? 'today' : ''}${d >= w0 && d <= w1 ? ' win' : ''}">${+d.slice(8)}</th>`).join('') + '<th class="tot" rowspan="2">계</th></tr><tr>'
-      + ds.map((d) => { const w = wd(d); return `<th class="wk ${w === '토' ? 'sat' : w === '일' ? 'sun' : ''}">${w}</th>`; }).join('') + '</tr></thead><tbody>';
+    const today = R.asOf;
+    // 11/13 가동표 통일(01 엑셀 색감 — ui/theme.css 가동표 공통 서식): 주말·공휴일 머리 노랑/빨강 · 이름 칸 연두 · 롤링 생산 칸 컬러 가동 색 · 지난 날 음영 · 오늘 남색 틀 · 숫자 쉼표
+    const HOL = new Set(['2026-12-25', '2027-01-01']), red = (d) => /[토일]/.test(wd(d)) || HOL.has(d), xd = (d) => (d < today ? ' xpast' : '') + (d === today ? ' xtdy' : '');
+    let h = `<colgroup><col class="cc0"><col class="cc1">${ds.map(() => '<col>').join('')}<col class="ctot"></colgroup><thead><tr><th class="c0 xnm" rowspan="2">라인</th><th class="c1 xnm" rowspan="2">구분</th>`
+      + ds.map((d) => `<th class="${red(d) ? 'xwe' : ''}${d === today ? ' xtdy' : ''}">${+d.slice(8)}</th>`).join('') + '<th class="tot xtot" rowspan="2">계</th></tr><tr>'
+      + ds.map((d) => `<th class="wk${red(d) ? ' xwe' : ''}${d === today ? ' xtdy' : ''}">${wd(d)}</th>`).join('') + '</tr></thead><tbody>';
     for (const l of LINES) {
-      const C = {}; for (const c of R.cells[l] || []) if (c[0].startsWith(m)) C[c[0]] = c;
-      const s0 = ds.reduce((s, d) => s + (C[d] ? C[d][1] : 0), 0), s1 = ds.reduce((s, d) => s + (C[d] ? C[d][2] : 0), 0);
-      h += `<tr class="r-dep first"><th class="c0 line" rowspan="2">${l}</th><th class="c1">월간 계획</th>`
-        + ds.map((d) => { const c = C[d]; return `<td class="${c && c[3] === 's' ? 'idle' : ''}">${c && c[1] >= 0.5 ? c[1] : ''}</td>`; }).join('') + `<td class="tot">${fmt(s0)}</td></tr>`;
-      h += `<tr class="r-fam"><th class="c1">롤링</th>` + ds.map((d) => {
-        const c = C[d]; if (!c) return '<td></td>';
+      const C = {}; for (const c of R.cells[l] || []) if (c[0].startsWith(m)) { C[c[0]] = c.slice(); if (window.CSPLAN) C[c[0]][1] = window.CSPLAN(l, c[0]); }   // 월간 계획 = 가동 현황 표와 같은 자료
+      const s0 = ds.reduce((s, d) => s + (C[d] && C[d][1] >= 0.5 ? Math.round(C[d][1]) : 0), 0), s1 = ds.reduce((s, d) => s + (C[d] && C[d][2] >= 0.5 ? Math.round(C[d][2]) : 0), 0);   // 계 = 보이는 칸(정수) 합
+      h += `<tr class="r-dep first"><th class="c0 line xnm xend" rowspan="2">${l}</th><th class="c1 xnm">월간 계획</th>`
+        + ds.map((d) => { const c = C[d]; return `<td class="${xd(d).trim()}">${c && c[1] >= 0.5 ? fmt(c[1]) : ''}</td>`; }).join('') + `<td class="tot xtot">${fmt(s0)}</td></tr>`;
+      h += `<tr class="r-fam xend"><th class="c1 xnm">롤링</th>` + ds.map((d) => {
+        const c = C[d]; if (!c) return `<td class="${xd(d).trim()}"></td>`;
         const [, o, v, k, fr, cf] = c, df = v - o;
-        const cls = [k === 's' ? 'idle' : k === 'a' ? 'k-a' : (k === 'c' || k === 'w') && cf >= 0.5 ? 'k-c' : '', k !== 'a' && k !== 's' && Math.abs(df) >= 30 ? (df > 0 ? 'up' : 'dn') : '', d === today ? 'today' : ''].filter(Boolean).join(' ');
+        const cls = [v >= 0.5 ? 'xC' : '', (k === 'c' || k === 'w') && cf >= 0.5 ? 'k-c' : '', k !== 'a' && k !== 's' && Math.abs(df) >= 30 ? (df > 0 ? 'up' : 'dn') : ''].filter(Boolean).join(' ') + xd(d);
         const tip = `${md(d)} ${l} · 월간 계획 ${fmt(o)}t → 롤링 ${fmt(v)}t` + (k === 'a' ? ' (실적)' : cf >= 0.5 ? ` (확정 작업지시 ${fmt(cf)}t${v - cf >= 0.5 ? ` + 계획 ${fmt(v - cf)}t` : ''})` : '') + (fr >= 60 ? ` · 빈 시간 ${(fr / 60).toFixed(1)}h` : '');
-        return `<td class="${cls}" title="${esc(tip)}">${v >= 0.5 ? Math.round(v) : ''}</td>`;
-      }).join('') + `<td class="tot">${fmt(s1)}</td></tr>`;
+        return `<td class="${cls}" title="${esc(tip)}">${v >= 0.5 ? fmt(v) : ''}</td>`;
+      }).join('') + `<td class="tot xtot">${fmt(s1)}</td></tr>`;
     }
     $('r-table').innerHTML = h + '</tbody>';
     { const r0 = $('r-table').tHead && $('r-table').tHead.rows[0]; if (r0) $('r-table').style.setProperty('--h1', r0.getBoundingClientRect().height + 'px'); }
