@@ -12,7 +12,7 @@
   const toStock = () => { if (location.hash === '#stock') { location.replace('integrated.html'); return true; } return false; };
   if (toStock()) return;
   addEventListener('hashchange', toStock);
-  CT.boot(['portal.enc.json', 'plating_actual.enc.json', 'color_actual.enc.json', 'cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json'], draw);
+  CT.boot(['portal.enc.json', 'plating_actual.enc.json', 'color_actual.enc.json', 'cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'suju.enc.json'], draw);
 
   function draw(D) {
     const m = document.getElementById('ct-main'), v = CT.view('perf', VIEWS), X = ctx(D);
@@ -69,28 +69,36 @@
     const mPlan = Gs.reduce((a, g) => a + (g.prod.month || 0), 0), mAct = Gs.reduce((a, g) => a + (g.prod.actual || 0), 0);
     const carryOf = (g) => Math.max(0, (g.prod.month || 0) - (g.prod.actual || 0) - (g.prod.after || 0));
     const carry = Gs.reduce((a, g) => a + carryOf(g), 0);
+    // 11/13 사용자 결정: 월 계획 = 지금 계획의 이달 합계(지난 날 실적 + 앞날 계획) · 계획 대비 = 전일까지 월차(이달 첫 계획) 누계 — 6라인 같은 식(UI.prodMon, 통합 관제·수주 관제와 같은 값)
+    const SJ = X.D.suju, PM = SJ && SJ.daily ? UI.prodMon(SJ, lines.map((l) => l.line)) : null;
     const L = lines.map((l) => {
       const act = daily(l.pl).filter((r) => String(r.d).slice(0, 7) === mon && r.d <= l.asOfL).reduce((a, r) => a + (+r[l.line] || 0), 0);
-      const plan = l.pl === 'G' ? l.sched : null;
+      const pm = PM && PM.by[l.line], plan = pm ? pm.due0 : l.pl === 'G' ? l.sched : null;
+      if (pm) l = { ...l, srMonth: l.month, month: pm.mon };
       const c = {}; days(l.asOfL, CT.diff(l.asOfL, mon + '-01') + 1).forEach((d) => (stopsOn(l, d) || []).forEach((s) => { c[s[0]] = (c[s[0]] || 0) + s[1] / 60; }));
       return { ...l, act, plan, cause: Object.entries(c).filter(([, h]) => h >= 0.05).sort((a, b) => b[1] - a[1]) };
     });
     const Lp = L.filter((x) => x.plan != null), dPlan = Lp.reduce((a, x) => a + x.plan, 0), dAct = Lp.reduce((a, x) => a + x.act, 0);
     const Lc = L.filter((x) => x.plan == null);
-    const k = [
+    const k = PM ? [
+      { label: `${+mon.slice(5)}월 월 계획`, v: n0(PM.mon), unit: 't', tone: 'info', sub: `지금 계획의 이달 합계 · 그룹 월 계획(판매+목표−기초) ${n0(mPlan)}t` },
+      { label: '생산실적(누계)', v: n0(PM.act), unit: 't', tone: 'info', sub: `월 계획의 ${pc(PM.act, PM.mon)}% · MES ~${md(asOfG)}${asOfC && asOfC !== asOfG ? ` · 컬러 ~${md(asOfC)}` : ''}` },
+      { label: '월차 대비 차이', v: sgn(PM.act - PM.due0), unit: 't', tone: UI.rate(PM.pct0), sub: `~${md(SJ.asOf)} 월차 계획 ${n0(PM.due0)}t 대비 ${pc(PM.act, PM.due0)}%` },
+    ] : [
       { label: `${+mon.slice(5)}월 생산계획`, v: n0(mPlan), unit: 't', tone: 'info', sub: '그룹 월 계획 합(도금 TF · 컬러 월간 계획)' },   // 11/9: 값 = 확정(기준) 계획 월 물량(pages.py groups.prod.month) — '최신 가동계획' 아님
       { label: '생산실적(누계)', v: n0(mAct), unit: 't', tone: 'info', sub: `MES ~${md(asOfG)}${Lc.length && asOfC !== asOfG ? ` · 컬러 ~${md(asOfC)}` : ''}` },
       { label: '계획 대비 차이', v: Lp.length ? sgn(dAct - dPlan) : '-', unit: 't', tone: !Lp.length ? '' : dAct >= dPlan ? 'ok' : dAct >= dPlan * 0.95 ? 'warn' : 'bad', sub: Lp.length ? `일정 누계 대비 ${pc(dAct, dPlan)}%` : '라인 계획 없음' },
-      { label: '이월 예상', v: n0(carry), unit: 't', tone: carry >= 1 ? 'warn' : 'ok', sub: '월 계획 − 실적 − 남은 계획' },
     ];
-    const scope = `<p class="pp-scope"><b>계획 대비 산출 범위</b> ${Lp.length ? `도금 ${Lp.length}라인(${Lp.map((x) => x.line).join('·')}, 판매생산속보 일정 누계 ${n0(dPlan)}t)` : '도금 제외(범위 밖)'}`
+    k.push(
+      { label: '이월 예상', v: n0(carry), unit: 't', tone: carry >= 1 ? 'warn' : 'ok', sub: '그룹 월 계획 − 실적 − 남은 계획' });
+    const scope = PM ? `<p class="pp-scope"><b>계획 대비</b> 6라인 전일까지 월차(이달 첫 계획) 누계 ${n0(dPlan)}t · 월 계획 = 지금 계획의 이달 합계 · 판생속보 월차·일정 누계는 참고(라인 줄에 마우스)</p>` : `<p class="pp-scope"><b>계획 대비 산출 범위</b> ${Lp.length ? `도금 ${Lp.length}라인(${Lp.map((x) => x.line).join('·')}, 판매생산속보 일정 누계 ${n0(dPlan)}t)` : '도금 제외(범위 밖)'}`
       + `${Lc.length ? ` · 컬러 ${Lc.length}라인 제외 — 라인 계획 없어 판매그룹 편성 기준(월 계획·이월에만 포함)` : ''}</p>`;
     const row = (x) => { const d = x.plan != null ? x.act - x.plan : null, r = x.plan ? x.act / x.plan : null;
-      return `<tr class="ck" data-l="${esc(x.line)}"><td class="id">${esc(x.line)}<small>${x.pl === 'G' ? '도금' : '컬러'}${x.fam ? ` · ${esc(x.fam)}` : ''}</small></td>`
-        + `<td class="r">${x.pl === 'G' ? n0(x.month) : '<span class="sub">없음</span>'}</td><td class="r">${x.plan != null ? n0(x.plan) : '<span class="sub">없음</span>'}</td><td class="r"><b>${n0(x.act)}</b></td>`
+      return `<tr class="ck" data-l="${esc(x.line)}" title="판생속보 월차 ${n0(x.srMonth)}t · 일정 누계 ${n0(x.sched)}t(참고)"><td class="id">${esc(x.line)}<small>${x.pl === 'G' ? '도금' : '컬러'}${x.fam ? ` · ${esc(x.fam)}` : ''}</small></td>`
+        + `<td class="r">${x.pl === 'G' || PM ? n0(x.month) : '<span class="sub">없음</span>'}</td><td class="r">${x.plan != null ? n0(x.plan) : '<span class="sub">없음</span>'}</td><td class="r"><b>${n0(x.act)}</b></td>`
         + `<td class="r ${d == null ? '' : d >= 0 ? 'pos' : 'neg'}">${d == null ? '-' : sgn(d)}</td><td class="r">${r == null ? '-' : `<b class="${r >= 1 ? 'pos' : r >= 0.95 ? 'wrn' : 'neg'}">${Math.round(r * 100)}%</b>`}</td>`
         + `<td class="w">${x.cause.length ? x.cause.slice(0, 2).map(([c, h]) => `<span class="pp-c">${esc(c)} <b>${n1(h)}h</b></span>`).join('') : '<span class="sub">기록 없음</span>'}</td></tr>`; };
-    const tbl = t([th('라인'), th('월 계획', 1, '판매생산속보 라인 월 계획'), th('일정 누계', 1, '판매생산속보 오늘까지 일정'), th('실적 누계', 1), th('차이', 1), th('달성률', 1), th('휴지 상위(누계)')], L.map(row), 'pp-t');
+    const tbl = t([th('라인'), th('월 계획', 1, PM ? '지금 계획의 이달 합계(지난 날 실적 + 앞날 계획)' : '판매생산속보 라인 월 계획'), th(PM ? '월차 누계' : '일정 누계', 1, PM ? '전일까지 월차(이달 첫 계획) 합' : '판매생산속보 오늘까지 일정'), th('실적 누계', 1), th('차이', 1), th(PM ? '월차 대비' : '달성률', 1), th('휴지 상위(누계)')], L.map(row), 'pp-t');
     // 일별 추이(최근 14일): 도금 = 아침 계획 대비, 컬러 = 실적만
     const D14 = days(asOfG, 14), acc = {}; (GA.accHist || []).forEach((a) => { (acc[a[0]] = acc[a[0]] || {})[a[1]] = a[2]; });
     const sum = (pl, d) => lines.filter((l) => l.pl === pl).reduce((a, l) => { const v = X.prodOn(l, d); return v == null ? a : (a || 0) + v; }, null);
@@ -151,7 +159,8 @@
     const { P, mon } = X, SD = (P.shipDay && P.shipDay.g) || {};
     return ((P.sr && P.sr.ship) || []).filter((s) => SHIPK[s.name] && CT.inScope(SHIPK[s.name][0])).map((s) => {
       const k = SHIPK[s.name], mes = SD[k] ? Object.entries(SD[k]).filter(([d]) => d.slice(0, 7) === mon).reduce((x, [, v]) => x + v, 0) : null, g_ = (P.groups || []).find((x) => x.key === k), a = g_ && g_.ship ? g_.ship.actual : mes != null ? mes : s.actual;   // 11/10 점검(F8 출하 실적 = MES 영업매출 1300): 관제 칩·그룹 표와 같은 값(속보 4,885 vs 일별 합 5,203 이던 것)
-      return { ...s, key: k, pl: k[0], a, mes };
+      const due = g_ && g_.ship && g_.ship.due != null ? g_.ship.due : null;   // 11/13 점검: 오늘까지 기준 = 통합 관제·관제판과 같은 값(월 계획 × 그룹 출하 실적 패턴) — 속보 일정 누계(도금수출 13,740t 등)는 참고로만
+      return { ...s, key: k, pl: k[0], a, mes, srSched: s.sched, srAct: s.actual, sched: due != null ? due : s.sched };
     });
   }
   function ship(X) {
@@ -164,13 +173,13 @@
     const k = [
       { label: `${+mon.slice(5)}월 출하계획`, v: n0(mP), unit: 't', tone: 'info', sub: `판매생산속보 ${md(P.sr && P.sr.asOf)}` },
       { label: '출하 실적(누계)', v: n0(mA), unit: 't', tone: 'info', sub: `월 진도 ${pc(mA, mP)}%` },
-      { label: '일정 미달량', v: n0(short), unit: 't', tone: short >= 1 ? 'warn' : 'ok', sub: '그룹별 일정 누계 − 실적(미달만)' },
+      { label: '오늘까지 미달량', v: n0(short), unit: 't', tone: short >= 1 ? 'warn' : 'ok', sub: '그룹별 오늘까지 기준 − 실적(미달만) · 통합 관제와 같은 값' },
       { label: '미출하 주문', v: n0(late.length), unit: '건', tone: late.length ? 'bad' : 'ok', sub: `도금 · 납기 경과 ${n0(late.reduce((a, o) => a + o.unshipT, 0))}t · 출하 실적 없음 ${n0(unk.length)}건${stale.length ? ` · 장기 미종결 ${n0(stale.length)}건 제외` : ''}` },
     ];
     const row = (s) => { const d = s.a - s.sched;
-      return `<tr><td class="id">${esc(s.name)}</td><td class="r">${n0(s.month)}</td><td class="r">${n0(s.sched)}</td><td class="r"><b>${n0(s.a)}</b></td><td class="r ${d >= 0 ? 'pos' : 'neg'}">${sgn(d)}</td>`
+      return `<tr><td class="id">${esc(s.name)}</td><td class="r">${n0(s.month)}</td><td class="r" title="판매생산속보 일정 누계 ${n0(s.srSched)}t(참고)">${n0(s.sched)}</td><td class="r" title="MES 출하 실적 · 판매생산속보 실적 ${n0(s.srAct)}t(참고)"><b>${n0(s.a)}</b></td><td class="r ${d >= 0 ? 'pos' : 'neg'}">${sgn(d)}</td>`
         + `<td class="r">${pc(s.a, s.month)}%</td><td class="r">${s.sched ? `<b class="${{ ok: 'pos', warn: 'wrn', bad: 'neg' }[UI.rate(s.a / s.sched * 100)]}">${pc(s.a, s.sched)}%</b>` : '<span class="sub">일정 0</span>'}</td><td class="pp-bar"><i style="width:${Math.min(100, s.month ? s.a / s.month * 100 : 0).toFixed(1)}%"></i></td></tr>`; };
-    const tbl = t([th('판매그룹'), th('월 출하계획', 1), th('일정 누계', 1, '판매생산속보 오늘까지 출하 일정'), th('출하 실적', 1), th('일정 대비', 1), th('월간 진도율', 1, '실적 ÷ 월 계획'), th('일정 누계 달성률', 1, '실적 ÷ 일정 누계'), th('')], S.map(row));
+    const tbl = t([th('판매그룹'), th('월 출하계획', 1), th('오늘까지 기준', 1, '월 계획 × 그룹 월중 출하 실적 패턴 누계(통합 관제·관제판과 같은 값)'), th('출하 실적', 1, 'MES 출하 실적'), th('기준 대비', 1), th('월 진도', 1, '실적 ÷ 월 계획'), th('기준 대비 달성률', 1, '실적 ÷ 오늘까지 기준'), th('')], S.map(row));
     // 일별 출하(이번 달) — 일별 계획 자료 없음
     const SD = (P.shipDay && P.shipDay.g) || {}, ds = [...new Set(S.flatMap((s) => Object.keys(SD[s.key] || {})))].filter((d) => d.slice(0, 7) === mon).sort().reverse();
     const dr = ds.map((d) => `<tr><td class="id">${md(d)}</td>${S.map((s) => `<td class="r">${(SD[s.key] || {})[d] ? n0(SD[s.key][d]) : '<span class="sub">0</span>'}</td>`).join('')}<td class="r"><b>${n0(S.reduce((a, s) => a + ((SD[s.key] || {})[d] || 0), 0))}</b></td></tr>`);

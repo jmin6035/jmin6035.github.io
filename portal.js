@@ -29,7 +29,7 @@
       const cProd = prod.pct == null ? c1('ct_prod.html#perf', 'na', prod.note ? '계획 0' : '–', `실적 ${n0(prod.actual)}t`, prod.note || '')
         : c1('ct_prod.html#perf', prod.tone, `${Math.round(prod.pct * 100)}<small>%</small>`, `${n0(prod.fin)} / ${n0(prod.month)}t`, `월말 예상 = 실적 ${n0(prod.actual)} + 남은 계획 ${n0(prod.fin - prod.actual)} → ${n0(prod.fin)}t ÷ 월 계획 ${n0(prod.month)}t`);
       const cShip = !ship ? c1('ct_prod.html#ship', 'na', '–', '출하 없음')
-        : c1('ct_prod.html#ship', ship.tone, ship.pct == null ? '–' : `${Math.round(ship.pct * 100)}<small>%</small>`, `${n0(ship.actual)} / ${n0(ship.base)}t`, `오늘까지 나갔어야 할 양(월 ${n0(ship.month)}t × 출하 패턴) 대비 실적`);
+        : c1('ct_prod.html#ship', ship.tone, ship.month > 0 ? `${Math.round(ship.actual / ship.month * 100)}<small>%</small>` : `${n0(ship.actual)}<small>t</small>`, `${n0(ship.actual)} / ${n0(ship.month)}t · 기준 ${ship.pct == null ? '–' : Math.round(ship.pct * 100) + '%'}`, `큰 숫자 = 실적 ÷ 월 계획 ${n0(ship.month)}t · 색·기준 대비 = 오늘까지 나갔어야 할 양 ${n0(ship.base)}t(월 계획 × 출하 패턴) 대비`);   // 11/13: 다른 화면과 같은 형식(큰 숫자 = 월 대비, 작은 글씨 = 오늘까지 기준 대비)
       const sT = stock.target;
       const cStock = stock.end == null || !sT ? c1('integrated.html', stock.tone, esc(r.vals[2][0]), esc(r.vals[2][1]))
         : c1('integrated.html', stock.tone, `${n0(stock.end)}<small>t</small>`, `목표 ${n0(sT)}t`, `월말 예상 ${n0(stock.end)}t · 목표 ${n0(sT)}t · 오늘 ${stock.now != null ? n0(stock.now) : '–'}t`);
@@ -42,11 +42,11 @@
     const matLate = R.filter((r) => r.cells[3] === 'bad').length;
     const head = `<div class="bsum"><span class="bn bad"><i class="cdot bad"></i>조치 <b>${cnt('bad')}</b></span><span class="bn warn"><i class="cdot warn"></i>주의 <b>${cnt('warn')}</b></span><span class="bn ok"><i class="cdot ok"></i>정상 <b>${cnt('ok')}</b></span>`
       + `<span class="bk">납기 위험 <b class="neg">${n0(rT)}t</b> <small>미결 ${n0(oT)}t 중 ${PCT(rT, oT) || 0}%</small></span>`
-      + (sb ? `<span class="bk">출하 <b class="${UI.rate(sa / sb * 100)}">${Math.round(sa / sb * 100)}%</b> <small>${n0(sa)} / 기준 ${n0(sb)}t</small></span>` : '')
+      + (sb ? `<span class="bk">출하 기준 대비 <b class="${UI.rate(sa / sb * 100)}">${Math.round(sa / sb * 100)}%</b> <small>${n0(sa)} / 오늘까지 기준 ${n0(sb)}t</small></span>` : '')
       + (matLate ? `<a class="bk" href="matcal.html#mt-orders">소재 발주 마감 지남 <b class="neg">${matLate}개 그룹</b></a>` : '')
       + `<span class="bd">실적 ~${md(O.asOf)} · 납기 판정 ${RK ? md(RK.asOf) : '–'}</span></div>`;
     return head + `<div class="ct-wrap"><table class="bt"><colgroup><col class="c-g"><col class="c-d"><col class="c-w"><col class="c-p"><col class="c-s"><col class="c-k"></colgroup>`
-      + `<thead><tr><th>판매그룹</th><th title="지연 예상 + 납기 지남(납기 위험 화면과 같은 판정)">납기 위험</th><th>주요 원인</th><th title="월말 예상 생산 ÷ 월 계획">생산 달성 예상</th><th title="실적 ÷ 오늘까지 나갔어야 할 양">출하 진도</th><th title="월말 예상 재고 vs 목표">월말 재고</th></tr></thead>`
+      + `<thead><tr><th>판매그룹</th><th title="지연 예상 + 납기 지남(납기 위험 화면과 같은 판정)">납기 위험</th><th>주요 원인</th><th title="월말 예상 생산(실적 + 남은 계획) ÷ 그룹 월 계획(판매 + 목표 − 기초)">월말 생산 예상</th><th title="큰 숫자 = 실적 ÷ 월 계획 · 색·작은 글씨 = 오늘까지 기준 대비">출하 진도</th><th title="월말 예상 재고 vs 목표">월말 재고</th></tr></thead>`
       + `<tbody>${sec('G', '도금')}${sec('C', '컬러')}</tbody></table></div>`;
   }
 

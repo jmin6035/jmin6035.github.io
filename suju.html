@@ -261,6 +261,19 @@ html.v2 .sj-cal tr.wk td:not(.lab) { font-weight: 600; background: none !importa
 html.v2 .sj-cal tr.wk td.w2 { color: var(--brand-2); font-weight: 800; } html.v2 .sj-cal tr.wk td.w0 { color: var(--ink-3, var(--ink-2)); font-weight: 500; }
 html.v2 body main table.sj-cal .now { box-shadow: inset 0 0 0 2px var(--brand-2); } html.v2 .sj-cal thead th.now b { color: var(--brand-2); }
 html.v2 body main table.sj-cal .wst { border-left: 2px solid color-mix(in srgb, var(--ink) 35%, var(--surface)) !important; }
+/* 11/13: 일별 계획 캘린더 = 01 일별 가동계획 양식(날짜 머리 흰색 · 주말 노랑/빨강 · 라인 칸 연두 · 선 #808080 · 합계 #f2f2f2 · 지난 날 옅은 음영 · 오늘 남색 틀 · M/C 노랑 · 여러 날 정지 남색) + 머리 붙박이 겹침 고침 */
+html.v2 body main table.sj-cal thead { position: relative; z-index: 3; }
+html.v2 body main table.sj-cal th, html.v2 body main table.sj-cal td { border: 1px solid #808080; }
+html.v2 body main table.sj-cal thead th { background: #fff; color: #000; }
+html.v2 body main table.sj-cal thead th.lab { z-index: 4; background: #ebf1de; }
+html.v2 body main table.sj-cal tbody .lab { z-index: 2; background: #ebf1de; }
+html.v2 body main table.sj-cal thead th.we { background: #ffff00; } html.v2 .sj-cal thead th.we b, html.v2 .sj-cal thead th.we span { color: #c00000; font-weight: 800; }
+html.v2 body main table.sj-cal tr.tot td, html.v2 body main table.sj-cal tr.tot td.lab { background: #f2f2f2; font-weight: 800; }
+html.v2 body main table.sj-cal td.ps:not(.stp) { background-image: linear-gradient(rgba(0,0,0,.07), rgba(0,0,0,.07)); }
+html.v2 body main table.sj-cal .now, html.v2 body main table.sj-cal thead th.now { box-shadow: inset 0 0 0 2px #1f3864; } html.v2 .sj-cal thead th.now b { color: #1f3864; }
+html.v2 body main table.sj-cal td.mc { background: #ffff00; color: #1f3864; font-weight: 800; } html.v2 .sj-cal td.mc span, html.v2 .sj-cal td.mc b { color: #1f3864; display: block; }
+html.v2 body main table.sj-cal td.stp { background: #1f3864; color: #fff; font-weight: 700; white-space: nowrap; }
+html.v2 .sj-k { display: inline-block; padding: 0 6px; font-weight: 700; } html.v2 .sj-k.mc { background: #ffff00; color: #1f3864; } html.v2 .sj-k.stp { background: #1f3864; color: #fff; }
 </style>
 </head>
 <body>

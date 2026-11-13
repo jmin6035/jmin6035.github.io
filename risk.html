@@ -96,6 +96,10 @@ html.v2 .rk .rk2-dg table.v2t td:nth-child(2) { white-space: normal !important; 
 html.v2 .rk .rk2-dg table.v2t:not(:has(colgroup)) { table-layout: auto; }
 html.v2 .rk .rk2-h { font-size: 15px; font-weight: 700; margin: 4px 0 8px; }
 html.v2 .rk details.rk-more table.v2t { table-layout: auto; max-width: none; }
+/* 11/13 점검: 규칙 13 — 표 칸·머리글 모두 가운데, 판매그룹·납기월 표는 카드 폭 그대로(펼친 상세 줄만 왼쪽) */
+html.v2 body main.rk table th, html.v2 body main.rk table td, html.v2 body main.rk table.v2t :is(th, td).n, html.v2 body main.rk table.v2t :is(th, td).l, html.v2 body main.rk table.v2t :is(th, td) { text-align: center !important; }
+html.v2 body main.rk tr.rk2-sub > td, html.v2 body main.rk tr.rk-d > td { text-align: left !important; }
+html.v2 body main.rk table.v2t:not(.rk2-o) { max-width: none; }
 @media (max-width: 1500px) { html.v2 .rk .rk2-dg { grid-template-columns: 1fr; } }
 @media (max-width: 900px) { html.v2 .rk table.rk2-g { min-width: 900px; } html.v2 .rk table.rk2-m { min-width: 860px; } html.v2 .rk table.rk2-o { min-width: 600px; } }
 </style>

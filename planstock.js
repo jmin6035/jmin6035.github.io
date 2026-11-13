@@ -93,7 +93,7 @@
     const n = D.days.length;
     g += `<polyline class="ln" fill="none" stroke="var(--s1)" stroke-width="3" points="${D.stock.map((v, i) => `${x(i)},${y(v)}`).join(' ')}"/>`;
     if (D.future.length) g += `<polyline fill="none" stroke="var(--s1)" stroke-width="3" stroke-dasharray="4 6" opacity=".75" points="${[[n - 1, D.stock[n - 1]]].concat(D.future.map((f, j) => [n + j, f[1]])).map(([i, v]) => `${x(i)},${y(v)}`).join(' ')}"/>`;
-    xs.forEach((d, i) => { if (i % every === 0 && i < xs.length - 1) { const v = i >= n ? D.future[i - n][1] : D.stock[i]; g += `<text x="${x(i) + (i ? 0 : 4)}" y="${y(v) - 9}" text-anchor="${i ? 'middle' : 'start'}" style="font-size:12.5px;font-weight:700;fill:var(--ink-2);paint-order:stroke;stroke:var(--surface);stroke-width:3.5px">${n0(v)}</text>`; } });   // 날짜 눈금마다 값(11/2 사용자 '숫자 보이게')
+    xs.forEach((d, i) => { if (i % every === 0 && i < xs.length - 1) { const v = i >= n ? D.future[i - n][1] : D.stock[i]; g += `<text x="${x(i) + (i ? 0 : 4)}" y="${y(v) - 9}" text-anchor="${i ? 'middle' : 'start'}" style="font-size:13.5px;font-weight:700;fill:var(--ink-2);paint-order:stroke;stroke:var(--surface);stroke-width:3.5px">${n0(v)}</text>`; } });   // 날짜 눈금마다 값(11/2 사용자 '숫자 보이게')
     const lv = D.future.length ? D.future[D.future.length - 1][1] : D.stock[n - 1];
     g += `<text x="${x(xs.length - 1) + 8}" y="${y(lv) - 10}" class="lab">${D.future.length ? '월말 예상 ' : ''}${n0(lv)}</text>`;
     xs.forEach((d, i) => {

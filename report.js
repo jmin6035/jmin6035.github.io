@@ -193,7 +193,7 @@
         ${s.action ? `<div class="sum-a"><span>조치</span>${esc(s.action)}</div>` : ''}</div>`;
     });
     t += '</div>';
-    if (N.decisions && N.decisions.length) t += `<div class="decide2"><h3>결정이 필요한 사항 <small>${N.decisions.length}건</small></h3><div class="dc-grid">${N.decisions.map((x, i) => { const [hd, ...rest] = String(x).split(' — '); return `<div class="dc"><i>${i + 1}</i><div><b>${esc(hd)}</b>${rest.length ? `<p>${esc(rest.join(' — '))}</p>` : ''}</div></div>`; }).join('')}</div></div>`;
+    if (N.decisions && N.decisions.length) t += `<div class="decide2"><h3>결정이 필요한 사항 <small>${N.decisions.length}건 · 숫자 = ${asOfS} 기준(작성 ${UI.fmtDate(o.createdAt)})</small></h3><div class="dc-grid">${N.decisions.map((x, i) => { const [hd, ...rest] = String(x).split(' — '); return `<div class="dc"><i>${i + 1}</i><div><b>${esc(hd)}</b>${rest.length ? `<p>${esc(rest.join(' — '))}</p>` : ''}</div></div>`; }).join('')}</div></div>`;
     else if (N.headline) t += notes(N.headline);
     h += `<section class="card"><h2><span class="n">요약</span>${esc(o.title || w1)} <small>막대 세로선 = 100%(일정·목표) · 타일에 마우스를 올리면 판단 근거</small></h2>${t}</section>`;
 

@@ -117,7 +117,7 @@
     $('checks').innerHTML = m.checks.filter((c) => c.level !== 'info').concat(m.checks.filter((c) => c.level === 'info')).map((c) => `<li class="${c.level}">${{ error: '오류', warn: '경고', info: '정보' }[c.level]} · ${esc(c.msg)}</li>`).join('');
     const H = GP.horizon(P);
     $('check-summary').innerHTML = m.summary
-      ? `<p>판매계획 기준 <b>${esc(m.asOf || '-')}</b> · 계획 기간 <b>${H.D0} ~ ${H.D1}</b> · 계획 대상 <b>${GP.fmt(m.summary.demand)}t</b> (버킷 ${m.summary.nBuckets}개)${P.firstWindowPrevMonth ? ` · 첫 달 1~5일 선적분 ${GP.fmt(m.summary.sept)}t는 전월 생산 가정` : ''}. 경고 ${warns.length}건.</p>`
+      ? `<p>판매계획 파일 안 기준일 <b>${esc(m.asOf || '-')}</b>(파일 시트 머리 값) · 이 계산 기간 <b>${UI.fmtDate(H.D0)} ~ ${UI.fmtDate(H.D1)}</b>${(GP.horizon(GP.DEFAULT_PARAMS) || {}).D1 === H.D1 ? '(게시 계획의 1·2월 연장분은 이 계산에 없음)' : ''} · 계획 대상 <b>${GP.fmt(m.summary.demand)}t</b> (버킷 ${m.summary.nBuckets}개)${P.firstWindowPrevMonth ? ` · 첫 달 1~5일 선적분 ${GP.fmt(m.summary.sept)}t는 전월 생산 가정` : ''}. 경고 ${warns.length}건.</p>`
       : '<p class="muted">입력 오류부터 해결 필요.</p>';
     // 부서×월 수요표
     const t = {};

@@ -22,6 +22,7 @@
     wait: ['입고 대기', (x) => x.st === '입고 대기'],
     none: ['소재 없음', (x) => x.st === '소재 없음'],
     late: ['납기 경과', (x) => x.lateDue],
+    stale: ['종결 확인', (x) => x.stale],
     all: ['전체', () => true],
   };
   const BY = { cus: ['고객사', (x) => x.cus || (O.cusLoaded ? '고객사 미확인' : '고객사 — 다음 자동 실행부터')], man: ['담당자', (x) => x.man || '담당자 미확인'], route: ['소재 경로', (x) => x.route] };
@@ -110,7 +111,7 @@
       + it('참고', x.note ? esc(x.note) : '')
       + '</dl>';
   }
-  const COLS2 = '<colgroup>' + [112, 190, null, 106, 72, 138, 146, 160, 170].map((w) => `<col${w ? ` style="width:${w}px"` : ''}>`).join('') + '</colgroup>';
+  const COLS2 = '<colgroup>' + [112, 236, null, 128, 72, 138, 146, 160, 170].map((w) => `<col${w ? ` style="width:${w}px"` : ''}>`).join('') + '</colgroup>';
   const HEAD2 = '<thead><tr><th>상태</th><th>계약번호-행</th><th title="품명 약호 · 상도 도료">품명 · 도료</th><th class="n">두께×폭</th><th class="n">주문 t</th><th title="지남 = 납기 경과">납기</th><th class="n" title="매치 t · 미생산 t(주문 − 생산)">매치 · 미생산</th><th class="n" title="작업 예정일">생산(예정)</th><th class="n" title="도료·PF·잉크·라미 입고 중 가장 늦은 날">가동 가능</th></tr></thead>';
   const firstDue = (L) => L.filter((x) => x.st !== '매치 완료').map((x) => x.due).filter(Boolean).sort()[0];
   // 묶음 머리 한 줄(도금과 같은 칸): 이름 | 건 | 미생산 | 소재 없음 | 미매치 | 납기 경과 | 가장 이른 납기(미매치)
@@ -154,7 +155,7 @@
       + `<div class="og-b">${subs.map(([k, v], i) => sub(k, v, i)).join('')}</div></section>`;
   }
   /* 첫 화면 결론(11/11): 조치가 필요한 묶음(건·미생산 t)을 크게 → 누르면 아래 목록이 그 묶음만 · 이번 주(수~화) 납기 한 줄 */
-  const TOP = ['none', 'late', 'wait', 'stock', 'act'], TIP = { none: '규격 재고·발주·자가재 모두 없음 — 소재 발주 필요', late: '납기일 지남 · 생산 남음', wait: '소재 발주·자가재 입고 대기', stock: '규격 맞는 재고 있음 — 매치만 하면 됨', act: '소재 없음 + 도료·소재 준비가 납기 이후 + 납기 경과 미매치' };
+  const TOP = ['none', 'late', 'wait', 'stock', 'act'], TIP = { none: '규격 재고·발주·자가재 모두 없음 — 소재 발주 필요', late: '납기일 지남 · 생산 남음(60일 넘게 지난 미종결은 종결 확인으로 따로)', wait: '소재 발주·자가재 입고 대기', stock: '규격 맞는 재고 있음 — 매치만 하면 됨', act: '소재 없음 + 도료·소재 준비가 납기 이후 + 납기 경과 미매치' };
   const wed = (s) => { const d = new Date(s + 'T00:00:00Z'); return new Date(d.getTime() - ((d.getUTCDay() + 4) % 7) * 864e5).toISOString().slice(0, 10); };
   const addD = (s, n) => new Date(Date.parse(s + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10);
   function topCard(R) {
@@ -229,7 +230,10 @@
   async function unlock(pw) {
     const env = await envReady;
     if (!env) { $('od-msg').textContent = '게시된 자료가 없습니다.'; return; }
-    try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
+    try { O = await GP.decryptJSON(env, pw);
+      // 11/13 점검: 납기 60일 넘게 지난 미종결 = '종결 확인'(주문진도(전체)·납기 위험과 같은 기준, ui/ct.js STALE) — 납기 경과에서 뺌
+      { const td = window.UI && UI.today ? UI.today(O.asOf) : O.asOf; for (const x of O.rows || []) if (x.lateDue && x.due && (Date.parse(String(x.due).slice(0, 10)) - Date.parse(String(td).slice(0, 10))) / 864e5 < -60) { x.stale = true; x.lateDue = false; } }
+      try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
     catch (e) { $('od-form').hidden = false; $('od-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
     render();
   }

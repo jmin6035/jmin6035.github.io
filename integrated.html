@@ -83,7 +83,7 @@ table.rules td.wrap, table.sum td.wrap { white-space: normal; }
 .st-chart .st-n { font-size: 20px; font-weight: 800; letter-spacing: -.02em; color: var(--ink); margin-right: 4px; } .st-chart .st-w { margin: 2px 0 8px; }
 /* 11/11 소재·재고 개편: 결론(제품 재고 목표 대비 · 그룹 상태 · 계획재) — 예전 '제품 재고' 화면 합침 */
 .iv-top { margin: 4px 0 18px; }
-table.t.iv-t { width: 100%; } html body table.t.iv-t :is(td, th).l { text-align: left !important; } html body table.t.iv-t :is(td, th):not(.l) { text-align: right !important; } table.t.iv-t td, table.t.iv-t th { padding: 8px 12px; } html body table.t.iv-t td.wrap { white-space: normal !important; }
+table.t.iv-t { width: 100%; } html body table.t.iv-t :is(td, th) { text-align: center !important; }   /* 11/13: 규칙 13 가운데 */ table.t.iv-t td, table.t.iv-t th { padding: 8px 12px; } html body table.t.iv-t td.wrap { white-space: normal !important; }
 .iv-over { color: var(--warn); } .iv-ok { color: var(--good); }
 .iv-why { display: inline-block; margin-right: 12px; white-space: nowrap; font-size: 14px; }
 .iv-at { font-size: 13.5px; color: var(--ink-2); margin: 6px 0 10px; }
@@ -95,6 +95,7 @@ table.t.iv-t { width: 100%; } html body table.t.iv-t :is(td, th).l { text-align:
 .iv-ul { margin: 4px 0 10px; padding-left: 20px; font-size: 13.5px; line-height: 1.7; color: var(--ink-2); }
 .iv-rule h2 { font-size: 15px; margin: 16px 0 6px; } .iv-rule h2 .n { display: none; }
 #g-main > details.fold { margin-top: 16px; }
+html.v2 body main table.ref-t :is(td, th) { text-align: center !important; }
 </style>
 </head>
 <body>
