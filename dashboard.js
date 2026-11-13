@@ -313,6 +313,8 @@
   function renderDept() {
     const H = A.H, t = {}, dem = {};
     for (const [d, l, a, c, x] of R.rows) { const k = `${c}|${A.mIdx(d)}`; t[k] = (t[k] || 0) + x; }
+    const dl = {}; for (const [d, l, , , x] of R.rows) dl[`${d}|${l}`] = (dl[`${d}|${l}`] || 0) + x;   // 11/13: 합계 = 날·라인 칸을 정수로 반올림한 뒤 더함(01 일별 가동계획 계·홈과 같은 값)
+    const mTot = {}; for (const [k, v] of Object.entries(dl)) { const i = A.mIdx(k.slice(0, 10)); mTot[i] = (mTot[i] || 0) + Math.round(v); }
     const sept = {};
     for (const it of R.items) dem[it.cls] = (dem[it.cls] || 0) + it.tons;
     for (const it of R.sept) sept[it.cls] = (sept[it.cls] || 0) + it.tons;
@@ -320,7 +322,7 @@
     const cell = (v) => `<td class="n bar-cell"><i style="width:${(v / mx) * 100}%"></i><span>${GP.fmt(v)}</span></td>`;
     $('d-dept').innerHTML = `<tr><th>부서</th>${H.ym.map(([, m]) => `<th>${m}월</th>`).join('')}<th>분기 생산</th><th>전월 생산 가정</th><th>요구량(파일)</th></tr>` +
       GP.DEPTS.map((dp) => { const v = H.ym.map((_, i) => t[`${dp}|${i}`] || 0); return `<tr><td>${dp}</td>${v.map(cell).join('')}<td class="n"><b>${GP.fmt(GP.sum(v))}</b></td><td class="n">${GP.fmt(sept[dp] || 0)}</td><td class="n">${GP.fmt(dem[dp] || 0)}</td></tr>`; }).join('') +
-      `<tr><td><b>합계</b></td>${H.ym.map((_, i) => `<td class="n"><b>${GP.fmt(GP.sum(GP.DEPTS, (dp) => t[`${dp}|${i}`] || 0))}</b></td>`).join('')}<td class="n"><b>${GP.fmt(A.prod)}</b></td><td class="n">${GP.fmt(GP.sum(R.sept, (i) => i.tons))}</td><td class="n">${GP.fmt(GP.sum(R.items, (i) => i.tons))}</td></tr>`;
+      `<tr><td><b>합계</b></td>${H.ym.map((_, i) => `<td class="n"><b>${GP.fmt(mTot[i] || 0)}</b></td>`).join('')}<td class="n"><b>${GP.fmt(A.prod)}</b></td><td class="n">${GP.fmt(GP.sum(R.sept, (i) => i.tons))}</td><td class="n">${GP.fmt(GP.sum(R.items, (i) => i.tons))}</td></tr>`;
   }
   function renderEarly() {
     const er = GP.earlyReasons(R, A);
