@@ -5,7 +5,7 @@
   const { esc, n0, n1, md } = CT;
   const VIEWS = ['ops', 'cause'];
   let bound = false;
-  CT.boot(['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'portal.enc.json', 'plating_actual.enc.json', 'color_actual.enc.json', 'mat_order.enc.json', 'latest.plan.enc.json', 'integrated.enc.json'], draw);
+  CT.boot(['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'portal.enc.json', 'plating_actual.enc.json', 'color_actual.enc.json', 'mat_order.enc.json', 'latest.plan.enc.json', 'integrated.enc.json', 'suju.enc.json'], draw);
   const pc = (a, b) => (b ? Math.round(a / b * 100) : null);
   const tone = (p, g = 95, w = 85) => (p == null ? '' : p >= g ? 'pos' : p >= w ? 'wrn' : 'neg');
   const card = (title, sub, body) => `<section class="card pf-c"><h2>${esc(title)} <small>${esc(sub)}</small></h2>${body}</section>`;
@@ -72,6 +72,7 @@
         if (!CT.inScope(pl)) continue;
         let plan, act, how;
         if (m < cm2) { plan = mSum(m, pl); act = actM(pl === 'G' ? GA : CA, m); how = '기준 계획 월 생산'; }
+        else if (D.suju && D.suju.daily) { const pmx = UI.prodMon(D.suju, pl === 'G' ? ['1CGL', '2CGL'] : ['1CCL', '2CCL', '3CCL', '4CCL']); plan = pmx.due0; act = pmx.act; how = `월차(이달 첫 계획) ~${md(D.suju.asOf)} · 월 계획 ${n0(pmx.mon)}t 중 ${pc(pmx.act, pmx.mon)}%`; }   // 11/13: 모든 화면 같은 식(UI.prodMon)
         else if (pl === 'G') { plan = gl.reduce((a, l) => a + (l.sched || 0), 0); act = gl.reduce((a, l) => a + (l.actual || 0), 0); how = `판매생산속보 일정(~${md(P.asOf)})`; }
         else { plan = cgp.reduce((a, g) => a + Math.max(0, (g.prod.month || 0) - (g.prod.after || 0)), 0); act = cgp.reduce((a, g) => a + (g.prod.actual || 0), 0); how = `그룹 계획(~${md(cgp[0] && cgp[0].prod.asOf || P.asOf)})`; }
         if (!plan && !act) continue;
@@ -147,7 +148,7 @@
       if (wz && wz[1].lt) why.push(['소재 지연', `${wz[0]} 지연 잔량 ${n0(wz[1].lt)}t 가장 큼`, 'ok', `F/H 입고 이력·예정일이 필요 입고일 지남(${wz[1].ln}건)`]);
       const MO = (D.mat_order && D.mat_order.groups && D.mat_order.groups.mats) || [];
       const late = (window.UI && UI.matView ? UI.matView(D.mat_order, D.portal) : MO).filter((x) => x.st === 'late' && CT.inScope(x.plant || 'G'));   // 11/10 점검: 소재 화면과 같은 공통 기준(마감 지남 4개 vs 6개)
-      if (late.length) why.push(['소재 지연', `소재 발주 마감 지남 ${late.length}개`, 'rel', `${late.slice(0, 3).map((x) => x.name).join('·')} — 발주 지연이 입고 지연으로 이어질 수 있음`]);
+      if (late.length) { const ls = late.slice().sort((a, b) => (b.lateT || 0) - (a.lateT || 0)); why.push(['소재 지연', `소재 발주 마감 지남 ${late.length}개`, 'rel', `${ls.map((x) => `${x.name}${x.lateT >= 0.5 ? ` ${n0(x.lateT)}t` : ''}`).join(' · ')} — 발주 지연이 입고 지연으로 이어질 수 있음`]); }   // 11/13 점검: 5개 중 3개만 쓰던 것 → 전부(큰 순)
     }
     // ⑤ 제품 재고
     const stk = ((P.sr && P.sr.stock) || []).filter((s) => !/소재/.test(s.name) && CT.inScope(/^도금/.test(s.name) ? 'G' : 'C'));

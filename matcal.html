@@ -6,7 +6,7 @@
 <title>소재 관제</title>
 <meta name="description" content="일별 가동 · 자가재 · 구매 소재(발주·입고·재고) · 제품 재고를 한 달력에서">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611130140">
+<link rel="stylesheet" href="ui/theme.css?v=2611132301">
 <style>
 .sbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 10px; font-size: 13.5px; color: var(--ink-2); }
 .sbar b { color: var(--ink); }
@@ -194,6 +194,14 @@ table.t.fwt { margin: 4px 0 0; font-size: 13.5px; width: auto; } table.t.fwt td 
 #mt-orders .card .hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-right: 96px; } #mt-orders .card .hd .ct-seg { margin: 0; }
 #mt-orders .sub-i { font-size: 13.5px; color: var(--ink-2); } #mt-orders .hd h2 small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 6px; } #mt-orders table.mt td, #mt-orders table.mt th { white-space: nowrap; }
 .mt-ul { margin: 4px 0 8px; padding-left: 20px; font-size: 13.5px; line-height: 1.7; color: var(--ink-2); }
+/* 11/13 통일: 소재 캘린더 = 01 소재 캘린더처럼 칸 바탕 없이 글자색(발주 주황 · 입고 초록 · 마감 지남 빨강), 머리 = 가동표 공통(흰 머리 · 주말 노랑/빨강 · 오늘 남색 틀) */
+html:root body main #s-cal3 thead th, html:root body main #s-cal3 thead .lb { background: #fff !important; color: #000 !important; font-weight: 700 !important; }
+html:root body main #s-cal3 thead th.sat, html:root body main #s-cal3 thead th.sun, html:root body main #s-cal3 thead th.xwe { background: #ffff00 !important; color: #c00000 !important; font-weight: 800 !important; }
+html:root body main #s-cal3 thead th.today, html:root body main #s-cal3 thead th.tb { box-shadow: inset 2px 0 0 #1f3864, inset -2px 0 0 #1f3864, inset 0 2px 0 #1f3864 !important; }
+html:root body main #s-cal3 tbody td.tb { box-shadow: inset 2px 0 0 #1f3864, inset -2px 0 0 #1f3864 !important; background-color: transparent; }
+html:root body main #s-cal3 tbody td.past { background-image: linear-gradient(rgba(0, 0, 0, .07), rgba(0, 0, 0, .07)); }
+html:root body main #s-cal3 tr.m-ord td.v, html:root body main #s-cal3 tr.m-inb td.v { background-color: transparent !important; }
+html:root body main #s-cal3 td.v.late { background-color: transparent !important; color: var(--bad) !important; }
 </style>
 <style>
 .oj-sum{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 12px}.oj-b{flex:1;min-width:150px;border-radius:10px;padding:10px 12px;border:1px solid var(--line,#ddd)}
@@ -258,13 +266,13 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
 </main>
 <footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2611130140"></script>
-<script src="engine/crypto.js?v=2611130140"></script>
-<script src="ui/cal.js?v=2611130140"></script>
-<script src="ui/proccalc.js?v=2611130140"></script>
-<script src="supply.js?v=2611130140"></script>
-<script src="ui/ct.js?v=2611130140"></script>
-<script src="ct_mat.js?v=2611130140"></script>
-<script src="matref.js?v=2611130140"></script>
+<script src="ui/shell.js?v=2611120206"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script src="ui/cal.js?v=2611120206"></script>
+<script src="ui/proccalc.js?v=2611120206"></script>
+<script src="supply.js?v=2611132301"></script>
+<script src="ui/ct.js?v=2611120206"></script>
+<script src="ct_mat.js?v=2611120206"></script>
+<script src="matref.js?v=2611132301"></script>
 </body>
 </html>

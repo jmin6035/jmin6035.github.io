@@ -48,7 +48,7 @@
   }
   /* ── 새 양식(UI.v2, ?ui=v2) — 11/12 사용자 '표 구성 자체를 다시': 한 칸 한 값, 공통 그룹 순서, 설명 문장은 title, 빨강은 위험 숫자에만 ── */
   const ORD = ['도금수출', '도금국내', '자동차', '자가재', '건재수출', '가전수출', '가전내수', '컬러건재', '수요개발'];
-  const GN = { 자가재: '도금 자가재', 건재수출: '컬러건재수출', 가전수출: '컬러가전수출', 가전내수: '컬러가전내수' };
+  const GN = { 자동차: '자동차강판', 자가재: '도금 자가재', 건재수출: '컬러수출(건재)', 가전수출: '컬러수출(가전)', 가전내수: '컬러수출(가전내수)' };   // 11/13: 판매그룹 이름 = 관제판·관제 띠와 같게(컬러수출그룹 안 세 갈래는 괄호)
   const gnm = (g) => GN[g] || g;
   const ordIx = (g) => { const i = ORD.indexOf(g.g); return (g.pl === 'G' ? 0 : 100) + (i < 0 ? 50 : i); };
   // 언제 풀리나 = 주요 원인 내역 중 가장 늦은 해소 예정일(날짜 없는 몫은 '미정 Nt')
@@ -115,11 +115,11 @@
             + (on ? `<tr class="rk2-sub"><td colspan="6">${detailV2(g)}</td></tr>` : ''); }).join('')}
         </tbody></table></div></section>
       <section class="card"><h2 title="납기월 기준 · 전월 이전 = 납기 경과분 · 12월 이후 물량은 생산 예정일이 확정된 범위(2~3주)까지만 판정">납기월별</h2>
-        <div class="scroll"><table class="v2t rk2-m"><colgroup><col style="width:200px"><col style="width:110px"><col style="width:110px"><col style="width:76px"><col style="width:130px"><col style="width:190px"><col></colgroup>
-        <thead><tr><th>납기월</th><th class="n">미결(t)</th><th class="n">위험(t)</th><th class="n">비율</th><th class="n" title="${esc(STT.stale)}">종결 확인(t)</th><th class="n">납기 내 가능·주의(t)</th><th></th></tr></thead><tbody>${cols.map(([nm, v]) => { const ok = Math.max(0, v[0] - v[1] - v[2]), op = Math.max(0, v[0] - v[2]), p = pct(v[1], op);
+        <div class="scroll"><table class="v2t rk2-m"><colgroup><col style="width:200px"><col style="width:110px"><col style="width:110px"><col style="width:76px"><col style="width:130px"><col style="width:190px"></colgroup>
+        <thead><tr><th>납기월</th><th class="n">미결(t)</th><th class="n">위험(t)</th><th class="n">비율</th><th class="n" title="${esc(STT.stale)}">종결 확인(t)</th><th class="n">납기 내 가능·주의(t)</th></tr></thead><tbody>${cols.map(([nm, v]) => { const ok = Math.max(0, v[0] - v[1] - v[2]), op = Math.max(0, v[0] - v[2]), p = pct(v[1], op);
           const isOld = nm === '전월 이전' && G.some((g) => g.old);
-          return `<tr${isOld ? ` class="rk2-x rk-old${oldOpen ? ' on' : ''}" tabindex="0" title="지난 달까지 생산했어야 할 물량 — 누르면 판매그룹별"` : ''}><td>${isOld ? '<i class="ch">▸</i>' : ''}${nm}</td><td class="n">${n0(op)}</td><td class="n">${v[1] >= 0.5 ? `<b class="rk-bad">${n0(v[1])}</b>` : '-'}</td><td class="n">${v[1] >= 0.5 ? pc(p) : '-'}</td><td class="n">${v[2] >= 0.5 ? n0(v[2]) : '-'}</td><td class="n">${ok >= 0.5 ? n0(ok) : '-'}</td><td></td></tr>`
-            + (isOld && oldOpen ? `<tr class="rk2-sub"><td colspan="7">${oldDetailV2(G)}</td></tr>` : ''); }).join('')}</tbody></table></div></section>`;
+          return `<tr${isOld ? ` class="rk2-x rk-old${oldOpen ? ' on' : ''}" tabindex="0" title="지난 달까지 생산했어야 할 물량 — 누르면 판매그룹별"` : ''}><td>${isOld ? '<i class="ch">▸</i>' : ''}${nm}</td><td class="n">${n0(op)}</td><td class="n">${v[1] >= 0.5 ? `<b class="rk-bad">${n0(v[1])}</b>` : '-'}</td><td class="n">${v[1] >= 0.5 ? pc(p) : '-'}</td><td class="n">${v[2] >= 0.5 ? n0(v[2]) : '-'}</td><td class="n">${ok >= 0.5 ? n0(ok) : '-'}</td></tr>`
+            + (isOld && oldOpen ? `<tr class="rk2-sub"><td colspan="6">${oldDetailV2(G)}</td></tr>` : ''); }).join('')}</tbody></table></div></section>`;
     const M = $('rk-main');
     const bind = (el, f) => { el.onclick = f; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f(); } }; };
     M.querySelectorAll('tr[data-k]').forEach((tr) => bind(tr, () => { open = open === tr.dataset.k ? null : tr.dataset.k; draw(); const t = document.querySelector(`tr[data-k="${CSS.escape(open || '')}"]`); if (t) t.scrollIntoView({ block: 'nearest' }); }));

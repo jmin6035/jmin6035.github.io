@@ -1203,3 +1203,39 @@ p.empty, div.empty:not(.card):not(.calc):not(.dv-day) { margin: 0; padding: 14px
 p.empty span { color: var(--ink-2); white-space: nowrap; } p.empty span::before { content: "· "; }
 /* ── 기준일 줄 · 보조 글 ── */
 html .ct-note { font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+/* ══ 가동표 공통 서식(11/13 사용자 '01~04 양식 기준으로 전부 통일') — 01 일별 가동계획(gyehoek.html 11/13 엑셀 색감 블록) 값 그대로 ══
+   쓰는 곳: 월간 가동(#s-cal·#s-ship) · 도금/컬러 가동 현황(#g-table·#r-table) · 생산 일정(cg/cc 캘린더). 표에 class="xl" 을 붙이고 칸에 아래 class
+   th.xnm = 라인·구분 이름 칸(연두) · th.xwe = 주말·공휴일 머리(노랑 바탕·빨강 글자) · td.xAZ/xAL/xMAC/xC = 강종·컬러 가동 칸 · td.xy = M/C·S/D·청소(노랑·남색 글자)
+   .xsp = 여러 날 정지·휴지·수리(남색·흰 글자) · tr.xsum = 합계 줄 · .xpast = 지난 날(옅은 음영) · .xtdy = 오늘(남색 틀) */
+:root { --xl-line: #808080; --xl-we: #ffff00; --xl-wef: #c00000; --xl-nm: #ebf1de; --xl-az: #fcd5b4; --xl-al: #95b3d7; --xl-mac: #8064a2; --xl-c: #dce6f1; --xl-y: #ffff00; --xl-navy: #1f3864; --xl-sum: #f2f2f2; --xl-past: rgba(0, 0, 0, .07); }
+html:root body main table.xl.xl.xl { border-collapse: separate !important; border-spacing: 0 !important; font-variant-numeric: tabular-nums; border-top: 1px solid var(--xl-line) !important; border-left: 1px solid var(--xl-line) !important; background: #fff; }
+html:root body main table.xl.xl.xl :is(td, th) { border: 0 !important; border-right: 1px solid var(--xl-line) !important; border-bottom: 1px solid var(--xl-line) !important; color: #000 !important; font-size: 14px !important; text-align: center !important; padding: 2px 1px !important; height: 28px; line-height: 1.25 !important; white-space: nowrap; letter-spacing: 0 !important; background-color: #fff; background-image: none; box-shadow: none !important; border-radius: 0 !important; font-style: normal !important; text-decoration: none !important; }
+html:root body main table.xl.xl.xl tbody td { font-weight: 400 !important; }
+html:root body main table.xl.xl.xl thead :is(th, td) { background: #fff !important; color: #000 !important; font-weight: 700 !important; height: 24px; }
+html:root body main table.xl.xl.xl thead :is(th, td).xwe { background: var(--xl-we) !important; color: var(--xl-wef) !important; font-weight: 800 !important; }
+html:root body main table.xl.xl.xl :is(th, td).xnm { background: var(--xl-nm) !important; color: #000 !important; font-weight: 700 !important; }
+html:root body main table.xl.xl.xl :is(th, td).xnm small { color: #000 !important; font-size: 13.5px !important; font-weight: 500 !important; }
+html:root body main table.xl.xl.xl td.xAZ { background-color: var(--xl-az) !important; color: #000 !important; }
+html:root body main table.xl.xl.xl td.xAL { background-color: var(--xl-al) !important; color: #000 !important; }
+html:root body main table.xl.xl.xl td.xMAC { background-color: var(--xl-mac) !important; color: #fff !important; }
+html:root body main table.xl.xl.xl td.xC { background-color: var(--xl-c) !important; color: #000 !important; }
+html:root body main table.xl.xl.xl :is(td, th).xy { background-color: var(--xl-y) !important; color: var(--xl-navy) !important; font-weight: 800 !important; }
+html:root body main table.xl.xl.xl :is(td, th).xsp { background: var(--xl-navy) !important; color: #fff !important; font-weight: 800 !important; }
+html:root body main table.xl.xl.xl :is(td, th).xsp * { color: #fff !important; background: transparent !important; }
+html:root body main table.xl.xl.xl tr.xsum > :is(td, th) { background-color: var(--xl-sum) !important; color: #000 !important; font-weight: 800 !important; }
+html:root body main table.xl.xl.xl :is(td, th).xtot { background-color: #fff; font-weight: 700 !important; }
+html:root body main table.xl.xl.xl td.xpast:not(.xsp) { background-image: linear-gradient(var(--xl-past), var(--xl-past)) !important; }
+html:root body main table.xl.xl.xl :is(td, th).xtdy { box-shadow: inset 2px 0 0 var(--xl-navy), inset -2px 0 0 var(--xl-navy) !important; }
+html:root body main table.xl.xl.xl thead tr:first-child :is(td, th).xtdy { box-shadow: inset 2px 0 0 var(--xl-navy), inset -2px 0 0 var(--xl-navy), inset 0 2px 0 var(--xl-navy) !important; }
+html:root body main table.xl.xl.xl tbody tr:last-child :is(td, th).xtdy { box-shadow: inset 2px 0 0 var(--xl-navy), inset -2px 0 0 var(--xl-navy), inset 0 -2px 0 var(--xl-navy) !important; }
+html:root body main table.xl.xl.xl tr.xend > :is(td, th), html:root body main table.xl.xl.xl th.xend { border-bottom: 2px solid #4a5561 !important; }
+html:root body main table.xl.xl.xl tr.xsum > :is(td, th) { border-top: 2px solid #4a5561 !important; border-bottom: 4px solid #1f2933 !important; }
+html:root body main table.xl.xl.xl :is(td, th).xtot { border-left: 2px solid #4a5561 !important; }
+html:root body main table.xl.xl.xl :is(td, th).xsel { outline: 2px solid #000; outline-offset: -2px; }
+/* 범례: 01 과 같은 네모(18×14, 회색 테) */
+.xl-lg { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 18px; margin: 10px 2px 0; font-size: 15px; color: var(--ink-2); }
+.xl-lg span { white-space: nowrap; display: inline-flex; align-items: center; }
+.xl-lg i { display: inline-block; width: 18px; height: 14px; border-radius: 3px; margin-right: 6px; box-shadow: inset 0 0 0 1px #bfbfbf; background: #fff; }
+.xl-lg i.xAZ { background: var(--xl-az); } .xl-lg i.xAL { background: var(--xl-al); } .xl-lg i.xMAC { background: var(--xl-mac); } .xl-lg i.xC { background: var(--xl-c); }
+.xl-lg i.xy { background: var(--xl-y); } .xl-lg i.xsp { background: var(--xl-navy); } .xl-lg i.xpast { background: #ededed; } .xl-lg i.xtdy { box-shadow: inset 0 0 0 2px var(--xl-navy); }
+.xl-lg i.xwe { background: var(--xl-we); box-shadow: inset 0 0 0 1px #bfbfbf; }

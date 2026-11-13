@@ -261,10 +261,12 @@
     const CKA = CK || checks(), today = dayOf(Math.max(W0, tms(D.now ? String(D.now).replace('T', ' ') : iso(W0))));
     $('ws-kpis').innerHTML = LINES[plant].map((l) => {
       const ev = sim(l), js = ev.filter((q) => q.k === 'j' && q.s < W1);
-      const run = js.reduce((s, q) => s + q.rm, 0), ch = js.reduce((s, q) => s + q.ch.m, 0);
-      const pl = ev.filter((q) => q.k === 'p' && q.s < W1).reduce((s, q) => s + Math.min(q.e, W1) - q.s, 0) + ev.filter((q) => q.k === 'g' && q.s < W1).reduce((s, q) => s + (q.e2 - q.s), 0);
-      const wt = ev.filter((q) => q.k === 'w' && q.s < W1).reduce((s, q) => s + Math.min(q.e, W1) - q.s, 0);
-      const end = ev.length ? Math.max(...ev.map((q) => q.e2 || q.e)) : tms(D.lines[l].from), left = W1 - end;
+      // 11/13 점검: 기간(시작 ~ 기간 끝) 안에 든 시간만 셈 → 생산 + 전환 휴지 + 계획·직접 휴지 + 기다림 + 남는 시간 = 기간(빈 틈도 남는 시간에 들어감)
+      const F0 = tms(D.lines[l].from), clip = (a, b) => Math.max(0, Math.min(b, W1) - Math.max(a, F0));
+      const run = js.reduce((s, q) => s + clip(q.s, q.e), 0), ch = js.reduce((s, q) => s + clip(q.ds, q.s), 0);
+      const pl = ev.filter((q) => q.k === 'p').reduce((s, q) => s + clip(q.s, q.e), 0) + ev.filter((q) => q.k === 'g').reduce((s, q) => s + clip(q.s, q.e2), 0);
+      const wt = ev.filter((q) => q.k === 'w').reduce((s, q) => s + clip(q.s, q.e), 0);
+      const end = ev.length ? Math.max(...ev.map((q) => q.e2 || q.e)) : F0, left = end > W1 ? W1 - end : Math.max(0, W1 - F0) - run - ch - pl - wt;
       const nb = CKA.filter((c) => c.l === l && c.lv === 'bad').length;
       const tj = ev.filter((q) => q.k === 'j' && dayOf(q.s) === today).slice(0, 3), nT = ev.filter((q) => q.k === 'j' && dayOf(q.s) === today).length;
       const spc = (x) => (plant === 'cg' ? `${(+x.thick).toFixed(2)}×${n0(x.width)} ${esc(x.al || '')}` : `${esc(x.item || '')} ${esc(x.code || x.color || '')}`);

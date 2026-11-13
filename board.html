@@ -12,7 +12,7 @@
 main.wrap { max-width: none; }
 #ui-ctl { display: none !important; }   /* 관제 띠 = 이 화면 요약 → 이 화면에서는 숨김 */
 /* 11/11 회의 '칸 줄여 한눈에 · 4분기 전망을 줄여 위 오른쪽에': 관제판(내용 폭) + 오른쪽 4분기 표 */
-.b-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0 14px; } @media (max-width: 1919px) { .b-top { grid-template-columns: minmax(0, 1fr); } .b-top > .b-q { justify-self: start; } } .b-top > .card { margin: 0 0 14px; min-width: 0; max-width: 100%; }
+.b-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0 14px; } @media (max-width: 2199px) { .b-top { grid-template-columns: minmax(0, 1fr); } .b-top > .b-q { justify-self: start; } } .b-top > .card { margin: 0 0 14px; min-width: 0; max-width: 100%; }
 .b-main { padding: 10px 12px 6px; min-width: 0; }   /* 11/12 사용자 '무슨 의도로': 넓은 화면에서 오른쪽 빈 공간 → 관제판이 남는 폭을 채움(원인 칸이 늘어남) */
 .b-q { flex: 0 1 auto; padding: 10px 12px 6px; } .b-q > h2 { font-size: 16px; margin: 0 0 6px; } .b-q > h2 small { display: block; font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin: 2px 0 0; }
 /* 요약 한 줄 */

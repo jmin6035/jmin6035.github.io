@@ -159,7 +159,7 @@ html.v2 .od-kpi .s { font-size: 13.5px; }
 html.v2 .od-wk .neg { color: inherit; }
 html.v2 .od-wk { font-size: 14.5px; }
 /* 판매그룹 표 */
-html.v2 table.og2 { width: 100%; min-width: 1000px; max-width: 1240px; table-layout: fixed; margin: 4px 0 6px; }
+html.v2 table.og2 { width: 100%; min-width: 1000px; table-layout: fixed; margin: 4px 0 6px; }
 html.v2 table.og2 tbody td { white-space: nowrap; vertical-align: middle; }
 html.v2 table.og2 tr.tot td { font-weight: 700; background: var(--surface-2); }
 html.v2 table.og2 td a { color: inherit; font-weight: 700; text-decoration: none; } html.v2 table.og2 td a:hover { text-decoration: underline; }
@@ -183,10 +183,11 @@ html.v2 :is(.og-h, details.sg2 > summary) button.gs.gf:not(.bad) { color: var(--
 html.v2 :is(.og-h, details.sg2 > summary) .c6 { color: var(--ink-2); } html.v2 :is(.og-h, details.sg2 > summary) .c6 b { color: var(--ink); }
 /* 계약 목록: 한 줄 = 한 계약 */
 html.v2 .od-wrap2 { overflow-x: auto; }
-html.v2 table.od2 { width: 100%; min-width: 1300px; max-width: 1400px; table-layout: fixed; margin: 0 0 6px; }
+html.v2 table.od2 { width: 100%; min-width: 1300px; table-layout: fixed; margin: 0 0 6px; }   /* 11/13: 1,400px 상한 없앰(계약번호·두께×폭 잘림, 규칙 3) */
 html.v2 table.od2 :is(td, th) { border-left: 0 !important; border-right: 0 !important; }
 html.v2 table.od2 thead th { white-space: nowrap; }
 html.v2 table.od2 tbody tr.r td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; font-variant-numeric: tabular-nums; }
+html.v2 table.od2 tbody tr.r td:nth-child(2), html.v2 table.od2 tbody tr.r td:nth-child(4) { text-overflow: clip; overflow: visible; }   /* 식별자(계약번호)·두께×폭은 말줄임 없이 */
 html.v2 table.od2 tr.r { cursor: pointer; }
 html.v2 table.od2 tr.r:hover td { background: var(--hover); }
 html.v2 table.od2 tr.r.on td { background: var(--surface-2); }

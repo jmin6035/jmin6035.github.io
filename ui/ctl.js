@@ -57,7 +57,7 @@
       // 출하: 실적 ÷ 오늘까지 기준선(그룹 출하 실적 패턴, portal ship.due — 없으면 일정 누계)
       const S = g.ship, base = S ? (S.due != null ? S.due : S.sched) : null, sp = S && base >= 1 ? S.actual / base : null;
       const ship = S ? { actual: S.actual || 0, base: base || 0, month: S.month || 0, pct: sp, by: S.due != null ? (S.dueBy || '출하 실적 패턴') : '판생 일정 누계', to: S.dueTo, tone: base < 1 ? 'ok' : UI.rate(sp * 100) } : null;
-      if (ship) ship.v = [ship.tone, sp != null ? `${Math.round(sp * 100)}%` : `${n0(S.actual)}t`, `실적 ${n0(S.actual)} / 기준 ${n0(base || 0)}t · 월 ${n0(S.month)}t`];   // 관제판과 같은 표기(기준 대비 %)
+      if (ship) ship.v = [ship.tone, S.month > 0 ? `${Math.round(S.actual / S.month * 100)}%` : `${n0(S.actual)}t`, `실적 ${n0(S.actual)} / 월 ${n0(S.month)}t · 기준 대비 ${sp != null ? Math.round(sp * 100) + '%' : '–'}`];   // 11/13: 관제판과 같은 표기(큰 숫자 = 월 대비, 색 = 오늘까지 기준 대비)
       // 재고: 오늘 → 월말 예상(재고 추이 롤링) vs 월말 목표(통합 계획). 목표 없으면 하루 출하 기준 일수 vs 상한
       const now = nowSt(g.key), end = endSt(g.key), r = V && V.plan && mi >= 0 && (V.plan[g.key] || [])[mi], tg = r ? r.target : null;
       const dy = (TR.days || {})[g.key], tt = (TR.target || {})[g.key], over = dy && tt ? dy / tt : 1.3;   // 과잉 = 통합 계획 재고 추이와 같은 기준(상한 ÷ 목표, 없으면 1.3배)
@@ -134,7 +134,7 @@
   UI.ctlRows = (O, mo, ig, rk) => { MO = mo || MO; IGc = ig || IGc; RKc = rk || RKc; return rowsOf(O); };
 
   /* 관제 띠: 홈 밖 모든 화면 머리 아래(ui/shell.js). 납기 위험(risk)·재고 목표(integrated)는 여기서 받아 오고, 받으면 띠를 다시 그림 */
-  const COL = ['생산', '출하', '재고', '소재', '납기'];
+  const COL = ['생산 예상', '출하', '재고', '소재', '납기'];   // 11/13: 생산 칸 = 월말 예상 ÷ 그룹 월 계획 → '예상' 표시
   let extra = null;
   const loadExtra = () => {
     if (extra || !(window.GP && GP.latest)) return extra;

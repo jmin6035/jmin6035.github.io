@@ -95,7 +95,7 @@
       const heat = `<div class="ct-wrap"><table class="ct-t ld"><thead><tr><th>라인</th>${wk.map(([a, b]) => `<th>${a === b ? md(a) : `${md(a)}~${md(b)}`}</th>`).join('')}</tr></thead><tbody>`
         + R.map((x) => `<tr><td class="id">${x.l}</td>${x.w.map((w) => `<td class="lc">${bar(w)}<small>${w.idle || w.out || w.need < 0.5 ? '' : `${n0(w.need)}t`}</small></td>`).join('')}</tr>`).join('')
         + '</tbody></table></div>';
-      return `<section class="card"><h2>${mm} 라인별 부하 <small>${rng}</small></h2><div class="ld-row"><div class="ld-l">${sumT}</div><div class="ld-r"><h4 class="ld-h">주별 부하율 <small>수요일 시작 · 달 경계에서 끊음</small></h4>${heat}</div></div></section>`;   // 11/5 사용자 '옆으로 붙여 — 전부'
+      return `<section class="card"><h2>${mm} 라인별 부하 <small>${rng}</small></h2><div class="ld-row"><div class="ld-l">${sumT}</div><div class="ld-r"><h4 class="ld-h">주별 부하율 <small>수요일 시작 · 달 경계에서 끊음</small></h4>${heat}<p class="ct-note" style="margin:8px 0 0">색 = 부하율: <b style="color:var(--good)">초록</b> 95% 미만(여유) · <b style="color:var(--warn)">주황</b> 95~100%(꽉 참) · <b style="color:var(--bad)">빨강</b> 100% 초과(능력 넘침)</p></div></div></section>`;   // 11/5 사용자 '옆으로 붙여 — 전부'
     });
     const tl = LG.filter((l) => X.tph[l]).map((l) => `${l} ${n1(X.tph[l])}t/h`).join(' · ');
     const f = `<ul class="ps-ul"><li>도금 능력 = 가용분(캘린더 − 정지) ÷ 60 × 최근 t/h(${tl})</li><li>컬러 부하 = 편성분 ÷ 정지 뺀 가용분(편성이 하루를 채워 100% 가 보통 → 100% 초과 = 병목)</li><li>주 = 수요일 시작 · 달 경계에서 끊음 · 오늘(${md(X.today)}) 이후만 · 주별 초과 합 = 주마다 능력을 넘는 양의 합</li><li>도금 = 게시 재계획 · 컬러 = 통합 컬러 계획</li></ul>`;

@@ -37,6 +37,7 @@ table.t td.bad { color: var(--bad); font-weight: 700; } .ps-late { margin: 0 0 1
 .ps-head { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: baseline; margin: 2px 0 10px; font-size: 14px; color: var(--ink-2); } .ps-n { font-size: 22px; font-weight: 800; color: var(--ink); } .tone-good { color: var(--good); } .tone-warn { color: var(--warn); } .tone-bad { color: var(--bad); }
 @media (max-width: 900px) { #ps-calbox { overflow-x: auto; } #ps-calbox .calg { min-width: 760px; } #ps-calbox .calc .chip { font-size: 13.5px; } }   /* 좁은 화면: 칸을 찌그러뜨리지 않고 가로 스크롤 */
 @media (max-width: 1700px) { html body main .grid2 table.t.big th, html body main .grid2 table.t.big td { padding-left: 6px; padding-right: 6px; } }   /* 반 칸 카드의 표 오른쪽 끝(판정)이 잘리던 것 */
+html.v2 body main table.t :is(td, th) { text-align: center !important; }   /* 11/13: 규칙 13 가운데 */
 </style>
 </head>
 <body>

@@ -49,7 +49,11 @@
       if (CT.idleSkip(D, e.text)) continue;                   // 계획 휴지 라인 경보 제외(11/8)
       const pl = /컬러/.test(e.area + e.text) ? 'C' : /도금|CGL|F\/H/.test(e.area + e.text) ? 'G' : '';
       if (pl && !CT.inScope(pl)) continue;
-      out.push({ key: 'exc|' + e.text, no: `현장-${e.area || '기타'}`, act: e.link ? '관련 화면에서 내용 확인 후 조치' : '내용 확인 후 조치', type: AREA[e.area] || '생산', pl, title: e.text.split(' — ')[0], text: e.text.split(' — ')[1] || '', t: null, n: 0, dept: ({ 구매: CT.DEPT.mat })[e.who] || e.who || '생산기획', due: null, orders: [], link: e.link, why: e.text.split(' — ')[1] || '', src: '화면 예외' });
+      // 11/13 점검: 글에 있는 기한('11/15까지')·물량('몫 1,546t', '작업지시 514t')을 칸으로 — '즉시 확인'·'-' 이던 것
+      const dm = /(\d{1,2})\/(\d{1,2})까지/.exec(e.text), tm = /(?:몫|작업지시|물량)\s*([\d,]+(?:\.\d+)?)t/.exec(e.text);
+      const eDue = dm ? `${asOf.slice(0, 4)}-${String(dm[1]).padStart(2, '0')}-${String(dm[2]).padStart(2, '0')}` : null, eT = tm ? +tm[1].replace(/,/g, '') : null;
+      const eAct = e.text.split(' — ')[1] || (/발주/.test(e.text) ? `${(/중 (.+?) 몫/.exec(e.text) || [])[1] || '업체'} 발주${eDue ? `(${md(eDue)}까지)` : ''}` : '내용 확인 후 조치');
+      out.push({ key: 'exc|' + e.text, no: `현장-${e.area || '기타'}`, act: eAct, type: AREA[e.area] || '생산', pl, title: e.text.split(' — ')[0], text: e.text.split(' — ')[1] || '', t: eT, n: 0, dept: ({ 구매: CT.DEPT.mat })[e.who] || e.who || '생산기획', due: eDue, orders: [], link: e.link, why: e.text.split(' — ')[1] || '', src: '화면 예외' });
     }
     // 저장소 이벤트 접기(번호별 시간순, 마지막 값)
     const E = {};
@@ -60,6 +64,7 @@
       for (const e of H) { if (e.st) x.st = e.st; if (e.owner) x.owner = e.owner; if (e.due) x.dueSet = e.due; if (e.note) x.note = e.note; }
       if (!H.length || x.st === 'auto') x.st = '신규';
       x.at0 = H.length ? String(H[0].at).slice(0, 10) : asOf;
+      if (x.key.startsWith('ord|') && x.due && x.due < x.at0) x.due = CT.addD(x.at0, 3);   // 11/13 점검: 이미 납기 지난 주문 묶음 = 조치 기한이 처음부터 '지남' → 이슈 만든 날 + 3일(납기 경과 건수는 내용 줄에)
       x.dueEff = x.dueSet || x.due;
       x.over = x.st !== '완료' && x.dueEff && x.dueEff < asOf;
       return x;

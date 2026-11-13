@@ -6,10 +6,10 @@
 <title>도금 가동 현황</title>
 <meta name="description" content="도금 1·2CGL 가동계획 조회 전용 대시보드">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="style.css?v=2611130140">
-<link rel="stylesheet" href="dashboard.css?v=2611130140">
-<link rel="stylesheet" href="ui/theme.css?v=2611130140">
-<link rel="stylesheet" href="ui/bridge.css?v=2611130140">
+<link rel="stylesheet" href="style.css?v=2611120206">
+<link rel="stylesheet" href="dashboard.css?v=2611120206">
+<link rel="stylesheet" href="ui/theme.css?v=2611132301">
+<link rel="stylesheet" href="ui/bridge.css?v=2611120206">
 <style>
 /* 기준일 라인 현황 카드 */
 .ln-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px 16px 14px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
@@ -30,6 +30,12 @@
 .gtable tr.r-stop th.c1 { color: var(--warn); }
 .hbtn { padding: 0; }   /* 옛 style.css 의 button 안쪽 여백이 '?' 를 아래로 밀던 것 */
 html body main table.vs3 { min-width: 760px; } table.vs3 b.r-ok { color: var(--good); } table.vs3 b.r-warn { color: var(--warn); } table.vs3 b.r-bad { color: var(--bad); }
+/* 11/13 가동표 통일(01 엑셀 색감 — ui/theme.css 가동표 공통 서식): 한 달 한 화면 */
+html:root body main table.gtable.xl { min-width: 1400px !important; table-layout: fixed; width: 100%; }
+html:root body main table.gtable.xl col.cc0 { width: 56px; } html:root body main table.gtable.xl col.cc1 { width: 92px; } html:root body main table.gtable.xl col.ctot { width: 72px; }
+html:root body main table.gtable.xl.xl.xl tr.r-hrs > td, html:root body main table.gtable.xl.xl.xl tr.r-stop > td { font-size: 13.5px !important; }
+html:root body main table.gtable.xl.xl.xl tr.r-dep > th.c1 { font-weight: 500 !important; }
+html:root body main table.gtable.xl.xl.xl tr.xsum > th { text-align: center !important; }
 </style>
 </head>
 <body class="dash">
@@ -61,7 +67,7 @@ html body main table.vs3 { min-width: 760px; } table.vs3 b.r-ok { color: var(--g
         <div class="tabs" id="g-tabs"></div>
       </div>
       <div class="glegend" id="g-legend"></div>
-      <div class="gtable-wrap"><table class="gtable" id="g-table"></table></div>
+      <div class="gtable-wrap"><table class="gtable xl" id="g-table"></table></div>
       <p class="hint">숫자 단위: 톤. 강종 행 = 당일 생산 강종과 물량, 부서 행 = 당일 부서별 물량. 노란색 = 강종 전환(M/C)·정기수리 후 재가동, 회색 = 정기수리.</p>
     </section>
 
@@ -106,13 +112,13 @@ html body main table.vs3 { min-width: 760px; } table.vs3 b.r-ok { color: var(--g
 <div id="tip" class="tip" role="tooltip" hidden></div>
 <footer class="wrap foot">조회 전용.</footer>
 
-<script src="ui/shell.js?v=2611130140"></script>
-<script src="engine/params.js?v=2611130140"></script>
-<script src="engine/util.js?v=2611130140"></script>
-<script src="engine/replan.js?v=2611130140"></script>
-<script src="engine/report.js?v=2611130140"></script>
-<script src="engine/gantt.js?v=2611130140"></script>
-<script src="engine/crypto.js?v=2611130140"></script>
-<script src="dashboard.js?v=2611130140"></script>
+<script src="ui/shell.js?v=2611120206"></script>
+<script src="engine/params.js?v=2611120206"></script>
+<script src="engine/util.js?v=2611120206"></script>
+<script src="engine/replan.js?v=2611120206"></script>
+<script src="engine/report.js?v=2611120206"></script>
+<script src="engine/gantt.js?v=2611120206"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script src="dashboard.js?v=2611132301"></script>
 </body>
 </html>

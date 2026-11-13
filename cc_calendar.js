@@ -96,8 +96,8 @@
     const pds = Array.from({ length: Math.max(0, lead) }, (_, i) => { const x = dt(w0); x.setDate(x.getDate() + i); return iso(x); });   // 이번 주 지난 날 = 실적
     const nx = (() => { const x = dt(wedOf(O.asOf)); x.setDate(x.getDate() + 7); return iso(x); })(), we = (() => { const x = dt(w0); x.setDate(x.getDate() + 6); return iso(x); })();
     const wl = w0 === nx ? ['다음 주', 'nx'] : w0 < nx ? ['이번 주', ''] : ['계획', 'pl'];
-    const head = `<th class="wl ${wl[1]}" title="생산주 ${mdw(w0)} ~ ${mdw(we)}">${wl[0]}<small>${md(w0)}~${md(we)}</small></th>` + pds.map((d) => `<th class="pst">${mdw(d)}<small class="tdy" style="background:var(--sub);color:var(--ink-2)">실적</small></th>`).join('') + days.map((d) => { const wd = dt(d).getDay(); return `<th class="${wd === 0 || wd === 6 ? 'we' : ''}">${mdw(d)}${d === UI.today() ? '<small class="tdy">오늘</small>' : ''}</th>`; }).join('') + pad.replace(/td/g, 'th');
-    const rows = LINES.map((ln) => `<tr><th>${ln}<small title="이 주 ${ln} 생산 톤 · 편성 시간">${n0(sum(days, (d) => O.lines[ln][idx(d)].cap))}t · ${n0(sum(days, (d) => O.lines[ln][idx(d)].usedH))}h</small></th>${pds.map((d) => `<td class="pst">${pastCell(ln, d)}</td>`).join('')}${days.map((d) => `<td>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`).join('');
+    const head = `<th class="wl ${wl[1]}" title="생산주 ${mdw(w0)} ~ ${mdw(we)}">${wl[0]}<small>${md(w0)}~${md(we)}</small></th>` + pds.map((d) => `<th class="pst">${mdw(d)}<small class="tdy" style="background:var(--sub);color:var(--ink-2)">실적</small></th>`).join('') + days.map((d) => { const wd = dt(d).getDay(); return `<th class="${wd === 0 || wd === 6 || d === '2026-12-25' || d === '2027-01-01' ? 'we' : ''}${d === UI.today() ? ' tdy' : ''}">${mdw(d)}${d === UI.today() ? '<small class="tdy">오늘</small>' : ''}</th>`; }).join('') + pad.replace(/td/g, 'th');
+    const rows = LINES.map((ln) => `<tr><th>${ln}<small title="이 주 ${ln} 생산 톤 · 편성 시간">${n0(sum(days, (d) => O.lines[ln][idx(d)].cap))}t · ${n0(sum(days, (d) => O.lines[ln][idx(d)].usedH))}h</small></th>${pds.map((d) => `<td class="pst">${pastCell(ln, d)}</td>`).join('')}${days.map((d) => `<td${d === UI.today() ? ' class="tdy"' : ''}>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`).join('');
     const sd = (d) => sum(LINES, (l) => O.lines[l][idx(d)].cap);
     const tot = `<tr class="dsum"><th title="네 라인 하루 생산 톤 합">하루 합<small>주 ${n0(sum(days, sd))}t</small></th>${pds.map((d) => `<td class="pst" title="${mdw(d)} 네 라인 생산 실적"><b>${n0(sum(LINES, (l) => actT(l, d)))}</b><small>t</small></td>`).join('')}${days.map((d) => `<td><b>${n0(sd(d))}</b><small>t</small></td>`).join('')}${pad}</tr>`;
     return `<table class="cg"><thead><tr>${head}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
@@ -111,8 +111,8 @@
       + '<span><i class="ky"></i><b>지시대기</b>소재 매치까지 된 물량(MES 1020)</span>'
       + '<span><i class="kb"></i><b>도료 미입고</b>지시대기 중 도료 입고 일정 없음</span>'
       + '<span><i class="kg"></i><b>계획편성</b>남는 시간에 우리 계획이 깐 물량</span>'
-      + '<span><i style="background:var(--ink-2)"></i><b>회색 칸 = 실적</b>지난 날 MES 생산</span></div>'
-      + `<p class="lgn"><b style="color:var(--bad)">작업대기 부족</b>(빨간 줄) = 24시간 중 현장 물량(작업대기)으로 못 채우는 시간 → 지시대기로 메워야 함 · <b>빈 시간</b> = 아무 물량도 없는 시간 · <b>회색 칸</b> = 정지(휴지·수리) · <b>칸 숫자</b> = 그날 톤 · 편성 시간/가용 시간 · <b>주</b> = 수~화 생산주</p></div>`
+      + '<span><i style="background:#ededed;box-shadow:inset 0 0 0 1px #bfbfbf"></i><b>음영 칸 = 실적</b>지난 날 MES 생산</span><span><i style="background:#1f3864"></i><b>남색 칸 = 정지</b>휴지 · 수리</span></div>'
+      + `<p class="lgn"><b style="color:var(--bad)">작업대기 부족</b>(빨간 줄) = 24시간 중 현장 물량(작업대기)으로 못 채우는 시간 → 지시대기로 메워야 함 · <b>빈 시간</b> = 아무 물량도 없는 시간 · <b>칸 숫자</b> = 그날 톤 · 편성 시간/가용 시간 · <b>주</b> = 수~화 생산주</p></div>`
       + (O.cus ? '' : '<p class="msg" style="margin:0 0 10px">DUMMY 고객 제외: 컬러 계약 고객사 자료(snap_cc_cus_names)가 사내 PC 다음 실행부터 반영 — 현재는 DUMMY 포함</p>')
       + weeks().map(([w0, ds]) => `<div class="wk">${weekTable(w0, ds)}</div>`).join('') + '</section>';
   }

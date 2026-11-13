@@ -144,6 +144,7 @@
   // 캘린더 — 표 양식(행 = 라인·하루 합, 열 = 수~화)은 생산 일정 화면과 같고, 칸 안은 편성 화면용으로 다시 그림
   // 11/12 사용자 '자가재 빼고, 막대그래프 필요없다, 날짜 누르면 그날 작업, 컬러랑 도금 양식 똑같이, 이어짐 쓰지 말고 전날로 넘겨라'
   const CAL = { cg: () => window.CGCAL, cc: () => window.CCCAL };
+  const HOL = new Set(['2026-12-25', '2027-01-01']);   // 공휴일 — 01 gyehoek.js 와 같은 목록(머리 노랑·빨강)
   const DOWS = '일월화수목금토';
   const mdw = (d) => `${md(d)}(${DOWS[new Date(d + 'T00:00:00Z').getUTCDay()]})`;
   const tsum = (a) => a.reduce((s, i) => s + (+i.t || 0), 0);
@@ -208,12 +209,12 @@
   function cgCell(c, ln, rem) {
     const fill = c.conf + c.plan + c.fcst, cap = c.cap || 0;
     const mc = /M\/C/.test(c.event || ''), ev = String(c.event || '').replace(/\s*\(([^)]*)\)/, ' $1');
-    if (cap < 1) return cellH({ ln, d: c.d, off: '정지', tip: `${ln} ${mdw(c.d)} ${c.event || '정지'}` });
+    if (cap < 1) return cellH({ ln, d: c.d, off: String(c.event || '').replace(/\s*\(.*\)$/, '') || '정지', tip: `${ln} ${mdw(c.d)} ${c.event || '정지'}` });   // 01 일별 가동계획과 같은 이름(정기수리·수리·휴지)
     const r = c.hAvail >= 1 ? (c.hrs || 0) / c.hAvail : null;
     return cellH({ ln, d: c.d, rem, fl: !!c.flag, band: c.event ? ev : '', mc, t: fill, chips: famC(c.fam),
       pct: pctB(r, `이 날 배정 주문을 실적 속도(같은 두께·폭 T/Hr)로 돌리면 ${n1(c.hrs)}시간 — 가동 가능 ${n1(c.hAvail)}시간을 넘어 다음 날로 밀림`, (c.hrs || 0) - c.hAvail),
       st: [['작업대기', c.conf], ['지시대기', c.plan], ['입고예정', c.fcst]], G: c.grp,
-      wn: [c.flag && (c.flagS || c.flag), c.gap >= 0.5 && `빈칸 ${n0(c.gap)}t`, c.lateE && `출항일 초과 ${c.lateE}건`, c.late - c.lateE > 0 && `납기 초과 ${c.late - c.lateE}건`],
+      wn: [c.flag && (c.flagS || c.flag), c.gap >= 0.5 && c.hAvail - (c.hrs || 0) >= 0.5 && `빈 시간 ${n1(c.hAvail - (c.hrs || 0))}h`,   /* 11/13 점검: '빈칸 Xt'(남은 시간 × 평균 속도)는 계획 톤과 안 맞아 보임 → 컬러와 같은 '빈 시간' */ c.lateE && `출항일 초과 ${c.lateE}건`, c.late - c.lateE > 0 && `납기 초과 ${c.late - c.lateE}건`],
       tip: `${ln} ${mdw(c.d)} · 생산 ${n0(fill)}t / 능력 ${n0(cap)}t · 작업대기 ${n0(c.conf)} · 지시대기 ${n0(c.plan)} · 입고예정 ${n0(c.fcst)} · ${Object.entries(regroup(c.grp)).filter(([, v]) => v >= 0.5).map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
   }
   function ccCell(x, ln, KD, rem) {
@@ -229,7 +230,7 @@
   }
   function pastCell(p, a, ln, d) {
     if (!a) return cellH({ ln, d, past: 1, t: null, tip: `${ln} ${mdw(d)} 실적 자료 없음(다음 날 아침 들어옴)` });
-    if (!(a.t >= 0.5)) return cellH({ ln, d, past: 1, off: '비가동', tip: `${ln} ${mdw(d)} 생산 없음` });
+    if (!(a.t >= 0.5)) return cellH({ ln, d, past: 1, off: '정지', tip: `${ln} ${mdw(d)} 생산 없음(정지)` });   // 앞날 정지 칸과 같은 말·같은 색
     const chips = p === 'cg' ? Object.entries(a.fam || {}).filter(([, v]) => v >= 0.5).sort((x, y) => y[1] - x[1]).slice(0, 2).map(([f]) => famC(f)).join('')
       : (a.pr || []).filter(([, v]) => v >= 0.5).slice(0, 1).map(([q]) => `<span class="fam">${esc(q)}</span>`).join('');
     return cellH({ ln, d, past: 1, t: a.t, chips, G: a.grp, tip: `${ln} ${mdw(d)} 생산 실적(MES) ${n0(a.t)}t${a.h ? ` · ${n1(a.h)}h` : ''}${a.pr ? ` · 품명 ${a.pr.map(([q, v]) => `${q} ${n0(v)}`).join(' · ')}` : ''}` });
@@ -245,7 +246,7 @@
     const tdc = (d, x) => `${d === today ? 'td' : ''}${x ? ' ' + x : ''}`.trim();
     const S = SEL[p], selD = S && S.all ? S.d : null;
     const dh = (d) => (kind(d) === 'pad' ? `<th class="pad" aria-hidden="true"></th>`
-      : `<th class="${kind(d) === 'pst' ? 'pst dk' : tdc(d, 'dk')}${d === selD ? ' on' : ''}" data-d="${d}" tabindex="0" role="button" aria-expanded="${d === selD}">${mdw(d)}${kind(d) === 'pst' ? '<small>실적</small>' : d === today ? '<small>오늘</small>' : ''}</th>`);
+      : `<th class="${kind(d) === 'pst' ? 'pst dk' : tdc(d, 'dk')}${d === selD ? ' on' : ''}${[0, 6].includes(new Date(d + 'T00:00:00Z').getUTCDay()) || HOL.has(d) ? ' we' : ''}" data-d="${d}" tabindex="0" role="button" aria-expanded="${d === selD}">${mdw(d)}${kind(d) === 'pst' ? '<small>실적</small>' : d === today ? '<small>오늘</small>' : ''}</th>`);
     const planT = (ln, d) => (p === 'cg' ? (() => { const c = R.cell(ln, d); return (c.cap || 0) < 1 ? 0 : c.conf + c.plan + c.fcst; })() : FL[ln][d].t);
     const pastT = (ln, d) => { const a = R.act(ln, d); return a ? a.t || 0 : null; };
     const dayT = (ln, d) => (kind(d) === 'pst' ? pastT(ln, d) || 0 : kind(d) === 'pl' ? planT(ln, d) : 0);

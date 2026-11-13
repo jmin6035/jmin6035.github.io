@@ -51,7 +51,7 @@
     $('k-h').innerHTML = `도금 계산 결과 <small>실적 ~${md(rp.t0)} · 재계획 ${esc(kst((LP && LP.savedAt) || PO.built))}</small>`;
     $('k-row').innerHTML = kpi('남은 M/C', `${n0(nmc)}<small>회</small>`, `고정 ~${md(lockTo())} · 그 뒤 엔진이 정함`, '')
       + kpi('결품', `${n0(now.short)}<small>t</small>`, `주문 ${n0(now.orderShort)}t · 판매계획 보충 ${n0(now.fillShort)}t`, now.orderShort > 0 ? 'bad' : now.short > 0 ? 'warn' : 'ok', (now.shortBy || []).join(' · '))
-      + kpi('납기 지연', `${n0(now.late)}<small>톤·일</small>`, `늦게 만드는 주문 ${n0(now.orderLateT)}t → <a href="risk.html">납기 위험</a>`, now.late > 0 ? 'warn' : 'ok', '원래 납기 기준 — 홈·가동 현황과 같은 값')
+      + kpi('납기 지연', `${n0(now.late)}<small>톤·일</small>`, `${now.orderLateT >= 0.5 ? `늦게 만드는 주문 ${n0(now.orderLateT)}t` : '주문 지연 0t — 지연은 판매계획 보충분(주문 연결 전)'} → <a href="risk.html">납기 위험</a>`, now.late > 0 ? 'warn' : 'ok', '원래 납기 기준 — 홈·가동 현황과 같은 값')
       + kpi('빼고 계산한 잔량', `${n0(Object.values((R.orderDemand || {}).skip || {}).reduce((a, v) => a + v, 0))}<small>t</small>`, Object.keys((R.orderDemand || {}).skip || {}).map(esc).join(' · ') || '없음', '');
     // 그룹 월 계획 + 수요 구성
     const OD = R.orderDemand || {}, sumOD = (src, cls) => Object.entries(OD[src] || {}).filter(([k]) => cls.includes(k.split('|')[0]) && k.split('|')[2] === ym).reduce((a, [, v]) => a + v, 0);

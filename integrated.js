@@ -183,9 +183,11 @@
       g += `<polyline points="${ad.map(([d, v]) => `${X(d).toFixed(1)},${Y(v).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--s3)" stroke-width="2.4" stroke-linejoin="round"/>`;
       g += ad.map(([d, v, parts]) => `<circle data-s="a" cx="${X(d).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.4" fill="var(--s3)"><title>실제 ${md(d)} 말 ${n0(v)}t (${K.act.map((k, i) => `${k === '도금 제품(자가재)' ? '자가재' : GN[k.replace('g:', '')] || k.replace('g:', '')} ${n0(parts[i])}`).join(' · ')})</title></circle>`).join('');
       const a = ad[ad.length - 1], pw = pv.find(([d]) => d >= a[0]);
+      // 11/13 점검: 머리 숫자 = 위 표와 같은 공장 총계(속보 '도금 제품(판매재)' + 자가재 · '컬러 제품'), 그래프 선 = 그룹 합 → 차이 = 그룹 미지정
+      const tot = pl === 'G' ? (AD[a[0]] || {})['도금 제품(판매재)'] != null ? AD[a[0]]['도금 제품(판매재)'] + (AD[a[0]]['도금 제품(자가재)'] || 0) : null : (AD[a[0]] || {})['컬러 제품'], un = tot != null ? tot - a[1] : 0;
       g += LB(X(a[0]), Y(a[1]) + 18, k1(a[1]), 'var(--s3)');                     // 실제 마지막 값
       return `<div class="st-chart"><h3>${K.nm} <small style="font-weight:500;color:var(--ink-3)">${K.sub}</small></h3>
-        <div class="st-s" style="margin:2px 0 4px"><b class="st-n">${n0(a[1])}t</b> 실제 ${md(a[0])} 말 (${md(d0)} 대비 ${a[1] >= ad[0][1] ? '+' : ''}${n0(a[1] - ad[0][1])}t)${pl === 'G' && (O.stockMax || {})['도금 제품(판매재)'] ? ` · 판매재 월말 최대 ${n0(O.stockMax['도금 제품(판매재)'])}t('27 목표)` : ''}</div>
+        <div class="st-s" style="margin:2px 0 4px"><b class="st-n">${n0(tot != null ? tot : a[1])}t</b> 실제 ${md(a[0])} 말${Math.abs(un) >= 0.5 ? ` · 그룹 합 ${n0(a[1])}t ${un >= 0 ? '+' : '−'} 그룹 미지정 ${n0(Math.abs(un))}t` : ''} (그룹 합 ${md(d0)} 대비 ${a[1] >= ad[0][1] ? '+' : ''}${n0(a[1] - ad[0][1])}t)${pl === 'G' && (O.stockMax || {})['도금 제품(판매재)'] ? ` · 판매재 월말 최대 ${n0(O.stockMax['도금 제품(판매재)'])}t('27 목표)` : ''}</div>
         <svg viewBox="0 0 ${Wd} ${H}" class="cv" role="img" aria-label="${K.nm} 전체 재고 추이">${g}</svg></div>`;
     };
     const plants = ['G', 'C'].filter((pl) => inS(pl)).map(plant).join('');
@@ -196,7 +198,8 @@
       const out = [], g = ((PT && PT.groups) || []).find((x) => x.key === key), sr = ((PT && PT.sr && PT.sr.ship) || []).find((x) => SHIPK[x.name] === key);
       const SD = PT && PT.shipDay && PT.shipDay.g && PT.shipDay.g[key], mes = SD ? Object.entries(SD).filter(([d]) => d.slice(0, 7) === pmon).reduce((a, [, v]) => a + v, 0) : null;
       const a = g && g.ship ? g.ship.actual : mes != null ? mes : sr && sr.actual;
-      if (sr && sr.sched && a < sr.sched) out.push(`출하 일정 미달 ${n0(sr.sched - a)}t`);
+      const base = g && g.ship && g.ship.due != null ? g.ship.due : sr && sr.sched;   // 11/13: 오늘까지 출하 기준 = 통합 관제·관제판·출하 실적과 같은 값
+      if (base && a < base) out.push(`출하 오늘까지 기준 미달 ${n0(base - a)}t`);
       if (g && g.prod && g.prod.month && g.prod.actual > g.prod.month * pel * 1.1) out.push(`생산 진도 초과 ${n0(g.prod.actual - g.prod.month * pel)}t`);
       return out.map((w) => `${GN[key] || key} ${w}`);
     };

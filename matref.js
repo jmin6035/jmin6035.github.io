@@ -60,7 +60,7 @@
   };
 
   const F = { lt: ['leadtime.enc.json', MatRef.ltHtml], spec: ['planstock.enc.json', MatRef.specHtml],
-    stkmat: ['portal.enc.json', (PT) => { const h = MatRef.stkHtml(PT, /소재/); return h ? `<span class="ref-l">소재 재고</span>${h}` : ''; }] };
+    stkmat: ['portal.enc.json', (PT) => { const h = MatRef.stkHtml(PT, /소재/); return h ? `<span class="ref-l" title="판매생산속보 소재 재고 — 계획 > 소재 화면 '지금 재고'(MES 소재재고 목록 + F/H 추정)와 출처가 달라 값이 다름">소재 재고 <small>판생속보 ${esc(UI.fmtDate(String((PT.sr || {}).asOf || '').slice(0, 10)))}</small></span>${h}` : ''; }] };   // 11/13 점검: 01 소재 '지금 재고'와 출처가 달라 값이 다름 — 출처를 숫자 옆에
   async function fill(pw) {
     for (const el of document.querySelectorAll('[data-ref]')) {
       const f = F[el.dataset.ref]; if (!f) continue;
