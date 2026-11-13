@@ -1,7 +1,8 @@
 /* 가동표 공통(11/13 사용자 '생긴 걸 똑같이 맞추라고') — 01 일별 가동계획(gyehoek.js) 표를 그리던 코드를 떼어 낸 것.
    01(gyehoek.js)·월간 가동(supply.js)이 같은 함수로 그림 → 칸·줄·색·범례 위치가 같음. 서식 = ui/optable.css
    OPT.table(ds, V, P, o) — ds = 그 달 날짜들, V = 보일 판 { kind:'now'|…, get(l, d) → 칸 }, P = 비교할 판(월차, 없으면 null)
-     칸 = { t 톤, act 실적 날, fam 대표 강종, al {강종: 톤}, mc M/C 날, sd S/D 날, stop '정기수리'|'수리'|'S/D'|'휴지'|'' }
+     칸 = { t 톤, act 실적 날, fam 대표 강종, al {강종: 톤}, mc M/C 날, sd S/D 날, stop '정기수리'|'수리'|'S/D'|'휴지'|'', sts {t, res} AL-STS 톤·그중 예약(OPT.sts) }
+     AL-STS(11/13 사용자 '칸을 늘리지 말고 색깔을'): AL 줄 칸 중 AL-STS 가 절반 이상인 날 = 청록 칸(kSTS), 툴팁 'AL-STS ○t (예약/주문)'
      o = { today, hrs(l, d, c) → 가동시간(없으면 가동시간 줄 없음), cEv(l, d) → [글, 툴팁] 컬러 부분 정지(노랑 칸), tip(l, d, c) → 칸 툴팁 }
      도금 라인 = 첫 강종 행 → 이벤트 행(M/C·S/D 노랑) → 다음 강종 행 → 가동시간 행. 여러 날 정지 = 직전 강종 행에 남색 합친 칸 '이름 (N일)'
      컬러 라인 = 생산 행 + 이벤트 행(부분 정지 노랑, 정지·휴지 남색 합친 칸). 도금·컬러 합계 행. 31일 칸 고정(짧은 달은 끝에 빈 칸)
@@ -45,6 +46,20 @@
     return `<div class="gk-wrap"><table class="gk${cls ? ' ' + cls : ''}">${inner}</table>${np ? `<i class="gk-past" data-n="${np}" aria-hidden="true"></i>` : ''}${ti >= 0 ? '<i class="gk-tdy" aria-hidden="true"></i>' : ''}</div>`;
   }
 
+  // AL-STS 날별 톤(재계획 R.rows 강종 AL-STS — 지난 날 = MES 실적) + 그중 예약(R.replan.sts.days — 판매계획 보충, 주문은 D-3 확정) → {'라인|날짜': {t, res, act}}
+  function sts(R) {
+    const m = {}, t0 = ((R && R.replan) || {}).t0 || '';
+    for (const [d, l, a, , t] of (R && R.rows) || []) if (a === 'AL-STS') { const x = (m[`${l}|${d}`] = m[`${l}|${d}`] || { t: 0, res: 0, act: d <= t0 }); x.t += t; }
+    for (const [d, l, , r] of (((R && R.replan) || {}).sts || {}).days || []) if (m[`${l}|${d}`]) m[`${l}|${d}`].res = r;
+    return m;
+  }
+  // 'AL-STS 812t (예약 600 · 주문 212)' · 지난 날 '(실적)'
+  function stsTip(c) {
+    const x = c && c.sts; if (!x || x.t < 0.5) return '';
+    if (x.act) return `AL-STS ${n0(x.t)}t (실적)`;
+    const r = Math.min(x.res || 0, x.t), o = x.t - r;
+    return `AL-STS ${n0(x.t)}t (${r >= 0.5 && o >= 0.5 ? `예약 ${n0(r)} · 주문 ${n0(o)}` : r >= 0.5 ? '예약 — 주문 D-3 확정' : '주문'})`;
+  }
   function table(ds, V, P, o) {
     const today = o.today || '';
     const ti = V.kind === 'now' ? ds.indexOf(today) : -1;
@@ -53,7 +68,7 @@
     const chgOf = (C, Q, i) => (Q && !C[i].act && differs(C[i], Q[i], P.toneOnly) ? ' chg' : '');
     const empty = (i) => `<td class="e${dc(i)}"></td>`;
     const at_ = (l, i) => `data-c="${l}|${ds[i]}" data-d="${ds[i]}"`;
-    const tip = (l, i, c) => { const t = o.tip ? o.tip(l, ds[i], c) : ''; return t ? ` title="${esc(t)}"` : ''; };
+    const tip = (l, i, c) => { const t = [o.tip ? o.tip(l, ds[i], c) : '', stsTip(c)].filter(Boolean).join(' · '); return t ? ` title="${esc(t)}"` : ''; };
     const lab = (nm) => `<span>${esc(nm)}</span>`;                        // 11/12 사용자 '휴지·수리 가운데 맞춤'
     let h = head(ds, today, '', '', ti) + '<tbody>';
     if (scope('G')) {
@@ -89,7 +104,8 @@
             }
             const v = inStop[i] ? 0 : amt[f][i];
             tot += v; day[i] += v;
-            r += v ? `<td class="d k${f}${C[i].act ? ' a' : ''}${chgOf(C, Q, i)}${dc(i)}" ${at_(l, i)}${tip(l, i, C[i])}>${n0(v)}</td>` : empty(i);
+            const kf = f === 'AL' && C[i].sts && C[i].sts.t >= 0.5 && C[i].sts.t >= v / 2 ? 'STS' : f;   // AL-STS 날 = AL 줄 안 다른 색(새 줄 없음)
+            r += v ? `<td class="d k${kf}${C[i].act ? ' a' : ''}${chgOf(C, Q, i)}${dc(i)}" ${at_(l, i)}${tip(l, i, C[i])}>${n0(v)}</td>` : empty(i);
           }
           return r + `<td class="tot${f === 'AZ' ? ' red' : ''}">${n0(tot)}</td></tr>`;
         };
@@ -143,7 +159,7 @@
   // 범례(표 아래 가운데): 지난 날이 없는 달은 '지난 날' 뺌 · 가동시간 줄은 색이 없어 뺌
   function legend(V, P, ds, o) {
     const sw = (c, t) => `<span><i class="${c}"></i>${t}</span>`, hasPast = (ds || []).some((d) => d < ((o && o.today) || ''));
-    return `<div class="gk-lg">${scope('G') ? sw('kAZ', 'AZ') + sw('kAL', 'AL') + sw('kMAC', 'MACOSTA') : ''}${scope('C') ? sw('kC', '컬러 가동') : ''}${hasPast ? sw('pst', '지난 날') : ''}${sw('y', 'M/C · S/D')}${sw('sp', '정지 · 휴지')}<span class="sep"></span>`
+    return `<div class="gk-lg">${scope('G') ? sw('kAZ', 'AZ') + sw('kAL', 'AL') + sw('kSTS', 'AL-STS') + sw('kMAC', 'MACOSTA') : ''}${scope('C') ? sw('kC', '컬러 가동') : ''}${hasPast ? sw('pst', '지난 날') : ''}${sw('y', 'M/C · S/D')}${sw('sp', '정지 · 휴지')}<span class="sep"></span>`
       + (P ? sw('chg', `${esc(P.lab)} 대비 바뀐 칸`) : '') + (V.kind === 'now' && ds.includes((o && o.today) || '') ? sw('tdy', '오늘') : '') + '</div>';
   }
   // 다른 표용 범례: items = [[class, 글], …] (같은 네모·같은 자리)
@@ -173,5 +189,5 @@
 
   // 이름 칸(64px)에 안 들어가는 긴 그룹 이름: 앞의 '도금'·'컬러'를 뗌(구분 띠·툴팁에 전체 이름) — 예: 컬러건재수출 → 건재수출
   const short = (nm) => { const s = String(nm || ''); return s.replace(/\s/g, '').length > 4 && /^(도금|컬러)\s?\S{2}/.test(s) ? s.replace(/^(도금|컬러)\s?/, '') : s; };
-  window.OPT = { short, table, legend, lg, head, pad31, wrap, snap, differs, hfmt, red, LINES, WD };
+  window.OPT = { short, sts, stsTip, table, legend, lg, head, pad31, wrap, snap, differs, hfmt, red, LINES, WD };
 })();

@@ -2,7 +2,7 @@
    기준 = 01 일별 가동계획(gyehoek.html) 표 — 이 파일 하나가 원본. 01·월간 가동은 ui/optable.js 가 같은 함수로 표를 그리고,
    다른 '라인(구분) × 날짜' 표(수주·수주 관제 캘린더, 가동 현황, 소재 캘린더, 다시 계산)는 같은 class 를 붙여 이 서식을 씀.
    표 class="gk" · 왼쪽 두 칸 th.c0(라인)·th.c1(강종·구분) 연두 · 머리 2줄 th.dn(날짜)/th.dw(요일), 주말·공휴일 .we 노랑·빨강 · 계 th/td.tot
-   칸: td.kAZ/kAL/kMAC 강종 · td.kC 컬러 가동 · td.y M/C·S/D·청소(노랑·남색 글자) · td.sp 여러 날 정지(남색 합친 칸) · tr.hr 가동시간 · tr.sum 합계
+   칸: td.kAZ/kAL/kMAC 강종 · td.kSTS AL-STS(AL 줄 안 청록) · td.kC 컬러 가동 · td.y M/C·S/D·청소(노랑·남색 글자) · td.sp 여러 날 정지(남색 합친 칸) · tr.hr 가동시간 · tr.sum 합계
    라인 묶음 끝 tr.le(굵은 선) · 지난 날 = 표 위 덮개 .gk-past · 오늘 = 표 위 틀 .gk-tdy (OPT.snap 이 자리 맞춤) · 범례 .gk-lg = 표 아래 가운데 */
 .gk-wrap { overflow-x: auto; background: #fff; border: 1px solid #bfbfbf; position: relative; }
 .gk-tdy { position: absolute; top: 0; z-index: 4; pointer-events: none; box-shadow: inset 0 0 0 2px #1f3864 !important; }
@@ -24,6 +24,7 @@ html:root body main table.gk.gk td.d:hover { filter: brightness(.95); }
 /* 강종 · 컬러 가동 칸(지난 날도 같은 색 — 지난 날은 표 위 음영 덮개) */
 html:root body main table.gk.gk :is(td.kAZ, td.kAZ.a) { background: #fcd5b4 !important; color: #000 !important; }
 html:root body main table.gk.gk :is(td.kAL, td.kAL.a) { background: #95b3d7 !important; color: #000 !important; }
+html:root body main table.gk.gk :is(td.kSTS, td.kSTS.a) { background: #8ccbc1 !important; color: #000 !important; }   /* AL-STS(AL 줄 안, 11/13) — AL 파랑과 구분되는 청록 */
 html:root body main table.gk.gk :is(td.kMAC, td.kMAC.a) { background: #8064a2 !important; color: #fff !important; }
 html:root body main table.gk.gk :is(td.kC, td.kC.a) { background: #dce6f1 !important; color: #000 !important; }
 html:root body main table.gk.gk td.kX { background: #fff; }
@@ -57,7 +58,7 @@ table.gk td.sel { outline: 3px solid #0070c0; outline-offset: -3px; }
 .gk-lg { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 18px; margin: 12px 2px 0; font-size: 15px; color: var(--ink-2); }
 .gk-lg span { white-space: nowrap; display: inline-flex; align-items: center; }
 .gk-lg i { display: inline-block; width: 18px; height: 14px; border-radius: 3px; margin-right: 6px; position: relative; box-shadow: inset 0 0 0 1px #bfbfbf; background: #fff; }
-.gk-lg i.kAZ { background: #fcd5b4; } .gk-lg i.kAL { background: #95b3d7; } .gk-lg i.kMAC { background: #8064a2; } .gk-lg i.kC { background: #dce6f1; }
+.gk-lg i.kAZ { background: #fcd5b4; } .gk-lg i.kAL { background: #95b3d7; } .gk-lg i.kSTS { background: #8ccbc1; } .gk-lg i.kMAC { background: #8064a2; } .gk-lg i.kC { background: #dce6f1; }
 .gk-lg i.y { background: #ffff00; } .gk-lg i.sp { background: #1f3864; } .gk-lg i.hr { background: #fff; } .gk-lg i.we { background: #ffff00; }
 .gk-lg i.pst { background: rgba(0, 0, 0, .07); box-shadow: inset 0 0 0 1px #808080; }
 .gk-lg i.chg { background: #fff; } .gk-lg i.chg::after { content: ''; position: absolute; top: 0; right: 0; border-top: 8px solid #000; border-left: 8px solid transparent; }

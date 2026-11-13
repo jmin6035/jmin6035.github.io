@@ -34,6 +34,9 @@
     timeLimit1: 1800, timeLimit2: 1800,                  // 초
     phase2Mode: 'fast',                                  // 'fast' = 전환일 ±7일 창 반복(수십 초), 'exact' = 전체 탐색·최적 증명(수 분)
     phase2Window: 7,
+    // 11/13 사용자 승인: 2CGL MAC 월 1회(매달 day일 시작·len일, dayOf = 달별 시작일) · 그 외 M/C 없음 · AL-STS 는 월초·월말 칸(slots 일)에만,
+    // MAC→AL 복귀 뒤 gap일 금지, 칸당 연속 최대 cap t · 지연 기준 = 칸 끝. 재계획 옵션 macRule 로 켬(tools/order_replan: data/plan_conditions.json cgl2-mac-window·cgl2-alsts-* use=apply)
+    macRule: { line: '2CGL', from: '2026-12-01', fam: 'MAC', base: 'AL', day: 11, dayOf: { '2027-01': 12 }, len: 11, alloy: 'AL-STS', slots: [[4, 9], [24, 28]], gap: 2, cap: 3500 },
 
     // 생산속도(t/분). 10/30 사용자 '실적 기준 통일, 26년 1월부터': 라인·강종 평균 = 2026.1~ 실적 하루 생산량(M/C·정지 날·더미 제외, tools/rate_actual.py)
     // 11/9 다시 맞춤: rateBase = 실적 하루 생산량 ÷ (1440 − 설비정지 − 비강종 더미, 11/9 실측 12.76·5.97 / 21.17·6.48) — 1CGL AL 708·AZ 758, 2CGL AL 944·MAC 973t/일(11/9 기준).

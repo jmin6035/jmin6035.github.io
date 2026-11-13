@@ -58,7 +58,8 @@
       const k = `${c}|${a}|${du}`; cp.by[k] = (cp.by[k] || 0) + t;
     }
     const early = R.rows.filter((r) => mIdx(r[0]) < mIdx(r[5]));
-    const late = R.rows.filter((r) => r[0] > r[5]);
+    const S = (R.replan && R.replan.sts) || {}, sref = S.ref || {};          // AL-STS 지연 = 칸 끝 기준(11/13 macRule)
+    const late = R.rows.filter((r) => r[0] > ((r[2] === S.alloy && sref[`${r[3]}|${r[5]}`]) || r[5]));
     const earlyT = GP.sum(early, (r) => r[4]), lateT = GP.sum(late, (r) => r[4]);
     const demand = GP.sum(R.buckets, (b) => b.orig), prod = GP.sum(R.rows, (r) => r[4]);
     // 화면 가동시간(분): 하루 1,440분을 넘지 않게. 실적 날은 MES 실제 가동시간(actMin, 화면이 도금 실적 자료로 채움)을 우선, 없으면 생산 t ÷ 계획 속도(최대 1,440)

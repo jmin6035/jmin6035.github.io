@@ -73,6 +73,8 @@
   GP.planDays = (P, H, O) => (O && O.t0 ? GP.dateRange(O.t0, H.D1) : H.days);
   function xAllowed(P, b, l, d, O) {
     if (GP.isBlackout(P, l, d)) return false;
+    const sl = O && O.slots;                                 // 11/13 2CGL AL-STS 칸(replan.js GP.macRule): 규칙 시작일부터는 칸 날짜에만
+    if (sl && b.alloy === sl.alloy && l === sl.line && d >= sl.from && !(d in sl.day)) return false;
     if (b.rel && d < b.rel) return false;                    // 주문 소재 입고 + 투입 전에는 못 만듦(tools/order_demand, 10/30)
     if (d > b.due) return !!(O && O.allowLate) && GP.diffDays(d, b.due) <= (b.maxLate || O.maxLate || 14);
     if (P.releaseExempt.includes(b.cls) || (O && O.freezeUntil && d <= O.freezeUntil)) return true;   // 동결 기간(기준 계획 그대로)은 상한 창 검사 안 함
@@ -81,6 +83,13 @@
   }
   // 생산 상한 일수: 강종(AL-STS 30) → 부서(자동차 45) → 기본(15) 순 — cglplan/model.py release_days 와 같게
   GP.releaseDaysFor = (P, b) => { const a = (P.releaseDaysAlloy || {})[b.alloy], c = (P.releaseDaysCls || {})[b.cls]; return a != null ? a : c != null ? c : P.releaseDays; };
+  // AL-STS 칸당 최대 톤(O.slots.cap[칸]) — cglplan/model.py slot_cons 와 같은 순서
+  function slotCons(lp, x, O) {
+    const sl = O.slots; if (!sl) return;
+    const g = {};
+    for (const e of x) if (e.b.alloy === sl.alloy && e.l === sl.line && e.d in sl.day) (g[sl.day[e.d]] = g[sl.day[e.d]] || []).push([1, e.v]);
+    sl.cap.forEach((cap, i) => { if (g[i]) lp.con(g[i], '<=', cap); });
+  }
   GP.runMILP = function (highs, buckets, P, log, O = {}) {
     const H = GP.horizon(P), days = GP.planDays(P, H, O), D0 = days[0], L = P.lines, LF = P.lineFamilies, FAM = P.alloyFamily;
     const prodDays = O.t0 ? days.slice(1) : days;
@@ -145,6 +154,7 @@
         lp.con(fl.map((e) => [1, e.v]).concat([[-1440 * r, z[`${l}|${f}|${d}`]]]), '<=', 0);
       }
     }
+    slotCons(lp, x, O);
     if (O.t0) { for (const l of L) lp.fix(z[`${l}|${O.init[l]}|${O.t0}`], 1, 1); }
     else for (const l of L) if (P.initFamily[l]) lp.con([[1, z[`${l}|${P.initFamily[l]}|${D0}`]]], '=', 1);
     // 최소 캠페인 길이(선택): 전환한 강종은 m일 이상 유지. 정기수리를 걸치는 구간은 제외
@@ -287,6 +297,7 @@
       if (u.length) lp.con(u, '<=', c);
       lp.con(u.concat([[1, U[l]]]), '>=', c);
     }
+    slotCons(lp, x, O);
     const INV = x.map((e) => [Math.max(0, GP.diffDays(e.b.due, e.d)), e.v]);
     const LATE = x.filter((e) => e.d > e.b.due).map((e) => [GP.diffDays(e.d, e.b.due) * (e.b.lateK || 1), e.v]);
     const BK = new Map(buckets.map((b) => [b.id, b]));
@@ -296,7 +307,7 @@
     const extra = L.map((l) => [[[1, U[l]]], '<=', a.val(U[l]) + 1.0]);
     const b2 = solve(highs, lp.text(INV.concat(pen), extra), {}, log, '평준화 2(선생산 최소)');
     const rows = [];
-    for (const e of x) { const v = b2.val(e.v); if (v > 0.05) rows.push([e.d, e.l, e.b.alloy, e.b.cls, GP.round(v, 2), e.b.due]); }
+    for (const e of x) { const v = b2.val(e.v); if (v > 0.05) rows.push([e.d, e.l, e.b.alloy, e.b.cls, GP.round(v, 2), e.b.due0 || e.b.due]); }   // due0 = 원래 납기(AL-STS 칸 끝으로 바꾼 버킷)
     rows.sort((p, q) => (p.join('\u0001') < q.join('\u0001') ? -1 : 1));
     const shortBy = Object.entries(short).map(([id, v]) => [+id, b2.val(v)]).filter(([, v]) => v > 0.05);
     return { rows, cal, slack: Object.fromEntries(L.map((l) => [l, a.val(U[l])])), shortBy };

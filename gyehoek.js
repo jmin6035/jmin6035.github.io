@@ -65,7 +65,7 @@
     if (SJ && SJ.daily && SJ.month) for (const [l, rows] of Object.entries(SJ.daily)) for (const r of rows) p0[`${l}|${r[0]}`] = +r[1] || 0;
     const ms = [today.slice(0, 7), mAdd(today.slice(0, 7), 1), mAdd(today.slice(0, 7), 2)];
     const MATS = Object.fromEntries((((MO || {}).groups || {}).mats || []).filter((m) => m.plant === 'G').map((m) => [m.key, m]));
-    D = { W, pl, ev, co, BD, actG, actC, cdn, cdx, dayMin, gsd, SW, p0, m0: SJ && SJ.month, at, ms, LT, H: HI && Array.isArray(HI.vers) ? HI : null, MATS, AD: AD && AD.days ? AD : null,
+    D = { sts: R && R.rows ? OPT.sts(R) : {}, W, pl, ev, co, BD, actG, actC, cdn, cdx, dayMin, gsd, SW, p0, m0: SJ && SJ.month, at, ms, LT, H: HI && Array.isArray(HI.vers) ? HI : null, MATS, AD: AD && AD.days ? AD : null,
       SR: PT && Array.isArray(PT.lines) ? { m: String((PT.lines.find((x) => x.asOf) || {}).asOf || '').slice(0, 7), v: Object.fromEntries(PT.lines.filter((x) => x.month > 0).map((x) => [x.line, x.month])) } : null };   // 판매생산속보 월차계획(라인별, 이번 달) — 11/13 사용자 '월차 대비에 판생 월차 추가'
     mon = ms[0];
   }
@@ -90,7 +90,7 @@
     }
     const sd = G ? (/S\/D 재가동/.test((e && e.event) || '') || D.gsd.has(k)) : false;
     const dn = G && e ? (e.blackout || 0) + (e.mcdummy || 0) : null;      // 계획 정지 분(정지 + M/C·재가동)
-    return { t: t < 0.5 ? 0 : t, act, fam, mc, stop, al, sd, dn, ev: e && e.event };
+    return { t: t < 0.5 ? 0 : t, act, fam, mc, stop, al, sd, dn, ev: e && e.event, sts: G ? D.sts[k] : null };
   }
   // 가동시간(시간): 지난 날 = MES 실적 가동 분, 앞날 = 24 − 계획 정지(재계획 cal 의 정지 + M/C 분), 판 자료에 분이 없으면 M/C = 24 − 엔진 M/C 분
   function hrs(l, d, c) {

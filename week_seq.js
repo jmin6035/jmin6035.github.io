@@ -212,7 +212,7 @@
     const row = (k, h) => `<div class="wk3"><i>${k}</i><div>${h}</div></div>`;
     if (plant === 'cg') {
       const t = x.trt || {};
-      return row('사양', `<span class="cp al">${esc(x.al || x.sur)}</span><span class="cp sz" title="두께 × 폭 × 길이(톤 환산)">${(+x.thick).toFixed(2)} × ${n0(x.width)} × ${n0(x.t * 1e6 / (x.thick * x.width * 7.85))}m</span>`
+      return row('사양', `<span class="cp al${(x.al || x.sur) === 'AL-STS' ? ' sts' : ''}">${esc(x.al || x.sur)}</span><span class="cp sz" title="두께 × 폭 × 길이(톤 환산)">${(+x.thick).toFixed(2)} × ${n0(x.width)} × ${n0(x.t * 1e6 / (x.thick * x.width * 7.85))}m</span>`
         + (t.cot ? `<span class="cp" title="도금량">${esc(t.cot)}</span>` : '') + (x.trt ? `<span class="cp" title="후처리">${esc(t.aft || '후처리 없음')}</span>` : '')
         + (x.grade ? `<span class="cp" title="재질(열처리 등급)">${esc(GR[x.grade] || x.grade)}</span>` : '') + (x.spec ? `<span class="cp" title="주문 사양">${esc(x.spec)}</span>` : '') + (x.ge ? '<span class="cp wr" title="용도 가전">가전</span>' : ''))
         + row('주문', (x.grp && x.grp !== '미상' ? `<span class="cp" title="판매그룹">${esc(x.grp)}</span>` : '')
@@ -287,8 +287,10 @@
     ev.forEach((q) => { const d = q.s >= W1 ? 'over' : dayOf(q.s); const o = dsum[d] = dsum[d] || { n: 0, t: 0, run: 0, dn: 0, seg: [] }; if (q.k === 'j') { o.n++; o.t += q.x.t; o.run += q.rm; o.dn += q.ch.m; } else o.dn += (q.e2 || q.e) - q.s; });
     const bar = (d) => { const b0 = tms(d + ' 07:00'); const seg = (a, z, c) => { const x0 = Math.max(0, a - b0), x1 = Math.min(1440, z - b0); return x1 > x0 ? `<i class="${c}" style="left:${(x0 / 14.4).toFixed(2)}%;width:${((x1 - x0) / 14.4).toFixed(2)}%"></i>` : ''; };
       return `<div class="dbar">${ev.map((q) => (q.k === 'j' ? seg(q.ds, q.s, 'd') + seg(q.s, q.e, 'r') : seg(q.s, q.e2 || q.e, q.k === 'p' ? (/샘플|test|시험/i.test(q.ev) ? 'p sm' : 'p') : q.k === 'g' ? (q.e.sm ? 'p sm' : 'd') : 'g'))).join('')}</div>`; };
+    const stsH = (d) => { const x = (((R && R.stsPlan) || {})[line] || {})[d]; if (!x || !(x[0] >= 0.5)) return '';   // AL-STS 날(재계획, 11/13) — 청록 칩 + 예약(판매계획 물량, 주문 D-3 확정)
+      return `<span class="stsc" title="재계획 AL-STS ${n0(x[0])}t${x[1] >= 0.5 ? ` · 그중 예약 ${n0(x[1])}t = 판매계획 물량(외부 소재처 주문 D-3 확정)` : ' · 주문'}">AL-STS ${n0(x[0])}t${x[1] >= 0.5 ? ` · 예약 ${n0(Math.min(x[1], x[0]))}t(D-3 확정)` : ''}</span>`; };
     const dayHead = (d) => { const o = dsum[d] || { n: 0, t: 0, run: 0, dn: 0 }; const over = o.run + o.dn > 1440.5;
-      return `<tr class="dh" data-d="${d}"><td colspan="7"><div class="dhh"><b>${d === 'over' ? `기간 끝(${md(iso(W1))} 07:00) 초과` : dnm(d)}</b><span>작업 ${o.n}건 · ${n0(o.t)}t</span><span>생산 ${n0(o.run)}분 · 휴지 ${n0(o.dn)}분</span>${over && d !== 'over' ? `<em title="그날 시작한 작업·휴지 합이 1,440분 초과">다음날로 ${n0(o.run + o.dn - 1440)}분</em>` : ''}</div>${d === 'over' ? '' : bar(d)}</td></tr>`; };
+      return `<tr class="dh" data-d="${d}"><td colspan="7"><div class="dhh"><b>${d === 'over' ? `기간 끝(${md(iso(W1))} 07:00) 초과` : dnm(d)}</b><span>작업 ${o.n}건 · ${n0(o.t)}t</span><span>생산 ${n0(o.run)}분 · 휴지 ${n0(o.dn)}분</span>${stsH(d)}${over && d !== 'over' ? `<em title="그날 시작한 작업·휴지 합이 1,440분 초과">다음날로 ${n0(o.run + o.dn - 1440)}분</em>` : ''}</div>${d === 'over' ? '' : bar(d)}</td></tr>`; };
     const shown = new Set();
     ev.forEach((q) => {
       const d = q.s >= W1 ? 'over' : dayOf(q.s);

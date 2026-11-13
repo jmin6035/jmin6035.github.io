@@ -43,6 +43,8 @@ main.wrap { max-width: none; }
 table.ws { width: 100%; border-collapse: collapse; font-size: 14.5px; table-layout: fixed; }
 html body table.ws td { padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; line-height: 1.5; text-align: left !important; white-space: normal; }
 table.ws tr.dh td { background: var(--sub); border-top: 2px solid var(--line); padding: 10px 12px; }
+html:root body main .cp.al.sts { background: #8ccbc1 !important; color: #000 !important; }   /* AL-STS 작업(11/13) */
+.dhh span.stsc { background: #8ccbc1; color: #000; font-weight: 700; border-radius: 5px; padding: 0 7px; }   /* AL-STS(11/13 — 01 가동 캘린더 청록) */
 .dhh { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; } .dhh b { font-size: 16px; white-space: nowrap; } .dhh span { color: var(--ink-2); font-size: 14px; white-space: nowrap; } .dhh em { font-style: normal; color: var(--warn); font-weight: 700; white-space: nowrap; }
 .dbar { position: relative; height: 12px; margin-top: 7px; background: var(--grid); border-radius: 3px; overflow: hidden; max-width: 900px; }
 .dbar i { position: absolute; top: 0; bottom: 0; } .dbar .r { background: var(--brand-2); } .dbar .d { background: var(--warn); } .dbar .p { background: var(--steel-3); } .dbar .g { background: var(--bad); }
@@ -256,6 +258,14 @@ table.t.cond.wb-t { margin: 4px 0; } table.t.cond.wb-t td.num { text-align: righ
 /* 11/13 서식 통일(04 수주 카드 기준): 라인 카드 가운데 · 보조 글 15px · 공통 관제 알약 줄 숨김(01·04 와 같게) */
 html.v2 #ui-ctl { display: none !important; }
 .ws-k { text-align: center; } .ws-k .b { font-size: 15px; } .ws-k .td { font-size: 15px; } .ws-k .ln { font-size: 18px; }
+/* 11/13 사용자 '1,2,3,4가 두 줄 — 칸 줄여서 한 줄로': 1920(본문 약 1660px)에서 컬러 4장·도금 2장 한 줄, 좁으면 2×2 */
+.ws-kpis { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 10px; }
+.ws-k { padding: 10px 12px; } .ws-k[aria-pressed="true"] { padding: 9px 11px; }
+.ws-k .ln { font-size: 17px; margin-bottom: 4px; }
+.ws-k .kb { gap: 14px; }
+.ws-k .v2 { font-size: 22px; column-gap: 10px; row-gap: 2px; } .ws-k .v2 small { font-size: 14px; } .ws-k .v2 > i { font-size: 14px; }
+.ws-k .kr { padding-left: 12px; } .ws-k .kr .b, .ws-k .b { font-size: 14px; line-height: 1.6; }
+.ws-k .kc { font-size: 14px; margin-top: 6px; padding-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #ws-fold { margin-top: 18px; } #ws-fold h3 { font-size: 16px; margin: 16px 0 8px; } #ws-fold h4 { font-size: 15px; margin: 12px 0 6px; } #ws-fold h4 small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 6px; }
 #ws-fold .card { box-shadow: none; border: 0; padding: 0; margin: 0 0 12px; background: none; }
 .ws-ul { margin: 6px 0 8px 18px; padding: 0; font-size: 14px; line-height: 1.7; }
@@ -305,6 +315,6 @@ table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px 
 <footer class="foot"><div class="wrap"><span>대상: 컬러 = 작업지시 편성 대상(소재 매치)·확정 대기열 · 도금 = 지시된 코일(생산 전) + 소재 들어온 작업 · 시간 = 기존 속도(t/h) · 휴지 = 전환 기준표(1년 실적)·휴지계획 · 저장 = 공유 저장소(암호화, 버전 이력)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611141500"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
-<script src="week_seq.js?v=2611141500"></script>
+<script src="week_seq.js?v=2611141900"></script>
 </body>
 </html>
