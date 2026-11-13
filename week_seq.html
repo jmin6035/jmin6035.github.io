@@ -19,16 +19,22 @@ main.wrap { max-width: none; }
 .ws-act #ws-who { width: 110px; } .ws-act #ws-memo { width: 220px; }
 .ws-res { font-size: 14px; color: var(--ink-2); }
 .ws-hint { font-size: 13.5px; color: var(--ink-3, var(--ink-2)); }
-.ws-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin: 0 0 16px; }
+.ws-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); gap: 12px; margin: 0 0 16px; }
 .ws-k { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; background: var(--surface); cursor: pointer; text-align: left; font: inherit; color: var(--ink); }
 .ws-k[aria-pressed="true"] { border: 2px solid var(--brand-2); background: var(--tint-2); padding: 11px 15px; }
-.ws-k .ln { font-size: 16px; font-weight: 800; } .ws-k .v { font-size: 26px; font-weight: 800; letter-spacing: -.4px; white-space: nowrap; }
+.ws-k .ln { font-size: 18px; font-weight: 800; text-align: center; margin-bottom: 6px; } .ws-k .v { font-size: 26px; font-weight: 800; letter-spacing: -.4px; white-space: nowrap; }
 .ws-k .v small { font-size: 14px; font-weight: 500; color: var(--ink-2); margin-left: 2px; }
-.ws-k .v2 { display: inline-grid; grid-template-columns: auto auto auto; column-gap: 14px; row-gap: 2px; align-items: baseline; font-size: 22px; font-weight: 800; letter-spacing: -.3px; white-space: nowrap; margin: 2px 0 4px; }
-.ws-k .v2 > span { text-align: right; } .ws-k .v2 small { font-size: 14px; font-weight: 500; color: var(--ink-2); margin-left: 2px; }
-.ws-k .v2 > i { font-style: normal; font-size: 14px; font-weight: 700; text-align: left; }
+.ws-k .v2 { display: inline-grid; grid-template-columns: auto auto auto; column-gap: 14px; row-gap: 4px; align-items: baseline; font-size: 28px; font-weight: 800; letter-spacing: -.3px; white-space: nowrap; margin: 2px 0 4px; }
+.ws-k .v2 > span { text-align: right; } .ws-k .v2 small { font-size: 15px; font-weight: 500; color: var(--ink-2); margin-left: 2px; }
+.ws-k .v2 > i { font-style: normal; font-size: 16px; font-weight: 700; text-align: left; }
 .ws-k .b { font-size: 13.5px; color: var(--ink-2); line-height: 1.6; } .ws-k .b b { color: var(--ink); white-space: nowrap; }
 .ws-k .b .w { color: var(--warn); font-weight: 700; }
+
+.ws-k .kb { display: flex; align-items: center; justify-content: center; gap: 22px; }
+.ws-k .kr { border-left: 1px solid var(--line); padding-left: 18px; text-align: left; }
+.ws-k .kr .b { font-size: 15px; line-height: 1.7; white-space: nowrap; }
+.ws-k .kc { margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--line); font-size: 14px; color: var(--ink-2); text-align: center; line-height: 1.6; }
+.ws-k .kc .w { color: var(--warn); font-weight: 700; } .ws-k .kc .ok { color: var(--ok, #2e7d32); font-weight: 700; } .ws-k .kc b { color: var(--ink); }
 .ws-grid { display: block; }
 .ws-side > details > summary { cursor: pointer; font-size: 16px; font-weight: 800; white-space: nowrap; }
 .ws-side > details > summary span { font-size: 14px; font-weight: 500; color: var(--ink-2); margin-left: 6px; }
@@ -74,9 +80,9 @@ table.ws tr.ev.sm .hint { color: #4b7d77; font-weight: 500; font-size: 13.5px; }
 .sub b.wr { color: var(--warn); }
 table.ws td .cn { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } table.ws td .cd { display: flex; flex-wrap: wrap; gap: 3px 4px; margin: 2px 0; }
 table.ws tr.j select { max-width: 92px; }
-html body table.ws td.nm { text-align: right !important; white-space: nowrap; font-variant-numeric: tabular-nums; } .nm b { font-size: 15px; }
-html body table.ws td.ac { text-align: right !important; line-height: 2; white-space: normal !important; } html body table.ws td.ac select { max-width: 68px; padding: 3px 4px; }
-.ac button, .ac select { font: inherit; font-size: 13.5px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; margin-left: 2px; }
+html body table.ws td.nm { text-align: center !important; white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 15px; } .nm b { font-size: 17px; } html body table.ws td.nm .sub { font-size: 14px; }
+html body table.ws td.ac { text-align: center !important; line-height: 2; white-space: nowrap !important; } html body table.ws td.ac select { max-width: 92px; padding: 4px 6px; }
+.ac button, .ac select { font: inherit; font-size: 15px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; margin-left: 2px; }
 .ac button:hover, .ac select:hover { border-color: var(--brand-2); }
 .ac button.x { color: var(--bad); }
 .ws-side h3 { font-size: 16px; margin: 0 0 8px; }
