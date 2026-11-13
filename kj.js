@@ -446,8 +446,9 @@
     for (const p of pls) {
       const X0 = A.plant[p][mSel]; if (cur) X0.over = sum(GRP.filter((g) => g.pl === p), (G) => Math.max(0, -(A.grp[G.k][mSel].gap || 0)));
       const noStk = !cur && X0.mat == null && X0.stk == null, nG = GRP.filter((g) => g.pl === p).length;
-      rows.push(rowOf(`${PN[p]} 전체`, X0, 'pt', false, false, X0.matGrp && !noStk ? 1 : 1 + nG, noStk));   // 그룹 소재가 없으면 공장 칸을 그룹 줄까지 세로로 합침
-      for (const G of GRP.filter((g) => g.pl === p)) rows.push(rowOf(G.nm, A.grp[G.k][mSel], G.self ? 'self' : '', true, G.self, 1, noStk));   // 11/13 점검: 도금 자가재 줄 다시 넣음 — 공장 줄 생산·재고(자가재 포함) = 그룹 줄 합이 보이게(수주·출하 칸은 '내부 투입')
+      const hasSelf = GRP.some((g) => g.pl === p && g.self);
+      rows.push(rowOf(hasSelf ? `${PN[p]} 전체 (자가재 포함)` : `${PN[p]} 전체`, X0, 'pt', false, false, X0.matGrp && !noStk ? 1 : 1 + nG - (hasSelf ? 1 : 0), noStk));   // 그룹 소재가 없으면 공장 칸을 그룹 줄까지 세로로 합침
+      for (const G of GRP.filter((g) => g.pl === p && !g.self)) rows.push(rowOf(G.nm, A.grp[G.k][mSel], '', true, G.self, 1, noStk));   // 도금 자가재 줄 뺌(11/12 사용자 결정 유지) — 공장 줄 이름에 '자가재 포함'을 밝혀 그룹 줄 합과 차이를 설명
     }
     if (pls.length > 1) { const P = pls.map((p) => A.plant[p][mSel]), T = {};
       for (const k of [...FLOW, 'mat', 'matCap', 'cap', 'matNa', 'dummy', 'over']) T[k] = sum(P, (x) => x[k]);
