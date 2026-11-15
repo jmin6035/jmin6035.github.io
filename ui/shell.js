@@ -40,7 +40,7 @@
   const ADMN = '관리';
   /* 11/12 회의: 메뉴 순서 = 보고 순서 ① 계획 → ② 관제 → ③ 편성(docs/16 ★2). 새 양식 미리보기(V2)에서만 맨 위, 기존 메뉴는 '기타'(접힘) 아래 — 기본 화면 메뉴는 그대로 */
   const MV2 = V2 ? [['v1', '계획', 'supply', [['gyehoek', 'gyehoek.html', '일별 가동계획'], ['gyehoek', 'gyehoek.html#mat', '소재']]],
-    ['v2', '작업', 'wo', [['weekseq', 'week_seq.html', '작업 순서']]], ['v3', '편성', 'weekseq', [['pyeonseong', 'pyeonseong.html', '편성']]],
+    ['v2', '작업', 'wo', [['weekseq', 'week_seq.html', '작업 순서'], ['seqview', 'seq_view.html', '작업 순서 조회']]], ['v3', '편성', 'weekseq', [['pyeonseong', 'pyeonseong.html', '편성']]],
     ['v4', '수주', 'home', [['kj', 'kj.html', '수주']]]] : [];   // 11/12 사용자 '관제 → 수주, 순서 = 계획·작업·편성·수주'
   const ETC = '기타', MENUS = [...MV2, ...MENU];
   const ALL = [...MENUS.flatMap((m) => m[3]), ...ADMIN];
@@ -455,7 +455,7 @@
 
   /* 관제 띠(11/3 사용자 '관제 — 어느 화면에서든 전체가 한눈에'): 홈 관제판과 같은 판매그룹 신호를 모든 화면 머리 아래 한 줄로 */
   async function ctlStrip() {
-    const h = document.getElementById('shell'); if (!h || h.dataset.page === 'home' || document.getElementById('ui-ctl')) return;
+    const h = document.getElementById('shell'); if (!h || h.dataset.page === 'home' || h.dataset.page === 'seqview' || document.getElementById('ui-ctl')) return;   // 작업 순서 조회(다른 부서용 보기 전용)엔 관제 띠 없음
     let pw = null; for (const k of ['cgl-analysis-pw', 'cgl-supply-pw']) { try { pw = pw || localStorage.getItem(k); } catch (e) { /* 무시 */ } }
     if (!pw) return;
     const wait = (t) => new Promise((r) => setTimeout(r, t));
