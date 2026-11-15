@@ -18,7 +18,7 @@
   const addD = (d, k) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + k); return x.toISOString().slice(0, 10); };
   const wkOf = (d) => addD(d, -((new Date(d + 'T00:00:00Z').getUTCDay() + 4) % 7));   // 생산주 = 수 ~ 화(포털 '이번 주(수~화)'·확정 키와 같음)
   const TODAY = new Date(Date.now() + 2 * 3600e3).toISOString().slice(0, 10);          // MES 일자(07시 기준, KST)
-  const COLS = ['순번', '계약번호', '행번', '두께', '폭', '중량', '길이', '부서', '담당자', '목적지', 'L/S', 't/hr', '시작시간', '종료시간', '상태'];
+  const COLS = ['순번', '계약번호', '행번', '두께', '폭', '중량', '길이', '부서', '담당자', '목적지', 'Top Color', 'Back Color', 'L/S', 't/hr', '시작시간', '종료시간', '상태'];
 
   let PW = '', plant = /cc/.test(location.hash) ? 'cc' : 'cg', line = null, V = null;
   const OP = {};   // 공정별 주문진도 { con: row }
@@ -59,13 +59,14 @@
         k: x.dummy ? 'd' : 'j', s: q.s, e: q.e, d: C.dayOf(q.s), cn, sq,
         thk: cg ? x.thick : x.thk, wdt: cg ? x.width : x.wdt, t: x.t, len: x.dummy ? null : x.len,
         grp: x.dummy ? '더미' : o.grp || (cg ? x.grp : x.g), man: x.man || o.man, dst: cg ? o.dst || x.dst : x.cus || o.cus || x.dst,
+        top: cg || x.dummy ? null : x.code || x.color, back: cg || x.dummy ? null : x.codeBack || x.back,   // 11/15 사용자 'top·back color 추가' — 컬러만(상도·이면 풀 코드, 없으면 도료 종류)
         ls: x.dummy ? null : cg ? x.ls : (x.ls || {})[l], tph: x.dummy ? null : tph,
         stt: cg ? (x.issued ? ['fx', '지시'] : ['wt', '대기']) : x.fixed ? ['kw', '작업대기'] : ['kj', '지시대기'],
       });
     });
     return out;
   }
-  const cellsOf = (r, n) => (r.k === 's' ? null : [n, r.con || r.cn, r.con ? '-' : r.sq, fx(r.thk, 2), n0(r.wdt), fx(r.t, 1), n0(r.len), r.grp || '-', r.man || '-', r.dst || '-', n0(r.ls), fx(r.tph, 1), tm(r.s), tm(r.e)]);
+  const cellsOf = (r, n) => (r.k === 's' ? null : [n, r.con || r.cn, r.con ? '-' : r.sq, fx(r.thk, 2), n0(r.wdt), fx(r.t, 1), n0(r.len), r.grp || '-', r.man || '-', r.dst || '-', r.top || '-', r.back || '-', n0(r.ls), fx(r.tph, 1), tm(r.s), tm(r.e)]);
 
   function draw() {
     const D = V.D, Ls = C.LINES[plant];
@@ -83,18 +84,18 @@
     // 표: 생산주(수~화) 구분줄 → 날짜 구분줄(요일·건수·톤) → 줄
     const rs = R[line], wk0 = wkOf(TODAY);
     const wkNm = (w) => (w === wk0 ? '이번 주' : w === addD(wk0, 7) ? '다음 주' : w === addD(wk0, -7) ? '지난 주' : '');
-    const CW = [52, 150, 58, 62, 68, 66, 72, 150, 80, 0, 58, 62, 128, 128, 96];
+    const CW = [52, 150, 58, 62, 68, 66, 72, 150, 80, 0, 104, 104, 58, 62, 128, 128, 96];
     let h = `<colgroup>${CW.map((w) => (w ? `<col style="width:${w}px">` : '<col>')).join('')}</colgroup><thead><tr>${COLS.map((c) => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody>`, n = 0, cw = null, cd = null, z = 0;
     rs.forEach((r) => {
       const w = wkOf(r.d);
-      if (w !== cw) { cw = w; const [k, t] = sum(rs.filter((x) => wkOf(x.d) === w)); h += `<tr class="wh"><td colspan="15">${wkNm(w)} ${mmdd(w).replace(/^0/, '')}~${mmdd(addD(w, 6)).replace(/^0/, '')}<span>${k}건 · ${n0(t)}t</span></td></tr>`; }
-      if (r.d !== cd) { cd = r.d; z = 0; const [k, t] = sum(rs.filter((x) => x.d === r.d)); const we = /[토일]/.test(dnm(r.d)); h += `<tr class="dh"><td colspan="15"><b${we ? ' class="we"' : ''}>${dnm(r.d)}</b><span>${k}건 · ${n0(t)}t</span></td></tr>`; }
-      if (r.k === 's') { h += `<tr class="stp ${r.yel ? 'y' : 'n'}"><td></td><td colspan="11">${esc(r.lab)}</td><td>${tm(r.s)}</td><td>${tm(r.e)}</td><td></td></tr>`; return; }
+      if (w !== cw) { cw = w; const [k, t] = sum(rs.filter((x) => wkOf(x.d) === w)); h += `<tr class="wh"><td colspan="17"><div class="stk">${wkNm(w)} ${mmdd(w).replace(/^0/, '')}~${mmdd(addD(w, 6)).replace(/^0/, '')}<span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
+      if (r.d !== cd) { cd = r.d; z = 0; const [k, t] = sum(rs.filter((x) => x.d === r.d)); const we = /[토일]/.test(dnm(r.d)); h += `<tr class="dh"><td colspan="17"><div class="stk"><b${we ? ' class="we"' : ''}>${dnm(r.d)}</b><span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
+      if (r.k === 's') { h += `<tr class="stp ${r.yel ? 'y' : 'n'}"><td colspan="14"><div class="stk">${esc(r.lab)}</div></td><td>${tm(r.s)}</td><td>${tm(r.e)}</td><td></td></tr>`; return; }
       n++; z++;
       const c = cellsOf(r, n);
-      h += `<tr class="${r.k === 'd' ? 'dm' : 'j'}${z % 2 === 0 ? ' z' : ''}"${r.note ? ` title="${esc(r.note)}"` : ''}>${c.map((v, i) => `<td${i === 1 ? ' class="cn"' : i === 7 || i === 8 ? ' class="mn"' : i === 9 ? ' class="ds"' : ''}>${esc(v)}</td>`).join('')}<td>${r.k === 'd' || !r.stt ? '-' : `<span class="chip ${r.stt[0]}">${r.stt[1]}</span>`}</td></tr>`;
+      h += `<tr class="${r.k === 'd' ? 'dm' : 'j'}${z % 2 === 0 ? ' z' : ''}"${r.note ? ` title="${esc(r.note)}"` : ''}>${c.map((v, i) => `<td${i === 1 ? ' class="cn"' : i === 7 || i === 8 ? ' class="mn"' : i === 9 ? ` class="ds" title="${esc(v)}"` : ''}>${esc(v)}</td>`).join('')}<td>${r.k === 'd' || !r.stt ? '-' : `<span class="chip ${r.stt[0]}">${r.stt[1]}</span>`}</td></tr>`;
     });
-    if (!rs.length) h += `<tr><td colspan="15" class="sv-empty">${line} 기간 안 작업 없음${D.lines[line] && D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}</td></tr>`;
+    if (!rs.length) h += `<tr><td colspan="17" class="sv-empty">${line} 기간 안 작업 없음${D.lines[line] && D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}</td></tr>`;
     $('sv-tbl').innerHTML = h + '</tbody>';
     find();
   }
@@ -108,10 +109,10 @@
       const ws = wb.addWorksheet(l), rs = rowsOf(l); let n = 0;
       ws.addRow(COLS);
       rs.forEach((r) => {
-        if (r.k === 's') { const x = ws.addRow(['', r.lab, '', '', '', '', '', '', '', '', '', '', tm(r.s), tm(r.e), '']); x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: r.yel ? 'FFFFFF00' : 'FF1F3864' } }; x.font = { bold: true, color: { argb: r.yel ? 'FF1F3864' : 'FFFFFFFF' } }; return; }
+        if (r.k === 's') { const x = ws.addRow(['', r.lab, '', '', '', '', '', '', '', '', '', '', '', '', tm(r.s), tm(r.e), '']); x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: r.yel ? 'FFFFFF00' : 'FF1F3864' } }; x.font = { bold: true, color: { argb: r.yel ? 'FF1F3864' : 'FFFFFFFF' } }; return; }
         n++;
         const num = (v, k) => (v == null || isNaN(v) || !(+v > 0) ? '-' : +(+v).toFixed(k));
-        const x = ws.addRow([n, r.con || r.cn, r.con ? '-' : r.sq, num(r.thk, 2), num(r.wdt, 0), num(r.t, 1), num(r.len, 0), r.grp || '-', r.man || '-', r.dst || '-', num(r.ls, 0), num(r.tph, 1), tm(r.s), tm(r.e), r.k === 'd' ? '-' : r.stt[1]]);
+        const x = ws.addRow([n, r.con || r.cn, r.con ? '-' : r.sq, num(r.thk, 2), num(r.wdt, 0), num(r.t, 1), num(r.len, 0), r.grp || '-', r.man || '-', r.dst || '-', r.top || '-', r.back || '-', num(r.ls, 0), num(r.tph, 1), tm(r.s), tm(r.e), r.k === 'd' ? '-' : r.stt[1]]);
         if (r.k === 'd') { x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECECEC' } }; x.font = { color: { argb: 'FFC00000' }, bold: true }; }
       });
       ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }; ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F3864' } };
