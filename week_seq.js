@@ -55,6 +55,9 @@
   function chgCC(a, b, l) {
     if (!a) return { m: 0, parts: [] };
     if (a.dummy || b.dummy) return { m: 0, parts: [] };
+    if (R.topSame && R.topSame[l] != null && catOf(a, b) === '상도' && a.thk === b.thk && a.wdt === b.wdt) {   // 11/16 사용자: 1·2CCL 두께·폭 같고 상도만 — 앞 작업 40분 이상 0분(표시 없음), 미만 실적 평균
+      if (runMin(a, l) >= 40) return { m: 0, parts: [] };
+      return { m: R.topSame[l], parts: [{ c: '상도 바뀜(앞 작업 40분 미만) — 실적 평균', m: R.topSame[l] }] }; }
     if (R.trans && R.trans[l]) { const k = catOf(a, b), m = R.trans[l][k];
       if (m != null) return { m, parts: [{ c: `${k === '사양 같음' ? '새 주문(사양 같음)' : k + ' 바뀜'} — 1년 실적 평균`, m }] }; }
     if (a.block !== b.block) { const lb = R.block[`${l}|${a.block}>${b.block}`]; if (lb) return { m: lb, parts: [{ c: `블록 전환 ${R.blockNm[a.block]}→${R.blockNm[b.block]}`, m: lb }] }; }
