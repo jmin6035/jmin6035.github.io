@@ -96,6 +96,7 @@
     });
     if (!rs.length) h += `<tr><td colspan="15" class="sv-empty">${line} 기간 안 작업 없음${D.lines[line] && D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}</td></tr>`;
     $('sv-tbl').innerHTML = h + '</tbody>';
+    find();
   }
 
   // ───────── 엑셀(칸 그대로, 라인마다 한 시트)
@@ -139,6 +140,13 @@
       document.querySelector('#sv-lock h2').textContent = '분석 암호';
     }
   }
+  // 11/15 사용자 '담당자나 계약번호 검색' — 맞는 작업 줄만 남김(정지·날 머리는 그대로)
+  function find() {
+    const q = ($('sv-find').value || '').trim().toLowerCase(); let n = 0;
+    document.querySelectorAll('#sv-tbl tr.j, #sv-tbl tr.dm').forEach((r) => { r.classList.remove('fd', 'nf'); if (!q) return; const c = r.cells; const ok = [c[1], c[8]].some((td) => td && td.innerText.toLowerCase().includes(q)); r.classList.add(ok ? 'fd' : 'nf'); n += ok; });
+    $('sv-fres').textContent = q ? `${line} ${n}건` : '';
+  }
+  document.addEventListener('input', (e) => { if (e.target && e.target.id === 'sv-find') find(); });   // 스크립트가 본문보다 먼저 읽혀 직접 연결하면 null
   const go = (p) => { if (!PW || p === plant) return; line = null; open(p).catch((e) => { $('sv-tbl').innerHTML = `<tbody><tr><td class="sv-empty">자료 읽기 실패: ${esc(e.message)}</td></tr></tbody>`; }); };
   $('sv-plant').querySelectorAll('button').forEach((b) => (b.onclick = () => { location.hash = b.dataset.p; }));
   addEventListener('hashchange', () => go(/cc/.test(location.hash) ? 'cc' : 'cg'));

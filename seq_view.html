@@ -29,6 +29,7 @@ table.sv thead th { position: sticky; top: 0; z-index: 2; background: #1f3864; c
 table.sv tr.z td { background: var(--zebra); }
 table.sv td.ds, table.sv td.mn { white-space: normal; word-break: keep-all; }
 table.sv td.cn { font-weight: 700; letter-spacing: .1px; }
+table.sv tr.fd td { background: #fff2cc !important; } table.sv tr.nf { display: none; }
 table.sv tr.dm td { background: #ececec !important; color: #c00000; font-weight: 600; }
 table.sv tr.wh td { background: var(--tint-2); color: var(--ink); font-size: 16px; font-weight: 800; padding: 9px 14px; border-top: 2px solid var(--brand-2); }
 table.sv tr.dh td { background: var(--surface-2); color: var(--ink); font-size: 16px; font-weight: 700; padding: 6px 14px; border-top: 1px solid var(--line); }
@@ -69,6 +70,7 @@ table.sv tr.stp.n td { background: #1f3864; color: #fff; }
       <div class="seg" id="sv-plant"><button type="button" data-p="cg">도금</button><button type="button" data-p="cc">컬러</button></div>
       <span class="sv-st" id="sv-st"></span>
       <span class="sv-wk" id="sv-wk"></span>
+      <input id="sv-find" type="search" placeholder="계약번호·담당자 찾기" aria-label="계약번호·담당자 찾기" style="font:inherit;font-size:15px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;width:240px;background:var(--surface);color:var(--ink)"><span class="sv-wk" id="sv-fres"></span>
       <span class="sp"></span>
       <button type="button" class="btn" id="sv-xls">엑셀 내려받기</button>
       <button type="button" class="btn" id="sv-prt">인쇄</button>

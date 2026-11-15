@@ -24,8 +24,18 @@
   const hhmm = (m) => iso(m).slice(11);
   const hrs = (m) => (m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 >= 1 ? ' ' + Math.round(m % 60) + '분' : ''}` : `${Math.round(m)}분`);
   const LINES = { cg: ['1CGL', '2CGL'], cc: ['1CCL', '2CCL', '3CCL', '4CCL'] };
-  const POOLNM = { pre: '기간 시작 전에 끝날 작업', over: '기간 내 시간 부족(순연)', later: '생산예정일이 기간 뒤', out: '직접 제외 작업', new: '신규 작업' };
-  const GR = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E 극저', GREL: 'Gr.E 저탄', GRA: 'Gr.A', GRB: 'Gr.B' };
+  const POOLNM = { pre: '기간 시작 전에 끝날 작업', over: '기간 내 시간 부족(순연)', later: '미편성 작업', out: '직접 제외 작업', new: '신규 작업' };
+  // 11/15 사용자 'VA·CQ·CSP1-HG 전부 한글로' — MES 코드 마스터(ORD_COT_QTY_CLS·COT_AFT_TRE_CLS_CD·PRC_AFT_TRE_CLS_CD) 이름
+  const GR = { CQ: '일반용', DQ: '가공용', DDQ: '심가공용', EDDQ: '초심가공용', LFQ: '성형용', GRA: '구조용 A', GRB: '구조용 B', GRC: '구조용 C', GRD: '구조용 D', GRE: '구조용 E(극저탄)', GREL: '구조용 E(저탄)' };
+  const COTG = { AA: 40, AB: 60, AC: 80, AD: 100, AE: 120, AF: 160, AR: 30, GC: 90, JC: 80, ME: 120, O6: 430, OB: 80, OC: 90, OD: 100, OE: 120, OF: 180, OH: 220, OJ: 250, OK: 275, OL: 350, OP: 300, OQ: 140, OY: 160, VA: 70, VB: 90, VC: 120, VD: 150, VE: 170, VF: 185, VJ: 100, XX: 150 };
+  const COTN = { O3: '패턴맥 로고', OT: '패턴맥 격자', OW: '패턴맥 격자' };
+  const cotKo = (c) => (COTG[c] ? `도금량 ${COTG[c]}g` : COTN[c] || (c ? `도금량 ${c}` : ''));
+  const AFT = { CX: '크롬', GC: '금색·3가크롬', IX: '3가크롬', KX: '크롬', LX: '윤활', MX: '무크롬 유기피복', NX: '무크롬 방청', RX: '무크롬 PE폼', XA: '무크롬 청색', XB: '무크롬 녹색', XF: '무크롬 PE폼', XG: '무크롬 유기피복', XT: '무크롬 가전용', XX: '무크롬', BT: '무크롬 바이오', AC: '내지문(후막)', AD: '내지문(박막)', AE: '특수 내지문' };
+  const specKo = (v) => { const s = String(v || ''); let m;   // 소재 규격: CSP1·CSP2·수입 CQ/DQ 는 재질(일반용·가공용)과 같은 뜻이라 뺌
+    if (!s || /^CSP[12](-|$)/.test(s) || /^IS-CR0-(CQ|DQ)/.test(s)) return '';
+    if ((m = s.match(/^CSP(\d{3})/))) return `고강도 ${m[1]}`;
+    if ((m = s.match(/(439|409L?|430)/))) return `스테인리스 ${m[1]}`;
+    return s; };
   const IND = { A: '508', B: '610', C: '305' };
 
   let mode = /-wo\b/.test(location.hash) ? 'wo' : 'ed';
@@ -213,8 +223,8 @@
     if (plant === 'cg') {
       const t = x.trt || {};
       return row('사양', `<span class="cp al${(x.al || x.sur) === 'AL-STS' ? ' sts' : ''}">${esc(x.al || x.sur)}</span><span class="cp sz" title="두께 × 폭 × 길이(톤 환산)">${(+x.thick).toFixed(2)} × ${n0(x.width)} × ${n0(x.t * 1e6 / (x.thick * x.width * 7.85))}m</span>`
-        + (t.cot ? `<span class="cp" title="도금량">${esc(t.cot)}</span>` : '') + (x.trt ? `<span class="cp" title="후처리">${esc(t.aft || '후처리 없음')}</span>` : '')
-        + (x.grade ? `<span class="cp" title="재질(열처리 등급)">${esc(GR[x.grade] || x.grade)}</span>` : '') + (x.spec ? `<span class="cp" title="주문 사양">${esc(x.spec)}</span>` : '') + (x.ge ? '<span class="cp wr" title="용도 가전">가전</span>' : ''))
+        + (t.cot ? `<span class="cp" title="도금량(코드 ${esc(t.cot)})">${esc(cotKo(t.cot))}</span>` : '') + (t.aft && x.grp !== '자가재' ? `<span class="cp" title="후처리(코드 ${esc(t.aft)})">${esc(AFT[t.aft] || t.aft)}</span>` : '')   // 11/15 사용자: 후처리 없음·자가재(컬러 소재) 후처리 표시 삭제
+        + (x.grade ? `<span class="cp" title="재질(코드 ${esc(x.grade)})">${esc(GR[x.grade] || x.grade)}</span>` : '') + (specKo(x.spec) ? `<span class="cp" title="소재 규격(${esc(x.spec)})">${esc(specKo(x.spec))}</span>` : '') + (x.ge ? '<span class="cp wr" title="용도 가전">가전</span>' : ''))
         + row('주문', (x.grp && x.grp !== '미상' ? `<span class="cp" title="판매그룹">${esc(x.grp)}</span>` : '')
           + `<span class="cp" title="담당자 - 목적지(내수는 고객사)">${esc(x.man || '담당 미상')} - ${esc(x.dst || '목적지 미상')}</span><span class="ib"><em class="lb">입고</em><span class="cp${x.ent && x.ent > TODAY ? ' wr' : ''}" title="소재 입고일">소재 ${x.ent ? md(x.ent) : '-'}</span></span>`);
     }
@@ -310,8 +320,26 @@
     days.filter((x) => !shown.has(x)).forEach((x) => { h += dayHead(x); });
     if (!ev.length) h += `<tr><td colspan="7" class="muted">이 라인에 기간 안 작업이 없습니다${D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}. 오른쪽 빠진 작업에서 넣을 수 있습니다.</td></tr>`;
     $('ws-tbl').innerHTML = `<colgroup><col style="width:30px"><col style="width:44px"><col style="width:118px"><col style="width:196px"><col><col style="width:${plant === 'cc' ? 150 : 170}px"><col style="width:${plant === 'cc' ? 360 : 280}px"></colgroup>` + h;
-    drawPool(); drawCk(); bind(); fit();
+    drawPool(); drawCk(); bind(); fit(); find();
   }
+  // 11/15 사용자 '담당자나 계약번호 검색' — 표 줄은 노란 칠, 미편성 목록은 맞는 것만, 다른 라인에 있으면 라인 단추
+  function find(go) {
+    const q = ($('ws-find').value || '').trim().toLowerCase(), out = $('ws-fres');
+    document.querySelectorAll('tr.j.fd').forEach((r) => r.classList.remove('fd'));
+    document.querySelectorAll('.pl-i.nf').forEach((r) => r.classList.remove('nf'));
+    if (!q) { out.innerHTML = ''; return; }
+    const hit = (x) => x && [x.con, x.man].some((v) => String(v || '').toLowerCase().includes(q));
+    const byId = Object.fromEntries(D.jobs.map((x) => [x.id, x]));
+    let n = 0, first = null;
+    document.querySelectorAll('tr.j[data-id]').forEach((r) => { if (hit(byId[r.dataset.id])) { r.classList.add('fd'); n++; first = first || r; } });
+    let m = 0; document.querySelectorAll('.pl-i[data-id]').forEach((r) => { if (hit(byId[r.dataset.id])) m++; else r.classList.add('nf'); });
+    if (m) { const d = $('ws-pool').querySelector('details'); if (d) d.open = true; $('ws-pool').querySelectorAll('.pl-g').forEach((g) => { if (g.querySelector('.pl-i:not(.nf)')) g.open = true; }); }
+    const other = {}; D.jobs.forEach((x) => { if (x.line !== line && hit(x)) other[x.line] = (other[x.line] || 0) + 1; });
+    out.innerHTML = `${line} 순서 ${n}건 · 미편성 ${m}건` + Object.entries(other).map(([l, k]) => ` · <a href="#" data-fl="${l}">${l} ${k}건</a>`).join('');
+    out.querySelectorAll('a[data-fl]').forEach((a) => (a.onclick = (e) => { e.preventDefault(); line = a.dataset.fl; draw(); }));
+    if (go && first) first.scrollIntoView({ block: 'center' });
+  }
+  document.addEventListener('input', (e) => { if (e.target && e.target.id === 'ws-find') find(true); });   // seq_view 도 이 파일을 읽음(ws-find 없음) — 직접 연결하면 오류
   // 본문이 좁으면(820px 미만) 묶음 배치(.cmp) · 날짜 머리줄 고정 위치 = 위 막대 높이
   function fit() {
     const m = $('ws-main'); if (!m || !m.clientWidth) return;
@@ -352,12 +380,12 @@
     };
     // 11/13 검토: 남는 시간이 있는데 미편성이 있는 이유 한 줄(강종이 기간 내 가동 강종과 다름 · 생산예정일이 기간 뒤 · 부원료 대기)
     const PLc = placed(), runF = [...new Set(D.jobs.filter((x) => x.line === line && PLc.has(x.id) && x.al).map((x) => x.al))];
-    const rsW = {}; P.forEach(({ x, r }) => { const k = plant === 'cg' && x.al && runF.length && !runF.includes(x.al) ? `강종 ${x.al}(기간 내 ${line} ${runF.join('·')} 가동)` : r === 'later' ? '생산예정일이 기간 뒤' : x.ready && x.ready >= dayOf(W1) ? '부원료 입고 전' : r === 'over' ? '시간 부족' : r === 'out' ? '직접 제외' : '신규(아직 안 넣음)'; rsW[k] = (rsW[k] || 0) + 1; });
+    const rsW = {}; P.forEach(({ x, r }) => { const k = plant === 'cg' && x.al && runF.length && !runF.includes(x.al) ? `강종 ${x.al}(기간 내 ${line} ${runF.join('·')} 가동)` : r === 'later' ? '미편성' : x.ready && x.ready >= dayOf(W1) ? '부원료 입고 전' : r === 'over' ? '시간 부족' : r === 'out' ? '직접 제외' : '신규(아직 안 넣음)'; rsW[k] = (rsW[k] || 0) + 1; });
     const whyL = P.length && left[line] > 60 ? `<div class="why pl-why">남는 시간이 있는데 미편성인 이유: ${Object.entries(rsW).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${esc(k)} ${n}건`).join(' · ')}</div>` : '';
     const was = $('ws-pool').querySelector('details'), op = was ? was.open : false, sub = {};
     $('ws-pool').querySelectorAll('.pl-g').forEach((d) => { sub[d.dataset.k] = d.open; });
     $('ws-pool').innerHTML = `<details${op ? ' open' : ''}><summary>${line} 기간 내 미편성 작업 <span>${P.length}건 · ${n0(P.reduce((s, p) => s + p.x.t, 0))}t — 끌어다 놓거나 '넣기'</span>${whyL}</summary><div class="pl-cols">` + ord.filter((k) => G[k]).map((k) => `<details class="pl-g" data-k="${k}"${(k in sub ? sub[k] : k === 'out' || k === 'new' || k === 'over') ? ' open' : ''}><summary>${nm[k]} <span>${G[k].length}건 · ${n0(G[k].reduce((s, x) => s + x.t, 0))}t</span></summary><div class="pl-body">`
-      + G[k].slice(0, 300).map((x) => `<div class="pl-i" draggable="true" data-id="${esc(x.id)}"><div><span class="cn">${esc(x.con || x.id)}</span>${plant === 'cc' && x.item ? ' <b>' + esc(x.item) + '</b>' : ''}<span class="sub"> · ${n1(x.t)}t${plant === 'cc' && x.len ? ' / ' + n0(x.len) + 'm' : ''}${plant === 'cg' ? (x.n > 1 ? ' · ' + x.n + '코일' : '') + (x.req ? ' · 예정 ' + md(x.req) : '') : (x.ready && x.ready > TODAY ? ' · ' + md(x.ready) + '부터 가능' : '')}${(plant === 'cg' ? x.dlv : x.due) ? ' · 납기 ' + md(plant === 'cg' ? x.dlv : x.due) : ''}</span>${why(x, k)}<div class="sp">${chips(x)}</div></div><button data-a="add" data-id="${esc(x.id)}">넣기</button></div>`).join('')
+      + G[k].slice(0, 300).map((x) => `<div class="pl-i" draggable="true" data-id="${esc(x.id)}"><div><div class="pl-h"><span class="cn">${esc(x.con || x.id)}</span>${plant === 'cc' && x.item ? ' <b>' + esc(x.item) + '</b>' : ''}<span class="pl-m"><b class="pl-t">${n1(x.t)}<small>t</small></b>${plant === 'cc' && x.len ? ' / ' + n0(x.len) + 'm' : ''}${plant === 'cg' ? (x.n > 1 ? ' · ' + x.n + '코일' : '') + (x.req ? ' · 예정 ' + md(x.req) : '') : (x.ready && x.ready > TODAY ? ' · ' + md(x.ready) + '부터 가능' : '')}${(plant === 'cg' ? x.dlv : x.due) ? ' · 납기 ' + md(plant === 'cg' ? x.dlv : x.due) : ''}</span></div>${why(x, k)}<div class="sp">${chips(x)}</div></div><button data-a="add" data-id="${esc(x.id)}">넣기</button></div>`).join('')
       + (G[k].length > 300 ? `<div class="sub">외 ${G[k].length - 300}건</div>` : '') + '</div></details>').join('') + '</div></details>';
   }
   function drawCk() {
@@ -613,7 +641,7 @@
   $('ws-save').onclick = () => save('save');
   $('ws-conf').onclick = () => save('confirm');
   $('ws-reset').onclick = () => { if (confirm('초안으로 되돌릴까요? (저장본은 이력에 남습니다)')) save('reset'); };
-  $('ws-chk').onclick = () => { CK = checks(); hl = null; draw(); $('ws-ck').scrollIntoView({ block: 'start', behavior: 'smooth' }); };
+  $('ws-chk').onclick = () => { if (CK) { CK = null; hl = null; draw(); return; } CK = checks(); hl = null; draw(); $('ws-ck').scrollIntoView({ block: 'start', behavior: 'smooth' }); };   // 11/15 사용자: 한 번 더 누르면 점검 결과 닫힘
   $('ws-vers').onchange = () => {
     const v = $('ws-vers').value; if (!v) return;
     if (dirty && !confirm('저장하지 않은 수정이 있습니다. 불러오면 사라집니다.')) { $('ws-vers').value = ''; return; }
