@@ -458,18 +458,20 @@
       if (!r.ok) throw new Error('저장소 읽기 ' + r.status);
       let v = 0;
       for (const x of (await r.json()).reverse()) { try { const p = await GP.decryptJSON(JSON.parse(x.payload), PW); VERS.push({ id: x.id, at: x.at, who: x.who, state: x.state, p, v: x.state === 'reset' ? null : ++v }); } catch (e) { /* 암호 다른 줄 */ } }
-    } catch (e) { $('ws-res').textContent = e.message; }
+    } catch (e) { if ($('ws-res')) $('ws-res').textContent = e.message; }
+    if (!$('ws-vers')) return;                                    // 작업 순서 조회(seq_view, 읽기 전용)엔 버전 칸 없음
     $('ws-vers').innerHTML = '<option value="">버전 고르기</option><option value="draft">초안(자료 ' + esc(UI.fmtDateTime(D.built)) + ')</option>' + VERS.filter((x) => x.v).slice().reverse().map((x) => `<option value="${x.id}">v${x.v} ${x.state === 'confirm' ? '확정' : '저장'} · ${esc(x.who)} · ${kst(x.at)}</option>`).join('');
   }
   function useVer(x, msg) {
     cur = x; dirty = false; CK = null; hl = null;
-    if (!x || x.state === 'reset') { fromDraft(); $('ws-res').textContent = msg || ''; return; }
+    const res = $('ws-res') || {};                                // 읽기 전용(seq_view)엔 안내 칸 없음
+    if (!x || x.state === 'reset') { fromDraft(); res.textContent = msg || ''; return; }
     fromDraft();                                                  // 11/10: 저장 뒤 생긴 샘플·테스트 일정은 저장본에 없어 빠지던 문제 → 초안의 그날 자리에 넣음
     const smNew = []; LINES[plant].forEach((l) => sim(l).forEach((v) => { if (v.k === 'g' && v.e.sm) smNew.push([l, v.e, dayOf(v.s)]); }));
     const gone = fromSaved(x.p);
     let nSm = 0; smNew.forEach(([l, e, d]) => { if (!L[l].some((q) => q.k === 'g' && q.sm && q.note === e.note)) { insertAtDay(l, e, d); nSm++; } });
     const known = new Set(x.p.known || []), P = placed(), nNew = D.jobs.filter((j) => j.why === 'week' && !P.has(j.id) && !known.has(j.id)).length;
-    $('ws-res').textContent = (msg || '') + (gone.length ? ` · 저장본 ${gone.length}건은 최신 자료에 없음(생산·취소)` : '')
+    res.textContent = (msg || '') + (gone.length ? ` · 저장본 ${gone.length}건은 최신 자료에 없음(생산·취소)` : '')
       + (nNew ? ` · 저장 후 신규 작업 ${nNew}건 — 아래 목록에서 추가` : '') + (nSm ? ` · 새 샘플·테스트 일정 ${nSm}건 반영` : '');
   }
   async function save(state) {
@@ -541,6 +543,24 @@
     if (!PW || p === plant) return;
     if (dirty && !confirm('저장하지 않은 수정이 있습니다. 바꾸면 사라집니다.')) { history.replaceState(null, '', hashOf(plant, mode)); return; }
     try { await open(p); } catch (e) { $('ws-res').textContent = '자료 읽기 실패: ' + e.message; }
+  }
+  /* 11/15 사용자 '다른 부서가 조회하는 화면': seq_view.html 이 WS_HEADLESS 로 이 파일을 불러 같은 자료·같은 시간 계산(sim)을 읽기 전용으로 씀(편집 화면 연결은 안 함).
+     보여 줄 순서 = 가장 최근 '확정'본(그 뒤 '초안으로 되돌리기'가 있으면 초안), 없으면 초안 */
+  if (window.WS_HEADLESS) {
+    window.WS_CORE = {
+      LINES, tms, iso, dayOf, dnm,
+      async view(p, pw) {
+        PW = pw; plant = p;
+        if (!DATA[p]) { const env = await GP.latest(`week_seq_${p}.enc.json`); if (!env) throw new Error('자료 없음'); DATA[p] = await GP.decryptJSON(env, PW); }
+        D = DATA[p]; R = D.rules; J = {}; D.jobs.forEach((x) => { J[x.id] = x; });
+        await loadVers();
+        const ci = VERS.map((x) => x.state).lastIndexOf('confirm'), cf = ci >= 0 && !VERS.slice(ci + 1).some((x) => x.state === 'reset') ? VERS[ci] : null;
+        useVer(cf);
+        const ev = {}; LINES[p].forEach((l) => { ev[l] = sim(l); });
+        return { D, R, J, cur: cf, ev };
+      },
+    };
+    return;
   }
   let toRules = false;
   const hashOf = (p, m) => '#' + p + (m === 'wo' ? '-wo' : '');

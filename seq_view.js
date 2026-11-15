@@ -1,0 +1,153 @@
+/* 작업 순서 조회(11/15 사용자 '우리가 순서 바꾸는 화면을 1030 화면처럼 쫙 — 다른 부서가 조회하는 화면'): 보기 전용.
+   자료·시각 계산 = 02 작업(week_seq.js)을 WS_HEADLESS 로 불러 그대로(WS_CORE.view: 게시 week_seq 자료 + 공유 저장소 확정본 → sim).
+   칸(사용자 지정 순서 그대로) = 순번 · 계약번호 · 행번 · 두께 · 폭 · 중량 · 길이 · 부서 · 담당자 · 목적지 · L/S · t/hr · 시작시간 · 종료시간 · 상태(11/15 사용자 '작업대기/지시대기까지').
+   부서·목적지 = 주문진도(cg/cc_order_progress)에서 계약번호로(없으면 작업 자료 값). 정지(M/C·S/D·청소·휴지)·더미는 한 줄로 끼움(01 일별 가동계획 색) */
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const PW_KEY = 'cgl-analysis-pw';
+  const C = window.WS_CORE;
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const n0 = (v) => (v == null || isNaN(v) || v === '' ? '-' : Math.round(v).toLocaleString('ko-KR'));
+  const fx = (v, k) => (v == null || v === '' || isNaN(v) || !(+v > 0) ? '-' : (+v).toFixed(k));
+  const WD = '일월화수목금토';
+  const mmdd = (d) => `${d.slice(5, 7)}/${d.slice(8, 10)}`;
+  const dnm = (d) => `${+d.slice(5, 7)}/${+d.slice(8, 10)}(${WD[new Date(d + 'T00:00:00Z').getUTCDay()]})`;
+  const tm = (m) => { const s = C.iso(m); return `${mmdd(s)} ${s.slice(11, 16)}`; };
+  const hrs = (m) => (m >= 1440 ? `${Math.floor(m / 1440)}일${m % 1440 >= 1 ? ' ' + hrs(m % 1440) : ''}` : m >= 60 ? `${Math.floor(m / 60)}시간${Math.round(m % 60) ? ' ' + Math.round(m % 60) + '분' : ''}` : `${Math.round(m)}분`);
+  const addD = (d, k) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + k); return x.toISOString().slice(0, 10); };
+  const wkOf = (d) => addD(d, -((new Date(d + 'T00:00:00Z').getUTCDay() + 4) % 7));   // 생산주 = 수 ~ 화(포털 '이번 주(수~화)'·확정 키와 같음)
+  const TODAY = new Date(Date.now() + 2 * 3600e3).toISOString().slice(0, 10);          // MES 일자(07시 기준, KST)
+  const COLS = ['순번', '계약번호', '행번', '두께', '폭', '중량', '길이', '부서', '담당자', '목적지', 'L/S', 't/hr', '시작시간', '종료시간', '상태'];
+
+  let PW = '', plant = /cc/.test(location.hash) ? 'cc' : 'cg', line = null, V = null;
+  const OP = {};   // 공정별 주문진도 { con: row }
+
+  async function opOf(p) {
+    if (OP[p]) return OP[p];
+    const m = {};
+    try { const env = await GP.latest(`${p}_order_progress.enc.json`); if (env) (await GP.decryptJSON(env, PW)).rows.forEach((r) => { if (r.con && !m[r.con]) m[r.con] = r; }); } catch (e) { /* 주문진도 없으면 작업 자료 값 */ }
+    return (OP[p] = m);
+  }
+
+  // ───────── 한 라인의 줄 목록(작업·더미·정지) — 시각은 02 작업 sim 그대로
+  function rowsOf(l) {
+    const O = OP[plant] || {}, out = [];
+    const st = (lab, s, e, yel) => out.push({ k: 's', lab, s, e, yel, d: C.dayOf(s) });
+    const yel = (t) => !/수리|휴지|대기/.test(t) && /M\/C|S\/D|청소|샘플|test|시험/i.test(t);   // 01 일별 가동계획 색: M/C·S/D·청소(샘플) 노랑 · 휴지·수리·대기 남색
+    const sp = (V.D.lines[l] || {}).stopUntil;
+    if (sp) st(`휴지계획 · ${+sp.slice(5, 7)}/${+sp.slice(8, 10)} 재가동`, C.tms(V.D.w0), C.tms(V.D.lines[l].from), false);
+    (V.ev[l] || []).forEach((q) => {
+      if (q.k === 'w') return;                                     // 도료·PF 기다림(내부 정보) — 시작 시각에만 반영
+      if (q.k === 'p') { const nm = !q.ev ? '휴지' : q.ev === 'plan' ? '휴지계획' : q.ev; return st(`${nm} ${hrs(q.e - q.s)}`, q.s, q.e, yel(nm)); }
+      if (q.k === 'g') {
+        const nt = q.e.note || '';
+        if (/더미/i.test(nt) && !q.e.sm) return out.push({ k: 'd', con: 'DUMMY', s: q.s, e: q.e2, d: C.dayOf(q.s), note: nt });
+        return st(`${q.e.sm ? nt || '샘플' : nt || '휴지'} ${hrs(q.e2 - q.s)}`, q.s, q.e2, q.e.sm ? !/수리|휴지/.test(nt) : /^(M\/C|S\/D|청소)/.test(nt));
+      }
+      // 작업(q.k === 'j'): 도금 전환 더미(1년 실적 50% 이상 바뀜만 시간에 넣은 것)는 작업 앞에 더미 한 줄
+      if (plant === 'cg' && q.ch && q.ch.m >= 1) {
+        const dp = q.ch.parts.filter((p) => p.m > 0 && /^더미/.test(p.c));
+        if (dp.length) { const t = dp.reduce((a, p) => { const m = String(p.c).match(/약\s*([\d,.]+)t/); return a + (m ? +m[1].replace(/,/g, '') : 0); }, 0);
+          out.push({ k: 'd', con: 'DUMMY', s: q.ds, e: q.s, d: C.dayOf(q.ds), t: t || null }); }
+      }
+      const x = q.x, o = O[x.con] || {}, con = String(x.con || '');
+      const cut = con.lastIndexOf('-'), cn = cut > 0 ? con.slice(0, cut) : con || '-', sq = cut > 0 ? con.slice(cut + 1) : '-';
+      const cg = plant === 'cg';
+      const tph = cg ? x.tph : (x.tph || {})[l];
+      out.push({
+        k: x.dummy ? 'd' : 'j', s: q.s, e: q.e, d: C.dayOf(q.s), cn, sq,
+        thk: cg ? x.thick : x.thk, wdt: cg ? x.width : x.wdt, t: x.t, len: cg ? null : x.len,
+        grp: x.dummy ? '더미' : o.grp || (cg ? x.grp : x.g), man: x.man || o.man, dst: cg ? o.dst || x.dst : x.cus || o.cus || x.dst,
+        ls: cg || x.dummy ? null : (x.ls || {})[l], tph: x.dummy ? null : tph,
+        stt: cg ? (x.issued ? ['fx', '지시'] : ['wt', '대기']) : x.fixed ? ['kw', '작업대기'] : ['kj', '지시대기'],
+      });
+    });
+    return out;
+  }
+  const cellsOf = (r, n) => (r.k === 's' ? null : [n, r.con || r.cn, r.con ? '-' : r.sq, fx(r.thk, 2), n0(r.wdt), fx(r.t, 1), n0(r.len), r.grp || '-', r.man || '-', r.dst || '-', n0(r.ls), fx(r.tph, 1), tm(r.s), tm(r.e)]);
+
+  function draw() {
+    const D = V.D, Ls = C.LINES[plant];
+    const cf = V.cur;
+    $('sv-st').className = 'sv-st ' + (cf ? 'cf' : 'dr');
+    $('sv-st').textContent = cf ? `확정 ${tm(Math.round(Date.parse(cf.at) / 6e4) + 540)}` : '초안(확정 전)';
+    $('sv-st').title = cf ? `${cf.who} 확정(v${cf.v})` : '02 작업에서 아직 확정하지 않음 — 지금 초안 순서';
+    $('sv-wk').textContent = `${dnm(D.w0.slice(0, 10))} 07시 ~ ${dnm(D.w1.slice(0, 10))} 07시 · 자료 ${mmdd(D.now.slice(0, 10))} ${D.now.slice(11, 16)}`;
+    $('sv-plant').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.p === plant)));
+    const R = {}; Ls.forEach((l) => { R[l] = rowsOf(l); });
+    if (!line || !Ls.includes(line)) line = Ls.find((l) => R[l].some((r) => r.k === 'j')) || Ls[0];
+    const sum = (rs) => { const j = rs.filter((r) => r.k === 'j'); return [j.length, j.reduce((a, r) => a + (+r.t || 0), 0)]; };
+    $('sv-lines').innerHTML = Ls.map((l) => { const [n, t] = sum(R[l]); return `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l}<small>${n}건 · ${n0(t)}t</small></button>`; }).join('');
+    $('sv-lines').querySelectorAll('button').forEach((b) => (b.onclick = () => { line = b.dataset.l; draw(); }));
+    // 표: 생산주(수~화) 구분줄 → 날짜 구분줄(요일·건수·톤) → 줄
+    const rs = R[line], wk0 = wkOf(TODAY);
+    const wkNm = (w) => (w === wk0 ? '이번 주' : w === addD(wk0, 7) ? '다음 주' : w === addD(wk0, -7) ? '지난 주' : '');
+    const CW = [52, 150, 58, 62, 68, 66, 72, 150, 80, 0, 58, 62, 128, 128, 96];
+    let h = `<colgroup>${CW.map((w) => (w ? `<col style="width:${w}px">` : '<col>')).join('')}</colgroup><thead><tr>${COLS.map((c) => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody>`, n = 0, cw = null, cd = null, z = 0;
+    rs.forEach((r) => {
+      const w = wkOf(r.d);
+      if (w !== cw) { cw = w; const [k, t] = sum(rs.filter((x) => wkOf(x.d) === w)); h += `<tr class="wh"><td colspan="15">${wkNm(w)} ${mmdd(w).replace(/^0/, '')}~${mmdd(addD(w, 6)).replace(/^0/, '')}<span>${k}건 · ${n0(t)}t</span></td></tr>`; }
+      if (r.d !== cd) { cd = r.d; z = 0; const [k, t] = sum(rs.filter((x) => x.d === r.d)); const we = /[토일]/.test(dnm(r.d)); h += `<tr class="dh"><td colspan="15"><b${we ? ' class="we"' : ''}>${dnm(r.d)}</b><span>${k}건 · ${n0(t)}t</span></td></tr>`; }
+      if (r.k === 's') { h += `<tr class="stp ${r.yel ? 'y' : 'n'}"><td></td><td colspan="11">${esc(r.lab)}</td><td>${tm(r.s)}</td><td>${tm(r.e)}</td><td></td></tr>`; return; }
+      n++; z++;
+      const c = cellsOf(r, n);
+      h += `<tr class="${r.k === 'd' ? 'dm' : 'j'}${z % 2 === 0 ? ' z' : ''}"${r.note ? ` title="${esc(r.note)}"` : ''}>${c.map((v, i) => `<td${i === 1 ? ' class="cn"' : i === 7 || i === 8 ? ' class="mn"' : i === 9 ? ' class="ds"' : ''}>${esc(v)}</td>`).join('')}<td>${r.k === 'd' || !r.stt ? '-' : `<span class="chip ${r.stt[0]}">${r.stt[1]}</span>`}</td></tr>`;
+    });
+    if (!rs.length) h += `<tr><td colspan="15" class="sv-empty">${line} 기간 안 작업 없음${D.lines[line] && D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}</td></tr>`;
+    $('sv-tbl').innerHTML = h + '</tbody>';
+  }
+
+  // ───────── 엑셀(칸 그대로, 라인마다 한 시트)
+  let xlsP = null;
+  const needXls = () => xlsP || (xlsP = new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'vendor/exceljs.min.js?v=2611120206'; s.onload = () => ok(window.ExcelJS); s.onerror = no; document.head.appendChild(s); }));
+  async function toXls() {
+    const XL = await needXls(), wb = new XL.Workbook();
+    C.LINES[plant].forEach((l) => {
+      const ws = wb.addWorksheet(l), rs = rowsOf(l); let n = 0;
+      ws.addRow(COLS);
+      rs.forEach((r) => {
+        if (r.k === 's') { const x = ws.addRow(['', r.lab, '', '', '', '', '', '', '', '', '', '', tm(r.s), tm(r.e), '']); x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: r.yel ? 'FFFFFF00' : 'FF1F3864' } }; x.font = { bold: true, color: { argb: r.yel ? 'FF1F3864' : 'FFFFFFFF' } }; return; }
+        n++;
+        const num = (v, k) => (v == null || isNaN(v) || !(+v > 0) ? '-' : +(+v).toFixed(k));
+        const x = ws.addRow([n, r.con || r.cn, r.con ? '-' : r.sq, num(r.thk, 2), num(r.wdt, 0), num(r.t, 1), num(r.len, 0), r.grp || '-', r.man || '-', r.dst || '-', num(r.ls, 0), num(r.tph, 1), tm(r.s), tm(r.e), r.k === 'd' ? '-' : r.stt[1]]);
+        if (r.k === 'd') x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECECEC' } };
+      });
+      ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }; ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F3864' } };
+      ws.columns.forEach((c, i) => { c.width = [6, 16, 6, 7, 7, 7, 8, 16, 10, 24, 6, 6, 13, 13, 9][i]; c.alignment = { horizontal: 'center', vertical: 'middle' }; });
+      ws.views = [{ state: 'frozen', ySplit: 1 }];
+    });
+    const buf = await wb.xlsx.writeBuffer(), a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    a.download = `작업순서_${plant === 'cg' ? '도금' : '컬러'}_${V.cur ? '확정' : '초안'}_${V.D.now.slice(0, 10)}.xlsx`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+
+  async function open(p) {
+    plant = p;
+    await opOf(p);
+    V = await C.view(p, PW);
+    draw();
+  }
+  async function unlock(pw) {
+    try {
+      PW = pw; $('sv-lock').hidden = true; $('sv-main').hidden = false;
+      await open(plant);
+      try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ }
+    } catch (e) {
+      $('sv-main').hidden = true; $('sv-lock').hidden = false; $('sv-form').hidden = false;
+      $('sv-msg').textContent = pw ? (/자료 없음/.test(e.message) ? '게시 자료가 없습니다(다음 포털 갱신 시 생성)' : '암호가 맞지 않습니다') : '';
+      document.querySelector('#sv-lock h2').textContent = '분석 암호';
+    }
+  }
+  const go = (p) => { if (!PW || p === plant) return; line = null; open(p).catch((e) => { $('sv-tbl').innerHTML = `<tbody><tr><td class="sv-empty">자료 읽기 실패: ${esc(e.message)}</td></tr></tbody>`; }); };
+  $('sv-plant').querySelectorAll('button').forEach((b) => (b.onclick = () => { location.hash = b.dataset.p; }));
+  addEventListener('hashchange', () => go(/cc/.test(location.hash) ? 'cc' : 'cg'));
+  const scopeGo = () => { const sc = window.UI && UI.scope ? UI.scope() : 'all', want = sc === 'C' ? 'cc' : sc === 'G' ? 'cg' : null; if (want && want !== plant) location.hash = want; };
+  if (window.UI && UI.onScope) UI.onScope(scopeGo);
+  if (!location.hash) { const sc = window.UI && UI.scope ? UI.scope() : 'all'; if (sc === 'C') plant = 'cc'; }
+  $('sv-xls').onclick = () => toXls().catch((e) => alert('엑셀 만들기 실패: ' + e.message));
+  $('sv-prt').onclick = () => print();
+  $('sv-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('sv-pw').value); });
+  let s = ''; try { s = localStorage.getItem(PW_KEY) || ''; } catch (e) { /* 무시 */ }
+  if (s) unlock(s); else { $('sv-form').hidden = false; document.querySelector('#sv-lock h2').textContent = '분석 암호'; }
+})();

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>작업 순서 조회</title>
+<meta name="description" content="도금·컬러 라인별 작업 순서 조회(보기 전용) — 확정본(없으면 초안)의 순번·계약·사양·시작·종료 시각">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
+<link rel="stylesheet" href="ui/theme.css?v=2611120206">
+<style>
+main.wrap { max-width: none; }
+.sv-bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin: 0 0 12px; }
+.sv-bar .seg button { font-size: 15px; font-weight: 700; padding: 8px 18px; }
+.sv-st { display: inline-block; border-radius: 8px; padding: 5px 14px; font-size: 17px; font-weight: 800; white-space: nowrap; }
+.sv-st.cf { background: var(--good-bg); color: var(--good); } .sv-st.dr { background: var(--warn-bg); color: var(--warn); }
+.sv-wk { font-size: 15px; color: var(--ink-2); white-space: nowrap; }
+.sv-bar .sp { flex: 1; }
+.sv-lines { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.sv-lines button { font: inherit; font-size: 16px; font-weight: 800; padding: 8px 18px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--ink); cursor: pointer; white-space: nowrap; }
+.sv-lines button small { font-size: 14px; font-weight: 500; color: var(--ink-2); margin-left: 8px; }
+.sv-lines button[aria-pressed="true"] { border: 2px solid var(--brand-2); background: var(--tint-2); padding: 7px 17px; }
+.sv-card { padding: 0; }
+.sv-wrap { overflow: auto; max-height: calc(100vh - 230px); }
+table.sv { width: 100%; min-width: 1480px; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 16px; font-variant-numeric: tabular-nums; }
+html body main table.sv.v2-grid :is(td, th), html.v2 body main table.sv.v2-grid :is(td, th) { font-size: 16px !important; }
+html body main table.sv.v2-grid thead th, html.v2 body main table.sv.v2-grid thead th { font-size: 15px !important; }
+table.sv th, table.sv td { text-align: center; padding: 6px 8px; border-bottom: 1px solid var(--grid); border-right: 1px solid var(--grid); white-space: nowrap; line-height: 1.45; }
+table.sv thead th { position: sticky; top: 0; z-index: 2; background: #1f3864; color: #fff; font-size: 15px; font-weight: 700; border-right-color: #3a5487; }
+table.sv tr.z td { background: var(--zebra); }
+table.sv td.ds, table.sv td.mn { white-space: normal; word-break: keep-all; }
+table.sv td.cn { font-weight: 700; letter-spacing: .1px; }
+table.sv tr.dm td { background: #ececec !important; color: #444; }
+table.sv tr.wh td { background: var(--tint-2); color: var(--ink); font-size: 16px; font-weight: 800; padding: 9px 14px; border-top: 2px solid var(--brand-2); }
+table.sv tr.dh td { background: var(--surface-2); color: var(--ink); font-size: 16px; font-weight: 700; padding: 6px 14px; border-top: 1px solid var(--line); }
+table.sv tr.wh td span, table.sv tr.dh td span { font-weight: 500; color: var(--ink-2); margin-left: 12px; }
+table.sv tr.dh td .we { color: #c00000; }
+table.sv tr.stp td { font-weight: 700; }
+table.sv tr.stp.y td { background: #ffff00; color: #1f3864; }
+table.sv tr.stp.n td { background: #1f3864; color: #fff; }
+.chip { display: inline-block; border-radius: 5px; padding: 0 8px; font-size: 14px; font-weight: 800; white-space: nowrap; }
+.chip.fx { background: var(--brand-2); color: #fff; } .chip.wt { background: var(--tint-2); color: var(--ink); }
+.chip.kw { background: #2a6fc9; color: #fff; border: 1.5px solid #2a6fc9; } .chip.kj { background: #fff; color: #2a6fc9; border: 1.5px solid #2a6fc9; }
+.sv-empty { padding: 28px; text-align: center; font-size: 16px; color: var(--ink-2); }
+@media print {
+  .sv-bar .btn, .sv-lines button[aria-pressed="false"] { display: none !important; }
+  .sv-bar .seg button[aria-pressed="false"] { display: none !important; }
+  .sv-wrap { max-height: none; overflow: visible; }
+  html body main .card.sv-card { break-inside: auto !important; padding: 0 !important; }
+  table.sv { min-width: 0 !important; table-layout: auto !important; } table.sv col { width: auto !important; }
+  html body main table.sv.v2-grid :is(td, th), html.v2 body main table.sv.v2-grid :is(td, th) { font-size: 10.5px !important; padding: 2px 4px !important; }
+  html.v2 body main table.sv.v2-grid thead th, html body main table.sv.v2-grid thead th { font-size: 10.5px !important; } .chip { font-size: 10px; padding: 0 4px; border-width: 1px; }
+  table.sv thead { display: table-header-group; } table.sv thead th { position: static; }
+  table.sv tr { break-inside: avoid; }
+  table.sv tr.stp.y td, table.sv tr.stp.n td, table.sv thead th, table.sv tr.dm td, .chip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .card { box-shadow: none; border: 0; }
+}
+</style>
+</head>
+<body>
+<header id="shell" data-page="seqview" data-crumb="작업" data-title="작업 순서 조회" data-sub="라인별 작업 순서와 시작·종료 시각(보기 전용)"></header>
+<main class="wrap">
+  <section class="card lock" id="sv-lock">
+    <div><div class="ic" aria-hidden="true">🔒</div><h2>불러오는 중…</h2>
+      <form class="unlock" id="sv-form" hidden><input type="password" id="sv-pw" placeholder="분석 암호" autocomplete="current-password" aria-label="분석 암호"><button type="submit">열기</button></form>
+      <p class="hint" id="sv-msg"></p></div>
+  </section>
+  <div id="sv-main" hidden>
+    <div class="sv-bar">
+      <div class="seg" id="sv-plant"><button type="button" data-p="cg">도금</button><button type="button" data-p="cc">컬러</button></div>
+      <span class="sv-st" id="sv-st"></span>
+      <span class="sv-wk" id="sv-wk"></span>
+      <span class="sp"></span>
+      <button type="button" class="btn" id="sv-xls">엑셀 내려받기</button>
+      <button type="button" class="btn" id="sv-prt">인쇄</button>
+    </div>
+    <div class="sv-lines" id="sv-lines"></div>
+    <section class="card sv-card" data-noexport><div class="sv-wrap"><table class="sv v2-grid" id="sv-tbl"></table></div></section>
+  </div>
+</main>
+<script src="ui/shell.js?v=2611151200"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script>window.WS_HEADLESS = true;</script>
+<script src="week_seq.js?v=2611151200"></script>
+<script src="seq_view.js?v=2611151200"></script>
+</body>
+</html>
