@@ -94,6 +94,12 @@ html body table.ws td.ac { text-align: center !important; line-height: 2; white-
 .wk3 { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px; align-items: center; padding: 1px 0; } .wk3 + .wk3 { border-top: 1px dashed var(--line); }
 .wk3 > i, .wk3 em.lb { font-style: normal; font-size: 13.5px; font-weight: 700; color: var(--ink-2); } .wk3 em.lb { margin-left: 8px; padding-left: 10px; border-left: 1px solid var(--line); } .wk3 .ib { display: inline-flex; flex-wrap: wrap; gap: 3px 5px; align-items: center; } .wk3 > div { display: flex; flex-wrap: wrap; gap: 3px 5px; align-items: center; }
 .pl-i .sp { margin-top: 4px; }
+/* 11/15 사용자 '톤·예정·납기를 밑 칸과 조화롭게 크게' — 미편성 목록 머리줄·사양 칸 */
+.pl-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; } .pl-h .cn { font-size: 17px; }
+.pl-m { font-size: 15.5px; font-weight: 600; color: var(--ink-2); } .pl-m .pl-t { font-size: 20px; color: var(--ink); margin-right: 2px; } .pl-m .pl-t small { font-size: 14px; margin-left: 1px; }
+.pl-i .sp .cp { font-size: 14.5px; padding: 1px 7px; } .pl-i .wk3 > i, .pl-i .wk3 em.lb { font-size: 14.5px; } .pl-i .wk3 { grid-template-columns: 38px minmax(0, 1fr); }
+.ws-find { display: flex; gap: 8px; align-items: center; margin: 0 0 10px; } .ws-find input { font: inherit; font-size: 15px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; width: 260px; background: var(--surface); color: var(--ink); } .ws-find span { font-size: 14px; color: var(--ink-2); }
+tr.j.fd td { background: #fff2cc !important; } .pl-i.nf { display: none; }
 .pl-i button { font: inherit; font-size: 13.5px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--brand-2); cursor: pointer; white-space: nowrap; }
 .ck { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin: 0 0 16px; background: var(--surface); }
 .ck h3 { font-size: 16px; margin: 0 0 8px; }
@@ -301,6 +307,7 @@ table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px 
       <select id="ws-vers" aria-label="저장 버전"></select>
       <span class="ws-res" id="ws-res"></span>
     </div>
+    <div class="ws-find"><input id="ws-find" type="search" placeholder="계약번호·담당자 찾기" aria-label="계약번호·담당자 찾기"><span id="ws-fres"></span></div>
     <div id="ws-miss"></div>
     <div id="ws-ck"></div>
     <div class="ws-grid">
