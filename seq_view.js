@@ -111,7 +111,7 @@
         n++;
         const num = (v, k) => (v == null || isNaN(v) || !(+v > 0) ? '-' : +(+v).toFixed(k));
         const x = ws.addRow([n, r.con || r.cn, r.con ? '-' : r.sq, num(r.thk, 2), num(r.wdt, 0), num(r.t, 1), num(r.len, 0), r.grp || '-', r.man || '-', r.dst || '-', num(r.ls, 0), num(r.tph, 1), tm(r.s), tm(r.e), r.k === 'd' ? '-' : r.stt[1]]);
-        if (r.k === 'd') x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECECEC' } };
+        if (r.k === 'd') { x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECECEC' } }; x.font = { color: { argb: 'FFC00000' }, bold: true }; }
       });
       ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }; ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F3864' } };
       ws.columns.forEach((c, i) => { c.width = [6, 16, 6, 7, 7, 7, 8, 16, 10, 24, 6, 6, 13, 13, 9][i]; c.alignment = { horizontal: 'center', vertical: 'middle' }; });
