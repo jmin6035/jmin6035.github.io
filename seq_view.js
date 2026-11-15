@@ -57,9 +57,9 @@
       const tph = cg ? x.tph : (x.tph || {})[l];
       out.push({
         k: x.dummy ? 'd' : 'j', s: q.s, e: q.e, d: C.dayOf(q.s), cn, sq,
-        thk: cg ? x.thick : x.thk, wdt: cg ? x.width : x.wdt, t: x.t, len: cg ? null : x.len,
+        thk: cg ? x.thick : x.thk, wdt: cg ? x.width : x.wdt, t: x.t, len: x.dummy ? null : x.len,
         grp: x.dummy ? '더미' : o.grp || (cg ? x.grp : x.g), man: x.man || o.man, dst: cg ? o.dst || x.dst : x.cus || o.cus || x.dst,
-        ls: cg || x.dummy ? null : (x.ls || {})[l], tph: x.dummy ? null : tph,
+        ls: x.dummy ? null : cg ? x.ls : (x.ls || {})[l], tph: x.dummy ? null : tph,
         stt: cg ? (x.issued ? ['fx', '지시'] : ['wt', '대기']) : x.fixed ? ['kw', '작업대기'] : ['kj', '지시대기'],
       });
     });
