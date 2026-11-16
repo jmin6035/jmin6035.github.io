@@ -67,7 +67,7 @@
       }
       const pl = {};
       for (const k of new Set([...Object.keys(cells), ...Object.keys(ev)])) {
-        const [l, d] = k.split('|'); if (!inQ(d)) continue;
+        const [l, d] = k.split('|'); if (d < D.days[0]) continue;   // 11/16 사용자 '1/21 품목 상세 없음': 4분기(12/31) 너머 재계획 기간(2월 말)도 상세 카드 — 예전엔 inQ 로 12/31 까지만
         const x = cells[k] || { cls: {}, alloy: {}, items: [] }, e = ev[k] || {}, fa = {};
         const t = Object.values(x.cls).reduce((a, v) => a + v, 0);
         if (t < 0.5 && !e.event) continue;
