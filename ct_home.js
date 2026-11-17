@@ -68,7 +68,7 @@
       return { x, p: ds.length && !miss ? p : null, a, ds };
     });
     let plan, act, prSub, pr0 = null;
-    // 11/13 사용자 결정: 월 계획 = 지금 계획의 그 달 합계(지난 날 실적 + 앞날 계획) · 큰 숫자 = 실적 ÷ 월 계획 · 색·작은 글씨 = 전일까지 월차(그 달 첫 판) 계획 대비 — UI.prodMon 한 곳(04 수주와 같은 값)
+    // 11/13 사용자 결정: 월 계획 = 지금 계획의 그 달 합계(지난 날 실적 + 앞날 계획) · 큰 숫자 = 실적 ÷ 월 계획 · 색·작은 글씨 = 전일까지 월차(그 달 첫 판) 계획 대비 — UI.prodMon 한 곳(02 수주와 같은 값)
     const SJ = D.suju, LIN = (P.lines || []).filter((x) => CT.inScope(x.pl)).map((x) => x.line);
     const PMv = SJ && SJ.daily ? (view === 'month' ? UI.prodMon(SJ, LIN) : UI.prodMon(SJ, LIN, view === 'day' ? SJ.asOf : p0, view === 'day' ? SJ.asOf : p1)) : null;
     if (PMv && view === 'month') { plan = PMv.mon; act = PMv.act; pr0 = PMv.pct0 == null ? null : Math.round(PMv.pct0); prSub = `실적 ${n0(act)} / 월 계획 ${n0(plan)}t · ~${md(SJ.asOf)} 월차 계획 대비 ${pr0 == null ? '–' : pr0 + '%'}`; }
@@ -431,7 +431,7 @@
     const defs = `<ul class="ct-ul">`
       + `<li><b>납기 위험</b> = 지연 예상 + 납기 지남(미결 주문, 납기 60일 넘게 지난 미종결 제외) — 납기 위험 화면과 같은 판정${RK ? `(${md(RK.asOf)})` : ''}. ${V2 ? '위험 숫자 색' : '그룹 색'}: 위험 ÷ 미결 30% 이상 빨강 · 15% 이상 주황</li>`
       + `<li><b>주요 원인</b> = ${V2 ? '위험 톤이 가장 큰 원인(나머지는 줄을 눌러 펼침), 언제 풀리나 = 그 원인 중 가장 큰 몫의 다음 생산일·입고 예정일' : '위험 톤이 큰 원인 2개, 옆 = 언제 풀리나(다음 생산일·입고 예정일)'}${RK ? `<ul>${Object.entries(RK.causeNm || {}).map(([k, v]) => `<li><b>${esc(v)}</b>${(RK.causeDef || {})[k] ? ` = ${esc(RK.causeDef[k])}` : ''} → ${esc((RK.dept || {})[k] || '')}</li>`).join('')}</ul>` : ''}</li>`
-      + `<li><b>생산 진도</b> = ${PMv ? `이달 = 실적 ÷ 월 계획(지금 계획의 ${+asOf.slice(5, 7)}월 합계 = 지난 날 실적 + 앞날 계획, 6라인) · 어제·이번 주·색 = 실적 ÷ 같은 날들의 월차(그 달 첫 계획) 계획 — 04 수주와 같은 값` : '라인 실적 ÷ 일정 누계'} · 월차 대비 98% 이상 정상 · 90% 이상 주의</li>`
+      + `<li><b>생산 진도</b> = ${PMv ? `이달 = 실적 ÷ 월 계획(지금 계획의 ${+asOf.slice(5, 7)}월 합계 = 지난 날 실적 + 앞날 계획, 6라인) · 어제·이번 주·색 = 실적 ÷ 같은 날들의 월차(그 달 첫 계획) 계획 — 02 수주와 같은 값` : '라인 실적 ÷ 일정 누계'} · 월차 대비 98% 이상 정상 · 90% 이상 주의</li>`
       + `<li><b>출하 미달</b> = 판매그룹 출하 실적 ÷ 오늘까지 기준(월 계획 × 그룹 월중 출하 실적 패턴) — 판매그룹 관제판과 같은 값</li>`
       + `<li><b>소재 부족</b> = 발주 마감이 지난 부족(소재 화면과 같은 값)</li></ul>`;
     const conFold = (Dd.conSec || '') && Dd.conSec.replace(/^<section class="card"><h2>오늘·내일 라인별 생산 계약 <small>/, '<details class="fold ct-f"><summary>오늘·내일 라인별 생산 계약 <small>').replace(/<\/small><\/h2>/, '</small></summary>').replace(/<\/section>$/, '</details>');
