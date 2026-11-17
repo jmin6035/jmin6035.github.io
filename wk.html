@@ -14,8 +14,8 @@ main.wrap { max-width: none; }
 /* 11/17 사용자 '주 단위로 끊고 위에 주별 종합 관제판 · 우리 계획대로 할 거니 그에 맞게 · 소재 표현' */
 :root { --wk-g: #1f5fae; --wk-c: #0f7f73; --wk-sec: #1f2937; --wk-nx: #6d28d9; --wk-bad: #b42318; --wk-warn: #a85b00;
   --m-ok: #1e7a46; --m-stock: #7fb3d5; --m-on: #8fd0a8; --m-late: #e08a1e; --m-wait1: #c3cad5; --m-wait2: #e6eaf0; --m-none: #c0262d; --wk-row: #f8fafc; }
-:root[data-theme="dark"] { --wk-bad: #f2777b; --wk-warn: #f0a646; --m-ok: #2f9e60; --m-stock: #4f86ad; --m-on: #4f9a6c; --m-wait1: #4b5563; --m-wait2: #374151; --wk-row: #1b2430; --wk-sec: #334155; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --wk-bad: #f2777b; --wk-warn: #f0a646; --m-ok: #2f9e60; --m-stock: #4f86ad; --m-on: #4f9a6c; --m-wait1: #4b5563; --m-wait2: #374151; --wk-row: #1b2430; --wk-sec: #334155; } }
+:root[data-theme="dark"] { --wk-bad: #f2777b; --wk-warn: #f0a646; --m-ok: #2f9e60; --m-stock: #4f86ad; --m-on: #4f9a6c; --m-wait1: #4b5563; --m-wait2: #374151; --wk-row: #1b2430; --wk-sec: #334155; --m-late: #d08a2e; --m-none: #e0565b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --wk-bad: #f2777b; --wk-warn: #f0a646; --m-ok: #2f9e60; --m-stock: #4f86ad; --m-on: #4f9a6c; --m-wait1: #4b5563; --m-wait2: #374151; --wk-row: #1b2430; --wk-sec: #334155; --m-late: #d08a2e; --m-none: #e0565b; } }
 #ct-main { color: var(--ink); word-break: keep-all; text-align: center; }
 .wk-top { display: flex; align-items: baseline; gap: 12px; margin: 2px 0 10px; } .wk-top h1 { font-size: 24px; font-weight: 800; margin: 0; } .wk-top span { font-size: 15px; color: var(--ink-2); }
 .wk-dash { display: grid; grid-template-columns: 64px repeat(var(--n), minmax(0, 1fr)); gap: 6px; }
@@ -30,8 +30,8 @@ main.wrap { max-width: none; }
 .wk-dash .wkc .v b { font-size: 20px; font-weight: 800; } .wk-dash .wkc .v small { font-size: 13.5px; color: var(--ink-2); }
 .wk-dash .wkc .na { font-size: 14px; color: var(--ink-2); padding: 18px 0; }
 .wk-dash .wkc .t { font-size: 13.5px; color: var(--ink-2); }
-.sb { display: flex; height: 12px; border-radius: 3px; overflow: hidden; gap: 2px; margin: 5px 0 3px; }
-.sb i { display: block; height: 100%; } .sb .ok { background: var(--m-ok); } .sb .stock { background: var(--m-stock); } .sb .on { background: var(--m-on); } .sb .late { background: var(--m-late); }
+.sb { display: flex; height: 12px; border-radius: 3px; overflow: hidden; margin: 5px 0 3px; }
+.sb i { display: block; height: 100%; box-shadow: inset -2px 0 0 var(--surface); } .sb .ok { background: var(--m-ok); } .sb .stock { background: var(--m-stock); } .sb .on { background: var(--m-on); } .sb .late { background: var(--m-late); }
 .sb .wait { background: repeating-linear-gradient(135deg, var(--m-wait1) 0 4px, var(--m-wait2) 4px 8px); } .sb .none { background: var(--m-none); } .sb .no { background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--m-none); }
 .wk-lf { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px 22px; justify-content: center; font-size: 15px; background: var(--surface); border: 1px solid var(--v2-line, var(--line)); border-radius: 8px; padding: 7px 12px; }
 .wk-lf span { font-weight: 800; } .wk-lf em { font-style: normal; color: var(--ink-2); } .wk-lf b { color: var(--wk-bad); }
@@ -45,7 +45,7 @@ table.wk-t td b { font-size: 17px; } table.wk-t td span.s { font-size: 14px; col
 table.wk-t tr.ds th { background: none; color: var(--ink-2); font-size: 14px; font-weight: 700; text-align: right; padding-right: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 table.wk-t tr.ds td { background: var(--wk-row); font-size: 14px; padding: 3px 10px; } table.wk-t tr.ds td b { font-size: 15px; }
 table.wk-t td.pr { font-size: 14px; color: var(--ink-2); text-align: left; } table.wk-t td.pr b { font-size: 15px; }
-table.wk-t td.tx { white-space: normal; overflow-wrap: anywhere; text-align: left; font-size: 14px; color: var(--ink-2); line-height: 1.7; } table.wk-t td.tx b { color: var(--ink); font-size: 14px; }
+table.wk-t td.tx { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; text-align: left; font-size: 14px; color: var(--ink-2); line-height: 1.7; } table.wk-t td.tx b { color: var(--ink); font-size: 14px; }
 table.wk-t tr.g { cursor: pointer; } table.wk-t tr.g th::after { content: ' ▾'; font-size: 12px; opacity: .8; } table.wk-t tr.g.cl th::after { content: ' ▸'; }
 table.wk-t td.nap { color: var(--ink-2); }
 .bad { color: var(--wk-bad) !important; } .warn { color: var(--wk-warn) !important; } .mu { color: var(--ink-2); }
