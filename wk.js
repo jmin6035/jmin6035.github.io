@@ -13,7 +13,7 @@
   const md = (s) => (s ? `${+s.slice(0, 4) !== Y0 && +s.slice(0, 4) !== Y0 + 1 ? `'${s.slice(2, 4)}.` : ''}${+s.slice(5, 7)}/${+s.slice(8)}` : '');
   const KEYS = ['p', 'o', 'dl', 'ok', 'on', 'late', 'wait', 'none', 'so', 'sw', 'sb', 'sn'];
   const tot = (L) => Object.fromEntries(KEYS.map((k) => [k, L.reduce((a, x) => a + (x[k] || 0), 0)]));
-  const DEPT = [['도금수출', ['도금수출'], 'G'], ['도금국내', ['도금국내'], 'G'], ['자동차', ['자동차'], 'G'], ['컬러수출(가전 포함)', ['컬러수출', '가전내수'], 'C'], ['컬러건재', ['컬러건재'], 'C'], ['수요개발', ['수요개발'], 'C']];
+  const DEPT = [['도금수출', ['도금수출'], 'G'], ['도금국내', ['도금국내'], 'G'], ['자동차', ['자동차'], 'G'], ['컬러수출', ['컬러수출'], 'C'], ['가전내수', ['가전내수'], 'C'], ['컬러건재', ['컬러건재'], 'C'], ['수요개발', ['수요개발'], 'C']];   // 판매그룹 그대로(11/17 사용자 '그룹별로')
   const KN = { none: '소재 없음', late: '소재 늦게 입고', wait: '입고일 불확실', sub: '부자재 대기', dl: '납기 넘김' };
   function bar(v) {
     const p = v.p || 0; if (!p) return '<div class="kb"></div>';
@@ -29,7 +29,7 @@
     const sc = window.UI && UI.scope ? UI.scope() : 'all', PS = sc === 'G' ? ['G'] : sc === 'C' ? ['C'] : ['G', 'C'];
     const W = K.weeks, lab = (i) => (i === 0 ? '이번 주' : i === 1 ? '차주(W+1)' : `W+${i}`);
     const DP = DEPT.filter((d) => PS.includes(d[2]));
-    const dv = (w, d) => { const L = w.g.filter((x) => d[1].includes(x.g)); return { ...tot(L), iss: L.flatMap((x) => (x.iss || []).map((it) => ({ ...it, dept: d[0] }))), rows: L.flatMap((x) => (x.rows || []).map((r) => ({ ...r, dept: d[0] }))), mkt: L.flatMap((x) => x.mkt || []), pl: d[2] }; };
+    const dv = (w, d) => { const L = w.g.filter((x) => d[1].includes(x.g)); return { ...tot(L), iss: L.flatMap((x) => (x.iss || []).map((it) => ({ ...it, dept: d[0] }))), rows: L.flatMap((x) => (x.rows || []).map((r) => ({ ...r, dept: d[0] }))), mkt: L.flatMap((x) => x.mkt || []), pl: d[2], ln: L.reduce((a_, x) => { Object.entries(x.ln || {}).forEach(([l, t]) => { a_[l] = (a_[l] || 0) + t; }); return a_; }, {}) }; };
     const wk = (w) => tot(DP.map((d) => dv(w, d)));
     // 주 고르기(칩) — 칩마다 계획·주문%·소재%
     const chips = `<div class="k-wk">${W.map((w, i) => { const v = wk(w), f = pc(v.o, v.p), ms = pc(v.ok + v.on, v.o); return `<button type="button" data-i="${i}" class="${i === SEL ? 'on' : ''}"><b>${lab(i)}</b><span>${md(w.from)}~${md(w.to)}</span><div class="mm">${v.p ? `<span>${n0(v.p)}t</span><span class="${f < 90 ? 'bad' : ''}">수주 ${f}%</span><span class="${ms < 50 ? 'bad' : ms < 80 ? 'warn' : ''}">소재 ${ms}%</span>` : '<span>계획 없음</span>'}</div></button>`; }).join('')}</div>`;
@@ -42,11 +42,11 @@
 <div><div class="l">부자재 준비(컬러)</div><div class="v ${sub && pc(T.so, sub) < 80 ? 'subc' : ''}">${sub ? pc(T.so, sub) : '–'}<small>%</small></div><div class="s">${sub ? `준비 ${n0(T.so)} · 대기 ${n0(T.sw + T.sb)} · 작업지시 전 ${n0(T.sn)}` : '도금은 주문 단위 부자재 없음'}</div></div></div>`;
     // 부서별 준비 현황
     const z = (v, c) => (v > 0.5 ? `<td class="${c || ''}">${n0(v)}</td>` : '<td class="z">–</td>');
-    const drow = ([d, v], tt) => !v.p && !tt ? `<tr><th class="${d[2]}">${d[0]}</th><td colspan="11" class="na">${d[2] === 'G' ? '판매재 계획 없음(자가재·정기수리 주간)' : `이 주 계획 없음${((lt) => (lt >= 50 ? ` — 계획 없는 주문 ${n0(lt)}t 대기(9주 합)` : ''))(d[1].reduce((a_, g_) => a_ + ((K.left || {})[g_] || 0), 0))}`}</td></tr>`
-      : `<tr class="${tt ? 'tot' : ''}"><th class="${tt ? '' : d[2]}">${tt ? '합계' : d[0]}</th><td>${n0(v.p)}</td>${z(v.o)}${z(Math.max(0, v.p - v.o), 'bad')}<td class="sep ${pc(v.ok + v.on, v.o) < 50 ? 'bad' : pc(v.ok + v.on, v.o) < 80 ? 'warn' : ''}">${v.o ? pc(v.ok + v.on, v.o) + '%' : '–'}</td>${z(v.ok)}${z(v.on)}${z(v.late, 'warn')}${z(v.none + v.wait, 'bad')}${d && d[2] === 'G' && !tt ? '<td class="sep z">–</td><td class="z">–</td>' : `<td class="sep">${v.so + v.sw + v.sb > 0.5 ? n0(v.so) : '–'}</td>${z(v.sw + v.sb, 'subc')}`}${z((tt ? V.flatMap(([, x_]) => x_.iss || []) : v.iss || []).filter((it) => it.k === 'dl' && it.due >= K.today).reduce((a_, it) => a_ + it.t, 0), 'dlc')}</tr>`;
-    const dtab = `<div class="k-card"><h2>부서별 준비 현황<small>톤 · 계획대로 만들 때</small></h2><div class="k-dscroll"><table class="k-d">
-<thead><tr class="grp"><th></th><th colspan="3" class="gs">주문</th><th colspan="5" class="gs">소재</th><th colspan="2" class="gs">부자재(컬러)</th><th class="gs">납기</th></tr>
-<tr><th></th><th>계획</th><th>주문</th><th>무주문</th><th class="sep">확보율</th><th>확보</th><th>입고 예정</th><th>늦게 입고</th><th>없음·불확실</th><th class="sep">준비</th><th>대기</th><th>새로 넘김</th></tr></thead>
+    const drow = ([d, v], tt) => !v.p && !tt ? `<tr><th class="${d[2]}">${d[0]}</th><td colspan="12" class="na">${d[2] === 'G' ? '판매재 계획 없음(자가재·정기수리 주간)' : `이 주 계획 없음${((lt) => (lt >= 50 ? ` — 계획 없는 주문 ${n0(lt)}t 대기(9주 합)` : ''))(d[1].reduce((a_, g_) => a_ + ((K.left || {})[g_] || 0), 0))}`}</td></tr>`
+      : `<tr class="${tt ? 'tot' : ''}"><th class="${tt ? '' : d[2]}">${tt ? '합계' : d[0]}</th><td class="pp">${n0(v.p)}</td><td class="ln">${tt ? '' : Object.entries(v.ln || {}).map(([l, t]) => `<span>${esc(l)} <b>${n0(t)}</b></span>`).join('')}</td>${z(v.o)}${z(Math.max(0, v.p - v.o), 'bad')}<td class="sep ${pc(v.ok + v.on, v.o) < 50 ? 'bad' : pc(v.ok + v.on, v.o) < 80 ? 'warn' : ''}">${v.o ? pc(v.ok + v.on, v.o) + '%' : '–'}</td>${z(v.ok)}${z(v.on)}${z(v.late, 'warn')}${z(v.none + v.wait, 'bad')}${d && d[2] === 'G' && !tt ? '<td class="sep z">–</td><td class="z">–</td>' : `<td class="sep">${v.so + v.sw + v.sb > 0.5 ? n0(v.so) : '–'}</td>${z(v.sw + v.sb, 'subc')}`}${z((tt ? V.flatMap(([, x_]) => x_.iss || []) : v.iss || []).filter((it) => it.k === 'dl' && it.due >= K.today).reduce((a_, it) => a_ + it.t, 0), 'dlc')}</tr>`;
+    const dtab = `<div class="k-card"><h2>${lab(SEL)} 그룹별 생산 계획<small>${md(w.from)}~${md(w.to)} · 톤</small></h2><div class="k-dscroll"><table class="k-d">
+<thead><tr class="grp"><th></th><th colspan="2" class="gs">생산 계획</th><th colspan="2" class="gs">주문</th><th colspan="5" class="gs">소재</th><th colspan="2" class="gs">부자재(컬러)</th><th class="gs">납기</th></tr>
+<tr><th></th><th>합계</th><th class="lh">라인별</th><th>주문</th><th>무주문</th><th class="sep">확보율</th><th>확보</th><th>입고 예정</th><th>늦게 입고</th><th>없음·불확실</th><th class="sep">준비</th><th>대기</th><th>새로 넘김</th></tr></thead>
 <tbody>${V.map((x) => drow(x)).join('')}${drow([null, T], true)}</tbody></table></div>
 <div class="k-lg"><span class="bad">빨강 = 무주문·소재 없음</span><span class="warn">주황 = 소재 늦게 입고</span><span class="subc">남색 = 부자재 대기</span><span class="dlc">보라 = 납기 넘김</span></div></div>`;
     // 독촉할 곳: 마케팅(빈 곳) · 소재(늦음·없음·부자재 대기) · 공정·출하(납기 넘김)
@@ -152,7 +152,7 @@ ${LF.length || ST.length ? `<div class="k-ask">${LF.length ? `<div class="k-card
     const VW = [['a', '준비 현황'], ['b', '결손 메우기'], ['c', '일정 지연 대비']];
     const seg = `<div class="k-seg">${VW.map(([k, t]) => `<button type="button" data-v="${k}" class="${VIEW === k ? 'on' : ''}">${t}</button>`).join('')}</div>`;
     const pull0 = PLANS.reduce((a_, P) => a_ + P.st.filter((s_) => !s_.k).reduce((b_, s_) => b_ + s_.tt, 0), 0);
-    const body = VIEW === 'a' ? `${kpi}${ask.replace('@@PULL@@', pull0 > 0.5 ? ` · 이 중 ${n0(pull0)}t은 이번 주 결손에 당김` : '')}<div style="margin-top:14px">${dtab}</div>`
+    const body = VIEW === 'a' ? `${kpi}<div style="margin:14px 0">${dtab}</div>${ask.replace('@@PULL@@', pull0 > 0.5 ? ` · 이 중 ${n0(pull0)}t은 이번 주 결손에 당김` : '')}`
       : VIEW === 'b' ? `${sumHtml}<div class="k-h">그룹·라인별<small>눌러서 선행 편성 주문 보기</small></div>${swHtml}`
       : `<div class="k-h">수리·M/C·휴지 지연 대비<small>${lab(SEL)}~${lab(Math.min(SEL + 3, W.length - 1))}</small></div><div class="k-card k-side">${dlHtml}</div>`;
     m.innerHTML = `<div class="k-top"><h1>주간 관제</h1><span class="as">${md(K.today)} 기준 · 주 = 수~화(이번 주 = ${md(W[0].from)}부터) · 계획 = ${K.planAt ? md(K.planAt) + ' 재계획' : '재계획'}·통합 계획</span>${seg}</div>
