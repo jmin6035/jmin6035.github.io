@@ -102,7 +102,7 @@ html body main td.dt { white-space: normal !important; min-width: 280px; text-al
     let evs = await events();
     if (!evs.length) {                                         // 처음: 예전 이 기기 기록 → 없으면 초기값
       let old = []; try { old = JSON.parse(localStorage.getItem('cgl-share-decisions') || '[]'); } catch (e) { /* 무시 */ }
-      for (const s of (old.length ? old : SEED.map((x) => Object.assign({ by: '초기값' }, x)))) await push({ t: 'add', uid: uid(), at: s.at || new Date().toISOString(), by: s.by, area: s.area, title: s.title, detail: s.detail, owner: s.owner, due: s.due, status: s.status });
+      for (const s of (old.length ? old : SEED.map((x) => Object.assign({ by: '첫 등록' }, x)))) await push({ t: 'add', uid: uid(), at: s.at || new Date().toISOString(), by: s.by, area: s.area, title: s.title, detail: s.detail, owner: s.owner, due: s.due, status: s.status });
       moved = old.length; evs = await events();
     }
     rows = fold(evs); mode(moved); draw();
@@ -121,7 +121,7 @@ html body main td.dt { white-space: normal !important; min-width: 280px; text-al
     $('d-count').textContent = `${L.length}건 / 전체 ${rows.length}`;
     const W = (s) => String(s == null ? '' : s).replace(/기발주/g, '발주 완료분').replace(/충당 계산/g, '발주 계산').replace(/선생산/g, '앞당김 생산').replace(/Claude\((\d+\/\d+) 검토\)/g, '자동 검토($1)').replace(/Claude/g, '자동 검토');   // 11/17 용어 기준: 저장된 기록(추가만 가능)은 그대로 두고 표시만 바꿈
     $('d-body').innerHTML = L.map((r) => `<tr data-id="${esc(r.id)}"><td>${r.at ? esc(UI.fmtDate(String(r.at).slice(0, 10))) : ''}</td><td class="c"><b>${esc(r.area)}</b></td><td class="l dt"><b>${esc(W(r.title))}</b>${r.detail ? `<br><span class="small">${esc(W(r.detail))}</span>` : ''}</td><td>${esc(r.owner || '')}</td>
-      <td class="${r.due && r.due < today && !['완료', '보류', '결정'].includes(r.status) ? 'overdue' : ''}">${r.due ? esc(UI.fmtDate(r.due)) : ''}</td><td><select data-st>${ST.map((s) => `<option ${s === r.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td><td class="muted">${esc(W(r.by || ''))}</td></tr>`).join('') || '<tr><td colspan="7" class="c muted">없음</td></tr>';
+      <td class="${r.due && r.due < today && !['완료', '보류', '결정'].includes(r.status) ? 'overdue' : ''}">${r.due ? esc(UI.fmtDate(r.due)) : ''}</td><td><select data-st>${ST.map((s) => `<option ${s === r.status ? 'selected' : ''}>${s}</option>`).join('')}</select></td><td class="muted">${esc(W(r.by === '초기값' ? '첫 등록' : (r.by || '')))}</td></tr>`).join('') || '<tr><td colspan="7" class="c muted">없음</td></tr>';
     $('d-filter').querySelectorAll('button').forEach((b) => b.onclick = () => { filt = b.dataset.f; draw(); });
     $('d-body').querySelectorAll('select[data-st]').forEach((s) => s.onchange = async () => { try { await push({ t: 'set', uid: s.closest('tr').dataset.id, status: s.value }); UI.toast('상태 변경'); } catch (e) { UI.toast('⚠ 저장 실패 — 재시도 바랍니다'); } load(); });
   }

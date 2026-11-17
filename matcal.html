@@ -6,8 +6,8 @@
 <title>소재 관제</title>
 <meta name="description" content="일별 가동 · 자가재 · 구매 소재(발주·입고·재고) · 제품 재고를 한 달력에서">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611171526">
-<link rel="stylesheet" href="ui/optable.css?v=2611171526">
+<link rel="stylesheet" href="ui/theme.css?v=2611132301">
+<link rel="stylesheet" href="ui/optable.css?v=2611141900">
 <style>
 .sbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 10px; font-size: 13.5px; color: var(--ink-2); }
 .sbar b { color: var(--ink); }
@@ -199,6 +199,11 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
 .oj-t.oj-st{table-layout:auto}.oj-t.oj-mx{table-layout:auto}.oj-t.oj-mx th{word-break:keep-all;vertical-align:bottom}.oj-t.oj-mx td.nw .oj-nx,.oj-t.oj-mx td.nw .oj-now{white-space:nowrap}
 .oj-nx{font-size:13.5px;color:var(--ink-2,#555);font-weight:600}.oj-now{display:inline-block;margin-top:2px;font-size:13.5px;font-weight:800;color:#fff;background:var(--bad,#c92a2a);border-radius:999px;padding:0 8px}.oj-def{display:inline-block;font-size:13.5px;font-weight:700;color:var(--warn,#b35c00);background:var(--warn-bg,#fff3e0);border-radius:6px;padding:0 5px}
 .oj-t{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}.oj-t th{background:var(--surface-2,#f4f6f8);font-weight:600;color:var(--ink-2,#555)}.oj-t th,.oj-t td{border-bottom:1px solid var(--grid,#e8ebef);text-align:center}.oj-t td.r,.oj-t th.r{text-align:right}.oj-t caption{text-align:left;padding:4px 2px}.oj-t td,.oj-t th{padding:5px 8px;vertical-align:middle}.nw{white-space:nowrap}.neg{color: var(--bad)}
+/* 11/17 검토: 1366 에서 소재 표(도금 1,144 · 컬러 1,356px > 1,020)의 판매그룹·리드타임 칸이 잘림 — 위 1700/1500 여백 규칙이 v2 여백(!important)에 눌려 안 먹던 것 · 머리와 그룹 상태 칩 줄바꿈 허용 */
+@media (max-width: 1700px) { html body main table.oj-t.oj-mx.oj-mx :is(th, td) { padding-left: 4px !important; padding-right: 4px !important; } }
+html body main table.oj-t.oj-mx thead th { white-space: normal !important; word-break: keep-all; }
+html body main table.oj-t.oj-mx tr.oj-gst td { white-space: normal !important; } html body main table.oj-t.oj-mx tr.oj-gst .oj-dot { white-space: normal; word-break: keep-all; display: inline-block; line-height: 1.25; }
+html body main table.oj-t.oj-mx td.nw .oj-nx { white-space: normal !important; }
 </style>
 </head>
 <body>
@@ -210,7 +215,7 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
     <p class="hint" id="msg"></p>
   </section>
   <div id="main" hidden>
-    <div class="mt-stk" data-ref="stkmat" hidden></div>
+    <div class="mt-stk" id="mt-stk" hidden></div>
     <section class="card" id="s-ojudge"></section>
     <div id="mt-orders"></div>
     <div class="sbar"><span id="s-meta"></span><div class="tabs" id="s-mon" role="group" aria-label="월"></div></div>
@@ -247,14 +252,36 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
 </main>
 <footer class="foot"><div class="wrap"><span></span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2611171526"></script>
-<script src="engine/crypto.js?v=2611171526"></script>
-<script src="ui/cal.js?v=2611171526"></script>
-<script src="ui/proccalc.js?v=2611171526"></script>
-<script src="ui/optable.js?v=2611171526"></script>
-<script src="supply.js?v=2611171526"></script>
-<script src="ui/ct.js?v=2611171526"></script>
-<script src="ct_mat.js?v=2611171526"></script>
-<script src="matref.js?v=2611171526"></script>
+<script src="ui/shell.js?v=2611141500"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script src="ui/cal.js?v=2611120206"></script>
+<script src="ui/proccalc.js?v=2611120206"></script>
+<script src="ui/optable.js?v=2611141900"></script>
+<script src="supply.js?v=2611172300"></script>
+<script src="ui/ct.js?v=2611120206"></script>
+<script src="ct_mat.js?v=2611120206"></script>
+<script src="matref.js?v=2611132301"></script>
+<script>/* 11/17 검토: 소재 재고 한 줄 = 02 현황과 같은 출처(MES 소재재고 — suju.enc.json hy.stockMat) · 같은 상한에 퍼센트 하나만. 판생속보 재고는 퍼센트 없이 옆에 */
+(function () {
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  async function fill(pw) {
+    const el = document.getElementById('mt-stk'); if (!el || !window.MatRef) return;
+    const S = await MatRef.load('suju.enc.json', pw), H = S && S.hy;
+    if (!H) { el.hidden = true; return; }
+    const one = (p, nm) => { const x = (H[p] || {}).stockMat; if (!x || x.now == null || !x.cap || !UI.inScope(p)) return '';
+      const r = x.now / x.cap, tone = r > 1 ? 'bad' : r < 0.9 ? 'warn' : 'ok';
+      return `<span class="ref-c ${tone}" title="MES 소재재고(02 현황과 같은 값) · 상한 = '27 판생그룹 월말 최대${x.sr != null ? ` · 판매생산속보 재고 ${UI.fmtT(x.sr)}(출처가 달라 값이 다름)` : ''}"><b>${nm}${x.lab ? ` ${esc(x.lab)}` : ''}</b> ${UI.fmtT(x.now)} <span>· 재고 상한 ${UI.fmtT(x.cap)} 대비</span> <em>${Math.round(r * 100)}%</em>${x.sr != null ? ` <span>· 판생 ${UI.fmtT(x.sr)}</span>` : ''}</span>`; };
+    const h = one('G', '도금 소재') + one('C', '컬러 소재');
+    el.innerHTML = h ? `<span class="ref-l">소재 재고 <small>MES ${esc(UI.fmtDate(H.asOf))}</small></span>${h}` : '';
+    el.hidden = !h;
+  }
+  let n = 0;
+  (function wait() {
+    let pw = null; try { pw = localStorage.getItem('cgl-analysis-pw'); } catch (e) { /* 무시 */ }
+    if (pw && window.UI) { UI.ready().then(() => fill(pw)); if (UI.onScope) UI.onScope(() => fill(pw)); return; }
+    if (++n < 600) setTimeout(wait, 1000);
+  })();
+})();
+</script>
 </body>
 </html>

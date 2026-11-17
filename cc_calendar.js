@@ -1,6 +1,6 @@
 /* 컬러 생산 캘린더: published/cc_calendar.enc.json (tools/cc_calendar.py)
    10/30 사용자 '11월 상세 계획 — 컬러 도금 둘 다 포털에': 1~4CCL × 오늘 ~ 월말.
-   11/5 컬러 담당 편성 규칙: 칸 = 라인 하루 24시간에 작업대기(1030) → 지시대기(1020, 부원료 입고 뒤, 노랑) → 도료 미입고(파랑) → 계획편성(초록). 작업대기로 24시간 못 채운 날 = 빨강
+   11/5 컬러 담당 편성 규칙: 칸 = 라인 하루 24시간에 작업대기(1030) → 지시대기(1020, 부자재 입고 뒤, 노랑) → 도료 미입고(파랑) → 계획편성(초록). 작업대기로 24시간 못 채운 날 = 빨강
    11/11 회의: 용어 = MES·통합속보와 같게 — 작업대기 = 현장에 내려가 바로 작업할 수 있는 물량(1030 확정), 지시대기 = 소재 매치까지 된 물량(1020), 계획편성 = 우리 계획이 깐 물량.
    11/13 사용자 '24시간이 안 채워졌는데 다음 날로 넘어가는 것 오류': 엔진(tools/cc_calendar.py)이 계약을 시간으로 나눠 그날 가용 시간을 꽉 채우고 나머지만 다음 날로 →
    예전 '이어짐'(빗금) 표시는 없앰. 칸 양식 = 도금 캘린더와 같음(제품 칩 + 톤 · 시간 막대 + 가동/가용 시간 + 정지 칩 · 판매그룹 톤) */
@@ -20,7 +20,7 @@
   const END = () => md(O.days[O.days.length - 1]);
   const sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
 
-  const KD = [['작업대기', '작업대기', 'sk1', '현장에 내려가 바로 작업할 수 있는 물량 — MES 작업지시 확정(1030), 생산우선순위 순'], ['지시대기', '지시대기', 'sk2', '소재 매치까지 된 물량 — MES 작업지시 전(1020), 부원료 입고 뒤 작업지시 순서대로'],
+  const KD = [['작업대기', '작업대기', 'sk1', '현장에 내려가 바로 작업할 수 있는 물량 — MES 작업지시 확정(1030), 생산우선순위 순'], ['지시대기', '지시대기', 'sk2', '소재 매치까지 된 물량 — MES 작업지시 전(1020), 부자재 입고 뒤 작업지시 순서대로'],
     ['부자재 입고대기', '도료 미입고', 'sk3', '지시대기 중 도료 입고 일정이 없는 물량 — 지시대기 뒤에 둠'], ['계획편성', '계획편성', 'sk4', '작업대기·지시대기 뒤 남는 시간에 우리 계획(통합 컬러 계획)이 깐 물량 — 주문 연결 전']];
   const SHORT_T = '작업대기 부족 = 하루 24시간(계획 휴지 뺌) 중 현장 물량(작업대기)으로 못 채우는 시간 — 지시대기로 메워야 하는 시간';
   /* 결론(11/11 생산 화면 통합 — 생산 일정 화면 맨 위 PS.sum): 이번 주(오늘부터 7일) 라인별 생산·가동 시간·24시간 부족 + 월말까지 편성 구성 */
@@ -36,7 +36,7 @@
   }
   /* 기준·사양(생산 일정 맨 아래 접기) */
   function spec() {
-    return `<h4>컬러 캘린더</h4><ul class="ps-ul"><li>하루 = 07시 ~ 다음날 07시 · 가용 = 24시간 − 계획 휴지(통합 컬러 계획 휴지 달력)</li>${KD.map(([, nm, cl, t]) => `<li><i class="ps-i ${cl}"></i><b>${nm}</b> — ${esc(t)}</li>`).join('')}<li><b>작업대기 부족</b>(빨강) = 하루 가용 시간 중 현장 물량(작업대기)으로 못 채우는 시간 → 지시대기로 메움</li><li>계약은 시간으로 나눠 그날 가용 시간(24시간 − 정지)을 꽉 채우고 나머지만 다음 날로(톤 = 시간 비율)</li><li><b>정지</b> = 휴지·S/D·수리·청소·Test·샘플(통합 컬러 계획 휴지 달력) — 칸에 사유·시간</li><li><b>확정본</b> = 작업 순서 화면에서 「확정」한 작업(주마다 최근 확정) — 작업대기 다음, 확정한 라인·날짜에 고정(다음 갱신 때 반영, 「저장」은 반영 안 됨)</li><li><b>빈 시간</b> = 아무 물량도 없는 시간</li><li>자료 ${esc(O.asOf)} · 작업지시 시각 ${esc(String(O.woNow || '').slice(0, 16).replace('T', ' '))} · 계산 ${esc(O.built || '')}</li></ul>`;
+    return `<h4>컬러 캘린더</h4><ul class="ps-ul"><li>하루 = 07시 ~ 다음날 07시 · 가용 = 24시간 − 계획 휴지(통합 컬러 계획 휴지 달력)</li>${KD.map(([, nm, cl, t]) => `<li><i class="ps-i ${cl}"></i><b>${nm}</b> — ${esc(t)}</li>`).join('')}<li><b>작업대기 부족</b>(빨강) = 하루 가용 시간 중 현장 물량(작업대기)으로 못 채우는 시간 → 지시대기로 메움</li><li>계약은 시간으로 나눠 그날 가용 시간(24시간 − 정지)을 꽉 채우고 나머지만 다음 날로(톤 = 시간 비율)</li><li><b>정지</b> = 휴지·S/D·수리·청소·시험·샘플(통합 컬러 계획 휴지 달력) — 칸에 사유·시간</li><li><b>확정본</b> = 작업 순서 화면에서 「확정」한 작업(주마다 최근 확정) — 작업대기 다음, 확정한 라인·날짜에 고정(다음 갱신 때 반영, 「저장」은 반영 안 됨)</li><li><b>빈 시간</b> = 아무 물량도 없는 시간</li><li>자료 ${esc(O.asOf)} · 작업지시 시각 ${esc(String(O.woNow || '').slice(0, 16).replace('T', ' '))} · 계산 ${esc(O.built || '')}</li></ul>`;
   }
 
   /* 칸 한 양식(11/13 사용자 '도금이랑 컬러 양식 똑같이 · S/D·청소 같이 넣어 · 시간/뭐 생산하는지 구분'): 도금 캘린더와 같은 구조
@@ -47,17 +47,17 @@
   const prodChips = (P) => { const Q = P.filter(([, v]) => v >= 0.5); return Q.slice(0, Q.length > 1 && String(Q[0][0]).length + String(Q[1][0]).length > 9 ? 1 : 2).map(([p]) => `<span class="fam fam-CC">${esc(p)}</span>`).join('') };
   const w24 = (v) => `${Math.max(0, 100 * v / 24).toFixed(2)}%`;
   function cell(c, ln) {
-    const D = c.down || [], dH = c.downH != null ? c.downH : D.reduce((a, x) => a + x[1], 0);
+    const D = (c.down || []).map(([k, h]) => [String(k).replace(/test/gi, '시험'), h]), dH = c.downH != null ? c.downH : D.reduce((a, x) => a + x[1], 0);
     if (c.stop) { const nm = D.length ? D.map(([k]) => k).join('·') : '정지'; return `<button type="button" class="cell sc stp" data-ln="${ln}" data-d="${c.d}" title="${ln} ${mdw(c.d)} ${esc(nm)} — 하루 종일"><div class="sc-r1"><span class="sc-off">${esc(nm)}</span></div><div class="sc-h">정지 24시간</div></button>`; }
     const K = c.k || {}, past = Math.max(0, 24 - (c.capH || 0) - dH), empty = (c.capH || 0) - (c.usedH || 0);
     const P = {}; c.items.forEach((i) => { if (i.item) P[i.item] = (P[i.item] || 0) + i.t; });
     const prods = Object.entries(P).sort((a, b) => b[1] - a[1]), chips = prodChips(prods.length ? prods : (c.planItems || []));
     const big = D.some(([k]) => /S\/D/.test(k)), red = c.woShort > 0 || empty >= 0.1;
-    const tip = `${ln} ${mdw(c.d)} · 생산 ${n0(c.cap)}t · ${KD.filter(([k]) => K[k]).map(([k, nm]) => `${nm} ${n0(K[k][0])}t ${n1(K[k][1])}시간`).join(' · ')} · 가동 ${n1(c.usedH)}시간 / 가용 ${n1(c.capH)}h${D.length ? ` · 정지 ${D.map(([k, h]) => `${k} ${n1(h)}시간`).join(' · ')}` : ''}${past >= 0.05 ? ` · 오늘 지난 ${n1(past)}시간` : ''}${c.lockT ? ` · 확정본 ${n1(c.lockT)}t = 작업 순서 화면에서 이 라인·날짜로 확정한 작업` : ''}${c.woShort > 0 ? ` · ${SHORT_T}` : ''}`;
+    const tip = `${ln} ${mdw(c.d)} · 생산 ${n0(c.cap)}t · ${KD.filter(([k]) => K[k]).map(([k, nm]) => `${nm} ${n0(K[k][0])}t ${n1(K[k][1])}시간`).join(' · ')} · 가동 ${n1(c.usedH)}시간 / 가용 ${n1(c.capH)}시간${D.length ? ` · 정지 ${D.map(([k, h]) => `${k} ${n1(h)}시간`).join(' · ')}` : ''}${past >= 0.05 ? ` · 오늘 지난 ${n1(past)}시간` : ''}${c.lockT ? ` · 확정본 ${n1(c.lockT)}t = 작업 순서 화면에서 이 라인·날짜로 확정한 작업` : ''}${c.woShort > 0 ? ` · ${SHORT_T}` : ''}`;
     return `<button type="button" class="cell sc${big ? ' mc' : ''}${red ? ' fl' : ''}" data-ln="${ln}" data-d="${c.d}" title="${esc(tip)}">`
       + `<div class="sc-r1"><span class="sc-ch">${chips}</span><span class="tv">${n0(c.cap)}<small>t</small></span></div>`
       + `<div class="sc-bar">${past >= 0.05 ? `<i class="spa" style="width:${w24(past)}"></i>` : ''}${D.map(([, h]) => `<i class="sst" style="width:${w24(h)}"></i>`).join('')}${KD.map(([k, , cl]) => (K[k] ? `<i class="${cl}" style="width:${w24(K[k][1])}"></i>` : '')).join('')}</div>`
-      + `<div class="sc-h"><b>${n1(c.usedH)}</b> / ${n1(c.capH)}h${D.map(([k, h]) => ` <span class="sc-st">${esc(k)} ${n1(h)}시간</span>`).join('')}</div>`
+      + `<div class="sc-h"><b>${n1(c.usedH)}</b> / ${n1(c.capH)}시간${D.map(([k, h]) => ` <span class="sc-st">${esc(k)} ${n1(h)}시간</span>`).join('')}</div>`
       + `<div class="gl">${regroup(c.grp).slice(0, 3).map(([g, v]) => `<span>${esc(g)} ${n0(v)}</span>`).join('')}</div>`
       + (c.lockT ? `<div class="mvc">확정본 ${n1(c.lockT)}t</div>` : '')
       + (c.overH ? `<div class="sh">확정본 넘침 ${n1(c.overH)}시간</div>` : '')
@@ -126,13 +126,13 @@
       if (!I.length) continue;
       if (k === '계획편성') { body += `<div class="fgl kgbg">${nm} ${n0(sum(I, (i) => i.t))}t · ${n1(sum(I, (i) => i.h))}시간(주문 연결 전) — ${I.map((i) => `${esc(i.grp)} ${n0(i.t)}t`).join(' · ')}${(c.planItems || []).length ? `<div class="pi">그날 계획 품명: ${c.planItems.map(([p, t]) => `${esc(p)} ${n0(t)}`).join(' · ')}</div>` : ''}</div>`; continue; }
       body += `<h4 class="kh"><i class="${cl}"></i>${nm} <small>${I.length}건 · ${n0(sum(I, (i) => i.t))}t · ${n1(sum(I, (i) => i.h))}시간</small></h4>`
-        + '<table class="it cmp"><colgroup><col style="width:48px"><col style="width:190px"><col><col style="width:96px"><col style="width:104px"><col style="width:96px"><col style="width:72px"><col style="width:64px"><col style="width:96px"></colgroup><thead><tr><th>순서</th><th>계약번호-행번</th><th>품명</th><th>그룹</th><th>두께×폭</th><th>상도 색</th><th class="num">톤</th><th class="num">시간</th><th>부원료 준비</th></tr></thead><tbody>'
-        + I.map((i, j) => `<tr><td class="sq">${j + 1}</td><td><div class="con">${esc(i.con)}${i.cont ? ' <small>(앞 날에서 이어서)</small>' : ''}</div>${i.locked ? '<span class="bd mv" title="작업 순서 화면에서 이 라인·날짜로 확정">확정본</span>' : ''}</td><td><b>${esc(i.item || '')}</b></td><td class="nw">${esc(i.grp || '')}</td>`
-          + `<td class="sz">${i.thk ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw">${esc(i.color || '')}</td><td class="num"><b>${n1(i.t)}</b></td><td class="num">${n1(i.h)}</td><td class="nw">${k === '부자재 입고대기' ? '<span class="bad">일정 없음</span>' : i.locked && i.ready > d ? `<b style="color:var(--bad)" title="확정한 날이 부원료 입고 전">${md(i.ready)} 입고</b>` : md(i.ready) || '-'}</td></tr>`).join('')
+        + '<table class="it cmp"><colgroup><col style="width:48px"><col style="width:190px"><col><col style="width:96px"><col style="width:104px"><col style="width:96px"><col style="width:72px"><col style="width:64px"><col style="width:96px"></colgroup><thead><tr><th>순서</th><th>계약번호-행번</th><th>품명</th><th>그룹</th><th>두께×폭</th><th>상도 색</th><th class="num">톤</th><th class="num">시간</th><th>부자재 준비</th></tr></thead><tbody>'
+        + I.map((i, j) => `<tr><td class="sq">${j + 1}</td><td><div class="con">${esc(i.con)}${i.cont ? ' <small>(앞 날에서 이어서)</small>' : ''}</div>${i.locked ? '<span class="bd mv" title="작업 순서 화면에서 이 라인·날짜로 확정">확정본</span>' : ''}</td><td><b>${esc(i.item || '')}</b></td><td class="nw" title="${esc(i.grp || '')}">${esc(GNM[i.grp] || (i.grp !== '미상' && i.grp) || '')}</td>`
+          + `<td class="sz">${i.thk ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw">${esc(i.color || '')}</td><td class="num"><b>${n1(i.t)}</b></td><td class="num">${n1(i.h)}</td><td class="nw">${k === '부자재 입고대기' ? '<span class="bad">일정 없음</span>' : i.locked && i.ready > d ? `<b style="color:var(--bad)" title="확정한 날이 부자재 입고 전">${md(i.ready)} 입고</b>` : md(i.ready) || '-'}</td></tr>`).join('')
         + '</tbody></table>';
     }
     if (!body) body = '<p class="msg">배정 없음</p>';
-    dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>가용 <b>${n1(c.capH)}시간</b> · 편성 ${n1(c.usedH)}h${c.woShort > 0 ? ` · <b class="bad">작업대기 부족 ${n1(c.woShort)}시간</b>` : c.short > 0 ? ` · <b class="bad">빈 ${n1(c.short)}시간</b>` : ''}</span>`
+    dlg.innerHTML = `<div class="dh"><b>${ln} ${mdw(d)}</b><span>가용 <b>${n1(c.capH)}시간</b> · 편성 ${n1(c.usedH)}시간${c.woShort > 0 ? ` · <b class="bad">작업대기 부족 ${n1(c.woShort)}시간</b>` : c.short > 0 ? ` · <b class="bad">빈 ${n1(c.short)}시간</b>` : ''}</span>`
       + `<span class="x"><button type="button" id="kc-x" aria-label="닫기">닫기 ×</button></span></div><div class="db">${body}</div>`;
     $('kc-x').onclick = () => dlg.close();
     if (!dlg.open) dlg.showModal();

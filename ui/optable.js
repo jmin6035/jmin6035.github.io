@@ -12,6 +12,12 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const n0 = (v) => Math.round(v || 0).toLocaleString('en-US');
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8, 10)}`;
+  /* 11/18 검수: 달을 넘는 정지(2CGL 정기수리 11/23~12/6)를 달마다 '(8일)'·'(6일)'로 나눠 쓰지 않게 — window.OPT_STOPEV = {'라인|날짜': 이름}(gyehoek.js 가 계획 전체 날짜로 채움) */
+  const addD1 = (d, k) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + k); return x.toISOString().slice(0, 10); };
+  const stopNm = (l, k, a0, z0, n) => { const E = window.OPT_STOPEV, nz = (v) => String(v || '').replace(/\s*\(.*\)$/, '');
+    let a = a0, z = z0;
+    if (E && nz(E[`${l}|${a0}`]) === nz(k)) { for (let i = 0; i < 90 && nz(E[`${l}|${addD1(a, -1)}`]) === nz(k); i++) a = addD1(a, -1); for (let i = 0; i < 90 && nz(E[`${l}|${addD1(z, 1)}`]) === nz(k); i++) z = addD1(z, 1); }
+    return (a !== a0 || z !== z0) ? `${k} ${md(a)}~${md(z)}` : k + (n > 1 ? ` (${n}일)` : ''); };
   const WD = ['일', '월', '화', '수', '목', '금', '토'];
   const wd = (d) => new Date(d + 'T00:00:00').getDay();
   const LINES = { G: ['1CGL', '2CGL'], C: ['1CCL', '2CCL', '3CCL', '4CCL'] };
@@ -98,7 +104,7 @@
           for (let i = 0; i < ds.length; i++) {
             const s = SR.find((x) => x.i === i);
             if (s && s.f === f) {
-              const nm = s.k + (s.n > 1 ? ` (${s.n}일)` : '');
+              const nm = stopNm(l, s.k, ds[s.i], ds[s.j], s.n);
               r += `<td class="sp${dc(i)}${chgOf(C, Q, i)}" colspan="${s.j - s.i + 1}" ${at_(l, i)} title="${esc(`${l} ${s.k} ${md(ds[s.i])}${s.j > s.i ? '~' + md(ds[s.j]) : ''}`)}">${lab(nm)}</td>`;
               i = s.j; continue;
             }
@@ -117,7 +123,7 @@
         ev += '<td class="tot">-</td></tr>';
         let hr = '';
         if (o.hrs) {
-          hr = '<tr class="hr le"><th class="c1">가동시간(시간)</th>'; let hs = 0;
+          hr = '<tr class="hr le"><th class="c1">가동시간</th>'; let hs = 0;
           for (let i = 0; i < ds.length; i++) { const v = Math.round(o.hrs(l, ds[i], C[i]) * 10) / 10; hs += v; hr += `<td class="${dc(i).trim()}">${hfmt(v)}</td>`; }
           hr += `<td class="tot">${hfmt(hs)}</td></tr>`;
         }
@@ -141,7 +147,7 @@
         for (let i = 0; i < ds.length; i++) {
           const s = SR.find((x) => x.i === i);
           if (s) {
-            const n = s.j - s.i + 1, nm = s.k + (n > 1 ? ` (${n}일)` : '');
+            const n = s.j - s.i + 1, nm = stopNm(l, s.k, ds[s.i], ds[s.j], n);
             ev += `<td class="sp${dc(i)}${chgOf(C, Q, i)}" colspan="${n}" ${at_(l, i)} title="${esc(C[i].stopTip || `${l} ${s.k} ${md(ds[s.i])}${s.j > s.i ? '~' + md(ds[s.j]) : ''}`)}">${lab(nm)}</td>`;
             i = s.j; continue;
           }
@@ -175,9 +181,18 @@
       if (ps && hd) { const D0 = [...w.querySelectorAll('thead tr:first-child th.dn')], n = +ps.dataset.n, a0 = D0[0] && D0[0].getBoundingClientRect(), b0 = D0[n - 1] && D0[n - 1].getBoundingClientRect(), h0 = hd.getBoundingClientRect();
         if (a0 && b0) Object.assign(ps.style, { left: (a0.left - W.left - w.clientLeft + w.scrollLeft) + 'px', top: (h0.bottom - W.top - w.clientTop + w.scrollTop) + 'px', width: (b0.right - a0.left) + 'px', height: (T.bottom - h0.bottom) + 'px' }); }
       if (th && fr) { const a = th.getBoundingClientRect(); Object.assign(fr.style, { left: (a.left - W.left - w.clientLeft + w.scrollLeft) + 'px', top: (T.top - W.top - w.clientTop + w.scrollTop) + 'px', width: a.width + 'px', height: T.height + 'px' }); }   // 소수점 픽셀까지(offsetLeft 반올림 → 칸 선과 어긋남, 11/12 사용자)
-      if (w.scrollWidth <= w.clientWidth + 1 || w.dataset.snapped) return;
-      const days = [...w.querySelectorAll('thead tr:first-child th.dn')], i0 = days.findIndex((x) => x.classList.contains('tdy'));
-      w.scrollLeft = i0 < 0 ? 0 : Math.round(Math.max(0, i0 - 2) * days[0].getBoundingClientRect().width); w.dataset.snapped = '1';
+      if (w.scrollWidth <= w.clientWidth + 1) return;
+      if (w.dataset.snapped != null && Math.abs(w.scrollLeft - +w.dataset.snapped) > 1) return;   // 사람이 옮겼으면 그대로
+      // 처음 위치: 오늘 2일 앞 날짜 칸이 고정 칸(라인·구분) 바로 오른쪽에 딱 붙게(칸 폭이 소수라 '칸 수 × 폭'은 앞 칸이 잘려 비침 — 11/17 검토)
+      const days = [...w.querySelectorAll('thead tr:first-child th.dn')], i0 = days.findIndex((x) => x.classList.contains('tdy')), c1 = tb.querySelector('thead th.c1');
+      const mx = w.scrollWidth - w.clientWidth, at = (k) => Math.ceil(w.scrollLeft + days[k].getBoundingClientRect().left - c1.getBoundingClientRect().right);   // c1 은 고정 칸이라 오른쪽 끝 자리가 그대로
+      const k = i0 < 0 || !c1 ? -1 : Math.max(0, i0 - 2), x = k < 0 ? 0 : Math.max(0, at(k));
+      if (x > mx) {                                                        // 끝까지 밀어도 칸 경계에 못 닿으면 오른쪽 끝에 빈 자리를 조금 덧댐(잘린 칸이 고정 칸 옆에 비치지 않게)
+        const sp = w.querySelector('.gk-xs') || w.appendChild(Object.assign(document.createElement('i'), { className: 'gk-xs' }));
+        Object.assign(sp.style, { position: 'absolute', top: '0', width: '1px', height: '1px', left: (x + w.clientWidth - 1) + 'px' });
+      }
+      w.scrollLeft = x;
+      w.dataset.snapped = String(w.scrollLeft);
     });
   }
   let rsT = 0; const later = () => { clearTimeout(rsT); rsT = setTimeout(snap, 120); };

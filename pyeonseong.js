@@ -137,9 +137,12 @@
   // 위 한 줄: 주문 마감 → 다음 마감 · 이번 주 배분 · 지시
   function drawLine() {
     const P = plants(), D0 = X[P[0] || 'cg'].D;
-    let tA = 0; const nF = { cg: 0, cc: 0 };
-    P.forEach((p) => LINES[p].forEach((l) => { tA += lineSum(p, l).t; sim(p, l).forEach((q) => { if (q.k === 'j' && done(p, q.x)) nF[p]++; }); }));
-    $('ps-line').innerHTML = `<span>지난 마감 <b class="dt">${dnm(addD(D0.week, -7))}</b></span><span class="ar">→</span><span>다음 마감 <b class="dt">${dnm(D0.week)}</b></span><span>편성량 <b>${n0(tA)}t</b></span>${P.includes('cg') ? `<span>도금 작업지시 <b>${n0(nF.cg)}건</b></span>` : ''}${P.includes('cc') ? `<span>컬러 작업대기 <b>${n0(nF.cc)}건</b></span>` : ''}`;   // 11/17 검토: 건 = 작업 순서 줄(계약 행)
+    const nF = { cg: 0, cc: 0 };
+    P.forEach((p) => LINES[p].forEach((l) => { sim(p, l).forEach((q) => { if (q.k === 'j' && done(p, q.x)) nF[p]++; }); }));
+    /* 11/17 검토: '편성량'이 작업 순서 기간(오늘부터 7일) 합이라 아래 수~화 주와 안 맞던 것 → 아래 '다음 주' 표 합계(수~화, 다음 마감 뒤 주)와 같은 값 ·
+       작업대기 = MES 작업지시가 내려간 작업 순서 줄(납기 전체 — 위 주문진도 '작업지시량'은 고른 납기 달만) */
+    const nx = P.reduce((s, p) => s + ((WKT[p] || {}).nxt || 0), 0), w1 = addD(D0.week, 6);
+    $('ps-line').innerHTML = `<span>지난 마감 <b class="dt">${dnm(addD(D0.week, -7))}</b></span><span class="ar">→</span><span>다음 마감 <b class="dt">${dnm(D0.week)}</b></span><span class="nw">다음 주 <b class="dt">${md(D0.week)}~${md(w1)}</b> 편성 <b>${n0(nx)}t</b></span><span class="nw" title="MES 작업지시가 내려간 작업(납기 전체)">작업대기${P.includes('cg') ? ` 도금 <b>${n0(nF.cg)}건</b>` : ''}${P.includes('cc') ? `${P.includes('cg') ? ' ·' : ''} 컬러 <b>${n0(nF.cc)}건</b>` : ''}</span>`;
   }
   // 캘린더 — 표 양식(행 = 라인·하루 합, 열 = 수~화)은 생산 일정 화면과 같고, 칸 안은 편성 화면용으로 다시 그림
   // 11/12 사용자 '자가재 빼고, 막대그래프 필요없다, 날짜 누르면 그날 작업, 컬러랑 도금 양식 똑같이, 이어짐 쓰지 말고 전날로 넘겨라'
@@ -190,11 +193,11 @@
   }
 
   /* 칸 한 양식(도금·컬러·지난 날 같음): ① 큰 톤 + 강종/품명 칩 + 시간 부하 % ② 상태 톤 ③ 그룹 톤 ④ 경고 칩 · 정지/비가동 = 글자만 가운데 */
-  const pctB = (r, tip, h) => (r == null || r <= 1.005 ? '' : `<span class="ld ov" title="${esc(tip)}">${h != null ? `${n1(h)}시간 초과` : `${Math.round(r * 100)}%`}</span>`);   // 11/12 사용자 '글 많다' — 넘칠 때만
+  const pctB = (r, tip, h) => (r == null || r <= 1.005 || (h != null && h < 0.05) ? '' : `<span class="ld ov" title="${esc(tip)}">${h != null ? `${n1(h)}시간 초과` : `${Math.round(r * 100)}%`}</span>`);   // 11/12 사용자 '글 많다' — 넘칠 때만
   /* 그룹 이름 = 관제 판매그룹(kj.js GRP 와 같은 묶음): 컬러수출 = 건재수출·가전수출·가전내수 · 컬러건재 = 주문재+계획재 · 도금 = 도금수출·도금국내·자동차·도금 자가재 */
   const GNM = { 수출: '도금수출', 도금수출: '도금수출', 국내: '도금국내', 도금국내: '도금국내', 자동차: '자동차', 자동차내수: '자동차', 자동차수출: '자동차', 자가재: '도금 자가재',
     건재수출: '컬러수출', 가전수출: '컬러수출', 가전내수: '컬러수출', 주문재: '컬러건재', 계획재: '컬러건재', 수요개발: '수요개발' };
-  const gnm = (g) => GNM[g] || g || '기타';
+  const gnm = (g) => GNM[g] || (g && g !== '미상' ? g : '기타');
   const regroup = (G) => { const o = {}; Object.entries(G || {}).forEach(([g, v]) => { const k = gnm(g); o[k] = (o[k] || 0) + (+v || 0); }); return o; };
   function cellH(o) {
     const at = o.past ? ' tabindex="-1"' : ` data-ln="${o.ln}" data-d="${o.d}"`;
@@ -217,7 +220,7 @@
       pct: pctB(r, `이 날 배정 주문을 실적 속도(같은 두께·폭 t/시간)로 돌리면 ${n1(c.hrs)}시간 — 가동 가능 ${n1(c.hAvail)}시간을 넘어 다음 날로 밀림`, (c.hrs || 0) - c.hAvail),
       st: [['작업대기', c.conf], ['지시대기', c.plan], ['입고예정', c.fcst]], G: c.grp,
       sts: sr >= 0.5 ? `AL-STS 예약 ${n0(sr)}t(D-3 확정)` : '', wn: [c.flag && (c.flagS || c.flag), c.gap >= 0.5 && c.hAvail - (c.hrs || 0) >= 0.5 && `빈 시간 ${n1((c.hAvail - (c.hrs || 0)) / (c.eff || 1))}시간`,   /* 11/13 점검: '빈칸 Xt'(남은 시간 × 평균 속도)는 계획 톤과 안 맞아 보임 → 컬러와 같은 '빈 시간' */ c.lateE && `출항일 초과 ${c.lateE}건`, c.late - c.lateE > 0 && `납기 초과 ${c.late - c.lateE}건`],
-      tip: `${ln} ${mdw(c.d)}${st ? ` · AL-STS ${n0(st.t)}t${sr >= 0.5 ? ` (예약 ${n0(sr)}${st.t - sr >= 0.5 ? ` · 주문 ${n0(st.t - sr)}` : ''} — 주문 D-3 확정)` : ' (주문)'}` : ''} · 생산 ${n0(fill)}t / 능력 ${n0(cap)}t · 작업 대기 ${n0(c.conf)} · 지시 대기 ${n0(c.plan)} · 입고 예정 ${n0(c.fcst)} · ${Object.entries(regroup(c.grp)).filter(([, v]) => v >= 0.5).map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
+      tip: `${ln} ${mdw(c.d)}${st ? ` · AL-STS ${n0(st.t)}t${sr >= 0.5 ? ` (예약 ${n0(sr)}${st.t - sr >= 0.5 ? ` · 주문 ${n0(st.t - sr)}` : ''} — 주문 D-3 확정)` : ' (주문)'}` : ''} · 생산 ${n0(fill)}t / 능력 ${n0(cap)}t · 작업대기 ${n0(c.conf)} · 지시대기 ${n0(c.plan)} · 입고예정 ${n0(c.fcst)} · ${Object.entries(regroup(c.grp)).filter(([, v]) => v >= 0.5).map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
   }
   function ccCell(x, ln, KD, rem) {
     const c = x.c;
@@ -227,7 +230,7 @@
     return cellH({ ln, d: x.d, rem, fl: c.woShort > 0 || em >= 1, t: x.t, chips: top ? `<span class="fam">${esc(top[0])}</span>` : '',
       pct: pctB(c.capH ? x.h / c.capH : null, `편성 ${n1(x.h)}시간 > 가용 ${n1(c.capH)}시간`, x.h - c.capH),
       st: KD.map(([k, nm]) => [nm, x.K[k] || 0]), G: x.G,
-      wn: [c.woShort > 0 && `작업 대기 부족 ${n1(c.woShort)}시간`, !(c.woShort > 0) && em >= 1 && `빈 시간 ${n1(em)}시간`, c.overH && `확정량 초과 ${n1(c.overH)}시간`],
+      wn: [c.woShort > 0 && `작업대기 부족 ${n1(c.woShort)}시간`, !(c.woShort > 0) && em >= 1 && `빈 시간 ${n1(em)}시간`, c.overH && `확정량 초과 ${n1(c.overH)}시간`],
       tip: `${ln} ${mdw(x.d)} · 생산 ${n0(x.t)}t · 편성 ${n1(x.h)}시간 / 가용 ${n1(c.capH)}시간${c.lockT ? ` · 확정량 ${n1(c.lockT)}t` : ''} · 누르면 그날 작업 순서` });
   }
   function pastCell(p, a, ln, d) {
@@ -240,6 +243,7 @@
     return cellH({ ln, d, past: 1, t: a.t, chips, G: a.grp, band: fams.length > 1 ? `M/C ${fams.join('·')}` : '', mc: fams.length > 1, tip: `${ln} ${mdw(d)} 생산 실적(MES) ${n0(a.t)}t${a.h ? ` · ${n1(a.h)}시간` : ''}${a.pr ? ` · 품명 ${a.pr.map(([q, v]) => `${q} ${n0(v)}`).join(' · ')}` : ''}` });
   }
   /* 2주 표(11/12 사용자 '편성은 2주치로 늘려, 칸 좀 줄여서'): 열 = 이번 생산주(수~화) + 다음 생산주 14일 · 이번 주 지난 날 = 실적 · 창(월말) 밖 = 빈 칸 */
+  const WKT = {};                                                   // 공장별 { cur, nxt } = 아래 두 표의 합계(수~화) — 위 한 줄 '다음 주 편성'
   function grid(p) {
     const C = CAL[p](), R = C && C.raw && C.raw(); if (!R) return '';
     const { w0, days } = R, today = UI.today(), LN = LINES[p], plan = days.concat(R.days2 || []);
@@ -269,7 +273,10 @@
         while (i < W.length) {
           const d = W[i], o = offOf(d);
           if (o) { let j = i; while (j + 1 < W.length && offOf(W[j + 1]) === o) j++;
-            tds.push(`<td class="stopc${W.slice(i, j + 1).includes(today) ? ' td' : ''}" colspan="${j - i + 1}" title="${esc(`${ln} ${mdw(W[i])}${j > i ? '~' + mdw(W[j]) : ''} ${o}`)}"><div class="sl">${esc(o)}${j > i ? `<small>${md(W[i])}~${md(W[j])}</small>` : ''}</div></td>`); i = j + 1; continue; }
+            /* 11/17 검토: 주 경계에서 잘린 기간('11/23~11/24') → 앞뒤 주로 이어진 실제 기간 */
+            const offX = (d) => { if (kind(d) !== 'pad') return offOf(d); if (p === 'cg' && window.CG_PLANEV) return window.CG_PLANEV[`${ln}|${d}`] || null; try { const c = R.cell(ln, d); if (!c) return null; return p === 'cg' ? ((c.cap || 0) < 1 ? (String(c.event || '').replace(/\s*\(.*\)$/, '') || '정지') : null) : (c.stop ? '정지' : null); } catch (e) { return null; } };   // 표 창(2주) 밖도 일정 자료로
+            let a = W[i], z = W[j]; for (let k = 0; k < 60 && offX(addD(a, -1)) === o; k++) a = addD(a, -1); for (let k = 0; k < 60 && offX(addD(z, 1)) === o; k++) z = addD(z, 1);
+            tds.push(`<td class="stopc${W.slice(i, j + 1).includes(today) ? ' td' : ''}" colspan="${j - i + 1}" title="${esc(`${ln} ${mdw(a)}${z > a ? '~' + mdw(z) : ''} ${o}`)}"><div class="sl">${esc(o)}${z > a ? `<small>${md(a)}~${md(z)}</small>` : ''}</div></td>`); i = j + 1; continue; }
           tds.push(kind(d) === 'pad' ? pad() : kind(d) === 'pst' ? `<td class="pst">${pastCell(p, R.act(ln, d), ln, d)}</td>`
             : `<td class="${tdc(d)}">${p === 'cg' ? cgCell(R.cell(ln, d), ln, d === today, R.sts && R.sts(ln, d)) : ccCell(FL[ln][d], ln, R.KD, d === today)}</td>`); i++;
         }
@@ -284,6 +291,7 @@
       return cap + `<table class="psw v2-grid ${cur ? 'cur' : 'nxt'}"><thead><tr class="wh"><th class="cn">${nm}<small>${md(W[0])}~${md(W[6])}</small></th>${W.map(dh).join('')}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
     };
     const W1 = D14.slice(0, 7), W2 = D14.slice(7);
+    WKT[p] = { cur: LN.reduce((s, l) => s + wT(l, W1), 0), nxt: LN.reduce((s, l) => s + wT(l, W2), 0) };
     const ov = LN.map((ln) => [ln, p === 'cg' && R.over(ln)]).filter(([, o]) => o);
     return week(W1, '이번 주') + `<div class="ps-gap"></div>` + week(W2, '다음 주')
       + (ov.length ? `<p class="ps-ov">${ov.map(([ln, o]) => `${ln} ${R.end} 뒤로 ${n0(o.t)}t 초과(${n1(o.h)}시간 부족)`).join(' · ')}</p>` : '');
@@ -306,15 +314,20 @@
   const chip = (t, c) => (t ? `<span class="cp${c ? ' ' + c : ''}">${esc(t)}</span>` : '');
   const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E 극저', GREL: 'Gr.E 저탄', GRB: 'Gr.B' };
   const dayItems = (p, l, d) => { const C = CAL[p](); if (p === 'cc') { const R = C.raw(), x = R && ccFlow(R).F[l][d]; return x ? x.items : []; } return C.items(l, d); };
-  function seqTable(p, I) {
+  const ymd = (d) => (!d ? '' : d.slice(0, 4) === UI.today().slice(0, 4) ? md(d) : `${d.slice(2, 4)}/${md(d)}`);   // 올해가 아니면 연도
+  function seqTable(p, I, day) {
+    const td0 = UI.today();
     const row = (i, k) => {
       const kc = KC[i.kind] || [i.kind, ''], sz = i.thk ? `${(+i.thk).toFixed(2)} × ${n0(i.wdt)}` : '–';
       const sp = p === 'cg' ? chip(i.fam, 'al') + chip(GRN[i.grade] || i.grade) + chip(i.cot) + chip(i.aft) : chip(i.item) + chip(i.color, 'cl');
-      const dl = p === 'cg' ? (i.dept ? `출항 ${md(i.dept)}` : i.arr ? `입항 ${md(i.arr)}` : i.due ? `납기 ${md(i.due)}` : '–') : (i.ready ? `준비 ${md(i.ready)}` : '–');
-      return `<tr class="${i.kind === '확정' || i.kind === '작업대기' ? 'fx' : ''}${i.late ? ' lt' : ''}"><td class="no">${k + 1}</td><td><i class="kd ${kc[1]}">${esc(kc[0])}</i></td><td class="cn" title="${esc([i.con, i.cus, i.dst].filter(Boolean).join(' · '))}">${esc(i.con || '주문 연결 전')}</td><td title="${esc(i.grp || '')}">${esc(i.grp ? gnm(i.grp) : '')}</td><td class="sp">${sp}</td><td class="sz">${sz}</td><td class="t">${n1(i.t)}t</td><td class="dl">${dl}</td></tr>`;
+      const dd = p === 'cg' ? i.dept || i.arr || i.due : i.ready;
+      const dl = p === 'cg' ? (i.dept ? `출항 ${ymd(i.dept)}` : i.arr ? `입항 ${ymd(i.arr)}` : i.due ? `납기 ${ymd(i.due)}` : '–') : (i.ready ? `준비 ${ymd(i.ready)}` : '–');
+      /* 11/17 검토: 이미 지난 납기·생산일 뒤 납기 = 빨강(작업 순서 화면과 같은 방식) */
+      const bad = p === 'cg' && dd && (dd < td0 || (day && dd < day) || i.late);
+      return `<tr class="${i.kind === '확정' || i.kind === '작업대기' ? 'fx' : ''}${bad ? ' pdue' : ''}"><td class="no">${k + 1}</td><td><i class="kd ${kc[1]}">${esc(kc[0])}</i></td><td class="cn" title="${esc([i.con, i.cus, i.dst].filter((v) => v && v !== '미상').join(' · '))}">${esc(i.con || '주문 연결 전')}</td><td title="${esc(i.grp && i.grp !== '미상' ? i.grp : '')}">${esc(i.grp && i.grp !== '미상' ? gnm(i.grp) : '')}</td><td class="sp">${sp}</td><td class="sz">${sz}</td><td class="t">${n1(i.t)}t</td><td class="dl">${dl}</td></tr>`;
     };
-    return `<table class="ps-seq"><colgroup><col style="width:72px"><col style="width:120px"><col style="width:230px"><col style="width:110px"><col><col style="width:150px"><col style="width:100px"><col style="width:120px"></colgroup>`
-      + `<thead><tr><th>순서</th><th>상태</th><th>계약</th><th>그룹</th><th>${p === 'cg' ? '강종·재질·도금량·후처리' : '품명·색상'}</th><th>두께 × 폭</th><th>톤</th><th>${p === 'cg' ? '출항·납기' : '부자재'}</th></tr></thead><tbody>${I.map(row).join('')}</tbody></table>`;
+    return `<table class="ps-seq"><colgroup><col style="width:52px"><col style="width:96px"><col style="width:196px"><col style="width:104px"><col><col style="width:118px"><col style="width:74px"><col style="width:112px"></colgroup>`
+      + `<thead><tr><th>순서</th><th>상태</th><th>계약</th><th>그룹</th><th>${p === 'cg' ? '강종·재질·<wbr>도금량·후처리' : '품명·색상'}</th><th>두께 × 폭</th><th>톤</th><th>${p === 'cg' ? '출항·납기' : '부자재'}</th></tr></thead><tbody>${I.map(row).join('')}</tbody></table>`;
   }
   /* 지난 날 = MES 실적. 계약 단위 일 실적 게시본이 없어(재계획 rows·color_actual 은 그룹·강종/품명 합) 그룹·강종(도금) · 그룹·품명(컬러) 톤 표 */
   const pctT = (v, T) => (T ? `${Math.round(v / T * 100)}%` : '');
@@ -343,7 +356,7 @@
     const box = $('ps-day-' + p), S = SEL[p], C = CAL[p]();
     if (!S || !C) { box.hidden = true; box.innerHTML = ''; return; }
     const isStop = (l) => !!(C.stop && C.stop(l, S.d));
-    const body = (l, I) => (I.length ? seqTable(p, I) : `<p class="ps-empty">${isStop(l) ? '라인 정지' : '배정된 주문 없음'}</p>`);
+    const body = (l, I) => (I.length ? seqTable(p, I, S.d) : `<p class="ps-empty">${isStop(l) ? '라인 정지' : '배정된 주문 없음'}</p>`);
     const close = '<button type="button" data-x="1">접기</button>';
     const R0 = C.raw && C.raw();
     if (S.all && R0 && S.d < R0.days[0]) { box.innerHTML = actDay(p, R0, S.d) + ''; box.hidden = false; box.querySelector('button[data-x]').onclick = () => { SEL[p] = null; drawCal(p); drawDay(p); }; return; }
@@ -375,7 +388,7 @@
     const P = plants(); if (!P.length) return;
     if (!P.some((p) => LINES[p].includes(line))) line = LINES[P[0]].find((l) => lineSum(P[0], l).n) || LINES[P[0]][0];
     $('ps-cgc').hidden = !P.includes('cg'); $('ps-ccc').hidden = !P.includes('cc');
-    drawLine(); P.forEach((p) => { drawCal(p); drawDay(p); }); syncFrame();
+    P.forEach((p) => { drawCal(p); drawDay(p); }); drawLine(); syncFrame();
   }
 
   // ───────── 아래 '작업 순서 수정' = 작업 순서 화면(week_seq.html) 그대로(iframe, 높이 = 화면 높이 · 안에서 넘김 — 날짜 머리줄 고정이 그대로 동작). 머리·메뉴·공장/방식 고르기·라인 요약 칸(위와 같은 내용)은 숨기고, 라인은 위 선택을 따라감
@@ -384,13 +397,20 @@
 html, body { background: transparent !important; min-height: 0 !important; height: auto !important; }
 body { margin: 0 !important; padding: 0 !important; display: block !important; }
 main.wrap { margin: 0 !important; padding: 0 !important; max-width: none !important; width: auto !important; }
-#ws-main .card { box-shadow: none; }`;
+#ws-main .card { box-shadow: none; }
+/* 11/17 검토(회의 규칙 9 '보기 전용, 수정은 작업 순서 화면'): 저장·확정·버전·↑↓·+휴지·✕·넣기·끌어 옮기기 숨김 */
+.ws-act, .pl-i button, #ws-ck, #ws-main.cmp table.ws td.ac, #ws-main.cmp table.ws td.hd { display: none !important; }
+#ws-main:not(.cmp) table.ws colgroup col:first-child, #ws-main:not(.cmp) table.ws colgroup col:last-child { width: 0 !important; }
+#ws-main:not(.cmp) table.ws td.hd, #ws-main:not(.cmp) table.ws td.ac { visibility: hidden; padding: 0 !important; font-size: 0 !important; overflow: hidden; }
+table.ws input, table.ws select { pointer-events: none !important; border-color: transparent !important; background: transparent !important; }
+table.ws tr[draggable], .pl-i { cursor: default !important; }`;
   let frReady = false;
   function fitFrame() { FR.style.height = Math.max(640, innerHeight - 96) + 'px'; }
   addEventListener('resize', fitFrame);
   function frameLoaded() {
     const d = FR.contentDocument; if (!d) return;
     const st = d.createElement('style'); st.textContent = FCSS; d.head.appendChild(st);
+    d.addEventListener('dragstart', (e) => e.preventDefault(), true);   // 보기 전용 — 끌어 옮기기 막음
     frReady = true; syncFrame(); fitFrame();
   }
   let syncT = null;

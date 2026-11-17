@@ -74,7 +74,7 @@
         if (!CT.inScope(pl)) continue;
         let plan, act, how;
         if (m < cm2) { plan = mSum(m, pl); act = actM(pl === 'G' ? GA : CA, m); how = '기준 계획 월 생산'; }
-        else if (D.suju && D.suju.daily) { const pmx = UI.prodMon(D.suju, pl === 'G' ? ['1CGL', '2CGL'] : ['1CCL', '2CCL', '3CCL', '4CCL']); plan = pmx.due0; act = pmx.act; how = `월차(이달 첫 계획) ${md(D.suju.asOf)}까지 · 월 계획 ${n0(pmx.mon)}t 중 ${pc(pmx.act, pmx.mon)}%`; }   // 11/13: 모든 화면 같은 식(UI.prodMon)
+        else if (D.suju && D.suju.daily) { const pmx = UI.prodMon(D.suju, pl === 'G' ? ['1CGL', '2CGL'] : ['1CCL', '2CCL', '3CCL', '4CCL']); plan = pmx.due0; act = pmx.act; how = `월차 ${md(D.suju.asOf)}까지 · 월 계획 ${n0(pmx.mon)}t의 ${pc(pmx.act, pmx.mon)}%`; }   // 11/13: 모든 화면 같은 식(UI.prodMon)
         else if (pl === 'G') { plan = gl.reduce((a, l) => a + (l.sched || 0), 0); act = gl.reduce((a, l) => a + (l.actual || 0), 0); how = `판매생산속보 일정(${md(P.asOf)}까지)`; }
         else { plan = cgp.reduce((a, g) => a + Math.max(0, (g.prod.month || 0) - (g.prod.after || 0)), 0); act = cgp.reduce((a, g) => a + (g.prod.actual || 0), 0); how = `그룹 계획(${md(cgp[0] && cgp[0].prod.asOf || P.asOf)}까지)`; }
         if (!plan && !act) continue;
@@ -95,7 +95,7 @@
     if (accRows.length || dayRows.length) {
       cards.push(card('생산계획 정확도', '월별 · 계획 대비 실적', tbl(['월 · 공정', '계획(t)', '실적(t)', '달성'], accRows)
         + (dayRows.length ? `<h3 class="pf-h">그날 아침 계획 대비(도금)</h3>` + tbl(['월 · 라인', '계획(t)', '실적(t)', '차이', '하루 오차', '미달 일수'], dayRows) : '')
-        + (CT.inScope('C') ? '<p class="pf-n">컬러 그날 아침 계획 대비는 자료 없음 — 컬러 계획은 매일 지난 날을 실적으로 덮어 게시해, 그날 아침 계획을 따로 보관한 기록이 없음(도금은 사내 PC가 매일 보관)</p>' : '')));
+        + (CT.inScope('C') ? '<p class="pf-n">컬러는 그날 아침 계획을 따로 보관하지 않아 비교 없음(도금만 매일 보관)</p>' : '')));
     }
     if (acc.length) {
       // 라인별: 미달이 큰 날에 MES 휴지 기록이 있으면 확인된 원인, 없으면 추가 확인 필요(편차 큰 라인의 휴지를 원인으로 단정하지 않음)

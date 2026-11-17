@@ -62,3 +62,4 @@ table.pl-t td.mu2 { min-width: 0; }
   .lg2 .lg2r table.pos-t :is(th, td) { padding-left: 6px !important; padding-right: 6px !important; }
   .lg2 .lg2r table.pos-t :is(th, td):first-child { width: auto; white-space: normal; word-break: keep-all; }
 }
+.pt .v { white-space: nowrap; overflow-wrap: normal; } @media (min-width: 761px) { .pt .v { font-size: clamp(19px, 1.6vw, 26px); } }   /* 11/18: 카드 다섯 칸일 때 큰 숫자 뒤 't' 가 테두리를 넘던 것 */

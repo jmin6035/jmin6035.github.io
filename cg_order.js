@@ -8,7 +8,7 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const n0 = (v) => (v == null || isNaN(v) ? '-' : Math.round(v).toLocaleString('ko-KR'));
   const n1 = (v) => (v == null || isNaN(v) ? '-' : (+v).toLocaleString('ko-KR', { maximumFractionDigits: 1 }));   // 250.0 → 250, 24.4 → 24.4(10/28 사용자)
-  const md = (s) => { if (!s) return ''; s = String(s); const y = O && O.asOf && s.slice(0, 4) < O.asOf.slice(0, 4);   // 기준일보다 앞 해면 YY/MM/DD(작년 발주가 올해 입고 뒤로 보이지 않게)
+  const md = (s) => { if (!s) return ''; s = String(s); const y = O && O.asOf && (s.slice(0, 4) < O.asOf.slice(0, 4) || Math.abs(Date.parse(s.slice(0, 10)) - Date.parse(String(O.asOf).slice(0, 10))) > 183 * 864e5);   // 기준일보다 앞 해 · 반년 넘게 떨어진 날이면 YY/MM/DD(다음 해 가까운 날 1/5 등은 M/D)(11/17 검토: 납기 1/23·3/31 = 올해 1·3월로 지난 주문인데 연도가 없어 내년처럼 읽힘)
     return y ? `${s.slice(2, 4)}/${s.slice(5, 7)}/${s.slice(8, 10)}` : `${+s.slice(5, 7)}/${+s.slice(8, 10)}`; };
   const ymd8 = (s) => (s && String(s).length >= 8 ? md(`${String(s).slice(0, 4)}-${String(s).slice(4, 6)}-${String(s).slice(6, 8)}`) : '');
   let CAL = null;                                            // 계약번호-행번 → 2주 캘린더 생산일
@@ -130,9 +130,9 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
       return { o, p, r, h: Math.max(0, o - p - r), ...sumOf(L) }; };
     const R = [['합계', sm(byG.flatMap(([, v]) => v))], ...byG.map(([g, v]) => [g, sm(v)])], mx = Math.max(1, ...R.map(([, s]) => s.o));
     const P = (v) => (100 * v / mx).toFixed(2) + '%';
-    const gs = (g) => ({ 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차', 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발' }[g] || g);
+    const gs = (g) => ({ 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차', 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발', '그룹 미상': '기타' }[g] || g);
     const tr = ([g, s], i) => `<tr${i === 0 ? ' class="tot"' : ''}><td>${i ? `<a href="#og-${i - 1}"><b>${esc(gs(g))}</b></a>` : `<b>${esc(gs(g))}</b>`}</td><td class="num">${n0(s.n)}</td>`
-      + `<td class="gbcell"><div class="gb" title="${esc(g)} · 주문 ${n0(s.o)}t = 생산 완료 ${n0(s.p)} + 소재 있음 ${n0(s.h)} + 미입고 ${n0(s.r)}"><span class="gbr"><i class="a" style="width:${P(s.p)}"></i><i class="m" style="width:${P(s.h)}"></i><i class="b" style="width:${P(s.r)}"></i></span><span class="gbv"><b>${n0(s.o)}</b>t</span></div></td>`
+      + `<td class="gbcell"><div class="gb" title="${esc(gs(g))} · 주문 ${n0(s.o)}t = 생산 완료 ${n0(s.p)} + 소재 있음 ${n0(s.h)} + 미입고 ${n0(s.r)}"><span class="gbr"><i class="a" style="width:${P(s.p)}"></i><i class="m" style="width:${P(s.h)}"></i><i class="b" style="width:${P(s.r)}"></i></span><span class="gbv"><b>${n0(s.o)}</b>t</span></div></td>`
       + `<td class="num">${n0(s.p)} <small class="sub">${s.o ? Math.round(100 * s.p / s.o) : 0}%</small></td><td class="num">${n0(s.h)}</td><td class="num">${n0(s.r)}</td>${[['late', s.late, 'bad'], ['hurry', s.hurry, 'warn'], ['chk', s.chk, '']].map(([f, v, c]) => `<td class="num ${v ? c : ''}">${v ? `<button type="button" class="gcn" data-gf="${f}" data-g="${i ? esc(g) : ''}" title="${esc(gs(g))} ${F[f][0]} ${v}건만 보기">${v}</button>` : '-'}</td>`).join('')}</tr>`;
     return '<div class="gcard"><div class="gbl"><span><i class="a"></i>생산 완료</span><span><i class="m"></i>소재 있음(생산 전)</span><span><i class="b"></i>미입고(포스코 진행·미발주)</span><span class="sub">주문 톤</span></div>'
       + '<div class="scroll"><table class="t gtab"><thead><tr><th>그룹</th><th>건</th><th>주문 톤</th><th>생산 완료</th><th>소재 있음</th><th>미입고</th><th title="필요 입고일 대비 소재 지연">소재 지연</th><th title="필요 입고 3주 이내 · 열연 이전">포스코 독촉</th><th title="인도기한 지났는데 입고 기록 없음">입고 확인</th></tr></thead>'
@@ -141,7 +141,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
   /* ── 새 양식(UI.v2, ?ui=v2) — 11/12 사용자 '표 구성 자체가 안 바뀌었다·한눈에 안 들어온다': 계약 한 줄 = 한 줄 높이, 세부는 줄을 누르면 펼침.
      칸 순서·이름은 컬러 주문진도(cc_order.js)와 같게. 숫자·계산은 기존 그대로(표시만) ── */
   const V2 = () => !!(window.UI && UI.v2);
-  const GV2 = { 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차', '자가재(컬러 투입)': '도금 자가재' };
+  const GV2 = { 도금수출그룹: '도금수출', 도금판매그룹: '도금국내', 자동차강판판매그룹: '자동차', '자가재(컬러 투입)': '도금 자가재', '그룹 미상': '기타' };
   const gv2 = (g) => GV2[g] || g;
   const s2 = (t, c, tip) => `<span class="s2${c ? ' ' + c : ''}"${tip ? ` title="${esc(tip)}"` : ''}>${t}</span>`;
   /* 소재 판정(표 줄·상세 공통) — 11/13 사용자 '대충해놓네': 필요 입고일이 지났는데 상세에 '여유 20일'이 나오던 것.
@@ -298,9 +298,9 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     for (const x of L) { const k = BY[by][1](x) || BY[by][2](); if (!m.has(k)) m.set(k, []); m.get(k).push(x); }
     const subs = [...m.entries()].map((e) => [e[0], e[1], sumOf(e[1])])
       .sort((a, b) => (b[2].late - a[2].late) || (b[2].hurry - a[2].hurry) || (b[2].chk - a[2].chk) || (b[2].n - a[2].n) || String(a[0]).localeCompare(String(b[0])));
-    if (V2()) return `<section class="og og2" id="og-${gi}" data-g="${esc(g)}"><header class="og-h"><h2 title="${esc(g)}${S.est ? ` · 판매그룹 추정 ${S.est}건(주문서 판매부서 없음 — 실적·계약번호·용도로 정함)` : ''}">${esc(gv2(g))}</h2>${statV2(S)}</header>`
+    if (V2()) return `<section class="og og2" id="og-${gi}" data-g="${esc(g)}"><header class="og-h"><h2${S.est ? ` title="판매그룹 추정 ${S.est}건(주문서 판매부서 없음 — 실적·계약번호·용도로 정함)"` : ''}>${esc(gv2(g))}</h2>${statV2(S)}</header>`
       + `<div class="og-b">${subs.map(([k, v], i) => sub(k, v, i)).join('')}</div></section>`;
-    return `<section class="og" id="og-${gi}" data-g="${esc(g)}"><header class="og-h"><h2>${esc(g)}</h2><div class="og-s">${stat(S)}${S.est ? `<span class="gs est" title="주문서 판매부서가 없어 실적·계약번호·용도로 판매그룹을 정한 계약">그룹 추정 ${S.est}</span>` : ''}</div></header>`
+    return `<section class="og" id="og-${gi}" data-g="${esc(g)}"><header class="og-h"><h2>${esc(gv2(g))}</h2><div class="og-s">${stat(S)}${S.est ? `<span class="gs est" title="주문서 판매부서가 없어 실적·계약번호·용도로 판매그룹을 정한 계약">그룹 추정 ${S.est}</span>` : ''}</div></header>`
       + `<div class="og-b">${subs.map(([k, v], i) => sub(k, v, i)).join('')}</div></section>`;
   }
   // 주문 충당(10/28 사용자: 2주치 주문이 깔려 있어야 — 라인별 캐파, 목표 = 월차). 핵심 숫자만(사용자 '부연설명 많다')

@@ -5,7 +5,9 @@
   'use strict';
   const $ = (id) => document.getElementById(id.replace(/^wo-/, 'wc-'));   // 작업 순서 화면 안에서 도금 제안(wo-)과 같이 쓰므로 id 앞머리 wc-
   const PW_KEY = 'cgl-analysis-pw';
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  /* 11/17 용어 기준: 자료 값의 영어(Lami·Test·Roll·Dummy)·t/h 는 화면 글자만 바꿈 */
+  const ko = (s) => String(s == null ? '' : s).replace(/Lami/g, '라미').replace(/단판\s*TEST|TEST|Test/g, (m) => (/단판/.test(m) ? '단판 시험' : '시험')).replace(/\(Roll\)/g, '(롤)').replace(/\(Dummy\)|DUMMY|Dummy/g, (m) => (m[0] === '(' ? '(더미)' : '더미')).replace(/t\/h\b/g, 't/시간');
+  const esc = (s) => ko(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const n0 = (v) => (v == null || isNaN(v) ? '-' : Math.round(v).toLocaleString('ko-KR'));
   const md = (s) => (s ? `${+s.slice(5, 7)}/${+s.slice(8, 10)}` : '');
   const WD = '일월화수목금토';
@@ -15,7 +17,7 @@
   const hm = (m) => { m = Math.round(m); return m >= 60 ? `${Math.floor(m / 60)}시간\u00a0${m % 60}분` : `${m}분`; };   // 줄바꿈 때 '분'만 떨어지지 않게
   const TIER = { 1: '수출', 2: '내수·수요개발·주문재', 3: '계획재' };
   const BLK = { general: '일반', pvs2: 'PVS2', print: '프린트' };
-  const DZ = [['col', '색·도료 교체'], ['order', '주문 바뀜'], ['test', '단판TEST'], ['roll', '폭(Roll)'], ['dummy', '두께(Dummy)'], ['block', '블록·프린트 전환']];
+  const DZ = [['col', '색·도료 교체'], ['order', '주문 바뀜'], ['test', '단판 시험'], ['roll', '폭(롤)'], ['dummy', '두께(더미)'], ['block', '블록·프린트 전환']];
   let O = null, line = null;
   const openDays = new Set();                                     // 펼친 날(11/10: 날짜 줄만 먼저 — 표가 2만px 이던 것)
   const view = 'seq';                                          // 11/11: 규칙 탭 → 작업 순서 화면 맨 아래 '기준·사양'(rulesInto)
@@ -36,7 +38,7 @@
       + `<td class="tm">${dn ? `<span class="bk">휴지 ${tm(x.downStart, day)}</span><br>` : ''}<b>${tm(x.start, day)}</b> – ${tm(x.end, day)}</td>`
       + `<td class="l"><b>${esc(x.item)}</b><span class="gt gt${x.tier}">${TIER[x.tier]}</span><br><span class="bk">${esc(x.pdt)} · ${BLK[x.block]} · ${esc(x.con)}</span></td>`
       + `<td class="l wr">${x.thk} × ${n0(x.wdt)}<br><span class="bk">${esc(x.top || x.color)}${x.back ? ` / 이면 ${esc(x.back)}` : ''}${x.top ? '' : ' <span title="풀 코드 대기(도료 코드 조회)">…</span>'}</span></td>`
-      + `<td class="num" title="${esc(x.speedSrc)}"><b>${x.t.toFixed(1)}t</b> · <span style="white-space:nowrap">${n0(x.runMin)}분</span><br><span class="bk">L/S ${x.ls} · ${x.tph}t/h</span>${x.tMade > 0.5 ? `<br><span class="bk" title="지시 ${x.tDrt}t 중 ${x.tMade}t 이미 생산">남은 양</span>` : ''}</td>`
+      + `<td class="num" title="${esc(x.speedSrc)}"><b>${x.t.toFixed(1)}t</b> · <span style="white-space:nowrap">${n0(x.runMin)}분</span><br><span class="bk">L/S ${x.ls} · ${x.tph}t/시간</span>${x.tMade > 0.5 ? `<br><span class="bk" title="지시 ${x.tDrt}t 중 ${x.tMade}t 이미 생산">남은 양</span>` : ''}</td>`
       + `<td class="l wr">${(x.chg || []).map((c) => `<div>${esc(c)}</div>`).join('')}</td>`
       + `<td class="l wr">${(x.downs || []).length ? ((x.downs.length > 1 && dn) ? `<div class="wo-ds">합계 ${n0(x.downMin)}분</div>` : '') + x.downs.filter((d) => d.m).map((d) => `<div class="wo-dl" title="${esc(d.b)}">${esc(String(d.c).replace(/^\d{4}\s*/, '').replace(/\s*—.*$/, '').replace(/\s*\(.*?\)\s*/g, ' ').trim())} <span class="wo-dm">${d.m}분</span></div>`).join('') : '<span class="bk">없음</span>'}</td>`
       + `<td class="l">${prep.join('<br>') || '<span class="bk">-</span>'}</td></tr>`;
@@ -54,7 +56,7 @@
       if (e.kind === 'job') { const x = byS[e.seq]; if (!x) return; if (x.downMin > 0.5) add(x.downStart, x.start, 'sd', `${x.seq} 앞 전환 휴지 ${n0(x.downMin)}분`); add(x.start, x.end, 'sr', `${x.seq}번 ${x.item} ${x.color} ${x.t}t · ${tm(x.start, d)}~${tm(x.end, d)}`, x.seq); }
       else if (e.ph === ph) add(e.start, e.end, e.kind === 'plan' ? 'sp' : 'sw', `${e.kind === 'plan' ? '휴지계획' : '기다림(준비 안 된 지시)'} ${n0(e.min)}분`, e.kind === 'plan' ? '휴지' : '대기');
     });
-    if (first && x0min > 0) seg.unshift(`<i class="sc" style="left:0;width:${(x0min / 14.4).toFixed(2)}%" title="이미 확정된 지시 작업(제안 대상 아님)">${x0min >= 90 ? '<b>확정분 작업</b>' : ''}</i>`);
+    if (first && x0min > 0) seg.unshift(`<i class="sc" style="left:0;width:${(x0min / 14.4).toFixed(2)}%" title="작업대기(MES 작업지시 내려감 — 제안 대상 아님)">${x0min >= 90 ? '<b>작업대기</b>' : ''}</i>`);
     return `<div class="strip">${seg.join('')}<span class="h0">7시</span><span class="h6">13시</span><span class="h12">19시</span><span class="h18">1시</span><span class="h24">7시</span></div>`;
   }
 
@@ -75,7 +77,7 @@
       h += `<tr data-of="${ph}${curDay}"${hid} class="ev ${e.kind}"><td class="c">—</td><td class="tm">${tm(e.start, curDay)} – ${tm(e.end, curDay)}</td><td colspan="${NC - 2}"><b>${e.kind === 'plan' ? '휴지계획' : '라인 멈춤(기다림)'} ${hm(e.min)}</b> · ${esc(e.why)}</td></tr>`;
     });
     return `<div class="scroll"><table class="t wo"><colgroup><col style="width:5%"><col style="width:10%"><col style="width:13%"><col style="width:12%"><col style="width:9%"><col style="width:17%"><col style="width:23%"><col style="width:11%"></colgroup>${HEAD}<tbody>${h}</tbody></table></div>`
-      + '<p class="hint lg"><i class="sr"></i>생산 <i class="sd"></i>휴지(앞 작업과 바뀜) <i class="sp"></i>휴지계획 <i class="sw"></i>기다림 — 띠에 마우스를 올리면 내용이 보입니다</p>';
+      + '<p class="hint lg"><i class="sr"></i>생산 <i class="sd"></i>휴지(앞 작업과 바뀜) <i class="sp"></i>휴지계획 <i class="sw"></i>기다림</p>';
   }
 
   // 편성 조건(순서대로) + 휴지 계산표 — 사용자 10/20: 조건을 1. 2. 순번으로, 첨부 파일 이름까지
@@ -118,7 +120,7 @@
       ['남은 양', '지시량 − 같은 계약·지시일로 이미 생산된 코일 무게. 95% 넘게 생산됐으면 끝난 지시로 봄', '지시량 − 코일 실적 무게', '대상 정의'],
       ['① 도료 입고일', '도료생산일(입고일) 07시부터 넣을 수 있음 — 당일 생산 가능(MES 일수 기준 07시)', '도료 입고예정일', '반드시 지킴'],
       ['② PF 입고일', 'PF종류가 00 이 아니면 PF입고예정일 07시부터 (당일 가능). 날짜가 비어 있으면 경고만', 'PF 종류 · PF 입고예정일', '반드시 지킴'],
-      ['③ 확정 대기열', '확정여부 Y 인 지시는 MES 순서 그대로 맨 앞 (순서 안 바꿈)', '작업예정일 · 작업 순번', '반드시 지킴'],
+      ['③ 작업대기', 'MES 작업지시가 내려간 것(작업대기)은 MES 순서 그대로 맨 앞(순서 안 바꿈)', '작업예정일 · 작업 순번', '반드시 지킴'],
       ['④ 준비된 날 순', '도료·PF 준비가 끝난 날이 빠른 지시부터(이미 준비된 지시는 모두 오늘 묶음). 그룹 순위(수출 → 내수 → 계획재)는 보지 않음 — 그룹 순위는 분기 가동계획에만, 주간 실제 작업지시는 고려 안 함', '①·② 날짜', '반드시 지킴'],
       ['⑤ 휴지 최소', '같은 날 준비된 지시끼리 아래 휴지 기준표로 셈한 휴지 합이 가장 적은 순서 (블록끼리 모음 — 결과적으로 같은 색·같은 주문 연속, 상도만 바뀌는 쪽 먼저, 넓은 폭 → 좁은 폭, 비슷한 두께끼리)', '아래 표', '최대한'],
       ['시각 계산', '출발 = 지금과 마지막 실적 코일 끝 중 늦은 때. 지시마다 휴지 → 생산(톤 ÷ (두께 × 폭 × L/S × 7.87)). L/S = 우리 실적. 그날 휴지계획은 그날 첫 작업 앞', '최근 코일 실적 · 휴지계획', ''],
@@ -153,22 +155,22 @@
     const all = L.map((l) => { const q = O.lines[l], nf = q.items.filter((x) => x.fixed).length, g = q.nFree ? q.mes.sum - q.ours.sum : 0;
       tot.fx += nf; tot.tfx += q.tFixed || 0; tot.n += q.nFree; tot.t += q.tFree || 0; tot.dn += q.downFreeSum || 0; tot.gain += g; tot.wait += q.waitN || 0;
       const fr = q.items.filter((x) => !x.fixed);
-      return `<tr class="ln${l === line ? ' on' : ''}" data-l="${l}" tabindex="0"><td><b>${l}</b></td><td>${q.stop ? `<span class="wo-st off">휴지</span>` : '<span class="wo-st on">가동</span>'}</td><td><b>${nf}</b>건 · ${n0(q.tFixed)}t</td><td>${nf ? esc(tm(q.fixedUntil)) : '-'}</td><td><b>${q.nFree}</b>건 · ${n0(q.tFree)}t</td><td>${q.nFree ? `${esc(tm(fr[0].start))} ~ ${esc(tm(q.until))}` : '-'}</td><td><b>${n0(q.downFreeSum)}</b>분</td><td>${q.nFree ? `<b class="${g >= 0 ? 'wo-g' : 'wo-b'}">${g >= 0 ? '−' : '+'}${n0(Math.abs(g))}분</b>` : '-'}</td><td>${q.waitN ? `<b class="wo-w">${q.waitN}건</b>` : '-'}</td></tr>`; }).join('');
-    const allCard = `<section class="card"><h2>전체 <small class="bk">컬러 4개 라인 · 라인 선택 시 해당 순서 표시</small></h2>
-      <div class="scroll"><table class="t wo-all"><thead><tr><th>라인</th><th>상태</th><th>확정 대기</th><th>확정분 끝</th><th>편성 제안</th><th>제안 기간</th><th>예상 휴지</th><th title="같은 지시를 MES 작업예정일·순번대로 돌릴 때와 비교(휴지 + 도료 기다림)">MES 순서 대비</th><th title="도료·PF 준비를 기다리는 지시">준비 대기</th></tr></thead><tbody>${all}
-      <tr class="tot-r"><td><b>합계</b></td><td></td><td><b>${tot.fx}</b>건 · ${n0(tot.tfx)}t</td><td></td><td><b>${tot.n}</b>건 · ${n0(tot.t)}t</td><td></td><td><b>${n0(tot.dn)}</b>분</td><td><b class="${tot.gain >= 0 ? 'wo-g' : 'wo-b'}">${tot.gain >= 0 ? '−' : '+'}${n0(Math.abs(tot.gain))}분</b></td><td>${tot.wait ? `<b class="wo-w">${tot.wait}건</b>` : '-'}</td></tr></tbody></table></div></section>`;
+      return `<tr class="ln${l === line ? ' on' : ''}" data-l="${l}" tabindex="0"><td><b>${l}</b></td><td>${q.stop ? `<span class="wo-st off">휴지</span>` : '<span class="wo-st on">가동</span>'}</td><td><b>${nf}</b>건 · ${n0(q.tFixed)}t</td><td>${nf ? esc(tm(q.fixedUntil)) : '-'}</td><td><b>${q.nFree}</b>건 · ${n0(q.tFree)}t</td><td>${q.nFree ? `${esc(tm(fr[0].start))} ~ ${esc(tm(q.until))}` : '-'}</td><td><b>${hm(q.downFreeSum || 0)}</b></td><td>${q.nFree ? `<b class="${g >= 0 ? 'wo-g' : 'wo-b'}">${g >= 0 ? '−' : '+'}${hm(Math.abs(g))}</b>` : '-'}</td><td>${q.waitN ? `<b class="wo-w">${q.waitN}건</b>` : '-'}</td></tr>`; }).join('');
+    const allCard = `<section class="card"><h2>전체</h2>
+      <div class="scroll"><table class="t wo-all"><thead><tr><th>라인</th><th>상태</th><th>작업대기</th><th>작업대기 끝</th><th>편성 제안</th><th>제안 기간</th><th>예상 휴지</th><th title="같은 지시를 MES 작업예정일·순번대로 돌릴 때와 비교(휴지 + 도료 기다림)">MES 순서 대비</th><th title="도료·PF 준비를 기다리는 지시">준비 대기</th></tr></thead><tbody>${all}
+      <tr class="tot-r"><td><b>합계</b></td><td></td><td><b>${tot.fx}</b>건 · ${n0(tot.tfx)}t</td><td></td><td><b>${tot.n}</b>건 · ${n0(tot.t)}t</td><td></td><td><b>${hm(tot.dn)}</b></td><td><b class="${tot.gain >= 0 ? 'wo-g' : 'wo-b'}">${tot.gain >= 0 ? '−' : '+'}${hm(Math.abs(tot.gain))}</b></td><td>${tot.wait ? `<b class="wo-w">${tot.wait}건</b>` : '-'}</td></tr></tbody></table></div></section>`;
     $('wo-main').innerHTML = tabs() + allCard + (O.missing && O.missing.length ? `<div class="miss"><b>아직 안 들어온 자료</b> — ${O.missing.map(esc).join(' / ')}</div>` : '')
-      + (ns.length ? `<div class="miss"><b>순서에서 뺀 지시 ${ns.length}건 — 계약 상세(두께·폭)가 MES 에 없음</b>: ${ns.map((x) => `${esc(x.con)} ${esc(x.item)} ${x.t}t(지시 ${md(x.drtDate)})`).join(' · ')}. 오래전 지시가 종료되지 않고 남은 것으로 보임 — MES 정리 확인</div>` : '')
+      + (ns.length ? `<div class="miss"><b>순서에서 뺀 지시 ${ns.length}건 — 계약 상세(두께·폭)가 MES 에 없음</b>: ${ns.map((x) => `${esc(x.con)} ${esc(x.item)} ${x.t}t(지시 ${/^\d{4}-/.test(String(x.drtDate || '')) && (Date.now() - Date.parse(x.drtDate)) / 864e5 > 90 ? String(x.drtDate).slice(2, 4) + '/' : ''}${md(x.drtDate)})`).join(' · ')}. 오래전 지시가 종료되지 않고 남은 것으로 보임 — MES 정리 확인</div>` : '')
       + `<section class="card"><div class="seg" id="wc-lines">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l} <small>${O.lines[l].stop ? '휴지' : `${O.lines[l].nFree}건`}</small></button>`).join('')}</div>${stop}`
       + '<div class="kpis" style="margin-top:12px">'
-      + `<div class="kpi"><div class="l">지금 라인 · 확정 대기</div><div class="v">${fx.length}<small>건</small></div><div class="b">마지막 코일 ${esc(v.lastCoil ? tm(v.lastCoil) : '-')} 끝 · 확정분 ${n0(v.tFixed)}t 은 ${esc(tm(v.fixedUntil))} 까지</div></div>`
+      + `<div class="kpi"><div class="l">지금 라인 · 작업대기</div><div class="v">${fx.length}<small>건</small></div><div class="b">마지막 코일 ${esc(v.lastCoil ? tm(v.lastCoil) : '-')} 끝 · 작업대기 ${n0(v.tFixed)}t 은 ${esc(tm(v.fixedUntil))}까지</div></div>`
       + `<div class="kpi"><div class="l">이번 제안(편성 대상)</div><div class="v">${v.nFree}<small>건 · ${n0(v.tFree)}t</small></div><div class="b">${v.nFree ? `${esc(tm(free[0].start))} → ${esc(tm(v.until))}` : '편성할 지시 없음'}${v.waitN ? ` · 도료·PF 준비 기다리는 지시 ${v.waitN}건` : ''}</div></div>`
-      + `<div class="kpi"><div class="l">예상 휴지(제안 순서)</div><div class="v wv">${n0(v.downFreeSum)}<small>분</small></div><div class="b">${dz}</div></div>`
+      + `<div class="kpi"><div class="l">예상 휴지(제안 순서)</div><div class="v wv">${v.downFreeSum >= 60 ? `${n0(Math.floor(v.downFreeSum / 60))}<small>시간</small> ${Math.round(v.downFreeSum % 60)}<small>분</small>` : `${n0(v.downFreeSum)}<small>분</small>`}</div><div class="b">${dz}</div></div>`
       + '</div>'
-      + (v.nFree ? `<div class="wo-cmp${gain < 0 ? ' bad' : ''}"><b>MES 순서와 비교</b> — 같은 ${v.nFree}건을 MES 에 지금 들어가 있는 작업예정일·순번대로 돌리면 휴지 ${n0(v.mes.down)}분${v.mes.wait ? ` + 도료 기다림 ${n0(v.mes.wait)}분` : ''} → 제안이 <b>${gain >= 0 ? `${n0(gain)}분 짧음` : `${n0(-gain)}분 김`}</b> <span class="bk">(같은 출발점, 같은 휴지 규칙)</span></div>` : '')
+      + (v.nFree ? `<div class="wo-cmp${gain < 0 ? ' bad' : ''}"><b>MES 순서와 비교</b> — 같은 ${v.nFree}건을 MES 에 지금 들어가 있는 작업예정일·순번대로 돌리면 휴지 ${n0(v.mes.down)}분${v.mes.wait ? ` + 도료 기다림 ${n0(v.mes.wait)}분` : ''} → 제안이 <b>${gain >= 0 ? `${n0(gain)}분 짧음` : `${n0(-gain)}분 김`}</b></div>` : '')
       + '</section>'
-      + (v.nFree ? `<section class="card"><h2>${line} 제안 순서 <small class="bk">일자 선택 시 작업 내역 표시</small> <button type="button" class="btn sm" id="wc-exp" style="margin-left:10px">모두 펼치기·접기</button></h2>${LEG}${table(v, free, 'free')}</section>` : '')
-      + (fx.length ? `<section class="card"><details class="fx"><summary>이미 확정된 대기열 ${fx.length}건 ${n0(v.tFixed)}t — MES 순서 그대로 (${esc(tm(v.from))} → ${esc(tm(v.fixedUntil))})</summary>${table(v, fx, 'fixed')}</details></section>` : '');
+      + (v.nFree ? `<section class="card"><h2>${line} 제안 순서 <button type="button" class="btn sm" id="wc-exp" style="margin-left:10px">모두 펼치기·접기</button></h2>${LEG}${table(v, free, 'free')}</section>` : '')
+      + (fx.length ? `<section class="card"><details class="fx"><summary>작업대기 ${fx.length}건 ${n0(v.tFixed)}t — MES 순서 그대로 (${esc(tm(v.from))} → ${esc(tm(v.fixedUntil))})</summary>${table(v, fx, 'fixed')}</details></section>` : '');
     $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; render(); });
     $('wo-main').querySelectorAll('tr.ln').forEach((r) => { const f = () => { line = r.dataset.l; render(); const c = $('wo-lines'); if (c) c.scrollIntoView({ block: 'start', behavior: 'smooth' }); }; r.onclick = f; r.onkeydown = (e) => { if (e.key === 'Enter') f(); }; });
     $('wo-main').querySelectorAll('tr.day').forEach((r) => { const f = () => { const k = r.dataset.day; if (openDays.has(k)) openDays.delete(k); else openDays.add(k); const on = openDays.has(k); r.setAttribute('aria-expanded', on);

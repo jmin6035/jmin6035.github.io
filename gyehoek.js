@@ -45,6 +45,7 @@
       const t0 = (R.replan || {}).t0 || ''; actG = t0;
       for (const [d, l, a, gr, t] of R.rows) { const x = (pl[`${l}|${d}`] = pl[`${l}|${d}`] || { t: 0, al: {}, sub: {}, gg: {}, aa: {} }); x.t += t; const gk = gNm(gr); x.gg[gk] = (x.gg[gk] || 0) + t; x.aa[a] = (x.aa[a] || 0) + t; x.al[FAM(a)] = (x.al[FAM(a)] || 0) + t; if (/^AL-/.test(a) && t >= 0.5) x.sub[a] = 1; }
       for (const c of R.cal) ev[`${c.line}|${c.date}`] = c;
+      window.OPT_STOPEV = {}; for (const c of R.cal) if (!((+c.cap || 0) >= 1) && c.event) window.OPT_STOPEV[`${c.line}|${c.date}`] = String(c.event).replace(/\s*\(.*\)$/, '');   // 11/18 검수: 달 넘는 정지 기간(ui/optable)
       if (PA && PA.asOf && Array.isArray(PA.daily) && t0) for (const r of PA.daily) {   // 재계획 실적일 뒤에 들어온 MES 실적 = 라인 합계를 실적으로(supply.js 와 같게)
         if (!(r.d > t0 && r.d <= PA.asOf)) continue;
         for (const l of LINES.G) { const k = `${l}|${r.d}`; pl[k] = Object.assign(pl[k] || { al: {}, sub: {} }, { t: r[l] || 0 }); }
@@ -127,19 +128,19 @@
     const val = (V, ls) => ls.reduce((a, l) => a + lineSum(V, l, ds), 0);
     const A = CH.map((V) => cols.map(([, ls]) => val(V, ls)));
     // 판마다 '월 합계 | 앞 판 대비' 두 칸(11/12 사용자 '조정 이해가 안 된다 — 칸 구분')
-    const rows = CH.map((V, i) => `<tr class="${i === si ? 'on' : ''}" data-i="${i}" tabindex="0"><th>${esc(V.lab)}</th>${A[i].map((v, j) => { const df = i ? Math.round(v - A[0][j]) : null,   // 월차(첫 판) 대비(11/12 사용자)
+    const rows = CH.map((V, i) => `<tr class="${i === si ? 'on' : ''}" data-i="${i}" tabindex="0"><th>${esc(V.lab).replace(/\((.+)\)$/, '<span style="white-space:nowrap">($1)</span>')}</th>${A[i].map((v, j) => { const df = i ? Math.round(v - A[0][j]) : null,   // 월차(첫 판) 대비(11/12 사용자)
       sm = /합계/.test(cols[j][0]) ? ' sm' : '';
       return `<td class="bl${sm}"><b>${n0(v)}</b></td><td class="df${sm}${df != null && df <= -0.5 ? ' dn' : df != null && df >= 0.5 ? ' up' : ''}">${df == null ? '–' : df === 0 ? '0' : sg(df)}</td>`; }).join('')}</tr>`).join('');
     const SRm = D.SR && D.SR.m === ds[0].slice(0, 7) && Object.keys(D.SR.v).length ? D.SR.v : null;
     const srRow = SRm ? `<tr class="sr"><th>판생 계획</th>${cols.map(([n, ls], j) => { const ok = ls.every((l) => SRm[l] != null), v = ok ? ls.reduce((a, l) => a + SRm[l], 0) : null, df = v == null ? null : Math.round(v - A[0][j]), sm = /합계/.test(n) ? ' sm' : '';
       return `<td class="bl${sm}"><b>${v == null ? '–' : n0(v)}</b></td><td class="df${sm}${df != null && df <= -0.5 ? ' dn' : df != null && df >= 0.5 ? ' up' : ''}">${df == null ? '–' : df === 0 ? '0' : sg(df)}</td>`; }).join('')}</tr>` : '';
-    return `<h3 class="gk-adjh">계획 변경 이력 — 월 생산 <small>톤</small></h3><div class="gk-adjw"><table class="gk-adj"><thead><tr><th rowspan="2">계획</th>${cols.map(([n]) => `<th colspan="2" class="bl${/합계/.test(n) ? ' sm' : ''}">${n}</th>`).join('')}</tr><tr>${cols.map(([n]) => `<th class="sub bl${/합계/.test(n) ? ' sm' : ''}">월 합계</th><th class="sub${/합계/.test(n) ? ' sm' : ''}">월차 대비</th>`).join('')}</tr></thead><tbody>${rows}${srRow}</tbody></table></div>`;
+    return `<h3 class="gk-adjh">계획 변경 이력 — 월 생산 · 월차 대비 ± <small>톤</small></h3><div class="gk-adjw"><table class="gk-adj"><colgroup><col style="width:112px">${cols.map(() => '<col style="width:61px"><col style="width:52px">').join('')}</colgroup><thead><tr><th rowspan="2">계획</th>${cols.map(([n]) => `<th colspan="2" class="bl${/합계/.test(n) ? ' sm' : ''}">${n}</th>`).join('')}</tr><tr>${cols.map(([n]) => `<th class="sub bl${/합계/.test(n) ? ' sm' : ''}">월 생산</th><th class="sub${/합계/.test(n) ? ' sm' : ''}" title="월차 대비">±</th>`).join('')}</tr></thead><tbody>${rows}${srRow}</tbody></table></div>`;
   }
 
   // 누른 칸 한 줄(가동 상세 머리): 판마다 그 칸(월차 → 매주 조정 → 지금) + 도금은 그 날 소재(F/H) 발주 마감과 발주 상태
   function info(l, d, noMat) {
     const CH = chain(), C = CH.map((V) => V.get(l, d)), last = C[C.length - 1], first = C[0];
-    const tx = (c) => (c.stop ? c.stop : `${n0(c.t)}t${c.mc ? ' M/C' : c.fam ? ' ' + c.fam : ''}`);
+    const tx = (c) => (c.stop ? c.stop : c.mc ? `M/C · 생산 ${n0(c.t)}t` : `${n0(c.t)}t${c.fam ? ' ' + c.fam : ''}`);   // 11/17 검토 '435t M/C' 오해
     let h = `<b>${md(d)}(${WD[wd(d)]}) ${l}</b> ` + CH.map((V, i) => `<span class="${i === CH.length - 1 ? 'nw' : ''}">${esc(V.kind === 'now' ? '현재 계획' : V.lab.replace(/ \d+:\d+$/, ''))} ${esc(tx(C[i]))}</span>`).join('<i>→</i>');
     if (CH.length > 1) { const df = Math.round(last.t - first.t); h += ` <em class="${df <= -0.5 ? 'dn' : ''}">(월차 대비 ${sg(df)}t)</em>`; }
     if (!noMat && /CGL$/.test(l) && D.LT && !last.act && last.t >= 0.5) {   // 상세 카드에 품목별 발주 마감·판정이 있으면 머리에서는 뺌(중복)
@@ -236,31 +237,34 @@
     const mEnd = add(add(mon + '-01', 32).slice(0, 7) + '-01', -1), cur = today.slice(0, 7) === mon;
     const A = {}, get = (pl, g) => (A[`${pl}|${g}`] = A[`${pl}|${g}`] || { pl, g, o: 0, op: 0, arr: 0, od: 0 });
     const open = {};
-    for (const x of [...(P.known || []), ...((P.knownInfo || {}).stale || []).map((z) => ({ ...z, date: z.eta, stale: 1 }))]) {
+    // 입고 지연 = 예정일 지남 ~30일(계획이 내일 입고로 보는 것) — 아래 '소재 현황' 입고 지연과 같은 기준(11/17 검토: 30일 넘은 미입고까지 넣어 5,724 vs 4,312).
+    // 30일 넘게 지난 미입고(계획에서 뺌, 입고 확인 필요)는 머리 칸 말풍선에만
+    const stl = {}; for (const x of (P.knownInfo || {}).stale || []) { const k = nz(x.po); open[k] = (open[k] || 0) + (x.t || 0); stl[x.plant] = (stl[x.plant] || 0) + (x.t || 0); }
+    for (const x of P.known || []) {
       const k = nz(x.po), g = grpOf[k] || '판매그룹 미상', pl = (info[k] || {}).pl || x.plant;
       open[k] = (open[k] || 0) + (x.t || 0);
-      const over = x.stale || /예정일 지남/.test(x.note || '');
+      const over = /예정일 지남/.test(x.note || '');
       if (over) { if (cur) get(pl, g).od += x.t; }
       else if (x.date >= mon + '-01' && x.date <= mEnd) get(pl, g).arr += x.t;
     }
     for (const [k, v] of Object.entries(F.po || {})) { const kk = nz(k), I = info[kk]; if (!I || I.dt.slice(0, 7) !== mon) continue; const a = get(I.pl, gname(v[2])); a.o += v[1] || 0; a.op += Math.min(v[1] || 0, open[kk] || 0); }   // 아직 안 들어옴 = MES 미입고(발주 − 입고 실적). 11/17 확인: 발주 종료(PUR_END_YN) 표시는 입고 뒤에도 N 으로 남는 것이 많아(포스코 지급 SUS 'Y' 발주는 발주일 전량 입고) 쓰지 않음
     const z = (v, c) => (v >= 0.5 ? `<td class="${c || ''}">${n0(v)}</td>` : '<td class="z">–</td>');
-    const row = (lab, c, tot) => `<tr class="${tot ? 'tot' : ''}"><th>${esc(lab)}</th>${cur ? z(c.od, 'bad') : ''}<td class="b">${c.o >= 0.5 ? n0(c.o) : '–'}</td>${z(c.op)}${z(c.arr, 'b')}</tr>`;
+    const hasO = Object.values(A).some((a) => a.g !== '판매그룹 미상' && a.o >= 0.5);   // 다음 달처럼 그 달 발주가 아직 없으면 발주 두 칸을 뺌(11/17 검토 '–'뿐인 두 칸)
+    const row = (lab, c, tot) => `<tr class="${tot ? 'tot' : ''}"><th>${esc(lab)}</th>${cur ? z(c.od, 'bad') : ''}${hasO ? `<td class="b">${c.o >= 0.5 ? n0(c.o) : '–'}</td>${z(c.op)}` : ''}${z(c.arr, 'b')}</tr>`;
     const PL0 = [['G', ['도금수출', '도금국내', '자동차', '자가재']], ['C', ['컬러수출(가전 포함)', '컬러건재', '수요개발']]];
     const ix = (gs, g) => { const i = gs.indexOf(g); return i < 0 ? 99 : i; };
     let body = '';
     for (const [pl, gs] of PL0) {
       if (!UI.inScope(pl)) continue;
-      const L = Object.values(A).filter((a) => a.pl === pl && (a.o >= 0.5 || a.arr >= 0.5 || a.od >= 0.5)).sort((x, y) => ix(gs, x.g) - ix(gs, y.g));
+      const L = Object.values(A).filter((a) => a.pl === pl && a.g !== '판매그룹 미상' && (a.o >= 0.5 || a.arr >= 0.5 || a.od >= 0.5)).sort((x, y) => ix(gs, x.g) - ix(gs, y.g));   // 11/17 사용자 '판매그룹 미상 빼라': 판매그룹에 안 이어진 발주는 줄·합계에서 뺌(합계 = 보이는 줄 합)
       if (!L.length) continue;
       const T = L.reduce((t, a) => ({ o: t.o + a.o, op: t.op + a.op, arr: t.arr + a.arr, od: t.od + a.od }), { o: 0, op: 0, arr: 0, od: 0 });
       body += row(`${PN[pl]} 소재 합계`, T, true) + L.map((a) => row(a.g, a)).join('');
     }
     const M_ = +mon.slice(5);
     el.innerHTML = `<h2 class="m4-h">${M_}월 그룹별 소재 발주 · 입고 <small>톤</small></h2>
-<div class="m4-sc"><table class="m4-gd" style="min-width:720px"><colgroup><col style="width:150px"><col><col><col>${cur ? '<col>' : ''}</colgroup>
-<thead><tr><th>판매그룹</th>${cur ? '<th>입고 지연</th>' : ''}<th>${M_}월 발주</th><th>${M_}월 발주 중 미입고</th><th>${M_}월 입고 예정<small>(${cur ? `<b class="dt">${md(today)}~${md(mEnd)}</b>, ` : ''}지난달 발주 포함)</small></th></tr></thead><tbody>${body || `<tr><td colspan="${cur ? 5 : 4}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>
-<div class="m4-lg"><span>가전내수는 컬러수출에 포함</span></div>`;
+<div class="m4-sc"><table class="m4-gd"><colgroup><col style="width:190px">${cur ? '<col>' : ''}${hasO ? '<col><col>' : ''}<col></colgroup>
+<thead><tr><th>판매그룹</th>${cur ? `<th${Object.keys(stl).length ? ` title="${esc(`예정일 30일 넘게 지난 미입고(계획에서 뺌, 입고 확인 필요): ${Object.entries(stl).filter(([p_]) => UI.inScope(p_)).map(([p_, t_]) => `${PN[p_]} ${n0(t_)}t`).join(' · ')}`)}"` : ''}>입고 지연</th>` : ''}${hasO ? `<th>${M_}월 발주</th><th>${M_}월 발주 중 미입고</th>` : ''}<th>${M_}월 입고 예정<small>(${cur ? `<b class="dt">${md(today)}~${md(mEnd)}</b>, ` : ''}지난달 발주 포함)</small></th></tr></thead><tbody>${body || `<tr><td colspan="${1 + (cur ? 1 : 0) + (hasO ? 2 : 0) + 1}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>`;
   }
   function matSync() {
     matDash();

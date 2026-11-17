@@ -23,6 +23,10 @@ main.wrap { max-width: none; }
 .pf-m td { background: var(--tint, #f3f6fa); } .pf-sub { padding-left: 22px !important; color: var(--ink-2); font-weight: 500; }
 .ct-t td.id small { display: block; font-size: 13.5px; color: var(--ink-2); font-weight: 400; }
 html body table.ct-t.pf-t td:first-child { white-space: normal !important; word-break: keep-all; overflow-wrap: anywhere; }   /* 긴 차이 문구가 옆 칸 배지와 겹치지 않게 */
+/* 11/17 검토: 1366 반쪽 카드(481px)에서 표 오른쪽 칸(실적·미달 일수)이 잘림 → 머리·부연 줄바꿈 허용, 칸 안 여백 줄임 */
+.pf-g table.ct-t th { white-space: normal !important; word-break: keep-all; }
+.pf-g table.ct-t td.id small { white-space: normal; word-break: keep-all; }
+.pf-g table.ct-t :is(th, td) { padding-left: 8px !important; padding-right: 8px !important; }
 </style>
 </head>
 <body>

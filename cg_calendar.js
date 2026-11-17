@@ -412,7 +412,7 @@
     const run = kh.확정 + kh.편성 + kh.예상, avail = (c.hAvail || 0) / e, past = Math.max(0, 24 * (1 - dl)), empty = avail - run;
     const w = (v) => `${Math.max(0, 100 * v / 24).toFixed(2)}%`;
     const gs = Object.entries(c.grp || {}).filter(([, v]) => v >= 1).slice(0, 3).map(([g, v]) => `<span>${esc(g)} ${n0(v)}</span>`).join('');
-    const tip = `${ln} ${mdw(c.d)}${stsTip(ln, c.d)} · 생산 ${n0(fill)}t(작업지시 ${n0(c.conf)} · 소재 있음 ${n0(c.plan)} · 입고 예정 ${n0(c.fcst)}) · 가동 ${n1(run)}시간 / 가용 ${n1(avail)}h${ST.length ? ` · 정지 ${ST.map(([k, h]) => `${k} ${n1(h)}시간`).join(' · ')}` : ''}${past >= 0.05 ? ` · 오늘 지난 ${n1(past)}시간` : ''} · 시간 = 톤 ÷ 실적 t/시간(같은 두께·폭) ÷ 가동률 ${Math.round(e * 100)}%`;
+    const tip = `${ln} ${mdw(c.d)}${stsTip(ln, c.d)} · 생산 ${n0(fill)}t(작업지시 ${n0(c.conf)} · 소재 있음 ${n0(c.plan)} · 입고 예정 ${n0(c.fcst)}) · 가동 ${n1(run)}시간 / 가용 ${n1(avail)}시간${ST.length ? ` · 정지 ${ST.map(([k, h]) => `${k} ${n1(h)}시간`).join(' · ')}` : ''}${past >= 0.05 ? ` · 오늘 지난 ${n1(past)}시간` : ''} · 시간 = 톤 ÷ 실적 t/시간(같은 두께·폭) ÷ 가동률 ${Math.round(e * 100)}%`;
     return `<button type="button" class="cell sc${big ? ' mc' : ''}${c.flag ? ' fl' : ''}" data-ln="${ln}" data-d="${c.d}" title="${esc(tip)}">`
       + `<div class="sc-r1"><span class="sc-ch">${famCh(c.fam)}${stsCh(ln, c.d, c.fam)}</span><span class="tv">${n0(fill)}<small>t</small></span></div>`
       + `<div class="sc-bar">${past >= 0.05 ? `<i class="spa" style="width:${w(past)}"></i>` : ''}${ST.map(([, h]) => `<i class="sst" style="width:${w(h * dl)}"></i>`).join('')}<i class="sk1" style="width:${w(kh.확정)}"></i><i class="sk2" style="width:${w(kh.편성)}"></i><i class="sk3" style="width:${w(kh.예상)}"></i></div>`
@@ -454,7 +454,7 @@
     // 11/13 검토 상3·상4: 주 합 = 보이는 7칸(지난 날 = 실적, 오늘부터 = 계획 톤) 정수 합 — 머리 기간(생산주)과 같은 날들 · 재계획 하루 톤 합은 풍선으로
     const lv = (ln, d) => (pds.includes(d) ? Math.round((av(ln, d) || {}).t || 0) : (() => { const c = O.lines[ln][idx(d)]; return (c.cap || 0) < 1 ? 0 : Math.round(c.conf + c.plan + c.fcst); })());
     const wkD = pds.concat(days), wkL = (ln) => wkD.reduce((s, d) => s + lv(ln, d), 0);
-    const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small title="${md(wkD[0])}~${md(wkD[wkD.length - 1])} ${ln} 7칸 합(지난 날 = 실적, 오늘부터 = 계획 톤) · 참고: ${md(days[0])}~${md(days[days.length - 1])} 재계획 하루 톤 합 ${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t">주 ${n0(wkL(ln))}t</small>${hr ? `<small class="hs ov" title="${END()}까지 주문을 t/시간(같은 두께·폭 2026년 실적)로 24시간 이어서 돌리면 가동 가능 시간(24시간 × 제원치 가동률)보다 ${n1(hr.h)}시간 초과 → 약 ${n0(hr.t)}t 은 ${md(O.days[O.days.length - 1])} 뒤에 생산">${END()} 뒤 ${n0(hr.t)}t</small>` : ''}</th>${pTd(ln)}${days.map((d) => `<td${d === UI.today() ? ' class="tdy"' : ''}>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`; }).join('');
+    const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small title="${md(wkD[0])}~${md(wkD[wkD.length - 1])} ${ln} 7칸 합(지난 날 = 실적, 오늘부터 = 계획 톤) · 참고: ${md(days[0])}${days[days.length - 1] !== days[0] ? '~' + md(days[days.length - 1]) : ''} 재계획 하루 톤 합 ${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t">주 ${n0(wkL(ln))}t</small>${hr ? `<small class="hs ov" title="${END()}까지 주문을 t/시간(같은 두께·폭 2026년 실적)로 24시간 이어서 돌리면 가동 가능 시간(24시간 × 제원치 가동률)보다 ${n1(hr.h)}시간 초과 → 약 ${n0(hr.t)}t 은 ${md(O.days[O.days.length - 1])} 뒤에 생산">${END()} 뒤 ${n0(hr.t)}t</small>` : ''}</th>${pTd(ln)}${days.map((d) => `<td${d === UI.today() ? ' class="tdy"' : ''}>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`; }).join('');
     const jg = pJg + days.map((d) => {
       const j = O.jg[idx(d)], df = j.cumSched - j.cumPlan;
       return `<td class="jg" title="컬러 계획 = 컬러 라인 투입 일정에 맞추려면 이 날까지 도금에서 만들어 둬야 할 자가재 누계(가동계획 기준) · 도금 생산 = 이 캘린더대로 도금에서 만드는 자가재 누계(${md(O.days[0])}부터)"><div class="jr"><span>컬러 계획</span><b>${n0(j.cumPlan)}</b></div><div class="jr"><span>도금 생산</span><b>${n0(j.cumSched)}</b></div><div class="jr ${df < 0 ? 'bad' : 'good'}"><span>${df < 0 ? '부족' : '여유'}</span><b>${n0(Math.abs(df))}</b></div>${j.mark ? `<div class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 도금에서 끝내야 할 자가재 톤">컬러 마감 ${n0(j.mark)}t</div>` : (O.jg.some((x) => x.mark) ? '<div class="mk" style="visibility:hidden">-</div>' : '')}</td>`;
@@ -800,7 +800,8 @@
     catch (e) { msg('⚠ 암호가 맞지 않습니다'); busy = false; return; }
     O.base = JSON.parse(JSON.stringify(O.lines));
     const LPd = await lpReady.then((e) => e && GP.decryptJSON(e, pw)).catch(() => null), LPr = (LPd && LPd.result) || {};
-    O.planT0 = (LPr.replan || {}).t0 || null;   // 11/9: 재계획 표기 = 실적 기준일
+    O.planT0 = (LPr.replan || {}).t0 || null;
+    window.CG_PLANEV = {}; for (const c of LPr.cal || []) if (!((+c.cap || 0) >= 1) && c.event) window.CG_PLANEV[`${c.line}|${c.date}`] = String(c.event).replace(/\s*\(.*\)$/, '');   // 11/18 검수: 정지 기간을 캘린더 자료 범위 밖(다음 달)까지 이어 보려고 — 계획 전체 날짜의 하루 종일 정지   // 11/9: 재계획 표기 = 실적 기준일
     O.sts = {};   // 11/13 AL-STS 날별 톤·예약(재계획 rows 강종 AL-STS · replan.sts.days 예약) — 칩·'예약 ○t(D-3 확정)'
     for (const r of LPr.rows || []) if (r[2] === 'AL-STS' && !(O.planT0 && r[0] <= O.planT0)) { const k = `${r[1]}|${r[0]}`; (O.sts[k] = O.sts[k] || { t: 0, res: 0 }).t += +r[4] || 0; }
     for (const [d, l, , rs] of ((LPr.replan || {}).sts || {}).days || []) if (O.sts[`${l}|${d}`]) O.sts[`${l}|${d}`].res = rs;

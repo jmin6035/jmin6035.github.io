@@ -135,7 +135,7 @@
     });
     const row = (x) => `<tr class="ck" data-l="${esc(x.l.line)}"><td class="id">${esc(x.l.line)}<small>${x.l.pl === 'G' ? '도금' : '컬러'}</small></td><td><b class="${x.st[1]}">${x.st[0]}</b><small>${md(x.l.asOfL)} 기준</small></td>`
       + `<td class="r"><b>${x.p1 == null ? '-' : n0(x.p1)}</b></td><td class="r">${n1(x.s1)}</td><td class="r"><b>${n0(x.p7)}</b></td><td class="r">${n1(x.s7)}</td><td class="r">${pc(168 - x.s7, 168)}%</td>`
-      + `<td>${x.nx ? `<b>${md(x.nx[0])}</b> ${esc(x.nx[1])}` : '<span class="sub">-</span>'}</td></tr>`;
+      + `<td>${x.nx ? `<b>${md(x.nx[0])}</b> ${esc(String(x.nx[1] || '').replace(/\s*~\s*(\d{1,2}\/\d{1,2})/g, ' $1까지').replace(/\bTest\b/g, '테스트'))}` : '<span class="sub">-</span>'}</td></tr>`;
     const tbl = t([th('라인'), th('상태'), th('하루 생산', 1), th('하루 비가동 시간', 1), th('7일 생산', 1), th('7일 비가동 시간', 1), th('가동률', 1, '1 − 비가동/168시간'), th('다음 일정')], R.map(row));
     const loss = R.flatMap((x) => Object.entries(x.cat).filter(([, h]) => h >= 0.1).map(([c, h]) => ({ l: x.l, c, h, t: c === FULL ? 0 : h * x.l.rate }))).sort((a, b) => b.t - a.t);
     const lr = loss.map((z) => `<tr class="ck" data-l="${esc(z.l.line)}"><td class="w">${esc(z.c)}</td><td class="id">${esc(z.l.line)}</td><td class="r"><b>${n1(z.h)}</b></td><td class="r">${n1(z.l.rate)}</td><td class="r"><b>${n0(z.t)}</b></td></tr>`);

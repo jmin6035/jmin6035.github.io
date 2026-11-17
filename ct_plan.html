@@ -153,7 +153,7 @@ button.lnk { font: inherit; font-size: 13.5px; border: 1px solid var(--line); ba
   .gbr i{display:block;height:100%} .gbr i:first-child{border-radius:4px 0 0 4px} .gbr i.b{border-radius:0 4px 4px 0}
   .gbr em{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;background:var(--ink,#111827)}
   .gbv{font-size:13.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
-  .gbt-tbl td.gbcell{min-width:420px} .gbt-tbl td.gbcell .gb{display:grid;grid-template-columns:minmax(160px,1fr) auto;gap:10px;align-items:center} .gbt-tbl tr.tot .gbr{height:20px}
+  .gbt-tbl td.gbcell{min-width:380px} .gbt-tbl td.gbcell .gb{display:grid;grid-template-columns:minmax(160px,1fr) auto;gap:10px;align-items:center} .gbt-tbl tr.tot .gbr{height:20px}
   .gbt .gbn{font-size:14px} .gbt .gbr{height:22px} .gbt .gbv b{font-size:14px}
   .gbt{padding-bottom:6px;border-bottom:1px solid var(--line,#e5e7eb)}
   @media (max-width:640px){.gb{grid-template-columns:56px minmax(0,1fr);}.gbv{grid-column:2}}
@@ -253,6 +253,8 @@ html:root body main button.cell.sc.stp .sc-h b { color: #fff; }
 button.cell.sc.pcell { background: transparent; cursor: default; color: var(--ink); }
 .lg2 i.sk0, .lg2 i.sk1, .lg2 i.sk2, .lg2 i.sk3, .lg2 i.sk4, .lg2 i.sst, .lg2 i.spa, .lg2 i.sgap { width: 22px; height: 12px; }
 .ps-c i.sk1, .ps-c i.sk2, .ps-c i.sk3, .ps-c i.sk4 { display: inline-block; width: 12px; height: 10px; } h4.kh i.sk1, h4.kh i.sk2, h4.kh i.sk3, h4.kh i.sk4 { display: inline-block; }
+html:root body main .rg table.it tbody td:nth-child(3) { white-space: normal !important; word-break: keep-all; overflow-wrap: anywhere; }   /* 11/17 검토: 미편성 주문 '상태' 칸 '발주(AL-STS 임가공·포스코 지급)'(213px)가 112px 칸을 넘어 옆 칸 숫자와 겹침 → 칸 안 줄바꿈 */
+html:root body main table.it.gbt-tbl :is(th, td) { padding-left: 8px !important; padding-right: 8px !important; } html:root body main table.it.gbt-tbl thead th { white-space: normal !important; word-break: keep-all; }   /* 11/17: 판매그룹별 표가 1,054px > 1,032 — 오른쪽 '계획 적중률' 칸 잘림 */
 </style>
 </head>
 <body>

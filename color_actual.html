@@ -34,6 +34,10 @@ details.tv { margin-top: 12px; } details.tv summary { cursor: pointer; color: va
 /* 11/13: 진도 = 실적 ÷ 월 계획 + 작은 글씨 월차 대비(04 수주 '생산 달성'과 같은 형식) · 막대 값 글자 흰 테(기준선과 겹침 방지) */
 td.pbar small.mvs { display: block; font-size: 13.5px; color: var(--ink-2); margin-top: 2px; } td.pbar small.mvs b.r-bad { color: var(--bad); } td.pbar small.mvs b.r-warn { color: var(--warn); } td.pbar small.mvs b.r-ok { color: var(--good); }
 .cv text.bv { paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+/* 11/17 검토: 1366 에서 '라인별 진도'(1,170px > 1,020)·'휴지 구성'(반쪽 480px) 표 오른쪽 칸이 잘림 → 머리 줄바꿈 허용·진도 막대 줄임·칸 여백 줄임 */
+html body main :is(#ca-line, #ca-stop) table.t thead th { white-space: normal !important; word-break: keep-all; }
+html body main #ca-line td.pbar { min-width: 0; } html body main #ca-line td.pbar div { width: 64px; margin-right: 6px; }
+@media (max-width: 1700px) { html body main #ca-line table.t :is(th, td) { padding-left: 6px !important; padding-right: 6px !important; } html body main #ca-stop table.t :is(th, td) { padding-left: 4px !important; padding-right: 4px !important; } }
 </style>
 </head>
 <body data-plant="C">

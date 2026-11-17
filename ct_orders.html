@@ -6,7 +6,7 @@
 <title>주문·납기</title>
 <meta name="description" content="도금·컬러 미결 주문 단계별 현황 · 납기 캘린더">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611171526">
+<link rel="stylesheet" href="ui/theme.css?v=2611120206">
 <style>
 main.wrap { max-width: none; }
 section.card.co-card { padding: 54px 16px 14px !important; }
@@ -101,6 +101,8 @@ html body table.co-t tr.co-gm td { text-align: center !important; padding: 8px; 
 .ot-td:hover { background: color-mix(in srgb, var(--brand-2) 10%, transparent); } .ot-td b { font-size: 16px; font-variant-numeric: tabular-nums; text-align: right; } .ot-td .n { color: var(--ink-2); font-size: 13.5px; text-align: right; white-space: nowrap; } .ot-td .w { color: var(--brand-2); font-size: 13.5px; font-weight: 700; white-space: nowrap; } .ot-td .k { font-weight: 700; word-break: keep-all; }
 .ot-psf > summary small { font-weight: 500; font-size: 13.5px; margin-left: 8px; } .ot-psf[open] > summary { margin-bottom: 12px; } .ot-psf { padding-bottom: 14px; }
 .rk-w .nw, .ot-r .nw { white-space: nowrap; } .ot-xby { display: inline-flex; vertical-align: middle; margin-left: 4px; } .ot-xby button { font-size: 13.5px; }
+@media (max-width: 640px) { .pts, .pts.p5, .pts.p6, .pts.p7 { grid-template-columns: minmax(0, 1fr) !important; } .pts.p7 .pt .v { font-size: 26px; } }   /* 11/17 검토 390: 주문진도 카드 큰 숫자·그룹 톤 잘림 → 한 줄에 카드 하나 */
+.pt .s .nw, .pt .s .bad { white-space: nowrap; }
 @media (max-width: 640px) { .ot-cs { grid-template-columns: 1fr; } .ot-td { grid-template-columns: minmax(0, 1fr) max-content max-content; } .ot-td .w { display: none; } }
 /* 납기 캘린더(11/11 전면 개편): 이번 주·다음 주 → 날짜 × 판매그룹 톤·위험 톤 */
 .dc-card { margin: 0 0 14px; } .dc-card h2 small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 8px; }
@@ -149,7 +151,7 @@ table.dc-t tr.dc-pl td { background: var(--tint-2, color-mix(in srgb, var(--bran
 .co-tl li.co-gh { list-style: none; padding: 8px 10px 4px; font-weight: 800; font-size: 13.5px; color: var(--ink); background: var(--tint, #f3f6fa); position: sticky; top: 0; z-index: 1; } .co-tl li.co-gh small { font-weight: 500; color: var(--ink-3); }
 .co-tl li .b.po { color: var(--ink-2); font-size: 13.5px; white-space: normal; }
 </style>
-<link rel="stylesheet" href="ui/ord_prog.css?v=2611171526">
+<link rel="stylesheet" href="ui/ord_prog.css?v=2611172300">
 <style>
 /* 주문진도(11/10 다시): 납기 위험(risk.html)과 같은 틀 */
 .rk { --c-ok: var(--good); --c-warn: #c9a227; --c-will: #e07b39; --c-past: var(--bad); --c-stale: #9aa5b1; }
@@ -251,11 +253,11 @@ html:root body main table.dc-t td small.dc-r { color: #c00000; }
 <body>
 <header id="shell" data-page="orders" data-title-auto data-title="주문·납기" data-sub="미결 주문 단계별 현황 · 납기 일정"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
-<footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611171526"></script>
-<script src="engine/crypto.js?v=2611171526"></script>
-<script src="ui/ct.js?v=2611171526"></script>
-<script src="ui/spec_ko.js?v=2611171526"></script>
-<script src="ct_orders.js?v=2611171526"></script>
+<footer class="foot"><div class="wrap"><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2611141500"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script src="ui/ct.js?v=2611120206"></script>
+<script src="ui/spec_ko.js?v=2611120206"></script>
+<script src="ct_orders.js?v=2611172300"></script>
 </body>
 </html>

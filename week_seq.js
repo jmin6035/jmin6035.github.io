@@ -45,7 +45,13 @@
 
   // ───────── 전환 휴지(분) — 도금: 학습 1년 조건표(cg_wo_sequence.pfeats·cost) / 컬러: 조건표 × 라인 보정(wo_cost.parts) + 블록 바뀜 실측
   const sk = (c) => { c = String(c || ''); return c.includes('·') ? c.split('·')[1] : c.length >= 7 ? c.slice(3, 7) : c; };
-  const kNm = (s) => String(s).replace('Lami', '라미').replace(/~(\d+mm)/, '$1 이하');   // 화면 이름만(기준표 키는 그대로)
+  const kNm = (s) => String(s).replace('Lami', '라미').replace(/이면/g, '뒷면').replace(/~(\d+mm)/, '$1 이하');   // 화면 이름만(기준표 키는 그대로)
+  const evNm = (s) => String(s == null ? '' : s).replace(/test/gi, '시험').replace(/sample/gi, '샘플');   // 11/17 용어 기준: 자료 값 'Test' → 시험(화면 글자만)
+  // 담당자 - 목적지: 모르는 쪽은 뺌('담당 미상' 금지) · 칸 안에서 줄바꿈
+  // 그룹 이름 = 현황·관제·편성과 같게(docs/32 · pyeonseong.js GNM 과 같은 묶음) — 화면 글자만
+  const GNM = { 수출: '도금수출', 국내: '도금국내', 도금판매: '도금국내', 자동차강판: '자동차', 자동차내수: '자동차', 자동차수출: '자동차', 건재수출: '컬러수출', 가전수출: '컬러수출', 가전내수: '컬러수출', 주문재: '컬러건재', 계획재: '컬러건재', 부원료: '부자재' };
+  const gnm = (g) => { const k = String(g || '').replace(/(판매)?그룹$/, ''); return GNM[k] || k; };
+  const manDst = (x) => { const a = [x.man, x.dst].filter((v) => v && v !== '미상'); return a.length ? `<span class="cp md" title="담당자 - 목적지(내수는 고객사)">${esc(a.join(' - '))}</span>` : ''; };
   // 11/10 사용자: 컬러 전환 휴지 = 1년 실적 평균(라인 × 바뀜 종류, 색상교체·롤 교체·청소·더미만) — Python week_seq.cc_cat 과 같은 규칙
   const catOf = (a, b) => { const s = [];
     if ((a.primer || '') !== (b.primer || '')) s.push('하도');
@@ -60,7 +66,7 @@
       if (runMin(a, l) >= 40) return { m: 0, parts: [] };
       return { m: R.topSame[l], parts: [{ c: '상도 바뀜(앞 작업 40분 미만) — 실적 평균', m: R.topSame[l] }] }; }
     if (R.trans && R.trans[l]) { const k = catOf(a, b), m = R.trans[l][k];
-      if (m != null) return { m, parts: [{ c: `${k === '사양 같음' ? '새 주문(사양 같음)' : k + ' 바뀜'} — 1년 실적 평균`, m }] }; }
+      if (m != null) return { m, parts: [{ c: `${k === '사양 같음' ? '새 주문(사양 같음)' : kNm(k) + ' 바뀜'} — 1년 실적 평균`, m }] }; }
     if (a.block !== b.block) { const lb = R.block[`${l}|${a.block}>${b.block}`]; if (lb) return { m: lb, parts: [{ c: `블록 전환 ${R.blockNm[a.block]}→${R.blockNm[b.block]}`, m: lb }] }; }
     const ta = a.top || a.color, tb = b.top || b.color, ct = ta && tb ? sk(ta) !== sk(tb) : true;
     const cb = !!(a.back && b.back && sk(a.back) !== sk(b.back)), cpr = !!(a.primer && b.primer && a.primer !== b.primer);
@@ -229,34 +235,34 @@
       return row('사양', `<span class="cp al${(x.al || x.sur) === 'AL-STS' ? ' sts' : ''}">${esc(x.al || x.sur)}</span><span class="cp sz" title="두께 × 폭 × 길이">${(+x.thick).toFixed(2)} × ${n0(x.width)} × ${x.len ? n0(x.len) : '약 ' + n0(x.t * 1e6 / (x.thick * x.width * 7.85))}m</span>`
         + (t.cot ? `<span class="cp" title="도금량(코드 ${esc(t.cot)})">${esc(cotKo(t.cot))}</span>` : '') + (t.aft && x.grp !== '자가재' ? `<span class="cp" title="후처리(코드 ${esc(t.aft)})">${esc(AFT[t.aft] || t.aft)}</span>` : '')   // 11/15 사용자: 후처리 없음·자가재(컬러 소재) 후처리 표시 삭제
         + (x.grade ? `<span class="cp" title="재질(코드 ${esc(x.grade)})">${esc(GR[x.grade] || x.grade)}</span>` : '') + (specKo(x.spec) ? `<span class="cp" title="소재 규격(${esc(x.spec)})">${esc(specKo(x.spec))}</span>` : '') + (x.ge ? '<span class="cp wr" title="용도 가전">가전</span>' : ''))
-        + row('주문', (x.grp && x.grp !== '미상' ? `<span class="cp" title="판매그룹">${esc(x.grp)}</span>` : '')
-          + `<span class="cp" title="담당자 - 목적지(내수는 고객사)">${esc(x.man || '담당 미상')} - ${esc(x.dst || '목적지 미상')}</span><span class="ib"><em class="lb">입고</em><span class="cp${x.ent && x.ent > TODAY ? ' wr' : ''}" title="소재 입고일">소재 ${x.ent ? md(x.ent) : '-'}</span></span>`);
+        + row('주문', (x.grp && x.grp !== '미상' ? `<span class="cp" title="판매그룹">${esc(gnm(x.grp))}</span>` : '')
+          + `${manDst(x)}<span class="ib"><em class="lb">입고</em><span class="cp${x.ent && x.ent > TODAY ? ' wr' : ''}" title="소재 입고일">소재 ${x.ent ? md(x.ent) : '-'}</span></span>`);
     }
     if (x.dummy) return row('사양', `<span class="cp wr" title="MES 1030 더미 지시 — 시간 = MES 작업시간">더미 0.5 × 1,000</span>`);
     const dtm = (v) => (v ? String(v).slice(5, 16).replace('-', '/').replace(/ 00:00$/, '') : '');   // 시각 00:00 = 날짜만 있는 값   // 11/9: 풀 코드 8자리·담당자-목적지·도료/PF 입고 일시
     const fut = (v) => v && new Date(String(v).replace(' ', 'T')) > new Date();
     const st = (at, s) => (at ? dtm(at) : s === 'F' ? '입고 완료' : s ? '입고 대기(입고일 미정)' : '-');
     return row('사양', (x.code ? `<span class="cp cl" title="상도 풀 코드">${esc(x.code)}</span>` : `<span class="cp cl wr" title="풀 코드 없음(주문 상세 자료 대기) — 도료 종류·색상번호">${esc(x.color)}</span>`)
-        + (x.codeBack ? `<span class="cp" title="이면 풀 코드">이면 ${esc(x.codeBack)}</span>` : '')
+        + (x.codeBack ? `<span class="cp" title="뒷면 풀 코드">뒷면 ${esc(x.codeBack)}</span>` : '')
         + `<span class="cp sz" title="두께 × 폭 × 잔량 길이">${(+x.thk).toFixed(2)} × ${n0(x.wdt)}${x.len ? ' × ' + n0(x.len) + 'm' : ''}</span>` + (x.block !== 'general' ? `<span class="cp wr">${esc(R.blockNm[x.block])}</span>` : ''))
-      + row('주문', `<span class="cp" title="판매그룹">${esc(x.g)}</span><span class="cp" title="담당자 - 목적지(내수는 고객사)">${esc(x.man || '담당 미상')} - ${esc(x.dst || '목적지 미상')}</span><span class="ib"><em class="lb">입고</em><span class="cp${fut(x.paintAt) ? ' wr' : ''}" title="도료 입고(예정) 일시">도료 ${st(x.paintAt, x.paintSts)}</span>`
+      + row('주문', `${x.g && x.g !== '미상' ? `<span class="cp" title="판매그룹 ${esc(x.g)}">${esc(gnm(x.g))}</span>` : ''}${manDst(x)}<span class="ib"><em class="lb">입고</em><span class="cp${fut(x.paintAt) ? ' wr' : ''}" title="도료 입고(예정) 일시">도료 ${st(x.paintAt, x.paintSts)}</span>`
         + (x.pfNeed ? `<span class="cp${fut(x.pfAt) ? ' wr' : ''}" title="필름 입고(예정) 일시">필름 ${st(x.pfAt, x.pfSts)}</span>` : '') + '</span>');
   }
   const MO = (i) => `<button type="button" class="mo" data-mo="${i}" aria-haspopup="dialog" aria-label="순서 바꾸기·빼기">⋯</button>`;   // 좁은 화면: 줄 단추 다섯 개 대신 하나
   function jobRow(l, v, days, n) {
     const x = v.x, bad = CK && CK.some((c) => c.id === x.id && c.l === l && c.lv === 'bad');
     const due = plant === 'cg' ? x.dlv : x.due;
-    const tag = plant === 'cg' ? (x.issued ? '<span class="cp fx" title="작업지시 완료(1030)">지시</span>' : '')
+    const tag = plant === 'cg' ? (x.issued ? '<span class="cp fx" title="MES 작업지시가 내려간 작업">작업대기</span>' : '')   /* 11/17 검토: 작업대기 = 작업지시 내려감(컬러·편성 캘린더와 같은 뜻) */
       : (x.fixed ? '<span class="cp kw" title="MES 1030 확정 작업지시 — 작업대기">작업대기</span>' : '<span class="cp kj" title="MES 1020 소재 매치 — 작업지시 확정 전">지시대기</span>');   // 11/12 사용자 '납기 옆에 작업대기/지시대기 구분'   // 11/10 사용자 '1030 #순번 · 1020 미확정 표시 지워라'
-    const sub = plant === 'cg' ? `${x.n > 1 ? x.n + '코일 · ' : ''}소재 ${esc(x.raws[0])}${x.n > 1 ? ' 외' : ''}${x.req ? ' · 생산 예정 ' + md(x.req) : ''}` : `<b title="품명(제품 코드 ${esc(x.pdt)})">${esc(x.item || x.pdt)}</b>${x.ready && x.ready > TODAY ? '<div class="wr" title="도료·필름 입고 뒤">' + md(x.ready) + '부터 가능</div>' : ''}`;
+    const sub = plant === 'cg' ? `${x.n > 1 ? x.n + '코일 · ' : ''}<span class="nw">소재 ${esc(x.raws[0])}${x.n > 1 ? ' 외' : ''}</span>${x.req ? ' · 생산 예정 ' + md(x.req) : ''}` : `<b title="품명(제품 코드 ${esc(x.pdt)})">${esc(x.item || x.pdt)}</b>${x.ready && x.ready > TODAY ? '<div class="wr" title="도료·필름 입고 뒤">' + md(x.ready) + '부터 가능</div>' : ''}`;
     const lsel = plant === 'cc' ? `<select data-a="line" data-i="${v.i}" title="다른 라인으로">${LINES.cc.map((y) => `<option${y === l ? ' selected' : ''}>${y}</option>`).join('')}</select>` : '';
     return `<tr class="j${x.fixed || x.issued ? ' fx' : ''}${hl === x.id ? ' hl' : bad ? ' bad' : ''}" draggable="true" data-i="${v.i}" data-id="${esc(x.id)}">`
       + `<td class="hd" title="끌어서 옮기기">⋮⋮</td><td class="no">${n}</td>`
       + `<td class="tm"><b>${hhmm(v.s)}</b>–${hhmm(v.e)}${dayOf(v.e) !== dayOf(v.s) ? '<div class="sub">다음날 끝남</div>' : ''}</td>`
       + `<td class="c-con"><div class="cn">${esc(x.con || '계약 미연결')}</div><div class="cd">${tag}${due ? `<span class="${due < dayOf(v.e) ? 'cp bd' : 'cp'}" title="납기">납기 ${md(due)}</span>` : ''}</div><div class="sub">${sub}</div></td>`
       + `<td class="c-sp"><div class="sp">${chips(x)}</div></td>`
-      + (plant === 'cg' ? `<td class="nm"><b>${n1(x.t)}<small>t</small></b><div class="sub">${hrs(v.rm)} · ${n1(x.tph)}t/시간</div></td>`
-        : `<td class="nm" title="잔량 톤 · 시간 = 길이 ÷ L/S(26년 1월부터 실적) × 라인 보정"><b>${n1(x.t)}<small>t</small></b><div class="sub">${hrs(v.rm)}${x.ls && x.ls[l] && !x.dummy ? ` · 기준 속도 ${n0(x.ls[l])}m/분` : ''}</div></td>`)
+      + (plant === 'cg' ? `<td class="nm"><b>${n1(x.t)}<small>t</small></b><div class="sub"><span class="nw">${hrs(v.rm)}</span> · <span class="nw">${n1(x.tph)}t/시간</span></div></td>`
+        : `<td class="nm" title="잔량 톤 · 시간 = 길이 ÷ L/S(26년 1월부터 실적) × 라인 보정"><b>${n1(x.t)}<small>t</small></b><div class="sub"><span class="nw">${hrs(v.rm)}</span>${x.ls && x.ls[l] && !x.dummy ? ` · <span class="nw">기준 속도 ${n0(x.ls[l])}m/분</span>` : ''}</div></td>`)
 
       + `<td class="ac"><span class="acd"><button data-a="up" data-i="${v.i}" title="위로">↑</button><button data-a="dn" data-i="${v.i}" title="아래로">↓</button>`
       + `<select data-a="day" data-i="${v.i}" title="다른 날로"><option value="">날</option>${days.map((d) => `<option value="${d}">${dnm(d)}</option>`).join('')}</select>`
@@ -284,7 +290,7 @@
       const nb = CKA.filter((c) => c.l === l && c.lv === 'bad').length;
       // 11/13 사용자: 'n건 Xt' 한 덩어리 대신 지시·대기 나눠 표기(도금 = 1030 지시 / 소재 들어온 대기, 컬러 = 1030 작업대기 / 1020 지시대기)
       const isW = (x) => (plant === 'cg' ? !!x.issued : !!x.fixed), jA = js.filter((q) => !q.x.dummy && isW(q.x)), jB = js.filter((q) => !q.x.dummy && !isW(q.x)), tt = (a) => n0(a.reduce((s, q) => s + q.x.t, 0));
-      const [nA, nB] = plant === 'cg' ? ['지시', '대기'] : ['작업대기', '지시대기'];
+      const [nA, nB] = ['작업대기', '지시대기'];   // 11/17 검토: 도금도 컬러와 같은 이름(작업대기 = MES 작업지시 내려감)
       // 11/13 사용자 '크게 · 좌우로 나눠 · 점검 위반이 뭔데': 왼쪽 = 지시/대기 건·톤, 오른쪽 = 시간 · 규칙 어긋남(종류별 건수)
       const bk = {}; CKA.filter((c) => c.l === l && c.lv === 'bad').forEach((c) => { bk[c.kind] = (bk[c.kind] || 0) + 1; });
       const bTxt = Object.entries(bk).sort((a, b) => b[1] - a[1]).map(([k, c]) => `<span class="nw">${esc(k)} <b>${c}</b></span>`).join(' · ');
@@ -310,9 +316,9 @@
       const d = q.s >= W1 ? 'over' : dayOf(q.s);
       if (d !== curD) { days.filter((x) => x > (curD || '') && x < d && !shown.has(x)).forEach((x) => { h += dayHead(x); shown.add(x); }); h += dayHead(d); shown.add(d); curD = d; }
       if (q.k === 'p') { const sm = /샘플|test|시험/i.test(q.ev), nm = q.ev === 'plan' || q.ev === '휴지계획' ? '' : q.ev;   // 11/10 사용자 '샘플 부분 잘 보이게'
-        h += `<tr class="ev pz${sm ? ' sm' : ''}"><td></td><td></td><td class="tm">${q.e - q.s >= 1440 ? '<b>종일</b>' : `<b>${hhmm(q.s)}</b>–${hhmm(q.e)}`}</td><td colspan="4">${nm ? `<span class="pk">${esc(nm)}</span> ` : ''}${sm ? '' : '계획 휴지 '}<b>${hrs(q.e - q.s)}</b>${sm ? ' — 이 시간엔 생산 작업 안 넣음' : ''}</td></tr>`; }
+        h += `<tr class="ev pz${sm ? ' sm' : ''}"><td></td><td></td><td class="tm">${q.e - q.s >= 1440 ? '<b>종일</b>' : `<b>${hhmm(q.s)}</b>–${hhmm(q.e)}`}</td><td colspan="4">${nm ? `<span class="pk">${esc(evNm(nm))}</span> ` : ''}${sm ? '' : '계획 휴지 '}<b>${hrs(q.e - q.s)}</b>${sm ? ' — 이 시간엔 생산 작업 안 넣음' : ''}</td></tr>`; }
       else if (q.k === 'w') h += `<tr class="ev w"><td></td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e)}</td><td colspan="4">기다림 <b>${hrs(q.e - q.s)}</b> · ${esc(q.x.con)} 도료·PF 준비 ${md(q.x.ready)} 07:00</td></tr>`;
-      else if (q.k === 'g' && q.e.sm) h += `<tr class="ev g sm" draggable="true" data-i="${q.i}"><td class="hd" title="끌어서 옮기기">⋮⋮</td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e2)}</td><td colspan="3"><span class="pk">${esc(q.e.note || '샘플')}</span> <input type="number" min="0" max="2880" step="10" data-a="gmin" data-i="${q.i}" value="${q.e.min}" title="시간(분) 바꾸기">분 <span class="hint">— 끌거나 ↑↓로 시각을 옮기고, 분을 바꿀 수 있음 · 이 시간엔 생산 안 넣음</span></td><td class="ac"><span class="acd"><button data-a="up" data-i="${q.i}" title="앞으로">↑</button><button data-a="dn" data-i="${q.i}" title="뒤로">↓</button><select data-a="day" data-i="${q.i}" title="다른 날로"><option value="">날</option>${days.map((d) => `<option value="${d}">${dnm(d)}</option>`).join('')}</select><button class="x" data-a="del" data-i="${q.i}" title="빼기">✕</button></span>${MO(q.i)}</td></tr>`;
+      else if (q.k === 'g' && q.e.sm) h += `<tr class="ev g sm" draggable="true" data-i="${q.i}"><td class="hd" title="끌어서 옮기기">⋮⋮</td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e2)}</td><td colspan="3"><span class="pk">${esc(evNm(q.e.note || '샘플'))}</span> <input type="number" min="0" max="2880" step="10" data-a="gmin" data-i="${q.i}" value="${q.e.min}" title="시간(분) 바꾸기">분 <span class="hint">— 끌거나 ↑↓로 시각을 옮기고, 분을 바꿀 수 있음 · 이 시간엔 생산 안 넣음</span></td><td class="ac"><span class="acd"><button data-a="up" data-i="${q.i}" title="앞으로">↑</button><button data-a="dn" data-i="${q.i}" title="뒤로">↓</button><select data-a="day" data-i="${q.i}" title="다른 날로"><option value="">날</option>${days.map((d) => `<option value="${d}">${dnm(d)}</option>`).join('')}</select><button class="x" data-a="del" data-i="${q.i}" title="빼기">✕</button></span>${MO(q.i)}</td></tr>`;
       else if (q.k === 'g') h += `<tr class="ev g" draggable="true" data-i="${q.i}"><td class="hd">⋮⋮</td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e2)}</td><td colspan="3">직접 넣은 휴지·더미 <input type="number" min="0" max="2880" step="5" data-a="gmin" data-i="${q.i}" value="${q.e.min}">분 <input class="nt" data-a="gnote" data-i="${q.i}" placeholder="사유(롤 교체·더미 등)" value="${esc(q.e.note || '')}"></td><td class="ac"><span class="acd"><button data-a="up" data-i="${q.i}" title="앞으로">↑</button><button data-a="dn" data-i="${q.i}" title="뒤로">↓</button><button class="x" data-a="del" data-i="${q.i}" title="빼기">✕</button></span>${MO(q.i)}</td></tr>`;
       else {
         n++;
@@ -323,7 +329,7 @@
     });
     days.filter((x) => !shown.has(x)).forEach((x) => { h += dayHead(x); });
     if (!ev.length) h += `<tr><td colspan="7" class="muted">이 라인에 기간 안 작업이 없습니다${D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}. 오른쪽 빠진 작업에서 넣을 수 있습니다.</td></tr>`;
-    $('ws-tbl').innerHTML = `<colgroup><col style="width:30px"><col style="width:44px"><col style="width:118px"><col style="width:196px"><col><col style="width:${plant === 'cc' ? 150 : 170}px"><col style="width:${plant === 'cc' ? 360 : 280}px"></colgroup>` + h;
+    $('ws-tbl').innerHTML = `<colgroup><col style="width:30px"><col style="width:44px"><col style="width:118px"><col style="width:196px"><col><col style="width:${plant === 'cc' ? 150 : 170}px"><col style="width:${plant === 'cc' ? 224 : 280}px"></colgroup>` + h;
     drawPool(); drawCk(); bind(); fit(); find();
   }
   // 11/15 사용자 '담당자나 계약번호 검색' — 표 줄은 노란 칠, 미편성 목록은 맞는 것만, 다른 라인에 있으면 라인 단추
@@ -627,7 +633,7 @@
     if (plant === 'cc' && R.trans) {
       const K = [...new Set(Object.values(R.trans).flatMap((x) => Object.keys(x)))].sort((a, b) => (a === '사양 같음') - (b === '사양 같음') || a.split('+').length - b.split('+').length || a.localeCompare(b));
       T = `<h4>컬러 전환 휴지 <small>분 · 앞뒤 작업에서 바뀌는 것 × 라인 · 1년 실적 평균(색상교체·롤 교체·청소·더미)</small></h4><div class="ct-wrap"><table class="ct-t ws-tr"><thead><tr><th class="l">바뀌는 것</th>${LINES.cc.map((l) => `<th class="r">${l}</th>`).join('')}</tr></thead><tbody>`
-        + K.map((k) => `<tr><td class="l">${k === '사양 같음' ? '새 주문(사양 같음)' : esc(k)}</td>${LINES.cc.map((l) => { const v = (R.trans[l] || {})[k]; return `<td class="r">${v == null ? '<span class="sub">-</span>' : n0(v)}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div>';
+        + K.map((k) => `<tr><td class="l">${k === '사양 같음' ? '새 주문(사양 같음)' : esc(kNm(k))}</td>${LINES.cc.map((l) => { const v = (R.trans[l] || {})[k]; return `<td class="r">${v == null ? '<span class="sub">-</span>' : n0(v)}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div>';
     }
     if (plant === 'cg' && R.pt) {
       const K = [...new Set(Object.values(R.pt).flatMap((x) => Object.keys(x)))];

@@ -21,7 +21,9 @@
   const XCOLS = ['순번', '계약번호', '행번', '두께', '폭', '중량', '길이', '부서', '담당자', '목적지', 'Top Color', 'Back Color', '기준 속도', 't/hr', '시작시간', '종료시간', '상태'];   // 엑셀 칸 이름(MES 양식 그대로)
   const COLS = ['순번', '계약번호', '행번', '두께', '폭', '중량', '길이', '부서', '담당자', '목적지', '앞면 색', '뒷면 색', '기준 속도', 't/시간', '시작', '종료', '상태'];   // 화면 칸 이름(11/17 용어 기준)
   const GNM = { 도금: '도금국내', 도금판매: '도금국내', 국내: '도금국내', 수출: '도금수출', 자동차강판: '자동차', 자동차내수: '자동차', 자동차수출: '자동차', 건재수출: '컬러수출', 가전수출: '컬러수출', 가전내수: '컬러수출', 주문재: '컬러건재', 계획재: '컬러건재', 부원료: '부자재' };   // pyeonseong.js GNM 과 같은 묶음   // 11/17 용어 기준: 그룹 이름 = 현황·관제와 같게
-  const gnm = (g) => { const k = String(g || '-').replace(/(판매)?그룹$/, ''); return GNM[k] || k; };
+  const gnm = (g) => { const k = String(g || '-').replace(/(판매)?그룹$/, ''); return k === '미상' ? '-' : GNM[k] || k; };
+  const evNm = (s) => String(s == null ? '' : s).replace(/test/gi, '시험').replace(/sample/gi, '샘플');   // 11/17 용어 기준: 자료 값 'Test' → 시험(화면 글자만)
+  const unk = (v) => (v && v !== '미상' ? v : null);
 
   let PW = '', plant = /cc/.test(location.hash) ? 'cc' : 'cg', line = null, V = null;
   const OP = {};   // 공정별 주문진도 { con: row }
@@ -42,11 +44,11 @@
     if (sp) st(`계획 휴지 · ${+sp.slice(5, 7)}/${+sp.slice(8, 10)} 재가동`, C.tms(V.D.w0), C.tms(V.D.lines[l].from), false);
     (V.ev[l] || []).forEach((q) => {
       if (q.k === 'w') return;                                     // 도료·PF 기다림(내부 정보) — 시작 시각에만 반영
-      if (q.k === 'p') { const nm = !q.ev ? '휴지' : q.ev === 'plan' || q.ev === '휴지계획' ? '계획 휴지' : q.ev; return st(`${nm} ${hrs(q.e - q.s)}`, q.s, q.e, yel(nm)); }
+      if (q.k === 'p') { const nm = !q.ev ? '휴지' : q.ev === 'plan' || q.ev === '휴지계획' ? '계획 휴지' : q.ev; return st(`${evNm(nm)} ${hrs(q.e - q.s)}`, q.s, q.e, yel(nm)); }
       if (q.k === 'g') {
         const nt = q.e.note || '';
         if (/더미/i.test(nt) && !q.e.sm) return out.push({ k: 'd', con: '더미', s: q.s, e: q.e2, d: C.dayOf(q.s), note: nt });
-        return st(`${q.e.sm ? nt || '샘플' : nt || '휴지'} ${hrs(q.e2 - q.s)}`, q.s, q.e2, q.e.sm ? !/수리|휴지/.test(nt) : /^(M\/C|S\/D|청소)/.test(nt));
+        return st(`${evNm(q.e.sm ? nt || '샘플' : nt || '휴지')} ${hrs(q.e2 - q.s)}`, q.s, q.e2, q.e.sm ? !/수리|휴지/.test(nt) : /^(M\/C|S\/D|청소)/.test(nt));
       }
       // 작업(q.k === 'j'): 도금 전환 더미(1년 실적 50% 이상 바뀜만 시간에 넣은 것)는 작업 앞에 더미 한 줄
       if (plant === 'cg' && q.ch && q.ch.m >= 1) {
@@ -61,10 +63,10 @@
       out.push({
         k: x.dummy ? 'd' : 'j', s: q.s, e: q.e, d: C.dayOf(q.s), cn, sq,
         thk: cg ? x.thick : x.thk, wdt: cg ? x.width : x.wdt, t: x.t, len: x.dummy ? null : x.len,
-        grp: x.dummy ? '더미' : o.grp || (cg ? x.grp : x.g), man: x.man || o.man, dst: cg ? o.dst || x.dst : x.cus || o.cus || x.dst,
+        grp: x.dummy ? '더미' : o.grp || (cg ? x.grp : x.g), man: unk(x.man) || unk(o.man), dst: cg ? unk(o.dst) || unk(x.dst) : unk(x.cus) || unk(o.cus) || unk(x.dst),
         top: cg || x.dummy ? null : x.code || x.color, back: cg || x.dummy ? null : x.codeBack || x.back,   // 11/15 사용자 'top·back color 추가' — 컬러만(상도·이면 풀 코드, 없으면 도료 종류)
         ls: x.dummy ? null : cg ? x.ls : (x.ls || {})[l], tph: x.dummy ? null : tph,
-        stt: cg ? (x.issued ? ['fx', '지시'] : ['wt', '대기']) : x.fixed ? ['kw', '작업대기'] : ['kj', '지시대기'],
+        stt: cg ? (x.issued ? ['fx', '작업대기'] : ['wt', '지시대기']) :   /* 11/17 검토: 도금도 컬러·편성과 같은 이름 */ x.fixed ? ['kw', '작업대기'] : ['kj', '지시대기'],
       });
     });
     return out;
@@ -90,11 +92,13 @@
     const CW0 = innerWidth < 1500 ? [44, 128, 44, 50, 54, 50, 64, 76, 60, 112, 84, 84, 56, 50, 100, 100, 80] : [52, 136, 58, 62, 68, 66, 72, 110, 80, 210, 104, 104, 58, 62, 112, 112, 96];   // 1366px: 목적지까지 보이고 시작·종료·상태는 오른쪽 고정
     const HID = plant === 'cg' ? [10, 11, 12] : [], vis = (a) => a.filter((_, i) => !HID.includes(i)), NC = 17 - HID.length;   // 11/17 검토: 도금은 색 칸 없음 → 숨김, 목적지 폭 고정
     const CW = vis(CW0);
-    $('sv-tbl').dataset.stk = plant === 'cc' ? '1' : '';   // 11/17 검토: 도금은 한 화면에 다 들어감 — 오른쪽 고정은 컬러만
+    $('sv-tbl').dataset.stk = plant === 'cc' && innerWidth >= 1500 ? '1' : '';   // 11/17 검토: 도금은 한 화면에 다 들어감 — 오른쪽 고정은 컬러 넓은 화면만(1366 에선 앞면·뒷면 색이 고정 칸 밑에 가려짐 → 가로로 넘김)
     let h = `<colgroup>${CW.map((w) => (w ? `<col style="width:${w}px">` : '<col>')).join('')}</colgroup><thead><tr>${vis(COLS).map((c) => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody>`, n = 0, cw = null, cd = null, z = 0;
     rs.forEach((r) => {
       const w = wkOf(r.d);
-      if (w !== cw) { cw = w; const [k, t] = sum(rs.filter((x) => wkOf(x.d) === w)); h += `<tr class="wh"><td colspan="${NC}"><div class="stk">${wkNm(w)} ${mmdd(w).replace(/^0/, '')}~${mmdd(addD(w, 6)).replace(/^0/, '')}<span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
+      if (w !== cw) { cw = w; const W = rs.filter((x) => wkOf(x.d) === w), [k, t] = sum(W), a = W[0].d, z2 = W[W.length - 1].d, md2 = (d) => mmdd(d).replace(/^0/, '');
+        /* 11/17 검토: 표가 오늘부터라 '이번 주 11/11~11/17'인데 실제는 오늘 남은 분 → 표에 든 날짜 그대로(주 일부면 '남은 날') */
+        h += `<tr class="wh"><td colspan="${NC}"><div class="stk">${wkNm(w)}${a > w ? ' 남은 날' : ''} ${md2(a)}${z2 > a ? '~' + md2(z2) : ''}<span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
       if (r.d !== cd) { cd = r.d; z = 0; const [k, t] = sum(rs.filter((x) => x.d === r.d)); const we = /[토일]/.test(dnm(r.d)); h += `<tr class="dh"><td colspan="${NC}"><div class="stk"><b${we ? ' class="we"' : ''}>${dnm(r.d)}</b><span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
       if (r.k === 's') { h += `<tr class="stp ${r.yel ? 'y' : 'n'}"><td colspan="${NC - 3}"><div class="stk">${esc(r.lab)}</div></td><td>${tm(r.s)}</td><td>${tm(r.e)}</td><td></td></tr>`; return; }
       n++; z++;

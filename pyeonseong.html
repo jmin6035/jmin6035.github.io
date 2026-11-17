@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>편성</title>
-<meta name="description" content="맨 위 = 컬러·도금 전체 주문진도 · 이번 주 + 다음 주 라인별 편성(지난 날 = 실적) — 칸을 누르면 그날 작업 순서 · 아래 = 작업 순서 수정">
+<meta name="description" content="맨 위 = 컬러·도금 전체 주문진도 · 이번 주 + 다음 주 라인별 편성(지난 날 = 실적) — 칸을 누르면 그날 작업 순서 · 아래 = 작업 순서(보기 전용)">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/theme.css?v=2611171526">
 <link rel="stylesheet" href="ui/ord_prog.css?v=2611171526">
@@ -130,6 +130,7 @@ i.kd.w1 { background: #44546a; } i.kd.w2 { background: #e0a800; color: #2b1a00; 
   table.ps-seq, table.ps-seq tbody { display: block; }
   table.ps-seq tr { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 10px; padding: 8px 6px; border-bottom: 1px solid var(--line); }
   table.ps-seq td { display: block; border: 0; padding: 0 !important; }
+  html body main table.ps-seq td { border: 0 !important; box-shadow: none !important; }
 }
 .ps-gap { height: 18px; } .ps-ov { text-align: center; color: var(--c-ov); font-weight: 700; font-size: 14px; margin: 10px 0 0; }
 html body main #ps-main table.psw tbody tr.dsum .tv { padding: 8px 0; }
@@ -182,6 +183,14 @@ html:root body main #ps-main table.psw.cur thead tr.wh th:not(.td) { background:
 html:root body main #ps-main table.psw.nxt thead tr.wh th:not(.td) { background: color-mix(in srgb, #7c3aed 6%, var(--surface)) !important; }
 .ps-gap { height: 28px; }
 .ps-lg span.src { white-space: normal; text-align: center; flex-basis: 100%; justify-content: center; } html body main #ps-main table.psw thead th.cn { white-space: nowrap; }
+/* 11/17 검토: 상세표 — 사양 칩은 칸 안에서 줄바꿈(옆 칸 침범 금지) · 지난/늦은 납기 빨강 · 맨 아래 작업 순서 = 보기 전용 + 고치는 화면 링크 */
+table.ps-seq td.sp { white-space: normal !important; overflow: hidden; word-break: keep-all; line-height: 1.9 !important; }
+table.ps-seq th { word-break: keep-all; }
+html.v2 body main table.ps-seq tr.pdue td.dl { color: var(--bad) !important; font-weight: 800; }
+.ps-go { margin-left: 14px; font-size: 15px; font-weight: 700; color: var(--brand-2, #1f5fae); text-decoration: none; white-space: nowrap; } .ps-go:hover { text-decoration: underline; }
+.ps-line .nw { white-space: nowrap; } #ps-ordc .pt .s .nw, #ps-ordc .pt .s .bad { white-space: nowrap; }
+/* 11/17 검토 390: 주문진도 카드 큰 숫자·그룹 톤이 칸 밖으로 — 좁은 화면은 한 줄에 카드 하나 */
+@media (max-width: 640px) { #ps-ordc .pts, #ps-ordc .pts.p5, #ps-ordc .pts.p6, #ps-ordc .pts.p7 { grid-template-columns: minmax(0, 1fr) !important; } #ps-ordc .pts.p7 .pt .v { font-size: 26px; } }
 /* 11/17 용어 기준: 날짜·기간 = 굵은 진한 파랑 */
 .dt { font-weight: 800; color: var(--brand-2, #1f5fae); } .ps-line b.dt { color: var(--brand-2, #1f5fae); }
 </style>
@@ -203,8 +212,8 @@ html:root body main #ps-main table.psw.nxt thead tr.wh th:not(.td) { background:
     <section class="card" id="ps-ccc"><h2>컬러</h2>
       <div class="ps-lg"><span><i class="sp"></i>정지(정기수리·휴지)</span><span><i class="tdy"></i>오늘</span><span><i class="ln" style="background:var(--bad)"></i>확인 필요</span><span><i class="pst"></i>지난 날 = 실적</span></div>
       <div class="wk" id="ps-cal-cc"></div><div class="ps-day" id="ps-day-cc" hidden></div></section>
-    <section class="card" id="ps-editc"><h2>작업 순서 수정</h2>
-      <iframe id="ps-frame" title="작업 순서 수정" loading="eager"></iframe>
+    <section class="card" id="ps-editc"><h2>작업 순서 <a class="ps-go" href="week_seq.html">작업 순서 화면에서 고치기 ›</a></h2>
+      <iframe id="ps-frame" title="작업 순서(보기 전용)" loading="eager"></iframe>
     </section>
   </div>
 </main>

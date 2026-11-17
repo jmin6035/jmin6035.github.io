@@ -2,7 +2,7 @@
    published/risk.enc.json(tools/risk_build.py): 전체 → 판매그룹 → 원인·강종(품명) × 납기월 → (접힘) 계약 */
 (() => {
   const $ = (id) => document.getElementById(id), PW_KEY = 'cgl-analysis-pw';
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const esc = (s) => String(s == null ? '' : s).replace(/입고 예정일 지남/g, '입고 지연').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));   // 11/17: 용어 기준(docs/32) '예정일 지남' → '입고 지연'
   const n0 = (v) => Math.round(v || 0).toLocaleString('ko-KR');
   const md = (s) => (s ? `${+s.slice(5, 7)}/${+s.slice(8, 10)}` : '');
   const pct = (a, b) => (b > 0 ? Math.round(a / b * 100) : 0);
@@ -16,13 +16,13 @@
   function detail(g) {
     const risk = g.risk || 0, yms = Object.keys(g.ym).sort();
     const cur = D.asOf.slice(0, 7), col = yms.filter((y) => y >= cur), old = yms.filter((y) => y < cur);
-    const cell = (v) => { const a = v ? v[0] : 0, r = v ? v[1] : 0; return a < 0.5 ? '<td class="hm z">-</td>' : `<td class="hm" style="background:color-mix(in srgb, var(--bad) ${Math.min(34, Math.round(r / a * 34))}%, transparent)"><b>${r >= 0.5 ? n0(r) : '-'}</b><small>/ ${n0(a)}</small></td>`; };
+    const cell = (v) => { const a = v ? v[0] : 0, r = v ? v[1] : 0; return a < 0.5 ? '<td class="hm z"></td>' : `<td class="hm" style="background:color-mix(in srgb, var(--bad) ${Math.min(34, Math.round(r / a * 34))}%, transparent)"><b>${r >= 0.5 ? n0(r) : '0'}</b><small>/ ${n0(a)}</small></td>`; };
     const sumOld = (Y) => old.reduce((s, y) => [s[0] + ((Y[y] || [0, 0])[0]), s[1] + ((Y[y] || [0, 0])[1])], [0, 0]);
     const subs = g.sub.filter((s) => s.t >= 0.5).slice(0, 14), rest = g.sub.slice(14);
     return `<div class="rk-dg">
       <div><p class="rk-h3">원인별 내역 <small>위험 ${n0(risk)}t</small></p>
         <table class="rk-s"><thead><tr><th class="l">원인</th><th class="l">내용</th><th>물량</th><th>건</th><th>해소 예정일</th></tr></thead><tbody>
-        ${g.why.filter((w) => w[2] >= 0.5).slice(0, 8).map((w) => `<tr><td class="l"><b>${esc(D.causeNm[w[0]])}</b></td><td class="w"><div class="rk-w">${esc(w[1])}</div></td><td><b>${n0(w[2])}t</b></td><td>${w[3]}</td><td>${w[4] ? md(w[4]) : '-'}</td></tr>`).join('') || '<tr><td class="l" colspan="5">해당 없음</td></tr>'}
+        ${g.why.filter((w) => w[2] >= 0.5).slice(0, 8).map((w) => `<tr><td class="l"><b>${esc(D.causeNm[w[0]])}</b></td><td class="w"><div class="rk-w">${esc(w[1])}</div></td><td><b>${n0(w[2])}t</b></td><td>${w[3]}</td><td>${w[4] ? md(w[4]) : ''}</td></tr>`).join('') || '<tr><td class="l" colspan="5">해당 없음</td></tr>'}
         </tbody></table>
         <p class="rk-rule">담당: ${Object.keys(g.cause).sort((a, b) => g.cause[b] - g.cause[a]).map((c) => `${esc(D.causeNm[c])} → ${esc(D.dept[c])}`).join(' · ') || '-'}</p></div>
       <div><p class="rk-h3">${g.pl === 'G' ? '강종' : '품명'} × 납기월 <small>상단 위험 / 하단 전체(t)</small></p>
@@ -52,7 +52,7 @@
   const gnm = (g) => GN[g] || g;
   const ordIx = (g) => { const i = ORD.indexOf(g.g); return (g.pl === 'G' ? 0 : 100) + (i < 0 ? 50 : i); };
   // 언제 풀리나 = 주요 원인 내역 중 가장 늦은 해소 예정일(날짜 없는 몫은 '미정 Nt')
-  const whenOf = (g) => { const z = (g.cz || []).find((x) => x[0] === g.top); if (!z) return ['-', ''];
+  const whenOf = (g) => { const z = (g.cz || []).find((x) => x[0] === g.top); if (!z) return ['', ''];
     const its = z[4] || [], ds = its.filter((x) => x[3]).map((x) => x[3]).sort(), und = its.filter((x) => !x[3]).reduce((a, x) => a + x[1], 0);
     const tip = its.map((x) => `${x[0]} ${n0(x[1])}t`).join(' · ');
     if (!ds.length) return ['미정', tip];
@@ -74,11 +74,11 @@
   function detailV2(g) {
     const yms = Object.keys(g.ym).sort(), cur = D.asOf.slice(0, 7), col = yms.filter((y) => y >= cur), old = yms.filter((y) => y < cur);
     const sumOld = (Y) => old.reduce((s, y) => [s[0] + ((Y[y] || [0, 0])[0]), s[1] + ((Y[y] || [0, 0])[1])], [0, 0]);
-    const cell = (v) => { const a = v ? v[0] : 0, r = v ? v[1] : 0; return a < 0.5 ? '<td class="n mu">-</td>' : `<td class="n" title="위험 ${n0(r)}t / 전체 ${n0(a)}t">${r >= 0.5 ? `<b class="rk-bad">${n0(r)}</b>` : '-'}<small class="mu"> / ${n0(a)}</small></td>`; };
+    const cell = (v) => { const a = v ? v[0] : 0, r = v ? v[1] : 0; return a < 0.5 ? '<td class="n mu"></td>' : `<td class="n" title="위험 ${n0(r)}t / 전체 ${n0(a)}t">${r >= 0.5 ? `<b class="rk-bad">${n0(r)}</b>` : '0'}<small class="mu"> / ${n0(a)}</small></td>`; };
     const subs = g.sub.filter((s) => s.t >= 0.5).slice(0, 14), KN = g.pl === 'G' ? '강종' : '품명';
     return `<div class="rk2-dg"><div><p class="rk2-h">원인별</p><table class="v2t"><colgroup><col style="width:170px"><col><col style="width:96px"><col style="width:60px"><col style="width:96px"></colgroup>
         <thead><tr><th>원인</th><th>내용</th><th class="n">물량(t)</th><th class="n">건</th><th class="n">해소 예정</th></tr></thead><tbody>
-        ${g.why.filter((w) => w[2] >= 0.5).slice(0, 8).map((w) => `<tr><td title="담당 ${esc(D.dept[w[0]] || '')}">${esc(D.causeNm[w[0]])}</td><td>${esc(w[1])}</td><td class="n">${n0(w[2])}</td><td class="n">${w[3]}</td><td class="n">${w[4] ? md(w[4]) : '-'}</td></tr>`).join('') || '<tr><td colspan="5">해당 없음</td></tr>'}
+        ${g.why.filter((w) => w[2] >= 0.5).slice(0, 8).map((w) => `<tr><td title="담당 ${esc(D.dept[w[0]] || '')}">${esc(D.causeNm[w[0]])}</td><td>${esc(w[1])}</td><td class="n">${n0(w[2])}</td><td class="n">${w[3]}</td><td class="n">${w[4] ? md(w[4]) : ''}</td></tr>`).join('') || '<tr><td colspan="5">해당 없음</td></tr>'}
         </tbody></table></div>
       <div><p class="rk2-h" title="칸 = 위험 / 전체(t)">${KN} × 납기월 <small class="mu">위험 / 전체(t)</small></p><div class="scroll"><table class="v2t"><thead><tr><th>${KN}</th>${old.length ? '<th class="n">전월 이전</th>' : ''}${col.map((y) => `<th class="n">${mon(y)}</th>`).join('')}</tr></thead><tbody>
         ${subs.map((s) => `<tr><td>${esc(s.k)}</td>${old.length ? cell(sumOld(s.ym)) : ''}${col.map((y) => cell(s.ym[y])).join('')}</tr>`).join('')}
@@ -111,7 +111,7 @@
         <thead><tr><th>그룹</th><th class="n">미결(t)</th><th class="n">위험(t)</th><th class="n">비율</th><th>주요 원인</th><th class="n">언제 풀리나</th></tr></thead><tbody>
         ${G.map((g) => { const key = g.pl + g.g, on = open === key, p = pct(g.risk, g.t), z = (g.cz || []).find((x) => x[0] === g.top), w = whenOf(g);
           return `<tr class="rk2-x${on ? ' on' : ''}" data-k="${esc(key)}" tabindex="0" title="${esc(g.msg || '')}"><td><i class="ch">▸</i>${esc(gnm(g.g))} <small class="mu">${n0(g.n)}건</small></td><td class="n">${n0(g.t)}</td><td class="n">${g.risk >= 0.5 ? `<b class="rk-bad">${n0(g.risk)}</b>` : '-'}</td><td class="n">${pc(p)}</td>`
-            + `<td>${z ? `${esc(D.causeNm[z[0]])} <span class="mu">${n0(z[1])}t</span>` : '<span class="mu">위험 없음</span>'}</td><td class="n" title="${esc(w[1] || '')}">${z ? w[0] : '-'}${w[2] ? `<small class="mu rk2-l2">${w[2]}</small>` : ''}</td></tr>`
+            + `<td>${z ? `${esc(D.causeNm[z[0]])} <span class="mu">${n0(z[1])}t</span>` : '<span class="mu">위험 없음</span>'}</td><td class="n" title="${esc(w[1] || '')}">${z ? w[0] : ''}${w[2] ? `<small class="mu rk2-l2">${w[2]}</small>` : ''}</td></tr>`
             + (on ? `<tr class="rk2-sub"><td colspan="6">${detailV2(g)}</td></tr>` : ''); }).join('')}
         </tbody></table></div></section>
       <section class="card"><h2 title="납기월 기준 · 전월 이전 = 납기 경과분 · 12월 이후 물량은 생산 예정일이 확정된 범위(2~3주)까지만 판정">납기월별</h2>

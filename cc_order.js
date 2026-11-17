@@ -9,7 +9,7 @@
   const n0 = (v) => (v == null || isNaN(v) ? '-' : Math.round(v).toLocaleString('ko-KR'));
   const n1 = (v) => (v == null || isNaN(v) ? '-' : (+v).toLocaleString('ko-KR', { maximumFractionDigits: 1 }));
   let O = null;
-  const md = (s) => { if (!s) return ''; s = String(s); const y = O && O.asOf && s.slice(0, 4) < O.asOf.slice(0, 4);   // 기준일보다 앞 해면 YY/MM/DD(작년 발주가 올해 입고 뒤로 보이지 않게)
+  const md = (s) => { if (!s) return ''; s = String(s); const y = O && O.asOf && (s.slice(0, 4) < O.asOf.slice(0, 4) || Math.abs(Date.parse(s.slice(0, 10)) - Date.parse(String(O.asOf).slice(0, 10))) > 183 * 864e5);   // 기준일보다 앞 해 · 반년 넘게 떨어진 날이면 YY/MM/DD(다음 해 가까운 날 1/5 등은 M/D)(11/17 검토: 납기 1/23·3/31 = 올해 1·3월로 지난 주문인데 연도가 없어 내년처럼 읽힘)
     return y ? `${s.slice(2, 4)}/${s.slice(5, 7)}/${s.slice(8, 10)}` : `${+s.slice(5, 7)}/${+s.slice(8, 10)}`; };
   let flt = 'act', q = '', ln = '', by = 'cus';
   try { by = localStorage.getItem(BY_KEY) || 'cus'; } catch (e) { /* 무시 */ }
@@ -174,7 +174,7 @@
     const m = new Map();
     for (const x of L) { const k = BY[by][1](x); if (!m.has(k)) m.set(k, []); m.get(k).push(x); }
     const subs = [...m.entries()].map((e) => [e[0], e[1], sumOf(e[1])]).sort((a, b) => (b[2].none - a[2].none) || (b[2].late - a[2].late) || (b[2].n - a[2].n));
-    if (V2()) return `<section class="og og2" id="og-${gi}" data-g="${esc(g)}"><header class="og-h"><h2 title="${esc(g)}">${esc(gs(g))}</h2>${statV2(sumOf(L), L)}</header>`
+    if (V2()) return `<section class="og og2" id="og-${gi}" data-g="${esc(g)}"><header class="og-h"><h2>${esc(gs(g))}</h2>${statV2(sumOf(L), L)}</header>`
       + `<div class="og-b">${subs.map(([k, v], i) => sub(k, v, i)).join('')}</div></section>`;
     return `<section class="og" id="og-${gi}" data-g="${esc(g)}"><header class="og-h"><h2>${esc(gs(g))}</h2><div class="og-s">${stat(sumOf(L))}</div></header>`
       + `<div class="og-b">${subs.map(([k, v], i) => sub(k, v, i)).join('')}</div></section>`;

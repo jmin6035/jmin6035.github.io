@@ -94,6 +94,12 @@ html body table.ws td.ac { text-align: center !important; line-height: 2; white-
 .wk3 { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px; align-items: center; padding: 1px 0; } .wk3 + .wk3 { border-top: 1px dashed var(--line); }
 .wk3 > i, .wk3 em.lb { font-style: normal; font-size: 13.5px; font-weight: 700; color: var(--ink-2); } .wk3 em.lb { margin-left: 8px; padding-left: 10px; border-left: 1px solid var(--line); } .wk3 .ib { display: inline-flex; flex-wrap: wrap; gap: 3px 5px; align-items: center; } .wk3 > div { display: flex; flex-wrap: wrap; gap: 3px 5px; align-items: center; }
 .pl-i .sp { margin-top: 4px; }
+/* 11/17 검토: '담당자 - 목적지' 칩이 옆 칸(톤·시간) 위로 겹침 → 칸 안에서 낱말 단위 줄바꿈 · 사양 칸 밖으로 안 나감 · 소재번호는 안 갈라짐 */
+.cp.md { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; max-width: 100%; }
+table.ws td.c-sp { overflow: hidden; }
+/* 컬러: 줄 단추(↑↓·날·라인·+휴지·✕)를 두 줄로 접어 사양 칸을 넓힘(1366 에서 사양 칩이 톤 칸 위로 겹치던 것) */
+html body #ws-main:not(.cmp) table.ws td.ac .acd { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 4px; white-space: normal; max-width: 100%; }
+html body #ws-main:not(.cmp) table.ws td.ac { white-space: normal !important; line-height: 1.4; } .wk3 > div { min-width: 0; } .nw { white-space: nowrap; }
 /* 11/15 사용자 '톤·예정·납기를 밑 칸과 조화롭게 크게' — 미편성 목록 머리줄·사양 칸 */
 .pl-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; } .pl-h .cn { font-size: 17px; }
 .pl-m { font-size: 15.5px; font-weight: 600; color: var(--ink-2); } .pl-m .pl-t { font-size: 20px; color: var(--ink); margin-right: 2px; } .pl-m .pl-t small { font-size: 14px; margin-left: 1px; }
@@ -126,7 +132,8 @@ html body #ws-main.cmp table.ws tr.dh td { position: static; flex: 1 1 100%; }
 #ws-main.cmp table.ws tr.j.fx { box-shadow: inset 4px 0 0 var(--brand-2); }
 #ws-main.cmp table.ws tr.j.hl { background: var(--warn-bg); } #ws-main.cmp table.ws tr.j.bad { background: color-mix(in srgb, var(--bad-bg) 60%, var(--surface)); }
 html body #ws-main.cmp table.ws tr.j td.no { order: 1; min-width: 20px; line-height: 1.5; } #ws-main.cmp table.ws tr.j td.tm { order: 2; width: auto; }
-#ws-main.cmp table.ws tr.j td.c-con { order: 3; flex: 1 1 150px; } html body #ws-main.cmp table.ws td.ac { order: 4; margin-left: auto; line-height: 1; }
+#ws-main.cmp table.ws tr.j td.c-con { order: 4; flex: 1 1 100%; } html body #ws-main.cmp table.ws td.ac { order: 3; margin-left: auto; line-height: 1; }
+html body #ws-main.cmp table.ws td .cn { overflow: visible; text-overflow: clip; } html body #ws-main.cmp table.ws td.c-con { text-align: left !important; } #ws-main.cmp table.ws td.c-con .sub { text-align: left; }   /* 11/17 검토 390: 계약번호 말줄임 금지 — 시각·⋯ 아래 줄 전체 폭 */
 #ws-main.cmp table.ws tr.j td.c-sp { order: 5; flex: 1 1 100%; }
 html body #ws-main.cmp table.ws tr.j td.nm { order: 6; flex: 1 1 100%; text-align: left !important; display: flex; flex-wrap: wrap; gap: 0 10px; align-items: baseline; }
 #ws-main.cmp table.ws tr.ch { padding: 5px 10px 5px 38px; font-size: 13.5px; color: var(--warn); border-bottom: 1px dashed var(--line); background: color-mix(in srgb, var(--warn-bg) 35%, var(--surface)); }
