@@ -100,7 +100,7 @@
     return `<div class="m4-pw"><div class="m4-sb" title="${esc(`입고 완료 ${n0(r.rec)}t · 발주(입고 예정) ${n0(r.ord)}t · 미발주 ${n0(r.nw)}t`)}">${r.rec >= 0.5 ? `<i class="in" style="width:${f(r.rec)}"></i>` : ''}${r.ord >= 0.5 ? `<i class="po" style="width:${f(r.ord)}"></i>` : ''}${r.nw >= 0.5 ? `<i class="no" style="width:${f(r.nw)}"></i>` : ''}</div><b>${pc(r)}%</b></div>`; };
   const nums = (r) => `<td>${n0(r.need)}</td><td class="c-in">${n0(r.rec)}</td><td>${n0(r.ord)}</td><td class="${(r.ovr || 0) >= 0.5 ? 'c-no' : 'mu'}">${(r.ovr || 0) >= 0.5 ? n0(r.ovr) : '–'}</td><td class="${r.nw >= 0.5 ? 'c-no' : 'mu'}">${r.nw >= 0.5 ? n0(r.nw) : '–'}</td><td class="pc">${bar(r)}</td>`;
   function judge(C) {
-    if (C.st === 'na' && C.giv) return '<span class="m4-jd na" title="포스코 지급재 — MES 상 발주일에 입고돼 입고 예정 자료가 없어 부족 판정을 하지 않음">포스코 지급</span>';
+    if (C.st === 'na' && C.giv) return '<span class="m4-jd na" title="도금 SUS 지급재(포스코·외부 업체) — MES 상 발주일에 입고돼 입고 예정 자료가 없어 부족 판정을 하지 않음">지급재(발주 당일 입고)</span>';
     if (C.st === 'na') return '<span class="m4-jd na" title="이 소재 코드의 재고 자료 없음">–</span>';
     if (C.st === 'bad' && C.lateOnly) return `<span class="m4-jd bad" title="${esc(`업체·주 단위 발주 계획에서 마감이 지난 미발주 ${n0(C.lateNw)}t · 재고 바닥 ${md(C.day)}(추가 발주 없음 가정)`)}">마감 지난 미발주 ${n0(C.lateNw)}t<small> ${md(C.day)} 바닥</small></span>`;
     if (C.st === 'bad') return `<span class="m4-jd bad" title="${esc(C.lateNw ? `발주 마감 지난 미발주 ${n0(C.lateNw)}t — ${md(C.day)}부터 부족` : `${C.dNm ? C.dNm + ' ' : ''}${md(C.day)} 부터 재고 부족(추가 발주 없음 가정 · 발주 완료분 입고 반영)`)}">${md(C.day)}부터 부족${C.dNm ? `<small> ${esc(C.dNm)}</small>` : ''}</span>`;
