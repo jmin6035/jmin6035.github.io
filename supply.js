@@ -132,6 +132,11 @@
       for (const u of P.units) if (`${u.plant}:${u.code}` === k) {   // 날짜별 소요(days) — 예전엔 주 합을 7일로 나눠 소진일이 소재 관제와 2~3일 달랐음
         if (u.days) { for (const [d, t] of Object.entries(u.days)) if (d >= t0) use[d] = (use[d] || 0) + t; } else for (let i = 0; i < 7; i++) { const d = add(u.wk, i); if (d >= t0) use[d] = (use[d] || 0) + u.t / 7; }
       }
+      if (k === 'G:N' && D.sts && Object.keys(D.sts).length) {         // 11/17 검토: 도금 SUS 소요 = 재계획 AL-STS 생산(발주 화면 units 는 옛 계획 날짜) — 재계획 기간 안은 계획으로 바꿈(02 현황과 같은 규칙)
+        const lastP = Object.keys(D.sts).map((kk) => kk.split('|')[1]).sort().pop();
+        for (const d of Object.keys(use)) if (d <= lastP) delete use[d];
+        for (const [kk, x] of Object.entries(D.sts)) { const d = kk.split('|')[1]; if (d >= t0 && !x.act && x.t >= 0.5) use[d] = (use[d] || 0) + x.t; }
+      }
       let past = 0;                                                     // 오늘 이전 날짜의 발주 완료분 = 이미 들어온 것 → 오늘 재고에 더함(FH 재고는 입고 자료가 없어서)
       for (const a of P.known || []) if (`${a.plant}:${a.code}` === k) { if (a.date < t0) past += a.t; else arr[a.date] = (arr[a.date] || 0) + a.t; }
       const s0 = (P.stock[k] || 0) + past;

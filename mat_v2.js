@@ -69,7 +69,9 @@
       const st = (d) => ms.reduce((a, m) => a + (m.stock[d] != null ? m.stock[d] : 0), 0), us = (d) => ms.reduce((a, m) => a + (m.use[d] || 0), 0);
       // 11/13 점검(02 현황 결품 위험과 같은 기준): ① 발주 마감 지난 미발주가 있으면 부족(첫 부족일) ② 월말 재고 5일분 미만(수주 관제 신호 matDays 경고)이면 빠듯
       const ln = C.types.filter((t) => t.lateNw >= 0.5);
-      if (ln.length && C.st !== 'bad') { C.st = 'bad'; C.day = ln.map((t) => t.mlDay || t.lateDay).sort()[0]; C.lateNw = ln.reduce((a, t) => a + t.lateNw, 0); }   // 첫 부족일 = 수주 관제(04)와 같은 값 우선
+      if (ln.length && C.st !== 'bad') {   // 11/17 검토: 첫 부족일 = 재고 굴림의 첫 음수일(달 넘어서도) — 보는 달마다 달라지던 것
+        let neg = null; for (const m of ms) for (const [d, v] of Object.entries(m.stock)) if (d >= today && v < -0.5 && (!neg || d < neg)) neg = d;
+        C.st = 'bad'; C.lateOnly = true; C.day = neg || ln.map((t) => t.mlDay || t.lateDay).sort()[0]; C.lateNw = ln.reduce((a, t) => a + t.lateNw, 0); }   // 첫 부족일 = 수주 관제(04)와 같은 값 우선
       if (C.st === 'ok' && ms.some((m) => m.stock[mEnd] != null)) { const ve = st(mEnd), du = ds.reduce((a, d) => a + us(d), 0) / ds.length;
         if (du >= 0.5 && ve / du < 5) { C.st = 'warn'; C.low = { v: ve, days: ve / du }; } }
     }
@@ -98,6 +100,7 @@
   const nums = (r) => `<td>${n0(r.need)}</td><td class="c-in">${n0(r.rec)}</td><td>${n0(r.ord)}</td><td class="${(r.ovr || 0) >= 0.5 ? 'c-no' : 'mu'}">${(r.ovr || 0) >= 0.5 ? n0(r.ovr) : '–'}</td><td class="${r.nw >= 0.5 ? 'c-no' : 'mu'}">${r.nw >= 0.5 ? n0(r.nw) : '–'}</td><td class="pc">${bar(r)}</td>`;
   function judge(C) {
     if (C.st === 'na') return '<span class="m4-jd na" title="이 소재 코드의 재고 자료 없음">–</span>';
+    if (C.st === 'bad' && C.lateOnly) return `<span class="m4-jd bad" title="${esc(`업체·주 단위 발주 계획에서 마감이 지난 미발주 ${n0(C.lateNw)}t · 재고 바닥 ${md(C.day)}(추가 발주 없음 가정)`)}">마감 지난 미발주 ${n0(C.lateNw)}t<small> ${md(C.day)} 바닥</small></span>`;
     if (C.st === 'bad') return `<span class="m4-jd bad" title="${esc(C.lateNw ? `발주 마감 지난 미발주 ${n0(C.lateNw)}t — ${md(C.day)}부터 부족` : `${C.dNm ? C.dNm + ' ' : ''}${md(C.day)} 부터 재고 부족(추가 발주 없음 가정 · 발주 완료분 입고 반영)`)}">${md(C.day)}부터 부족${C.dNm ? `<small> ${esc(C.dNm)}</small>` : ''}</span>`;
     if (C.st === 'warn' && C.low) return `<span class="m4-jd warn" title="${esc(`월말 재고 ${n0(C.low.v)}t = 하루 평균 투입의 ${C.low.days.toFixed(1)}일분(5일분 미만)`)}">월말 ${C.low.days.toFixed(1)}일분</span>`;
     if (C.st === 'warn') return `<span class="m4-jd warn" title="${esc(`${C.dNm ? C.dNm + ' ' : ''}${md(C.day)} 재고 ${n0(C.v2)}t < 다음 이틀 투입 ${n0(C.n2)}t`)}">${md(C.day)} 빠듯${C.dNm ? `<small> ${esc(C.dNm)}</small>` : ''}</span>`;
