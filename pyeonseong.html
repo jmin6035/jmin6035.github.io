@@ -181,6 +181,7 @@ html:root body main #ps-main table.psw.cur { border-left: 6px solid var(--pz-bra
 html:root body main #ps-main table.psw.cur thead tr.wh th:not(.td) { background: color-mix(in srgb, var(--pz-brand) 7%, var(--surface)) !important; }
 html:root body main #ps-main table.psw.nxt thead tr.wh th:not(.td) { background: color-mix(in srgb, #7c3aed 6%, var(--surface)) !important; }
 .ps-gap { height: 28px; }
+.ps-lg span.src { white-space: normal; text-align: center; flex-basis: 100%; justify-content: center; } html body main #ps-main table.psw thead th.cn { white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -195,7 +196,7 @@ html:root body main #ps-main table.psw.nxt thead tr.wh th:not(.td) { background:
     <section class="card" id="ps-ordc" hidden><div id="ps-ord"></div></section>
     <div class="ps-line" id="ps-line"></div>
     <section class="card" id="ps-cgc"><h2>도금</h2>
-      <div class="ps-lg"><span><i class="mc"></i>M/C</span><span><i class="ev"></i>S/D·수리 등 특이사항</span><span><i class="sp"></i>정지(정기수리·휴지)</span><span><i class="tdy"></i>오늘</span><span><i class="ln" style="background:var(--bad)"></i>확인 필요</span><span><i class="pst"></i>지난 날 = 실적</span><span class="src">톤 = 작업 순서(작업대기·지시대기) + 입고예정 주문(예측) — 계획(01)의 일별 톤과 출처가 다름</span></div>
+      <div class="ps-lg"><span><i class="mc"></i>M/C</span><span><i class="ev"></i>S/D·수리 등 특이사항</span><span><i class="sp"></i>정지(정기수리·휴지)</span><span><i class="tdy"></i>오늘</span><span><i class="ln" style="background:var(--bad)"></i>확인 필요</span><span><i class="pst"></i>지난 날 = 실적</span><span class="src">톤 = 작업 순서(지시·대기) + 입고예정 주문(예측) — 계획(01)의 일별 톤과 출처가 다름</span></div>
       <div class="wk" id="ps-cal-cg"></div><div class="ps-day" id="ps-day-cg" hidden></div></section>
     <section class="card" id="ps-ccc"><h2>컬러</h2>
       <div class="ps-lg"><span><i class="sp"></i>정지(정기수리·휴지)</span><span><i class="tdy"></i>오늘</span><span><i class="ln" style="background:var(--bad)"></i>확인 필요</span><span><i class="pst"></i>지난 날 = 실적</span><span class="src">톤 = 작업 순서(MES 작업대기 · 지시대기 · 계획편성) — 계획(01)의 일별 톤과 출처가 다름</span></div>

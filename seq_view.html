@@ -59,6 +59,11 @@ table.sv tr.stp.n td { background: #1f3864; color: #fff; }
   table.sv tr.stp.y td, table.sv tr.stp.n td, table.sv thead th, table.sv tr.dm td, .chip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .card { box-shadow: none; border: 0; }
 }
+/* 11/17 검토: 1366px 에서도 시작·종료·상태가 보이게 오른쪽 세 칸 고정(가로로 밀어도 남음) */
+table.sv tr > :nth-last-child(-n+3):not([colspan]) { position: sticky; z-index: 1; background: var(--surface, #fff); }
+table.sv tr.z > :nth-last-child(-n+3):not([colspan]) { background: var(--zebra); }
+table.sv tr > :nth-last-child(1):not([colspan]) { right: 0; } table.sv tr > :nth-last-child(2):not([colspan]) { right: 96px; } table.sv tr > :nth-last-child(3):not([colspan]) { right: 208px; box-shadow: -4px 0 6px -4px rgba(0,0,0,.25); }
+html body main table.sv thead tr > th:nth-last-child(-n+3):not([colspan]) { z-index: 3; background: #1f3864 !important; }
 </style>
 </head>
 <body>
