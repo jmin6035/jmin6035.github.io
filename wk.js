@@ -81,14 +81,17 @@ ${list(SUBs, (g) => `생산 ${rng(g.pd)} · 납기 ${rng(g.due)}`, PS.includes('
       const stk = stockOf(x.pl), urgentTo = addd(w.to, 14);
       let rem = x.need, added = 0, held = 0;   // held = 납기가 그 주 뒤라 재고로 머무는 양(이미 납기 지난·이번 주 납기 주문은 만들면 바로 나감)
       const st = (x.steps || []).map((s_) => {
-        const rule = s_.k === 1 ? 'all' : s_.k === 2 ? (stk.v != null && stk.cap && stk.v + held < stk.cap ? 'all' : 'stock') : 'urgent';
+        const rule = s_.k === 1 || s_.k === 2 ? 'all' : 'urgent';   // W+1·W+2 = 당김(재고는 주문마다 판단) · W+3 이후 = 급한 주문만
         const pool = rule === 'all' ? s_.items : rule === 'urgent' ? s_.items.filter((e) => e.due <= urgentTo) : [];
         const take = [];
         let skip = 0;
+        const mEnd = addd(addd(w.from.slice(0, 7) + '-01', 32).slice(0, 7) + '-01', -1);   // 그 주가 속한 달 말
         for (const e of pool) {
           if (rem <= 0.5) break;
-          if (e.due > w.to && stk.v != null && stk.cap && stk.v + held + e.t > stk.cap) { skip += e.t; continue; }   // 재고로 남아 상한을 넘기면 안 당김
-          take.push(e); rem -= e.t; added += e.t; if (e.due > w.to) held += e.t;
+          if (e.t > rem * 1.1 + 5) continue;                                   // 필요보다 큰 주문은 건너뜀(검토 11/17)
+          const stays = e.due > mEnd;                                           // 납기가 달을 넘기면 월말 재고로 남음
+          if (stays && stk.v != null && stk.cap && stk.v + held + e.t > stk.cap) { skip += e.t; continue; }   // 재고 상한을 넘기면 안 당김
+          take.push(e); rem -= e.t; added += e.t; if (stays) held += e.t;
         }
         const tt = take.reduce((a_, e) => a_ + e.t, 0);
         const early = tt ? Math.round(take.reduce((a_, e) => a_ + e.t * Math.max(0, (new Date(e.pd) - new Date(addd(w.from, 3))) / 864e5), 0) / tt) : 0;
@@ -96,26 +99,26 @@ ${list(SUBs, (g) => `생산 ${rng(g.pd)} · 납기 ${rng(g.due)}`, PS.includes('
       });
       return { st, rem: Math.max(0, rem), added, held, stk };
     };
-    const RULE = { all: '당김', stock: '재고 상한 — 안 당김', urgent: '급한 주문만' };
+    const RULE = { all: '당김', urgent: '납기 2주 안만' };
     // 라인별 판단(11/17 사용자 '라인별로 보여줘야지'): 그룹마다 당긴 주문을 원래 라인에 모아, 라인의 빠질 몫에서 빼고 남는 몫 → 휴지·감속 일수
     const PUL = {};
-    SW.forEach((x) => { const P = plan(x), filled = x.need - P.rem, nl = x.nl || {}, tot_ = Object.values(nl).reduce((a_, v) => a_ + v, 0) || 1; Object.entries(nl).forEach(([ln, v]) => { PUL[ln] = (PUL[ln] || 0) + filled * v / tot_; }); });   // 당겨 채운 양은 구멍 난 라인에(그룹의 라인별 빠질 몫 비율)
+    SW.forEach((x) => { const P = plan(x); PUL[x.line] = (PUL[x.line] || 0) + (x.need - P.rem); });   // 그룹 × 라인으로 당겼으니 그 라인에 그대로
     const LN = (w.lines || []).filter((l) => PS.includes(/CGL/.test(l.line) ? 'G' : 'C')).sort((a_, b_) => (/CGL/.test(b_.line) - /CGL/.test(a_.line)) || a_.line.localeCompare(b_.line));
-    const sumHtml = LN.length ? `<div class="k-card k-rs"><h2>라인별 — 빠질 몫 · 당겨 채움 · 남는 몫<small>판매재 계획 기준 · 당긴 주문은 구멍 난 라인에서 만든다고 봄 · 남는 몫은 휴지·감속 검토(검토안)</small></h2><div class="k-rsg">${LN.map((l) => {
-      const pu = Math.min(PUL[l.line] || 0, l.need), rem = Math.max(0, l.need - pu), d = l.dayT ? rem / l.dayT : null;
-      return `<div class="${rem > 0.5 ? 'idle' : ''}"><div class="h">${esc(l.line)} <small>계획 ${n0(l.plan)}t</small></div><div class="v">${rem > 0.5 ? `${n0(rem)}t 남음` : l.need > 0.5 ? '다 채움' : '문제 없음'}</div>
-<div class="s">빠질 몫 ${n0(l.need)}t${l.gap > 0.5 ? `(빈 곳 ${n0(l.gap)})` : ''}${pu > 0.5 ? ` · 당겨 채움 ${n0(pu)}t` : ''}${rem > 0.5 && d != null ? ` · <b class="warn">휴지·감속 약 ${d.toFixed(1)}일</b>` : ''}</div></div>`;
+    const sumHtml = LN.length ? `<div class="k-card k-rs"><h2>라인별 — 빠질 몫 · 당겨 채움 · 남는 몫<small>당기는 주문은 그 라인이 이 주에 돌리는 강종·두께·폭 범위 안만 · 휴지 일수 = 남는 몫 ÷ 그 라인 하루 생산(자가재 포함)</small></h2><div class="k-rsg">${LN.map((l) => {
+      const pu = Math.min(PUL[l.line] || 0, l.need), rem = Math.max(0, l.need - pu), d = l.dayT ? rem / l.dayT : null, small = d != null && d < 0.2;
+      return `<div class="${rem > 0.5 && !small ? 'idle' : ''}"><div class="h">${esc(l.line)} <small>${l.fams && l.fams.length ? `${l.fams.join('·')} · ` : ''}판매재 ${n0(l.plan)}t${l.runD < 7 ? ` · 가동 ${l.runD}일` : ''}</small></div><div class="v">${rem > 0.5 ? `${n0(rem)}t 남음` : l.need > 0.5 ? '다 채움' : '문제 없음'}</div>
+<div class="s">빠질 몫 ${n0(l.need)}t${l.gap > 0.5 ? `(빈 곳 ${n0(l.gap)})` : ''}${pu > 0.5 ? ` · 당겨 채움 ${n0(pu)}t` : ''}${rem > 0.5 ? (small ? ' · 하루치에 못 미침 — 순서 조정' : ` · <b class="warn">휴지·감속 약 ${d.toFixed(1)}일</b>`) : ''}</div></div>`;
     }).join('')}</div></div>` : '';
     const swHtml = SW.length ? SW.map((x) => {
       const P = plan(x), idleD = x.dayT ? P.rem / x.dayT : null;
-      const flow = P.st.map((s_) => `<div class="k-step ${s_.tt > 0.5 ? 'on' : s_.rule === 'stock' ? 'off' : ''}"><div class="h">${lab(SEL + s_.k)} <small>${md(s_.from)}~</small></div><div class="t">${s_.tt > 0.5 ? `+${n0(s_.tt)}t` : '–'}</div><div class="r">${s_.avail < 0.5 ? '소재 있는 주문 없음' : RULE[s_.rule]}${s_.tt > 0.5 ? ` · 평균 ${s_.early}일 앞당김` : ''}${s_.skip > 0.5 ? ` · 재고 상한으로 ${n0(s_.skip)}t 안 당김` : ''}</div></div><div class="k-arr">›</div>`).join('');
-      const idle = `<div class="k-step ${P.rem > 0.5 ? 'idle' : 'off'}"><div class="h">남는 몫</div><div class="t">${P.rem > 0.5 ? `${n0(P.rem)}t` : '0'}</div><div class="r">${P.rem > 0.5 ? '라인 판단 — 위 라인별' : '다 채움'}</div></div>`;
-      const stkTxt = P.stk.v != null && P.stk.cap ? `제품 재고 ${P.stk.cur ? '월말 예상' : '그 달 말'} ${n0(P.stk.v)}t / 상한 ${n0(P.stk.cap)}t(${Math.round(P.stk.v / P.stk.cap * 100)}%)${P.added > 0.5 ? ` → 당긴 ${n0(P.added)}t 중 재고로 머무는 양(납기가 이 주 뒤) +${n0(P.held)}t → ${Math.round((P.stk.v + P.held) / P.stk.cap * 100)}%` : ''}` : '제품 재고 자료 없음';
+      const flow = P.st.map((s_) => `<div class="k-step ${s_.tt > 0.5 ? 'on' : s_.rule === 'stock' ? 'off' : ''}"><div class="h">${lab(SEL + s_.k)} <small>${md(s_.from)}~</small></div><div class="t">${s_.tt > 0.5 ? `+${n0(s_.tt)}t` : '–'}</div><div class="r">${s_.avail < 0.5 ? (s_.noFit > 0.5 ? `이 라인에서 못 만듦 ${n0(s_.noFit)}t` : '소재 있는 주문 없음') : RULE[s_.rule]}${s_.tt > 0.5 ? ` · 평균 ${s_.early}일 앞당김` : ''}${s_.skip > 0.5 ? ` · 재고 상한 넘어 ${n0(s_.skip)}t 뺌` : ''}</div></div><div class="k-arr">›</div>`).join('');
+      const idle = `<div class="k-step ${P.rem > 0.5 ? 'idle' : 'off'}"><div class="h">남는 몫</div><div class="t">${P.rem > 0.5 ? `${n0(P.rem)}t` : '0'}</div><div class="r">${P.rem > 0.5 ? '위 라인별에서 휴지·감속 판단' : '다 채움'}</div></div>`;
+      const stkTxt = P.stk.v != null && P.stk.cap ? `제품 재고 ${P.stk.cur ? '월말 예상' : '그 달 말'} ${n0(P.stk.v)}t / 상한 ${n0(P.stk.cap)}t(${Math.round(P.stk.v / P.stk.cap * 100)}%)${P.held > 0.5 ? ` → 당긴 주문 중 납기가 달을 넘겨 월말 재고로 남는 양 +${n0(P.held)}t → ${Math.round((P.stk.v + P.held) / P.stk.cap * 100)}%` : ''}` : '제품 재고 자료 없음';
       const verdict = P.rem > 0.5
-        ? `검토안: ${P.st.filter((s_) => s_.tt > 0.5).map((s_) => `${lab(SEL + s_.k)} ${n0(s_.tt)}t`).join(' · ') || '당길 주문 없음'}${x.need - P.rem > 0.5 ? ' 당기고' : ''}, 남는 ${n0(P.rem)}t 는 더 먼 주문을 당겨 재고를 쌓지 않음`
-        : `검토안: ${P.st.filter((s_) => s_.tt > 0.5).map((s_) => `${lab(SEL + s_.k)} ${n0(s_.tt)}t`).join(' · ')} 당겨 다 채움`;
+        ? `${P.st.filter((s_) => s_.tt > 0.5).map((s_) => `${lab(SEL + s_.k)} ${n0(s_.tt)}t`).join(' · ') || '당길 주문 없음'}${x.need - P.rem > 0.5 ? ' 당김' : ''} · ${n0(P.rem)}t 못 채움 → 라인 휴지·감속 판단`
+        : `${P.st.filter((s_) => s_.tt > 0.5).map((s_) => `${lab(SEL + s_.k)} ${n0(s_.tt)}t`).join(' · ')} 당겨 다 채움`;
       const pulled = P.st.flatMap((s_) => s_.take.map((e) => ({ ...e, wk: lab(SEL + s_.k) })));
-      return `<div class="k-card k-sw"><h2>${esc(x.g)}${x.al ? ` <span class="k-al">${esc(x.al)}</span>` : ''} — 빠질 몫 <span class="bad">${n0(x.need)}t</span><small>소재 늦음·없음 ${n0(x.out)}${x.gap ? ` · 빈 곳 ${n0(x.gap)}` : ''} · 같은 그룹${x.pl === 'G' ? '·같은 강종' : ''} 주문만 당김</small></h2>
+      return `<div class="k-card k-sw"><h2>${esc(x.g)} · ${esc(x.line)}${x.al ? ` <span class="k-al">${esc(x.al)}</span>` : ''} — 빠질 몫 <span class="bad">${n0(x.need)}t</span><small>소재 늦음·없음 ${n0(x.out)}${x.gap ? ` · 빈 곳 ${n0(x.gap)}` : ''} · ${x.pl === 'G' ? '같은 그룹 중 이 라인 강종·두께·폭 범위 안' : '같은 그룹 · 같은 라인 · 부자재 준비된 것'}만</small></h2>
 <div class="k-flow">${flow}${idle}</div>
 <div class="k-vd ${P.rem > 0.5 ? 'idle' : ''}">${verdict}<span>${stkTxt}</span></div>
 <div class="k-swl"><div><h3>미룰 주문 — 소재 늦음·없음<span>${n0(x.out)}t</span></h3>${x.push.length ? clist(x.push, 'push', 5) : '<div class="k-more">없음</div>'}</div>

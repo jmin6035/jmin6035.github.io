@@ -43,12 +43,12 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
     const md_ = (d) => (d ? `${+d.slice(5, 7)}/${+d.slice(8)}` : '');
     const rg = (a, b) => (a === b ? md_(a) : `${md_(a)}~${md_(b)}`);
     const one = (n, late, op, a, b) => [late > 0.5 ? `<b class="bad">${n}부족 ${n0(late)}</b>` : '', op > 0.5 ? `<b class="warn">${n}발주 필요 ${n0(op)} · 마감 ${rg(a, b)}</b>` : ''].filter(Boolean).join(' · ');
-    const lines = p === 'G' ? [one('', v.late, v.openT, v.dlFrom, v.dlTo, 0)] : (v.shortBy || []).map(([n, late, op, a, b, st]) => one(`${esc(n)} `, late, op, a, b, st));
-    const pc_ = pct(v.cov, v.use), mx = Math.max(v.use, (v.beg || 0) + (v.arr || 0)) || 1;
-    const st = p === 'G' ? (v.stale ? `예정일 30일 넘게 지난 미입고 ${n0(v.stale)} 미포함` : '') : (v.shortBy || []).filter((z) => z[5] > 0.5).map((z) => `${esc(z[0])} 예정일 30일 넘게 지난 미입고 ${n0(z[5])} 미포함(들어오면 부족 해소)`).join(' · ');
+    const lines = (v.shortBy || []).map(([n, late, op, a, b]) => one(`${esc(n)} `, late, op, a, b));
+    const pc_ = pct(v.cov, v.use), hv = (v.beg || 0) + (v.arr || 0) || 1, cb = v.cov * (v.beg || 0) / hv, ca = v.cov * (v.arr || 0) / hv;   // 막대 = 필요 대비 소재별 확보(남는 소재로 모자란 소재를 덮지 않음), 재고·발주 비율로 나눔
+    const sl = (v.shortBy || []).filter((z) => z[5] > 0.5), st = sl.length ? `빼고 계산: 예정일 30일 넘게 지난 미입고 ${sl.map((z) => `${esc(z[0])} ${n0(z[5])}t`).join(' · ')}(입고 여부 확인)` : '';
     // 11/17 사용자 '소재는 발주랑 재고를 같이 만들었노 구분해라': 월초 재고 · 발주 입고 예정을 따로(막대도 두 칸)
-    return `<div class="hy-row"><div class="hy-m2"><div><span>월초 재고</span><b>${n0(v.beg)}</b><small>톤</small></div><div><span>발주 입고 예정</span><b>${n0(v.arr)}</b><small>톤</small></div><div><span>필요</span><b>${n0(v.use)}</b><small>톤</small></div><div><span>확보율</span><b class="${pc_ < 100 ? (lines.some((l) => l.includes('bad')) ? 'bad' : 'warn') : ''}">${pc_ ?? '–'}</b><small>%</small></div></div>
-<div class="hy-trk ${p}"><i class="fl" style="width:${W((v.beg || 0) / mx * 100)}"></i><i class="po" style="left:${W((v.beg || 0) / mx * 100)};width:${W((v.arr || 0) / mx * 100)}"></i><i class="tg" style="left:${W(v.use / mx * 100)}"></i></div>
+    return `<div class="hy-row"><div class="hy-m2"><div><span>월초 재고${!v.beg ? '(전달 소진)' : ''}</span><b>${n0(v.beg)}</b><small>톤</small></div><div><span>발주 입고 예정</span><b>${n0(v.arr)}</b><small>톤</small></div><div><span>필요</span><b>${n0(v.use)}</b><small>톤</small></div><div><span>확보율</span><b class="${pc_ < 100 ? (lines.some((l) => l.includes('bad')) ? 'bad' : 'warn') : ''}">${pc_ ?? '–'}</b><small>%</small></div></div>
+<div class="hy-trk ${p}"><i class="fl" style="width:${W(cb / (v.use || 1) * 100)}"></i><i class="po" style="left:${W(cb / (v.use || 1) * 100)};width:${W(ca / (v.use || 1) * 100)}"></i></div>
 ${lines.filter(Boolean).map((l) => `<div class="hy-ms">${l}</div>`).join('')}${st ? `<div class="hy-mn">${st}</div>` : ''}</div>`;
   }
   // 다음 달: 월말 예상(○)만
