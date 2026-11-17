@@ -5,7 +5,7 @@
 (function () {
   'use strict';
   const { esc, n0, md } = CT;
-  const FILES = ['portal.enc.json', 'mat_order.enc.json', 'integrated.enc.json', 'risk.enc.json'];
+  const FILES = ['portal.enc.json', 'mat_order.enc.json', 'integrated.enc.json', 'risk.enc.json', 'suju.enc.json'];
   const dim = (m) => new Date(+m.slice(0, 4), +m.slice(5, 7), 0).getDate();
   const PCT = (a, b) => (b > 0 ? Math.round(a / b * 100) : null);
   let D = null, CM = null, X = null;
@@ -109,7 +109,7 @@
   }
 
   function render(d) {
-    D = d;
+    D = d; UI._SJ = d.suju || null;   // 11/17 재검토: 월말 생산 예상 = 월간 가동·수주 관제와 같은 값(UI.grpMon)
     const O = D.portal; if (!O) { document.getElementById('ct-main').innerHTML = UI.empty('관제판 자료 없음', '다음 자동 실행 때 채워짐'); return; }
     const main = document.getElementById('ct-main');
     main.innerHTML = `<div class="b-top"><section class="card b-main">${board(O, D.risk, D.integrated, D.mat_order)}</section>${qSec(O)}</div>${monthSec(O)}${basisSec(O)}`;
