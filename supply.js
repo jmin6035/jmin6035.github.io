@@ -591,10 +591,11 @@
     const ords = Object.entries(byT).sort((x, y) => y[1].sh - x[1].sh).map(([c, t]) => `${esc(c)} ${md(add(need, -t.lt))}`).join(' · ') || '-';
     const j = MP && MP.J.find((x) => x.plant === 'G' && x.code === code && x.wk === mondayOf(d));
     const st = !j ? ['info', '-'] : j.short < 1 ? ['ok', '재고·발주 완료분로 충당'] : ['warn', `그 주 부족 ${n0(j.short)}t — 소재 발주에서 확인`];
-    const stc = !j || FHS.has(d) ? null : j.short < 1 ? ['F/H(그 주)', '재고·발주분으로 확보', null, 'due'] : j.kind === 'nosup' ? ['F/H(그 주)', `${n0(j.short)}t 발주할 업체 없음`, null, 'late']: j.kind === 'adjust' || j.kind === 'check' ? ['F/H(그 주)', `${n0(j.short)}t 발주 마감 지남 — 생산 조정 대상(생산계획)`, null, 'late'] : ['F/H(그 주)', `${n0(j.short)}t 발주 필요${j.deadline === today ? ' — 오늘 마감' : ''}(소재)`, null, 'warn'];
+    const stc = !j || FHS.has(d) || j.short < 1 ? null : j.kind === 'nosup' ? ['F/H(그 주)', `${n0(j.short)}t 발주할 업체 없음`, null, 'late']: j.kind === 'adjust' || j.kind === 'check' ? ['F/H(그 주)', `${n0(j.short)}t 발주 마감 지남 — 생산 조정 대상(생산계획)`, null, 'late'] : ['F/H(그 주)', `${n0(j.short)}t 발주 필요${j.deadline === today ? ' — 오늘 마감' : ''}(소재)`, null, 'warn'];
     if (stc) FHS.add(d);   // 그 주 판정은 날짜 상세에서 한 번만   // 11/17 검토: 발주했는지·확보됐는지
     const dl = j && j.deadline;   // 발주 마감 = 엔진 주별 마감(캘린더·소재 관제와 같은 값)
-    const dlc = dl ? (dl < today ? ['발주 마감', `${md(dl)} 지남`, null, 'late'] : dl === today ? ['발주 마감', '오늘', null, 'late'] : ['발주 마감', `${md(dl)}까지`, null, 'due']) : ['발주 마감', ords, null, 'due'];
+    const ok_ = j && j.short < 1;   // 그 주 확보면 마감이 지났어도 경고 아님
+    const dlc = ok_ ? ['F/H', '확보됨', null, 'due'] : dl ? (dl < today ? ['발주 마감', `${md(dl)} 지남`, null, 'late'] : dl === today ? ['발주 마감', '오늘', null, 'late'] : ['발주 마감', `${md(dl)}까지`, null, 'due']) : ['발주 마감', ords, null, 'due'];
     return { what: nm, steps: [dlc, [need <= today ? '소재 입고' : '입고 필요', md(need), need], ...(stc ? [stc] : [])], st };
   }
 
