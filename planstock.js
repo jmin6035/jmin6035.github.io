@@ -71,7 +71,7 @@
     const today = UI.today(O.today);   // 공통 기준일(11/8)
     const win = (m) => { const y = +m.slice(0, 4), mm = +m.slice(5); const om = mm - 2 <= 0 ? mm + 10 : mm - 2, oy = mm - 2 <= 0 ? y - 1 : y; return [`${oy}-${String(om).padStart(2, '0')}-10`, `${oy}-${String(om).padStart(2, '0')}-20`]; };
     const rows = Object.entries(O.fh).filter(([m]) => m >= '2026-10').map(([m, [need, have, cov]]) => {
-      const left = Math.max(0, need - (cov != null ? cov : have)), [o0, o1] = win(m);   // 11/10: 앞 달에 남은 발주 완료분는 뒤 달에 씀(cov = 누적 충당, planstock.py) — 예전엔 달마다 따로 빼 '기간 지남' 4,123t(발주 요약 703t 과 다름)
+      const left = Math.max(0, need - (cov != null ? cov : have)), [o0, o1] = win(m);   // 11/10: 앞 달에 남은 발주 완료분은 뒤 달에 씀(cov = 누적 충당, planstock.py) — 예전엔 달마다 따로 빼 '기간 지남' 4,123t(발주 요약 703t 과 다름)
       const st = left < 0.5 ? ['충분', 'good'] : today > o1 ? ['기간 지남', 'bad'] : today >= o0 ? ['발주 기간 중', 'warn'] : [`${md(o0)}부터`, ''];
       return `<tr><td><b>${+m.slice(5)}월적</b>${m.slice(0, 4) !== '2026' ? ` <small>'${m.slice(2, 4)}</small>` : ''}</td><td>${md(o0)}~${md(o1)}</td><td>${md(`${m}-07`)}</td><td>${n0(need)}</td><td>${n0(have)}</td><td class="${st[1] === 'bad' ? 'bad' : st[1] === 'warn' ? 'warn' : ''}"><b>${n0(left)}</b></td><td><span class="tag ${st[1]}">${st[0]}</span></td></tr>`; }).join('');
     return card('ps-fh', '수입 FH 월적', '계획재용 수입 FH — 필요량 · 발주 완료분 · 남은 발주', '단위: 톤',
