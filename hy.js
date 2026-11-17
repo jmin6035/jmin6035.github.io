@@ -45,7 +45,7 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
   function matStock(p, v, sm) {
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
     const L = v.by.filter((z) => z[3] > 0.5), cap = sm && sm.cap, bg = sm ? sm.beg : v.beg, en = sm ? sm.end : v.endT, su = sm && sm.sus;
-    return `<div class="hy-row"><div class="hy-num sk">${su ? '<span class="hlb">F/H</span>' : ''}<span class="hlb">월초</span><b>${n0(bg)}<small>톤</small></b><span class="ar">→</span><span class="hlb">월말</span><b class="${(cap && en > cap) || (en < 0.5 && bg > 0.5) ? 'bad' : ''}">${n0(en)}<small>톤</small>${en < 0.5 && bg > 0.5 ? ' 부족' : cap ? ` ${pct(en, cap)}%` : ''}</b></div>
+    return `<div class="hy-row"><div class="hy-num sk">${su ? '<span class="hlb">F/H</span>' : ''}<span class="hlb">월초</span><b>${n0(bg)}<small>톤</small></b><span class="ar">→</span><span class="hlb">월말</span><b class="${(cap && en > cap) || (en < 0.5 && bg > 0.5) ? 'bad' : ''}">${n0(en)}<small>톤</small>${en < 0.5 && bg > 0.5 ? ' (재고 없음)' : cap ? ` ${pct(en, cap)}%` : ''}</b></div>
 <div class="hy-mn">${(v.shortBy || []).filter((z) => z[6] && (p !== 'G' || z[0] !== 'SUS')).map((z) => `<b class="bad">${esc(SN(z[0]))} ${z[6].slice(8) === '01' ? '월초부터' : mdd(z[6]) + '부터'} 부족</b> · `).join('')}${su ? 'SUS = 지급재(발주 당일 입고) — 재고 굴림에서 뺌 · ' : ''}월말 = 추가 발주 없이 입고 예정만 들어올 때${cap ? ` · 상한 ${n0(cap)}톤` : ''}</div>
 <div class="hy-sub">${L.filter(([n, , , u]) => u >= 0.5 && !(p === 'G' && n === 'SUS')).map(([n, b, , u]) => `<div class="sr"><span class="sn">${esc(SN(n))}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(Math.min(100, b / u * 100))}"></i></div><span class="sv">월초 재고로 ${b >= u ? '<b>모두 충당</b>' : `충당 <b>${pct(b, u)}%</b>`}</span></div>`).join('')}</div></div>`;   // 11/17 검토: 100% 넘으면 '모두 충당'(1151% 같은 값 안 보임)
   }
@@ -53,7 +53,7 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
     const SB = Object.fromEntries((v.shortBy || []).map((z) => [z[0], z]));
     const L = v.by.filter((z) => z[3] > 0.5 || z[2] > 0.5 || (v.shortBy || []).some((y) => y[0] === z[0] || y[0].startsWith(z[0] + '(')));   // 부족 판정이 있는 소재는 사용·입고 없어도 보임
-    const one_ = (z, lb) => [z[1] > 0.5 ? `<b class="bad">${lb}부족 ${n0(z[1])}톤(발주 시기 지남)</b>` : '', z[2] > 0.5 ? `<b class="warn">${lb}추가 발주(재고 부족 기준) ${n0(z[2])}톤 · ${z[3] === z[4] ? `${mdd(z[3])}까지` : `${mdd(z[3])}부터 차례로(~${mdd(z[4])})`}</b>` : ''].filter(Boolean).join(' · ');
+    const one_ = (z, lb) => [z[1] > 0.5 ? `<b class="bad">${lb}발주 늦음 ${n0(z[1])}톤(지금 발주해도 못 맞춤)</b>` : '', z[2] > 0.5 ? `<b class="warn">${lb}추가 발주(재고 부족 기준) ${n0(z[2])}톤 · ${z[3] === z[4] ? `${mdd(z[3])}까지` : `${mdd(z[3])}부터 차례로(~${mdd(z[4])})`}</b>` : ''].filter(Boolean).join(' · ');
     const stat = (n) => { if (p === 'G' && n === 'SUS') return '<span class="ok">지급재(발주 당일 입고)</span>'; const zs = (v.shortBy || []).filter((z) => z[0] === n || z[0].startsWith(n + '(')); if (!zs.length) return '<span class="ok">확보</span>'; return zs.map((z) => one_(z, z[0] === n ? '' : `${esc(z[0].slice(n.length).replace(/[()]/g, ''))} `)).join('<br>'); };   // 11/17 검토: F/H 는 코드별(AL용·GI/GL용) 판정
     const sl = v.staleBy ? v.staleBy.map(([n_, t_]) => [n_, 0, 0, 0, 0, t_]) : (v.shortBy || []).filter((z) => z[5] > 0.5);
     return `<div class="hy-row"><div class="hy-num"><b>${n0(v.arr)}</b><small>톤</small><span class="d1">입고 예정</span></div>
@@ -66,7 +66,7 @@ ${v.stale > 0.5 ? `<div class="hy-mn">제외: 입고 예정일이 30일 넘게 �
     // 마감 지남 = 빨강 '부족'(지금 발주해도 못 댐) · 마감 전 = 주황 '발주 필요(마감 범위)'(검토 11/17)
     const md_ = (d) => (d ? `${+d.slice(5, 7)}/${+d.slice(8)}` : '');
     const rg = (a, b) => (a === b ? md_(a) : `${md_(a)}~${md_(b)}`);
-    const one = (n, late, op, a, b) => [late > 0.5 ? `<b class="bad">${n}부족 ${n0(late)}</b>` : '', op > 0.5 ? `<b class="warn">${n}발주 필요 ${n0(op)} · 마감 ${rg(a, b)}</b>` : ''].filter(Boolean).join(' · ');
+    const one = (n, late, op, a, b) => [late > 0.5 ? `<b class="bad">${n}발주 늦음 ${n0(late)}</b>` : '', op > 0.5 ? `<b class="warn">${n}발주 필요 ${n0(op)} · 마감 ${rg(a, b)}</b>` : ''].filter(Boolean).join(' · ');
     const lines = (v.shortBy || []).map(([n, late, op, a, b]) => one(`${esc(SN(n))} `, late, op, a, b));
     const pc_ = pct(v.cov, v.use), hv = (v.beg || 0) + (v.arr || 0) || 1, cb = v.cov * (v.beg || 0) / hv, ca = v.cov * (v.arr || 0) / hv;   // 막대 = 필요 대비 소재별 확보(남는 소재로 모자란 소재를 덮지 않음), 재고·발주 비율로 나눔
     const sl = v.staleBy ? v.staleBy.map(([n_, t_]) => [n_, 0, 0, 0, 0, t_]) : (v.shortBy || []).filter((z) => z[5] > 0.5), st = sl.length ? `빼고 계산: 예정일 30일 넘게 지난 미입고 ${sl.map((z) => `${esc(z[0])} ${n0(z[5])}t`).join(' · ')}(입고 여부 확인)` : '';
@@ -129,7 +129,7 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
 <div class="hy-g${PS.length < 2 ? ' one' : ''}"><div></div>${PS.map((p) => `<div class="hd ${p === 'G' ? 'g' : 'c'}">${p === 'G' ? '도금' : '컬러'}</div>`).join('')}
 ${R.map(([a, b, u, f]) => `${sec(a, b, u)}${PS.map((p) => cell(p, a, f(p))).join('')}`).join('')}</div>
 <div class="hy-lg">${M ? `${UI.inScope('G') ? '<span><i class="k-g"></i>도금 주문·소재 확보</span>' : ''}${UI.inScope('C') ? '<span><i class="k-c"></i>컬러 주문·소재 확보</span>' : ''}` : '<span><i class="k-g"></i>도금 실적</span><span><i class="k-c"></i>컬러 실적</span>'}${M ? '' : '<span><i class="k-rm"></i>남은 계획</span><span><i class="k-tg"></i>목표</span><span><i class="k-td"></i>오늘</span><span>● 현재 · ○ 월말</span>'}<span><i class="k-ov"></i>상한 초과</span>${M ? '<span>○ 월말</span>' : '<span class="bad">빨강 = 7일치 미만</span>'}</div>
-<div class="hy-ft">${M ? '확정 주문 = 납기가 그 달인 등록 주문 · 판매계획 = 도금 재계획 · 컬러 3개월 계획 · 소재 입고 예정 = 발주된 물량 중 그 달 입고분 · 추가 발주 = 지금 발주하면 맞출 수 있는 양과 기한 · 부족 = 발주 기한(재고 소진일 − 리드타임)이 지나 맞출 수 없는 양 · 총 재고 = 소재 + 제품, 상한 = 판생 기준 재고 상한 합' : '수주 = 이달 생산 실적 + 다음 주까지 만들 소재 매치 주문 · 생산 = MES 코일 실적 · 출하 = 판매생산속보 출하현황(내수 송장 · 수출 B/L) — 모든 화면 같은 값'}</div>`;
+<div class="hy-ft">${M ? '확정 주문 = 납기가 그 달인 등록 주문 · 판매계획 = 도금 재계획 · 컬러 3개월 계획 · 소재 입고 예정 = 발주된 물량 중 그 달 입고분 · 추가 발주 = 지금 발주하면 맞출 수 있는 양과 기한 · m/d부터 부족 = 추가 발주가 없을 때 재고가 모자라기 시작하는 날 · 발주 늦음 n톤 = 발주 기한(부족 시작일 − 리드타임)이 지나 지금 발주해도 못 맞추는 양 · 총 재고 = 소재 + 제품, 상한 = 판생 기준 재고 상한 합' : '수주 = 이달 생산 실적 + 다음 주까지 만들 소재 매치 주문 · 생산 = MES 코일 실적 · 출하 = 판매생산속보 출하현황(내수 송장 · 수출 B/L) — 모든 화면 같은 값'}</div>`;
     m.querySelectorAll('.hy-tabs button').forEach((b) => b.addEventListener('click', () => { MI = +b.dataset.mi; try { sessionStorage.setItem('hy-mi', MI); } catch (e) { /* 무시 */ } render(D); }));
   }
   let LD = null, SUB = false;
