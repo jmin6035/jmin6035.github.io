@@ -161,7 +161,7 @@
     const pdBy = Object.entries(PD.reduce((o, z) => { o[z.mat] = (o[z.mat] || 0) + z.t; return o; }, {})).sort((a, b) => b[1] - a[1]);
     const warn = pdT >= 0.5 ? `<div class="m4-pdw" title="${esc(PD.sort((a, b) => a.need.localeCompare(b.need)).map((z) => `${z.mat} ${z.size} ${n0(z.t)}t — 필요 ${md(z.need)}`).join('\n'))}"><b>${pdM.map((m) => m + '월').join('·')} 판생 계획재 소재 부족 ${n0(pdT)}t</b><span>지금 발주해도 생산일 전에 못 들어옴 — 판생 조정 필요</span><span class="by">${pdBy.map(([m, t]) => `${esc(m)} ${n0(t)}t`).join(' · ')}</span></div>` : '';
     return `<h2 class="m4-h">발주 · 입고 캘린더</h2>${warn}${wk}<div class="m4-q" title="소재마다 위 줄 = 발주, 아래 줄 = 입고 · 발주 줄: 지난 날 = 실제 낸 발주, 오늘부터 = 해야 할 발주(생산 계획 기준) · 입고 줄: 지난 날 = 실입고, 앞날 = 입고 예정 · 숫자를 누르면 업체·양 상세">톤 · 흐린 칸 = 실적 · <b style="color:var(--bad)">빨강</b> = 발주·입고 지연</div>`
-      + `<div class="m4-sc"><table class="m4-cl v2-grid" style="min-width:${210 + ds.length * 66}px"><colgroup><col style="width:88px"><col style="width:76px">${ds.map(() => '<col>').join('')}<col style="width:66px"></colgroup>`
+      + `<div class="m4-sc"><table class="m4-cl v2-grid" style="min-width:${210 + ds.length * 66}px"><colgroup><col style="width:104px"><col style="width:60px">${ds.map(() => '<col>').join('')}<col style="width:66px"></colgroup>`
       + `<thead><tr><th>소재</th><th></th>${hd}<th>계</th></tr></thead><tbody>${b}</tbody></table></div>`;
   }
 

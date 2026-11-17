@@ -283,7 +283,7 @@
         bd += fr(`${PN[pl]} 소재 합계`, T, true) + L.map((b) => fr(b.g, b)).join('');
       }
       el.innerHTML = `<h2 class="m4-h">${M_}월 그룹별 소재 <small>톤</small></h2>
-<div class="m4-sc"><table class="m4-gd" style="max-width:980px;margin:0 auto"><colgroup><col style="width:190px"><col><col><col><col></colgroup>
+<div class="m4-sc"><table class="m4-gd"><colgroup><col style="width:190px"><col><col><col><col style="width:26%"></colgroup>
 <thead><tr><th>판매그룹</th><th title="${M_}월 생산 계획에 드는 소재">${M_}월 필요</th><th title="지금 재고 + 발주 완료분(입고 예정)으로 채워지는 양">확보</th><th title="재고·발주 완료분으로 못 채우는 양 — 아래 소재 현황 미발주와 같은 값">미발주</th><th>발주 마감</th></tr></thead>
 <tbody>${bd || `<tr><td colspan="5" class="z">${M_}월 소재 계획 없음</td></tr>`}</tbody></table></div>`;
       return;
