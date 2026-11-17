@@ -251,7 +251,7 @@
     let body = '';
     for (const [pl, gs] of PL0) {
       if (!UI.inScope(pl)) continue;
-      const L = Object.values(A).filter((a) => a.pl === pl && (a.o >= 0.5 || a.arr >= 0.5 || a.od >= 0.5)).sort((x, y) => ix(gs, x.g) - ix(gs, y.g));
+      const L = Object.values(A).filter((a) => a.pl === pl && a.g !== '판매그룹 미상' && (a.o >= 0.5 || a.arr >= 0.5 || a.od >= 0.5)).sort((x, y) => ix(gs, x.g) - ix(gs, y.g));   // 11/17 사용자 '판매그룹 미상 빼라': 판매그룹에 안 이어진 발주는 줄·합계에서 뺌(합계 = 보이는 줄 합)
       if (!L.length) continue;
       const T = L.reduce((t, a) => ({ o: t.o + a.o, op: t.op + a.op, arr: t.arr + a.arr, od: t.od + a.od }), { o: 0, op: 0, arr: 0, od: 0 });
       body += row(`${PN[pl]} 소재 합계`, T, true) + L.map((a) => row(a.g, a)).join('');

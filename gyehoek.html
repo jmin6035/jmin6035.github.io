@@ -158,7 +158,9 @@ html body main #m4 table.m4-cl td.odt { font-size: 13px !important; color: var(-
 #m4 .m4-wk button:hover { border-color: var(--ink-2); } #m4 .m4-wk button span { display: block; font-size: 13px; color: var(--ink-2); font-weight: 700; } #m4 .m4-wk button b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
 #m4 .m4-wk button small { display: block; font-size: 12.5px; color: var(--bad); font-weight: 600; } #m4 .m4-wk button small.ok { color: var(--ink-3); font-weight: 500; }
 html body main #m4 table.m4-cl tr.hl > :is(td, th) { background: color-mix(in srgb, #f2b705 16%, var(--surface)) !important; }
-.gk-rl { margin: 14px 0 0; text-align: right; font-size: 14.5px; } .gk-rl a { font-weight: 700; color: var(--brand-2, var(--ink)); }
+.gk-rl { margin: 18px 0 0; text-align: center; }   /* 11/17 사용자: 일별 가동계획 맨 아래 '일일 가동 계획 규칙' → 규칙 화면 */
+.gk-rl a { display: inline-block; padding: 12px 28px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 16px; font-weight: 800; color: var(--brand-2, #1f5fae); text-decoration: none; }
+.gk-rl a:hover { border-color: var(--brand-2, #1f5fae); }
 #m4-grp .m4-q { font-size: 15px; color: var(--ink-2); }
 @media (max-width: 700px) {   /* 날짜 상세 390px: 일정 칸을 품목 아래 줄로 */
   .gk-det table.dt.mt.fl thead { display: none; }
@@ -440,7 +442,7 @@ b.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 날짜·기간 �
     <div class="tabs big" id="gk-tab" role="tablist"><button type="button" data-t="plan" aria-pressed="true">일별 가동계획</button><button type="button" data-t="mat" aria-pressed="false">소재</button></div>
     <div class="gk-bar"><div class="seg" id="gk-mon" role="group" aria-label="월"></div><span class="sp"></span><button type="button" class="pbtn noprint" id="gk-print">인쇄</button></div>
     <div id="gk-plan"></div>
-    <p class="gk-rl noprint" id="gk-rl"><a href="rules.html">계획 규칙 보기 ›</a></p>
+    <p class="gk-rl noprint" id="gk-rl"><a href="rules.html">일일 가동 계획 규칙 ›</a></p>
     <div id="gk-mat" hidden>
       <div class="sbar"><span id="s-meta"></span><div class="tabs" id="s-mon" role="group" aria-label="월"></div></div>
       <section id="s-ojudge" hidden></section>
@@ -450,7 +452,7 @@ b.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 날짜·기간 �
         <div id="m4"><section class="card m4" id="m4-grp"></section><section class="card m4" id="m4-cal"></section><section class="card m4" id="m4-sum"></section></div>
         <section class="card matcal" hidden><h2>소재 캘린더<span class="unit">톤</span></h2>
           <div id="s-cal3"></div>
-          <div class="lg"><span><i style="background:var(--pt-ord)"></i>발주</span><span><i style="background:var(--bad-bg)"></i>마감 지난 발주</span><span><i style="background:var(--pt-inb)"></i>입고 예정(발주 완료)</span><span><i style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--good)"></i>입고 필요(아직 발주 안 함)</span><span><i style="background:var(--pt-use)"></i>생산 투입</span></div>
+          <div class="lg"><span><i style="background:var(--pt-ord)"></i>발주</span><span><i style="background:var(--bad-bg)"></i>발주 지연</span><span><i style="background:var(--pt-inb)"></i>입고 예정(발주 완료)</span><span><i style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--good)"></i>입고 필요(아직 발주 안 함)</span><span><i style="background:var(--pt-use)"></i>생산 투입</span></div>
         </section>
         <div class="det" id="s-det2"></div>
         <details class="card m4-lt"><summary>리드타임 보기</summary><section id="gk-lt"></section></details>
