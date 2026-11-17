@@ -88,7 +88,7 @@
       const gSmall = G.filter((o) => !o.closed && (o.remT || 0) > 0.0005 && (o.remT || 0) <= 1 && !tq(o));
       const can = R.filter((o) => catG(o) !== K0).reduce((a, o) => a + o.remT, 0);
       out.push({ pl: 'G', nm: '도금', R, cap, can, ex: { zero: G.length - R.length - gSmall.length, small: gSmall.length, zT: 0, sT: gSmall.reduce((a, o) => a + (o.remT || 0), 0) }, all: G, cats: CFG.G.leaves.map(([k, c, t]) => { const rs = R.filter((o) => catG(o) === k); return { k, c, t, n: rs.length, rem: rs.reduce((a, o) => a + (o.remT || 0), 0), rs }; }) });
-      // 11/13 검토: 03 편성 · 작업 순서의 '작업지시 1,637t' = MES 지시 코일 무게(지시중량), 여기 1,627t = 11월까지 납기 주문 잔여 → 컬러와 같은 정의(큰 숫자 = 주문 잔여, 작은 글씨 = 지시중량)
+      // 11/13 검토: 03 생산 편성 · 작업 순서의 '작업지시 1,637t' = MES 지시 코일 무게(지시중량), 여기 1,627t = 11월까지 납기 주문 잔여 → 컬러와 같은 정의(큰 숫자 = 주문 잔여, 작은 글씨 = 지시중량)
       const CL = ((D0 || {}).cg_calendar || {}).lines, kw = out[out.length - 1].cats.find((c) => c.k === '작업지시량');
       if (CL && kw) kw.remX = gl.reduce((a, l) => a + (CL[l] || []).reduce((q, c) => q + (+c.conf || 0), 0), 0);
     }
@@ -113,7 +113,7 @@
       + tile(K0, n0(m0.rem), 't', `${n0(m0.n)}건${m0s}${gTxt(m0.rs, K0)}`, m0.rem > 0.5 ? 'bad' : '', xk(K0))
       + tile(KP, n0(mtT), 't', `${n0(mtN)}건 · ${hd(mtR, KP)}${gTxt(mtR, KP)}`, '', xk(KP))
       + F.tiles.map((k) => { const c = cat(k); return tile(`└ ${k}`, n0(c.rem), 't', `${n0(c.n)}건 · ${hd(c.rs, k)}${c.remX != null && Math.abs(c.remX - c.rem) >= 0.5 ? ` · <span class="nw" title="MES 작업지시 편성 지시 잔량">지시 ${n0(c.remX)}t</span>` : ''}${gTxt(c.rs, k)}`, (k === '부자재 대기' || k === '불량') && c.rem > 0.5 ? 'warn' : '', xk(k)); }).join('')
-      + tile(KW, n0(wT), 't', `지시 ${n0(wN)}건${d.pl === 'C' ? ` · 계약 ${n0(w.n)}건` : ''} · ${hd(w.rs, KW)}${w.remX != null ? ` · <span class="nw" title="MES 확정 지시중량(코일 무게)${d.pl === 'G' ? ' — 03 편성 · 작업 순서의 작업지시 톤과 같은 값' : ''}">지시중량 ${n0(w.remX)}t</span>` : ''}${gTxt(w.rs, KW)}`, 'ok', xk(KW)) + '</div>';
+      + tile(KW, n0(wT), 't', `지시 ${n0(wN)}건${d.pl === 'C' ? ` · 계약 ${n0(w.n)}건` : ''} · ${hd(w.rs, KW)}${w.remX != null ? ` · <span class="nw" title="MES 확정 지시중량(코일 무게)${d.pl === 'G' ? ' — 03 생산 편성 · 작업 순서의 작업지시 톤과 같은 값' : ''}">지시중량 ${n0(w.remX)}t</span>` : ''}${gTxt(w.rs, KW)}`, 'ok', xk(KW)) + '</div>';
     const pct = (v) => `${tot ? Math.round(v / tot * 100) : 0}%`;
     const row = (ex, cls, sw, nm, cnt, t, h, dy, txt) => `<tr class="${cls}${ex ? ' ck' : ''}"${ex ? ` data-ex="${esc(ex)}" aria-expanded="${PS.open === ex}"${tip(ex.slice(2))}` : ''}><td class="nw">${sw ? `<i class="sw" style="background:${sw}"></i>` : ''}${nm}${ex ? `<span class="tg">${PS.open === ex ? '▾' : '▸'}</span>` : ''}</td><td class="r">${n0(cnt)}</td><td class="r"><b>${n0(t)}</b></td><td class="r">${pct(t)}</td><td class="r">${h == null ? '<span class="mu">–</span>' : n0(h)}</td><td class="r">${dy || '<span class="mu">–</span>'}</td><td class="mu2">${txt}</td></tr>`;
     let body = row(xk(K0), '', F.leaves[0][1], esc(K0), m0.n, m0.rem, null, '', esc(F.leaves[0][2]))

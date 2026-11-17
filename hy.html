@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>현황</title>
+<meta name="description" content="도금·컬러 판매·생산·소재·출하·재고·주문충당량 — 이번 달 계획 대비">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
+<link rel="stylesheet" href="ui/theme.css?v=2611120206">
+<link rel="stylesheet" href="ui/optable.css?v=2611141900">
+<style>
+main.wrap { max-width: none; }
+#ui-ctl, html.v2 #ui-ctl { display: none !important; }
+:root { --hy-g: #1f5fae; --hy-g2: #d6e3f3; --hy-g3: #a9c4e8; --hy-c: #0f7f73; --hy-c2: #cfe9e5; --hy-c3: #9fd3ca; --hy-bad: #c0262d; --hy-okz: #e3f2e8; --hy-ovz: #fbdcdc; --hy-sec: #1f2937; }
+:root[data-theme="dark"] { --hy-g2: #22344d; --hy-g3: #35557d; --hy-c2: #173a36; --hy-c3: #2a6159; --hy-bad: #f2777b; --hy-okz: #18321f; --hy-ovz: #4a1d1f; --hy-sec: #334155; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --hy-g2: #22344d; --hy-g3: #35557d; --hy-c2: #173a36; --hy-c3: #2a6159; --hy-bad: #f2777b; --hy-okz: #18321f; --hy-ovz: #4a1d1f; --hy-sec: #334155; } }
+#ct-main { color: var(--ink); word-break: keep-all; text-align: center; }
+.hy-top { display: flex; align-items: baseline; gap: 12px; margin: 2px 0 10px; } .hy-top h1 { font-size: 24px; font-weight: 800; margin: 0; } .hy-top span { font-size: 16px; color: var(--ink-2); }
+.hy-g { display: grid; grid-template-columns: 116px minmax(0, 1fr) minmax(0, 1fr); gap: 8px 12px; }
+.hy-g .hd { font-size: 19px; font-weight: 800; color: #fff; border-radius: 10px; padding: 6px 0; } .hy-g .hd.g { background: var(--hy-g); } .hy-g .hd.c { background: var(--hy-c); }
+.hy-g .sec { background: var(--hy-sec); color: #fff; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 4px; }
+.hy-g .sec b { font-size: 18px; font-weight: 800; } .hy-g .sec small { font-size: 13.5px; color: #cbd5e1; margin-top: 2px; }
+.hy-g .cell { background: var(--surface); border: 1px solid var(--v2-line, var(--line)); border-radius: 10px; padding: 8px 18px; min-width: 0; display: flex; align-items: center; }
+.hy-row { width: 100%; }
+.hy-num { display: flex; justify-content: center; align-items: baseline; gap: 4px; font-variant-numeric: tabular-nums; }
+.hy-num b { font-size: 24px; font-weight: 800; } .hy-num small { font-size: 15px; color: var(--ink-2); margin-left: 1px; } .hy-num .pc { margin-left: 16px; }
+.hy-num.sk { gap: 6px; flex-wrap: wrap; } .hy-num.sk b { font-size: 20px; } .hy-num .hlb { font-size: 15px; color: var(--ink-2); } .hy-num .ar { color: var(--ink-2); margin: 0 4px; }
+.hy-trk { position: relative; height: 18px; border-radius: 5px; margin: 6px 0 2px; }
+.hy-trk.G { background: var(--hy-g2); } .hy-trk.C { background: var(--hy-c2); }
+.hy-trk i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 5px; }
+.hy-trk.G .fl { background: var(--hy-g); } .hy-trk.C .fl { background: var(--hy-c); } .hy-trk.G .rm { background: var(--hy-g3); } .hy-trk.C .rm { background: var(--hy-c3); }
+.hy-trk .td { width: 0; top: -4px; bottom: -4px; border-left: 2px dashed var(--ink); border-radius: 0; }
+.hy-trk .tg { width: 3px; top: -5px; bottom: -5px; background: var(--hy-bad); border-radius: 0; }
+.hy-cap { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-2); } .hy-cap b { color: var(--ink); font-size: 15px; }
+.hy-zone { position: relative; height: 22px; margin: 6px 0 2px; }
+.hy-zone i { position: absolute; }
+.hy-zone .ok { left: 0; top: 6px; height: 10px; background: var(--hy-okz); border-radius: 5px 0 0 5px; } .hy-zone .ov { right: 0; top: 6px; height: 10px; background: var(--hy-ovz); border-radius: 0 5px 5px 0; }
+.hy-zone .cp { top: 0; bottom: 0; width: 2px; background: var(--ink); }
+.hy-zone .ln { top: 10px; height: 2px; background: var(--ink-2); }
+.hy-zone .dn, .hy-zone .de { top: 4px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; }
+.hy-zone .dn { background: var(--ink); } .hy-zone .dn.bad { background: var(--hy-bad); }
+.hy-zone .de { background: var(--surface); border: 3px solid var(--ink); box-sizing: border-box; } .hy-zone .de.bad { border-color: var(--hy-bad); }
+.hy-cv { display: flex; gap: 8px; width: 100%; } .hy-cv .c { flex: 1; border-radius: 8px; padding: 4px 2px; background: color-mix(in srgb, var(--ink) 4%, var(--surface)); }
+.hy-cv .n { font-size: 15px; font-weight: 700; color: var(--ink-2); } .hy-cv .v { font-size: 20px; font-weight: 800; } .hy-cv .v small { font-size: 14px; margin-left: 1px; color: var(--ink-2); } .hy-cv .d { font-size: 16px; font-weight: 800; } .hy-cv .r .d { color: var(--hy-bad); }
+.bad { color: var(--hy-bad) !important; }
+.hy-lg { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 16px; margin-top: 10px; font-size: 14px; color: var(--ink-2); }
+.hy-lg i { display: inline-block; width: 16px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
+.hy-lg .k-g { background: var(--hy-g); } .hy-lg .k-c { background: var(--hy-c); } .hy-lg .k-rm { background: var(--hy-g3); } .hy-lg .k-tg { width: 3px; height: 14px; background: var(--hy-bad); } .hy-lg .k-td { width: 0; height: 14px; border-left: 2px dashed var(--ink); } .hy-lg .k-ov { background: var(--hy-ovz); }
+.hy-na { color: var(--ink-2); width: 100%; }
+@media (max-width: 700px) {
+  .hy-g { grid-template-columns: minmax(0, 1fr); } .hy-g > div:first-child, .hy-g .hd { display: none; }
+  .hy-g .sec { flex-direction: row; gap: 8px; } .hy-g .cell { flex-direction: column; } .hy-g .cell::before { content: attr(data-pl); font-size: 14px; font-weight: 700; color: var(--ink-2); margin-bottom: 2px; }
+}
+</style>
+</head>
+<body>
+<header id="shell" data-page="hy" data-title="현황"></header>
+<main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
+<footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보·통합 계획 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<script src="ui/shell.js?v=2611171200"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script src="ui/ct.js?v=2611120206"></script>
+<script src="hy.js?v=2611171300"></script>
+</body>
+</html>

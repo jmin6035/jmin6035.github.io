@@ -35,7 +35,7 @@
   const MON = () => { const a = String(O.month.asOf || O.asOf).slice(0, 10), e = new Date(Date.parse(a) - 864e5).toISOString().slice(0, 10); return +e.slice(5, 7); };   // 진도 달(속보 기준일 전날)
   const S0 = (k) => O.lines.reduce((a, x) => a + (x.w0[k] || 0), 0), S1 = (k) => O.lines.reduce((a, x) => a + (x.w1[k] || 0), 0);
   // 11/13 사용자 결정: 월 계획 = 지금 계획의 그 달 합(지난 날 실적 + 앞날 현재 계획), 진도 = 실적 ÷ 월 계획, 작은 글씨 = 전일까지 월차(그 달 첫 게시 계획) 대비
-  //   자료 = suju.enc.json daily(02 수주 '생산 달성'과 같은 값: [날짜, 월차, 지금 계획(지난 날 = 실적), 실적]). 판생 월차는 참고(마우스 올림)
+  //   자료 = suju.enc.json daily(02 현황 '생산 달성'과 같은 값: [날짜, 월차, 지금 계획(지난 날 = 실적), 실적]). 판생 월차는 참고(마우스 올림)
   const SJ = () => (O && O.SJ && O.SJ.daily && O.SJ.month && +O.SJ.month.slice(5) === MON() ? O.SJ : null);
   const monPlan = (l) => { const S = SJ(); return S && S.daily[l] ? S.daily[l].reduce((a, r) => a + Math.round(r[2] || 0), 0) : null; };
   const m0To = (l) => { const S = SJ(); return S && S.daily[l] ? S.daily[l].filter((r) => r[0] <= S.asOf).reduce((a, r) => a + (r[1] || 0), 0) : null; };
@@ -156,7 +156,7 @@
     if (!env) env = await envReady;                              // 자료를 받기 전에 암호를 넣은 경우
     if (pw) { $('ca-lockbox').hidden = true; $('ca-skel').hidden = false; }
     try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ }
-      try { const se = await GP.latest('suju.enc.json'); O.SJ = se ? await GP.decryptJSON(se, pw) : null; } catch (e) { O.SJ = null; }   // 월 계획·월차(02 수주와 같은 자료)
+      try { const se = await GP.latest('suju.enc.json'); O.SJ = se ? await GP.decryptJSON(se, pw) : null; } catch (e) { O.SJ = null; }   // 월 계획·월차(02 현황와 같은 자료)
       render(); }
     catch (e) { $('ca-lockbox').hidden = false; $('ca-skel').hidden = true; $('ca-form').hidden = false; $('ca-msg').textContent = pw ? '암호가 맞지 않습니다' : ''; }
   }
