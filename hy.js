@@ -44,7 +44,7 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
     const L = v.by.filter((z) => z[3] > 0.5), cap = sm && sm.cap, bg = sm ? sm.beg : v.beg, en = sm ? sm.end : v.endT, su = sm && sm.sus;
     return `<div class="hy-row"><div class="hy-num sk">${su ? '<span class="hlb">F/H</span>' : ''}<span class="hlb">월초</span><b>${n0(bg)}<small>톤</small></b><span class="ar">→</span><span class="hlb">월말</span><b class="${(cap && en > cap) || (en < 0.5 && bg > 0.5) ? 'bad' : ''}">${n0(en)}<small>톤</small>${en < 0.5 && bg > 0.5 ? ' 바닥' : cap ? ` ${pct(en, cap)}%` : ''}</b></div>
 <div class="hy-mn">${su ? `SUS 별도 월초 ${n0(su.beg)} → 월말 ${n0(su.end)}톤 · ` : ''}월말 = 추가 발주 없이 입고 예정만 들어올 때${cap ? ` · 상한 ${n0(cap)}톤` : ''}</div>
-<div class="hy-sub">${L.map(([n, b, , u]) => `<div class="sr"><span class="sn">${esc(SN(n))}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(b / u * 100)}"></i></div><span class="sv">월초 재고로 <b>${pct(b, u)}%</b></span></div>`).join('')}</div></div>`;
+<div class="hy-sub">${L.map(([n, b, , u]) => `<div class="sr"><span class="sn">${esc(SN(n))}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(b / u * 100)}"></i></div><span class="sv">월초 재고로 충당 <b>${pct(b, u)}%</b></span></div>`).join('')}</div></div>`;
   }
   function matPo(p, v) {
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
@@ -109,7 +109,7 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
       ['제품 재고', '월말 예상', 'integrated.html', (p) => stockEnd(M[p].stockPdt)],
       ['총 재고', '소재 + 제품 · 월말', null, (p) => stockEnd(M[p].stockAll)],
     ] : [
-      ['판매', '판매계획 대비 수주', null, (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', null, { grp: H[p].sales.grp })],
+      ['수주', '실적 + 소재 확보 주문', null, (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', null, { grp: H[p].sales.grp })],
       ['생산', '목표 대비 실적', 'gyehoek.html', (p) => prod(p, H[p].prod, td)],
       ['소재', '발주 대비 입고', 'matcal.html', (p) => bar(p, H[p].mat, `${mo}월 입고 발주`, td)],
       ['출하', '계획 대비 출하', null, (p) => bar(p, H[p].ship, '이달 계획', td, { grp: H[p].ship.grp })],

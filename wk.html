@@ -73,7 +73,7 @@ table.k-m td { border-top: 1px solid var(--k-line); padding: 6px; vertical-align
 .k-rsg .h { font-size: 15px; font-weight: 800; color: var(--k-ink); } .k-rsg .h small { font-size: 13.5px; font-weight: 500; color: var(--k-mute); } .k-rsg .v { font-size: 22px; font-weight: 800; }  .k-rsg .s { font-size: 13.5px; color: var(--k-mute); }
 .k-more { font-size: 13.5px; color: var(--k-mute); padding-top: 6px; }
 .k-ft { font-size: 13.5px; color: var(--k-mute); margin-top: 12px; line-height: 1.6; }
-.k-wk { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 14px; }
+.k-wk { display: flex; flex-wrap: wrap; gap: 6px; overflow-x: auto; padding-bottom: 2px; margin-bottom: 14px; }
 .k-wk button { font: inherit; flex: 0 0 auto; text-align: left; border: 1px solid var(--k-line); background: var(--surface); color: var(--k-sub); border-radius: 10px; padding: 6px 12px; cursor: pointer; min-width: 104px; }
 .k-wk button b { display: block; font-size: 14.5px; color: var(--k-ink); } .k-wk button span { font-size: 13.5px; } .k-wk button.on { border-color: var(--k-ink); box-shadow: inset 0 0 0 1px var(--k-ink); }
 .k-wk button .mm { display: flex; gap: 8px; font-variant-numeric: tabular-nums; font-size: 13.5px; margin-top: 2px; }
@@ -97,6 +97,8 @@ table.k-d .sep { border-left: 1px solid var(--k-line); }
 @media (max-width: 900px) { .k-flow { flex-wrap: wrap; } .k-flow .k-step { flex: 1 1 40%; } .k-arr { display: none; } .k-top { flex-wrap: wrap; } .k-seg { margin-left: 0; } }
 @media (max-width: 700px) { .k-con.sw .r { grid-template-columns: minmax(0, 1fr) 36px 82px 40px; } .k-con .r span { white-space: nowrap; } .k-con.sw .r span:nth-child(3) { display: none; } .k-con .r { grid-template-columns: minmax(124px, 1fr) 34px 40px auto 40px; gap: 4px; } .k-con .r span:first-child { overflow: visible; } }
 .k-dscroll { overflow-x: auto; } .k-rsg .ho { margin-top: 4px; color: var(--k-sub); font-size: 13.5px; } .k-out { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px 24px; font-size: 14.5px; } .k-out > div > b { font-size: 15px; } .k-out > div > span { color: var(--k-mute); font-size: 13.5px; margin-left: 8px; } .k-out > div > div { margin-top: 4px; }
+.k-con .r span:nth-child(3) { padding-left: 10px; } .k-con.ne .r { grid-template-columns: minmax(150px, 2.6fr) 0.6fr 0.8fr 0.6fr; } .k-ask + .k-ask { margin-top: 14px; }
+@media (max-width: 700px) { .k-con.ne .r { grid-template-columns: minmax(124px, 1fr) 34px 52px 40px; } .k-wk { flex-wrap: nowrap; } }
 </style>
 </head>
 <body>
