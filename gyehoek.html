@@ -251,6 +251,8 @@ table.sc td.nd { color: var(--ink-3); }
 .dethd.m { border-left-color: #b25e00; }
 .dethd { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; } .dethd > span { flex: 1; min-width: 0; }
 .dethd .fold { flex: none; font: inherit; font-size: 13.5px; font-weight: 700; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 12px; cursor: pointer; }
+.dethd .det-x { flex: none; font: inherit; font-size: 13.5px; font-weight: 700; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 12px; cursor: pointer; } .dethd .det-x:hover { color: var(--bad); border-color: var(--bad); }
+#m4 > #s-det2:not(:empty) { margin: 0 0 16px; } #m4 #s-det2 table.t.mt { table-layout: auto; width: 100%; } #m4 #s-det2 table.t.mt td:nth-child(5) { white-space: normal !important; min-width: 150px; max-width: 220px; word-break: keep-all; }
 .dethd .fold:hover { color: var(--brand-2); border-color: var(--brand-2); }
 .det.folded > :not(.dethd) { display: none; }
 .det table.dt td.wsrc { min-width: 170px; } .det table.dt td.wst { min-width: 210px; line-height: 1.45; } .dethd small { display: block; font-size: 13.5px; font-weight: 500; color: var(--ink-3); margin-top: 2px; }
@@ -371,8 +373,8 @@ table.t.fwt { margin: 4px 0 0; font-size: 13.5px; width: auto; } table.t.fwt td 
 #m4 .m4-h { font-size: 19px; font-weight: 800; margin: 0 0 4px; text-align: center; display: block; }
 #m4 .m4-q { text-align: center; font-size: 14px; color: var(--ink-2); margin-bottom: 14px; }
 #m4 .m4-sc { overflow-x: auto; }
-#m4 table { border-collapse: collapse; width: 100%; table-layout: fixed; font-variant-numeric: tabular-nums; }
-#m4 th, #m4 td { text-align: center; padding: 0; }
+#m4 > section table { border-collapse: collapse; width: 100%; table-layout: fixed; font-variant-numeric: tabular-nums; }
+#m4 > section th, #m4 > section td { text-align: center; padding: 0; }   /* 11/18: 칸 상세(#s-det2)를 #m4 안으로 옮김 — 상세 표는 원래 모양 그대로 */
 /* ① 소재 현황 */
 html body main .m4-mx thead th { white-space: normal !important; line-height: 1.3; } html body main .m4-mx thead th small { display: block; white-space: normal; } .m4-mx td .m4-jd { white-space: normal; }
 @media (max-width: 1500px) { html body main .m4-mx tbody td { font-size: 14px !important; padding-left: 4px !important; padding-right: 4px !important; } }
@@ -475,12 +477,11 @@ html body main details.card.m4-lt { padding-top: 14px !important; }   /* '리드
       <p class="gk-none" id="gk-matnone" hidden></p>
       <div id="gk-matbody">
         <section class="card" id="s-msum"></section>
-        <div id="m4"><section class="card m4" id="m4-grp"></section><section class="card m4" id="m4-cal"></section><section class="card m4" id="m4-sum"></section></div>
+        <div id="m4"><section class="card m4" id="m4-grp"></section><section class="card m4" id="m4-cal"></section><div class="det" id="s-det2"></div><section class="card m4" id="m4-sum"></section></div>
         <section class="card matcal" hidden><h2>소재 캘린더<span class="unit">톤</span></h2>
           <div id="s-cal3"></div>
           <div class="lg"><span><i style="background:var(--pt-ord)"></i>발주</span><span><i style="background:var(--bad-bg)"></i>발주 지연</span><span><i style="background:var(--pt-inb)"></i>입고 예정(발주 완료)</span><span><i style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--good)"></i>입고 필요(아직 발주 안 함)</span><span><i style="background:var(--pt-use)"></i>생산 투입</span></div>
         </section>
-        <div class="det" id="s-det2"></div>
         <details class="card m4-lt"><summary>리드타임 보기</summary><section id="gk-lt"></section></details>
       </div>
     </div>
