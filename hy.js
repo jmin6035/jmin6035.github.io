@@ -111,7 +111,7 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
     ] : [
       ['수주', '실적 + 소재 확보 주문', null, (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', null, { grp: H[p].sales.grp })],
       ['생산', '목표 대비 실적', 'gyehoek.html', (p) => prod(p, H[p].prod, td)],
-      ['소재', '이달 실입고 / 입고 대상', 'gyehoek.html#mat', (p) => bar(p, H[p].mat, `${mo}월 입고 발주`, td)],
+      ['소재', '이달 실입고 / 입고 대상(도금 SUS 포함)', 'gyehoek.html#mat', (p) => bar(p, H[p].mat, `${mo}월 입고 발주`, td)],
       ['출하', '계획 대비 출하', null, (p) => bar(p, H[p].ship, '이달 계획', td, { grp: H[p].ship.grp })],
       ['소재 재고', '현재 → 월말', null, (p) => stock(H[p].stockMat)],
       ['제품 재고', '현재 → 월말', 'integrated.html', (p) => stock(H[p].stockPdt)],
