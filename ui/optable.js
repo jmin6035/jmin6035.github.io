@@ -70,7 +70,7 @@
     const at_ = (l, i) => `data-c="${l}|${ds[i]}" data-d="${ds[i]}"`;
     const tip = (l, i, c) => { const t = [o.tip ? o.tip(l, ds[i], c) : '', stsTip(c)].filter(Boolean).join(' · '); return t ? ` title="${esc(t)}"` : ''; };
     const lab = (nm) => `<span>${esc(nm)}</span>`;                        // 11/12 사용자 '휴지·수리 가운데 맞춤'
-    let h = head(ds, today, '', '', ti) + '<tbody>';
+    let h = head(ds, today, '라인', '강종', ti) + '<tbody>';
     if (scope('G')) {
       const day = ds.map(() => 0);
       for (const l of LINES.G) {
