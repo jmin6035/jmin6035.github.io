@@ -24,7 +24,7 @@
   function lockMsg(t, m) { $('c-lock-t').textContent = t; $('c-lock-msg').textContent = m || ''; }
   async function unlock(p) {
     await envs;
-    if (!E.files || !E.mes) { lockMsg('계산 기준 자료가 게시되지 않았습니다', '사내 PC 자동 실행 또는 관리자 게시 후 이용 가능.'); return; }
+    if (!E.files || !E.mes) { lockMsg('계산 기준 자료가 게시되지 않았습니다', '자동 갱신 또는 관리자 게시 뒤 이용 가능.'); return; }
     try {
       [D.files, D.mes, D.cur] = await Promise.all([GP.decryptJSON(E.files, p), GP.decryptJSON(E.mes, p), E.cur ? GP.decryptJSON(E.cur, p) : null]);
       D.prev = E.prev && String(E.prev.created) > String(E.files.created) ? await GP.decryptJSON(E.prev, p).catch(() => null) : null;
@@ -46,7 +46,7 @@
       ['판매계획 · 계획재 운영안', `기준 자료 게시 ${fmtT(E.files.created)}`, 'TF 일별가동계획(9월 작성) · 계획재 운영안(R15)', 'good'],
       ['품목별 적용라인', lr ? `${esc(lr.source || '')} · 받은 날 ${esc(lr.extracted || '')} · ${lr.rules.length}행` : '없음', '필수라인 → 우선라인1 → 2 → 3 순서로 라인 배정', lr ? 'good' : 'warn'],
       ['컬러 휴지계획', dn ? `${esc(dn.src || '')} · ${dn.items.length}건` : '없음', '계획휴지·S/D·수리 · 청소·시험·샘플', dn ? 'good' : 'warn'],
-      ['MES 실적 · 재고', `자료 ${fmtT(D.mes.savedAt || E.mes.created)}`, '컬러 생산 실적 · 재고 · 출하 · 판매생산속보(사내 PC 매일 갱신)', 'good'],
+      ['MES 실적 · 재고', `자료 ${fmtT(D.mes.savedAt || E.mes.created)}`, '컬러 생산 실적 · 재고 · 출하 · 판매생산속보(매일 자동 갱신)', 'good'],
       ['현재 게시 계획', D.cur ? `계산 ${fmtT(D.cur.built)} · 실적 ${esc(D.cur.asOf || '')}까지` : '없음', D.prev ? '지난 컬러 계획 자리를 먼저 씀(일정이 덜 바뀌게)' : '도금 = 기준 계획(바뀌지 않음)', D.cur ? 'good' : 'warn'],
     ];
     $('c-src').innerHTML = S.map(([t, a, b, st]) => `<div class="cc-src"><b>${t}</b><small>${a}</small><small>${b}</small><span class="st ${st}">${st === 'good' ? '사용' : '확인'}</span></div>`).join('');

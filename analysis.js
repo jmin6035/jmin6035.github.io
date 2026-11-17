@@ -9,10 +9,12 @@
 
   const planParams = () => { let s = null; try { s = JSON.parse(localStorage.getItem(P_KEY) || 'null'); } catch (e) { s = null; } return Object.assign(GP.clone(GP.DEFAULT_PARAMS), s || {}); };
 
+  // 11/17 검토: 시각 표기 통일 'YYYY-MM-DD HH:MM KST'(브라우저 지역 설정과 무관)
+  const KST = (t) => { const d = new Date(t); if (isNaN(d)) return String(t || ''); const k = new Date(d.getTime() + 9 * 3600e3).toISOString(); return `${k.slice(0, 10)} ${k.slice(11, 16)} KST`; };
   function render(a, sourceNote) {
     A = a;
     $('a-empty').hidden = true; $('a-body').hidden = false;
-    $('a-meta').textContent = [sourceNote, a.analyzedAt && `분석 ${new Date(a.analyzedAt).toLocaleString('ko-KR')}`, a.auto && a.auto.actualTo && `재계획 실적 ${GP.md(a.auto.actualTo)}까지`].filter(Boolean).join(' · ');
+    $('a-meta').textContent = [sourceNote, a.analyzedAt && `분석 ${KST(a.analyzedAt)}`, a.auto && a.auto.actualTo && `재계획 실적 ${GP.md(a.auto.actualTo)}까지`].filter(Boolean).join(' · ');
     $('a-period').textContent = a.period ? `— 실적 ${a.period.from} ~ ${a.period.to}` : '';
     $('a-lines').innerHTML = Object.entries(a.lines).map(([l, x]) => `<div class="line-card"><h3>${l}</h3><dl>
       <dt>제품 생산</dt><dd>${GP.fmt(x.tons)}t · 코일 ${GP.fmt(x.coils)}개 (더미 ${GP.fmt(x.dummyT)}t)</dd>
@@ -28,7 +30,7 @@
     const v = (c, x) => (x == null ? '-' : GP.fmt(x * (c.scale || 1), 1));
     $('a-cands').innerHTML = '<tr><th>반영</th><th>항목</th><th>현재</th><th>실적</th><th>차이</th><th>근거</th><th>판정</th></tr>' + a.cands.map((c, i) => {
       const d = c.cur && c.act != null ? c.act / c.cur - 1 : null;
-      return `<tr><td><input type="checkbox" data-cand="${i}" ${c.apply ? 'checked' : ''} ${c.act != null ? '' : 'disabled'} aria-label="${esc(c.label)} 반영"></td><td class="l">${esc(c.label)} <small class="muted">${esc(c.unit)}</small></td>`
+      return `<tr><td><input type="checkbox" data-cand="${i}" ${c.apply ? 'checked' : ''} ${c.act != null ? '' : 'disabled'} aria-label="${esc(c.label)} 반영"></td><td class="l">${esc(c.label)} <small class="muted">${esc(String(c.unit || '').replace('t/hr', 't/시간'))}</small></td>`
         + `<td class="n">${v(c, c.cur)}</td><td class="n"><b>${v(c, c.act)}</b></td><td class="n ${c.flag ? 'neg' : ''}">${d == null ? '-' : (d > 0 ? '+' : '') + GP.fmt(d * 100, 1) + '%'}</td>`
         + `<td class="l muted">${esc(c.basis || '').replace(/\d{4,}(?=코일)/g, (n) => GP.fmt(+n))}</td><td>${c.apply ? '<span class="pill warn">반영 권장</span>' : c.flag ? '<span class="pill">검토(표본 부족)</span>' : '유지'}</td></tr>`;
     }).join('');
@@ -37,7 +39,7 @@
         + (ap.length ? ['1CGL', '2CGL'].map((l) => { const L = ap.filter((c) => String(c.label).startsWith(l)); return L.length ? `<span class="lst"><b>${l}</b> ${L.map((c) => `${esc(String(c.label).slice(l.length).trim())} ${v(c, c.cur)} → <b>${v(c, c.act)}</b>`).join(' · ')}</span>` : ''; }).join('') + '<span class="lst">엔진 값은 <a href="rules.html#edit">계획 규칙 → 규칙 수치 바꾸기</a>에서(자동 반영 안 됨)</span>' : '<span class="lst">계획 조건이 최근 실적과 맞음</span>'); }
     renderWeekly(a);
     $('a-events').innerHTML = '<tr><th>시작</th><th>라인</th><th>전환</th><th>손실(분)</th><th>정지(분)</th><th>사유</th></tr>' + (a.events.map((e) =>
-      `<tr><td>${esc(e.at)}</td><td>${e.line}</td><td>${e.kind === 'M/C' ? `${e.from}→${e.to}` : esc(e.kind)}</td><td class="n"><b>${GP.fmt(e.minutes)}</b></td><td class="n">${e.stopMin != null ? GP.fmt(e.stopMin) : '-'}</td><td class="l wrap">${esc(e.reason || '')}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">기간 중 강종 전환 없음</td></tr>');
+      `<tr><td>${/^\d{4}-\d\d-\d\d/.test(String(e.at)) ? `${+String(e.at).slice(5, 7)}/${+String(e.at).slice(8, 10)}<br><small class="muted">${String(e.at).slice(11, 16)}</small>` : esc(e.at)}</td><td>${e.line}</td><td>${e.kind === 'M/C' ? `${e.from}→${e.to}` : esc(e.kind)}</td><td class="n"><b>${GP.fmt(e.minutes)}</b></td><td class="n">${e.stopMin != null ? GP.fmt(e.stopMin) : '-'}</td><td class="l wrap">${esc(e.reason || '')}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">기간 중 강종 전환 없음</td></tr>');
     const RS = a.reasons || [];
     $('a-reason-card').hidden = !RS.length;
     const days = Object.fromEntries(Object.entries(a.lines).map(([l, x]) => [l, x.opDays || x.days || 1]));
@@ -102,7 +104,7 @@
     try {
       const r = await fetch('published/weekly_report.enc.json', { cache: 'no-store' }); if (!r.ok) return;
       const o = await GP.decryptJSON(await r.json(), pw);
-      $('a-wr-meta').textContent = `— ${o.title || ''} · ${new Date(o.createdAt).toLocaleString('ko-KR')}`;
+      $('a-wr-meta').textContent = `— ${o.title || ''} · ${KST(o.createdAt)}`;
       if (o.version === 2) {                                   // 임원 보고 형식 → 요약 + 보고서 화면 링크
         $('a-wr-body').innerHTML = '<ul>' + ((o.notes && o.notes.headline) || []).map((t) => `<li>${esc(t)}</li>`).join('') + '</ul>' +
           '<p><a class="btnlike primary" href="report.html">주간 보고서 열기(표·추이 그래프)</a></p>';
@@ -118,19 +120,19 @@
       const o = await GP.decryptJSON(env, $('a-pw').value);
       try { if ($('a-remember').checked) localStorage.setItem(PW_KEY, $('a-pw').value); else localStorage.removeItem(PW_KEY); } catch (e) { /* 저장 불가 */ }
       $('a-unlock-msg').textContent = '';
-      render(o, '자동 분석(사내 PC)');
+      render(o, '자동 분석');
       loadWeekly($('a-pw').value);
     } catch (e) { $('a-unlock-msg').textContent = '⚠ ' + e.message; try { localStorage.removeItem(PW_KEY); } catch (x) { /* 무시 */ } }
   }
   $('a-unlock').onsubmit = (ev) => { ev.preventDefault(); unlock(); };
   const src = new URLSearchParams(location.search).get('src');
   GP.fetchPublished(src ? [src] : SRC).then((e) => {
-    if (!e) { $('a-empty-title').textContent = '자동 분석 결과가 없습니다'; $('a-empty-text').textContent = '사내 PC 자동 실행 후 표시됩니다. 아래 “엑셀로 직접 분석”으로 바로 볼 수도 있습니다.'; return; }
+    if (!e) { $('a-empty-title').textContent = '자동 분석 결과가 없습니다'; $('a-empty-text').textContent = '매일 자동 분석 뒤 표시됩니다. 아래 “엑셀로 직접 분석”으로 바로 볼 수도 있습니다.'; return; }
     if (e.app === 'cgl-analysis') { render(e, '분석 결과'); return; }
     env = e;
     $('a-empty-title').textContent = '자동 분석 결과';
     $('a-empty-text').textContent = '분석 암호를 넣으면 열립니다. 암호 해제는 이 브라우저 안에서만 합니다.';
-    $('a-pubinfo').innerHTML = `<b>${esc(e.label || '실적 분석')}</b> · 게시 ${new Date(e.created).toLocaleString('ko-KR')}`;
+    $('a-pubinfo').innerHTML = `<b>${esc(e.label || '실적 분석')}</b> · 게시 ${KST(e.created)}`;
     $('a-unlock').hidden = false;
     let saved = null; try { saved = localStorage.getItem(PW_KEY); } catch (x) { saved = null; }
     if (saved) { $('a-pw').value = saved; unlock(); } else $('a-pw').focus();

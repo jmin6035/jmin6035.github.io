@@ -11,7 +11,7 @@
   const { esc, n0 } = CT;
   const pct = (a, b) => (a != null && b ? Math.round(a / b * 100) : null);
   const W = (x) => `${Math.max(0, Math.min(100, x)).toFixed(1)}%`;
-  const r100 = (x) => n0(Math.round(x / 100) * 100);
+  const r100 = (x, f = Math.round) => n0(f(x / 100) * 100);   // 범위는 바깥으로(하한 내림 · 상한 올림 — 11/17 검토: 하한 43,300 이 01 현재 계획 43,254 보다 크던 것)
 
   const sg = (x) => (x > 0 ? '+' : x < 0 ? '−' : '±') + n0(Math.abs(x));
   let PV = '어제';
@@ -35,13 +35,14 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
   function prod(p, v, td) {
     const a = v.act || 0, rem = v.rem || 0, pl = v.plan || 0, mx = Math.max(a + rem, pl) * 1.03;
     const [lo, hi] = v.est || [];
-    const est = lo == null ? null : lo === hi ? `${r100(lo)}톤` : `${r100(lo)}~${r100(hi)}톤`;
+    const est = lo == null ? null : lo === hi ? `${r100(lo)}톤` : `${r100(lo, Math.floor)}~${r100(hi, Math.ceil)}톤`;
     return bar(p, v, '판생 계획', td, { max: mx, rem, tgt: true, tdBase: pl, est, grp: v.lines });
   }
   // 다음 달 소재(11/17 사용자 '12월·1월 소재 — 이미 나간 발주'): 확보 = 월초 재고(이달 월말 예상) + 이미 나간 발주 입고 예정 · 대비 = 그 달 사용 계획
   // 11/17 사용자 '재고는 재고대로 발주는 발주대로 구분': 다음 달 소재를 두 행으로 — 소재별(도금 F/H·SUS / 컬러 CGI·AZ·EGI·SUS…)
   const SN = (n) => ({ 'GALVALUME(AZ)': 'AZ', 'PosMAC1.5': 'MAC1.5', 'PosMAC3.0': 'MAC3.0', 'ALUMINIUM': 'AL', 'F/H(GI/GL용)': 'F/H GI·GL', 'F/H(AL용)': 'F/H AL', 'F/H(Ti용)': 'F/H Ti' }[n] || n);
-  const mdd = (d) => (d ? `${+d.slice(5, 7)}/${+d.slice(8)}` : '');
+  const TD = new Date().toLocaleDateString('sv-SE');
+  const mdd = (d) => (d ? `${+d.slice(5, 7)}/${+d.slice(8)}${d === TD ? '(오늘)' : ''}` : '');   // 마감이 오늘이면 '(오늘)'(11/17 검토)
   function matStock(p, v, sm) {
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
     const L = v.by.filter((z) => z[3] > 0.5), cap = sm && sm.cap, bg = sm ? sm.beg : v.beg, en = sm ? sm.end : v.endT, su = sm && sm.sus;
@@ -106,14 +107,14 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
     const tabs = [`${mo}월`, ...MS.map((x) => `${+x.ym.slice(5)}월`)];
     const M = MI ? MS[MI - 1] : null, mm = M ? +M.ym.slice(5) : mo;
     const R = M ? [
-      ['수주', '판매계획 대비 주문', null, (p) => bar(p, M[p].sales, '판매계획', null, { grp: M[p].sales.grp })],
+      ['주문', '판매계획 대비 주문', null, (p) => bar(p, M[p].sales, '판매계획', null, { grp: M[p].sales.grp })],
       ['생산', '월 계획', 'gyehoek.html', (p) => `<div class="hy-row"><div class="hy-num"><b>${n0(M[p].prod.plan)}</b><small>톤</small></div>${cover((M[p].prod.lines || []).map((x) => ({ line: x.g, t: x.plan })), true)}</div>`],
       ['소재 입고', '입고 예정 · 추가 발주', 'matcal.html', (p) => matPo(p, M[p].mat)],
       ['소재 재고', '월초 → 월말', null, (p) => matStock(p, M[p].mat, M[p].stockMat)],
       ['제품 재고', '월말 예상', 'integrated.html', (p) => stockEnd(M[p].stockPdt)],
       ['총 재고', '소재 + 제품 · 월말', null, (p) => stockEnd(M[p].stockAll)],
     ] : [
-      ['수주', '생산 실적 + 확정 주문', null, (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', null, { grp: H[p].sales.grp })],
+      ['주문', '생산 실적 + 확정 주문', null, (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', null, { grp: H[p].sales.grp })],
       ['생산', '판생 계획 대비 실적', 'gyehoek.html', (p) => prod(p, H[p].prod, td)],
       ['소재', `입고 실적 / ${mo}월 입고 계획`, 'gyehoek.html#mat', (p) => bar(p, H[p].mat, `${mo}월 입고 계획`, td)],
       ['출하', '계획 대비 출하', null, (p) => bar(p, H[p].ship, '판매계획', td, { grp: H[p].ship.grp })],

@@ -102,8 +102,8 @@
       { label: '조치일 지남', v: n0(cnt.over), unit: '건', tone: cnt.over ? 'bad' : 'ok', sub: `기한 ${md(asOf)} 전 · 종결 제외` }, { label: '종결', v: n0(cnt.done), unit: '건', tone: 'ok', sub: '조치 완료' }];
     const L = list.filter((x) => (fil === 'auto' ? x.st === '신규' : fil === 'open' ? isOpen(x) : fil === 'done' ? x.st === '완료' : true));
     const chips = `<div class="seg ct-seg" id="is-fil">${FIL.map(([k_, n]) => `<button type="button" data-k="${k_}" aria-pressed="${k_ === fil}">${n} <b>${n0(list.filter((x) => (k_ === 'auto' ? x.st === '신규' : k_ === 'open' ? isOpen(x) : k_ === 'done' ? x.st === '완료' : true)).length)}</b></button>`).join('')}</div>`;
-    const row = (x) => `<tr class="ck" data-i="${x.id}"><td class="id">${esc(x.no)}</td><td class="w"><b>${esc(x.title)}</b>${x.text && x.text !== x.act ? `<small>${esc(x.text)}</small>` : ''}</td><td class="w"><b>${esc(x.act)}</b><small>${esc(x.owner || x.dept)}</small></td>`
-      + `<td class="r">${x.n ? `${n0(x.n)}건${x.nOrdEst ? '<small>후보</small>' : ''}` : '-'}</td><td class="r">${x.t != null ? `<b>${n0(x.t)}</b>` : '-'}</td><td>${dueTd(x, asOf)}</td><td>${stCell(x)}</td></tr>`;
+    const row = (x) => `<tr class="ck" data-i="${x.id}"><td class="id">${esc(x.no)}</td><td class="w"><b>${esc(String(x.title || '').replace('리드타임 이내 부족', '소재 부족'))}</b>${x.text && x.text !== x.act ? `<small>${esc(x.text)}</small>` : ''}</td><td class="w"><b>${esc(x.act)}</b><small>${esc(x.owner || x.dept)}</small></td>`
+      + `<td class="r">${x.n ? `${n0(x.n)}건${x.nOrdEst ? '<small>후보</small>' : ''}` : ''}</td><td class="r">${x.t != null ? `<b>${n0(x.t)}</b>` : ''}</td><td>${dueTd(x, asOf)}</td><td>${stCell(x)}</td></tr>`;   // 11/17 검토: 해당 없음 = 빈칸('-' 뜻 없음)
     const deps = [...new Set(L.map((x) => x.dept))];
     const sec = (dp) => { const R = L.filter((x) => x.dept === dp).sort((a, b) => ST.indexOf(a.st) - ST.indexOf(b.st) || String(a.dueEff || '0').localeCompare(String(b.dueEff || '0')) || (b.t || 0) - (a.t || 0));
       const lt = R.filter((x) => x.over).length;

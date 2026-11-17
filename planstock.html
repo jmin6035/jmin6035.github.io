@@ -36,8 +36,13 @@ table.t td.bad { color: var(--bad); font-weight: 700; } .ps-late { margin: 0 0 1
 #ps-f button small { opacity: .7; margin-left: 3px; }
 .ps-head { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: baseline; margin: 2px 0 10px; font-size: 14px; color: var(--ink-2); } .ps-n { font-size: 22px; font-weight: 800; color: var(--ink); } .tone-good { color: var(--good); } .tone-warn { color: var(--warn); } .tone-bad { color: var(--bad); }
 @media (max-width: 900px) { #ps-calbox { overflow-x: auto; } #ps-calbox .calg { min-width: 760px; } #ps-calbox .calc .chip { font-size: 13.5px; } }   /* 좁은 화면: 칸을 찌그러뜨리지 않고 가로 스크롤 */
-@media (max-width: 1700px) { html body main .grid2 table.t.big th, html body main .grid2 table.t.big td { padding-left: 6px; padding-right: 6px; } }   /* 반 칸 카드의 표 오른쪽 끝(판정)이 잘리던 것 */
+@media (max-width: 1700px) { html body main .grid2 table.t.big th, html body main .grid2 table.t.big td { padding-left: 6px !important; padding-right: 6px !important; } html body main .grid2 table.t.big thead th { white-space: normal !important; word-break: keep-all; } }   /* 반 칸 카드의 표 오른쪽 끝(판정·남은 발주)이 잘리던 것 — 11/17: v2 여백 규칙(!important)에 눌려 안 먹던 것 고침 · 머리 줄바꿈   /* 반 칸 카드의 표 오른쪽 끝(판정)이 잘리던 것 */
 html.v2 body main table.t :is(td, th) { text-align: center !important; }   /* 11/13: 규칙 13 가운데 */
+/* 11/17 검토: 사양별 표(13칸)가 1,482px — 머리 줄바꿈 · 보조 숫자(일정·월계획·예측)는 아래 줄로 */
+html body main #ps-spec table.t thead th { white-space: normal !important; word-break: keep-all; }
+html body main #ps-spec table.t tbody td:is(:nth-child(2), :last-child) { white-space: normal !important; word-break: keep-all; min-width: 110px; }
+html body main #ps-spec table.t small.ps-b { display: block; font-size: 13.5px; }
+html body main #ps-spec table.t :is(th, td) { padding-left: 7px !important; padding-right: 7px !important; }
 </style>
 </head>
 <body>

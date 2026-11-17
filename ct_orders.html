@@ -101,6 +101,8 @@ html body table.co-t tr.co-gm td { text-align: center !important; padding: 8px; 
 .ot-td:hover { background: color-mix(in srgb, var(--brand-2) 10%, transparent); } .ot-td b { font-size: 16px; font-variant-numeric: tabular-nums; text-align: right; } .ot-td .n { color: var(--ink-2); font-size: 13.5px; text-align: right; white-space: nowrap; } .ot-td .w { color: var(--brand-2); font-size: 13.5px; font-weight: 700; white-space: nowrap; } .ot-td .k { font-weight: 700; word-break: keep-all; }
 .ot-psf > summary small { font-weight: 500; font-size: 13.5px; margin-left: 8px; } .ot-psf[open] > summary { margin-bottom: 12px; } .ot-psf { padding-bottom: 14px; }
 .rk-w .nw, .ot-r .nw { white-space: nowrap; } .ot-xby { display: inline-flex; vertical-align: middle; margin-left: 4px; } .ot-xby button { font-size: 13.5px; }
+@media (max-width: 640px) { .pts, .pts.p5, .pts.p6, .pts.p7 { grid-template-columns: minmax(0, 1fr) !important; } .pts.p7 .pt .v { font-size: 26px; } }   /* 11/17 검토 390: 주문진도 카드 큰 숫자·그룹 톤 잘림 → 한 줄에 카드 하나 */
+.pt .s .nw, .pt .s .bad { white-space: nowrap; }
 @media (max-width: 640px) { .ot-cs { grid-template-columns: 1fr; } .ot-td { grid-template-columns: minmax(0, 1fr) max-content max-content; } .ot-td .w { display: none; } }
 /* 납기 캘린더(11/11 전면 개편): 이번 주·다음 주 → 날짜 × 판매그룹 톤·위험 톤 */
 .dc-card { margin: 0 0 14px; } .dc-card h2 small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 8px; }
@@ -251,7 +253,7 @@ html:root body main table.dc-t td small.dc-r { color: #c00000; }
 <body>
 <header id="shell" data-page="orders" data-title-auto data-title="주문·납기" data-sub="미결 주문 단계별 현황 · 납기 일정"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
-<footer class="foot"><div class="wrap"><span>원자료: MES·판매생산속보</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<footer class="foot"><div class="wrap"><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611141500"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
 <script src="ui/ct.js?v=2611120206"></script>

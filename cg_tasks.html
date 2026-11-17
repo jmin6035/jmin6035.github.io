@@ -89,6 +89,8 @@ dialog.tk::backdrop { background: rgba(15, 23, 32, .45); }
   .cal { grid-template-columns: 1fr; } .cal > .hd, .cal > .we, .cal > .out { display: none; }
   .cal > div { min-height: 0; } .tk dl { grid-template-columns: 1fr; } .tk dt { border: 0; padding-bottom: 0; }
 }
+.wk .tc:has(.pp) { flex-wrap: wrap; row-gap: 4px; } .wk .tc:has(.pp) .pp { margin-left: auto; } .wk .tc:has(.pp) .tb { order: 3; flex-basis: 100%; align-items: center; text-align: center; }   /* 11/17 검토: 주간 칸에서 '월 1회' 표가 붙은 카드가 좁아져 '가동계/획'처럼 낱말 중간 줄바꿈 → 시각·주기를 윗줄, 이름을 아랫줄 전체 폭 */
+.tc .tb b, .tc .ts { overflow-wrap: normal; }
 </style>
 </head>
 <body>

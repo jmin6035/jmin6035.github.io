@@ -13,7 +13,11 @@
   const md = (s) => (s ? `${+s.slice(0, 4) !== Y0 && +s.slice(0, 4) !== Y0 + 1 ? `'${s.slice(2, 4)}.` : ''}${+s.slice(5, 7)}/${+s.slice(8)}` : '');
   const KEYS = ['p', 'o', 'dl', 'ok', 'on', 'late', 'wait', 'none', 'so', 'sw', 'sb', 'sn'];
   const tot = (L) => Object.fromEntries(KEYS.map((k) => [k, L.reduce((a, x) => a + (x[k] || 0), 0)]));
-  const DEPT = [['도금수출', ['도금수출'], 'G'], ['도금국내', ['도금국내'], 'G'], ['자동차', ['자동차'], 'G'], ['컬러수출', ['컬러수출'], 'C'], ['가전내수', ['가전내수'], 'C'], ['컬러건재', ['컬러건재'], 'C'], ['수요개발', ['수요개발'], 'C']];   // 판매그룹 그대로(11/17 사용자 '그룹별로')
+  const DEPT = [['도금수출', ['도금수출'], 'G'], ['도금국내', ['도금국내'], 'G'], ['자동차', ['자동차'], 'G'], ['컬러수출', ['컬러수출', '가전내수'], 'C'], ['컬러건재', ['컬러건재'], 'C'], ['수요개발', ['수요개발'], 'C']];   // 판매그룹 그대로(11/17 사용자 '그룹별로')
+  /* 11/17 검토: 같은 값은 한 번 반올림해 같이 씀(표 401 · 위 402 어긋남) — 주문 부족 합계 = 라인 줄 부족(반올림 전) 합을 한 번 반올림 */
+  const gapI = (p, o) => Math.max(0, (p || 0) - (o || 0));
+  const GMAP = { 가전내수: '컬러수출' };
+  const addc0 = (a_, c_) => { for (const [k_, v_] of Object.entries(c_ || {})) if (typeof v_ === 'number') a_[k_] = (a_[k_] || 0) + v_; return a_; };   // docs/32 그룹 이름: 컬러수출(가전 포함)
   const KN = { none: '미발주', late: '입고 지연', wait: '입고일 미정', sub: '부자재 대기', dl: '납기 지연' };
   function bar(v) {
     const p = v.p || 0; if (!p) return '<div class="kb"></div>';
@@ -35,19 +39,22 @@
     const chips = `<div class="k-wk">${W.map((w, i) => { const v = wk(w), f = pc(v.o, v.p), ms = pc(v.ok + v.on, v.o); return `<button type="button" data-i="${i}" class="${i === SEL ? 'on' : ''}"><b class="dt">${md(w.from)}~${md(w.to)}</b><div class="mm">${v.p ? `<span>${n0(v.p)}t</span><span class="${f < 90 ? 'bad' : ''}">주문 ${f}%</span><span class="${ms < 50 ? 'bad' : ms < 80 ? 'warn' : ''}">소재 ${ms}%</span>` : '<span>계획 없음</span>'}</div></button>`; }).join('')}</div>`;
     const w = W[SEL], V = DP.map((d) => [d, dv(w, d)]), T = tot(V.map(([, v]) => v));
     const sub = T.so + T.sw + T.sb + T.sn;
+    const lnGap = (() => { const A = {}; w.g.filter((x) => PS.includes(x.pl)).forEach((x) => Object.entries(x.byLn || {}).forEach(([l, c]) => { const a = A[l] = A[l] || { p: 0, o: 0 }; a.p += c.p || 0; a.o += c.o || 0; })); return Object.values(A).reduce((s_, a) => s_ + gapI(a.p, a.o), 0); })();
     const SELF_T = w.g.filter((x) => PS.includes(x.pl)).reduce((a_, x) => a_ + Object.values(x.byLn || {}).reduce((b_, c_) => b_ + (c_.noneSelf || 0), 0), 0);   // 자가재 대기(도금 생산) — 미발주와 나눔
     const kpi = T.p < 0.5 && T.o < 0.5 ? `<div class="k-card"><div class="k-more" style="font-size:16px;padding:6px 0"><b class="dt">${md(w.from)}~${md(w.to)}</b> <b>판매재 생산 계획 없음</b></div></div>` : `<div class="k-kpi${PS.includes('C') ? '' : ' n3'}">
 <div><div class="l">판매재 생산 계획<small> (자가재 제외)</small></div><div class="v">${n0(T.p)}<small>톤</small></div><div class="s">${DP.map(([n], i) => `${n} ${n0(V[i][1].p)}`).filter((_, i) => V[i][1].p).join(' · ')}</div></div>
-<div><div class="l">주문 확보율</div><div class="v ${pc(T.o, T.p) < 90 ? 'bad' : ''}">${pc(T.o, T.p) ?? '–'}<small>%</small></div><div class="s">${n0(T.o)}톤 · 주문 부족 ${n0(Math.max(0, T.p - T.o))}톤</div></div>
+<div><div class="l">주문 확보율</div><div class="v ${pc(T.o, T.p) < 90 ? 'bad' : ''}">${pc(T.o, T.p) ?? '–'}<small>%</small></div><div class="s">${n0(T.o)}톤 · 주문 부족 ${n0(lnGap)}톤</div></div>
 <div><div class="l">소재 확보율(생산 전날 기준)</div><div class="v ${pc(T.ok + T.on, T.o) < 50 ? 'bad' : pc(T.ok + T.on, T.o) < 80 ? 'warn' : ''}">${pc(T.ok + T.on, T.o) ?? '–'}<small>%</small></div><div class="s">확보 ${n0(T.ok)} · 입고 예정 ${n0(T.on)} · 입고 지연 ${n0(T.late)} · 입고일 미정 ${n0(T.wait)} · 소재 배정 전 ${n0(SELF_T)} · 미발주 ${n0(Math.max(0, T.none - SELF_T))}</div></div>
 ${PS.includes('C') ? `<div><div class="l">부자재 준비(컬러)</div><div class="v ${sub && pc(T.so, sub) < 80 ? 'subc' : ''}">${sub ? pc(T.so, sub) : '–'}<small>%</small></div><div class="s">${sub ? `준비 ${n0(T.so)} · 대기 ${n0(T.sw + T.sb)} · 작업지시 전 ${n0(T.sn)}` : '도금은 주문 단위 부자재 없음'}</div></div>` : ''}</div>`;
     // 부서별 준비 현황
     const z = (v, c) => (v > 0.5 ? `<td class="${c || ''}">${n0(v)}</td>` : '<td class="z">–</td>');
     // 라인별 대구분 → 그룹별(11/17 사용자): 라인 머리 줄(합계) 아래 그 라인에서 만드는 그룹
-    const GS = w.g.filter((x) => PS.includes(x.pl));
+    const GS = Object.values(w.g.filter((x) => PS.includes(x.pl)).reduce((a_, x) => { const g = GMAP[x.g] || x.g, o = a_[g];
+      if (!o) { a_[g] = { ...x, g, byLn: Object.fromEntries(Object.entries(x.byLn || {}).map(([l, c]) => [l, { ...c }])) }; return a_; }
+      o.p = (o.p || 0) + (x.p || 0); Object.entries(x.byLn || {}).forEach(([l, c]) => { o.byLn[l] = addc0(o.byLn[l] || {}, c); }); return a_; }, {}));   // 11/17 검토: 가전내수는 컬러수출에 합침
     const LNO = [...new Set(GS.flatMap((x) => Object.keys(x.byLn || {})))].sort((a_, b_) => (/CGL/.test(b_) - /CGL/.test(a_)) || a_.localeCompare(b_));
     const addc = (a_, c_) => { for (const [k_, v_] of Object.entries(c_ || {})) a_[k_] = (a_[k_] || 0) + v_; return a_; };
-    const cells = (c, pl) => { const ms = c.o ? pc((c.ok || 0) + (c.on || 0), c.o) : null; return `<td class="pp">${n0(c.p || 0)}</td>${z(c.o || 0)}${z(Math.max(0, (c.p || 0) - (c.o || 0)), 'bad')}<td class="sep ${ms != null && ms < 50 ? 'bad' : ms != null && ms < 80 ? 'warn' : ''}">${ms != null ? ms + '%' : '–'}</td>${z(c.ok || 0)}${z(c.on || 0)}${z(c.late || 0, 'warn')}${z(c.wait || 0, 'warn')}${z(c.noneSelf || 0, 'self')}${z(Math.max(0, (c.none || 0) - (c.noneSelf || 0)), 'bad')}${!PS.includes('C') ? '' : pl === 'G' ? '<td class="sep z">–</td><td class="z">–</td>' : `<td class="sep">${(c.so || 0) + (c.sw || 0) + (c.sb || 0) > 0.5 ? n0(c.so || 0) : '–'}</td>${z((c.sw || 0) + (c.sb || 0), 'subc')}`}${z(c.dln || 0, 'dlc')}`; };
+    const cells = (c, pl, gT) => { const ms = c.o ? pc((c.ok || 0) + (c.on || 0), c.o) : null; return `<td class="pp">${n0(c.p || 0)}</td>${z(c.o || 0)}${z(gT != null ? gT : gapI(c.p, c.o), 'bad')}<td class="sep ${ms != null && ms < 50 ? 'bad' : ms != null && ms < 80 ? 'warn' : ''}">${ms != null ? ms + '%' : '–'}</td>${z(c.ok || 0)}${z(c.on || 0)}${z(c.late || 0, 'warn')}${z(c.wait || 0, 'warn')}${z(c.noneSelf || 0, 'self')}${z(Math.max(0, (c.none || 0) - (c.noneSelf || 0)), 'bad')}${!PS.includes('C') ? '' : pl === 'G' ? '<td class="sep z">–</td><td class="z">–</td>' : `<td class="sep">${(c.so || 0) + (c.sw || 0) + (c.sb || 0) > 0.5 ? n0(c.so || 0) : '–'}</td>${z((c.sw || 0) + (c.sb || 0), 'subc')}`}${z(c.dln || 0, 'dlc')}`; };
     const lnInfo = (l) => { const x = (w.lines || []).find((y) => y.line === l); return x ? [x.fams && x.fams.length ? x.fams.join('·') : '', x.runD < 7 ? `가동 ${x.runD}일` : ''].filter(Boolean).join(' · ') : ''; };
     const TT = {};
     const body_ = LNO.map((l) => {
@@ -55,11 +62,11 @@ ${PS.includes('C') ? `<div><div class="l">부자재 준비(컬러)</div><div cla
       addc(TT, LT);
       return `<tr class="lnh ${pl}"><th><b>${esc(l)}</b><small>${esc(lnInfo(l))}</small></th>${cells(LT, pl)}</tr>${gs.map((x) => `<tr class="gr"><th>${esc(x.g)}</th>${cells(x.byLn[l], pl)}</tr>`).join('')}`;
     }).join('');
-    const none_ = GS.filter((x) => !x.p).map((x) => { const lt = (K.left || {})[x.g] || 0; return `<tr class="gr"><th>${esc(x.g)}</th><td colspan="${PS.includes('C') ? 13 : 11}" class="na">${x.pl === 'G' ? '이 주 판매재 계획 없음' : `이 주 계획 없음${lt >= 50 ? ` · 미계획 주문 ${n0(lt)}t` : ''}`}</td></tr>`; }).join('');
+    const none_ = GS.filter((x) => !x.p).map((x) => { const lt = Object.entries(K.left || {}).filter(([g]) => (GMAP[g] || g) === x.g).reduce((a_, [, v]) => a_ + v, 0); return `<tr class="gr"><th>${esc(x.g)}</th><td colspan="${PS.includes('C') ? 13 : 11}" class="na">${x.pl === 'G' ? '이 주 판매재 계획 없음' : `이 주 계획 없음${lt >= 50 ? ` · 미계획 주문 ${n0(lt)}t` : ''}`}</td></tr>`; }).join('');
     const dtab = `<div class="k-card"><h2><b class="dt">${md(w.from)}~${md(w.to)}</b> 라인별 생산 계획(톤)</h2><div class="k-dscroll"><table class="k-d k-dl">
 <thead><tr class="grp"><th></th><th class="gs">생산</th><th colspan="2" class="gs">주문</th><th colspan="7" class="gs">소재</th>${PS.includes('C') ? '<th colspan="2" class="gs">부자재(컬러)</th>' : ''}<th class="gs">납기</th></tr>
 <tr><th></th><th>계획</th><th>주문</th><th>주문 부족</th><th class="sep">소재 확보율</th><th>확보</th><th>입고 예정</th><th>입고 지연</th><th>입고일 미정<small>발주함</small></th><th>소재 배정 전<small>자가재·입고분</small></th><th>미발주</th>${PS.includes('C') ? '<th class="sep">준비</th><th>대기</th>' : ''}<th>납기 지연(신규)</th></tr></thead>
-<tbody>${body_}${none_}<tr class="tot"><th>합계</th>${cells({ ...TT, ...Object.fromEntries(['p', 'o', 'ok', 'on', 'late', 'wait', 'none', 'so', 'sw', 'sb', 'sn'].map((k_) => [k_, T[k_] || 0])) }, PS.includes('C') ? 'C' : 'G')}</tr></tbody></table></div>
+<tbody>${body_}${none_}<tr class="tot"><th>합계</th>${cells({ ...TT, ...Object.fromEntries(['p', 'o', 'ok', 'on', 'late', 'wait', 'none', 'so', 'sw', 'sb', 'sn'].map((k_) => [k_, T[k_] || 0])) }, PS.includes('C') ? 'C' : 'G', lnGap)}</tr></tbody></table></div>
 <div class="k-lg"><span class="bad">빨강 = 주문 부족·미발주</span><span class="warn">주황 = 입고 지연·입고일 미정</span><span class="self">연보라 = 소재 배정 전</span>${PS.includes('C') ? '<span class="subc">남색 = 부자재 대기</span>' : ''}<span class="dlc">보라 = 납기 지연(신규)</span></div></div>`;
     // 독촉할 곳: 마케팅(빈 곳) · 소재(늦음·없음·부자재 대기) · 공정·출하(납기 넘김)
     const ALL = V.flatMap(([, v]) => v.iss);
@@ -93,7 +100,7 @@ ${false && (LF.length || ST.length) ? `<div class="k-ask">${LF.length ? `<div cl
     // 대응안(11/17 사용자 '생산이 계획대로 안 되거나, 주문 충당이 안 되거나, 소재가 결국 안 들어오면 — 차주 작업 당기기')
     const SW = (w.swap || []).filter((x) => PS.includes(x.pl));
     const PLN = { G: '도금', C: '컬러' };
-    const GN = (g) => { const d = DEPT.find((d_) => d_[1].includes(g)); return d && d[1].length === 1 ? d[0] : g; };   // 한 그룹 = 한 부서면 표의 부서 이름, 여러 그룹이 한 부서면 그룹 이름(가전내수)   // 그룹 → 표와 같은 부서 이름
+    const GN = (g) => { const d = DEPT.find((d_) => d_[1].includes(g)); return d ? d[0] : g; };   // 그룹 → 표와 같은 부서 이름(가전내수 → 컬러수출)   // 한 그룹 = 한 부서면 표의 부서 이름, 여러 그룹이 한 부서면 그룹 이름(가전내수)   // 그룹 → 표와 같은 부서 이름
     const crow = (e, kind) => `<div class="r"><span title="${esc(e.con || '')}">${esc(e.con || '–')}</span><span>${n0(e.t)}</span><span>${esc(GN(e.g))} · ${esc(e.dst || '')}</span><span>${e.pd ? `${md(e.pd)}${e.ln ? ` ${esc(e.ln)}` : ''}` : '계획 없음'}</span><span class="${e.pd && e.due < e.pd ? 'dlc' : ''}">${md(e.due)}</span></div>`;
     const clist = (L, kind, n) => `<div class="k-con sw"><div class="r h"><span>계약번호</span><span>톤</span><span>부서 · 목적지</span><span>${kind === 'pull' ? '원래 생산' : '생산'}</span><span>납기</span></div>${L.slice(0, n).map((e) => crow(e, kind)).join('')}${L.length > n ? `<div class="k-more">외 ${L.length - n}건 · ${n0(L.slice(n).reduce((a_, e) => a_ + e.t, 0))}톤</div>` : ''}</div>`;
     // 빈 곳 메우기(11/17 사용자 '이번 주 부족하면 다음 주, 없으면 다다음 주 — 재고가 많아지면 휴지가 낫다는 판단도'):

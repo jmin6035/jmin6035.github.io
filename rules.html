@@ -81,6 +81,7 @@ html body .kr td.a { white-space: nowrap !important; width: 1%; } .kr td.a a { f
 .flow .bx:not(:last-child)::after { content: '→'; position: absolute; right: -10px; top: 50%; transform: translate(50%, -50%); color: var(--ink-3); font-weight: 800; z-index: 1; }
 .flow .bx h4 { margin: 0 0 4px; font-size: 13.5px; color: var(--ink-2); font-weight: 700; }
 .flow .bx .k { display: block; font-weight: 800; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
+.flow .bx .nw { white-space: nowrap; }   /* '32.0 t/ │ 시간' 갈라짐(11/17 검토) */
 .flow .bx ul { margin: 0; padding-left: 16px; color: var(--ink-2); font-size: 13.5px; }
 .flow .bx b.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .r-st { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; font-size: 14px; margin: 0 0 14px; }
@@ -113,7 +114,7 @@ b.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 날짜·기간 �
 
     <section class="card" id="r-sec">
       <details class="fold" id="r-fold" style="margin-top:0" open><summary>전체 규칙 — 단계별 <small id="r-cnt"></small></summary>
-        <p class="small" style="margin:10px 0"><span class="rl-edit">수정 가능</span> 위 수치 바꾸기 · <span class="rl-auto">자동</span> 엔진 고정 · <span class="rl-todo">반영 예정</span> 결정 완료·엔진 반영 전 · <span class="rl-hold">보류</span> 결정 대기</p>
+        <p class="small" style="margin:10px 0"><span class="rl-edit">수정 가능</span> 위 수치 바꾸기 · <span class="rl-auto">자동</span> 계획에 반영됨 · <span class="rl-todo">반영 예정</span> 결정 완료·엔진 반영 전 · <span class="rl-hold">보류</span> 결정 대기</p>
         <div class="rl-tabs" id="r-tabs" role="tablist"></div>
         <div id="r-body"></div>
       </details>
@@ -284,7 +285,7 @@ b.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 날짜·기간 �
       + box('① 수요', '실주문 먼저 + 모자란 만큼 판매계획', ['수출 = 출항 − 1일', '내수 = 납기월 말일', `자가재 = 컬러 사용일 −${L.selfLead}~−${L.selfLeadMin}일`])
       + box('② 월 계획', '판매 + 목표 − 기초', [`목표 = 하루 판매 × <b class="n">${T('G수출')}일</b>(상한)`, `자동차 ${A.days['기타']} · AL-STS ${A.days['AL-STS']}일`, '기초 = 전달 말 MES 재고'])
       + box('③ 편성', '결품 → 지연 → M/C → 선생산 최소', [`M/C 1회 = 납기 지연 <b class="n">${n0(A.replan.tradeoff)}톤·일</b>로 봄`, `앞 ${A.replan.freezeDays}일 강종 고정`, '하루 한 강종(1CGL AL·AZ · 2CGL AL·MAC)'])
-      + box('④ 제약', `M/C 고정 <b class="dt">${mdy(lockTo())}</b>까지`, [`정기수리 ${sd}`, `속도 1CGL AL ${tph('1CGL|AL')} · AZ ${tph('1CGL|AZ')} t/시간`, `2CGL AL ${tph('2CGL|AL')} · MAC ${tph('2CGL|MAC')} t/시간`, `M/C 1회 손실 1CGL ${n0(A.plating.switchDummy['1CGL'])}분 · 2CGL ${n0(A.plating.switchDummy['2CGL'])}분`, `소재 입고 → 도금 최소 ${L.safetyG}일`])
+      + box('④ 제약', `M/C 고정 <b class="dt">${mdy(lockTo())}</b>까지`, [`정기수리 ${sd}`, `속도 1CGL <span class="nw">AL ${tph('1CGL|AL')}</span> · <span class="nw">AZ ${tph('1CGL|AZ')} t/시간</span>`, `2CGL <span class="nw">AL ${tph('2CGL|AL')}</span> · <span class="nw">MAC ${tph('2CGL|MAC')} t/시간</span>`, `M/C 1회 손실 1CGL ${n0(A.plating.switchDummy['1CGL'])}분 · 2CGL ${n0(A.plating.switchDummy['2CGL'])}분`, `소재 입고 → 도금 최소 ${L.safetyG}일`])
       + `</div><div class="flow c"><div class="pl">컬러</div>`
       + box('① 수요', '그룹 월 계획 → 품목', ['품목 = 판매계획 비율', `수출 = 선적 기한 전 ${A.days['건재수출']}일 창`, '계획재 = 운영안 안전재고'])
       + box('② 월 계획', '판매 + 목표 − 기초', [`목표 ${T('주문재')}일(상한) · 가전내수 ${A.days['가전내수']}일`, '기초 = 전달 말 MES 재고', '이번 달 = 실적·확정 빼고 남은 양 매일 재계산'])

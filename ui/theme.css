@@ -917,6 +917,7 @@ html body main table.sc { min-width: 1760px !important; }
 html body main :is(table.gtable td.w4, table.gtable td.w5, table.sc td.w4) { font-size: 13.5px !important; }
 /* 가동 상세: 흐름(소재 → 생산 → 납기)은 칸이 모자라면 다음 줄로 */
 html body main .flw { flex-wrap: wrap; white-space: normal; row-gap: 5px; }
+html body main .flw .fu { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }   /* '›' + 칩 = 한 덩어리(11/17 검토 '›'가 혼자 한 줄) */
 html body main .det table.dt td { white-space: normal; }
 html body main #g-table :is(.c0, .c1) { z-index: 6; }
 html body main :is(.k .v, .kpi .v, .sum-v, .st-v) small { font-size: 15px !important; }   /* 큰 숫자 옆 단위는 작게 유지 */

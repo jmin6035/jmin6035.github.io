@@ -214,7 +214,7 @@
     const PSv = PS && PS.tot ? PS.tot : null;
     const psLine = PSv && inS('C') ? `<div class="iv-chip ${PSv.stock > PSv.target * 1.5 ? 'warn' : ''}"><b>계획재</b>${n0(PS.n)}개 사양 ${n0(PSv.stock)}t · 목표 ${n0(PSv.target)}t의 ${Math.round(PSv.stock / PSv.target * 100)}% · ${+String(PS.month).slice(5)}월말 예상 ${n0(PSv.end[0])}t <i>·</i> 결품·안전재고 미만 ${n0((PS.flags.short || 0) + (PS.flags.low || 0))}개 사양 <a href="planstock.html">계획재 상세 →</a></div>` : '';
     const topH = `<div class="iv-top"><div class="scroll"><table class="t iv-t"><thead><tr><th class="l">제품 재고</th><th>실재고</th><th title="'27 판생그룹 월말 최대">목표</th><th>목표 대비</th><th>차이</th><th class="l">초과 근거(같은 판매그룹)</th></tr></thead><tbody>${cats.map(crow).join('') || '<tr><td colspan="6" class="muted">판매생산속보 재고 없음</td></tr>'}</tbody></table></div>
-      <p class="iv-at">판매생산속보 ${PT && PT.sr ? esc(md(String(PT.sr.asOf).slice(0, 10))) : '-'} 기준 · 아래 그래프 = ${md(W[wi])} 주말 계획 · 실제(속보 원천 표)</p>
+      <p class="iv-at">판매생산속보 ${PT && PT.sr ? esc(md(String(PT.sr.asOf).slice(0, 10))) : ''} 기준</p>
       ${chip('bad', '부족 위험', gs.filter((x) => x.now === 'bad').map((x) => nm(x.r)))}
       ${chip('warn', '앞으로 목표 미만', gs.filter((x) => x.now !== 'bad' && x.ahead).map((x) => `${nm(x.r)} <span>${md(W[x.wk])} 주 ${n0(x.r.v[x.wk])}t</span>`))}
       ${chip('over', '상한 초과', gs.filter((x) => x.now === 'over').map((x) => `${nm(x.r)} <span>${x.r.tgt ? `목표의 ${Math.round(x.r.v[wi] / x.r.tgt[wi] * 100)}%` : ''}</span>`))}
@@ -227,7 +227,7 @@
       const grp = /^자가재/.test(r.k) ? 'S' : 'P'; const sep = ri && grp !== prevGrp ? ' class="sep"' : ''; prevGrp = grp;
       return `<tr${sep}><td class="l nm">${esc(GN[r.k] || r.k)}</td>${r.v.map((v, i) => `<td class="h-${st(r, i)}" title="${md(W[i])} ${n0(v)}t${r.tgt ? ' / 목표 ' + n0(r.tgt[i]) : ''}">${k1(v)}</td>`).join('')}<td class="muted">${r.tgt ? k1(r.tgt[r.tgt.length - 1]) : '0 이상'}</td></tr>`;
     }).join('');
-    return { html: card('s-stock', '①', '제품·자가재 재고 추이', `${SRL ? `제품${SRL.v && SRL.v['G자가재'] ? '·자가재' : ''} = 매일 갱신(어제 ${md(SRL.asOf)} 실제 재고 + 아침 재계획)${SRL.v && SRL.v['G자가재'] ? '' : ` · 자가재 = ${VN[V]}`}` : `${VN[V]} 기준`} · 주말 재고 · ${md(W[wi])} 주부터 12월 말까지`, `
+    return { html: card('s-stock', '①', '제품·자가재 재고 추이', `${SRL ? `실제 ${md(SRL.asOf)}까지 + 재계획` : `${VN[V]} 기준`} · 주말 재고 · ${md(W[wi])} 주~12월 말`, `
       ${topH}
       ${plants ? `<h3 class="st-sec">공장별 전체 재고 <small>숫자 = 천t · 초록 = 실제(판매생산속보, 일별) · 파랑 = 계획(주말 예측)</small></h3><div class="dc-grid st-charts st-plant">${plants}</div>` : ''}
       <h3 class="st-sec">판매그룹별 재고 <small>숫자 = 주말 재고(천t) · 목표 = TF 목표 일수 × 다음 달 하루 판매 · 자가재 = 도금 → 컬러 소재(목표 없음, 부족해지지 않게)</small></h3>

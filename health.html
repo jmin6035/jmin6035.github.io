@@ -36,7 +36,7 @@ ol.fix li { margin: 8px 0; font-size: 16px; } ol.fix code { background: var(--ti
     ['integrated.enc.json', '통합 가동계획', '계획 변경 시(수동)']];
   (async () => {
     const st = (await Promise.all([get(SUPA + 'status.json'), get('published/status.json')])).filter(Boolean).sort((a, b) => (String(a.runAt) < String(b.runAt) ? 1 : -1))[0];
-    const envs = await Promise.all(PAGES.map(async ([n, , , only]) => { const [a, b] = await Promise.all([get(SUPA + n), only === 'remote' ? null : get('published/' + n)]); /* remote = 사내 PC 가 Supabase 에만 올리는 파일(사이트 쪽 요청은 404) */ const ca = a && (a.created || a.savedAt), cb = b && (b.created || b.savedAt); return ca && (!cb || ca > cb) ? { src: '사내 PC 자동', at: ca } : cb ? { src: '수동 게시', at: cb } : null; }));
+    const envs = await Promise.all(PAGES.map(async ([n, , , only]) => { const [a, b] = await Promise.all([get(SUPA + n), only === 'remote' ? null : get('published/' + n)]); /* remote = 사내 PC 가 Supabase 에만 올리는 파일(사이트 쪽 요청은 404) */ const ca = a && (a.created || a.savedAt), cb = b && (b.created || b.savedAt); return ca && (!cb || ca > cb) ? { src: '자동 갱신', at: ca } : cb ? { src: '수동 게시', at: cb } : null; }));
     let h = '';
     if (st) {
       const fs = st.feeds || [];
@@ -48,7 +48,7 @@ ol.fix li { margin: 8px 0; font-size: 16px; } ol.fix code { background: var(--ti
     } else h += '<section class="card"><h2>원천 자료</h2><p class="lead">자료 상태 파일이 없습니다(새 자동 실행기 설치 후 생성).</p></section>';
     h += `<section class="card"><h2>화면별 게시 시각 <small>매일 자동 갱신본과 수동 게시본 중 최신</small></h2><div class="scroll"><table class="t"><thead><tr><th class="l">화면</th><th>게시</th><th>경과</th><th class="l">출처</th><th class="l">갱신 방식</th></tr></thead><tbody>${PAGES.map(([n, nm, how], i) => { const e = envs[i]; return `<tr><td class="l"><b>${nm}</b></td><td>${e ? kst(e.at) : '-'}</td><td class="c">${badge(e ? age(new Date(e.at).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })) : null)}</td><td class="l">${e ? e.src : '-'}</td><td class="l muted">${how}</td></tr>`; }).join('')}</tbody></table></div></section>`;
     h += `<section class="card"><h2>갱신 중단 시 점검 절차</h2><ol class="fix">
-      <li>사내 PC가 켜져 있고 로그인돼 있는지(MES 받기가 Edge 화면을 직접 조작)</li>
+      <li>자동 실행 컴퓨터가 켜져 있고 로그인돼 있는지(MES 받기가 Edge 화면을 직접 조작)</li>
       <li>작업 스케줄러에 등록됐는지: 명령 프롬프트에서 <code>schtasks /Query /TN "CGL 자동수집"</code> — 없으면 설치 폴더의 <code>register_task.bat</code> 실행</li>
       <li>직접 한 번 실행: <code>run_auto.bat</code> → 끝나고 이 화면 새로고침</li>
       <li>실패 기록: 설치 폴더 <code>out\\auto_log.txt</code> 마지막 줄(‘실패:’로 시작) — MES 화면 변경·암호 만료가 흔한 원인</li></ol></section>`;

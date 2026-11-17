@@ -65,7 +65,7 @@
       (LT ? `<p class="ps-late" title="${esc(LT.tip)}">발주 지연 <b>${n0(LT.t)}t</b> <span>${LT.items.map((x) => esc(x.name)).join(' · ')}</span></p>` : '')
       + `<div class="scroll"><table class="t big"><thead><tr><th>소재</th><th>업체</th><th title="발주 기간이 지난 생산분 필요량(재고 차감 전) — 경고 아님, 실제 부족은 위 '발주 지연'">기간 지남</th><th>2주 내 마감</th><th>이후</th><th>합계</th></tr></thead><tbody>${rows}</tbody></table></div>`
       + (next.length ? `<p class="small"><b>최우선 발주:</b> ${next.slice(0, 3).map((o) => `${md(o.o1)}까지 ${o.kind} ${n0(o.t - (o.ordered || 0))}t(${md(o.arr)} 입고)`).join(' · ')}</p>` : '')
-      + '<p class="small">기간 지남 = 발주일이 지난 생산분의 소재 필요량(재고·발주 완료분 빼기 전). 실제 부족은 위 \'발주 지연\'.</p>');
+      );   // 11/17 검토: '기간 지남' 설명 줄 삭제(머리 칸 마우스 올림에 같은 설명)
   }
   function fhCard() {
     const today = UI.today(O.today);   // 공통 기준일(11/8)
@@ -73,10 +73,10 @@
     const rows = Object.entries(O.fh).filter(([m]) => m >= '2026-10').map(([m, [need, have, cov]]) => {
       const left = Math.max(0, need - (cov != null ? cov : have)), [o0, o1] = win(m);   // 11/10: 앞 달에 남은 발주 완료분은 뒤 달에 씀(cov = 누적 충당, planstock.py) — 예전엔 달마다 따로 빼 '기간 지남' 4,123t(발주 요약 703t 과 다름)
       const st = left < 0.5 ? ['충분', 'good'] : today > o1 ? ['기간 지남', 'bad'] : today >= o0 ? ['발주 기간 중', 'warn'] : [`${md(o0)}부터`, ''];
-      return `<tr><td><b>${+m.slice(5)}월적</b>${m.slice(0, 4) !== '2026' ? ` <small>'${m.slice(2, 4)}</small>` : ''}</td><td>${md(o0)}~${md(o1)}</td><td>${md(`${m}-07`)}</td><td>${n0(need)}</td><td>${n0(have)}</td><td class="${st[1] === 'bad' ? 'bad' : st[1] === 'warn' ? 'warn' : ''}"><b>${n0(left)}</b></td><td><span class="tag ${st[1]}">${st[0]}</span></td></tr>`; }).join('');
+      return `<tr><td><b>${+m.slice(5)}월적</b>${m.slice(0, 4) !== '2026' ? ` <small>'${m.slice(2, 4)}</small>` : ''}</td><td>${md(o0)}~${+o1.slice(8)}</td><td>${md(`${m}-07`)}</td><td>${n0(need)}</td><td>${n0(have)}</td><td class="${st[1] === 'bad' ? 'bad' : st[1] === 'warn' ? 'warn' : ''}"><b>${n0(left)}</b></td><td><span class="tag ${st[1]}">${st[0]}</span></td></tr>`; }).join('');
     return card('ps-fh', '수입 FH 월적', '계획재용 수입 FH — 필요량 · 발주 완료분 · 남은 발주', '단위: 톤',
       `<div class="scroll"><table class="t big"><thead><tr><th>월적</th><th>발주 기간</th><th>입고</th><th>필요</th><th>발주 완료분</th><th>남은 발주</th><th>판정</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="small">발주 완료분 = 기초재고 파일의 그 달 입고분 수입 FH 발주량 · 남은 발주 = 필요 − (앞 달에 남은 발주 완료분 + 그 달 발주 완료분)</p>`);
+      <p class="small">남은 발주 = 필요 − 발주 완료분(앞 달 남은 몫 포함)</p>`);
   }
   function trend() {
     const D = O.daily, W = 1200, H = 340, pl0 = 64, pr = 150, pt = 16, pb = 34;
@@ -138,7 +138,7 @@
       const e = r.end || [];
       const ec = (v) => (v < 0 ? 'bad' : v < s.safe ? 'warn' : '');
       return `<tr><td class="l nm">${esc(s.product)}</td><td class="l">${esc(s.spec)}</td><td class="l">${esc(s.mat)}</td><td class="l">${esc(s.owner)}</td>
-        <td><b>${n1(r.stock)}</b></td><td>${n1(s.safe)} / ${n1(s.target)}</td><td>${n1(r.prodM)} <small class="muted">/ ${n1(r.planDue)} / ${n1(r.planM)}</small></td><td>${n1(r.shipM)} <small class="muted">/ ${n1(r.fcM)}</small></td>
+        <td><b>${n1(r.stock)}</b></td><td>${n1(s.safe)} / ${n1(s.target)}</td><td>${n1(r.prodM)}<small class="muted ps-b">${n1(r.planDue)} / ${n1(r.planM)}</small></td><td>${n1(r.shipM)}<small class="muted ps-b">${n1(r.fcM)}</small></td>
         <td class="${ec(e[0])}"><b>${n1(e[0])}</b></td><td class="${ec(e[1])}">${n1(e[1])}</td><td class="${ec(e[2])}">${n1(e[2])}</td><td>${r.cover == null ? '-' : n0(r.cover)}</td><td class="l">${fl}</td></tr>`;
     }).join('') || '<tr><td colspan="13" class="muted">해당 사양 없음</td></tr>';
     const m1 = O.months.indexOf(O.month);

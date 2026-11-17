@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="dashboard.css?v=2611120206">
 <link rel="stylesheet" href="ui/theme.css?v=2611120206">
 <link rel="stylesheet" href="ui/bridge.css?v=2611120206">
-<style>html body main #a-events td.wrap { min-width: 150px !important; max-width: 220px; }   /* 11/10 점검: M/C 사유 칸 잘림 → 줄바꿈 */.hbtn { padding: 0; }   /* 옛 style.css 의 button 안쪽 여백이 '?' 를 아래로 밀던 것 */
+<style>html body main #a-events td.wrap { min-width: 130px !important; max-width: 220px; white-space: normal !important; word-break: keep-all; }   /* 11/10 점검: M/C 사유 칸 잘림 → 줄바꿈 */.hbtn { padding: 0; }   /* 옛 style.css 의 button 안쪽 여백이 '?' 를 아래로 밀던 것 */
 .an-seg { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); margin: 4px 0 12px; }
 .an-seg button { border: 0; background: transparent; font: inherit; font-size: 15px; font-weight: 800; padding: 7px 22px; border-radius: 7px; color: var(--ink-2); cursor: pointer; }
 .an-seg button[aria-pressed="true"] { background: var(--brand-2); color: var(--on-brand, #fff); }
@@ -21,6 +21,9 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
 .an-sum .warn { color: var(--warn); } .an-sum .ok { color: var(--good); }
 .an-sum .lst { flex-basis: 100%; color: var(--ink-2); font-size: 14px; }
 .ref { margin: 8px 0 0; padding-left: 18px; line-height: 1.8; font-size: 14px; }
+/* 11/17 검토: '근거' 칸(긴 문장)이 한 줄로 늘어 표가 1,268px > 1,020 — 오른쪽 '판정' 칸이 잘림 → 근거만 줄바꿈 */
+html body main #a-cands td.l.muted { white-space: normal !important; word-break: keep-all; min-width: 240px; }
+html body main #a-events :is(th, td) { padding-left: 8px !important; padding-right: 8px !important; }
 </style>
 </head>
 <body class="dash">

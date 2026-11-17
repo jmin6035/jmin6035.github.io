@@ -37,7 +37,7 @@
     $('lt-meta').textContent = `기준 ${fdt(D.built)} · ${mdTxt(D.team.source)}`;
     $('lt-main').innerHTML = `
       <section class="card"><h2>입고 뒤 계획이 쓰는 일수</h2>
-        <div class="lt-k">${D.fixed.map((f) => `<div><small>${esc(wd_(f[1]))}</small><b>${num(f[0], f[2])}<i>일</i></b><span>${esc(wd_(f[3]))}</span><em>${esc(f[4])}</em></div>`).join('')}
+        <div class="lt-k">${D.fixed.map((f) => `<div title="${esc('쓰는 곳: ' + f[4])}"><small>${esc(wd_(f[1]))}</small><b>${num(f[0], f[2])}<i>일</i></b><span>${esc(wd_(f[3]))}</span></div>`).join('')}
           <div><small>도금 선생산 허용</small><b class="ro">${esc(D.release.split(' · ')[0])}</b><span>${esc(D.release.split(' · ').slice(1).join(' · '))}</span><em>도금 계획 엔진 — <a href="rules.html">계획 규칙</a>에서 수정</em></div></div></section>
       <section class="card"><h2>소재 유형별 발주 → 입고 <small>발주 창이 있는 유형은 창 첫날 발주 기준(가장 긴 경우)</small></h2>
         <div class="scroll"><table class="t"><thead><tr><th class="l">소재 유형</th><th>리드타임</th><th class="l" style="min-width:260px"></th><th class="l">발주 방식</th></tr></thead><tbody>
@@ -47,7 +47,7 @@
         <div class="lt-bar2"><input id="lt-who" placeholder="이름" maxlength="40" aria-label="이름"><input id="lt-memo" placeholder="바꾸는 이유(선택)" maxlength="200" aria-label="바꾸는 이유"><button type="button" class="btn primary" id="lt-apply" disabled>적용</button><span id="lt-n" class="lt-n"></span><span id="lt-res" class="small"></span></div>
         ${D.src ? `<p class="small">지금 값: ${esc(D.src.who || '')} ${esc(fd(D.src.at))}${D.src.memo ? ' · ' + esc(D.src.memo) : ''}</p>` : ''}
         ${(D.log || []).length ? `<details class="small"><summary>바꾼 이력 ${D.log.length}건</summary>${D.log.map((g) => `<p>${esc(fdt(g.at))} ${esc(g.who)} — ${esc((g.chg || []).join(' · '))}${g.memo ? ' (' + esc(g.memo) + ')' : ''}</p>`).join('')}</details>` : ''}</section>
-      <section class="card"><details class="lt-fold"><summary><b>단계별 흐름</b> <small>팀 리드타임 표 원문 · ${D.team.rows.length}줄</small></summary>
+      <section class="card"><details class="lt-fold"><summary><b>단계별 흐름</b> <small>팀 리드타임 표 원문 · ${D.team.rows.length}건</small></summary>
         ${D.team.note ? `<p class="small">${esc(D.team.note)}</p>` : ''}
         <div class="scroll"><table class="t"><thead><tr>${D.team.columns.map((c) => `<th class="l">${esc(c)}</th>`).join('')}</tr></thead><tbody>
         ${D.team.rows.map((r) => `<tr>${D.team.columns.map((c, i) => `<td class="l">${i === 1 ? '<b>' + esc(r[c]) + '</b>' : esc(r[c])}</td>`).join('')}</tr>`).join('')}

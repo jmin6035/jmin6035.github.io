@@ -10,11 +10,11 @@
 table.gk { width: 100%; min-width: 1560px; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; background: #fff; }
 table.gk col.c0 { width: 64px; } table.gk col.c1 { width: 80px; } table.gk col.tot { width: 96px; }
 html:root body main table.gk.gk :is(td, th) { height: 28px; padding: 0 1px !important; font-size: 14px !important; line-height: 1.15 !important; text-align: center !important; vertical-align: middle !important; letter-spacing: -0.2px; color: #000; background: #fff; border: 0; border-right: 1px solid #808080 !important; border-bottom: 1px solid #808080 !important; white-space: nowrap; overflow: hidden; position: relative; font-weight: 400; box-shadow: none; border-radius: 0; }
-html:root body main table.gk.gk thead :is(th, td) { height: 24px; font-weight: 700; position: sticky; z-index: 3; background: #fff !important; color: #000 !important; }
-html:root body main table.gk.gk thead :is(th.c0, th.c1) { z-index: 5; }
+html:root body main table.gk.gk thead :is(th, td) { height: 24px; font-weight: 700; position: sticky; z-index: 6; background: #fff !important; color: #000 !important; }
+html:root body main table.gk.gk thead :is(th.c0, th.c1) { z-index: 8; }
 html:root body main table.gk.gk thead :is(th, td).we { background: #ffff00 !important; color: #c00000 !important; font-weight: 800; }
-html:root body main table.gk.gk :is(th.c0, th.c1) { font-weight: 700; position: sticky; z-index: 2; background: #ebf1de !important; color: #000 !important; }
-html:root body main table.gk.gk th.c0 { left: 0; border-right: 2px solid #4a5561 !important; } html:root body main table.gk.gk th.c1 { left: 64px; }
+html:root body main table.gk.gk :is(th.c0, th.c1) { font-weight: 700; position: sticky; z-index: 6; background: #ebf1de !important; color: #000 !important; }
+html:root body main table.gk.gk th.c0 { left: 0; border-right: 2px solid #4a5561 !important; } html:root body main table.gk.gk th.c1 { left: 64px; border-right: 2px solid #4a5561 !important; }   /* 고정 칸(라인·구분)은 정지 글자·지난 날 덮개·오늘 틀(z 3~5)보다 위 — 11/17 검토 '수리 (9일)이 고정 칸 위로'
 html:root body main table.gk.gk th.c0[rowspan] { white-space: normal !important; word-break: keep-all; }   /* 긴 이름은 두 줄 */
 html:root body main table.gk.gk :is(th.c0, th.c1) small { display: block; font-size: 13.5px !important; font-weight: 500; color: #000; }
 html:root body main table.gk.gk :is(th.tot, td.tot) { font-weight: 700; color: #000; border-left: 2px solid #4a5561 !important; }
@@ -34,7 +34,8 @@ html:root body main table.gk.gk :is(td, th).padc { background: var(--surface-2, 
 /* M/C·S/D·청소 노랑 · 여러 날 정지 남색 합친 칸 · 가동시간 줄 · 합계 줄 */
 html:root body main table.gk.gk :is(td, th).y { background: #ffff00 !important; color: #1f3864 !important; font-weight: 800; cursor: pointer; }
 html:root body main table.gk.gk :is(td, th).sp { background: #1f3864 !important; color: #fff !important; font-weight: 800; cursor: pointer; text-align: center !important; }
-html:root body main table.gk.gk td.sp span { position: relative; z-index: 5; background: #1f3864; padding: 0 6px; }
+html:root body main table.gk.gk td.sp { overflow: visible; }
+html:root body main table.gk.gk td.sp span { position: sticky; left: 150px; right: 100px; display: inline-block; z-index: 5; background: #1f3864; padding: 0 2px; }   /* 합친 정지 칸 이름 = 보이는 칸 안에 붙어 있음(왼쪽 고정 칸 뒤로 숨지 않게) */
 html:root body main table.gk.gk :is(tr.ev, tr.hr) > * { height: 24px; }
 html:root body main table.gk.gk tr.ev td.tot { color: #000; font-weight: 400; }
 html:root body main table.gk.gk tr.hr > * { font-size: 13.5px !important; background: #fff !important; color: #000 !important; font-weight: 500; }
@@ -69,3 +70,5 @@ table.gk td.sel { outline: 3px solid #0070c0; outline-offset: -3px; }
   .gk-tdy { display: none !important; }
   table.gk th, table.gk td, .gk-lg i { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+/* 11/17 검토: 표 머리를 따라 내려오게 할 때(공통 shell stickyHeads — thead 를 옮김) 머리가 고정 칸·정지 글자(z 5~6)보다 위 */
+html:root body main table.gk.stk-js thead { z-index: 9; }
