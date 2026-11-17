@@ -416,7 +416,7 @@
     return `<button type="button" class="cell sc${big ? ' mc' : ''}${c.flag ? ' fl' : ''}" data-ln="${ln}" data-d="${c.d}" title="${esc(tip)}">`
       + `<div class="sc-r1"><span class="sc-ch">${famCh(c.fam)}${stsCh(ln, c.d, c.fam)}</span><span class="tv">${n0(fill)}<small>t</small></span></div>`
       + `<div class="sc-bar">${past >= 0.05 ? `<i class="spa" style="width:${w(past)}"></i>` : ''}${ST.map(([, h]) => `<i class="sst" style="width:${w(h * dl)}"></i>`).join('')}<i class="sk1" style="width:${w(kh.확정)}"></i><i class="sk2" style="width:${w(kh.편성)}"></i><i class="sk3" style="width:${w(kh.예상)}"></i></div>`
-      + `<div class="sc-h"><b>${n1(run)}</b> / ${n1(avail)}h${ST.map(([k, h]) => ` <span class="sc-st">${esc(k)} ${n1(h)}시간</span>`).join('')}</div>`
+      + `<div class="sc-h"><b>${n1(run)}</b> / ${n1(avail)}시간${ST.map(([k, h]) => ` <span class="sc-st"><i>${esc(k)}</i> <i>${n1(h)}시간</i></span>`).join('')}</div>`
       + `<div class="gl">${gs}</div>` + stsLn(ln, c.d)
       + (c.flag ? `<div class="fg">⚠ ${esc(c.flagS || c.flag)}</div>` : '')
       + (empty >= 0.5 ? `<div class="sh" title="${esc(c.why || '넣을 주문·소재 없음')}">빈 ${n1(empty)}시간</div>` : '')

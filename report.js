@@ -125,7 +125,7 @@
       const right = mode === 'stock'
         ? (r.ref == null ? `<b>${n0(r.v)}</b>t <span class="muted">목표 없음</span>` : `<b>${n0(r.v)}</b>t <span class="muted">/ 목표 ${n0(r.ref)}</span> <span class="pc ${cls}">${Math.round(rt)}%</span>`)
         : `<b>${n0(r.v)}</b>t <span class="muted">/ 일정 ${n0(r.ref)}</span> <span class="pc ${cls}">${rt == null ? '-' : Math.round(rt) + '%'}</span>`;
-      return `<div class="bul-row${r.total ? ' total' : ''}"><div class="bul-l">${esc(r.name)}</div><div class="bul-track">` +
+      return `<div class="bul-row${r.total ? ' total' : ''}"><div class="bul-l">${esc(String(r.name == null ? '' : r.name).replace(/^자동차강판(판매)?/, '자동차').replace(/^도금판매(\(국내\))?/, '도금국내'))}</div><div class="bul-track">` +
         (r.full ? `<div class="bul-full" style="width:${w(r.full)}%"></div>` : '') +
         `<div class="bul-bar ${cls}" style="width:${w(r.v)}%"></div>` +
         (r.ref != null ? `<div class="bul-ref" style="left:${w(r.ref)}%"></div>` : '') +

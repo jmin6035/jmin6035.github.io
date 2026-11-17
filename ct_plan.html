@@ -244,7 +244,8 @@ i.sk0 { background: #a6a6a6; } i.sk1 { background: #2e7d32; } i.sk2 { background
 i.sst { background: #ffff00; box-shadow: inset 0 0 0 1px #1f3864; } i.spa { background: repeating-linear-gradient(135deg, #bfbfbf 0 2px, #f2f2f2 2px 5px); } i.sgap { background: #fff; box-shadow: inset 0 0 0 1px #bfbfbf; }
 .sc-h { font-size: 13.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; line-height: 1.5; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px 6px; }
 .sc-h b { color: var(--ink); font-size: 14.5px; }
-.sc-st { display: inline-block; background: #ffff00; color: #1f3864; font-weight: 800; border-radius: 4px; padding: 0 5px; box-shadow: inset 0 0 0 1px #1f3864; white-space: nowrap; }
+.sc-st i { font-style: normal; white-space: nowrap; display: inline-block; }   /* 칩 안 '정지 이름'·'시간' 은 각각 안 끊김 */
+.sc-st { display: inline-block; background: #ffff00; color: #1f3864; font-weight: 800; border-radius: 4px; padding: 0 5px; box-shadow: inset 0 0 0 1px #1f3864; white-space: normal; word-break: keep-all; max-width: 100%; box-sizing: border-box; text-align: center; line-height: 1.35; }   /* M/C(AL→AZ) 10.2시간 처럼 긴 정지 칩이 칸 밖으로 넘치지 않게 줄바꿈(11/17) */
 button.cell.sc .gl { margin-top: 4px; border-top: 1px dashed #d9d9d9; padding-top: 3px; } button.cell.sc .gl:empty { display: none; }
 button.cell.sc .sh, button.cell.sc .fg, button.cell.sc .lt, button.cell.sc .mvc { text-align: center; }
 .sc-off { font-size: 15px; font-weight: 800; } button.cell.sc.stp { justify-content: center; } button.cell.sc.stp .sc-h { color: #fff; }
@@ -272,7 +273,7 @@ button.cell.sc.pcell { background: transparent; cursor: default; color: var(--in
   </section>
   <details class="fold" id="ps-fold"><summary>기준·사양 <small></small></summary><div id="ps-fold-b"></div></details>
 </main>
-<footer class="foot"><div class="wrap"><span>원자료: MES 작업지시·주문진도·최신 재계획·통합 컬러 계획 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<footer class="foot"><div class="wrap"><span>원자료: MES 작업지시·주문진도·최신 재계획·통합 컬러 계획</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611141500"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
 <script src="ui/ct.js?v=2611120206"></script>

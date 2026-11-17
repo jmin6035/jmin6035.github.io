@@ -74,7 +74,7 @@
       const mg = (MO && MO.groups ? MO.groups.groups : []).filter((x) => (MOG[g.key] || []).includes(x.group));
       const gu = {}; mg.forEach((x) => (x.mats || []).forEach((m) => { gu[m.key] = (gu[m.key] || 0) + (m.use || 0); }));
       const ma = mg.flatMap((x) => x.mats || []).filter((x) => !(x.use < 1)).filter((x, i, A) => A.findIndex((y) => y.key === x.key) === i).map((x) => { const v = VM.get(x.key) || x; return Object.assign({}, v, { lateT: Math.round((v.lateT || 0) * (UT[x.key] ? gu[x.key] / UT[x.key] : 1)) }); }).sort((a, b) => SR_[a.st] - SR_[b.st] || (b.lateT || 0) - (a.lateT || 0) || String(a.deadline || '9').localeCompare(String(b.deadline || '9')))[0];
-      const mat = { m: ma, v: !mg.length ? ['na', '–', ''] : !ma || ma.st === 'ok' ? ['ok', '충분', ''] : [{ late: 'bad', soon: 'warn', plan: 'ok' }[ma.st], { late: '발주 지연', soon: '2주 안 발주', plan: '발주 예정' }[ma.st], ma.st === 'late' ? `${CT.matNm(ma.name)} ${n0(ma.lateT)}t` : `${CT.matNm(ma.name)} <b class="dt">${md(ma.deadline)}</b>까지`] };
+      const mat = { m: ma, v: !mg.length ? ['na', '–', ''] : !ma || ma.st === 'ok' ? ['ok', '충분', ''] : [{ late: 'bad', soon: 'warn', plan: 'ok' }[ma.st], { late: '발주 지연', soon: '2주 안 발주', plan: '발주 예정' }[ma.st], ma.st === 'late' ? `${CT.matNm(ma.name)} ${n0(ma.lateT)}t` : `${CT.matNm(ma.name)} ${md(ma.deadline)}까지`] };
       // 납기: 납기 위험(위험 = 지연 예상 + 납기 지남) — 자료 없으면 '–'
       const due = UI.ctlRisk(RKc, g.key);
       const dv = due ? [due.tone, due.risk >= 0.5 ? `위험 ${n0(due.risk)}t` : '위험 0', due.t ? `미결 ${n0(due.t)}t 중 ${Math.round(due.risk / due.t * 100)}%` : ''] : ['na', '–', ''];
@@ -120,7 +120,7 @@
         const mg = (mo && mo.groups ? mo.groups.groups : []).filter((x) => (MOG[g.key] || []).includes(x.group));
         const VM = new Map(UI.matView(mo, O).map((x) => [x.key, x]));
         const ms = mg.flatMap((x) => x.mats).map((x) => VM.get(x.key) || x).filter((x) => x.first && x.first.slice(0, 7) <= m && x.st !== 'ok').sort((a, b) => (a.deadline < b.deadline ? -1 : 1))[0];
-        c4 = ms ? [{ late: 'bad', soon: 'warn', plan: 'ok' }[ms.st] || 'ok', `${esc(CT.matNm(ms.name))}`, `<b class="dt">${md(ms.deadline)}</b>까지 발주 · <b class="dt">${md(ms.first)}</b>부터 부족`] : ['ok', '충분', ''];
+        c4 = ms ? [{ late: 'bad', soon: 'warn', plan: 'ok' }[ms.st] || 'ok', `${esc(CT.matNm(ms.name))}`, `${md(ms.deadline)}까지 발주 · ${md(ms.first)}부터 부족`] : ['ok', '충분', ''];
         const nm = { G수출: ['도금수출'], G국내: ['도금국내'], G자동차: ['자동차내수', '자동차수출'], G자가재: ['자가재'] }[g.key] || [];
         const pick = (L) => L.filter((x) => nm.some((n) => x.startsWith(n + ' ')) && +(x.match(/ (\d+)\/\d+ /) || [0, 0])[1] === mm).map((x) => +(x.match(/([\d,]+)t$/) || [0, '0'])[1].replace(/,/g, ''));
         const sh = pick(SB), sf = pick(SF), sm = (L) => n0(L.reduce((a, b) => a + b, 0));

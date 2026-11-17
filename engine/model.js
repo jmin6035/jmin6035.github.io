@@ -225,7 +225,7 @@
           if (sw[l].some((x) => Math.abs(GP.diffDays(d, x)) <= W)) continue;
           for (const f of LF[l]) { const v = st[`${l}|${d}`] === f ? 1 : 0; fixB[z[`${l}|${f}|${d}`]] = [v, v]; }
         }
-        const r = solve(highs, lp.text(obj2, extra, fixB), { time_limit: P.timeLimit2, mip_rel_gap: 0 }, log, `2단계(선생산 최소) ${it + 1}회`);
+        const r = solve(highs, lp.text(obj2, extra, fixB), { time_limit: P.timeLimit2, mip_rel_gap: 0 }, log, `2단계(앞당김 생산 최소) ${it + 1}회`);
         tot2 += r.sec;
         if (!r.optimal && !isFinite(r.res.ObjectiveValue)) break;
         const improved = r.res.ObjectiveValue < best - 1e-6 * Math.max(1, Math.abs(best));
@@ -234,7 +234,7 @@
       }
       r2.windowed = true; r2.sec = tot2;
     } else {
-      r2 = solve(highs, lp.text(obj2, extra), { time_limit: P.timeLimit2, mip_rel_gap: 0 }, log, '2단계(선생산 최소)');
+      r2 = solve(highs, lp.text(obj2, extra), { time_limit: P.timeLimit2, mip_rel_gap: 0 }, log, '2단계(앞당김 생산 최소)');
     }
     const state = {};
     for (const l of L) for (const d of days) state[`${l}|${d}`] = LF[l].find((f) => r2.val(z[`${l}|${f}|${d}`]) > 0.5);
@@ -305,7 +305,7 @@
     const pen = LATE.map(([c, v]) => [1e4 * c, v]).concat(SHORT.map(([c, v]) => [1e7 * c, v]));
     const a = solve(highs, lp.text(L.map((l) => [1, U[l]]).concat(pen)), {}, log, '평준화 1(최대 여유 최소)');
     const extra = L.map((l) => [[[1, U[l]]], '<=', a.val(U[l]) + 1.0]);
-    const b2 = solve(highs, lp.text(INV.concat(pen), extra), {}, log, '평준화 2(선생산 최소)');
+    const b2 = solve(highs, lp.text(INV.concat(pen), extra), {}, log, '평준화 2(앞당김 생산 최소)');
     const rows = [];
     for (const e of x) { const v = b2.val(e.v); if (v > 0.05) rows.push([e.d, e.l, e.b.alloy, e.b.cls, GP.round(v, 2), e.b.due0 || e.b.due]); }   // due0 = 원래 납기(AL-STS 칸 끝으로 바꾼 버킷)
     rows.sort((p, q) => (p.join('\u0001') < q.join('\u0001') ? -1 : 1));

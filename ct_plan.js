@@ -125,8 +125,8 @@
       return `<tr><td class="id">${l}</td><td>${x.map((d) => `<span class="${sy.has(d) ? '' : 'gone'}">${md(d)}</span>`).join(' ') || '-'}</td><td>${y.map((d) => `<span class="${sx.has(d) ? '' : 'new'}">${md(d)}</span>`).join(' ') || '-'}</td></tr>`; }).join('')}</tbody></table></div>`;
     const ma = ra.milp || {}, mb = rb.milp || {}, la = dueLate(ra), lb = dueLate(rb);
     const kp = CT.kpis([
-      { label: '결품', v: `${n0(ma.short)}→${n0(mb.short)}`, unit: 't', tone: (mb.short || 0) > (ma.short || 0) + 0.5 ? 'bad' : 'ok', sub: `차이 ${n0((mb.short || 0) - (ma.short || 0))}t` },
-      { label: '지연(천 t·일)', v: `${n0(la / 1000)}→${n0(lb / 1000)}`, unit: '', tone: lb > la + 0.5 ? 'bad' : 'ok', sub: `차이 ${n0((lb - la) / 1000)}천` },
+      { label: '결품', v: `${n0(ma.short)}→${n0(mb.short)}`, unit: 't', tone: (mb.short || 0) > (ma.short || 0) + 0.5 ? 'bad' : 'ok', sub: Math.abs((mb.short || 0) - (ma.short || 0)) < 0.5 ? '변화 없음' : `${(mb.short || 0) > (ma.short || 0) ? '+' : '−'}${n0(Math.abs((mb.short || 0) - (ma.short || 0)))}t` },
+      { label: '지연(천 t·일)', v: `${n0(la / 1000)}→${n0(lb / 1000)}`, unit: '', tone: lb > la + 0.5 ? 'bad' : 'ok', sub: Math.abs(lb - la) < 0.5 ? '변화 없음' : `${lb > la ? '+' : '−'}${n0(Math.abs(lb - la))} t·일` },
       { label: 'M/C', v: `${ma.K ?? '-'}→${mb.K ?? '-'}`, unit: '회', tone: 'info' },
     ]);
     const mv = [];
