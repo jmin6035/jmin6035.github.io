@@ -32,7 +32,7 @@ html.v2 main #ps-main .xbtn { font-size: 14px !important; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-ov: #ff8c42; --c-act: #8a96a3; --c-mc: #8a6d00; } }
 :root[data-theme="dark"] { --c-ov: #ff8c42; --c-act: #8a96a3; --c-mc: #8a6d00; }
 .wk { overflow-x: auto; }
-table.psw { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1100px; table-layout: fixed; font-variant-numeric: tabular-nums; }
+table.psw { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 880px; table-layout: fixed; font-variant-numeric: tabular-nums; }
 html body main #ps-main table.psw :is(th, td) { font-size: 14px !important; padding: 0 !important; border: 0; border-right: 1px solid var(--grid); text-align: center !important; line-height: 1.35 !important; white-space: normal; word-break: keep-all; }
 html body main #ps-main table.psw tbody td { vertical-align: top !important; height: 1px; }
 html body main #ps-main table.psw tr > :first-child { width: 104px; border-left: 1px solid var(--grid); }
@@ -184,7 +184,7 @@ html:root body main #ps-main table.psw.nxt thead tr.wh th:not(.td) { background:
 </style>
 </head>
 <body>
-<header id="shell" data-page="pyeonseong" data-crumb="편성" data-title="편성"></header>
+<header id="shell" data-page="pyeonseong" data-crumb="주간 편성" data-title="주간 편성"></header>
 <main class="wrap">
   <section class="card lock" id="ps-lock">
     <div><div class="ic" aria-hidden="true">🔒</div><h2>불러오는 중…</h2>
@@ -195,7 +195,7 @@ html:root body main #ps-main table.psw.nxt thead tr.wh th:not(.td) { background:
     <section class="card" id="ps-ordc" hidden><div id="ps-ord"></div></section>
     <div class="ps-line" id="ps-line"></div>
     <section class="card" id="ps-cgc"><h2>도금</h2>
-      <div class="ps-lg"><span><i class="mc"></i>M/C</span><span><i class="ev"></i>S/D·수리 등 특이사항</span><span><i class="sp"></i>정지(정기수리·휴지)</span><span><i class="tdy"></i>오늘</span><span><i class="ln" style="background:var(--bad)"></i>확인 필요</span><span><i class="pst"></i>지난 날 = 실적</span><span class="src">톤 = 작업 순서(MES 작업지시 · 순서안) — 계획(01)의 일별 톤과 출처가 다름</span></div>
+      <div class="ps-lg"><span><i class="mc"></i>M/C</span><span><i class="ev"></i>S/D·수리 등 특이사항</span><span><i class="sp"></i>정지(정기수리·휴지)</span><span><i class="tdy"></i>오늘</span><span><i class="ln" style="background:var(--bad)"></i>확인 필요</span><span><i class="pst"></i>지난 날 = 실적</span><span class="src">톤 = 작업 순서(작업대기·지시대기) + 입고예정 주문(예측) — 계획(01)의 일별 톤과 출처가 다름</span></div>
       <div class="wk" id="ps-cal-cg"></div><div class="ps-day" id="ps-day-cg" hidden></div></section>
     <section class="card" id="ps-ccc"><h2>컬러</h2>
       <div class="ps-lg"><span><i class="sp"></i>정지(정기수리·휴지)</span><span><i class="tdy"></i>오늘</span><span><i class="ln" style="background:var(--bad)"></i>확인 필요</span><span><i class="pst"></i>지난 날 = 실적</span><span class="src">톤 = 작업 순서(MES 작업대기 · 지시대기 · 계획편성) — 계획(01)의 일별 톤과 출처가 다름</span></div>

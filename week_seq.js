@@ -225,7 +225,7 @@
     const row = (k, h) => `<div class="wk3"><i>${k}</i><div>${h}</div></div>`;
     if (plant === 'cg') {
       const t = x.trt || {};
-      return row('사양', `<span class="cp al${(x.al || x.sur) === 'AL-STS' ? ' sts' : ''}">${esc(x.al || x.sur)}</span><span class="cp sz" title="두께 × 폭 × 길이(톤 환산)">${(+x.thick).toFixed(2)} × ${n0(x.width)} × ${n0(x.t * 1e6 / (x.thick * x.width * 7.85))}m</span>`
+      return row('사양', `<span class="cp al${(x.al || x.sur) === 'AL-STS' ? ' sts' : ''}">${esc(x.al || x.sur)}</span><span class="cp sz" title="두께 × 폭 × 길이">${(+x.thick).toFixed(2)} × ${n0(x.width)} × ${n0(x.len || x.t * 1e6 / (x.thick * x.width * 7.85))}m</span>`
         + (t.cot ? `<span class="cp" title="도금량(코드 ${esc(t.cot)})">${esc(cotKo(t.cot))}</span>` : '') + (t.aft && x.grp !== '자가재' ? `<span class="cp" title="후처리(코드 ${esc(t.aft)})">${esc(AFT[t.aft] || t.aft)}</span>` : '')   // 11/15 사용자: 후처리 없음·자가재(컬러 소재) 후처리 표시 삭제
         + (x.grade ? `<span class="cp" title="재질(코드 ${esc(x.grade)})">${esc(GR[x.grade] || x.grade)}</span>` : '') + (specKo(x.spec) ? `<span class="cp" title="소재 규격(${esc(x.spec)})">${esc(specKo(x.spec))}</span>` : '') + (x.ge ? '<span class="cp wr" title="용도 가전">가전</span>' : ''))
         + row('주문', (x.grp && x.grp !== '미상' ? `<span class="cp" title="판매그룹">${esc(x.grp)}</span>` : '')
@@ -263,7 +263,7 @@
   }
   function draw() {
     const W0 = tms(D.w0), W1 = tms(D.w1), days = Array.from({ length: Math.max(1, Math.round((W1 - W0) / 1440)) }, (_, i) => dayOf(W0 + i * 1440));   // 11/10 사용자 '수요일로 자르지 마' — 오늘부터 1030 확정이 끝날 때까지
-    $('ws-wk').textContent = `${dnm(days[0])} ~ ${dnm(days[days.length - 1])}`;
+    $('ws-wk').textContent = `오늘부터 ${dnm(days[0])} ~ ${dnm(days[days.length - 1])}`;
     $('ws-wk').title = `${iso(W0)} ~ ${iso(W1)} (하루 = 07시 ~ 다음날 07시)`;
     const v = $('ws-ver');
     if (dirty) { v.className = 'ws-ver ed'; v.textContent = '수정 · 저장 전'; }
@@ -282,7 +282,7 @@
       const end = ev.length ? Math.max(...ev.map((q) => q.e2 || q.e)) : F0, left = end > W1 ? W1 - end : Math.max(0, W1 - F0) - run - ch - pl - wt;
       const nb = CKA.filter((c) => c.l === l && c.lv === 'bad').length;
       // 11/13 사용자: 'n건 Xt' 한 덩어리 대신 지시·대기 나눠 표기(도금 = 1030 지시 / 소재 들어온 대기, 컬러 = 1030 작업대기 / 1020 지시대기)
-      const isW = (x) => (plant === 'cg' ? !!x.issued : !!x.fixed), jA = js.filter((q) => isW(q.x)), jB = js.filter((q) => !isW(q.x)), tt = (a) => n0(a.reduce((s, q) => s + q.x.t, 0));
+      const isW = (x) => (plant === 'cg' ? !!x.issued : !!x.fixed), jA = js.filter((q) => !q.x.dummy && isW(q.x)), jB = js.filter((q) => !q.x.dummy && !isW(q.x)), tt = (a) => n0(a.reduce((s, q) => s + q.x.t, 0));
       const [nA, nB] = plant === 'cg' ? ['지시', '대기'] : ['작업대기', '지시대기'];
       // 11/13 사용자 '크게 · 좌우로 나눠 · 점검 위반이 뭔데': 왼쪽 = 지시/대기 건·톤, 오른쪽 = 시간 · 규칙 어긋남(종류별 건수)
       const bk = {}; CKA.filter((c) => c.l === l && c.lv === 'bad').forEach((c) => { bk[c.kind] = (bk[c.kind] || 0) + 1; });
@@ -600,7 +600,7 @@
   /* 위 보기(전체·도금·컬러)와 맞춤 — 컬러를 골랐는데 도금이 나오던 문제(11/10 사용자) */
   const scopeGo = () => { const sc = window.UI && UI.scope ? UI.scope() : 'all', want = sc === 'C' ? 'cc' : sc === 'G' ? 'cg' : null; if (want && want !== plant) location.hash = hashOf(want, mode); };
   if (window.UI && UI.onScope) UI.onScope(scopeGo);
-  if (!location.hash || /^#(cg|cc)?-?rules$/.test(location.hash)) { if (/rules/.test(location.hash)) { $('ws-fold').open = true; toRules = true; history.replaceState(null, '', location.pathname + location.search + hashOf(plant, 'ed')); } scopeGo(); }
+  if (!location.hash || /^#(cg|cc)?-?rules$/.test(location.hash)) { if (window.UI && UI.scope && UI.scope() === 'C') plant = 'cc';   /* 11/17 검토: ?pl=C 로 처음 열 때 컬러부터(조회 화면과 같게) */ if (/rules/.test(location.hash)) { $('ws-fold').open = true; toRules = true; history.replaceState(null, '', location.pathname + location.search + hashOf(plant, 'ed')); } scopeGo(); }
   addEventListener('hashchange', () => { const m = /-wo\b/.test(location.hash) ? 'wo' : 'ed', p = /cc/.test(location.hash) ? 'cc' : 'cg'; if (p !== plant) go(p).then(() => setMode(m)); else setMode(m); });
   /* 작업지시 제안(옛 작업지시 순서 화면): 처음 열 때 그 공정 스크립트를 불러 붙임. 편집 칸은 숨김(저장 안 한 수정은 그대로 남음) */
   const MOD = { cg: ['cg_wo.js', 'wo-host', 'WO_CG'], cc: ['wo.js', 'wc-host', 'WO_CC'] }, loaded = {};

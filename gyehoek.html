@@ -366,6 +366,9 @@ table.t.fwt { margin: 4px 0 0; font-size: 13.5px; width: auto; } table.t.fwt td 
 #m4 table { border-collapse: collapse; width: 100%; table-layout: fixed; font-variant-numeric: tabular-nums; }
 #m4 th, #m4 td { text-align: center; padding: 0; }
 /* ① 소재 현황 */
+html body main .m4-mx thead th { white-space: normal !important; line-height: 1.3; } html body main .m4-mx thead th small { display: block; white-space: normal; } .m4-mx td .m4-jd { white-space: normal; }
+@media (max-width: 1500px) { html body main .m4-mx tbody td { font-size: 14px !important; padding-left: 4px !important; padding-right: 4px !important; } }
+.m4-mx .m4-bn { display: block; font-size: 13.5px; white-space: nowrap; line-height: 1.5; } .m4-mx .m4-bn b { font-size: 15px; } .m4-jd small { font-weight: 600; }
 .m4-mx :is(th, td) { font-size: 15px; height: 44px; border-bottom: 1px solid var(--grid); color: var(--ink); }
 .m4-mx thead th { font-size: 14px; color: var(--ink-2); font-weight: 700; height: 34px; background: var(--th); }
 .m4-mx thead th.gq { color: var(--ink); font-size: 15px; font-weight: 800; background: color-mix(in srgb, var(--brand-2) 8%, var(--surface)); border-bottom: 2px solid var(--surface); }

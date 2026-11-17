@@ -190,13 +190,13 @@
     }
     const arrs = [...C.autoArr(), ...S.arr.map((a) => ({ ...a, plant: ProcCalc.plantOf(a.code), t: +a.t || 0 }))];
     for (const a of arrs) {
-      if (a.plant === 'G' && a.code === 'N') continue;                     // 임가공(포스코 지급)
+      // 11/17 검토: 도금 SUS(P-FH(STS))도 발주·입고 대상(02 현황·발주 원장과 같게) — 예전엔 임가공으로 빼서 01 소재 탭에만 없었음
       push(get(a.plant, clsOf(a.plant, a.code, a.sup)).inb, a.date, { a, t: a.t, kind: 'arr' });
     }
     const act = (D && D.PO || {}).matAct || {};                            // 지난 날 = MES 실적(발주 원장 발주일 · 입고 원장 실입고일), 사용자 10/21
     for (const k of ['ord', 'inb']) for (const [key, t] of Object.entries(act[k] || {})) {
       const [pl, code, sup, d] = key.split('|');
-      if (d >= today || (pl === 'G' && code === 'N') || t < 0.05) continue;
+      if (d >= today || t < 0.05) continue;
       push(get(pl, clsOf(pl, code, sup))[k], d, { t, kind: 'act', a: { code, sup, date: d, t } });
     }
     return { T, J, P, arrs, codeNm: (c) => (P.matCode || {})[c] || c, supNm: (s_) => (s_ ? ((P.supNames || {})[s_.sup] || s_.name || s_.sup) : '-') };
@@ -584,7 +584,6 @@
   const SAFE_G = 1;
   function matG(r, d) {
     const a = r[0] || '', code = /STS/.test(a) ? 'N' : /^AL/.test(a) ? 'H' : 'F', need = add(d, -SAFE_G);
-    if (code === 'N') return { what: '도금용 SUS', steps: [['포스코 지급(임가공)', '-', null]], st: ['info', '발주 대상 아님'] };
     const P = MP && MP.P, nm = P ? (P.matCode || {})[code] || code : code;
     const sups = P ? P.suppliers.filter((x) => x.plant === 'G' && x.code === code && (x.share || 0) > 0) : [];
     const byT = {}; for (const x of sups) { const t = (byT[x.cls] = byT[x.cls] || { lt: x.lt, sh: 0 }); t.sh += x.share || 0; }
@@ -596,7 +595,7 @@
     const dl = j && j.deadline;   // 발주 마감 = 엔진 주별 마감(캘린더·소재 관제와 같은 값)
     const ok_ = j && j.short < 1;   // 그 주 확보면 마감이 지났어도 경고 아님
     const dlc = ok_ ? ['F/H', '확보됨', null, 'due'] : dl ? (dl < today ? ['발주 마감', `${md(dl)} 지남`, null, 'late'] : dl === today ? ['발주 마감', '오늘', null, 'late'] : ['발주 마감', `${md(dl)}까지`, null, 'due']) : ['발주 마감', ords, null, 'due'];
-    return { what: nm, steps: [dlc, [need <= today ? '소재 입고' : '입고 필요', md(need), need], ...(stc ? [stc] : [])], st };
+    return { what: nm, steps: ok_ ? [dlc] : [dlc, [need <= today ? '소재 입고' : '입고 기한', md(need), need], ...(stc ? [stc] : [])], st };
   }
 
   // 날짜 상세 카드(라인별 품목·소재·일정) — 가동 캘린더 상세와 계획 화면(gyehoek.js, window.supDet)이 같이 씀. ls = 보일 라인(없으면 전부)
@@ -607,13 +606,13 @@
       for (const r of rows) { if (!(r[ti] >= 0.5)) continue; const k = ks.map((i) => r[i] == null ? '' : r[i]).join('|'), z = M.get(k); if (z) z[ti] += r[ti]; else M.set(k, r.slice()); }
       return [...M.values()]; };
     const pcard = (l) => { const x = D.pl[`${l}|${d}`]; if (!x) return ''; return `<section class="card rv wide" data-noexport data-dom="G"><h3>${l} · ${x.t > 0.5 ? `${x.fam} ${n0(x.t)}t` : '생산 없음'} ${x.act ? '<small>(실적)</small>' : ''} ${x.ev ? `<small style="color:#8a5a00">${esc(x.ev)}</small>` : ''}</h3>
-      <div class="scroll"><table class="dt mt fl"><thead><tr><th>강종 · 부서</th><th>목적지</th><th class="r">톤</th><th>소재</th><th>일정 (소재 → 생산 → 납기)</th></tr></thead><tbody>${(x.lineOnly ? [] : mergeRows(x.items, [0, 1, 2, 3, 6], 5)).map((r) => { const f = r[1] === '자가재' ? flowOf(r[6], r[2], r[0]) : null, m = matG(r, d);
+      <div class="scroll"><table class="dt mt fl"><thead><tr><th>품목 · 그룹</th><th>목적지 · 고객</th><th class="r">톤</th><th>소재</th><th>일정 (소재 → 생산 → 납기)</th></tr></thead><tbody>${(x.lineOnly ? [] : mergeRows(x.items, [0, 1, 2, 3, 6], 5)).map((r) => { const f = r[1] === '자가재' ? flowOf(r[6], r[2], r[0]) : null, m = matG(r, d);
         const steps = [...m.steps, ['도금 생산', md(d), d, 'now'], ...(f ? [['컬러 투입', f.use.length ? span(f.use) : '사용일 미정', null]] : [dueChip(r[6], md(r[6]), d)])];
         return `<tr><td><b>${esc(r[0])}</b> <small>${esc(r[1])}</small></td><td>${esc([String(r[2] || '').replace(/^주문 /, ''), r[3]].filter(Boolean).join(' · '))}</td><td class="r">${n0(r[5])}</td><td>${esc(m.what)}</td><td>${flowHtml(steps)}</td></tr>`; }).join('') || `<tr><td colspan="5" class="small">${x.lineOnly && x.t > 0.5 ? '라인 합계 실적 · 품목 내역 차기 재계획 반영' : '생산 없음'}</td></tr>`}</tbody></table></div>
       ${x.why.length ? `<div class="why">${x.why.map(esc).join('<br>')}</div>` : ''}</section>`; };
     const ccard = (l) => { const x0 = D.co[`${l}|${d}`]; if (!x0 || x0.t < 0.5) return ''; const x = { ...x0, rows: mergeRows(x0.rows || [], [0, 1, 2, 3, 4, 9, 13], 5) }; const fu = D.fUse[`${l}|${d}`] || []; return `<section class="card rv wide" data-noexport data-dom="C"><h3>${l} · ${n0(x.t)}t ${x.act ? '<small>(실적)</small>' : ''}</h3>
       ${fu.length ? `<div class="fin">${fu.map(([f, t]) => `<span>자가재 ${esc(f.a)} ${n0(t)}t ← 도금 ${span(f.made)}</span>`).join('')}</div>` : ''}
-      ${x.rows.length ? `<div class="scroll"><table class="dt mt fl"><thead><tr><th>품명 · 구분</th><th>고객·지역</th><th class="r">톤</th><th>소재</th><th>일정 (소재 → 생산 → 납기)</th></tr></thead><tbody>${x.rows.slice(0, 12).map((r) => { const ML0 = x.act ? [] : matLine(r, d, l), ML = ML0.length ? [ML0.reduce((a_, b_) => (b_.sh > a_.sh ? b_ : a_))] : []; const n = Math.max(1, ML.length); const due = r[9] ? md(r[9]) : esc(r[4] || '-'); const head_ = (k) => (k ? '' : `<td rowspan="${n}"><b>${esc(r[1])}</b> <small>${esc(r[0] === '주문재' ? '건재 주문재' : r[0])}</small></td><td rowspan="${n}">${r[0] === '계획재' ? `<span class="muted">재고 보충</span><small class="spec">${esc([r[13] || r[2], r[3]].filter(Boolean).join(' '))}</small>` : esc([r[13] || r[2], r[3]].filter(Boolean).join(' · '))}</td><td class="r" rowspan="${n}">${n0(r[5])}</td>`); return ML.length ? ML.map((m, k) => `<tr class="${k ? 'cont' : ''}"${r[8] ? ` title="배치 사유: ${esc(r[8])}"` : ''}>${head_(k)}<td><small class="kd2 ${m.kind === '자가재' ? 'self' : 'buy'}">${m.kind === '자가재' ? '자가재(도금)' : '구매'}</small> ${m.nm}</td><td>${flowHtml([...(m.steps || []), ['컬러 생산', md(d), d, 'now'], dueChip(r[9], due, d)])}</td></tr>`).join('') : `<tr>${head_(0)}<td colspan="3" class="small">실적일</td></tr>`; }).join('')}</tbody></table></div>${x.rows.length > 12 ? `<div class="why">외 ${x.rows.length - 12}건</div>` : ''}` : `<div class="why">${Object.entries(x.g).map(([k, v]) => `${esc(k)} ${n0(v)}t`).join(' · ')}</div>`}</section>`; };
+      ${x.rows.length ? `<div class="scroll"><table class="dt mt fl"><thead><tr><th>품목 · 그룹</th><th>목적지 · 고객</th><th class="r">톤</th><th>소재</th><th>일정 (소재 → 생산 → 납기)</th></tr></thead><tbody>${x.rows.slice(0, 12).map((r) => { const ML0 = x.act ? [] : matLine(r, d, l), ML = ML0.length ? [ML0.reduce((a_, b_) => (b_.sh > a_.sh ? b_ : a_))] : []; const n = Math.max(1, ML.length); const due = r[9] ? md(r[9]) : esc(r[4] || '-'); const head_ = (k) => (k ? '' : `<td rowspan="${n}"><b>${esc(r[1])}</b> <small>${esc(r[0] === '주문재' ? '건재 주문재' : r[0])}</small></td><td rowspan="${n}">${r[0] === '계획재' ? `<span class="muted">재고 보충</span><small class="spec">${esc([r[13] || r[2], r[3]].filter(Boolean).join(' '))}</small>` : esc([r[13] || r[2], r[3]].filter(Boolean).join(' · '))}</td><td class="r" rowspan="${n}">${n0(r[5])}</td>`); return ML.length ? ML.map((m, k) => `<tr class="${k ? 'cont' : ''}"${r[8] ? ` title="배치 사유: ${esc(r[8])}"` : ''}>${head_(k)}<td><small class="kd2 ${m.kind === '자가재' ? 'self' : 'buy'}">${m.kind === '자가재' ? '자가재(도금)' : '구매'}</small> ${m.nm}</td><td>${flowHtml([...(m.steps || []), ['컬러 생산', md(d), d, 'now'], dueChip(r[9], due, d)])}</td></tr>`).join('') : `<tr>${head_(0)}<td colspan="3" class="small">실적일</td></tr>`; }).join('')}</tbody></table></div>${x.rows.length > 12 ? `<div class="why">외 ${x.rows.length - 12}건</div>` : ''}` : `<div class="why">${Object.entries(x.g).map(([k, v]) => `${esc(k)} ${n0(v)}t`).join(' · ')}</div>`}</section>`; };
     const on = (l) => !ls || ls.includes(l);
     return (UI.inScope('G') ? ['1CGL', '2CGL'].filter(on).map(pcard).join('') : '') + (UI.inScope('C') ? ['1CCL', '2CCL', '3CCL', '4CCL'].filter(on).map(ccard).join('') : '');
   }
@@ -637,7 +636,7 @@
     };
     const mt = more.reduce((a, r) => a + r[ix.t], 0);
     return `<section class="card rv wide" data-noexport data-dom="${G ? 'G' : 'C'}"><h3>${esc(head)}</h3>
-      <div class="scroll"><table class="dt mt fl"><thead><tr><th>품명 · 구분</th><th>고객·지역</th><th class="r">톤</th><th>소재</th><th>일정 (소재 → 생산 → 납기)</th></tr></thead><tbody>${R.slice(0, N).map(tr).join('')}</tbody></table></div>${more.length ? `<div class="why">외 ${more.length}건 ${n0(mt)}t</div>` : ''}</section>`;
+      <div class="scroll"><table class="dt mt fl"><thead><tr><th>품목 · 그룹</th><th>목적지 · 고객</th><th class="r">톤</th><th>소재</th><th>일정 (소재 → 생산 → 납기)</th></tr></thead><tbody>${R.slice(0, N).map(tr).join('')}</tbody></table></div>${more.length ? `<div class="why">외 ${more.length}건 ${n0(mt)}t</div>` : ''}</section>`;
   };
 
   // ---------- 날짜 상세 ----------

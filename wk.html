@@ -82,7 +82,7 @@ table.k-d th, table.k-d td { white-space: nowrap; padding: 9px 8px; text-align: 
 table.k-d thead th { border-top: 0; font-size: 13.5px; font-weight: 700; color: var(--k-mute); padding-bottom: 4px; vertical-align: bottom; }
 table.k-d thead tr.grp th { text-align: center; color: var(--k-sub); font-size: 14px; padding-bottom: 2px; } table.k-d thead tr.grp th.gs { border-bottom: 2px solid var(--k-line); }
 table.k-d tbody th { text-align: left; font-weight: 700; position: relative; padding-left: 12px; } table.k-d tbody th::before { content: ''; position: absolute; left: 0; top: 11px; bottom: 11px; width: 3px; border-radius: 2px; background: var(--k-g); } table.k-d tbody th.C::before { background: var(--k-c); }
-table.k-d td.z { color: var(--k-line); } table.k-d td.na { color: var(--k-mute); font-size: 13.5px; text-align: center; }
+table.k-d td.z { color: var(--k-line); } table.k-d td.na { color: var(--k-mute); font-size: 13.5px; text-align: left !important; padding-left: 14px; }
 table.k-d tr.tot th, table.k-d tr.tot td { font-weight: 800; border-top: 2px solid var(--k-ink); }
 table.k-d td.bar { width: 22%; min-width: 140px; } table.k-d td.bar .kb { margin: 0; }
 table.k-d .sep { border-left: 1px solid var(--k-line); }
@@ -111,6 +111,8 @@ ol.k-act { margin: 8px 0 0; padding-left: 20px; font-size: 14.5px; line-height: 
 ol.k-act .who { display: inline-block; font-size: 12.5px; font-weight: 700; color: var(--k-sub); background: var(--k-soft); border-radius: 5px; padding: 0 6px; margin-left: 4px; }
 .k-rsg .v.ok { color: var(--k-ok); } .k-rsg { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important; }
 .self { color: #6b4fa0 !important; } table.k-d thead th small { display: block; font-size: 12px; font-weight: 500; color: var(--k-mute); } .k-rsg .s.flow { font-size: 14px; color: var(--k-sub); margin-top: 2px; }
+html body main table.k-dl thead tr:not(.grp) th { white-space: normal !important; min-width: 0; max-width: 84px; line-height: 1.3; } html body main table.k-dl thead th small { white-space: normal; }
+@media (max-width: 1500px) { html body main table.k-dl th, html body main table.k-dl td { padding-left: 4px !important; padding-right: 4px !important; } html body main table.k-dl td { font-size: 14.5px !important; } html body main table.k-dl td.pp { font-size: 15.5px !important; } html body main table.k-dl tr.gr th { padding-left: 22px !important; } }
 </style>
 </head>
 <body>
