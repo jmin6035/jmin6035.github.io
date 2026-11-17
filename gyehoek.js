@@ -245,7 +245,7 @@
     }
     for (const [k, v] of Object.entries(F.po || {})) { const kk = nz(k), I = info[kk]; if (!I || I.dt.slice(0, 7) !== mon) continue; const a = get(I.pl, gname(v[2])); a.o += v[1] || 0; a.op += Math.min(v[1] || 0, open[kk] || 0); }
     const z = (v, c) => (v >= 0.5 ? `<td class="${c || ''}">${n0(v)}</td>` : '<td class="z">–</td>');
-    const row = (lab, c, tot) => `<tr class="${tot ? 'tot' : ''}"><th>${esc(lab)}</th><td class="b">${c.o >= 0.5 ? n0(c.o) : '–'}</td>${z(Math.max(0, c.o - c.op))}${z(c.op)}${z(c.arr, 'b')}${cur ? z(c.od, 'bad') : ''}</tr>`;
+    const row = (lab, c, tot) => `<tr class="${tot ? 'tot' : ''}"><th>${esc(lab)}</th>${cur ? z(c.od, 'bad') : ''}<td class="b">${c.o >= 0.5 ? n0(c.o) : '–'}</td>${z(Math.max(0, c.o - c.op))}${z(c.op)}${z(c.arr, 'b')}</tr>`;
     const PL0 = [['G', ['도금수출', '도금국내', '자동차', '자가재']], ['C', ['컬러수출', '가전내수', '컬러건재', '수요개발']]];
     const ix = (gs, g) => { const i = gs.indexOf(g); return i < 0 ? 99 : i; };
     let body = '';
@@ -259,7 +259,7 @@
     const M_ = +mon.slice(5);
     el.innerHTML = `<h2 class="m4-h">${M_}월 그룹별 소재 발주 · 입고</h2><div class="m4-q">톤 · 발주 원장(발주번호 → 판매그룹·발주일)과 MES 미입고 목록 기준 · 생산 계획과 무관</div>
 <div class="m4-sc"><table class="m4-gd" style="min-width:720px"><colgroup><col style="width:150px"><col><col><col><col>${cur ? '<col>' : ''}</colgroup>
-<thead><tr><th>판매그룹</th><th>${M_}월에 낸 발주</th><th>그중 들어옴</th><th>그중 아직 안 들어옴<small>리드타임 35~84일</small></th><th>${M_}월 들어올 예정<small>${cur ? `${md(today)}부터 · ` : ''}앞 달 발주분 포함</small></th>${cur ? '<th>예정일 지났는데 안 들어옴<small>독촉 대상</small></th>' : ''}</tr></thead><tbody>${body || `<tr><td colspan="${cur ? 6 : 5}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>
+<thead><tr><th>판매그룹</th>${cur ? '<th>예정일 지났는데 안 들어옴<small>독촉 대상</small></th>' : ''}<th>${M_}월에 낸 발주</th><th>그중 들어옴</th><th>그중 아직 안 들어옴<small>리드타임 35~84일</small></th><th>${M_}월 들어올 예정<small>${cur ? `${md(today)}부터 · ` : ''}앞 달 발주분 포함</small></th></tr></thead><tbody>${body || `<tr><td colspan="${cur ? 6 : 5}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>
 <div class="m4-lg"><span>'그중 들어옴' = 그 달에 낸 발주 중 MES 미입고 목록에 없는 양(입고 원장 대조 전 추정)</span></div>`;
   }
   function matSync() {
