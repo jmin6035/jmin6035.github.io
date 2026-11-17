@@ -41,7 +41,7 @@
   /* 11/12 회의: 메뉴 순서 = 보고 순서 ① 계획 → ② 관제 → ③ 편성(docs/16 ★2). 새 양식 미리보기(V2)에서만 맨 위, 기존 메뉴는 '기타'(접힘) 아래 — 기본 화면 메뉴는 그대로 */
   const MV2 = V2 ? [['v1', '계획', 'supply', [['gyehoek', 'gyehoek.html', '일별 가동계획'], ['gyehoek', 'gyehoek.html#mat', '소재']]],
     ['v2', '현황', 'home', [['hy', 'hy.html', '현황']]],
-    ['v3', '생산 편성', 'weekseq', [['pyeonseong', 'pyeonseong.html', '주간 편성'], ['weekseq', 'week_seq.html', '작업 순서'], ['seqview', 'seq_view.html', '작업 순서 조회']]]] : [];   // 11/17 사용자 '01 계획 · 02 현황 · 03 생산 편성, 작업은 편성 하위로 · 수주 화면은 현황(hy)으로 대체'
+    ['v3', '생산 편성', 'weekseq', [['wk', 'wk.html', '주간 관제'], ['pyeonseong', 'pyeonseong.html', '주간 편성'], ['weekseq', 'week_seq.html', '작업 순서'], ['seqview', 'seq_view.html', '작업 순서 조회']]]] : [];   // 11/17 사용자 '01 계획 · 02 현황 · 03 생산 편성, 작업은 편성 하위로 · 수주 화면은 현황(hy)으로 대체'
   const ETC = '기타', MENUS = [...MV2, ...MENU];
   const ALL = [...MENUS.flatMap((m) => m[3]), ...ADMIN];
   const DEFV = { home: 'day', suju: 'dash', orders: 'status', prodsum: 'perf', perf: 'ops', issues: 'now' };   // 주소에 #이 없을 때 화면이 여는 하위 화면
