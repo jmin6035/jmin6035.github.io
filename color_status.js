@@ -17,7 +17,7 @@
   let MONTHS = ['2026-10', '2026-11', '2026-12'], D0 = '2026-10-01', D1 = '2026-12-31';   // 11/9: render 에서 자료(colorLines·color)의 달로 바꿈 — 이 값은 자료 없을 때만
   const sum = (a, f = (x) => x) => a.reduce((s, x) => s + (f(x) || 0), 0);
   let O = null, by = {}, gMonth = null, lastAct = '', dn = {}, dnP = {};
-  const KN = { plan: '계획휴지', sd: 'S/D', repair: '수리', clean: '청소', test: 'Test', sample: '샘플', color: '색상교체·청소', roll: '폭·롤 전환', etc: '기타 정지', gap: '기록 없는 정지(TEST 등)' };
+  const KN = { plan: '계획휴지', sd: 'S/D', repair: '수리', clean: '청소', test: '시험', sample: '샘플', color: '색상교체·청소', roll: '폭·롤 전환', etc: '기타 정지', gap: '기록 없는 정지(TEST 등)' };
   const HARD = ['plan', 'sd', 'repair']; const PLANK = ['plan', 'sd', 'repair', 'clean', 'test', 'sample'];
   const fullDay = (l, d) => sum((dn[`${l}|${d}`] || []).filter((x) => HARD.includes(x[0])), (x) => x[1]) >= 1439;
   const dnTxt = (l, d) => (dn[`${l}|${d}`] || []).map((x) => `${KN[x[0]]} ${fmt(x[1])}분`).join(', ');

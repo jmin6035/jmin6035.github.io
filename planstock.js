@@ -62,10 +62,10 @@
     const next = O.orders.filter((o) => o.state === 'soon').sort((a, b) => (a.o1 < b.o1 ? -1 : 1));
     const LT = UI.matLate(MO && MO.late);   // 소재 '발주 마감 지남' 공통 기준(ui/shell.js UI.matLate, 11/8) — 부족·조치·소재 수급·수주 관제와 같은 값
     return card('ps-osum', '소재 발주 요약', `생산 일정(10월 ~ 3월) 기준 · ${md(UI.today(O.today))} 현재`, '단위: 톤',
-      (LT ? `<p class="ps-late" title="${esc(LT.tip)}">마감 지난 부족 <b>${n0(LT.t)}t</b> <span>${LT.items.map((x) => esc(x.name)).join(' · ')}</span></p>` : '')
-      + `<div class="scroll"><table class="t big"><thead><tr><th>소재</th><th>업체</th><th title="발주 기간이 지난 생산분 필요량(재고 차감 전) — 경고 아님, 실제 부족은 위 '마감 지난 부족'">기간 지남</th><th>2주 내 마감</th><th>이후</th><th>합계</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      (LT ? `<p class="ps-late" title="${esc(LT.tip)}">발주 지연 <b>${n0(LT.t)}t</b> <span>${LT.items.map((x) => esc(x.name)).join(' · ')}</span></p>` : '')
+      + `<div class="scroll"><table class="t big"><thead><tr><th>소재</th><th>업체</th><th title="발주 기간이 지난 생산분 필요량(재고 차감 전) — 경고 아님, 실제 부족은 위 '발주 지연'">기간 지남</th><th>2주 내 마감</th><th>이후</th><th>합계</th></tr></thead><tbody>${rows}</tbody></table></div>`
       + (next.length ? `<p class="small"><b>최우선 발주:</b> ${next.slice(0, 3).map((o) => `${md(o.o1)}까지 ${o.kind} ${n0(o.t - (o.ordered || 0))}t(${md(o.arr)} 입고)`).join(' · ')}</p>` : '')
-      + '<p class="small">기간 지남 = 발주일이 지난 생산분의 소재 필요량(재고·발주 완료분 빼기 전). 실제 부족은 위 \'마감 지난 부족\'(소재 관제와 같은 값).</p>');
+      + '<p class="small">기간 지남 = 발주일이 지난 생산분의 소재 필요량(재고·발주 완료분 빼기 전). 실제 부족은 위 \'발주 지연\'.</p>');
   }
   function fhCard() {
     const today = UI.today(O.today);   // 공통 기준일(11/8)
