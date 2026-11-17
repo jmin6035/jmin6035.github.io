@@ -1011,7 +1011,7 @@
     if (!render.sub) { render.sub = true; UI.onScope(() => { if (!D) return; if (document.getElementById('s-ojudge')) orderJudge(MOx); weekBox(); progress(); monthSum(); cal(); }); }   // 11/11 사용자 '도금·컬러·전체를 눌러도 표가 안 바뀜'
     try { const pe = await GP.latest('procure.enc.json'); const P = pe ? await GP.decryptJSON(pe, pw) : null; matExtend(P); PM = P ? prepMat(P, MOx) : null; MP = P ? matPlan(P, MOx) : null; } catch (e) { PM = null; MP = null; }
     const POD = {}; for (const [k, L] of Object.entries((FHP && FHP.ord) || {})) { const dt = k.split('|').pop(); for (const p_ of L) POD[String(p_).replace(/\s/g, '')] = dt; }   // 11/17 사용자 '입고 보면 언제 발주했는지' — 발주번호 → 발주일(소재 주문 요청 원장)
-    window.SupMat = { MP, PM, today, sumT, typeDetail, poDate: (po) => POD[String(po || '').replace(/\s/g, '')] || null, ext: (D.matMonths || []).filter((m) => !D.months.includes(m)) };   // ext = 통합 계획 너머 소재 달(matExtend)   // 계획 > 소재(mat_v2.js)가 같은 값을 읽음
+    window.SupMat = { MP, PM, today, sumT, typeDetail, fhp: FHP, poDate: (po) => POD[String(po || '').replace(/\s/g, '')] || null, ext: (D.matMonths || []).filter((m) => !D.months.includes(m)) };   // ext = 통합 계획 너머 소재 달(matExtend)   // 계획 > 소재(mat_v2.js)가 같은 값을 읽음
     mon = D.months.includes(today.slice(0, 7)) ? today.slice(0, 7) : D.months[0];
     const LV = D.live || {};
     $('s-meta').innerHTML = LV.pl ? `실적 ~${md(LV.pl.actTo || LV.pl.t0)} · 재계획 ${esc(UI.fmtDateTime(LV.pl.at))}` : `기준 <b>기준 계획</b> · 계산 ${esc(UI.fmtDateTime(W.built))} · 실적 ~${esc(UI.fmtDate(W.asOf))}`;
