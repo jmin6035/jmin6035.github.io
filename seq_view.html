@@ -27,10 +27,10 @@ html body main table.sv.v2-grid thead th, html.v2 body main table.sv.v2-grid the
 table.sv th, table.sv td { text-align: center; padding: 6px 8px; border-bottom: 1px solid var(--grid); border-right: 1px solid var(--grid); white-space: nowrap; line-height: 1.45; }
 table.sv thead th { position: sticky; top: 0; z-index: 2; background: #1f3864; color: #fff; font-size: 15px; font-weight: 700; border-right-color: #3a5487; }
 table.sv tr.z td { background: var(--zebra); }
-table.sv td.ds, table.sv td.mn { white-space: normal; word-break: keep-all; }
+table.sv td.ds, table.sv td.mn { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
 table.sv td.cn { font-weight: 700; letter-spacing: .1px; }
 /* 11/15 사용자 '열 맞추던지' — 주·날·정지 줄 글자를 왼쪽 첫 칸에 맞추고 가로로 밀어도 같은 자리(가운데 정렬이라 표 폭 따라 제각각이었음) */
-table.sv td.ds { max-width: 180px; overflow: hidden; text-overflow: ellipsis; }   /* 긴 목적지가 Top Color 칸에 붙던 것 */
+table.sv td.ds { overflow-wrap: anywhere; }   /* 긴 목적지가 Top Color 칸에 붙던 것 */
 html:root body main table.sv.sv tr:is(.wh, .dh, .stp) > td[colspan] { text-align: left !important; padding-left: 14px !important; }
 table.sv .stk { position: sticky; left: 14px; display: inline-block; white-space: nowrap; }
 table.sv tr.fd td { background: #fff2cc !important; } table.sv tr.nf { display: none; }
@@ -60,12 +60,12 @@ table.sv tr.stp.n td { background: #1f3864; color: #fff; }
   .card { box-shadow: none; border: 0; }
 }
 /* 11/17 검토: 1366px 에서도 시작·종료·상태가 보이게 오른쪽 세 칸 고정(가로로 밀어도 남음) */
-table.sv tr > :nth-last-child(-n+3):not([colspan]) { position: sticky; z-index: 1; background: var(--surface, #fff); }
-table.sv tr.z > :nth-last-child(-n+3):not([colspan]) { background: var(--zebra); }
-table.sv tr > :nth-last-child(1):not([colspan]) { right: 0; } table.sv tr > :nth-last-child(2):not([colspan]) { right: 96px; } table.sv tr > :nth-last-child(3):not([colspan]) { right: 208px; box-shadow: -4px 0 6px -4px rgba(0,0,0,.25); }
-html body main table.sv thead tr > th:nth-last-child(-n+3):not([colspan]) { z-index: 3; background: #1f3864 !important; }
-@media (max-width: 1499px) { table.sv { min-width: 0; } html body main table.sv.v2-grid :is(td, th), html.v2 body main table.sv.v2-grid :is(td, th) { font-size: 14px !important; } table.sv th, table.sv td { padding: 5px 4px; } table.sv tr > :nth-last-child(2):not([colspan]) { right: 84px; } table.sv tr > :nth-last-child(3):not([colspan]) { right: 184px; } }
-@media (max-width: 700px) { table.sv tr > :nth-last-child(-n+3):not([colspan]) { position: static; box-shadow: none; } html body main table.sv thead tr > th:nth-last-child(-n+3):not([colspan]) { position: sticky; right: auto; } }
+table.sv.stk tr > :nth-last-child(-n+3):not([colspan]) { position: sticky; z-index: 1; background: var(--surface, #fff); }
+table.sv.stk tr.z > :nth-last-child(-n+3):not([colspan]) { background: var(--zebra); }
+table.sv.stk tr > :nth-last-child(1):not([colspan]) { right: 0; } table.sv.stk tr > :nth-last-child(2):not([colspan]) { right: 96px; } table.sv.stk tr > :nth-last-child(3):not([colspan]) { right: 208px; box-shadow: -4px 0 6px -4px rgba(0,0,0,.25); }
+html body main table.sv.stk thead tr > th:nth-last-child(-n+3):not([colspan]) { z-index: 3; background: #1f3864 !important; }
+@media (max-width: 1499px) { table.sv { min-width: 0; } html body main table.sv.v2-grid :is(td, th), html.v2 body main table.sv.v2-grid :is(td, th) { font-size: 14px !important; } table.sv th, table.sv td { padding: 5px 4px; } table.sv.stk tr > :nth-last-child(2):not([colspan]) { right: 80px; } table.sv.stk tr > :nth-last-child(3):not([colspan]) { right: 180px; } }
+@media (max-width: 700px) { table.sv.stk tr > :nth-last-child(-n+3):not([colspan]) { position: static; box-shadow: none; } html body main table.sv thead tr > th:nth-last-child(-n+3):not([colspan]) { position: sticky; right: auto; } }
 </style>
 </head>
 <body>

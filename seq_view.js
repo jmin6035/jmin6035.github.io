@@ -66,7 +66,7 @@
     });
     return out;
   }
-  const cellsOf = (r, n) => (r.k === 's' ? null : [n, r.con || r.cn, r.con ? '-' : r.sq, fx(r.thk, 2), n0(r.wdt), fx(r.t, 1), n0(r.len), r.grp || '-', r.man || '-', r.dst || '-', r.top || '-', r.back || '-', n0(r.ls), fx(r.tph, 1), tm(r.s), tm(r.e)]);
+  const cellsOf = (r, n) => (r.k === 's' ? null : [n, r.con || r.cn, r.con ? '-' : r.sq, fx(r.thk, 2), n0(r.wdt), fx(r.t, 1), n0(r.len), String(r.grp || '-').replace(/(판매)?그룹$/, ''), r.man || '-', r.dst || '-', r.top || '-', r.back || '-', n0(r.ls), fx(r.tph, 1), tm(r.s), tm(r.e)]);
 
   function draw() {
     const D = V.D, Ls = C.LINES[plant];
@@ -84,9 +84,10 @@
     // 표: 생산주(수~화) 구분줄 → 날짜 구분줄(요일·건수·톤) → 줄
     const rs = R[line], wk0 = wkOf(TODAY);
     const wkNm = (w) => (w === wk0 ? '이번 주' : w === addD(wk0, 7) ? '다음 주' : w === addD(wk0, -7) ? '지난 주' : '');
-    const CW0 = innerWidth < 1500 ? [44, 104, 46, 52, 56, 54, 60, 80, 62, 112, 96, 96, 52, 52, 100, 100, 84] : [52, 136, 58, 62, 68, 66, 72, 110, 80, 210, 104, 104, 58, 62, 112, 112, 96];   // 1366px: 목적지까지 보이고 시작·종료·상태는 오른쪽 고정
+    const CW0 = innerWidth < 1500 ? [44, 128, 44, 50, 54, 50, 56, 76, 60, 96, 76, 76, 48, 50, 100, 100, 80] : [52, 136, 58, 62, 68, 66, 72, 110, 80, 210, 104, 104, 58, 62, 112, 112, 96];   // 1366px: 목적지까지 보이고 시작·종료·상태는 오른쪽 고정
     const HID = plant === 'cg' ? [10, 11, 12] : [], vis = (a) => a.filter((_, i) => !HID.includes(i)), NC = 17 - HID.length;   // 11/17 검토: 도금은 색 칸 없음 → 숨김, 목적지 폭 고정
     const CW = vis(CW0);
+    $('sv-tbl').classList.toggle('stk', plant === 'cc');   // 11/17 검토: 도금은 한 화면에 다 들어감 — 오른쪽 고정은 컬러만
     let h = `<colgroup>${CW.map((w) => (w ? `<col style="width:${w}px">` : '<col>')).join('')}</colgroup><thead><tr>${vis(COLS).map((c) => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody>`, n = 0, cw = null, cd = null, z = 0;
     rs.forEach((r) => {
       const w = wkOf(r.d);

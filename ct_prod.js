@@ -160,7 +160,7 @@
     return ((P.sr && P.sr.ship) || []).filter((s) => SHIPK[s.name] && CT.inScope(SHIPK[s.name][0])).map((s) => {
       const k = SHIPK[s.name], mes = SD[k] ? Object.entries(SD[k]).filter(([d]) => d.slice(0, 7) === mon).reduce((x, [, v]) => x + v, 0) : null, g_ = (P.groups || []).find((x) => x.key === k), a = g_ && g_.ship ? g_.ship.actual : mes != null ? mes : s.actual;   // 11/10 점검(F8 출하 실적 = MES 영업매출 1300): 관제 칩·그룹 표와 같은 값(속보 4,885 vs 일별 합 5,203 이던 것)
       const due = g_ && g_.ship && g_.ship.due != null ? g_.ship.due : null;   // 11/13 점검: 오늘까지 기준 = 통합 관제·관제판과 같은 값(월 계획 × 그룹 출하 실적 패턴) — 속보 일정 누계(도금수출 13,740t 등)는 참고로만
-      return { ...s, key: k, pl: k[0], a, mes, srSched: s.sched, srAct: s.actual, sched: due != null ? due : s.sched };
+      return { ...s, name: { 도금판매: '도금국내', 자동차강판: '자동차' }[s.name] || s.name, key: k, pl: k[0], a, mes, srSched: s.sched, srAct: s.actual, sched: due != null ? due : s.sched };
     });
   }
   function ship(X) {
@@ -177,9 +177,9 @@
       { label: '미출하 주문', v: n0(late.length), unit: '건', tone: late.length ? 'bad' : 'ok', sub: `도금 · 납기 경과 ${n0(late.reduce((a, o) => a + o.unshipT, 0))}t · 출하 실적 없음 ${n0(unk.length)}건${stale.length ? ` · 장기 미종결 ${n0(stale.length)}건 제외` : ''}` },
     ];
     const row = (s) => { const d = s.a - s.sched;
-      return `<tr><td class="id">${esc(s.name)}</td><td class="r">${n0(s.month)}</td><td class="r" title="판매생산속보 일정 누계 ${n0(s.srSched)}t(참고)">${n0(s.sched)}</td><td class="r" title="MES 출하 실적 · 판매생산속보 실적 ${n0(s.srAct)}t(참고)"><b>${n0(s.a)}</b></td><td class="r ${d >= 0 ? 'pos' : 'neg'}">${sgn(d)}</td>`
+      return `<tr><td class="id">${esc(s.name)}</td><td class="r">${n0(s.month)}</td><td class="r" title="판매생산속보 일정 누계 ${n0(s.srSched)}t(참고)">${n0(s.sched)}</td><td class="r" title="판매생산속보 출하 실적(모든 화면 같은 값) · MES 영업매출 ${n0(s.mes ?? 0)}t(참고)"><b>${n0(s.a)}</b></td><td class="r ${d >= 0 ? 'pos' : 'neg'}">${sgn(d)}</td>`
         + `<td class="r">${pc(s.a, s.month)}%</td><td class="r">${s.sched ? `<b class="${{ ok: 'pos', warn: 'wrn', bad: 'neg' }[UI.rate(s.a / s.sched * 100)]}">${pc(s.a, s.sched)}%</b>` : '<span class="sub">일정 0</span>'}</td><td class="pp-bar"><i style="width:${Math.min(100, s.month ? s.a / s.month * 100 : 0).toFixed(1)}%"></i></td></tr>`; };
-    const tbl = t([th('판매그룹'), th('월 출하계획', 1), th('오늘까지 기준', 1, '월 계획 × 그룹 월중 출하 실적 패턴 누계(통합 관제·관제판과 같은 값)'), th('출하 실적', 1, 'MES 출하 실적'), th('기준 대비', 1), th('월 진도', 1, '실적 ÷ 월 계획'), th('기준 대비 달성률', 1, '실적 ÷ 오늘까지 기준'), th('')], S.map(row));
+    const tbl = t([th('판매그룹'), th('월 출하계획', 1), th('오늘까지 기준', 1, '월 계획 × 그룹 월중 출하 실적 패턴 누계(통합 관제·관제판과 같은 값)'), th('출하 실적', 1, '판매생산속보 출하 누계(내수 송장·수출 B/L)'), th('기준 대비', 1), th('월 진도', 1, '실적 ÷ 월 계획'), th('기준 대비 달성률', 1, '실적 ÷ 오늘까지 기준'), th('')], S.map(row));
     // 일별 출하(이번 달) — 일별 계획 자료 없음
     const SD = (P.shipDay && P.shipDay.g) || {}, ds = [...new Set(S.flatMap((s) => Object.keys(SD[s.key] || {})))].filter((d) => d.slice(0, 7) === mon).sort().reverse();
     const dr = ds.map((d) => `<tr><td class="id">${md(d)}</td>${S.map((s) => `<td class="r">${(SD[s.key] || {})[d] ? n0(SD[s.key][d]) : '<span class="sub">0</span>'}</td>`).join('')}<td class="r"><b>${n0(S.reduce((a, s) => a + ((SD[s.key] || {})[d] || 0), 0))}</b></td></tr>`);
