@@ -270,7 +270,7 @@
       if (e.kind === 'use') { const j = e.j; return `<tr><td class="l"><b>${esc(MP.codeNm(j.code))}</b></td><td class="l">${esc(MP.supNm(e.s))} <small class="muted">배정 ${Math.round((e.s.share || 0) * 100)}%</small></td><td>${n0(e.t)}</td><td>-</td><td>생산 투입</td><td>-</td><td>-</td><td class="l small wfor">${useTxt(j)}</td></tr>`; }
       if (e.kind === 'act') { const a = e.a; return `<tr><td class="l"><b>${esc(MP.codeNm(a.code))}</b></td><td class="l">${esc((MP.P.supNames || {})[a.sup] || a.sup || '-')}</td><td>${n0(e.t)}</td><td>${k === 'ord' ? `<span class="muted">${md(e.d)} 발주함</span>` : '-'}</td><td><b>${k === 'ord' ? '발주 완료' : '입고 완료'}</b> <small class="muted">MES</small></td><td>${k === 'ord' ? etaPO((FHP && FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) || []) : md(e.d)}</td><td>${k === 'ord' ? (() => { const ns = ((FHP && FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) || []).map((p_) => FHP.po[p_] && FHP.po[p_][6]).filter(Boolean).sort(); return ns.length ? md(ns[0]) + (ns.length > 1 && ns[ns.length - 1] !== ns[0] ? `~${md(ns[ns.length - 1])}` : '') : '<span class="muted">미정</span>'; })() : '<span class="muted">–</span>'}</td><td class="l small wfor">${k === 'ord' && FHP ? forWhom(FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) : ''}</td></tr>`; }
       if (e.kind === 'mlate') { const m = e.m; return `<tr><td class="l"><b>${esc(m.name)}</b></td><td class="l">${m.by === 'spec' && m.sizes ? m.sizes.map((z) => `${esc(z[1])} ${n0(z[2])}t`).join(' · ') : '-'}</td><td>${n0(e.t)}</td><td>${m.deadline ? md(m.deadline) : '-'}</td><td><span class="neg">마감 지난 부족</span></td><td>-</td><td>${m.needBy ? md(m.needBy) : '-'}</td><td class="l small wfor">소재 관제와 같은 값 — 지금 발주해도 필요일에 못 댐</td></tr>`; }
-      if (e.kind === 'arr') { const a = e.a; return `<tr><td class="l"><b>${esc(MP.codeNm(a.code))}</b></td><td class="l">${esc((MP.P.supNames || {})[a.sup] || a.sup || '-')}</td><td>${n0(e.t)}</td><td>${a.po ? esc(a.po) : '-'}</td><td><span class="pos">입고 예정(발주 완료)</span></td><td>${md(e.d)}</td><td>-</td><td class="l small wfor">${forWhom([a.po]) || esc(a.note || '')}</td></tr>`; }
+      if (e.kind === 'arr') { const a = e.a; return `<tr><td class="l"><b>${esc(MP.codeNm(a.code))}</b></td><td class="l">${esc((MP.P.supNames || {})[a.sup] || a.sup || '-')}</td><td>${n0(e.t)}</td><td>${a.po ? esc(a.po) : '-'}</td><td>${((neg) => (neg && neg < e.d ? `<span class="neg" title="이 입고 전에 재고가 바닥남(추가 발주 없음 가정)">입고 늦음 — ${md(neg)} 바닥</span>` : '<span class="pos">입고 예정(발주 완료)</span>'))(negDay(`${a.plant}:${a.code}`))}</td><td>${md(e.d)}</td><td>-</td><td class="l small wfor">${forWhom([a.po]) || esc(a.note || '')}</td></tr>`; }
       const j = e.j, x = e.x;
       const st = k === 'ord' ? (e.late ? `<span class="neg">마감 ${md(x.dl)} 지남</span>` : `발주 마감 ${md(x.dl)}`) : (j.needBy < today ? `<span class="neg">입고 필요 ${md(j.needBy)} 지남</span>` : '입고 예정(아직 발주 안 함)');
       return `<tr><td class="l"><b>${esc(MP.codeNm(j.code))}</b>${j.thk ? ` <small class="muted">${j.thk[0]}~${j.thk[1]}mm</small>` : ''}</td><td class="l">${esc(MP.supNm(x.s))} <small class="muted">LT ${x.s.lt}일</small></td><td>${n0(e.t)}</td><td>${md(x.dl)}</td><td>${st}</td><td>${(() => { const eta = add(x.dl && x.dl > today ? x.dl : today, x.s.lt || 0); return eta > j.needBy ? `<span class="neg">${md(eta)}</span>` : md(eta); })()}</td><td>${md(j.needBy)}</td><td class="l small wfor">${useTxt(j)}</td></tr>`;
@@ -588,6 +588,7 @@
   const flowHtml = (steps) => `<div class="flw">${steps.map(([lb, v, dt, cl], i) => `${i ? '<i>›</i>' : ''}<span class="fs ${cl || ''} ${dt && dt < today && !cl ? 'done' : ''}"><small>${esc(lb)}</small><b>${v}</b></span>`).join('')}</div>`;
   // 도금 소재(F/H): 강종 → 소재 코드, 입고 필요 = 생산일 − 투입 여유(팀 리드타임 표 1일 — 11/9 회의, 예전 5일), 발주 마감 = 입고 필요 − 업체 유형별 리드타임(27년 배정 업체)
   const SAFE_G = 1;
+  const negDay = (k) => { const m = (PM || []).find((x) => x.k === k); if (!m) return null; return Object.keys(m.stock).sort().find((d) => d >= today && m.stock[d] < -0.5) || null; };   // 11/17 검토: 재고 굴림 첫 음수일
   function matG(r, d) {
     const a = r[0] || '', code = /STS/.test(a) ? 'N' : /^AL/.test(a) ? 'H' : 'F', need = add(d, -SAFE_G);
     const P = MP && MP.P, nm = P ? (P.matCode || {})[code] || code : code;
@@ -601,6 +602,10 @@
     const dl = j && j.deadline;   // 발주 마감 = 엔진 주별 마감(캘린더·소재 관제와 같은 값)
     const ok_ = j && j.short < 1;   // 그 주 확보면 마감이 지났어도 경고 아님
     const dlc = ok_ ? ['F/H', '확보됨', null, 'due'] : dl ? (dl < today ? ['발주 마감', `${md(dl)} 지남`, null, 'late'] : dl === today ? ['발주 마감', '오늘', null, 'late'] : ['발주 마감', `${md(dl)}까지`, null, 'due']) : ['발주 마감', ords, null, 'due'];
+    if (code === 'N' && PM && !FHS.has('N' + d)) {                    // 11/17 검토: 도금 SUS 는 주별 판정(j)이 없음 — 재고 굴림(재계획 AL-STS 소요)으로 그날 부족 표시
+      const m = PM.find((x) => x.k === 'G:N'), v = m && m.stock[d];
+      if (v != null && v < -0.5) { FHS.add('N' + d); return { what: nm, steps: [dlc, ['입고 기한', md(need), need], ['SUS 재고', `${md(d)} 부족 ${n0(-v)}t(입고 예정이 늦음)`, null, 'late']], st: ['warn', `SUS 재고 부족 ${n0(-v)}t`] }; }
+    }
     return { what: nm, steps: ok_ ? [dlc] : [dlc, [need <= today ? '소재 입고' : '입고 기한', md(need), need], ...(stc ? [stc] : [])], st };
   }
 
