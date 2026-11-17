@@ -235,7 +235,9 @@
     if (!(a.t >= 0.5)) return cellH({ ln, d, past: 1, off: '정지', tip: `${ln} ${mdw(d)} 생산 없음(정지)` });   // 앞날 정지 칸과 같은 말·같은 색
     const chips = p === 'cg' ? Object.entries(a.fam || {}).filter(([, v]) => v >= 0.5).sort((x, y) => y[1] - x[1]).slice(0, 2).map(([f]) => famC(f)).join('')
       : (a.pr || []).filter(([, v]) => v >= 0.5).slice(0, 1).map(([q]) => `<span class="fam">${esc(q)}</span>`).join('');
-    return cellH({ ln, d, past: 1, t: a.t, chips, G: a.grp, tip: `${ln} ${mdw(d)} 생산 실적(MES) ${n0(a.t)}t${a.h ? ` · ${n1(a.h)}h` : ''}${a.pr ? ` · 품명 ${a.pr.map(([q, v]) => `${q} ${n0(v)}`).join(' · ')}` : ''}` });
+    /* 11/17 사용자 '특이사항 같이': 지난 날 도금 = 그날 강종 계열이 둘 이상(AL·AZ·MAC, AL-STS 는 AL) → M/C 날로 표시 */
+    const fams = p === 'cg' ? [...new Set(Object.entries(a.fam || {}).filter(([, v]) => v >= 5).map(([f]) => (String(f).startsWith('AZ') ? 'AZ' : String(f).startsWith('MAC') ? 'MAC' : 'AL')))] : [];
+    return cellH({ ln, d, past: 1, t: a.t, chips, G: a.grp, band: fams.length > 1 ? `M/C ${fams.join('·')}` : '', mc: fams.length > 1, tip: `${ln} ${mdw(d)} 생산 실적(MES) ${n0(a.t)}t${a.h ? ` · ${n1(a.h)}h` : ''}${a.pr ? ` · 품명 ${a.pr.map(([q, v]) => `${q} ${n0(v)}`).join(' · ')}` : ''}` });
   }
   /* 2주 표(11/12 사용자 '편성은 2주치로 늘려, 칸 좀 줄여서'): 열 = 이번 생산주(수~화) + 다음 생산주 14일 · 이번 주 지난 날 = 실적 · 창(월말) 밖 = 빈 칸 */
   function grid(p) {
@@ -248,7 +250,7 @@
     const tdc = (d, x) => `${d === today ? 'td' : ''}${x ? ' ' + x : ''}`.trim();
     const S = SEL[p], selD = S && S.all ? S.d : null;
     const dh = (d) => (kind(d) === 'pad' ? `<th class="pad" aria-hidden="true"></th>`
-      : `<th class="${kind(d) === 'pst' ? 'pst dk' : tdc(d, 'dk')}${d === selD ? ' on' : ''}${[0, 6].includes(new Date(d + 'T00:00:00Z').getUTCDay()) || HOL.has(d) ? ' we' : ''}" data-d="${d}" tabindex="0" role="button" aria-expanded="${d === selD}">${mdw(d)}${kind(d) === 'pst' ? '<small>실적</small>' : d === today ? '<small>오늘</small>' : ''}</th>`);
+      : `<th class="${kind(d) === 'pst' ? 'pst dk' : tdc(d, 'dk')}${d === selD ? ' on' : ''}${(() => { const w = new Date(d + 'T00:00:00Z').getUTCDay(); return w === 0 || HOL.has(d) ? ' we sun' : w === 6 ? ' we sat' : ''; })()}" data-d="${d}" tabindex="0" role="button" aria-expanded="${d === selD}">${mdw(d)}${kind(d) === 'pst' ? '<small>실적</small>' : d === today ? '<small>오늘</small>' : ''}</th>`);
     const planT = (ln, d) => (p === 'cg' ? (() => { const c = R.cell(ln, d); return (c.cap || 0) < 1 ? 0 : c.conf + c.plan + c.fcst; })() : FL[ln][d].t);
     const pastT = (ln, d) => { const a = R.act(ln, d); return a ? a.t || 0 : null; };
     const dayT = (ln, d) => (kind(d) === 'pst' ? pastT(ln, d) || 0 : kind(d) === 'pl' ? planT(ln, d) : 0);
@@ -258,9 +260,20 @@
     const week = (W, nm) => {
       const rows = LN.map((ln) => {
         const idle = W.every((d) => kind(d) === 'pad' || (kind(d) === 'pst' ? !pastT(ln, d) : (p === 'cg' ? (R.cell(ln, d).cap || 0) < 1 : R.cell(ln, d).stop)));
-        return `<tr class="ln${idle ? ' idle' : ''}"><th>${ln}<small>${n0(wT(ln, W))}t</small></th>`
-          + W.map((d) => (kind(d) === 'pad' ? pad() : kind(d) === 'pst' ? `<td class="pst">${pastCell(p, R.act(ln, d), ln, d)}</td>`
-            : `<td class="${tdc(d)}">${p === 'cg' ? cgCell(R.cell(ln, d), ln, d === today, R.sts && R.sts(ln, d)) : ccCell(FL[ln][d], ln, R.KD, d === today)}</td>`)).join('') + '</tr>';
+        /* 11/17 사용자 '양식 다시': 하루 종일 정지(정기수리·휴지·실적 0)는 칸마다 같은 글자 대신 이어진 날을 한 칸으로 합쳐 빗금 + 이름 · 기간 */
+        const offOf = (d) => { if (kind(d) === 'pad') return null;
+          if (kind(d) === 'pst') { const a = R.act(ln, d); return a && !(a.t >= 0.5) ? '정지' : null; }
+          if (p === 'cg') { const c = R.cell(ln, d); return (c.cap || 0) < 1 ? (String(c.event || '').replace(/\s*\(.*\)$/, '') || '정지') : null; }
+          return R.cell(ln, d).stop ? '정지' : null; };
+        const tds = []; let i = 0;
+        while (i < W.length) {
+          const d = W[i], o = offOf(d);
+          if (o) { let j = i; while (j + 1 < W.length && offOf(W[j + 1]) === o) j++;
+            tds.push(`<td class="stopc${W.slice(i, j + 1).includes(today) ? ' td' : ''}" colspan="${j - i + 1}" title="${esc(`${ln} ${mdw(W[i])}${j > i ? '~' + mdw(W[j]) : ''} ${o}`)}"><div class="sl">${esc(o)}${j > i ? `<small>${md(W[i])}~${md(W[j])}</small>` : ''}</div></td>`); i = j + 1; continue; }
+          tds.push(kind(d) === 'pad' ? pad() : kind(d) === 'pst' ? `<td class="pst">${pastCell(p, R.act(ln, d), ln, d)}</td>`
+            : `<td class="${tdc(d)}">${p === 'cg' ? cgCell(R.cell(ln, d), ln, d === today, R.sts && R.sts(ln, d)) : ccCell(FL[ln][d], ln, R.KD, d === today)}</td>`); i++;
+        }
+        return `<tr class="ln${idle ? ' idle' : ''}"><th>${ln}<small>${n0(wT(ln, W))}t</small></th>` + tds.join('') + '</tr>';
       }).join('');
       const sumT = (d) => LN.reduce((s, l) => s + dayT(l, d), 0);
       const tot = `<tr class="dsum"><th>합계<small>${n0(LN.reduce((s, l) => s + wT(l, W), 0))}t</small></th>`
