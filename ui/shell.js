@@ -50,7 +50,7 @@
      되돌리려면 SHOW = null. 목록에 없는 화면을 직접 열면 가동 캘린더로 보내고, 남긴 화면 안의 다른 화면 링크는 글자만 남김 */
   const SHOW = null;   // 11/2 회의 뒤 사용자 '다시 전부 다 보여줘' — 3화면만 남기려면 ['supply', 'matcal', 'integrated']
   const SHOWF = SHOW && NAV.filter((x) => typeof x !== 'string' && SHOW.includes(x[0])).map((x) => x[1]);
-  const HOME = SHOWF ? SHOWF[0] : 'index.html';
+  const HOME = SHOWF ? SHOWF[0] : 'hy.html';   // 11/17 사용자: 로고·홈 = 02 현황
   if (SHOWF) {
     const file = (location.pathname.split('/').pop() || 'index.html');
     if (!SHOWF.includes(file)) { document.documentElement.style.visibility = 'hidden'; location.replace(HOME); return; }
@@ -165,7 +165,7 @@
     // 메뉴 밑 세부 탭(11/4 사용자 '탭 밑에 세부탭이 뜨게') — 화면에 들어가지 않고 바로 이동
     const subs = (m) => { const L = m[3].filter((t) => t[3] !== 't' && (t[3] !== 'd' || m === curM) && okT(t));
       return L.length > 1 ? `<div class="nv-sub">${L.map((t) => `<a href="${t[1]}" data-tab="${tabKey(t)}"${only(t)}>${esc(t[2])}</a>`).join('')}</div>` : ''; };
-    const eOpen = (curM && MENU.includes(curM)) || inAdm || open0.includes(ETC);   // V2 '기타': 지금 화면이 그 안이거나 펼쳐 둔 경우만 열림
+    const eOpen = (curM && MENU.includes(curM)) || inAdm;   // 11/17 사용자: 04 기타는 접어 둠(지금 화면이 그 안일 때만 펼침)   // V2 '기타': 지금 화면이 그 안이거나 펼쳐 둔 경우만 열림
     const nav = V2 ? MV2.map((m, i) => mlink(m, i) + subs(m)).join('')
       + `<div class="nv-sec${eOpen ? ' open' : ''}" data-g="${ETC}"><button type="button" class="nv-grp nv-tg" aria-expanded="${eOpen}"><small class="nv-no">${String(MV2.length + 1).padStart(2, '0')}</small>${ETC}<svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">`
       + MENU.map((m) => (mOK(m) ? mlink(m, null) + subs(m) : '')).join('') + (adm.length ? `<div class="nv-grp">${ADMN}</div>${adm.map(link).join('')}` : '') + '</div></div>'

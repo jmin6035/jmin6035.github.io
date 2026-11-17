@@ -102,12 +102,20 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
     <p class="hint" id="t-msg"></p>
   </section>
   <div id="t-main" hidden style="margin-top:16px">
-    <section class="card"><h2>지금 적용 중인 핵심 규칙 <small id="k-asof"></small></h2>
+    <section class="card" hidden><h2>지금 적용 중인 핵심 규칙 <small id="k-asof"></small></h2>
       <table class="kr"><tbody id="k-rows"></tbody></table>
     </section>
     <section class="card"><h2>계획이 만들어지는 순서 <small>수요 → 월 계획 → 편성 → 제약 · 지금 값</small></h2>
       <div id="f-flow"></div>
       <p class="small" style="margin:12px 0 0">이번 달 숫자로 보기 → <a href="plan_calc.html">계획 계산</a> · 실적으로 잰 속도·손실 → <a href="analysis.html">조건 분석</a></p>
+    </section>
+
+    <section class="card" id="r-sec">
+      <details class="fold" id="r-fold" style="margin-top:0" open><summary>전체 규칙 — 단계별 <small id="r-cnt"></small></summary>
+        <p class="small" style="margin:10px 0"><span class="rl-edit">수정 가능</span> 위 수치 바꾸기 · <span class="rl-auto">자동</span> 엔진 고정 · <span class="rl-todo">반영 예정</span> 결정 완료·엔진 반영 전 · <span class="rl-hold">보류</span> 결정 대기</p>
+        <div class="rl-tabs" id="r-tabs" role="tablist"></div>
+        <div id="r-body"></div>
+      </details>
     </section>
 
     <section class="card" id="t-edit-sec">
@@ -136,13 +144,6 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
       </details>
     </section>
 
-    <section class="card" id="r-sec">
-      <details class="fold" id="r-fold" style="margin-top:0"><summary>전체 규칙 — 단계별 <small id="r-cnt"></small></summary>
-        <p class="small" style="margin:10px 0"><span class="rl-edit">수정 가능</span> 위 수치 바꾸기 · <span class="rl-auto">자동</span> 엔진 고정 · <span class="rl-todo">반영 예정</span> 결정 완료·엔진 반영 전 · <span class="rl-hold">보류</span> 결정 대기</p>
-        <div class="rl-tabs" id="r-tabs" role="tablist"></div>
-        <div id="r-body"></div>
-      </details>
-    </section>
 
     <section class="card">
       <details class="fold" style="margin-top:0"><summary>기준·사양 <small>결정 기록 · 계획 조건식 · 리드타임</small></summary>

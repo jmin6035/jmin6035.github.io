@@ -158,6 +158,7 @@ html body main #m4 table.m4-cl td.odt { font-size: 11.5px !important; color: var
 #m4 .m4-wk button:hover { border-color: var(--ink-2); } #m4 .m4-wk button span { display: block; font-size: 13px; color: var(--ink-2); font-weight: 700; } #m4 .m4-wk button b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
 #m4 .m4-wk button small { display: block; font-size: 12.5px; color: var(--bad); font-weight: 600; } #m4 .m4-wk button small.ok { color: var(--ink-3); font-weight: 500; }
 html body main #m4 table.m4-cl tr.hl > :is(td, th) { background: color-mix(in srgb, #f2b705 16%, var(--surface)) !important; }
+.gk-rl { margin: 14px 0 0; text-align: right; font-size: 14.5px; } .gk-rl a { font-weight: 700; color: var(--brand-2, var(--ink)); }
 </style>
 <style>
 /* 소재 탭 = 소재 관제(matcal.html)의 소재 캘린더·월별 소재 입고 계획 서식 그대로 */
@@ -421,6 +422,7 @@ table.gk-adj tr.sr > * { background: #fff8e1 !important; border-top: 2px solid #
     <div class="tabs big" id="gk-tab" role="tablist"><button type="button" data-t="plan" aria-pressed="true">일별 가동계획</button><button type="button" data-t="mat" aria-pressed="false">소재</button></div>
     <div class="gk-bar"><div class="seg" id="gk-mon" role="group" aria-label="월"></div><span class="sp"></span><button type="button" class="pbtn noprint" id="gk-print">인쇄</button></div>
     <div id="gk-plan"></div>
+    <p class="gk-rl noprint" id="gk-rl"><a href="rules.html">계획 규칙 보기 — 이 계획이 어떤 규칙으로 만들어졌나 ›</a></p>
     <div id="gk-mat" hidden>
       <div class="sbar"><span id="s-meta"></span><div class="tabs" id="s-mon" role="group" aria-label="월"></div></div>
       <section id="s-ojudge" hidden></section>
