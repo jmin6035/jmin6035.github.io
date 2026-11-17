@@ -229,8 +229,8 @@
     const K = D && D.WK, M = K && K.mon && K.mon[mon], cv = K && K.monCov && K.monCov[mon];
     if (!M) { el.innerHTML = `<h2 class="m4-h">${+mon.slice(5)}월 그룹별 소재 확보</h2><p class="gk-none">이 달은 주문 자료 범위(9주) 밖입니다</p>`; return; }
     const z = (v, c) => (v >= 0.5 ? `<td class="${c || ''}">${n0(v)}</td>` : '<td class="z">–</td>');
-    const row = (g, c, tot) => { const ord = c.o || 0, ok = c.ok || 0, inb = (c.on || 0) + (c.late || 0) + (c.wait || 0), no = c.none || 0, r = ord ? Math.round((ok + (c.on || 0)) / ord * 100) : null, nop = Math.max(0, (c.p || 0) - ord);
-      return `<tr class="${tot ? 'tot' : ''}"><th>${esc(g)}</th><td class="b">${n0(ord)}</td>${z(ok)}${z(inb)}${z(no, 'bad')}<td class="pc ${r == null ? '' : r < 50 ? 'bad' : r < 80 ? 'warn' : 'good'}">${r == null ? '–' : r + '%'}</td><td class="gbar">${ord ? `<div style="display:flex;width:100%;height:10px;border-radius:5px;overflow:hidden;background:var(--surface-2)"><div style="width:${ok / ord * 100}%;background:var(--m4-in)"></div><div style="width:${inb / ord * 100}%;background:var(--m4-po)"></div><div style="width:${no / ord * 100}%;background:var(--m4-no)"></div></div>` : ''}</td>${((ob) => (ob ? `<td class="ob ${ob[0] < today ? 'bad' : ''}">${ob[0] === ob[1] ? md(ob[0]) : `${md(ob[0])}~${md(ob[1])}`}${ob[0] < today ? '<small>지남</small>' : '<small>까지</small>'}</td>` : '<td class="z">–</td>'))(c.ordBy)}${z(c.late || 0, 'warn')}${z(nop, 'muted')}</tr>`; };
+    const row = (g, c, tot) => { const ord = c.o || 0, ok = c.ok || 0, inb = (c.on || 0) + (c.late || 0) + (c.wait || 0), sf = c.noneSelf || 0, no = Math.max(0, (c.none || 0) - sf), r = ord ? Math.round((ok + (c.on || 0)) / ord * 100) : null, nop = Math.max(0, (c.p || 0) - ord);
+      return `<tr class="${tot ? 'tot' : ''}"><th>${esc(g)}</th><td class="b">${n0(ord)}</td>${z(ok)}${z(inb)}${z(sf, 'self')}${z(no, 'bad')}<td class="pc ${r == null ? '' : r < 50 ? 'bad' : r < 80 ? 'warn' : 'good'}">${r == null ? '–' : r + '%'}</td><td class="gbar">${ord ? `<div style="display:flex;width:100%;height:10px;border-radius:5px;overflow:hidden;background:var(--surface-2)"><div style="width:${ok / ord * 100}%;background:var(--m4-in)"></div><div style="width:${inb / ord * 100}%;background:var(--m4-po)"></div><div style="width:${sf / ord * 100}%;background:#b9a7d9"></div><div style="width:${no / ord * 100}%;background:var(--m4-no)"></div></div>` : ''}</td>${((ob) => (ob ? `<td class="ob ${ob[0] < today ? 'bad' : ''}">${ob[0] === ob[1] ? md(ob[0]) : `${md(ob[0])}~${md(ob[1])}`}${ob[0] < today ? '<small>지남</small>' : '<small>까지</small>'}</td>` : '<td class="z">–</td>'))(c.ordBy)}${z(c.late || 0, 'warn')}${z(nop, 'muted')}</tr>`; };
     const add = (a, c) => { for (const [k, v] of Object.entries(c)) { if (k === 'ordBy') a.ordBy = a.ordBy ? [v[0] < a.ordBy[0] ? v[0] : a.ordBy[0], v[1] > a.ordBy[1] ? v[1] : a.ordBy[1]] : v.slice(); else if (typeof v === 'number') a[k] = (a[k] || 0) + v; } return a; };
     let body = '';
     for (const [pl, gs] of GRP_ORD) {
@@ -239,10 +239,10 @@
       const T = L.reduce((a, g) => add(a, M[g]), {});
       body += row(PN[pl] + ' 합계', T, true) + L.map((g) => row(g, M[g])).join('');
     }
-    el.innerHTML = `<h2 class="m4-h">${+mon.slice(5)}월 그룹별 소재 확보</h2><div class="m4-q">톤 · ${cv ? `${md(cv[0])}~${md(cv[1])} 생산분(주문 기준)` : ''} · 확보율 = (입고 완료 + 제때 입고 예정) ÷ 이달 필요 · 발주일 = 생산일 − 소재 리드타임</div>
-<div class="m4-sc"><table class="m4-gd"><colgroup><col style="width:120px"><col><col><col><col><col style="width:70px"><col style="width:16%"><col style="width:150px"><col><col></colgroup>
-<thead><tr><th>그룹</th><th>이달 필요</th><th>입고 완료</th><th>입고 예정<small>발주 완료</small></th><th>미발주</th><th>확보율</th><th></th><th>미발주 발주일</th><th>늦게 입고<small>입고 예정 중</small></th><th>주문 없음<small>계획만</small></th></tr></thead><tbody>${body}</tbody></table></div>
-<div class="m4-lg"><span><i class="in"></i>입고 완료</span><span><i class="po"></i>입고 예정(발주 완료)</span><span><i class="no"></i>미발주</span></div>`;
+    el.innerHTML = `<h2 class="m4-h">${+mon.slice(5)}월 그룹별 소재 확보</h2><div class="m4-q">톤 · ${cv ? `${md(cv[0])}~${md(cv[1])} 생산 계획에 들어간 판매 주문` : ''}(자가재 생산·재고 보충 제외 — 아래 '소재 현황'의 소재 전체 필요와 범위가 다름) · 확보율 = (입고 완료 + 제때 입고 예정) ÷ 필요 · 구매 발주일 = 생산일 − 리드타임</div>
+<div class="m4-sc"><table class="m4-gd"><colgroup><col style="width:120px"><col><col><col><col><col><col style="width:70px"><col style="width:16%"><col style="width:150px"><col><col></colgroup>
+<thead><tr><th>그룹</th><th>필요<small>${cv && cv[0].slice(8) !== '01' ? '남은 기간' : '그 달'}</small></th><th>입고 완료</th><th>입고 예정<small>발주 완료</small></th><th>자가재 대기<small>도금 생산 필요</small></th><th>구매 미발주</th><th>확보율</th><th></th><th>구매 발주일</th><th>늦게 입고<small>입고 예정 중</small></th><th>주문 없음<small>계획만</small></th></tr></thead><tbody>${body}</tbody></table></div>
+<div class="m4-lg"><span><i class="in"></i>입고 완료</span><span><i class="po"></i>입고 예정(발주 완료)</span><span><i style="background:#b9a7d9"></i>자가재 대기(도금 생산)</span><span><i class="no"></i>구매 미발주</span></div>`;
   }
   function matSync() {
     matDash();

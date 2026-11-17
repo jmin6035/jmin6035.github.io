@@ -23,7 +23,7 @@
     const PM = Object.fromEntries((S.PM || []).map((m) => [m.k, m]));
     // 유형별 그 달 숫자
     const T = Object.entries(MP.T).filter(([, R]) => inScope(R.plant)).map(([c, R]) => {
-      const o = { c, pl: R.plant, rec: 0, ord: 0, nw: 0, od: {}, ib: {}, ibN: {}, late: {}, codes: new Set(), use: 0, lateNw: 0, lateDay: null };
+      const o = { c, pl: R.plant, rec: 0, ord: 0, nw: 0, od: {}, ib: {}, ibN: {}, odt: {}, late: {}, codes: new Set(), use: 0, lateNw: 0, lateDay: null };
       for (const d of ds) {
         const I = R.inb[d] || [], O = R.ord[d] || [];
         for (const e of I) { if (e.kind === 'act') o.rec += e.t; else if (e.kind === 'new') o.nw += e.t; else o.ord += e.t;
@@ -31,6 +31,7 @@
         // 11/13 점검: 입고 줄 = 입고 완료·발주 완료분 입고 예정만(초록) · 미발주 필요량(new)은 따로(빨강 '필요') — 발주 안 한 양이 입고처럼 보이던 것
         const ti = sumT(I.filter((e) => e.kind !== 'new')), tn = sumT(I.filter((e) => e.kind === 'new')), to = sumT(O);
         if (ti >= 0.5) o.ib[d] = ti; if (tn >= 0.5) o.ibN[d] = tn;
+        { const ods = [...new Set(I.filter((e) => e.kind === 'arr' && e.a).map((e) => (S.poDate && S.poDate(e.a.po)) || ((/(\d{2})\/(\d{2}) 발주/.exec(e.a.note || '') || [])[0] ? `${mon.slice(0, 4)}-${/(\d{2})\/(\d{2}) 발주/.exec(e.a.note)[1]}-${/(\d{2})\/(\d{2}) 발주/.exec(e.a.note)[2]}` : null)).filter(Boolean))].sort(); if (ods.length) o.odt[d] = ods; }   // 입고 예정분의 발주일
         if (to >= 0.5) { o.od[d] = to; if (O.some((e) => e.late)) o.late[d] = 1; }
         for (const e of O) if (e.kind === 'mlate' && e.m) { const f = e.m.first || (e.m.sizes || []).map((z) => z[3]).filter(Boolean).sort()[0]; if (f && (!o.mlDay || f < o.mlDay)) o.mlDay = f; }   // 마감 지난 부족(수주 관제 matLate 와 같은 목록)의 첫 부족일
         o.use += sumT(R.use[d]);
@@ -126,10 +127,11 @@
         const cl = [d < td ? 'ps' : '', d === td ? 'td' : ''].filter(Boolean).join(' ');
         const late = k === 'po' && t.late[d];
         return `<td${cl ? ` class="${cl}"` : ''}>${v ? `<span class="${k}${late ? ' late' : ''}${v >= 9999.5 ? ' w5' : ''}" data-c="${esc(t.c)}" data-k="${k === 'po' ? 'ord' : 'inb'}" data-d="${d}" title="${esc(`${md(d)} ${t.c} ${k === 'po' ? '발주' : '입고'} ${n0(v)}t${late ? ' — 마감 지난 몫 포함' : ''}`)}">${n0(v)}</span>` : ''}${v && vn ? `<span class="ib nd" data-c="${esc(t.c)}" data-k="inb" data-d="${d}" title="${esc(`${md(d)} ${t.c} 미발주 — 입고 필요 ${n0(vn)}t`)}">+${n0(vn)}</span>` : ''}</td>`; }).join('');
-      return `<tr class="${first ? 'r1' : 'r2'}">${first ? `<th class="nm" rowspan="2">${esc(t.c)}</th>` : ''}<th class="kd"><i class="${k}">${k === 'po' ? '발주' : '입고'}</i></th>${cells}<td class="tt">${s >= 0.5 ? n0(s) : ''}</td></tr>`;
+      return `<tr class="${first ? 'r1' : 'r2'}">${first ? `<th class="nm" rowspan="3">${esc(t.c)}</th>` : ''}<th class="kd"><i class="${k}">${k === 'po' ? '발주' : '입고'}</i></th>${cells}<td class="tt">${s >= 0.5 ? n0(s) : ''}</td></tr>`;
     };
     let b = '';
-    for (const g of R.calRows) { if (!g.rows.length) continue; b += `<tr class="sec"><th colspan="${nc}">${PLN[g.pl]}</th></tr>` + g.rows.map((t) => line(t, 'po', true) + line(t, 'ib', false)).join(''); }
+    const odLine = (t) => `<tr class="r3"><th class="kd"><i class="odt">발주일</i></th>${ds.map((d) => { const L = t.odt[d]; return `<td class="odt"${L ? ` title="${esc(`${md(d)} 입고 예정분 발주일: ${L.map(md).join(' · ')}`)}"` : ''}>${L ? `${md(L[0])}${L.length > 1 ? '<small>외</small>' : ''}` : ''}</td>`; }).join('')}<td class="tt"></td></tr>`;
+    for (const g of R.calRows) { if (!g.rows.length) continue; b += `<tr class="sec"><th colspan="${nc}">${PLN[g.pl]}</th></tr>` + g.rows.map((t) => line(t, 'po', true) + line(t, 'ib', false) + odLine(t)).join(''); }
     if (R.quiet.length) b += `<tr class="fold"><td colspan="${nc}">▸ 이달 발주·입고 없음 ${R.quiet.length}종 <small>${R.quiet.map(esc).join(' · ')}</small></td></tr>`;
     return `<h2 class="m4-h">발주 · 입고 캘린더</h2><div class="m4-q" title="소재마다 위 줄 = 발주, 아래 줄 = 입고 · 지난 날은 실적(흐리게) · 숫자를 누르면 업체·양 상세">톤 · <b style="color:var(--bad)">빨강</b> = 마감 지난 발주 · 미발주 입고 필요</div>`
       + `<div class="m4-sc"><table class="m4-cl v2-grid"><colgroup><col style="width:88px"><col style="width:56px">${ds.map(() => '<col>').join('')}<col style="width:66px"></colgroup>`
