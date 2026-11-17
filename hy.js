@@ -43,7 +43,7 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
     const L = v.by.filter((z) => z[3] > 0.5), cap = sm && sm.cap, bg = sm ? sm.beg : v.beg, en = sm ? sm.end : v.endT, su = sm && sm.sus;
     return `<div class="hy-row"><div class="hy-num sk">${su ? '<span class="hlb">F/H</span>' : ''}<span class="hlb">월초</span><b>${n0(bg)}<small>톤</small></b><span class="ar">→</span><span class="hlb">월말</span><b class="${(cap && en > cap) || (en < 0.5 && bg > 0.5) ? 'bad' : ''}">${n0(en)}<small>톤</small>${en < 0.5 && bg > 0.5 ? ' 바닥' : cap ? ` ${pct(en, cap)}%` : ''}</b></div>
-<div class="hy-mn">${su ? `SUS 별도 월초 ${n0(su.beg)} → 월말 ${n0(su.end)}톤 · ` : ''}월말 = 추가 발주 없이 입고 예정만 들어올 때${cap ? ` · 상한 ${n0(cap)}톤` : ''}</div>
+<div class="hy-mn">${su ? `SUS 별도 월초 ${n0(su.beg)} → 월말 ${n0(su.end)}톤(월중 바닥 후 월말 입고) · ` : ''}월말 = 추가 발주 없이 입고 예정만 들어올 때${cap ? ` · 상한 ${n0(cap)}톤` : ''}</div>
 <div class="hy-sub">${L.map(([n, b, , u]) => `<div class="sr"><span class="sn">${esc(SN(n))}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(b / u * 100)}"></i></div><span class="sv">월초 재고로 충당 <b>${pct(b, u)}%</b></span></div>`).join('')}</div></div>`;
   }
   function matPo(p, v) {
