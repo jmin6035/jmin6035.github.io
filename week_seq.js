@@ -225,7 +225,7 @@
     const row = (k, h) => `<div class="wk3"><i>${k}</i><div>${h}</div></div>`;
     if (plant === 'cg') {
       const t = x.trt || {};
-      return row('사양', `<span class="cp al${(x.al || x.sur) === 'AL-STS' ? ' sts' : ''}">${esc(x.al || x.sur)}</span><span class="cp sz" title="두께 × 폭 × 길이">${(+x.thick).toFixed(2)} × ${n0(x.width)} × ${n0(x.len || x.t * 1e6 / (x.thick * x.width * 7.85))}m</span>`
+      return row('사양', `<span class="cp al${(x.al || x.sur) === 'AL-STS' ? ' sts' : ''}">${esc(x.al || x.sur)}</span><span class="cp sz" title="두께 × 폭 × 길이">${(+x.thick).toFixed(2)} × ${n0(x.width)} × ${x.len ? n0(x.len) : '약 ' + n0(x.t * 1e6 / (x.thick * x.width * 7.85))}m</span>`
         + (t.cot ? `<span class="cp" title="도금량(코드 ${esc(t.cot)})">${esc(cotKo(t.cot))}</span>` : '') + (t.aft && x.grp !== '자가재' ? `<span class="cp" title="후처리(코드 ${esc(t.aft)})">${esc(AFT[t.aft] || t.aft)}</span>` : '')   // 11/15 사용자: 후처리 없음·자가재(컬러 소재) 후처리 표시 삭제
         + (x.grade ? `<span class="cp" title="재질(코드 ${esc(x.grade)})">${esc(GR[x.grade] || x.grade)}</span>` : '') + (specKo(x.spec) ? `<span class="cp" title="소재 규격(${esc(x.spec)})">${esc(specKo(x.spec))}</span>` : '') + (x.ge ? '<span class="cp wr" title="용도 가전">가전</span>' : ''))
         + row('주문', (x.grp && x.grp !== '미상' ? `<span class="cp" title="판매그룹">${esc(x.grp)}</span>` : '')

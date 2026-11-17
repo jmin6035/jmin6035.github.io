@@ -45,15 +45,15 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
   function matStock(p, v, sm) {
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
     const L = v.by.filter((z) => z[3] > 0.5), cap = sm && sm.cap, bg = sm ? sm.beg : v.beg, en = sm ? sm.end : v.endT, su = sm && sm.sus;
-    return `<div class="hy-row"><div class="hy-num sk">${su ? '<span class="hlb">F/H</span>' : ''}<span class="hlb">월초</span><b>${n0(bg)}<small>톤</small></b><span class="ar">→</span><span class="hlb">월말</span><b class="${(cap && en > cap) || (en < 0.5 && bg > 0.5) ? 'bad' : ''}">${n0(en)}<small>톤</small>${en < 0.5 && bg > 0.5 ? ' 바닥' : cap ? ` ${pct(en, cap)}%` : ''}</b></div>
-<div class="hy-mn">${(v.shortBy || []).filter((z) => z[6] && (p !== 'G' || z[0] !== 'SUS')).map((z) => `<b class="bad">${esc(SN(z[0]))} ${z[6].slice(8) === '01' ? '월초부터' : mdd(z[6])} 바닥</b> · `).join('')}${su ? 'SUS = 지급재(발주 당일 입고) — 재고 굴림에서 뺌 · ' : ''}월말 = 추가 발주 없이 입고 예정만 들어올 때${cap ? ` · 상한 ${n0(cap)}톤` : ''}</div>
+    return `<div class="hy-row"><div class="hy-num sk">${su ? '<span class="hlb">F/H</span>' : ''}<span class="hlb">월초</span><b>${n0(bg)}<small>톤</small></b><span class="ar">→</span><span class="hlb">월말</span><b class="${(cap && en > cap) || (en < 0.5 && bg > 0.5) ? 'bad' : ''}">${n0(en)}<small>톤</small>${en < 0.5 && bg > 0.5 ? ' 부족' : cap ? ` ${pct(en, cap)}%` : ''}</b></div>
+<div class="hy-mn">${(v.shortBy || []).filter((z) => z[6] && (p !== 'G' || z[0] !== 'SUS')).map((z) => `<b class="bad">${esc(SN(z[0]))} ${z[6].slice(8) === '01' ? '월초부터' : mdd(z[6]) + '부터'} 부족</b> · `).join('')}${su ? 'SUS = 지급재(발주 당일 입고) — 재고 굴림에서 뺌 · ' : ''}월말 = 추가 발주 없이 입고 예정만 들어올 때${cap ? ` · 상한 ${n0(cap)}톤` : ''}</div>
 <div class="hy-sub">${L.filter(([n, , , u]) => u >= 0.5 && !(p === 'G' && n === 'SUS')).map(([n, b, , u]) => `<div class="sr"><span class="sn">${esc(SN(n))}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(Math.min(100, b / u * 100))}"></i></div><span class="sv">월초 재고로 ${b >= u ? '<b>모두 충당</b>' : `충당 <b>${pct(b, u)}%</b>`}</span></div>`).join('')}</div></div>`;   // 11/17 검토: 100% 넘으면 '모두 충당'(1151% 같은 값 안 보임)
   }
   function matPo(p, v) {
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
     const SB = Object.fromEntries((v.shortBy || []).map((z) => [z[0], z]));
     const L = v.by.filter((z) => z[3] > 0.5 || z[2] > 0.5 || (v.shortBy || []).some((y) => y[0] === z[0] || y[0].startsWith(z[0] + '(')));   // 부족 판정이 있는 소재는 사용·입고 없어도 보임
-    const one_ = (z, lb) => [z[1] > 0.5 ? `<b class="bad">${lb}부족 ${n0(z[1])}톤(발주 시기 지남)</b>` : '', z[2] > 0.5 ? `<b class="warn">${lb}추가 발주(재고 바닥 기준) ${n0(z[2])}톤 · ${z[3] === z[4] ? `${mdd(z[3])}까지` : `${mdd(z[3])}부터 차례로(~${mdd(z[4])})`}</b>` : ''].filter(Boolean).join(' · ');
+    const one_ = (z, lb) => [z[1] > 0.5 ? `<b class="bad">${lb}부족 ${n0(z[1])}톤(발주 시기 지남)</b>` : '', z[2] > 0.5 ? `<b class="warn">${lb}추가 발주(재고 부족 기준) ${n0(z[2])}톤 · ${z[3] === z[4] ? `${mdd(z[3])}까지` : `${mdd(z[3])}부터 차례로(~${mdd(z[4])})`}</b>` : ''].filter(Boolean).join(' · ');
     const stat = (n) => { if (p === 'G' && n === 'SUS') return '<span class="ok">지급재(발주 당일 입고)</span>'; const zs = (v.shortBy || []).filter((z) => z[0] === n || z[0].startsWith(n + '(')); if (!zs.length) return '<span class="ok">확보</span>'; return zs.map((z) => one_(z, z[0] === n ? '' : `${esc(z[0].slice(n.length).replace(/[()]/g, ''))} `)).join('<br>'); };   // 11/17 검토: F/H 는 코드별(AL용·GI/GL용) 판정
     const sl = v.staleBy ? v.staleBy.map(([n_, t_]) => [n_, 0, 0, 0, 0, t_]) : (v.shortBy || []).filter((z) => z[5] > 0.5);
     return `<div class="hy-row"><div class="hy-num"><b>${n0(v.arr)}</b><small>톤</small><span class="d1">입고 예정</span></div>
@@ -62,7 +62,7 @@ ${v.stale > 0.5 ? `<div class="hy-mn">제외: 입고 예정일이 30일 넘게 �
   }
   function matNext(p, v) {
     if (!v) return '<div class="hy-na">자료 없음</div>';
-    // 확보율 = 소재별 min(확보, 필요) 합 ÷ 필요(남는 소재가 모자란 소재를 덮지 않음) · 모자란 몫은 그날 발주 마감(바닥일 − 리드타임)으로 나눔:
+    // 확보율 = 소재별 min(확보, 필요) 합 ÷ 필요(남는 소재가 모자란 소재를 덮지 않음) · 모자란 몫은 그날 발주 마감(부족 시작일 − 리드타임)으로 나눔:
     // 마감 지남 = 빨강 '부족'(지금 발주해도 못 댐) · 마감 전 = 주황 '발주 필요(마감 범위)'(검토 11/17)
     const md_ = (d) => (d ? `${+d.slice(5, 7)}/${+d.slice(8)}` : '');
     const rg = (a, b) => (a === b ? md_(a) : `${md_(a)}~${md_(b)}`);

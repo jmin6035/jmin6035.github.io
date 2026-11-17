@@ -53,8 +53,8 @@
   const catG = (o) => ((o.src && o.src.woWait) ? '작업지시량' : o.matSt !== '확보' ? K0 : '작업 대기');   // 현장 작업지시에 올랐으면 소재는 있는 것
   const CFG = {
     C: { cat: catC, sub: MSUB, subOf: msub, tiles: ['부자재 대기', '불량', '작업 대기'], leaves: [[K0, '#d03b3b', '매치된 소재 없음 — 아래는 소재 상태'], ['부자재 대기', '#eda100', '작업지시 편성 — 부자재 입고 대기'],
-      ['불량', '#9b2c6a', '작업지시 편성 — 부자재 불량'], ['작업 대기', '#2a78d6', '작업지시 편성 — 부자재 준비됨(확정 전)'], ['작업지시량', '#008300', '확정 지시 — DUMMY 고객사 제외 · 톤 = 주문 잔여(지시중량은 작게)']] },
-    G: { cat: catG, sub: GSUB, subOf: gsub, tiles: [],   /* 11/13 점검: 도금은 매치 후 = 작업 대기 하나뿐 — 같은 숫자 타일 두 번 뺌 */ leaves: [[K0, '#d03b3b', '소재(F/H) 입고 전 — 아래는 소재 상태'], ['작업 대기', '#2a78d6', '소재 입고 끝 — 현장 작업지시 전'], ['작업지시량', '#008300', '현장 작업지시 목록에 오름 — 바로 생산 · 톤 = 주문 잔여(지시중량은 작게)']] },
+      ['불량', '#9b2c6a', '작업지시 편성 — 부자재 불량'], ['작업 대기', '#2a78d6', '작업지시 편성 — 부자재 준비됨(확정 전)'], ['작업지시량', '#008300', '확정 지시 — DUMMY 고객사 제외 · 톤 = 주문 잔여(지시중량과 다를 수 있음 — 코일 무게 기준)']] },
+    G: { cat: catG, sub: GSUB, subOf: gsub, tiles: [],   /* 11/13 점검: 도금은 매치 후 = 작업 대기 하나뿐 — 같은 숫자 타일 두 번 뺌 */ leaves: [[K0, '#d03b3b', '소재(F/H) 입고 전 — 아래는 소재 상태'], ['작업 대기', '#2a78d6', '소재 입고 끝 — 현장 작업지시 전'], ['작업지시량', '#008300', '현장 작업지시 목록에 오름 — 바로 생산 · 톤 = 주문 잔여(지시중량과 다를 수 있음 — 코일 무게 기준)']] },
   };
   const MATCHED = ['부자재 대기', '불량', '작업 대기'], KW = '작업지시량';
   // MES 화면번호는 화면 글자에 쓰지 않고 말풍선(title)에만
@@ -113,7 +113,7 @@
       + tile(K0, n0(m0.rem), 't', `${n0(m0.n)}건${m0s}${gTxt(m0.rs, K0)}`, m0.rem > 0.5 ? 'bad' : '', xk(K0))
       + tile(KP, n0(mtT), 't', `${n0(mtN)}건 · ${hd(mtR, KP)}${gTxt(mtR, KP)}`, '', xk(KP))
       + F.tiles.map((k) => { const c = cat(k); return tile(`└ ${k}`, n0(c.rem), 't', `${n0(c.n)}건 · ${hd(c.rs, k)}${c.remX != null && Math.abs(c.remX - c.rem) >= 0.5 ? ` · <span class="nw" title="MES 작업지시 편성 지시 잔량">지시 ${n0(c.remX)}t</span>` : ''}${gTxt(c.rs, k)}`, (k === '부자재 대기' || k === '불량') && c.rem > 0.5 ? 'warn' : '', xk(k)); }).join('')
-      + tile(KW, n0(wT), 't', `지시 ${n0(wN)}건${d.pl === 'C' ? ` · 계약 ${n0(w.n)}건` : ''} · ${hd(w.rs, KW)}${w.remX != null ? ` · <span class="nw" title="MES 확정 지시중량(코일 무게)${d.pl === 'G' ? ' — 03 생산 편성 · 작업 순서의 작업지시 톤과 같은 값' : ''}">지시중량 ${n0(w.remX)}t</span>` : ''}${gTxt(w.rs, KW)}`, 'ok', xk(KW)) + '</div>';
+      + tile(KW, n0(wT), 't', `지시 ${n0(wN)}건${d.pl === 'C' ? ` · 계약 ${n0(w.n)}건` : ''} · ${hd(w.rs, KW)}${w.remX != null ? ` · <span class="nw" title="MES 확정 지시중량(코일 무게)${d.pl === 'G' ? ' — 생산 캘린더 확정 작업 합(작업 순서 지시 톤과 계산 범위가 달라 조금 다를 수 있음)' : ''}">지시중량 ${n0(w.remX)}t</span>` : ''}${gTxt(w.rs, KW)}`, 'ok', xk(KW)) + '</div>';
     const pct = (v) => `${tot ? Math.round(v / tot * 100) : 0}%`;
     const row = (ex, cls, sw, nm, cnt, t, h, dy, txt) => `<tr class="${cls}${ex ? ' ck' : ''}"${ex ? ` data-ex="${esc(ex)}" aria-expanded="${PS.open === ex}"${tip(ex.slice(2))}` : ''}><td class="nw">${sw ? `<i class="sw" style="background:${sw}"></i>` : ''}${nm}${ex ? `<span class="tg">${PS.open === ex ? '▾' : '▸'}</span>` : ''}</td><td class="r">${n0(cnt)}</td><td class="r"><b>${n0(t)}</b></td><td class="r">${pct(t)}</td><td class="r">${h == null ? '<span class="mu">–</span>' : n0(h)}</td><td class="r">${dy || '<span class="mu">–</span>'}</td><td class="mu2">${txt}</td></tr>`;
     let body = row(xk(K0), '', F.leaves[0][1], esc(K0), m0.n, m0.rem, null, '', esc(F.leaves[0][2]))
