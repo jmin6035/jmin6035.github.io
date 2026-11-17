@@ -73,6 +73,15 @@ main.wrap { max-width: none; }
   .hy-g, .hy-g.one { grid-template-columns: minmax(0, 1fr); } .hy-g > div:first-child, .hy-g .hd { display: none; }
   .hy-g .sec { flex-direction: row; gap: 8px; } .hy-g .cell { flex-direction: column; } .hy-g .cell::before { content: attr(data-pl); font-size: 14px; font-weight: 700; color: var(--ink-2); margin-bottom: 2px; }
 }
+/* 11/18 사용자 '더 직관적으로': 재고 = 현재·월말 막대 + 상한 세로선 · 생산 막대 선 이름 */
+.sk2 { position: relative; } .sk-cap { position: relative; height: 18px; margin-left: 46px; margin-right: 150px; } .sk-cap span { position: absolute; left: var(--xc); transform: translateX(-50%); font-size: 13.5px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.sk-w { position: relative; } .sk-r { display: grid; grid-template-columns: 40px minmax(0, 1fr) 144px; align-items: center; gap: 6px; margin: 3px 0; }
+.sk-l { font-size: 14px; font-weight: 700; color: var(--ink-2); text-align: right; } .sk-v { text-align: left; white-space: nowrap; font-variant-numeric: tabular-nums; } .sk-v b { font-size: 18px; font-weight: 800; } .sk-v small { font-size: 13.5px; color: var(--ink-2); } .sk-v em { font-style: normal; font-weight: 800; font-size: 15px; margin-left: 4px; } .sk-v .d1 { display: block; margin: 0; font-size: 13.5px; }
+.sk-b { position: relative; height: 16px; background: color-mix(in srgb, var(--ink) 6%, var(--surface)); border-radius: 4px; }
+.sk-b i { position: absolute; top: 0; bottom: 0; border-radius: 4px; } .sk-b .in { left: 0; background: color-mix(in srgb, var(--ink) 38%, var(--surface)); } .sk-b .ov { background: var(--hy-bad); border-radius: 0 4px 4px 0; }
+.sk-w::after { content: ''; position: absolute; top: -4px; bottom: -4px; left: calc(46px + (100% - 46px - 150px) * var(--xc) / 100); border-left: 2px solid var(--ink); pointer-events: none; }
+.hy-lg .k-ov2 { background: var(--hy-bad); }
+.hy-tgl { position: relative; height: 18px; margin-bottom: 2px; } .hy-tgl span { position: absolute; transform: translateX(-50%); font-size: 13.5px; white-space: nowrap; top: 0; } .hy-tgl .t1 { color: var(--ink-2); } .hy-tgl .t2 { color: var(--hy-bad); font-weight: 700; }
 </style>
 </head>
 <body>
