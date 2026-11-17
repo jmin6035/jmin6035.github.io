@@ -223,40 +223,44 @@
 
   // ---------- 소재 탭: supply.js 의 월 탭(#s-mon, 숨김)을 위 월 선택과 맞춤 ----------
   // 소재 대시보드(11/17 사용자 '그룹별로 이달 필요·입고 완료·발주 예정·미발주·확보율') — 수주 관제 주간과 같은 주문 채움(그 달 생산분)
-  const GRP_ORD = [['G', ['도금수출', '도금국내', '자동차']], ['C', ['컬러수출', '가전내수', '컬러건재', '수요개발']]];
   function matDash() {
     // 11/17 사용자 '소재는 발주한 거, 입고된 거만 — 생산이랑 연계하지 말고': 발주 원장(발주번호 → 판매그룹·발주일) × MES 미입고(입고 예정·예정일 지난 것)
     const el = $('m4-grp'); if (!el) return;
     const S = window.SupMat;
     if (!S || !S.MP || !S.fhp) { el.innerHTML = '<h2 class="m4-h">그룹별 소재 발주 · 입고</h2><p class="gk-none">소재 자료를 불러오는 중입니다</p>'; setTimeout(matDash, 800); return; }
+    const GN_ = { 자동차강판: '자동차', 가전수출: '컬러수출', 건재수출: '컬러수출' };   // 판매그룹 이름을 02 현황·주간 관제와 같게
+    const gname = (g) => GN_[g] || g || '판매그룹 미상';
     const nz = (x) => String(x || '').replace(/\s/g, ''), P = S.MP.P || {}, F = S.fhp;
     const info = {}; for (const [k, L] of Object.entries(F.ord || {})) { const [pl, , , dt] = k.split('|'); for (const x of L) info[nz(x)] = { pl, dt }; }
-    const grpOf = {}; for (const [k, v] of Object.entries(F.po || {})) grpOf[nz(k)] = v[2];
-    const open = {}, arrM = {}; const mEnd = add(add(mon + '-01', 32).slice(0, 7) + '-01', -1);
+    const grpOf = {}; for (const [k, v] of Object.entries(F.po || {})) grpOf[nz(k)] = gname(v[2]);
+    const mEnd = add(add(mon + '-01', 32).slice(0, 7) + '-01', -1), cur = today.slice(0, 7) === mon;
+    const A = {}, get = (pl, g) => (A[`${pl}|${g}`] = A[`${pl}|${g}`] || { pl, g, o: 0, op: 0, arr: 0, od: 0 });
+    const open = {};
     for (const x of [...(P.known || []), ...((P.knownInfo || {}).stale || []).map((z) => ({ ...z, date: z.eta, stale: 1 }))]) {
-      const k = nz(x.po); open[k] = (open[k] || 0) + (x.t || 0);
-      if (!x.stale && x.date >= mon + '-01' && x.date <= mEnd) { const g = grpOf[k] || '(그룹 없음)', pl = (info[k] || {}).pl || x.plant; const kk = `${pl}|${g}`; arrM[kk] = (arrM[kk] || 0) + x.t; }
+      const k = nz(x.po), g = grpOf[k] || '판매그룹 미상', pl = (info[k] || {}).pl || x.plant;
+      open[k] = (open[k] || 0) + (x.t || 0);
+      const over = x.stale || /예정일 지남/.test(x.note || '');
+      if (over) { if (cur) get(pl, g).od += x.t; }
+      else if (x.date >= mon + '-01' && x.date <= mEnd) get(pl, g).arr += x.t;
     }
-    const A = {};   // (공장|그룹) → {o 이달 발주, op 그중 미입고, arr 이달 입고 예정}
-    const get = (pl, g) => (A[`${pl}|${g}`] = A[`${pl}|${g}`] || { pl, g, o: 0, op: 0, arr: 0 });
-    for (const [k, v] of Object.entries(F.po || {})) { const kk = nz(k), I = info[kk]; if (!I || I.dt.slice(0, 7) !== mon) continue; const a = get(I.pl, v[2]); a.o += v[1] || 0; a.op += Math.min(v[1] || 0, open[kk] || 0); }
-    for (const [kk, t] of Object.entries(arrM)) { const [pl, g] = kk.split('|'); get(pl, g).arr += t; }
+    for (const [k, v] of Object.entries(F.po || {})) { const kk = nz(k), I = info[kk]; if (!I || I.dt.slice(0, 7) !== mon) continue; const a = get(I.pl, gname(v[2])); a.o += v[1] || 0; a.op += Math.min(v[1] || 0, open[kk] || 0); }
     const z = (v, c) => (v >= 0.5 ? `<td class="${c || ''}">${n0(v)}</td>` : '<td class="z">–</td>');
-    const row = (lab, c, tot) => { const done = Math.max(0, c.o - c.op), r = c.o >= 0.5 ? Math.round(done / c.o * 100) : null;
-      return `<tr class="${tot ? 'tot' : ''}"><th>${esc(lab)}</th><td class="b">${c.o >= 0.5 ? n0(c.o) : '–'}</td>${z(done)}${z(c.op, 'warn')}<td class="pc">${r == null ? '–' : r + '%'}</td><td class="gbar">${c.o >= 0.5 ? `<div style="display:flex;width:100%;height:10px;border-radius:5px;overflow:hidden;background:var(--surface-2)"><div style="width:${done / c.o * 100}%;background:var(--m4-in)"></div><div style="width:${c.op / c.o * 100}%;background:var(--m4-po)"></div></div>` : ''}</td>${z(c.arr, 'b')}</tr>`; };
-    const PL0 = [['G', ['도금수출', '도금국내', '자동차강판', '자가재']], ['C', ['가전내수', '가전수출', '건재수출', '컬러건재']]];
+    const row = (lab, c, tot) => `<tr class="${tot ? 'tot' : ''}"><th>${esc(lab)}</th><td class="b">${c.o >= 0.5 ? n0(c.o) : '–'}</td>${z(Math.max(0, c.o - c.op))}${z(c.op)}${z(c.arr, 'b')}${cur ? z(c.od, 'bad') : ''}</tr>`;
+    const PL0 = [['G', ['도금수출', '도금국내', '자동차', '자가재']], ['C', ['컬러수출', '가전내수', '컬러건재', '수요개발']]];
+    const ix = (gs, g) => { const i = gs.indexOf(g); return i < 0 ? 99 : i; };
     let body = '';
     for (const [pl, gs] of PL0) {
       if (!UI.inScope(pl)) continue;
-      const L = Object.values(A).filter((a) => a.pl === pl && (a.o >= 0.5 || a.arr >= 0.5)).sort((x, y) => (gs.indexOf(x.g) + 99 * (gs.indexOf(x.g) < 0)) - (gs.indexOf(y.g) + 99 * (gs.indexOf(y.g) < 0)));
+      const L = Object.values(A).filter((a) => a.pl === pl && (a.o >= 0.5 || a.arr >= 0.5 || a.od >= 0.5)).sort((x, y) => ix(gs, x.g) - ix(gs, y.g));
       if (!L.length) continue;
-      const T = L.reduce((t, a) => ({ o: t.o + a.o, op: t.op + a.op, arr: t.arr + a.arr }), { o: 0, op: 0, arr: 0 });
+      const T = L.reduce((t, a) => ({ o: t.o + a.o, op: t.op + a.op, arr: t.arr + a.arr, od: t.od + a.od }), { o: 0, op: 0, arr: 0, od: 0 });
       body += row(`${PN[pl]} 소재 합계`, T, true) + L.map((a) => row(a.g, a)).join('');
     }
-    el.innerHTML = `<h2 class="m4-h">${+mon.slice(5)}월 그룹별 소재 발주 · 입고</h2><div class="m4-q">톤 · 발주 원장(발주번호 → 판매그룹·발주일)과 MES 미입고 자료 기준 · 생산 계획과 무관</div>
-<div class="m4-sc"><table class="m4-gd"><colgroup><col style="width:150px"><col><col><col><col style="width:80px"><col style="width:20%"><col></colgroup>
-<thead><tr><th>판매그룹</th><th>이달 발주<small>발주일이 ${+mon.slice(5)}월</small></th><th>그중 입고 완료</th><th>그중 입고 대기<small>아직 안 들어옴</small></th><th>입고율</th><th></th><th>이달 입고 예정<small>앞 달 발주분 포함</small></th></tr></thead><tbody>${body || '<tr><td colspan="7" class="z">이 달 발주·입고 예정 없음</td></tr>'}</tbody></table></div>
-<div class="m4-lg"><span><i class="in"></i>입고 완료</span><span><i class="po"></i>입고 대기</span></div>`;
+    const M_ = +mon.slice(5);
+    el.innerHTML = `<h2 class="m4-h">${M_}월 그룹별 소재 발주 · 입고</h2><div class="m4-q">톤 · 발주 원장(발주번호 → 판매그룹·발주일)과 MES 미입고 목록 기준 · 생산 계획과 무관</div>
+<div class="m4-sc"><table class="m4-gd" style="min-width:720px"><colgroup><col style="width:150px"><col><col><col><col>${cur ? '<col>' : ''}</colgroup>
+<thead><tr><th>판매그룹</th><th>${M_}월에 낸 발주</th><th>그중 들어옴</th><th>그중 아직 안 들어옴<small>리드타임 35~84일</small></th><th>${M_}월 들어올 예정<small>${cur ? `${md(today)}부터 · ` : ''}앞 달 발주분 포함</small></th>${cur ? '<th>예정일 지났는데 안 들어옴<small>독촉 대상</small></th>' : ''}</tr></thead><tbody>${body || `<tr><td colspan="${cur ? 6 : 5}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>
+<div class="m4-lg"><span>'그중 들어옴' = 그 달에 낸 발주 중 MES 미입고 목록에 없는 양(입고 원장 대조 전 추정)</span></div>`;
   }
   function matSync() {
     matDash();

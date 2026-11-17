@@ -533,7 +533,7 @@
     return { stock0: ds.includes(null), d0: ds.filter(Boolean)[0] || null, d1: ds.filter(Boolean).pop() || null, lines, short: L[L.length - 1].to < hi - 0.5 };
   }
   // 자가재 판정 칩(11/10 규칙: 컬러 생산 1~8일 전에 도금 생산) — '도금 생산 날짜·라인' 다음에 한 칩만
-  const selfJudge = (pd, d, TL) => { const g = Math.round((new Date(d) - new Date(pd)) / 864e5); return g > TL ? ['기준 1~8일 전', `${g - TL}일 일찍 생산`, null, 'warn'] : g >= 1 ? ['기준 1~8일 전', '맞음', null] : ['기준 1~8일 전', '늦음', null, 'late']; };
+  const selfJudge = (pd, d, TL) => { const g = Math.round((new Date(d) - new Date(pd)) / 864e5); return g > TL ? ['재고 사용', `${g}일 전 생산분`, null, 'due'] : g >= 1 ? ['기준 1~8일 전', '맞음', null, 'due'] : ['도금이 늦음', '컬러 생산 뒤', null, 'late']; };
   function matLine(r, d, l) {
     const M = D.W.mat || {}, IN = (M.inLead || {}).C || 7, TL = M.selfLeadTeam || 8, out = [];
     const sh = r[11] || 0, base = r[10] || r[1];
@@ -567,10 +567,10 @@
         const oTxt = (t) => (t.ordTo ? `${md(t.ord)}~${md(t.ordTo)}` : md(t.ord));
         const ordTxt = TT.length ? TT.map((t) => (TT.length > 1 ? `${esc(t.c)} ${oTxt(t)}` : oTxt(t))).join(' · ') : '-';
         const first = TT.length ? TT.map((t) => t.ordTo || t.ord).sort()[0] : null, last = TT.length ? TT.map((t) => t.ordTo || t.ord).sort().pop() : null;
-        const st = !TT.length ? ['warn', '팀 리드타임 표에 없는 소재'] : first >= today ? ['ok', `발주 예정 ${md(first)}~`] : last >= today ? ['warn', '일부 업체 발주 지남'] : ['info', '발주 완료분분 사용'];
+        const st = !TT.length ? ['warn', '팀 리드타임 표에 없는 소재'] : first >= today ? ['ok', `발주 예정 ${md(first)}~`] : last >= today ? ['warn', '일부 업체 발주 지남'] : ['info', '발주 완료분 사용'];
         const arr = TT.length ? TT.map((t) => t.arrive).sort()[0] : need;
         const src = TT.length ? TT.map((t) => `${esc(t.c)} ${Math.round(t.sh * 100)}%${t.n.length ? ` (${esc(t.n.slice(0, 3).join('·'))}${t.n.length > 3 ? ` 외 ${t.n.length - 3}` : ''})` : ''}`).join(' · ') : '-';
-        out.push({ kind: '구매', nm: esc(nm), sh: (1 - sh) * w, what: `${esc(nm)} <b>${n0(r[5] * (1 - sh) * w)}t</b> <small class="muted">${Math.round((1 - sh) * w * 100)}%</small>`, src, inb: `${md(arr)} 입고 예정`, ord: ordTxt, st, steps: [[last && last < today ? '소재발주' : '발주', ordTxt, first], [arr <= today ? '소재 입고' : '입고 예정', md(arr), arr]] });
+        out.push({ kind: '구매', nm: esc(nm), sh: (1 - sh) * w, what: `${esc(nm)} <b>${n0(r[5] * (1 - sh) * w)}t</b> <small class="muted">${Math.round((1 - sh) * w * 100)}%</small>`, src, inb: `${md(arr)} 입고 예정`, ord: ordTxt, st, steps: [['발주 마감', ordTxt, first, 'due'], [arr <= today ? '소재 입고' : '입고 예정', md(arr), arr]] });
       }
     }
     return out;
@@ -578,6 +578,7 @@
 
   // 11/17 사용자: 날짜 상세의 한 품목 = 소재 하나(자가재면 도금 생산, 구매면 구매) — matLine 중 비중이 가장 큰 소재만 보임
   // ---------- 일정 흐름(칩 → 칩): 지난 날짜 = 완료(회색 ✓), 오늘 생산 = 강조 ----------
+  const dueChip = (du, txt, d) => (du && du < d ? [`납기 · ${Math.round((new Date(d) - new Date(du)) / 864e5)}일 지남`, txt, du, 'late'] : ['납기', txt, du || null, 'due']);   // 납기가 생산보다 앞서면 빨강
   const flowHtml = (steps) => `<div class="flw">${steps.map(([lb, v, dt, cl], i) => `${i ? '<i>›</i>' : ''}<span class="fs ${cl || ''} ${dt && dt < today && !cl ? 'done' : ''}"><small>${esc(lb)}</small><b>${v}</b></span>`).join('')}</div>`;
   // 도금 소재(F/H): 강종 → 소재 코드, 입고 필요 = 생산일 − 투입 여유(팀 리드타임 표 1일 — 11/9 회의, 예전 5일), 발주 마감 = 입고 필요 − 업체 유형별 리드타임(27년 배정 업체)
   const SAFE_G = 1;
@@ -600,12 +601,12 @@
       return [...M.values()]; };
     const pcard = (l) => { const x = D.pl[`${l}|${d}`]; if (!x) return ''; return `<section class="card rv wide" data-noexport data-dom="G"><h3>${l} · ${x.t > 0.5 ? `${x.fam} ${n0(x.t)}t` : '생산 없음'} ${x.act ? '<small>(실적)</small>' : ''} ${x.ev ? `<small style="color:#8a5a00">${esc(x.ev)}</small>` : ''}</h3>
       <div class="scroll"><table class="dt mt fl"><thead><tr><th>강종 · 부서</th><th>목적지</th><th class="r">톤</th><th>소재</th><th>일정 (소재 → 생산 → 납기)</th></tr></thead><tbody>${(x.lineOnly ? [] : mergeRows(x.items, [0, 1, 2, 3, 6], 5)).map((r) => { const f = r[1] === '자가재' ? flowOf(r[6], r[2], r[0]) : null, m = matG(r, d);
-        const steps = [...m.steps, ['도금 생산', md(d), d, 'now'], ...(f ? [['컬러 투입', span(f.use), null]] : [['납기', md(r[6]), r[6]]])];
+        const steps = [...m.steps, ['도금 생산', md(d), d, 'now'], ...(f ? [['컬러 투입', span(f.use), null]] : [dueChip(r[6], md(r[6]), d)])];
         return `<tr><td><b>${esc(r[0])}</b> <small>${esc(r[1])}</small></td><td>${esc([String(r[2] || '').replace(/^주문 /, ''), r[3]].filter(Boolean).join(' · '))}</td><td class="r">${n0(r[5])}</td><td>${esc(m.what)}</td><td>${flowHtml(steps)}</td></tr>`; }).join('') || `<tr><td colspan="5" class="small">${x.lineOnly && x.t > 0.5 ? '라인 합계 실적 · 품목 내역 차기 재계획 반영' : '생산 없음'}</td></tr>`}</tbody></table></div>
       ${x.why.length ? `<div class="why">${x.why.map(esc).join('<br>')}</div>` : ''}</section>`; };
     const ccard = (l) => { const x0 = D.co[`${l}|${d}`]; if (!x0 || x0.t < 0.5) return ''; const x = { ...x0, rows: mergeRows(x0.rows || [], [0, 1, 2, 3, 4, 9, 13], 5) }; const fu = D.fUse[`${l}|${d}`] || []; return `<section class="card rv wide" data-noexport data-dom="C"><h3>${l} · ${n0(x.t)}t ${x.act ? '<small>(실적)</small>' : ''}</h3>
       ${fu.length ? `<div class="fin">${fu.map(([f, t]) => `<span>자가재 ${esc(f.a)} ${n0(t)}t ← 도금 ${span(f.made)}</span>`).join('')}</div>` : ''}
-      ${x.rows.length ? `<div class="scroll"><table class="dt mt fl"><thead><tr><th>품명 · 구분</th><th>고객·지역</th><th class="r">톤</th><th>소재</th><th>일정 (소재 → 생산 → 납기)</th></tr></thead><tbody>${x.rows.slice(0, 12).map((r) => { const ML0 = x.act ? [] : matLine(r, d, l), ML = ML0.length ? [ML0.reduce((a_, b_) => (b_.sh > a_.sh ? b_ : a_))] : []; const n = Math.max(1, ML.length); const due = r[9] ? md(r[9]) : esc(r[4] || '-'); const head_ = (k) => (k ? '' : `<td rowspan="${n}"><b>${esc(r[1])}</b> <small>${esc(r[0] === '주문재' ? '건재 주문재' : r[0])}</small></td><td rowspan="${n}">${r[0] === '계획재' ? `<span class="muted">재고 보충</span><small class="spec">${esc([r[13] || r[2], r[3]].filter(Boolean).join(' '))}</small>` : esc([r[13] || r[2], r[3]].filter(Boolean).join(' · '))}</td><td class="r" rowspan="${n}">${n0(r[5])}</td>`); return ML.length ? ML.map((m, k) => `<tr class="${k ? 'cont' : ''}"${r[8] ? ` title="배치 사유: ${esc(r[8])}"` : ''}>${head_(k)}<td><small class="kd2 ${m.kind === '자가재' ? 'self' : 'buy'}">${m.kind === '자가재' ? '자가재(도금)' : '구매'}</small> ${m.nm}</td><td>${flowHtml([...(m.steps || []), ['컬러 생산', md(d), d, 'now'], ['납기', due, r[9] || null]])}</td></tr>`).join('') : `<tr>${head_(0)}<td colspan="3" class="small">실적일</td></tr>`; }).join('')}</tbody></table></div>${x.rows.length > 12 ? `<div class="why">외 ${x.rows.length - 12}건</div>` : ''}` : `<div class="why">${Object.entries(x.g).map(([k, v]) => `${esc(k)} ${n0(v)}t`).join(' · ')}</div>`}</section>`; };
+      ${x.rows.length ? `<div class="scroll"><table class="dt mt fl"><thead><tr><th>품명 · 구분</th><th>고객·지역</th><th class="r">톤</th><th>소재</th><th>일정 (소재 → 생산 → 납기)</th></tr></thead><tbody>${x.rows.slice(0, 12).map((r) => { const ML0 = x.act ? [] : matLine(r, d, l), ML = ML0.length ? [ML0.reduce((a_, b_) => (b_.sh > a_.sh ? b_ : a_))] : []; const n = Math.max(1, ML.length); const due = r[9] ? md(r[9]) : esc(r[4] || '-'); const head_ = (k) => (k ? '' : `<td rowspan="${n}"><b>${esc(r[1])}</b> <small>${esc(r[0] === '주문재' ? '건재 주문재' : r[0])}</small></td><td rowspan="${n}">${r[0] === '계획재' ? `<span class="muted">재고 보충</span><small class="spec">${esc([r[13] || r[2], r[3]].filter(Boolean).join(' '))}</small>` : esc([r[13] || r[2], r[3]].filter(Boolean).join(' · '))}</td><td class="r" rowspan="${n}">${n0(r[5])}</td>`); return ML.length ? ML.map((m, k) => `<tr class="${k ? 'cont' : ''}"${r[8] ? ` title="배치 사유: ${esc(r[8])}"` : ''}>${head_(k)}<td><small class="kd2 ${m.kind === '자가재' ? 'self' : 'buy'}">${m.kind === '자가재' ? '자가재(도금)' : '구매'}</small> ${m.nm}</td><td>${flowHtml([...(m.steps || []), ['컬러 생산', md(d), d, 'now'], dueChip(r[9], due, d)])}</td></tr>`).join('') : `<tr>${head_(0)}<td colspan="3" class="small">실적일</td></tr>`; }).join('')}</tbody></table></div>${x.rows.length > 12 ? `<div class="why">외 ${x.rows.length - 12}건</div>` : ''}` : `<div class="why">${Object.entries(x.g).map(([k, v]) => `${esc(k)} ${n0(v)}t`).join(' · ')}</div>`}</section>`; };
     const on = (l) => !ls || ls.includes(l);
     return (UI.inScope('G') ? ['1CGL', '2CGL'].filter(on).map(pcard).join('') : '') + (UI.inScope('C') ? ['1CCL', '2CCL', '3CCL', '4CCL'].filter(on).map(ccard).join('') : '');
   }
