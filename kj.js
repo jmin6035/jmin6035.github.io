@@ -3,7 +3,7 @@
    이 화면에서 볼 것 · 보는 순서(위 → 아래)
    0. 달 탭 11월 실적 · 12월 계획 · 1월 계획 — 화면 전체(카드·그래프·표·캘린더·조치)가 같이 바뀜
    1. 운영 일정 한 줄
-   2. 결론 카드 4개 — 수주 진도(판매계획 대비) · 생산 달성(월 계획 대비, 작은 글씨 = 전일까지 월차 대비) · 소재 결품 위험 · 창고 재고(소재·제품 / 상한)
+   2. 결론 카드 4개 — 주문 확보율(판매계획 대비) · 생산 달성(월 계획 대비, 작은 글씨 = 전일까지 월차 대비) · 소재 결품 위험 · 창고 재고(소재·제품 / 상한)
    3. 도금 전체 | 컬러 전체(같은 축) — 판매계획 · 수주 · 생산 · 출하 · 재고(소재·제품)
    4. 그룹별 같은 그래프(그룹 7개 같은 축)
    5. 관제 매트릭스 — 3·4 의 숫자를 표로(공장 전체 = 그룹 합, 합계 줄)
@@ -12,7 +12,7 @@
    8. 조치할 사항(그 달 것만, 할 일까지)
 
    숫자 기준(한 화면 안에서 모두 같은 값)
-   · 수주 진도 = 확정(다음 달 = 그 달 납기 주문) ÷ 판매계획. 오늘 기준(기준선) = 1일~주문 마감 생산주 끝(cut)까지 통합 계획 편성량 — 눈금선·색에만 씀
+   · 주문 확보율 = 확정(다음 달 = 그 달 납기 주문) ÷ 판매계획. 오늘 기준(기준선) = 1일~주문 마감 생산주 끝(cut)까지 통합 계획 편성량 — 눈금선·색에만 씀
    · 생산 = 계획 화면 '지금' 판과 같은 출처·반올림: 도금 = 매일 재계획(latest.plan, 지난 날 = MES 실적 + plating_actual), 컬러 = 지난 날 color_actual · 앞날 통합 계획 color
      월 계획 = 지금 판 그 달 합계(지난 날 실적 + 앞날 계획 — 카드·그래프·매트릭스·캘린더 '계' 모두 이 값) · 오늘까지 계획 = 월차(그 달 첫 판, 수주 관제 일별 p0) 누계 · 그룹 계획 = 일별 그룹 배정 합 → 공장 = 그룹 합 = 라인 합
    · 출하(이번 달) = 판생속보 그룹 출하. 다음 달 출하 계획은 따로 없음(판매계획과 같은 값이라 그리지 않음)
@@ -291,7 +291,7 @@
 
   // 그래프 범례 — 막대 모양 + 글자 색 뜻 + 눈금선 두 가지
   function legend(cur) {
-    return `<div class="kj-lg" aria-label="범례"><span><i class="sl"></i>${cur ? '판매계획 · 월 계획 · 목표' : '판매계획 · 생산 계획 · 목표'}</span><span><i class="ac"></i>${cur ? '주문(소재 ON + OFF) · 실적' : '납기 주문'}</span><span><i class="stk"></i>재고${cur ? ' <small title="소재 재고 = 판매생산속보 창고 재고(소재 관제와 같은 값) — 01 소재의 지금 재고(MES 소재재고 목록)와 출처 다름">(판생속보 창고)</small>' : ''}</span><span><i class="ov"></i>목표 초과</span>`
+    return `<div class="kj-lg" aria-label="범례"><span><i class="sl"></i>${cur ? '판매계획 · 월 계획 · 목표' : '판매계획 · 생산 계획 · 목표'}</span><span><i class="ac"></i>${cur ? '주문(소재 ON + OFF) · 실적' : '납기 주문'}</span><span><i class="stk"></i>재고${cur ? ' <small title="소재 재고 = 판매생산속보 창고 재고 — 01 소재의 지금 재고(MES 소재재고 목록)와 출처 다름">(판생속보 창고)</small>' : ''}</span><span><i class="ov"></i>목표 초과</span>`
       + (cur ? '<span><b class="bad">빨강 %</b>오늘까지 계획보다 늦음(생산·출하)</span>' : '') + '<span><b class="ov">주황 %</b>목표 초과</span></div>';
   }
 
@@ -309,7 +309,7 @@
     const kc = (h, t, sub, cls, v, s, tip) => `<a class="kj-kl" href="${h}" title="${esc(tip)} — 누르면 자세히"><div class="ct-kpi kj-k"><div class="l">${t}${sub ? ` <small>${sub}</small>` : ''}</div><div class="v ${cls}">${v}</div><div class="s">${s}</div></div></a>`;
     const pc = (v) => (v == null ? '–' : `${(+v).toFixed(1)}<small>%</small>`);
     const sales = T('sales'), ord = T('ord'), off = cur ? T('off') || 0 : 0, base = T('base'), oo = ord == null ? null : ord + off;   // 진도 = (ON + OFF) ÷ 판매계획(11/12 사용자)
-    const k1 = kc(cur ? 'suju.html#order' : 'cg_order.html', '수주 진도', '판매계획 대비', '', pc(pctOf(oo, sales)),
+    const k1 = kc(cur ? 'suju.html#order' : 'cg_order.html', '주문 확보율', '판매계획 대비', '', pc(pctOf(oo, sales)),
       sales == null ? '판매계획 미수령' : (cur ? `소재 ON+OFF ${n0(oo)} / 판매계획 ${n0(sales)}t` : `주문 ${n0(ord)} / 판매계획 ${n0(sales)}t`),
       cur ? '(소재 ON + 소재 OFF) ÷ 판매계획' : `${mLab(mSel)} 납기 주문 ÷ ${mLab(mSel)} 판매계획`);
     let k2;
@@ -536,7 +536,7 @@
     const Gs = GRP.filter((G) => inPl(G.pl));
     if (cur) {
       for (const G of Gs) { const x = A.grp[G.k][m]; if (G.self) continue;
-        // 11/13 점검: 신호와 글을 같은 분자(소재 ON + OFF = 카드·매트릭스 수주 진도)로 — 기준 = 오늘 기준(1일~주문 마감 생산주 편성량)
+        // 11/13 점검: 신호와 글을 같은 분자(소재 ON + OFF = 카드·매트릭스 주문 확보율)로 — 기준 = 오늘 기준(1일~주문 마감 생산주 편성량)
         { const oo = x.ord == null ? null : x.ord + (x.off || 0);
           if (oo != null && x.base != null && oo + 0.5 < x.base) add(oo < x.base * 0.9 ? '경고' : '주의', '수주', `${G.nm} 수주 ${n0(oo)}t(소재 ON+OFF) — 오늘 기준 ${n0(x.base)}t(~${md(A.S.cut)} 생산 편성)의 ${P0(pctOf(oo, x.base))} · 판매계획 ${n0(x.sales)}t 대비 ${P0(pctOf(oo, x.sales))}`, x.off >= 1 ? '소재 매치 당김' : '주문 확보 요청', nextDl, A.dept[G.k]); }
         // 11/12 회의: 미발주(주문은 있는데 소재 발주 확정 안 함) · 미수주(판매계획 − ON − OFF = 아직 안 들어온 주문) — 매트릭스와 같은 값

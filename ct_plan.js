@@ -7,7 +7,7 @@
   const { esc, n0, n1, md, addD } = CT;
   const $ = (id) => document.getElementById(id);
   const LG = ['1CGL', '2CGL'], LC = ['1CCL', '2CCL', '3CCL', '4CCL'];
-  const KN = { plan: '계획휴지', sd: 'S/D', repair: '수리', jr: '정기수리', clean: '청소', test: 'Test', sample: '샘플' };
+  const KN = { plan: '계획휴지', sd: 'S/D', repair: '수리', jr: '정기수리', clean: '청소', test: '시험', sample: '샘플' };
   const PDOWN = new Set(['plan', 'sd', 'repair', 'jr']);       // 계획 휴지로 보는 컬러 정지 종류
   const VIEWS = ['cg', 'cc', 'load', 'cmp'];
   let X = null, DD = null, mvAll = false;

@@ -240,7 +240,7 @@
     return `<ol class="rl-why"><li><b>부족 시작</b> ${md(M.first)} — 재고 + 발주 완료분 입고 − 날마다 필요량이 처음 음수가 되는 날(최대 ${n0(M.short)}t 부족)</li>`
       + `<li><b>입고 필요일</b> = ${md(M.first)} − 투입 여유 ${M.safe}일 = <b>${md(need)}</b></li>`
       + `<li><b>발주 마감</b> = ${md(need)} − 리드타임 ${M.lt}일 = <b>${md(M.deadline)}</b>${(M.sup || []).filter(Boolean).length ? ` (${esc(M.sup.filter(Boolean).join('·'))})` : ''}</li>`
-      + `<li><b>판정</b>: ${({ late: '마감 지남', soon: '2주 안 발주', plan: '발주 예정', ok: '확보' })[M.st] || M.st}${M.first < addD(CTX.today, (M.lt || 0) + (M.safe || 0)) ? ' · 부족 확정(지금 발주해도 리드타임 내 해소 불가)' : ''}</li></ol>`;
+      + `<li><b>상태</b>: ${({ late: '발주 지연', soon: '2주 안 발주', plan: '발주 예정', ok: '확보' })[M.st] || M.st}${M.first < addD(CTX.today, (M.lt || 0) + (M.safe || 0)) ? ' · 오늘 발주해도 필요일보다 늦게 들어옴' : ''}</li></ol>`;
   }
   function drawWhy() {
     const ln = document.getElementById('x-line').value, d = document.getElementById('x-date').value, out = document.getElementById('x-out');

@@ -23,7 +23,7 @@
   /* 11/10 사용자 '관리 탭에 왜 전부 몰아놨냐 — 각 탭 성격에 맞게': 관리에 모았던 화면을 성격에 맞는 묶음으로 되돌림.
      표시 'd' = 세부 화면 — 화면 위 탭에는 늘 보이고, 왼쪽 메뉴에는 그 묶음에 들어가 있을 때만 펼침(메뉴가 길어지지 않게) */
   const MENU = [
-    ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '수주 진도'], ['suju', 'suju.html#prod', '생산'], ['suju', 'suju.html#mat', '소재'], ['suju', 'suju.html#stock', '재고'], ['suju', 'suju.html#close', '월 실적 마감']]],
+    ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '주문 확보율'], ['suju', 'suju.html#prod', '생산'], ['suju', 'suju.html#mat', '소재'], ['suju', 'suju.html#stock', '재고'], ['suju', 'suju.html#close', '월 실적 마감']]],
     ['ct1', '통합 관제', 'home', [['home', 'index.html', '통합 관제', 't'],
       ['board', 'board.html', '판매그룹 관제판', 'd'], ['issues', 'ct_issue.html#now', '이슈 현황', 'd'], ['issues', 'ct_issue.html#req', '조정 요청', 'd']]],
     ['ct2', '주문·납기', 'cgorder', [['risk', 'risk.html', '납기 위험'], ['orders', 'ct_orders.html#track', '주문진도(전체)'], ['orders', 'ct_orders.html#cal', '납기 캘린더'],
