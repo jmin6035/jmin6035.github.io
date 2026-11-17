@@ -107,6 +107,28 @@
     });
     return { rem: out, ref };
   };
+  // 11/17 사용자 'AL-STS 이어서, 칸당 3,500t 미만' — cglplan/macrule.py contig 와 같은 규칙(날 단위 순서만 바꿈, 지연 적은 쪽, 하루 능력이 다르면 그대로)
+  MR.contig = function (rows, cal, slots, rule, t0) {
+    const l = rule.line, a = rule.alloy, cap = {}, notes = [];
+    for (const c of cal) if (c.line === l) cap[c.date] = Math.round(c.cap || 0);
+    rows = rows.map((r) => r.slice());
+    for (const s of slots) {
+      const days = s.days.filter((d) => d > t0), has = {};
+      for (const d of days) has[d] = rows.some((r) => r[1] === l && r[0] === d && r[2] === a);
+      const sd = days.filter((d) => has[d]); if (sd.length < 2) continue;
+      const win = days.filter((d) => sd[0] <= d && d <= sd[sd.length - 1]); if (win.length === sd.length) continue;
+      if (new Set(win.map((d) => cap[d])).size > 1) { notes.push(`${l} ${a} ${GP.md(win[0])}~${GP.md(win[win.length - 1])}: 하루 능력이 달라 이어 붙이지 못함`); continue; }
+      const A = win.filter((d) => !has[d]); let best = null;
+      for (const order of [sd.concat(A), A.concat(sd)]) {
+        const mp = {}; order.forEach((d, i) => { mp[d] = win[i]; });
+        let late = 0; for (const r of rows) if (r[1] === l && r[0] in mp) late += r[4] * Math.max(0, GP.diffDays(mp[r[0]], r[5]));
+        if (!best || late < best[0] - 1e-6) best = [late, mp];
+      }
+      const mp = best[1]; for (const r of rows) if (r[1] === l && r[0] in mp) r[0] = mp[r[0]];
+      notes.push(`${l} ${a} 이어 붙임 ${GP.md(win[0])}~${GP.md(win[win.length - 1])}`);
+    }
+    return { rows, notes };
+  };
   MR.summary = function (rows, items, t0, rule, slots, ref) {
     const tot = {}, res = {}, day = {};
     for (const it of items || []) { if (it.alloy !== rule.alloy || it.dest === '생산 완료') continue; const k = `${it.cls}|${it.due}`; tot[k] = (tot[k] || 0) + it.tons; if (it.src !== '주문') res[k] = (res[k] || 0) + it.tons; }
@@ -187,6 +209,7 @@
       }
     }
     const lev = GP.runLevel(highs, rem, PS, milp.state, log, MO);
+    if (slots.length) { const c_ = MR.contig(lev.rows, lev.cal, slots, rule, act.t0); lev.rows = c_.rows; lockNotes.push(...c_.notes); }   // 11/17 사용자: AL-STS 칸 안 연속
     const rows = act.rows.concat(lev.rows).sort((p, q) => (p.join('\u0001') < q.join('\u0001') ? -1 : 1));
     const actDay = {};
     for (const r of act.rows) actDay[`${r[1]}|${r[0]}`] = (actDay[`${r[1]}|${r[0]}`] || 0) + r[4];
