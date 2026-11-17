@@ -81,11 +81,11 @@
         ? `정기수리 전과 같은 ${e.to}로 재가동 — 재가동 더미 ${P.restartSame[e.line]}분(강종을 바꾸면 ${P.restartFamchg[e.line]}분).`
         : `정기수리 후 ${e.to}로 바꿔 재가동 — 재가동 더미 ${P.restartFamchg[e.line]}분(같은 강종이면 ${P.restartSame[e.line]}분). ${e.to} 물량 마감이 더 급해 강종 변경이 M/C 한 번보다 유리.`);
     } else if (before) {
-      parts.push(`${e.from} 캠페인(${GP.md(before.start)}~${GP.md(before.end)}, ${GP.fmt(before.tons)}t) 종료.`);
+      parts.push(`${e.from} 연속 생산(${GP.md(before.start)}~${GP.md(before.end)}, ${GP.fmt(before.tons)}t) 종료.`);
     }
     if (after) {
       const firstDue = Object.keys(after.by).map((k) => k.split('|')[2]).sort()[0];
-      parts.push(`${e.to} 캠페인 ${GP.md(after.start)}~${GP.md(after.end)} ${GP.fmt(after.tons)}t: ` + topBy(after.by, 3).map(([k, t]) => descKey(k, t)).join(', ') + (Object.keys(after.by).length > 3 ? ' 등' : '') + '.');
+      parts.push(`${e.to} 연속 생산 ${GP.md(after.start)}~${GP.md(after.end)} ${GP.fmt(after.tons)}t: ` + topBy(after.by, 3).map(([k, t]) => descKey(k, t)).join(', ') + (Object.keys(after.by).length > 3 ? ' 등' : '') + '.');
       if (firstDue && e.kind === 'M/C') parts.push(`${e.to} 첫 마감 ${GP.md(firstDue)}.`);
     }
     return parts.join(' ');
@@ -107,10 +107,10 @@
       const ld = A.load[`${l}|${dm}`] || 0;
       const cp = A.campaigns.filter((x) => x.line === l && x.fam === f && A.mIdx(x.start) <= +pm && A.mIdx(x.end) >= +pm).map((x) => `${GP.md(x.start)}~${GP.md(x.end)}`).join(', ');
       let why;
-      if (famDays === 0) why = `M/C 절감: ${mm}월 마감(${GP.md(du)}) 전 ${l}의 ${f} 생산일 없음(타 강종 캠페인·정기수리) → ${f} 캠페인(${cp})에서 선행 생산.`;
-      else if (ld >= 0.995) why = `능력 부족: ${mm}월 ${l} 부하 ${GP.fmt(ld * 100, 1)}% — 마감 전 ${f} 생산일 ${famDays}일로 부족하여 전월 ${f} 캠페인(${cp})에서 선행 생산.`;
-      else if (famLoad >= 0.99) why = `캠페인 능력 부족: ${mm}월 ${l} ${f} 생산일은 ${GP.md(fd[0].date)}~${GP.md(fd[fd.length - 1].date)} ${famDays}일(그 기간 부하 ${GP.fmt(famLoad * 100, 1)}%)에 그쳐 ${mm}월 ${f} 물량 충족 불가 — ${f} 추가 전환 없이 전월 ${f} 캠페인(${cp})에서 선행 생산.`;
-      else why = `평준화(유휴 방지): 납기월 ${f} 생산일 ${famDays}일은 여유가 있으나(해당 기간 부하 ${GP.fmt(famLoad * 100, 1)}%), 전월 ${f} 캠페인(${cp})의 일 여유시간을 ${R.slack && R.slack[l] != null ? GP.fmt(R.slack[l]) + '분' : '최소 수준'} 이하로 유지하기 위해 주문 확정 범위(마감 ${P.releaseDays}일 전) 내 물량을 선행 생산. 선생산 축소 시 전월 여유시간 허용 필요.`;
+      if (famDays === 0) why = `M/C 절감: ${mm}월 마감(${GP.md(du)}) 전 ${l}의 ${f} 생산일 없음(다른 강종 연속 생산·정기수리) → ${f} 연속 생산(${cp})에서 앞당김 생산.`;
+      else if (ld >= 0.995) why = `능력 부족: ${mm}월 ${l} 부하 ${GP.fmt(ld * 100, 1)}% — 마감 전 ${f} 생산일 ${famDays}일로 부족하여 전월 ${f} 연속 생산(${cp})에서 앞당김 생산.`;
+      else if (famLoad >= 0.99) why = `연속 생산 능력 부족: ${mm}월 ${l} ${f} 생산일은 ${GP.md(fd[0].date)}~${GP.md(fd[fd.length - 1].date)} ${famDays}일(그 기간 부하 ${GP.fmt(famLoad * 100, 1)}%)에 그쳐 ${mm}월 ${f} 물량 충족 불가 — ${f} 추가 전환 없이 전월 ${f} 연속 생산(${cp})에서 앞당김 생산.`;
+      else why = `평준화(유휴 방지): 납기월 ${f} 생산일 ${famDays}일은 여유가 있으나(해당 기간 부하 ${GP.fmt(famLoad * 100, 1)}%), 전월 ${f} 연속 생산(${cp})의 일 여유시간을 ${R.slack && R.slack[l] != null ? GP.fmt(R.slack[l]) + '분' : '최소 수준'} 이하로 유지하기 위해 주문 확정 범위(마감 ${P.releaseDays}일 전) 내 물량을 앞당김 생산. 앞당김 생산 축소 시 전월 여유시간 허용 필요.`;
       return { line: l, alloy: a, cls: c, prodMonth: A.H.ym[+pm][1], due: du, tons: t, why };
     });
   };
@@ -122,7 +122,7 @@
     const lines = [
       `• M/C 합계 ${GP.sum(L, (l) => A.mc[l])}회: ` + L.map((l) => `${l} ${A.mc[l]}회(${evTxt(l)})`).join(' / ') + (rst.length ? `. S/D 재가동: ${rst.join(', ')}` : ''),
       `• 결품 ${GP.fmt(A.short)}t, 지연 ${GP.fmt(A.lateT)}t (수출은 선적창 마지막날, 그 외 월말 기준). 유휴일 ${A.idle.length}일.`,
-      `• 전월 선생산 ${GP.fmt(A.earlyT)}t — 사유는 "선생산_사유" 시트.`,
+      `• 전월 앞당김 생산 ${GP.fmt(A.earlyT)}t — 사유는 "앞당김생산_사유" 시트.`,
       `• 부하: ` + L.map((l) => `${l} ` + A.H.ym.map((_, i) => `${GP.fmt((A.load[`${l}|${i}`] || 0) * 100, 1)}%`).join('/')).join(', '),
       `• 전제: ① 첫 달 1~5일 선적분 ${GP.fmt(GP.sum(R.sept, (s) => s.tons))}t은 전월 생산${P.firstWindowPrevMonth ? '' : '(미적용)'} ② 첫날 강종 ` + L.map((l) => `${l} ${P.initFamily[l] || '자유'}`).join('·') + ` ③ 주문재는 마감 ${P.releaseDays}일 전부터 생산 가능 ④ 정기수리 ` + (P.shutdowns.map((s) => `${s.line} ${GP.md(s.start)}~${GP.md(s.end)}`).join(', ') || '없음'),
     ];
@@ -225,12 +225,12 @@
     // 일별상세_납기별
     const wd = wb.addWorksheet('일별상세_납기별', { views: [{ state: 'frozen', ySplit: 4 }] });
     title(wd, 1, '일별 생산 상세 — 어떤 날, 어느 라인이, 어느 부서·목적지의 어떤 납기 물량을 만드는지', FT, 17);
-    title(wd, 2, '목적지: 수출=판매계획 권역(대표 항구는 배선일정 기준) / 도금국내=용도 / 자동차내수=고객군 / 자가재=컬러 섹션. 마감일: 수출=선적창 마지막날, 그 외=월말. t/hr=라인×강종×부서 실적속도.', FN, 17);
-    hdr(wd, 4, ['날짜', '요일', '라인', '강종군', '세부강종', '부서', '목적지', '대표 항구', '생산량(t)', 't/hr', '소요시간(분)', '마감일', '선적창/납기', '마감까지(일)', '생산월', '납기월', '구분']);
+    title(wd, 2, '목적지: 수출=판매계획 권역(대표 항구는 배선일정 기준) / 도금국내=용도 / 자동차내수=고객군 / 자가재=컬러 섹션. 마감일: 수출=선적창 마지막날, 그 외=월말. t/시간=라인×강종×부서 실적속도.', FN, 17);
+    hdr(wd, 4, ['날짜', '요일', '라인', '강종군', '세부강종', '부서', '목적지', '대표 항구', '생산량(t)', 't/시간', '소요시간(분)', '마감일', '선적창/납기', '마감까지(일)', '생산월', '납기월', '구분']);
     r = 5;
     for (const [d, l, a, c, dest, port, win, t, du] of R.dest) {
       const rt = GP.rateFor(P, l, a, c) * 60;
-      const kind = A.mIdx(d) < A.mIdx(du) ? '선생산(전월)' : (d > du ? '지연' : '당월');
+      const kind = A.mIdx(d) < A.mIdx(du) ? '앞당김 생산(전월)' : (d > du ? '지연' : '당월');
       const self = c === '자가재';
       const st = { font: self ? F9B : F9, fill: self ? JAF : (kind !== '당월' ? EARLYF : undefined) };
       [d, GP.weekday(d), l, FAM[a], a, c, dest, port, t, GP.round(rt, 1), GP.round(t / rt * 60, 0), du, winLabel(c, du, win), GP.diffDays(du, d), +d.slice(5, 7), +du.slice(5, 7), kind]
@@ -244,7 +244,7 @@
     const wp = wb.addWorksheet('일별계획', { views: [{ state: 'frozen', xSplit: 4, ySplit: 4 }] });
     title(wp, 1, `${qLabel} 도금공장 일별 가동계획`, FT, 12);
     title(wp, 2, '라인×일 1행. 가동가능(분)=1440−정기수리−설비정지−비강종더미−M/C·재가동더미. 여유시간=가동가능−소요시간.', FN, 12);
-    const cols = ['날짜', '요일', '월', '라인', '강종', '이벤트', '정기수리(분)', '설비정지(분)', '비강종더미(분)', 'M/C·재가동\n더미(분)', '가동가능(분)'].concat(DEPTS.map((x) => `${x}(t)`), ['생산합계(t)', '소요시간(분)', '여유시간(분)', '가동률', '선생산(전월)(t)', 't/hr']);
+    const cols = ['날짜', '요일', '월', '라인', '강종', '이벤트', '정기수리(분)', '설비정지(분)', '비강종더미(분)', 'M/C·재가동\n더미(분)', '가동가능(분)'].concat(DEPTS.map((x) => `${x}(t)`), ['생산합계(t)', '소요시간(분)', '여유시간(분)', '가동률', '선생산(전월)(t)', 't/시간']);
     hdr(wp, 4, cols, 34);
     const depLD = {}, earlyLD = {};
     for (const [d, l, a, c, t, du] of R.rows) {
@@ -269,7 +269,7 @@
     for (let j = 3; j <= 33; j++) wg.getColumn(j).width = 6.3;
     wg.getColumn(34).width = 9;
     title(wg, 1, `${qLabel} 도금공장 가동계획(안)`, { name: AR, size: 14, bold: true }, 20);
-    title(wg, 2, '굵은 글씨·파란 배경 = 자가재(“└ 자가재(t)” 행). 노란색 = M/C·S/D 재가동일. 회색 = 정기수리(S/D). 더미시간: 연회색 = 비강종 더미, 주황 = M/C·재가동 더미. 생산가능시간 = 총시간 − 설비정지 − 더미시간. t/hr = 생산량 ÷ 실가동시간.', FN, 34);
+    title(wg, 2, '굵은 글씨·파란 배경 = 자가재(“└ 자가재(t)” 행). 노란색 = M/C·S/D 재가동일. 회색 = 정기수리(S/D). 더미시간: 연회색 = 비강종 더미, 주황 = M/C·재가동 더미. 생산가능시간 = 총시간 − 설비정지 − 더미시간. t/시간 = 생산량 ÷ 실가동시간.', FN, 34);
     r = 4;
     const famLD = {}, selfLD = {};
     for (const [d, l, a, c, t] of R.rows) {
@@ -308,7 +308,7 @@
         const jaRow = rr; put(wg, rr, 2, '└ 자가재(t)', { font: F9B, fill: JAF }); let sj = 0;
         for (let dd = 1; dd <= nd; dd++) { const v = selfLD[`${l}|${GP.ymd(y, m, dd)}`] || 0; sj += v; put(wg, rr, 2 + dd, v > 0.5 ? Math.round(v) : '', { font: F9B, fill: JAF, fmt: NUM }); }
         put(wg, rr, 34, Math.round(sj), { font: F9B, fill: JAF, fmt: '#,##0' }); rr++;
-        const labs = [['tot', '총시간(h)'], ['eq', '설비정지(h)'], ['dm', '더미시간(h)'], ['av', '생산가능시간(h)'], ['run', '실가동시간(h)'], ['tph', 't/hr']];
+        const labs = [['tot', '총시간(h)'], ['eq', '설비정지(h)'], ['dm', '더미시간(h)'], ['av', '생산가능시간(h)'], ['run', '실가동시간(h)'], ['tph', 't/시간']];
         const sums = {};
         for (const [key, lab] of labs) {
           put(wg, rr, 2, lab, { fill: SUBF, font: (key === 'av' || key === 'tph') ? F9B : F9 });
@@ -365,8 +365,8 @@
     widths(wm, [11, 7, 11, 11, 12, 95]);
 
     // 선생산_사유
-    const we = wb.addWorksheet('선생산_사유');
-    title(we, 1, '선행 생산 사유 — 납기월 이전 생산 물량과 사유 (자동 판정)', FT, 7);
+    const we = wb.addWorksheet('앞당김생산_사유');
+    title(we, 1, '앞당김 생산 사유 — 납기월 이전 생산 물량과 사유 (자동 판정)', FT, 7);
     hdr(we, 3, ['라인', '세부강종', '부서', '생산월', '납기(마감일)', '물량(t)', '사유']);
     r = 4;
     const er = GP.earlyReasons(R, A);
@@ -414,15 +414,15 @@
       ['첫 달 1~5일 선적분', P.firstWindowPrevMonth ? '전월 생산으로 가정(계획에서 제외)' : '계획에 포함'],
       ['정기수리', P.shutdowns.map((s) => `${s.line} ${s.start}~${s.end}`).join(', ') || '없음'],
       ['라인 생산 가능 강종', L.map((l) => `${l}: ${P.allowed[l].join(', ')}`).join(' / ')],
-      ['최적화', `1단계 M/C 최소(재가동 강종변경은 M/C 환산 가중) → 2단계 M/C·재가동 판단 고정 후 선생산(톤·일) 최소 → 평준화 LP(유휴 최소화). 1단계 ${GP.round(R.milp.sec[0])}초·2단계 ${GP.round(R.milp.sec[1])}초${!(R.milp.optimal1 && R.milp.optimal2) ? ', ⚠ 시간 제한 도달' : R.milp.phase2Exact === false ? ' (2단계 빠른 모드: 전환일 ±7일 창 반복 — 전체 최적 증명은 정밀 모드)' : ', 모두 최적 증명'}`],
+      ['최적화', `1단계 M/C 최소(재가동 강종변경은 M/C 환산 가중) → 2단계 M/C·재가동 판단 고정 후 앞당김 생산(톤·일) 최소 → 평준화 LP(유휴 최소화). 1단계 ${GP.round(R.milp.sec[0])}초·2단계 ${GP.round(R.milp.sec[1])}초${!(R.milp.optimal1 && R.milp.optimal2) ? ', ⚠ 시간 제한 도달' : R.milp.phase2Exact === false ? ' (2단계 빠른 모드: 전환일 ±7일 창 반복 — 전체 최적 증명은 정밀 모드)' : ', 모두 최적 증명'}`],
     ];
     for (const [a, b] of prem) { put(wt, r, 1, a, { font: F9B }); put(wt, r, 2, b, { align: LEFT }); wt.mergeCells(r, 2, r, 6); r++; }
     widths(wt, [30, 12, 12, 8, 30, 30]);
 
     // 속도
     const wr = wb.addWorksheet('속도_t_hr');
-    title(wr, 1, '라인×강종×부서별 생산속도(t/hr) — 실적 달성속도 기준', FT, 5);
-    hdr(wr, 3, ['라인', '강종', '부서', 't/hr', 't/분']);
+    title(wr, 1, '라인×강종×부서별 생산속도(t/시간) — 실적 달성속도 기준', FT, 5);
+    hdr(wr, 3, ['라인', '강종', '부서', 't/시간', 't/분']);
     r = 4;
     for (const [k, v] of Object.entries(P.rateDept).sort()) { const [l, a, c] = k.split('|'); [l, a, c, GP.round(v * 60, 1), v].forEach((x, j) => put(wr, r, j + 1, x, { fmt: j === 4 ? '0.0000' : undefined })); r++; }
     for (const [k, v] of Object.entries(P.rateBase).sort()) { const [l, a] = k.split('|'); [l, a, '(기본값)', GP.round(v * 60, 1), v].forEach((x, j) => put(wr, r, j + 1, x, { fmt: j === 4 ? '0.0000' : undefined })); r++; }
@@ -437,7 +437,7 @@
     for (const c of meta.checks || []) { put(wv, r, 1, { error: '오류', warn: '경고', info: '정보' }[c.level], { font: c.level === 'info' ? F9 : { name: AR, size: 9, bold: true, color: { argb: 'FFC00000' } } }); put(wv, r, 2, c.msg, { align: LEFT }); r++; }
     widths(wv, [8, 120]);
 
-    const order = ['요약', '가동계획', '일별계획', '일별상세_납기별', 'MC_SD일정', '선생산_사유', '수요대사', '시간파라미터', '속도_t_hr', '입력검증'];
+    const order = ['요약', '가동계획', '일별계획', '일별상세_납기별', 'MC_SD일정', '앞당김생산_사유', '수요대사', '시간파라미터', '속도_t_hr', '입력검증'];
     wb.eachSheet((w) => { w.orderNo = order.indexOf(w.name); });
     return { wb, A };
   };

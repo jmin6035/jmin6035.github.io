@@ -61,7 +61,7 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
         <button type="button" class="primary" id="a-apply">선택 항목을 다시 계산 도구 조건에 넣기</button>
         <span class="hint" id="a-msg"></span>
       </div>
-      <p class="hint">엔진 값 바꾸기 = <a href="rules.html#edit">계획 규칙 → 규칙 수치 바꾸기 ③</a>(이 버튼은 이 기기의 다시 계산 도구 조건만 바꿈). <b>M/C 손실과 비강종 더미는 같이 반영됩니다</b>(한쪽만 바꾸면 손실이 이중으로 잡힘). 속도(t/hr)는 제품 두께 구성에 크게 좌우됩니다(박물일수록 낮음). 기간이 짧거나 두께 구성이 치우치면 틀린 값이 나오므로 28일 이상·표본이 충분할 때만 “반영 권장”으로 표시합니다. 반영은 이 기기의 계획 계산 조건에 저장되고, 계산을 다시 돌려야 계획에 적용됩니다.</p>
+      <p class="hint">엔진 값 바꾸기 = <a href="rules.html#edit">계획 규칙 → 규칙 수치 바꾸기 ③</a>(이 버튼은 이 기기의 다시 계산 도구 조건만 바꿈). <b>M/C 손실과 비강종 더미는 같이 반영됩니다</b>(한쪽만 바꾸면 손실이 이중으로 잡힘). 속도(t/시간)는 제품 두께 구성에 크게 좌우됩니다(박물일수록 낮음). 기간이 짧거나 두께 구성이 치우치면 틀린 값이 나오므로 28일 이상·표본이 충분할 때만 “반영 권장”으로 표시합니다. 반영은 이 기기의 계획 계산 조건에 저장되고, 계산을 다시 돌려야 계획에 적용됩니다.</p>
     </section>
 
     <section class="card" id="a-weekly-report" hidden>
@@ -70,7 +70,7 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
     </section>
 
     <section class="card">
-      <h2>주별 속도 추이 <small class="muted">(t/hr, 주 = 월요일 시작, 더미 제외)</small></h2>
+      <h2>주별 속도 추이 <small class="muted">(t/시간, 주 = 월요일 시작, 더미 제외)</small></h2>
       <div class="scroll"><table class="data" id="a-weekly"></table></div>
       <p class="hint">굵은 빨강 = 현재 조건보다 5% 이상 낮음, 굵은 파랑 = 5% 이상 높음. 칸에 마우스를 올리면 그 주 물량·코일 수가 보입니다. 속도 차이는 설비보다 두께 구성(박물 비중) 변화 때문인 경우가 많습니다.</p>
     </section>
@@ -134,13 +134,13 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
 
     <section class="card">
       <h2>계획 속도 점검 <small class="muted" id="ca-cand-sub">— 계획 계산에 쓰는 속도가 최근 실적과 맞는지 · 라인 카드를 누르면 그 라인 품명</small></h2>
-      <p class="lead-note">계획 계산은 라인·품명별 <b>속도(t/hr)</b>로 하루에 몇 톤을 만들지 정합니다. 이 속도는 <span id="ca-plan-per"></span> 실적으로 정한 값이라, 최근 실적과 비교해 차이가 크면 다음 계획 계산 때 속도를 바꾸자는 <b>제안</b>입니다(자동으로 바뀌지 않음). <b>계획</b> = 지금 계획에 쓰는 속도, <b>실제</b> = 최근 실적 속도.</p>
+      <p class="lead-note">계획 계산은 라인·품명별 <b>속도(t/시간)</b>로 하루에 몇 톤을 만들지 정합니다. 이 속도는 <span id="ca-plan-per"></span> 실적으로 정한 값이라, 최근 실적과 비교해 차이가 크면 다음 계획 계산 때 속도를 바꾸자는 <b>제안</b>입니다(자동으로 바뀌지 않음). <b>계획</b> = 지금 계획에 쓰는 속도, <b>실제</b> = 최근 실적 속도.</p>
       <div id="ca-cands"></div>
       <p class="hint">속도 = 생산 톤 ÷ (작업 + 정지) 시간 — 색상교체·청소·테스트 정지 포함. 라인 카드 = 최근 실적 기간에 실제로 만든 품목을 계획 속도로 만들었다면 걸렸을 시간과 실제 걸린 시간 비교(품목 구성 차이는 빼고 속도만 비교).</p>
     </section>
 
     <section class="card">
-      <h2>월별 속도 추이 <small class="muted">(t/hr, 월 단위 · 이번 달은 누계 · 100t 이상 품명)</small></h2>
+      <h2>월별 속도 추이 <small class="muted">(t/시간, 월 단위 · 이번 달은 누계 · 100t 이상 품명)</small></h2>
       <div class="scroll"><table class="data" id="ca-weekly"></table></div>
       <p class="hint">굵은 빨강 = 계획 조건보다 5% 이상 낮음, 굵은 파랑 = 5% 이상 높음. 칸에 마우스를 올리면 그 달 물량·코일 수. 같은 품명이라도 두께·폭·색상 교체 횟수에 따라 크게 달라짐.</p>
     </section>
@@ -153,7 +153,7 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
       <section class="card">
         <h2>월별 휴지 <small class="muted">(시간/가동일)</small></h2>
         <div class="scroll"><table class="data" id="ca-events"></table></div>
-        <p class="hint">휴지 = 그 달 정지 시간 합 ÷ 가동일(생산한 날). 예: 6.1 = 생산한 날 하루 24시간 중 평균 6.1시간은 색상교체·청소·테스트 등으로 멈춰 있었다는 뜻. 이 정지는 생산속도(정지 포함 t/hr)에 이미 들어 있어서 계획에서 따로 빼지 않습니다.</p>
+        <p class="hint">휴지 = 그 달 정지 시간 합 ÷ 가동일(생산한 날). 예: 6.1 = 생산한 날 하루 24시간 중 평균 6.1시간은 색상교체·청소·테스트 등으로 멈춰 있었다는 뜻. 이 정지는 생산속도(정지 포함 t/시간)에 이미 들어 있어서 계획에서 따로 빼지 않습니다.</p>
       </section>
     </div>
 
@@ -171,8 +171,8 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
     <details class="fold"><summary>기준·사양 <small>정의 · 원자료 · 반영 방법</small></summary>
       <ul class="ref">
         <li>원자료 = MES 도금·컬러 코일 생산 실적 + 휴지 실적(사내 PC 매일 갱신)</li>
-        <li>도금 속도(t/h) = 제품 톤 ÷ 가동 시간(더미 코일 제외) · M/C 손실 = 정지 시작 ~ 새 강종 첫 제품 코일 · 설비정지·비강종 더미 = 하루 평균 분</li>
-        <li>컬러 속도(t/h) = 생산 톤 ÷ (작업 + 정지) 시간 — 색상교체·청소·테스트 정지 포함, 계획에서 따로 빼지 않음</li>
+        <li>도금 속도(t/시간) = 제품 톤 ÷ 가동 시간(더미 코일 제외) · M/C 손실 = 정지 시작 ~ 새 강종 첫 제품 코일 · 설비정지·비강종 더미 = 하루 평균 분</li>
+        <li>컬러 속도(t/시간) = 생산 톤 ÷ (작업 + 정지) 시간 — 색상교체·청소·테스트 정지 포함, 계획에서 따로 빼지 않음</li>
         <li>반영 권장 = 차이 5% 이상 · 표본 충분(도금 28일 이상, 컬러 150t·4주 이상)일 때만 — 자동으로 바뀌지 않음</li>
         <li>엔진 값 바꾸기 → <a href="rules.html#edit">계획 규칙 → 규칙 수치 바꾸기</a> · 지금 계획 조건 → <a href="rules.html">계획 규칙</a></li>
       </ul>

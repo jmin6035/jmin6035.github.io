@@ -244,6 +244,7 @@ html:root body main table.mt2.xl.xl.xl td[data-d] { cursor: pointer; } html:root
 html:root body main table.gk.gk td.kov, .gk-lg b.kov { color: #8a5a00 !important; font-weight: 700; }
 html:root body main table.gk.gk td.neg { color: var(--bad) !important; font-weight: 800; }
 html:root body main table.gk.shp td[data-d] { cursor: pointer; }
+b.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 11/17 용어 기준: 날짜 = 굵은 진한 파랑 */
 </style>
 </head>
 <body>
@@ -267,7 +268,7 @@ html:root body main table.gk.shp td[data-d] { cursor: pointer; }
     <details class="fold" style="margin-top:14px"><summary>기준·사양 <small>월 계획 · 출하 기준선 · 실적·계획 출처 · 범례</small></summary>
       <div class="spec">
         <h4>월 계획</h4><ul>
-          <li><b>생산 월 계획 = F3 공식</b>: 판매 + 목표 재고 − 기초 재고(MES 재고현황 전달 말). 한 달 동안 고정, 0 미만은 0(재고가 목표보다 많음). 다음 달 정기수리·능력 부족 대비 선생산은 월 계획에 넣지 않고 사유(막대 말풍선)로만.</li>
+          <li><b>생산 월 계획 = F3 공식</b>: 판매 + 목표 재고 − 기초 재고(MES 재고현황 전달 말). 한 달 동안 고정, 0 미만은 0(재고가 목표보다 많음). 다음 달 정기수리·능력 부족 대비 앞당김 생산은 월 계획에 넣지 않고 사유(막대 말풍선)로만.</li>
           <li><b>출하 월 계획</b> = 이번 달 판생속보 월 계획, 다른 달은 TF 판매계획.</li>
           <li>% = 실적 ÷ 월 계획 · 월말 전망 = 실적 + 남은 날 일별 계획(매일 아침 재계획).</li></ul>
         <h4>진도 기준(가장 뒤처진 그룹)</h4><ul>
@@ -279,7 +280,7 @@ html:root body main table.gk.shp td[data-d] { cursor: pointer; }
           <li>칸 아래 색 띠 = 그날 주 강종(도금 AL·AZ·MAC) · 주 판매그룹(컬러 수출·건재·수요개발). 같은 강종이 이어지면 칸 선 없이 한 띠.</li>
           <li><b>M/C(노랑)</b> = 강종 전환(Material Change) 날. 정지 블록 = 종일 정지: 계획휴지(남회색) · 수리(빨강) · S/D(파랑) · 정기수리(보라) · 계획 물량 없음(빗금 — 정지 계획 없이 배정 물량 없음).</li></ul>
         <h4>판매그룹 출하 · 재고</h4><ul>
-          <li>출하 = 지난 날 MES 출하 실적, 앞날 = 계획 출고(재고 롤링과 같은 값). 기말 재고 = 어제 말 실제 재고 + 재계획 생산 − 계획 출고. 재고 칸 색 = 목표 대비 100~130%(노랑) · 130% 초과(주황).</li>
+          <li>출하 = 지난 날 MES 출하 실적, 앞날 = 계획 출고(재고 추이와 같은 값). 기말 재고 = 어제 말 실제 재고 + 재계획 생산 − 계획 출고. 재고 칸 색 = 목표 대비 100~130%(노랑) · 130% 초과(주황).</li>
           <li>컬러(건재·수출) 계획 출고 = 월 판매계획을 MES 출하 실적의 월중 분포로 나눔. 도금 = 판매계획 품목이 납기일에 출고.</li></ul>
         <h4>날짜 상세 · 소재</h4><ul>
           <li>품목 줄 = 요청 납기(수출 벌크 = 선적 완료기한, 그 외 = 선적 반순) → 생산일 → 소재. 자가재 = 도금 생산 → 컬러 투입 8일 기준. 구매 소재 = 품명 → 소재 코드 비중(13주 실적), 입고 필요일 = 컬러 생산 − 7일(도금 F/H − 5일).</li>
@@ -287,13 +288,13 @@ html:root body main table.gk.shp td[data-d] { cursor: pointer; }
       </div></details>
   </div>
 </main>
-<footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<footer class="foot"><div class="wrap"><span></span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
 <script src="ui/shell.js?v=2611141500"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
 <script src="ui/cal.js?v=2611120206"></script>
 <script src="ui/proccalc.js?v=2611120206"></script>
 <script src="ui/optable.js?v=2611141900"></script>
-<script src="supply.js?v=2611141900"></script>
+<script src="supply.js?v=2611172300"></script>
 </body>
 </html>

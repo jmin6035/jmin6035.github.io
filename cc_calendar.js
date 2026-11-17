@@ -31,7 +31,7 @@
       return `<tr><td class="l"><b>${l}</b></td><td class="r"><b>${n0(t)}</b>t</td><td class="r">${n0(uh)} / ${n0(ch)}h</td><td class="r">${ws >= 0.5 ? `<b class="bad">${n1(ws)}h</b>` : '<span class="sub">0</span>'}</td><td class="r">${st ? `${st}일` : '<span class="sub">-</span>'}</td><td class="r">${S[l].woUntil ? md(S[l].woUntil) : '<span class="sub">없음</span>'}</td></tr>`; }).join('');
     const short = sum(LINES, (l) => sum(C(l), (c) => c.woShort || 0));
     const chip = (k, cl) => `<span class="ps-c" title="${esc(KD.find((x) => x[0] === k)[3])}"><i class="${cl}"></i>${KD.find((x) => x[0] === k)[1]} <b>${n0(tk(k, 0))}t</b></span>`;
-    return `<div class="ps-st">${short >= 0.5 ? `<span class="ct-b bad" title="${SHORT_T} · 오늘부터 7일 네 라인 합">작업대기 부족 ${n1(short)}h</span>` : '<span class="ct-b ok">작업대기로 24시간 채움</span>'}${(O.confirms || []).length ? `<span class="ct-b ok" title="작업 순서 화면 확정본 — 확정한 라인·날짜에 고정 · ${esc(O.confirms.map((c) => `${md(c.week)} 주 확정 ${n0(c.t)}t(${c.who || ''})`).join(' · '))}">확정 반영 ${n0(sum(O.confirms, (c) => c.t || 0))}t</span>` : ''}<span class="ps-k">~${END()} 편성</span>${chip('작업대기', 'sk1')}${chip('지시대기', 'sk2')}${chip('부자재 입고대기', 'sk3')}${chip('계획편성', 'sk4')}</div>`
+    return `<div class="ps-st">${short >= 0.5 ? `<span class="ct-b bad" title="${SHORT_T} · 오늘부터 7일 네 라인 합">작업대기 부족 ${n1(short)}h</span>` : '<span class="ct-b ok">작업대기로 24시간 채움</span>'}${(O.confirms || []).length ? `<span class="ct-b ok" title="작업 순서 화면 확정본 — 확정한 라인·날짜에 고정 · ${esc(O.confirms.map((c) => `${md(c.week)} 주 확정 ${n0(c.t)}t(${c.who || ''})`).join(' · '))}">확정 반영 ${n0(sum(O.confirms, (c) => c.t || 0))}t</span>` : ''}<span class="ps-k">${END()}까지 편성</span>${chip('작업대기', 'sk1')}${chip('지시대기', 'sk2')}${chip('부자재 입고대기', 'sk3')}${chip('계획편성', 'sk4')}</div>`
       + `<div class="ct-wrap"><table class="ct-t ps-t"><thead><tr><th class="l">라인</th><th class="r">생산</th><th class="r" title="편성 시간 / 가용 시간(계획 휴지 뺀 24시간) — 차이 = 편성 없는 빈 시간">가동 시간</th><th class="r" title="${SHORT_T}">작업대기 부족</th><th class="r">정지</th><th class="r" title="현장 물량(작업대기)이 들어 있는 마지막 날 — 그 뒤는 지시대기·계획편성">작업대기 끝</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
   /* 기준·사양(생산 일정 맨 아래 접기) */
@@ -97,7 +97,7 @@
   }
 
   function calCard() {
-    return `<section class="card"><h2>라인별 ~${END()} <small title="라인 하루 24시간(계획 휴지 뺌)">칸을 누르면 그날 계약 목록</small></h2>`
+    return `<section class="card"><h2>라인별 ${END()}까지 <small title="라인 하루 24시간(계획 휴지 뺌)">칸을 누르면 그날 계약 목록</small></h2>`
       + '<div class="lgx"><div class="lg2">' + KD.map(([, nm, cl, t]) => `<span><i class="${cl}"></i><b>${nm}</b>${esc(t.split(' — ')[0])}</span>`).join('')
       + '<span><i class="sst"></i><b>노랑 = 정지</b>M/C·S/D·청소 등 하루 안 몇 시간</span><span><i class="spa"></i><b>빗금 회색</b>오늘 이미 지난 시간</span><span><i class="sgap"></i><b>흰 칸 = 빈 시간</b>넣을 일 없음</span>'
       + '<span><i style="background:#1f3864"></i><b>남색 칸 = 하루 종일 정지</b>정기수리·휴지</span><span><i style="background:#ffff00;box-shadow:inset 0 0 0 1px #808080"></i><b>노란 칸 = M/C·S/D 날</b></span><span><i class="sk0"></i><b>음영 칸 = 실적</b>지난 날 MES 생산</span><span><i style="background:var(--bad)"></i><b>빨간 줄 = 확인 필요</b></span></div>'
@@ -112,8 +112,8 @@
     const bw = wk(B), sw = wk(S), ks = [...new Set([...Object.keys(bw), ...Object.keys(sw)])].sort();
     const rows = ks.map((k) => `<tr><td class="nw">${md(k)}~ 주</td><td class="num">${n0(bw[k] || 0)}</td><td class="num">${n0(sw[k] || 0)}</td></tr>`).join('');
     return '<section class="card"><h2>소재 들어오는 양 <small>주별 · 톤</small></h2>'
-      + `<div class="mt" style="margin:0 0 12px" title="재고 = MES 컬러 소재 재고(투입 가능 재고구분) — 01 소재(MES 소재재고 목록 전체)·소재 관제(판생속보 창고)와 출처 다름"><div><div class="s">구매 소재 재고 <small>MES 투입 가능</small></div><b class="v">${n0(M.buyStock)}t</b></div><div><div class="s">구매 소재 입고 예정 ~${END()}</div><b class="v">${n0(M.buySoon)}t</b></div>`
-      + `<div title="컬러 소재 창고의 자사(도금) 소재 중 사용가능·작업지시대기·가공대기 재고 — 관제의 '도금 자가재 재고'(판생 속보, 도금 쪽 자가재 제품 재고 전체)와 범위가 다름"><div class="s">자가재 재고(컬러 소재 창고 · 투입 가능)</div><b class="v">${n0(M.selfStock)}t</b></div><div><div class="s">도금 자가재 생산 ~${END()}</div><b class="v">${n0(M.selfCg)}t</b></div></div>`
+      + `<div class="mt" style="margin:0 0 12px" title="재고 = MES 컬러 소재 재고(투입 가능 재고구분) — 01 소재(MES 소재재고 목록 전체)·소재 관제(판생속보 창고)와 출처 다름"><div><div class="s">구매 소재 재고 <small>MES 투입 가능</small></div><b class="v">${n0(M.buyStock)}t</b></div><div><div class="s">구매 소재 입고 예정 ${END()}까지</div><b class="v">${n0(M.buySoon)}t</b></div>`
+      + `<div title="컬러 소재 창고의 자사(도금) 소재 중 사용가능·작업지시대기·가공대기 재고 — 관제의 '도금 자가재 재고'(판생 속보, 도금 쪽 자가재 제품 재고 전체)와 범위가 다름"><div class="s">자가재 재고(컬러 소재 창고 · 투입 가능)</div><b class="v">${n0(M.selfStock)}t</b></div><div><div class="s">도금 자가재 생산 ${END()}까지</div><b class="v">${n0(M.selfCg)}t</b></div></div>`
       + (rows ? `<table class="it" style="max-width:520px"><thead><tr><th>주</th><th class="num">구매 소재 입고 예정</th><th class="num">도금 자가재 생산</th></tr></thead><tbody>${rows}</tbody></table>` : '')
       + '</section>';
   }

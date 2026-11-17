@@ -380,8 +380,8 @@
     }).join('');
     return `<div class="ps-st">${st}${O.odT > 0 ? `<span class="ct-b bad" title="필요 생산일 지났는데 생산 전${(O.shipMiss || []).length ? ` · 그중 출항 지난 수출 ${O.shipMiss.length}건(배선 확인)` : ''}">필요일 경과 ${n0(O.odT)}t · ${O.nOd}건</span>` : ''}`
       + `${fl ? `<span class="ct-b bad" title="${esc(misTxt)}">재계획과 현장 강종 다름 ${fl}일</span>` : ''}<span class="ct-b ${jgMin >= 0 ? 'ok' : 'bad'}" title="컬러 계획(투입 일정) 대비 도금 자가재 생산 누계 — 최대 부족일">자가재 진도 ${jgMin >= 0 ? '충분' : `${n0(-jgMin)}t 부족`}</span>`
-      + `<span class="ps-k" title="~${END()} 재계획 톤(재계획 하루 톤 합 — 라인 부하 화면의 '가용 능력'(속도 × 가용 시간)과 다른 값) = 작업지시 + 소재 있음 + 입고 예정 + 빈칸">~${END()} 재계획 ${n0(tot('cap'))}t = 작업지시(지시중량) ${n0(tot('conf'))} · 소재 있음 ${n0(tot('plan'))} · 입고 예정 ${n0(tot('fcst'))}${tot('gap') >= 1 ? ` · 빈칸 ${n0(tot('gap'))}` : ''}</span></div>`
-      + `<div class="ct-wrap"><table class="ct-t ps-t"><thead><tr><th class="l">라인</th><th class="r" title="편성(작업지시 + 소재 있음 + 입고 예정) / 재계획(재계획 하루 톤 합)">편성 / 재계획</th><th class="r" title="편성 주문을 실적 T/Hr 로 돌리는 시간 ÷ 가동 가능 시간(24h × 제원치 가동률)">시간 부하</th><th class="r" title="현장 강종 ≠ 재계획 · 재질 순서 등 확인할 날 수">확인 필요 날</th><th class="r" title="그날 생산하면 출항일(수출)·납기(내수)를 넘기는 주문">납기 초과</th><th class="r">~${END()} 넘침</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      + `<span class="ps-k" title="${END()}까지 재계획 톤(재계획 하루 톤 합 — 라인 부하 화면의 '가용 능력'(속도 × 가용 시간)과 다른 값) = 작업지시 + 소재 있음 + 입고 예정 + 빈칸">${END()}까지 재계획 ${n0(tot('cap'))}t = 작업지시(지시중량) ${n0(tot('conf'))} · 소재 있음 ${n0(tot('plan'))} · 입고 예정 ${n0(tot('fcst'))}${tot('gap') >= 1 ? ` · 빈칸 ${n0(tot('gap'))}` : ''}</span></div>`
+      + `<div class="ct-wrap"><table class="ct-t ps-t"><thead><tr><th class="l">라인</th><th class="r" title="편성(작업지시 + 소재 있음 + 입고 예정) / 재계획(재계획 하루 톤 합)">편성 / 재계획</th><th class="r" title="편성 주문을 실적 T/Hr 로 돌리는 시간 ÷ 가동 가능 시간(24h × 제원치 가동률)">시간 부하</th><th class="r" title="현장 강종 ≠ 재계획 · 재질 순서 등 확인할 날 수">확인 필요 날</th><th class="r" title="그날 생산하면 출항일(수출)·납기(내수)를 넘기는 주문">납기 초과</th><th class="r">${END()}까지 넘침</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
   function over(ln, days) {                                   // days 전체를 24시간 이어 돌렸을 때 가동 가능 시간을 넘는 시간·톤(T/Hr 기준)
     const C = days.map((d) => O.lines[ln][O.days.indexOf(d)]), h = C.reduce((s, c) => s + (c.hrs || 0), 0), a = C.reduce((s, c) => s + (c.hAvail || 0), 0), t = C.reduce((s, c) => s + c.conf + c.plan + c.fcst, 0);
@@ -392,10 +392,10 @@
       const K = Object.keys(S).filter((k) => k.startsWith(ln + '|')).map((k) => k.split('|'));
       const th = [...new Set(K.map((k) => k[1]))].sort((a, b) => a - b), wd = [...new Set(K.map((k) => k[2]))].sort((a, b) => a - b);
       if (!th.length) return '';
-      return `<div><h4>${ln} 시간당 생산량 <small>t/hr · 두께(행) × 폭(열) · 없으면 라인 평균 ${n1(S[ln])}</small></h4><div class="ct-wrap"><table class="ct-t ps-sp"><thead><tr><th class="l">두께＼폭</th>${wd.map((w) => `<th class="r">${n0(w)}</th>`).join('')}</tr></thead><tbody>`
+      return `<div><h4>${ln} 시간당 생산량 <small>t/시간 · 두께(행) × 폭(열) · 없으면 라인 평균 ${n1(S[ln])}</small></h4><div class="ct-wrap"><table class="ct-t ps-sp"><thead><tr><th class="l">두께＼폭</th>${wd.map((w) => `<th class="r">${n0(w)}</th>`).join('')}</tr></thead><tbody>`
         + th.map((t) => `<tr><td class="l"><b>${t}</b></td>${wd.map((w) => { const v = S[`${ln}|${t}|${w}`]; return `<td class="r">${v == null ? '<span class="sub">-</span>' : n1(v)}</td>`; }).join('')}</tr>`).join('') + '</tbody></table></div></div>';
     }).join('');
-    return `<h4>도금 캘린더</h4><ul class="ps-ul"><li>하루 능력 = 재계획 하루 톤(속도 = 2026.1월~ 실적 하루 생산량) · 강종 = 최신 재계획</li><li>채우는 순서 = MES 작업지시 → 1010 순서안 → 필요 생산일 빠른 순(수출 출항 − 1일 · 내수 납기 − 1일)</li><li><b>작업지시</b> = MES 작업지시 확정(1030) — 현장에 내려간 코일(컬러 캘린더 '작업대기'와 같은 뜻) · <b>소재 있음</b> = 소재가 들어온 주문 · <b>입고 예정</b> = 소재 입고 예정 — 입고 다음 날부터 생산</li><li><b>넘침</b> = 칸 주문을 아래 t/hr 로 24시간 이어 돌릴 때 가동 가능 시간(24h × 제원치 가동률)을 넘는 양</li><li>주 = 생산주 수~화(작업 순서 화면과 같음) · 다음 주 확정 = 매주 수요일 오전 다음 생산주(수~화) 저장 → 다음 날부터 준수율</li><li>자료 ${esc(O.asOf)} · ${O.planT0 ? `재계획(실적 ~${md(O.planT0)})` : esc(O.planSrc || '')} · 계산 ${esc(O.built || '')}</li><li>시간당 생산량 = 같은 두께(0.1mm)·폭(100mm) 최근 2026년 실적</li></ul><div class="ps-spw">${tb}</div>`;
+    return `<h4>도금 캘린더</h4><ul class="ps-ul"><li>하루 능력 = 재계획 하루 톤(속도 = 2026.1월~ 실적 하루 생산량) · 강종 = 최신 재계획</li><li>채우는 순서 = MES 작업지시 → 1010 순서안 → 필요 생산일 빠른 순(수출 출항 − 1일 · 내수 납기 − 1일)</li><li><b>작업지시</b> = MES 작업지시 확정(1030) — 현장에 내려간 코일(컬러 캘린더 '작업대기'와 같은 뜻) · <b>소재 있음</b> = 소재가 들어온 주문 · <b>입고 예정</b> = 소재 입고 예정 — 입고 다음 날부터 생산</li><li><b>넘침</b> = 칸 주문을 아래 t/시간 로 24시간 이어 돌릴 때 가동 가능 시간(24h × 제원치 가동률)을 넘는 양</li><li>주 = 생산주 수~화(작업 순서 화면과 같음) · 다음 주 확정 = 매주 수요일 오전 다음 생산주(수~화) 저장 → 다음 날부터 준수율</li><li>자료 ${esc(O.asOf)} · ${O.planT0 ? `재계획(실적 ${md(O.planT0)}까지)` : esc(O.planSrc || '')} · 계산 ${esc(O.built || '')}</li><li>시간당 생산량 = 같은 두께(0.1mm)·폭(100mm) 최근 2026년 실적</li></ul><div class="ps-spw">${tb}</div>`;
   }
 
   /* 칸 한 양식(11/13 사용자 '도금이랑 컬러 양식 똑같이 · S/D·청소 같이 넣어 · 시간/뭐 생산하는지 구분'): 컬러 캘린더와 같은 구조
@@ -467,7 +467,7 @@
   function calCard() {
     const nw = nextWeek();
     const ex = O.expNeed && O.expNeed.due ? ` · 배선 없는 수출 ${O.expNeed.due}건은 납기 − 1일` : '';
-    return `<section class="card"><h2>라인별 ~${END()} <small title="하루 능력 = 재계획 하루 톤(속도 = 2026.1월~ 실적 하루 생산량, 가동 현황·가동 캘린더·주문진도와 같은 값) · 강종 = 최신 재계획 · 채우는 순서 = 작업지시 → 1010 순서안 → 필요 생산일 빠른 순(수출 출항 − 1일 · 내수 납기 − 1일${ex})">칸을 누르면 그날 작업 순서</small></h2>`
+    return `<section class="card"><h2>라인별 ${END()}까지 <small title="하루 능력 = 재계획 하루 톤(속도 = 2026.1월~ 실적 하루 생산량, 가동 현황·가동 캘린더·주문진도와 같은 값) · 강종 = 최신 재계획 · 채우는 순서 = 작업지시 → 1010 순서안 → 필요 생산일 빠른 순(수출 출항 − 1일 · 내수 납기 − 1일${ex})">칸을 누르면 그날 작업 순서</small></h2>`
       + UI_LEG([['sk1', '작업지시', 'MES 작업지시 확정(1030) — 현장에 내려간 코일'], ['sk2', '소재 있음', '소재가 들어와 계획에 넣은 주문'], ['sk3', '입고 예정', '소재 들어올 주문 — 입고 다음 날부터']], '강종')
       + moveBar()
       + weeks().map(([w0, ds]) => `<div class="wk">${weekTable(w0, ds, nw)}</div>`).join('') + '</section>';
@@ -715,7 +715,7 @@
         + `<span class="gbv"><b>${n0(p)}</b> / ${n0(g.target)} <small class="${d < -0.5 ? 'neg' : 'sub'}">${d >= 0 ? '+' : ''}${n0(d)}</small> <small class="sub">(소재 ${n0(a)} · 입고 ${n0(b)})</small></span></div>`; };
     const chart = `<div class="gbl"><span><i class="a"></i>소재 있음(작업지시 포함)</span><span><i class="b"></i>입고 예정</span><span><em></em>재계획 목표</span><span class="sub">계획 / 목표 · 차이</span></div>`
       ;   // 막대는 아래 표 둘째 칸으로(11/2 사용자 '그래프 하나 표 하나 말고 하나로')
-    return `<section class="card"><h2>판매그룹별 <small>~${END()} · 톤</small></h2>` + chart + '<div class="scroll"><table class="it gbt-tbl"><thead><tr><th>그룹</th>'
+    return `<section class="card"><h2>판매그룹별 <small>${END()}까지 · 톤</small></h2>` + chart + '<div class="scroll"><table class="it gbt-tbl"><thead><tr><th>그룹</th>'
       + '<th>생산 계획 / 재계획 목표 · 차이</th>'
       + '<th class="num" title="그 날 생산하면 출항일(수출)·납기(내수)를 초과하는 주문">출항일·납기 초과</th><th class="num" title="' + END() + '까지 필요하나 미편성인 주문(소재 없음·능력 부족)">' + END() + '까지 미편성</th><th class="num" title="필요 생산일이 이미 지났는데 생산 전">필요일 경과</th>'
       + (hasAcc ? '<th class="num" title="지난 계획 중 그날 실제로 만든 톤 비율">계획 적중률</th>' : '') + '</tr></thead><tbody>'
@@ -777,7 +777,7 @@
   function render() {
     const stale = Math.round((Date.now() - dt(O.asOf).getTime()) / 864e5);
     $('cc-main').innerHTML = (stale >= 2 ? `<div class="card" style="background:var(--warn-bg);color:var(--warn);font-weight:700">자료 기준 ${md(O.asOf)} — ${stale}일 전 자료</div>` : '')
-      + calCard() + confirmCard() + riskCard() + fold(grpCard(), `판매그룹별 계획 · 재계획 목표 <small>~${END()} · 톤</small>`) + fold(accCard(), '계획 적중률 <small>계획 ↔ 실제 생산</small>');   // 11/11: 결론(확정·경과·라인 부하)은 맨 위 PS.sum, 세부(그룹별·적중률)는 접기
+      + calCard() + confirmCard() + riskCard() + fold(grpCard(), `판매그룹별 계획 · 재계획 목표 <small>${END()}까지 · 톤</small>`) + fold(accCard(), '계획 적중률 <small>계획 ↔ 실제 생산</small>');   // 11/11: 결론(확정·경과·라인 부하)은 맨 위 PS.sum, 세부(그룹별·적중률)는 접기
     $('cc-main').querySelectorAll('button.cell[data-d]').forEach((b) => b.onclick = () => openDay(b.dataset.ln, b.dataset.d));
     $('cc-main').querySelectorAll('#cc-rk button').forEach((b) => b.onclick = () => { rk = b.dataset.rk; try { localStorage.setItem(RK_KEY, rk); } catch (e) { /* 무시 */ } render(); });
     $('cc-save').onclick = save;

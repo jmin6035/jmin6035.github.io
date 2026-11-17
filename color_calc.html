@@ -70,7 +70,7 @@ td.up1 { color: var(--good); font-weight: 700; } td.dn1 { color: var(--bad); fon
 
     <section class="card" id="c-cal">
       <h2>캘린더에서 일정 옮기기 <small>사양 칸을 끌어 다른 날에 놓으면 그 사양·톤이 옮겨짐 → 계산 시작</small></h2>
-      <p class="hint">옮긴 몫은 그 날에 고정하고, 나머지는 연속 공정대로 다시 채웁니다(넘친 일은 뒷날로, 빈 시간은 바로 뒤 일을 당겨 채움 · 휴지 덩어리는 그대로). 시간은 사양별 속도로 다시 셈 — 예) 1CCL PES 11t/h · PGS 20t/h 라 같은 100t 이라도 시간이 다릅니다. 실적이 있는 날은 이동 불가.</p>
+      <p class="hint">옮긴 몫은 그 날에 고정하고, 나머지는 연속 공정대로 다시 채웁니다(넘친 일은 뒷날로, 빈 시간은 바로 뒤 일을 당겨 채움 · 휴지 덩어리는 그대로). 시간은 사양별 속도로 다시 셈 — 예) 1CCL PES 11t/시간 · PGS 20t/시간 라 같은 100t 이라도 시간이 다릅니다. 실적이 있는 날은 이동 불가.</p>
       <div class="dv-bar"><div class="seg" id="dv-line"></div><div class="seg" id="dv-mon"></div><span class="hint" id="dv-src"></span></div>
       <div id="dv-grid" class="dv-grid" aria-label="컬러 일별 계획 캘린더"></div>
       <div class="dv-moves" id="dv-moves"></div>
@@ -118,7 +118,7 @@ td.up1 { color: var(--good); font-weight: 700; } td.dn1 { color: var(--bad); fon
   <label class="dv-t">옮길 톤 <input type="number" id="dv-dlg-n" min="0.1" step="0.1" inputmode="decimal"> t <small id="dv-dlg-max"></small></label>
   <div class="bar"><button value="ok" class="btn primary" id="dv-dlg-ok">옮기기</button><button value="cancel" class="btn" formnovalidate>취소</button></div>
 </form></dialog>
-<footer class="foot"><div class="wrap"><span>계산 코드 = 서버 cglplan · tools/color_calc.py 그대로(Pyodide) · 결과는 서버 계산과 같음을 확인(2026-10-12)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<footer class="foot"><div class="wrap"><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611141500"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
 <script src="color_calc.js?v=2611120206"></script>

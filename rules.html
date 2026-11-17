@@ -88,6 +88,7 @@ html body .kr td.a { white-space: nowrap !important; width: 1%; } .kr td.a a { f
 details.fold { margin-top: 14px; }
 details.fold > summary { cursor: pointer; font-weight: 800; font-size: 16px; padding: 4px 0; }
 details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size: 13.5px; margin-left: 6px; }
+b.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 날짜·기간 강조(용어 기준 11/17) */
 .ref { margin: 8px 0 0; padding-left: 18px; line-height: 1.8; font-size: 14px; }
 @media (max-width: 900px) { .flow { grid-template-columns: 1fr; } .flow .pl { padding: 8px; } .flow .bx:not(:last-child)::after { content: '↓'; right: 50%; top: auto; bottom: -10px; transform: translate(50%, 50%); } .kr td.a { display: none; } }
 @media (max-width: 640px) { html body table.kr td.v { white-space: normal !important; } }
@@ -125,7 +126,7 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
       <p hidden><small id="t-src"></small></p>
       <div class="tr-grid">
         <div><h3>① 그룹별 월말 재고 — 목표 일수 = 상한</h3>
-          <div class="scroll"><table class="t tr"><thead><tr><th class="l">판매 그룹</th><th>계획 일수</th><th>바꿀 계획 일수</th><th>상한</th><th>바꿀 상한</th></tr></thead><tbody id="t-days"></tbody></table></div></div>
+          <div class="scroll"><table class="t tr"><thead><tr id="t-dh"><th class="l">판매 그룹</th><th>계획 일수</th><th>바꿀 계획 일수</th><th>상한</th><th>바꿀 상한</th></tr></thead><tbody id="t-days"></tbody></table></div></div>
         <div><h3>② 공장 월말 재고 상한(톤)</h3>
           <div class="scroll"><table class="t tr"><thead><tr><th class="l">재고 구분</th><th>지금 계획</th><th>바꿀 값(t)</th></tr></thead><tbody id="t-max"></tbody></table></div>
         </div>
@@ -139,7 +140,6 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
       <p class="small" id="t-res"></p>
       <details class="fold"><summary>바꾼 이력 <small id="t-hn"></small></summary>
         <div class="scroll"><table class="t hist"><thead><tr><th>저장 시각</th><th>바꾼 사람</th><th class="l">바뀐 항목(직전 저장 대비)</th><th class="l">이유</th><th>적용</th></tr></thead><tbody id="t-hist"></tbody></table></div>
-        <p class="small">저장 = 분석 암호로 잠가 공유 저장소에 추가(수정·삭제 불가). 암호가 다른 줄은 계산에 쓰지 않음.</p>
       </details>
       </details>
     </section>
@@ -148,20 +148,19 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
     <section class="card">
       <details class="fold" style="margin-top:0"><summary>기준·사양 <small>결정 기록 · 계획 조건식 · 리드타임</small></summary>
         <ul class="ref">
-          <li><a href="decisions.html">결정 기록</a> — 사용자·회의 결정 전체(날짜순)</li>
+          <li><a href="decisions.html">결정 기록</a> — 회의·결정 전체(날짜순)</li>
           <li><a href="doc.html?d=conditions">계획 조건식</a> — 월 물량 · 컬러 일정 · 자가재 · 도금 일정 · 소재 · 재계획 계산식</li>
           <li><a href="leadtime.html">리드타임 기준</a> — 소재 유형별 발주 → 입고 → 도금 → 컬러 표</li>
           <li><a href="planstock.html">계획재</a> — 사양별 운영안 안전재고</li>
           <li id="k-lt"></li>
-          <li>엔진 원본: 수요 tools/order_demand.py · 리드타임 cglplan/leadtime_rules.json · 그룹 월 계획 cglplan/pages.py(f3_month_plan) · 목표 일수·손실 cglplan/tf_rules.json</li>
         </ul>
       </details>
     </section>
   </div>
 </main>
-<footer class="foot"><div class="wrap"><span>저장 = 공유 저장소(모든 사람이 같은 값) · 적용 = 매시 정각(08~20시) 확인 → 40~70분 계산 → 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<footer class="foot"><div class="wrap"><span></span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611141500"></script>
-<script src="rules_logic.js?v=2611120206"></script>
+<script src="rules_logic.js?v=2611172200"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
 <script>
 (function () {
@@ -183,7 +182,7 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
     ['equipDown', '설비 정지', '분/일', 0, 300, '설비 고장·운전 이상으로 서는 시간(하루 평균)'],
     ['restartFamchg', '정지(S/D) 뒤 재가동 — 강종 바뀜', '분', 0, 3000, '정기수리 등으로 멈췄다가 다른 강종으로 다시 돌릴 때 드는 시간'],
     ['restartSame', '정지(S/D) 뒤 재가동 — 같은 강종', '분', 0, 3000, '멈췄다가 같은 강종으로 다시 돌릴 때 드는 시간']];
-  const RP = [['tradeoff', 'M/C 1번 = 납기 지연 몇 톤·일', '톤·일', 1, 100000, 'M/C 1번 늘리는 손해를 납기 지연 몇 톤·일과 같게 볼지. 100 = 100톤을 하루(또는 10톤을 10일) 지연하는 것과 M/C 1번이 같은 손해. 키우면 M/C를 줄이고 지연을 더 받아들이고, 줄이면 납기를 지키려고 M/C를 더 넣음. 사내 PC 매일 재계획도 같은 값'],
+  const RP = [['tradeoff', 'M/C 1번 = 납기 지연 몇 톤·일', '톤·일', 1, 100000, 'M/C 1번 늘리는 손해를 납기 지연 몇 톤·일과 같게 볼지. 100 = 100톤을 하루(또는 10톤을 10일) 지연하는 것과 M/C 1번이 같은 손해. 키우면 M/C를 줄이고 지연을 더 받아들이고, 줄이면 납기를 지키려고 M/C를 더 넣음. 매일 재계획도 같은 값'],
     ['freezeDays', '강종을 안 바꾸는 앞쪽 날 수', '일', 0, 7, '다시 계산해도 오늘부터 이 날 수만큼은 강종을 그대로 둠(작업지시가 이미 나가 있는 기간)']];
   const DEF = { days: { 'G수출': 15, 'G국내': 15, 'G자가재': 15, 'AL-STS': 30, '임가공': 15, '기타': 45, '건재수출': 15, '가전수출': 15, '가전내수': 30, '주문재': 15, '수요개발': 15 },
     target: { 'G국내': 15, '주문재': 15, '수요개발': 15, '건재수출': 15, '가전수출': 15 },   // 11/9 회의: 목표 = 상한(cglplan/tf_rules.json target · tfrules.TARGET_KEYS)
@@ -219,7 +218,12 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
   const inp = (s, k, v, lo, hi, step, l) => `<input type="number" min="${lo}" max="${hi}" step="${step}" data-s="${s}" data-k="${esc(k)}"${l ? ` data-l="${l}"` : ''} value="${v}">`;
   function draw() {
     const A = APPLIED, C = cur(), offC = A.modeC && A.modeC !== 'tf';
-    $('t-days').innerHTML = DAYS.map(([sec, k, lb, sub]) => (!k ? `<tr><td class="l">${lb}</td><td></td><td></td><td></td><td></td></tr>`
+    // 11/17: 계획 일수 = 상한(목표 = 상한)이 모든 그룹에서 같으면 '목표 일수' 한 칸 — 바꿀 값은 상한 칸 하나, 계획 일수 칸은 숨겨 같은 값으로 맞춤(저장 값 구조 그대로)
+    const one = Object.keys(DEF.target).every((k) => +Math.min(A.target[k] ?? A.days[k], A.days[k]) === +A.days[k] && +C.target[k] === +C.days[k]);
+    $('t-dh').innerHTML = one ? '<th class="l">판매 그룹</th><th>목표 일수</th><th>바꿀 목표 일수</th>' : '<th class="l">판매 그룹</th><th>계획 일수</th><th>바꿀 계획 일수</th><th>상한</th><th>바꿀 상한</th>';
+    if (one) $('t-days').innerHTML = DAYS.map(([sec, k, lb, sub]) => (!k ? `<tr><td class="l">${lb}</td><td></td><td></td></tr>`
+      : `<tr><td class="l">${sub ? '└ ' : ''}${lb}${sec === '컬러' && offC ? ' <span class="tr-off">지금 계획 미적용</span>' : ''}</td><td class="num"><b>${n0(A.days[k])}일</b></td><td>${inp('days', k, C.days[k], 0, 120, 1)}${k in DEF.target ? inp('target', k, C.target[k], 0, 120, 1).replace('<input', '<input hidden') : ''}</td></tr>`)).join('');
+    else $('t-days').innerHTML = DAYS.map(([sec, k, lb, sub]) => (!k ? `<tr><td class="l">${lb}</td><td></td><td></td><td></td><td></td></tr>`
       : `<tr><td class="l">${sub ? '└ ' : ''}${lb}${sec === '컬러' && offC ? ' <span class="tr-off">지금 계획 미적용</span>' : ''}</td><td class="num"><b>${n0(Math.min(A.target[k] ?? A.days[k], A.days[k]))}일</b></td><td>${k in DEF.target ? inp('target', k, C.target[k], 0, 120, 1) : '<span class="tr-off">= 상한</span>'}</td><td class="num">${n0(A.days[k])}일</td><td>${inp('days', k, C.days[k], 0, 120, 1)}</td></tr>`)).join('');
     $('t-max').innerHTML = MAXK.map((k) => `<tr><td class="l">${esc(k)}</td><td class="num">${n0(A.stockMax[k])}t</td><td>${inp('stockMax', k, C.stockMax[k], 1, 100000, 100)}</td></tr>`).join('');
     $('t-pl').innerHTML = PL.map(([k, lb, u, lo, hi, ds]) => `<tr><td class="l"><b>${lb}</b> <small class="muted">${u}</small></td><td class="l small ds">${ds}</td>${['1CGL', '2CGL'].map((l) => `<td class="num">${n0(A.plating[k][l])}</td><td>${inp('plating', k, C.plating[k][l], lo, hi, 0.01, l)}</td>`).join('')}</tr>`).join('')
@@ -236,7 +240,7 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
     const r = ST.result, p = ST.prev, src = APPLIED.src || {};
     let h = `<span>지금 계획 수치 = <b>${src.id ? `#${src.id} ${esc(kst(src.at))} ${esc(src.who || '')}` : `${esc(String(src.at || '').slice(5, 10).replace('-', '/'))} ${esc(src.who || '파일')}`}</b></span>`;
     if (req) h += `<span><b class="pend">적용 요청 대기</b> #${req.id} ${esc(kst(req.at))} ${esc(req.who)} — 다음 정시에 계산 시작</span>`;
-    if (ST.state) h += `<span>마지막 적용 요청 #${ST.lastRequestId} <b>${esc(ST.state)}</b> ${esc(kst(ST.at))}${r && p ? ` · M/C ${p.mc} → ${r.mc}회 · 지연 ${n0(p.late)} → ${n0(r.late)}톤·일 · 결품 ${n0(r.short)}t` : ''}</span>`;
+    if (ST.state && !/시험/.test(ST.state)) h += `<span>마지막 적용 요청 #${ST.lastRequestId} <b>${esc(ST.state)}</b> ${esc(kst(ST.at))}${r && p ? ` · M/C ${p.mc} → ${r.mc}회 · 지연 ${n0(p.late)} → ${n0(r.late)}톤·일 · 결품 ${n0(r.short)}t` : ''}</span>`;
     if (ST.state === '검토 대기') h += '<span><button type="button" class="btn primary" id="t-force">그래도 적용(게시)</button></span>';
     $('t-st').innerHTML = h;
     $('t-edit-sum').innerHTML = req ? `<b class="pend" style="color:var(--warn)">적용 요청 대기 #${req.id}</b>` : '목표 일수 · 재고 상한 · 도금 손실 · 재계산 기준 → 저장하고 적용';
@@ -250,12 +254,12 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
   function drawKey() {
     const A = APPLIED, T = (k) => Math.min(A.target[k] ?? A.days[k], A.days[k]), L = LT || { selfLead: 8, selfLeadMin: 1 };
     const K = [
-      ['11/10', '그룹 월 계획 = 판매 + 목표 재고 − 기초 재고', '기초 = 전달 말 MES 재고 · 한 달 고정 · 0 미만이면 0(사유 표시)', 'F3', 'stock'],
+      ['11/10', '그룹 월 계획 = 판매 + 목표 재고 − 기초 재고', '기초 = 전달 말 MES 재고 · 한 달 고정 · 0 미만이면 0(사유 표시)', '판매 + 목표 − 기초', 'stock'],
       ['11/9', '목표 재고 일수 = 상한 — 출하 N일 전까지만 생산', `가전내수 ${A.days['가전내수']} · 자동차 ${A.days['기타']} · AL-STS ${A.days['AL-STS']}일`, `${T('G국내')}일`, 'stock'],
       ['11/10', '납기: 내수(도금·컬러) = 납기월 말일', '납기월 1일부터 생산 · 수출 = 출항 − 1일', '납기월 말일', 'cg'],
       ['11/10', '자가재 = 컬러 사용일 − 1일 마감', `도금 생산 = 사용일 −${L.selfLead} ~ −${L.selfLeadMin}일 사이 · 반순 마감 폐지`, `−${L.selfLead} ~ −${L.selfLeadMin}일`, 'self'],
       ['11/10', '계획재 = 운영안 안전재고만 지킴', '사양별 생산 = 남은 출하 + 안전재고 − 지금 재고(수입 F/H·서림 GI 90사양)', '안전재고', 'stock'],
-      ['11/10', 'M/C 고정 = 판생 확정 다음 달 말까지', `회사 지정 M/C 먼저 · 그 뒤는 엔진이 정함 · 앞 ${A.replan.freezeDays}일 강종 고정`, `~${mdy(lockTo())}`, 'cg'],
+      ['11/10', 'M/C 고정 = 판생 확정 다음 달 말까지', `회사 지정 M/C 먼저 · 그 뒤는 엔진이 정함 · 앞 ${A.replan.freezeDays}일 강종 고정`, `${mdy(lockTo())}까지`, 'cg'],
       ['11/10', '생산 캘린더 하루 능력 = 재계획 톤 × 두께별 실적 속도', '두꺼운 주문은 같은 시간에 더 많이 · 0.6~1.6배', '두께별 속도', 'cg'],
       ['11/10', '출하 진도 기준선 = 그룹 출하 실적 패턴', '그날까지 나갔어야 할 누계 = 월 계획 × 월중 출하 패턴(최근 12개월)', '실적 패턴', 'ship'],
     ];
@@ -263,7 +267,7 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
     $('k-rows').innerHTML = K.map(([d, r, x, v, tab]) => `<tr><td class="d">${DT(d)}</td><td class="r"><b>${esc(r)}</b><span class="x">${esc(x)}</span></td><td class="v">${esc(v)}</td><td class="a"><a href="#${tab}" data-tab="${tab}">자세히 →</a></td></tr>`).join('');
     $('k-asof').textContent = `바뀐 날짜 = 결정일 · 최근 ${NEWEST}`;
     $('k-rows').querySelectorAll('a[data-tab]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); openRule(a.dataset.tab); }));
-    if (LT) $('k-lt').innerHTML = `리드타임 고정값 — 자가재 도금 생산 = 컬러 사용일 −${LT.selfLead} ~ −${LT.selfLeadMin}일 · 구매 소재 투입 여유 컬러 ${LT.safetyC}일 · 도금 ${LT.safetyG}일 · 새 발주로 맞출 수 있는 최소 ${LT.newOrderLT}일${LT.release ? ` · 주문재 생산 시작 = ${esc(LT.release)}` : ''}`;
+    if (LT) $('k-lt').innerHTML = `리드타임 고정값 — 자가재 도금 생산 = 컬러 사용일 −${LT.selfLead} ~ −${LT.selfLeadMin}일 · 구매 소재 투입 여유 컬러 ${LT.safetyC}일 · 도금 ${LT.safetyG}일 · 발주 후 투입까지 최소 ${LT.newOrderLT}일${LT.release ? ` · 주문재 생산 시작 = ${esc(LT.release)}` : ''}`;
   }
   function openRule(k) {
     $('r-fold').open = true;
@@ -274,18 +278,18 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
     const A = APPLIED, P = (IG && IG.planP) || {}, rb = P.rateBase || {}, L = LT || { selfLead: 8, selfLeadMin: 1, safetyC: 7, safetyG: 1 };
     const T = (k) => Math.min(A.target[k] ?? A.days[k], A.days[k]);
     const tph = (k) => (rb[k] ? `${(rb[k] * 60).toFixed(1)}` : '-');
-    const sd = (P.shutdowns || []).map((x) => `${x.line} ${mdy(x.start)}~${mdy(x.end)}`).join(' · ') || '없음';
+    const sd = (P.shutdowns || []).map((x) => `${esc(x.line)} <b class="dt">${mdy(x.start)}~${mdy(x.end)}</b>`).join(' · ') || '없음';
     const box = (h, k, li) => `<div class="bx"><h4>${h}</h4><span class="k">${k}</span><ul>${li.map((x) => `<li>${x}</li>`).join('')}</ul></div>`;
     $('f-flow').innerHTML = `<div class="flow"><div class="pl">도금</div>`
       + box('① 수요', '실주문 먼저 + 모자란 만큼 판매계획', ['수출 = 출항 − 1일', '내수 = 납기월 말일', `자가재 = 컬러 사용일 −${L.selfLead}~−${L.selfLeadMin}일`])
       + box('② 월 계획', '판매 + 목표 − 기초', [`목표 = 하루 판매 × <b class="n">${T('G수출')}일</b>(상한)`, `자동차 ${A.days['기타']} · AL-STS ${A.days['AL-STS']}일`, '기초 = 전달 말 MES 재고'])
-      + box('③ 편성', '결품 → 지연 → M/C → 선생산 최소', [`M/C 1번 = 지연 <b class="n">${n0(A.replan.tradeoff)}톤·일</b>`, `앞 ${A.replan.freezeDays}일 강종 고정`, '하루 한 강종(1CGL AL·AZ · 2CGL AL·MAC)'])
-      + box('④ 제약', `M/C 고정 ~${mdy(lockTo())}`, [`정기수리 ${esc(sd)}`, `속도 1CGL AL ${tph('1CGL|AL')} · AZ ${tph('1CGL|AZ')} t/h`, `2CGL AL ${tph('2CGL|AL')} · MAC ${tph('2CGL|MAC')} t/h`, `M/C 손실 ${n0(A.plating.switchDummy['1CGL'])} · ${n0(A.plating.switchDummy['2CGL'])}분`, `소재 입고 → 도금 최소 ${L.safetyG}일`])
+      + box('③ 편성', '결품 → 지연 → M/C → 선생산 최소', [`M/C 1회 = 납기 지연 <b class="n">${n0(A.replan.tradeoff)}톤·일</b>로 봄`, `앞 ${A.replan.freezeDays}일 강종 고정`, '하루 한 강종(1CGL AL·AZ · 2CGL AL·MAC)'])
+      + box('④ 제약', `M/C 고정 <b class="dt">${mdy(lockTo())}</b>까지`, [`정기수리 ${sd}`, `속도 1CGL AL ${tph('1CGL|AL')} · AZ ${tph('1CGL|AZ')} t/시간`, `2CGL AL ${tph('2CGL|AL')} · MAC ${tph('2CGL|MAC')} t/시간`, `M/C 1회 손실 1CGL ${n0(A.plating.switchDummy['1CGL'])}분 · 2CGL ${n0(A.plating.switchDummy['2CGL'])}분`, `소재 입고 → 도금 최소 ${L.safetyG}일`])
       + `</div><div class="flow c"><div class="pl">컬러</div>`
       + box('① 수요', '그룹 월 계획 → 품목', ['품목 = 판매계획 비율', `수출 = 선적 기한 전 ${A.days['건재수출']}일 창`, '계획재 = 운영안 안전재고'])
-      + box('② 월 계획', '판매 + 목표 − 기초', [`목표 ${T('주문재')}일(상한) · 가전내수 ${A.days['가전내수']}일`, '기초 = 전달 말 MES 재고', '이번 달 = 실적·확정 빼고 남은 양 롤링'])
-      + box('③ 편성', '집약 → 수출 → 내수·주문재 → 계획재', ['라인 = 톤파워 우선 · 2CCL 최후', 'Print = 4CCL · STS·Lami = 3CCL', '확정 창 = 오늘 ~ 다음 주 일요일 고정'])
-      + box('④ 제약', '하루 1,440분 − 계획정지', ['Test·샘플 시간도 뺌', '속도 = 품목별 단위생산량', '수입 FH = 입고월 13일 이후', `구매 소재 투입 여유 ${L.safetyC}일 · 휴지 집약 최대 30일 당김`])
+      + box('② 월 계획', '판매 + 목표 − 기초', [`목표 ${T('주문재')}일(상한) · 가전내수 ${A.days['가전내수']}일`, '기초 = 전달 말 MES 재고', '이번 달 = 실적·확정 빼고 남은 양 매일 재계산'])
+      + box('③ 편성', '집약 → 수출 → 내수·주문재 → 계획재', ['라인 = 시간당 생산량 높은 라인 우선 · 2CCL 최후', '프린트 = 4CCL · STS·라미 = 3CCL', '확정 기간 = 오늘 ~ 다음 주 일요일 고정'])
+      + box('④ 제약', '하루 1,440분 − 계획정지', ['시험·샘플 시간도 뺌', '속도 = 품목별 단위생산량', '수입 FH = 입고월 13일 이후', `구매 소재 투입 여유 ${L.safetyC}일 · 휴지 집약 최대 30일 당김`])
       + `</div>`;
   }
   let rulesOn = false;
@@ -295,10 +299,12 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
     const h = location.hash.slice(1); if (h && h !== 'edit' && document.querySelector(`#r-tabs button[data-k="${h}"]`)) $('r-fold').open = true;
   }
   function drawHist() {
-    $('t-hn').textContent = HIST.length ? `${HIST.length}건` : '';
+    const hide = (h) => /claude/i.test(`${h.who || ''} ${h.memo || ''}`) || /^시험/.test(h.who || '') || /\(target\)/.test(h.memo || '');   // 지난 시험 기록은 숨김(11/17)
+    const nShow = HIST.filter((h) => !hide(h)).length;
+    $('t-hn').textContent = nShow ? `${nShow}건` : '';
     const lbl = Object.fromEntries(DAYS.filter((d) => d[1]).map((d) => [d[1], d[2]]));
     const F = [];
-    Object.keys(DEF.target).forEach((k) => F.push(['target', k, null, `${lbl[k]} 계획 일수`, '일']));
+    Object.keys(DEF.target).forEach((k) => F.push(['target', k, null, `${lbl[k]} 목표 일수`, '일']));
     DAYS.forEach(([, k]) => { if (k) F.push(['days', k, null, `${lbl[k]} 상한`, '일']); });
     MAXK.forEach((k) => F.push(['stockMax', k, null, k, 't']));
     PL.forEach(([k, lb]) => ['1CGL', '2CGL'].forEach((l) => F.push(['plating', k, l, `${l} ${lb}`, '분'])));
@@ -307,13 +313,14 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
     const g = (o, s, k, l) => { const x = o && o[s] && o[s][k]; return l ? x && x[l] : x; };
     // 11/10 점검: 11/9 회의 값(15일·가전내수 30일)은 파일(cglplan/tf_rules.json)로 바로 반영돼 저장 이력에 없음 — 맨 위 '지금 계획' 줄로 보여 이력(15→7 등)과 표 값이 달라 보이지 않게
     const A0 = APPLIED, h0 = HIST[0], cf = h0 && A0 && A0.src && !A0.src.id ? F.filter(([s, k, l]) => g(h0, s, k, l) != null && g(A0, s, k, l) != null && g(h0, s, k, l) !== g(A0, s, k, l)).map(([s, k, l, nm, u]) => `${esc(nm)} ${n0(g(h0, s, k, l))} → <b>${n0(g(A0, s, k, l))}${u}</b>`) : [];
-    const top = cf.length ? `<tr><td>${esc(String(A0.src.at || '').slice(0, 10))}</td><td>${esc(A0.src.who || '파일')}</td><td class="l wrap chgl">${cf.join(' · ')}</td><td class="l wrap">11/9 회의 결정 — 파일(cglplan/tf_rules.json)로 반영</td><td><b>지금 계획</b></td></tr>` : '';
+    const top = cf.length ? `<tr><td>${esc(String(A0.src.at || '').slice(0, 10))}</td><td>${esc(A0.src.who || '파일')}</td><td class="l wrap chgl">${cf.join(' · ')}</td><td class="l wrap">11/9 회의 결정</td><td><b>지금 계획</b></td></tr>` : '';
     $('t-hist').innerHTML = top + HIST.map((h, i) => {
+      if (hide(h)) return '';
       const p = HIST[i + 1], ch = p ? F.filter(([s, k, l]) => !(p.has && p.has[s] === false) && g(p, s, k, l) !== g(h, s, k, l)).map(([s, k, l, nm, u]) => `${esc(nm)} ${n0(g(p, s, k, l))} → <b>${n0(g(h, s, k, l))}${u}</b>`) : [];
       const used = APPLIED.src && APPLIED.src.id === h.id;
       const ap = used ? '<b>지금 계획</b>' : h.apply ? (ST.lastRequestId >= h.id ? (ST.lastRequestId === h.id ? esc(ST.state || '') : '처리됨') : '적용 요청') : '저장만';
       return `<tr><td>${esc(kst(h.at))}</td><td>${esc(h.who)}</td><td class="l wrap chgl">${p ? (ch.join(' · ') || '바뀐 값 없음') : '첫 기록'}${h.force ? ' <span class="pill">그래도 적용</span>' : ''}</td><td class="l wrap">${esc(h.memo || '')}</td><td>${ap}</td></tr>`;
-    }).join('') || '<tr><td colspan="5" class="muted">저장한 기록이 없습니다</td></tr>';
+    }).join('') || (top ? '' : '<tr><td colspan="5" class="muted">저장한 기록이 없습니다</td></tr>');
   }
   function marks() {
     const C = cur();
@@ -356,7 +363,7 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
     try { await Promise.all([loadHist(), loadStatus()]); } catch (e) { $('t-res').textContent = e.message; }
     draw();
   }
-  document.addEventListener('input', (e) => { if (e.target.matches('table.tr input')) marks(); });
+  document.addEventListener('input', (e) => { if (!e.target.matches('table.tr input')) return; if (e.target.dataset.s === 'days') { const t = e.target.parentNode.querySelector('input[data-s="target"][hidden]'); if (t) t.value = e.target.value; } marks(); });
   $('t-save').addEventListener('click', () => save(false));
   $('t-apply').addEventListener('click', () => save(true));
   $('t-reset').addEventListener('click', draw);

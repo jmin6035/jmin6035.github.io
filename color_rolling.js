@@ -18,7 +18,7 @@
   function render() {
     const el = $('r-sec'); if (!el || !R) return;
     el.hidden = false;
-    $('r-meta').textContent = `확정 창 ${md(R.window[0])}~${md(R.window[1])} · 작업지시 ${String(R.woNow || '').slice(5).replace('-', '/')} · 확정 ${fmt(R.conf.t)}t${R.actTo ? ` · 실적 = MES ~${md(R.actTo)}${R.actTo >= R.asOf ? '(오늘 진행분 포함)' : ''}` : ''}`;   // 11/10 점검: 실적 6,104(오늘 진행분 포함) vs 다른 화면 ~11/8 5,921 — 기준일 표시
+    $('r-meta').textContent = `확정 창 ${md(R.window[0])}~${md(R.window[1])} · 작업지시 ${String(R.woNow || '').slice(5).replace('-', '/')} · 확정 ${fmt(R.conf.t)}t${R.actTo ? ` · 실적 = MES ${md(R.actTo)}까지${R.actTo >= R.asOf ? '(오늘 진행분 포함)' : ''}` : ''}`;   // 11/10 점검: 실적 6,104(오늘 진행분 포함) vs 다른 화면 ~11/8 5,921 — 기준일 표시
     $('r-tabs').innerHTML = R.months.map((m, i) => `<button type="button" data-m="${i}" aria-pressed="${i === mi}">${+m.slice(5)}월</button>`).join('');
     const m = R.months[mi];
     // 11/13 사용자 결정: 월 계획 = 지금 판의 그 달 합(지난 날 실적 + 앞날 계획 = 01 컬러 합계 계) — 롤링 원본(고정 판) 대신. 비교용 월차(그 달 첫 판)는 합계 줄에만
@@ -58,16 +58,16 @@
       const s0 = ds.reduce((s, d) => s + (C[d] && C[d][1] >= 0.5 ? Math.round(C[d][1]) : 0), 0), s1 = ds.reduce((s, d) => s + (C[d] && C[d][2] >= 0.5 ? Math.round(C[d][2]) : 0), 0);   // 계 = 보이는 칸(정수) 합
       h += `<tr class="r-dep"><th class="c0 lnC le" rowspan="2">${l}</th><th class="c1">월 계획</th>`
         + ds.map((d) => { const c = C[d]; return `<td>${c && c[1] >= 0.5 ? fmt(c[1]) : ''}</td>`; }).join('') + `<td class="tot">${fmt(s0)}</td></tr>`;
-      h += `<tr class="r-fam le"><th class="c1">롤링</th>` + ds.map((d) => {
+      h += `<tr class="r-fam le"><th class="c1">재계획</th>` + ds.map((d) => {
         const c = C[d]; if (!c) return '<td></td>';
         const [, o, v, k, fr, cf] = c, df = v - o;
         const cls = [v >= 0.5 ? 'kC' : '', (k === 'c' || k === 'w') && cf >= 0.5 ? 'k-c' : '', k !== 'a' && k !== 's' && Math.abs(df) >= 30 ? (df > 0 ? 'up' : 'dn') : ''].filter(Boolean).join(' ');
-        const tip = `${md(d)} ${l} · 월 계획 ${fmt(o)}t → 롤링 ${fmt(v)}t` + (k === 'a' ? ' (실적)' : cf >= 0.5 ? ` (확정 작업지시 ${fmt(cf)}t${v - cf >= 0.5 ? ` + 계획 ${fmt(v - cf)}t` : ''})` : '') + (fr >= 60 ? ` · 빈 시간 ${(fr / 60).toFixed(1)}h` : '');
+        const tip = `${md(d)} ${l} · 월 계획 ${fmt(o)}t → 재계획 ${fmt(v)}t` + (k === 'a' ? ' (실적)' : cf >= 0.5 ? ` (확정 작업지시 ${fmt(cf)}t${v - cf >= 0.5 ? ` + 계획 ${fmt(v - cf)}t` : ''})` : '') + (fr >= 60 ? ` · 빈 시간 ${(fr / 60).toFixed(1)}h` : '');
         return `<td class="${cls}" title="${esc(tip)}">${v >= 0.5 ? fmt(v) : ''}</td>`;
       }).join('') + `<td class="tot">${fmt(s1)}</td></tr>`;
     }
     $('r-table').innerHTML = OPT.wrap(OPT.pad31(h, ds.length) + '</tbody>', ds.filter((d) => d < today).length, ti, 'r-table')
-      + OPT.lg([['kC', '롤링 생산'], ds.some((d) => d < today) && ['pst', '지난 날'], ['sep'], ti >= 0 && ['tdy', '오늘']]);
+      + OPT.lg([['kC', '재계획 생산'], ds.some((d) => d < today) && ['pst', '지난 날'], ['sep'], ti >= 0 && ['tdy', '오늘']]);
   }
 
   document.addEventListener('click', (ev) => { const b = ev.target.closest('#r-tabs button'); if (b) { mi = +b.dataset.m; render(); } });

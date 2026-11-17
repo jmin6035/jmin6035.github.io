@@ -15,7 +15,7 @@
   const WD = ['일', '월', '화', '수', '목', '금', '토'];
   const wd = (d) => new Date(d + 'T00:00:00').getDay();
   const LINES = { G: ['1CGL', '2CGL'], C: ['1CCL', '2CCL', '3CCL', '4CCL'] };
-  const FN = { AZ: 'AZ', AL: 'AL', MAC: 'MACOSTA' }, PL = { '1CGL': ['AL', 'AZ'], '2CGL': ['AL', 'MAC'] };   // 엑셀 양식의 강종 행 이름 · 라인 강종
+  const FN = { AZ: 'AZ', AL: 'AL', MAC: 'MAC' }, PL = { '1CGL': ['AL', 'AZ'], '2CGL': ['AL', 'MAC'] };   // 엑셀 양식의 강종 행 이름 · 라인 강종
   const HOL = new Set(['2026-12-25', '2027-01-01']);                      // 공휴일(머리 칸 노랑·빨강)
   const red = (d) => wd(d) % 6 === 0 || HOL.has(d);
   const hfmt = (h) => { const r = Math.round(h * 10) / 10; return Number.isInteger(r) ? String(r) : r.toFixed(1); };
@@ -117,7 +117,7 @@
         ev += '<td class="tot">-</td></tr>';
         let hr = '';
         if (o.hrs) {
-          hr = '<tr class="hr le"><th class="c1">가동시간</th>'; let hs = 0;
+          hr = '<tr class="hr le"><th class="c1">가동시간(시간)</th>'; let hs = 0;
           for (let i = 0; i < ds.length; i++) { const v = Math.round(o.hrs(l, ds[i], C[i]) * 10) / 10; hs += v; hr += `<td class="${dc(i).trim()}">${hfmt(v)}</td>`; }
           hr += `<td class="tot">${hfmt(hs)}</td></tr>`;
         }
@@ -159,7 +159,7 @@
   // 범례(표 아래 가운데): 지난 날이 없는 달은 '지난 날' 뺌 · 가동시간 줄은 색이 없어 뺌
   function legend(V, P, ds, o) {
     const sw = (c, t) => `<span><i class="${c}"></i>${t}</span>`, hasPast = (ds || []).some((d) => d < ((o && o.today) || ''));
-    return `<div class="gk-lg">${scope('G') ? sw('kAZ', 'AZ') + sw('kAL', 'AL') + sw('kSTS', 'AL-STS') + sw('kMAC', 'MACOSTA') : ''}${scope('C') ? sw('kC', '컬러 가동') : ''}${hasPast ? sw('pst', '지난 날') : ''}${sw('y', 'M/C · S/D')}${sw('sp', '정지 · 휴지')}<span class="sep"></span>`
+    return `<div class="gk-lg">${scope('G') ? sw('kAZ', 'AZ') + sw('kAL', 'AL') + sw('kSTS', 'AL-STS') + sw('kMAC', 'MAC') : ''}${scope('C') ? sw('kC', '컬러 가동') : ''}${hasPast ? sw('pst', '지난 날') : ''}${sw('y', 'M/C · S/D')}${sw('sp', '정지 · 휴지')}<span class="sep"></span>`
       + (P ? sw('chg', `${esc(P.lab)} 대비 바뀐 칸`) : '') + (V.kind === 'now' && ds.includes((o && o.today) || '') ? sw('tdy', '오늘') : '') + '</div>';
   }
   // 다른 표용 범례: items = [[class, 글], …] (같은 네모·같은 자리)

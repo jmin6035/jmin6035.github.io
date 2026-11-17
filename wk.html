@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>주간 관제</title>
-<meta name="description" content="주별 생산 계획 대비 수주 · 소재 — 이번 주 ~ W+8">
+<meta name="description" content="주별 생산 계획 대비 주문 · 소재">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/theme.css?v=2611120206">
 <link rel="stylesheet" href="ui/optable.css?v=2611141900">
@@ -113,12 +113,14 @@ ol.k-act .who { display: inline-block; font-size: 12.5px; font-weight: 700; colo
 .self { color: #6b4fa0 !important; } table.k-d thead th small { display: block; font-size: 12px; font-weight: 500; color: var(--k-mute); } .k-rsg .s.flow { font-size: 14px; color: var(--k-sub); margin-top: 2px; }
 html body main table.k-dl thead tr:not(.grp) th { white-space: normal !important; min-width: 0; max-width: 84px; line-height: 1.3; } html body main table.k-dl thead th small { white-space: normal; }
 @media (max-width: 1500px) { html body main table.k-dl th, html body main table.k-dl td { padding-left: 4px !important; padding-right: 4px !important; } html body main table.k-dl td { font-size: 14.5px !important; } html body main table.k-dl td.pp { font-size: 15.5px !important; } html body main table.k-dl tr.gr th { padding-left: 22px !important; } }
+.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }
+.k-h .dt { margin-left: 8px; font-size: 16px; } .k-wk button b.dt { font-size: 15.5px; color: var(--brand-2, #1f5fae); } .k-step .h .dt { font-size: 14.5px; }
 </style>
 </head>
 <body>
 <header id="shell" data-page="wk" data-title="주간 관제"></header>
 <main class="wrap"><div id="ct-main" style="margin-top:8px"></div></main>
-<footer class="foot"><div class="wrap"><span>원자료: 재계획·통합 계획 · 도금·컬러 주문 진도 → 사내 PC 자동 실행 → 암호화 게시</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<footer class="foot"><div class="wrap"><span>원자료: 재계획·통합 계획 · 도금·컬러 주문 진도</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611171200"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
 <script src="ui/ct.js?v=2611120206"></script>

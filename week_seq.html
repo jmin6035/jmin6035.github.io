@@ -279,10 +279,11 @@ table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px 
 .wo-rl { margin: 4px 0 8px; }
 .cp.kw { background: #2a6fc9; color: #fff; border-color: #2a6fc9; font-weight: 800; } .cp.kj { background: #fff; color: #2a6fc9; border: 1.5px solid #2a6fc9; font-weight: 800; }   /* 작업대기(1030 확정) 채움 · 지시대기(1020) 테두리 */
 @media (max-width: 640px) { .ws-k .kc { white-space: normal; overflow: visible; } .ws-kpis { grid-template-columns: minmax(0, 1fr); } .ws-k { min-width: 0; max-width: 100%; padding: 10px 12px; } .ws-k .v2 { font-size: 22px; column-gap: 10px; } .ws-k .kb, .ws-k .kr, .ws-k .b { min-width: 0; max-width: 100%; overflow-wrap: anywhere; } }
+.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 11/17 용어 기준: 날짜·기간 = 굵은 진한 파랑 */
 </style>
 </head>
 <body>
-<header id="shell" data-page="weekseq" data-crumb="생산계획" data-title="작업 순서" data-sub="라인별 오늘부터 돌릴 순서 — 고쳐서 저장·확정·점검 · 작업지시 제안과 근거"></header>
+<header id="shell" data-page="weekseq" data-crumb="생산계획" data-title="작업 순서" data-sub="라인별 작업 순서 — 수정·저장·확정"></header>
 <main class="wrap">
   <div class="docmeta" id="ws-meta"></div>
   <section class="card lock" id="ws-lock">
@@ -320,9 +321,9 @@ table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px 
     <details class="fold" id="ws-fold"><summary>기준·사양 <small>전환 휴지·더미 기준 · 점검 규칙 · 시간 계산 · 작업지시 편성 조건</small></summary><div id="ws-spec"></div><div id="ws-rules"></div></details>
   </div>
 </main>
-<footer class="foot"><div class="wrap"><span>대상: 컬러 = 작업지시 편성 대상(소재 매치)·확정 대기열 · 도금 = 지시된 코일(생산 전) + 소재 들어온 작업 · 시간 = 기존 속도(t/h) · 휴지 = 전환 기준표(1년 실적)·휴지계획 · 저장 = 공유 저장소(암호화, 버전 이력)</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<footer class="foot"><div class="wrap"><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <script src="ui/shell.js?v=2611141500"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
-<script src="week_seq.js?v=2611141900"></script>
+<script src="week_seq.js?v=2611171900"></script>
 </body>
 </html>

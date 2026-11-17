@@ -18,7 +18,10 @@
   const addD = (d, k) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + k); return x.toISOString().slice(0, 10); };
   const wkOf = (d) => addD(d, -((new Date(d + 'T00:00:00Z').getUTCDay() + 4) % 7));   // 생산주 = 수 ~ 화(포털 '이번 주(수~화)'·확정 키와 같음)
   const TODAY = new Date(Date.now() + 2 * 3600e3).toISOString().slice(0, 10);          // MES 일자(07시 기준, KST)
-  const COLS = ['순번', '계약번호', '행번', '두께', '폭', '중량', '길이', '부서', '담당자', '목적지', 'Top Color', 'Back Color', '기준 속도', 't/hr', '시작시간', '종료시간', '상태'];
+  const XCOLS = ['순번', '계약번호', '행번', '두께', '폭', '중량', '길이', '부서', '담당자', '목적지', 'Top Color', 'Back Color', '기준 속도', 't/hr', '시작시간', '종료시간', '상태'];   // 엑셀 칸 이름(MES 양식 그대로)
+  const COLS = ['순번', '계약번호', '행번', '두께', '폭', '중량', '길이', '부서', '담당자', '목적지', '앞면 색', '뒷면 색', '기준 속도', 't/시간', '시작', '종료', '상태'];   // 화면 칸 이름(11/17 용어 기준)
+  const GNM = { 도금: '도금국내', 도금판매: '도금국내', 국내: '도금국내', 수출: '도금수출', 자동차강판: '자동차', 자동차내수: '자동차', 자동차수출: '자동차', 건재수출: '컬러수출', 가전수출: '컬러수출', 가전내수: '컬러수출', 주문재: '컬러건재', 계획재: '컬러건재', 부원료: '부자재' };   // pyeonseong.js GNM 과 같은 묶음   // 11/17 용어 기준: 그룹 이름 = 현황·관제와 같게
+  const gnm = (g) => { const k = String(g || '-').replace(/(판매)?그룹$/, ''); return GNM[k] || k; };
 
   let PW = '', plant = /cc/.test(location.hash) ? 'cc' : 'cg', line = null, V = null;
   const OP = {};   // 공정별 주문진도 { con: row }
@@ -36,20 +39,20 @@
     const st = (lab, s, e, yel) => out.push({ k: 's', lab, s, e, yel, d: C.dayOf(s) });
     const yel = (t) => !/수리|휴지|대기/.test(t) && /M\/C|S\/D|청소|샘플|test|시험/i.test(t);   // 01 일별 가동계획 색: M/C·S/D·청소(샘플) 노랑 · 휴지·수리·대기 남색
     const sp = (V.D.lines[l] || {}).stopUntil;
-    if (sp) st(`휴지계획 · ${+sp.slice(5, 7)}/${+sp.slice(8, 10)} 재가동`, C.tms(V.D.w0), C.tms(V.D.lines[l].from), false);
+    if (sp) st(`계획 휴지 · ${+sp.slice(5, 7)}/${+sp.slice(8, 10)} 재가동`, C.tms(V.D.w0), C.tms(V.D.lines[l].from), false);
     (V.ev[l] || []).forEach((q) => {
       if (q.k === 'w') return;                                     // 도료·PF 기다림(내부 정보) — 시작 시각에만 반영
-      if (q.k === 'p') { const nm = !q.ev ? '휴지' : q.ev === 'plan' ? '휴지계획' : q.ev; return st(`${nm} ${hrs(q.e - q.s)}`, q.s, q.e, yel(nm)); }
+      if (q.k === 'p') { const nm = !q.ev ? '휴지' : q.ev === 'plan' || q.ev === '휴지계획' ? '계획 휴지' : q.ev; return st(`${nm} ${hrs(q.e - q.s)}`, q.s, q.e, yel(nm)); }
       if (q.k === 'g') {
         const nt = q.e.note || '';
-        if (/더미/i.test(nt) && !q.e.sm) return out.push({ k: 'd', con: 'DUMMY', s: q.s, e: q.e2, d: C.dayOf(q.s), note: nt });
+        if (/더미/i.test(nt) && !q.e.sm) return out.push({ k: 'd', con: '더미', s: q.s, e: q.e2, d: C.dayOf(q.s), note: nt });
         return st(`${q.e.sm ? nt || '샘플' : nt || '휴지'} ${hrs(q.e2 - q.s)}`, q.s, q.e2, q.e.sm ? !/수리|휴지/.test(nt) : /^(M\/C|S\/D|청소)/.test(nt));
       }
       // 작업(q.k === 'j'): 도금 전환 더미(1년 실적 50% 이상 바뀜만 시간에 넣은 것)는 작업 앞에 더미 한 줄
       if (plant === 'cg' && q.ch && q.ch.m >= 1) {
         const dp = q.ch.parts.filter((p) => p.m > 0 && /^더미/.test(p.c));
         if (dp.length) { const t = dp.reduce((a, p) => { const m = String(p.c).match(/약\s*([\d,.]+)t/); return a + (m ? +m[1].replace(/,/g, '') : 0); }, 0);
-          out.push({ k: 'd', con: 'DUMMY', s: q.ds, e: q.s, d: C.dayOf(q.ds), t: t || null }); }
+          out.push({ k: 'd', con: '더미', s: q.ds, e: q.s, d: C.dayOf(q.ds), t: t || null }); }
       }
       const x = q.x, o = O[x.con] || {}, con = String(x.con || '');
       const cut = con.lastIndexOf('-'), cn = cut > 0 ? con.slice(0, cut) : con || '-', sq = cut > 0 ? con.slice(cut + 1) : '-';
@@ -66,7 +69,7 @@
     });
     return out;
   }
-  const cellsOf = (r, n) => (r.k === 's' ? null : [n, r.con || r.cn, r.con ? '-' : r.sq, fx(r.thk, 2), n0(r.wdt), fx(r.t, 1), (r.len ? n0(r.len) : r.t && r.thk && r.wdt ? '약 ' + n0(r.t * 1e6 / (r.thk * r.wdt * 7.85)) : '-'), String(r.grp || '-').replace(/(판매)?그룹$/, ''), r.man || '-', r.dst || '-', r.top || '-', r.back || '-', n0(r.ls), fx(r.tph, 1), tm(r.s), tm(r.e)]);
+  const cellsOf = (r, n) => (r.k === 's' ? null : [n, r.con || r.cn, r.con ? '-' : r.sq, fx(r.thk, 2), n0(r.wdt), fx(r.t, 1), (r.len ? n0(r.len) : r.t && r.thk && r.wdt ? '약 ' + n0(r.t * 1e6 / (r.thk * r.wdt * 7.85)) : '-'), gnm(r.grp), r.man || '-', r.dst || '-', r.top || '-', r.back || '-', n0(r.ls), fx(r.tph, 1), tm(r.s), tm(r.e)]);
 
   function draw() {
     const D = V.D, Ls = C.LINES[plant];
@@ -74,7 +77,7 @@
     $('sv-st').className = 'sv-st ' + (cf ? 'cf' : 'dr');
     $('sv-st').textContent = cf ? `확정 ${tm(Math.round(Date.parse(cf.at) / 6e4) + 540)}` : '초안(확정 전)';
     $('sv-st').title = cf ? `${cf.who} 확정(v${cf.v})` : '03 생산 편성 · 작업 순서에서 아직 확정하지 않음 — 지금 초안 순서';
-    $('sv-wk').textContent = `${dnm(D.w0.slice(0, 10))} 07시 ~ ${dnm(D.w1.slice(0, 10))} 07시 · 자료 ${mmdd(D.now.slice(0, 10))} ${D.now.slice(11, 16)}`;
+    $('sv-wk').innerHTML = `<b class="dt">${dnm(D.w0.slice(0, 10))} 07시 ~ ${dnm(D.w1.slice(0, 10))} 07시</b> · 자료 ${mmdd(D.now.slice(0, 10))} ${D.now.slice(11, 16)}`;
     $('sv-plant').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.p === plant)));
     const R = {}; Ls.forEach((l) => { R[l] = rowsOf(l); });
     if (!line || !Ls.includes(line)) line = Ls.find((l) => R[l].some((r) => r.k === 'j')) || Ls[0];
@@ -91,7 +94,7 @@
     let h = `<colgroup>${CW.map((w) => (w ? `<col style="width:${w}px">` : '<col>')).join('')}</colgroup><thead><tr>${vis(COLS).map((c) => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody>`, n = 0, cw = null, cd = null, z = 0;
     rs.forEach((r) => {
       const w = wkOf(r.d);
-      if (w !== cw) { cw = w; const [k, t] = sum(rs.filter((x) => wkOf(x.d) === w)); h += `<tr class="wh"><td colspan="${NC}"><div class="stk">${wkNm(w)} ${mmdd(w).replace(/^0/, '')}~${mmdd([addD(w, 6), rs[rs.length - 1].d].sort()[0]).replace(/^0/, '')}<span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
+      if (w !== cw) { cw = w; const [k, t] = sum(rs.filter((x) => wkOf(x.d) === w)); h += `<tr class="wh"><td colspan="${NC}"><div class="stk">${wkNm(w)} ${mmdd(w).replace(/^0/, '')}~${mmdd(addD(w, 6)).replace(/^0/, '')}<span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
       if (r.d !== cd) { cd = r.d; z = 0; const [k, t] = sum(rs.filter((x) => x.d === r.d)); const we = /[토일]/.test(dnm(r.d)); h += `<tr class="dh"><td colspan="${NC}"><div class="stk"><b${we ? ' class="we"' : ''}>${dnm(r.d)}</b><span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
       if (r.k === 's') { h += `<tr class="stp ${r.yel ? 'y' : 'n'}"><td colspan="${NC - 3}"><div class="stk">${esc(r.lab)}</div></td><td>${tm(r.s)}</td><td>${tm(r.e)}</td><td></td></tr>`; return; }
       n++; z++;
@@ -110,12 +113,12 @@
     const XL = await needXls(), wb = new XL.Workbook();
     C.LINES[plant].forEach((l) => {
       const ws = wb.addWorksheet(l), rs = rowsOf(l); let n = 0;
-      ws.addRow(COLS);
+      ws.addRow(XCOLS);
       rs.forEach((r) => {
         if (r.k === 's') { const x = ws.addRow(['', r.lab, '', '', '', '', '', '', '', '', '', '', '', '', tm(r.s), tm(r.e), '']); x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: r.yel ? 'FFFFFF00' : 'FF1F3864' } }; x.font = { bold: true, color: { argb: r.yel ? 'FF1F3864' : 'FFFFFFFF' } }; return; }
         n++;
         const num = (v, k) => (v == null || isNaN(v) || !(+v > 0) ? '-' : +(+v).toFixed(k));
-        const x = ws.addRow([n, r.con || r.cn, r.con ? '-' : r.sq, num(r.thk, 2), num(r.wdt, 0), num(r.t, 1), num(r.len, 0), r.grp || '-', r.man || '-', r.dst || '-', r.top || '-', r.back || '-', num(r.ls, 0), num(r.tph, 1), tm(r.s), tm(r.e), r.k === 'd' ? '-' : r.stt[1]]);
+        const x = ws.addRow([n, r.con || r.cn, r.con ? '-' : r.sq, num(r.thk, 2), num(r.wdt, 0), num(r.t, 1), num(r.len, 0), gnm(r.grp), r.man || '-', r.dst || '-', r.top || '-', r.back || '-', num(r.ls, 0), num(r.tph, 1), tm(r.s), tm(r.e), r.k === 'd' ? '-' : r.stt[1]]);
         if (r.k === 'd') { x.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFECECEC' } }; x.font = { color: { argb: 'FFC00000' }, bold: true }; }
       });
       ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } }; ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1F3864' } };

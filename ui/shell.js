@@ -178,7 +178,7 @@
     const title = d.titleAuto != null && cur ? cur[2] : (d.title || document.title);   // data-title-auto: 하위 화면(#)마다 제목 = 메뉴 이름
     const crumb = V2 && curM && MV2.includes(curM) ? `${String(MV2.indexOf(curM) + 1).padStart(2, '0')} ${curM[1]}` : V2 && (curM || inAdm) ? `${ETC} · ${curM ? curM[1] : ADMN}`
       : curM ? `${String(MENU.indexOf(curM) + 1).padStart(2, '0')} ${curM[1]}` : inAdm ? `${String(MENU.length + 1).padStart(2, '0')} ${ADMN}` : d.crumb;
-    const TH = { auto: '자동', light: '밝게', dark: '어둡게' };
+    const TH = { auto: '화면: 자동', light: '화면: 밝게', dark: '화면: 어둡게' };
     h.className = 'shell-top';
     h.innerHTML = `<div class="topbar noprint"><button type="button" class="hamb" aria-label="메뉴 열기" aria-expanded="false"><i></i><i></i><i></i></button><a class="brand" href="${HOME}">${MARK}<span class="bt"><b>POSCO STEELEON</b><small>도금·컬러 가동계획</small></span></a><a class="fresh" id="ui-fresh-m" href="health.html" hidden></a></div>
       <aside class="side" aria-label="메뉴">
@@ -224,7 +224,7 @@
   }
 
   /* 기준일 하나(11/8 사용자 '날짜를 최신으로 통일'): 모든 화면의 '기준일·오늘' = 마지막 자료를 받은 시각(status.json runAt)이 속한 생산일(07시~).
-     실적은 그 전날까지(하루가 끝난 날만) — 표시는 '실적 ~11/4 · 자료 11/5 16:50'. 브라우저 시계·화면 계산 시각(built)은 기준일로 쓰지 않음.
+     실적은 그 전날까지(하루가 끝난 날만) — 표시는 '실적 11/4까지 · 자료 11/5 16:50'. 브라우저 시계·화면 계산 시각(built)은 기준일로 쓰지 않음.
      UI.today(fb) = 기준일(status 를 못 받으면 fb → 그래도 없으면 시계 생산일) · UI.basis() = {day, at, act, txt} · UI.statusP = status 받기(화면 그리기 전에 기다림) */
   const kstIso = (t) => { const v = Date.parse(t); return isNaN(v) ? null : new Date(v + 9 * 36e5).toISOString(); };
   const clockDay = () => new Date(Date.now() + 2 * 36e5).toISOString().slice(0, 10);   // 한국 시각 − 7시간
@@ -233,7 +233,7 @@
     const S = UI.status; const k = S && S.runAt && kstIso(S.runAt); if (!k) return null;
     const day = new Date(Date.parse(k) - 7 * 36e5).toISOString().slice(0, 10), f = (S.feeds || []).find((x) => x.name === '도금 생산 실적(코일)');
     const act = f && f.last && f.last < day ? f.last : (() => { const d = new Date(day + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); })();
-    return { day, at: `${mdS(k)} ${k.slice(11, 16)}`, act, txt: `실적 ~${mdS(act)} · 자료 ${mdS(k)} ${k.slice(11, 16)}` };
+    return { day, at: `${mdS(k)} ${k.slice(11, 16)}`, act, txt: `실적 <b style="font-weight:800;color:#fff">${mdS(act)}</b>까지 · 자료 ${mdS(k)} ${k.slice(11, 16)}` };   // 기준일 굵게(배지는 어두운 메뉴 바탕이라 흰색)
   };
   UI.today = (fb) => (UI.basis() || {}).day || (fb ? String(fb).slice(0, 10) : clockDay());
   UI.statusP = (async () => {
@@ -328,12 +328,12 @@
     const age = Math.round((Date.parse(clockDay()) - Date.parse(B.day)) / 864e5);   // 기준일이 오늘 생산일보다 며칠 전인가
     const el = document.getElementById('ui-fresh');
     el.hidden = false; el.className = 'fresh ' + (age <= 1 ? 'ok' : age <= 2 ? 'warn' : 'bad');
-    el.title = `기준일 ${B.day} · 도금 실적 ~${B.act} · 자료 받은 시각 ${B.at}`;
-    el.innerHTML = `<i></i>${B.txt}`;
+    el.title = `기준일 ${B.day} · 도금 실적 ${B.act}까지 · 자료 받은 시각 ${B.at}`;
+    el.innerHTML = `<i></i><span>${B.txt}</span>`;   // 배지가 flex 라 글자를 한 칸으로 묶음(굵은 날짜가 따로 떨어지지 않게)
     const m = document.getElementById('ui-fresh-m'); if (m) { m.hidden = false; m.className = el.className; m.title = el.title; m.innerHTML = el.innerHTML; }
     if (age >= 2 && h.dataset.page !== 'health' && !document.getElementById('ui-stale')) {
       const b = document.createElement('div'); b.id = 'ui-stale'; b.className = 'wrap stale-band';
-      b.innerHTML = `<div>⚠ <b>자료가 ${age}일 전(${mdS(B.day)} ${B.at.slice(-5)})에서 멈춰 있습니다.</b> 모든 화면은 기준일 ${mdS(B.day)}(실적 ~${mdS(B.act)}) 기준입니다 — 사내 PC 자동 실행 확인 필요. <a href="health.html">자료 상태 보기 →</a></div>`;
+      b.innerHTML = `<div>⚠ <b>자료가 ${age}일 전(${mdS(B.day)} ${B.at.slice(-5)})에서 멈춰 있습니다.</b> 모든 화면은 기준일 <b>${mdS(B.day)}</b>(실적 <b>${mdS(B.act)}</b>까지) 기준입니다. <a href="health.html">자료 상태 보기 →</a></div>`;
       h.after(b);
     }
   }
@@ -345,7 +345,7 @@
     integrated: '기준 계획 기준 주별 제품·자가재 재고 추이와 일별 배치 기준. 날짜별 가동은 월간 가동에서',
     status: '도금 1·2CGL 게시 계획(매일 재계획)의 월별 간트·강종 전환·부서별 물량',
     rolling: '판매계획·자가재계획 엑셀로 도금 계획을 새로 계산하거나 실적으로 재계획하고 게시(담당자용). 정기수리를 추가하면 정지 시나리오도 볼 수 있음',
-    analysis: '(계획 담당자용) MES 실적으로 도금 속도·M/C 손실·정지, 컬러 라인·품명 t/hr 를 다시 계산해 계획 조건과 비교',
+    analysis: '(계획 담당자용) MES 실적으로 도금 속도·M/C 손실·정지, 컬러 라인·품명 t/시간을 다시 계산해 계획 조건과 비교',
     plancalc: '지금 게시 계획이 어떤 숫자로 계산됐는지 — 그룹 월 계획(판매 + 목표 − 기초), 남은 주문, M/C·정기수리, 결품·지연',
     plan7: '이번 주 라인별 편성·부하 → 생산 캘린더(도금·컬러). 라인 부하·계획 변경은 세부 탭',
     weekseq: '라인별 주간 작업 순서 편집·점검·확정, 작업지시 제안 보기',
@@ -477,13 +477,13 @@
       const O = pe ? await GP.decryptJSON(pe, pw) : null; if (!O) return;
       const MO = me ? await GP.decryptJSON(me, pw).catch(() => null) : null;
       const b = document.createElement('div'); b.id = 'ui-ctl'; b.className = 'wrap ctl-strip';
-      /* 11/10: 홈 밖 화면은 한 줄 요약('관제 · 조치 n · 주의 n')만 — 누르면 판매그룹별 값이 펼쳐짐(펼친 상태는 이 탭에서만 기억) */
+      /* 11/10: 홈 밖 화면은 한 줄 요약('조치 필요 n건 · 주의 n건')만 — 누르면 판매그룹별 값이 펼쳐짐(펼친 상태는 이 탭에서만 기억) */
       let op = false; try { op = sessionStorage.getItem('cgl-ctl-open') === '1'; } catch (e) { /* 무시 */ }
       const draw = () => {   // 전체·도금·컬러 바꾸면 그 공정 판매그룹만 다시(11/5 사용자 '도금 선택해도 컬러가 나온다')
         const R = UI.ctlRows(O, MO) || [], html = R.length ? UI.ctlStrip(O, MO) : ''; b.hidden = !html; if (!html) { b.innerHTML = ''; return; }
         const n = (t) => R.filter((r) => r.w === t).length, nb = n('bad'), nw = n('warn');
         b.classList.toggle('open', op);
-        b.innerHTML = `<button type="button" class="cs-sum" aria-expanded="${op}" aria-controls="ui-ctl-all"><b>관제</b>${nb ? `<span class="cs-n bad"><i class="cdot bad"></i>조치 ${nb}</span>` : ''}${nw ? `<span class="cs-n warn"><i class="cdot warn"></i>주의 ${nw}</span>` : ''}${!nb && !nw ? '<span class="cs-n ok"><i class="cdot ok"></i>정상</span>' : ''}<svg class="cs-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="cs-all" id="ui-ctl-all"${op ? '' : ' hidden'}>${html}</div>`;
+        b.innerHTML = `<button type="button" class="cs-sum" aria-expanded="${op}" aria-controls="ui-ctl-all">${nb ? `<span class="cs-n bad"><i class="cdot bad"></i>조치 필요 ${nb}건</span>` : ''}${nw ? `<span class="cs-n warn"><i class="cdot warn"></i>주의 ${nw}건</span>` : ''}${!nb && !nw ? '<b>관제</b><span class="cs-n ok"><i class="cdot ok"></i>정상</span>' : ''}<svg class="cs-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="cs-all" id="ui-ctl-all"${op ? '' : ' hidden'}>${html}</div>`;
         b.querySelector('.cs-sum').onclick = () => { op = !op; try { sessionStorage.setItem('cgl-ctl-open', op ? '1' : '0'); } catch (e) { /* 무시 */ } draw(); };
       };
       draw(); (document.getElementById('ui-stale') || h).after(b);
@@ -527,7 +527,7 @@
   }); };
   addEventListener('scroll', () => { if (stkJs.size && !stkRaf) stkRaf = requestAnimationFrame(stkMove); }, { passive: true });
   function stickyHeads() {
-    const tb = document.querySelector('.topbar'); stkTop = tb && getComputedStyle(tb).position === 'sticky' ? tb.offsetHeight : 0;
+    const tb = document.querySelector('.topbar'); stkTop = tb && getComputedStyle(tb).position === 'sticky' && tb.parentElement.offsetHeight > innerHeight ? tb.offsetHeight : 0;   // 11/17: 위 막대의 부모(header#shell)가 짧으면 막대는 스크롤과 함께 사라짐 → 머리글을 58px 내려 붙이면 빈 띠가 생기고 첫 줄을 가림(390)
     document.querySelectorAll('main table').forEach((t) => {
       if (!t.tHead || !t.tHead.rows.length || !t.offsetParent || t.closest('.ch, .ln-c, .ct-panel, dialog, [data-nostick]')) return;
       const long = t.offsetHeight > innerHeight * (V2 ? 0.45 : 0.9);

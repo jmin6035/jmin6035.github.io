@@ -9,6 +9,7 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const n0 = (v) => UI.fmtN(v), n1 = (v) => UI.fmtN(v, 1);
   const cache = {};
+  const wd_ = (t) => String(t == null ? '' : t).replace('새 발주로 맞출 수 있는 최소 일수', '발주 후 투입까지 최소 일수').replace(/새 발주로 맞춤/g, '발주로 맞춤').replace('동종 AZ와 같게 봄(표에 없음)', '동종AZ와 같음');   // 화면 문구(용어 기준 11/17)
   const MatRef = window.MatRef = {};
   const css = document.createElement('style');   // 첨부 표 서식 — 이 파일을 쓰는 화면(소재 관제·발주·재고 전망·계획재)만
   css.textContent = `.ref-h { font-size: 15px; margin: 14px 0 6px; } .ref-h small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 6px; }
@@ -27,11 +28,11 @@
   MatRef.ltHtml = (L) => {
     if (!L || !L.types) return UI.empty('리드타임 자료 없음', '다음 자동 게시 뒤');
     const T = L.types.slice().sort((a, b) => a[1] - b[1]);
-    return `<h3 class="ref-h">소재 유형별 리드타임 <small>발주 → 입고 · ${esc(UI.fmtDate((L.src && L.src.at) || L.built))} 기준 · <a href="leadtime.html">고치기 →</a></small></h3>
+    return `<h3 class="ref-h">소재 유형별 리드타임 <small>발주 → 입고 · ${esc(UI.fmtDate((L.src && L.src.at) || L.built))} 기준 · 수정은 <a href="leadtime.html">리드타임 화면</a></small></h3>
       <div class="scroll"><table class="t ref-t"><thead><tr><th class="l">소재 유형</th><th>리드타임(일)</th><th class="l">발주 방식</th></tr></thead><tbody>
-      ${T.map((t) => `<tr><td class="l"><b>${esc(t[0])}</b></td><td>${n0(t[1])}</td><td class="l">${esc(t[2])}</td></tr>`).join('')}</tbody></table></div>
+      ${T.map((t) => `<tr><td class="l"><b>${esc(t[0])}</b></td><td>${n0(t[1])}</td><td class="l">${esc(wd_(t[2]))}</td></tr>`).join('')}</tbody></table></div>
       ${(L.fixed || []).length ? `<h3 class="ref-h">입고 뒤 계획이 쓰는 일수</h3><div class="scroll"><table class="t ref-t"><thead><tr><th class="l">항목</th><th>일수</th><th class="l">뜻</th></tr></thead><tbody>
-      ${L.fixed.map((f) => `<tr><td class="l"><b>${esc(f[1])}</b></td><td>${n0(f[2])}</td><td class="l">${esc(f[3])}</td></tr>`).join('')}
+      ${L.fixed.map((f) => `<tr><td class="l"><b>${esc(wd_(f[1]))}</b></td><td>${n0(f[2])}</td><td class="l">${esc(wd_(f[3]))}</td></tr>`).join('')}
       ${L.release ? `<tr><td class="l"><b>도금 선생산 허용</b></td><td>${esc(String(L.release).split(' · ')[0].replace(/[^0-9]/g, '') || '-')}</td><td class="l">${esc(L.release)}</td></tr>` : ''}</tbody></table></div>` : ''}`;
   };
 
@@ -56,7 +57,7 @@
     const L = ((PT && PT.sr && PT.sr.stock) || []).filter((s) => re.test(s.name) && s.target && UI.inScope(/^도금/.test(s.name) ? 'G' : 'C'));
     if (!L.length) return '';
     return L.map((s) => { const r = s.current / s.target, tone = r > 1 ? 'bad' : r < 0.9 ? 'warn' : 'ok';
-      return `<span class="ref-c ${tone}" title="판매생산속보 창고 재고 ${esc(UI.fmtDateTime(PT.sr.asOf))} · 상한 = '27 판생그룹 월말 최대(02 현황 소재는 MES 코드별)"><b>${esc(s.name)}</b> 판생 ${UI.fmtT(s.current)} <span>상한 ${UI.fmtT(s.target)}의</span> <em>${Math.round(r * 100)}%</em>${r > 1 ? ` <span>초과 ${UI.fmtT(s.current - s.target)}</span>` : r < 0.9 ? ` <span>여유 ${UI.fmtT(s.target - s.current)}</span>` : ''}</span>`; }).join('');
+      return `<span class="ref-c ${tone}" title="판매생산속보 창고 재고 ${esc(UI.fmtDateTime(PT.sr.asOf))} · 상한 = '27 판생그룹 월말 최대(02 현황 소재는 MES 코드별)"><b>${esc(s.name)}</b> 판생 ${UI.fmtT(s.current)} <span>· 재고 상한 ${UI.fmtT(s.target)} 대비</span> <em>${Math.round(r * 100)}%</em>${r > 1 ? ` <span>· 초과 ${UI.fmtT(s.current - s.target)}</span>` : r < 0.9 ? ` <span>· 여유 ${UI.fmtT(s.target - s.current)}</span>` : ''}</span>`; }).join('');
   };
 
   const F = { lt: ['leadtime.enc.json', MatRef.ltHtml], spec: ['planstock.enc.json', MatRef.specHtml],

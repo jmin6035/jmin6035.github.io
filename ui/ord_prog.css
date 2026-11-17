@@ -1,4 +1,5 @@
 /* 주문진도 요약 카드(도금·컬러 전체 주문진도) — ct_orders.html 과 편성(pyeonseong.html) 맨 위가 같이 씀(11/12) */
+.dt { font-weight: 800; color: var(--brand-2, #1f5fae); } .pch span b.dt { font-size: inherit; }   /* 11/17 용어 기준: 날짜 = 굵은 진한 파랑 */
 .ps { margin: 0 0 16px; } .ps-seg { margin: 0 0 12px; }
 .pbar { display: flex; gap: 2px; margin: 2px 0 4px; } .pbar .ps { flex: 1; height: 14px; border-radius: 3px; margin: 0; } .pbar.ph { margin: 3px 0 0; } .pbar.ph span { flex: 1; text-align: center; font-size: 13.5px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
 .pbar .ps.done { background: #6f8fb0; } .pbar .ps.cur { background: #e8890c; } .pbar .ps.todo { background: var(--grid, #e6e9ee); } .pbar .ps.in { background: #2e7d32; } .pn { font-size: 13.5px; font-weight: 700; color: #9a5105; }
@@ -56,3 +57,8 @@ table.pl-t td.mu2 { min-width: 0; }
 .ps-et table { width: 100%; } .ps-et table td, .ps-et table th { font-size: 14.5px; padding: 6px 10px; text-align: center; }
 .ps-et table td.tl { white-space: normal !important; min-width: 140px; max-width: 330px; } .ps-et table td .bad { color: var(--bad, #c0392b); font-weight: 700; }
 .pt .v { white-space: nowrap; } .pts.p7 .pt .v { font-size: clamp(19px, 1.6vw, 30px); } .pts.p7 .pt { padding-left: 8px; padding-right: 8px; } @media (min-width: 1200px) { .pts.p7 { grid-template-columns: repeat(7, minmax(0, 1fr)); } } @media (max-width: 1199px) { .pts.p7 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 700px) {   /* 390: 라인별 작업가능일·비중 표가 칸에 맞게(고정 폭이면 '소재 입고 완료(작업 대기)'·'9.4일 225시간'이 옆 칸으로 넘침) */
+  .lg2 .lg2r table.pos-t { table-layout: auto; min-width: 340px; }
+  .lg2 .lg2r table.pos-t :is(th, td) { padding-left: 6px !important; padding-right: 6px !important; }
+  .lg2 .lg2r table.pos-t :is(th, td):first-child { width: auto; white-space: normal; word-break: keep-all; }
+}

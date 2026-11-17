@@ -174,7 +174,7 @@ html:root body main table.gk.tcal td.v { cursor: pointer; font-weight: 700; }
 html:root body main table.gk.tcal tr.m-ord td.v, html:root body main table.gk.tcal th.c1.m-ord { color: #b45f06 !important; }
 html:root body main table.gk.tcal tr.m-inb td.v, html:root body main table.gk.tcal th.c1.m-inb { color: #1e7b3a !important; }
 html:root body main table.gk.tcal tr.m-use td.v { color: #000 !important; font-weight: 400; }
-html:root body main table.gk.tcal td.v.late { color: #c00000 !important; font-weight: 800; }
+html:root body main table.gk.tcal tr td.v.late { color: #c00000 !important; font-weight: 800; }   /* tr 포함 — 'tr.m-ord td.v' 주황보다 앞서게(11/17 빨강이 안 보이던 것)
 html:root body main table.gk.tcal td.v.nw { box-shadow: inset 0 0 0 2px #1e7b3a; }
 .gk-lg i.o-ord, .gk-lg i.o-late, .gk-lg i.o-inb, .gk-lg i.o-nw, .gk-lg i.o-use { width: 14px; height: 14px; border-radius: 50%; box-shadow: none; }
 .gk-lg i.o-ord { background: #b45f06; } .gk-lg i.o-late { background: #c00000; } .gk-lg i.o-inb { background: #1e7b3a; } .gk-lg i.o-use { background: #000; } .gk-lg i.o-nw { background: #fff; border-radius: 3px; box-shadow: inset 0 0 0 2px #1e7b3a; }
@@ -183,6 +183,7 @@ html:root body main table.gk.sc2 td.lo { color: #b45f06 !important; font-weight:
 html:root body main table.gk.sc2 td.inb2 { color: #1e7b3a !important; font-weight: 800; letter-spacing: -0.6px; } html:root body main table.gk.sc2 td.inb2::before { content: '▲'; font-size: 8px; margin-right: 0; }
 html:root body main table.gk.sc2 td.dl { box-shadow: inset 0 0 0 2px #c00000; } html:root body main table.gk.sc2 td.est { font-style: italic; } html:root body main table.gk.sc2 td.nd { color: #808080 !important; }
 html:root body main table.gk.sc2 tr.sec > th, html:root body main table.gk.tcal tr.sec > th { text-align: center !important; }
+b.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 11/17 용어 기준: 날짜 = 굵은 진한 파랑 */
 </style>
 <style>
 .oj-sum{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 12px}.oj-b{flex:1;min-width:150px;border-radius:10px;padding:10px 12px;border:1px solid var(--line,#ddd)}
@@ -195,7 +196,7 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
 .oj-mx tr.oj-gst td{background:var(--surface-2,#f7f8fa);font-size:13.5px;border-bottom:2px solid var(--line,#ccc)}.oj-mx tr.oj-gst .oj-dot{padding:1px 8px}.oj-mx tr.oj-gst .oj-gn{font-size:13.5px;font-weight:700;margin-top:2px}
 .oj-mx td.oj-sup{font-size:13.5px;color:var(--ink-2,#555);white-space:normal;word-break:keep-all;min-width:120px}
 .oj-h{margin:16px 0 6px;font-size:16px}.oj-det{margin-top:14px}.oj-det summary{cursor:pointer;font-weight:700}
-.oj-t.oj-mx{table-layout:auto}.oj-t.oj-mx th{word-break:keep-all;vertical-align:bottom}.oj-t.oj-mx td.nw .oj-nx,.oj-t.oj-mx td.nw .oj-now{white-space:nowrap}
+.oj-t.oj-st{table-layout:auto}.oj-t.oj-mx{table-layout:auto}.oj-t.oj-mx th{word-break:keep-all;vertical-align:bottom}.oj-t.oj-mx td.nw .oj-nx,.oj-t.oj-mx td.nw .oj-now{white-space:nowrap}
 .oj-nx{font-size:13.5px;color:var(--ink-2,#555);font-weight:600}.oj-now{display:inline-block;margin-top:2px;font-size:13.5px;font-weight:800;color:#fff;background:var(--bad,#c92a2a);border-radius:999px;padding:0 8px}.oj-def{display:inline-block;font-size:13.5px;font-weight:700;color:var(--warn,#b35c00);background:var(--warn-bg,#fff3e0);border-radius:6px;padding:0 5px}
 .oj-t{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}.oj-t th{background:var(--surface-2,#f4f6f8);font-weight:600;color:var(--ink-2,#555)}.oj-t th,.oj-t td{border-bottom:1px solid var(--grid,#e8ebef);text-align:center}.oj-t td.r,.oj-t th.r{text-align:right}.oj-t caption{text-align:left;padding:4px 2px}.oj-t td,.oj-t th{padding:5px 8px;vertical-align:middle}.nw{white-space:nowrap}.neg{color: var(--bad)}
 </style>
@@ -244,14 +245,14 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
     </details>
   </div>
 </main>
-<footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<footer class="foot"><div class="wrap"><span></span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
 <script src="ui/shell.js?v=2611141500"></script>
 <script src="engine/crypto.js?v=2611120206"></script>
 <script src="ui/cal.js?v=2611120206"></script>
 <script src="ui/proccalc.js?v=2611120206"></script>
 <script src="ui/optable.js?v=2611141900"></script>
-<script src="supply.js?v=2611141900"></script>
+<script src="supply.js?v=2611172300"></script>
 <script src="ui/ct.js?v=2611120206"></script>
 <script src="ct_mat.js?v=2611120206"></script>
 <script src="matref.js?v=2611132301"></script>

@@ -5,7 +5,7 @@
   const $ = (id) => document.getElementById(id), MAIN = 'mt-orders';
   if (!$(MAIN)) return;
   // 소재 관제 판매그룹 → 주문 판매그룹(CT.grpName). 도금 '자가재' = 컬러 부서 계약의 도금 주문
-  const GMAP = { 도금수출: ['도금수출'], 도금국내: ['도금국내'], 자동차: ['자동차강판'], 자가재: ['자가재(컬러수출)', '자가재(컬러건재)', '자가재(수요개발)'],
+  const GMAP = { 도금수출: ['도금수출'], 도금국내: ['도금국내'], 자동차: ['자동차', '자동차강판'], 자가재: ['자가재(컬러수출)', '자가재(컬러건재)', '자가재(수요개발)'],
     '컬러수출(건재)': ['컬러수출'], '컬러수출(가전)': ['컬러수출'], 가전내수: ['컬러수출'], '컬러건재 주문재': ['컬러건재'], '컬러건재 계획재': ['컬러건재'], 수요개발: ['수요개발'] };
   let showAll = false;
 
@@ -34,7 +34,7 @@
     // 11/11 개편: 소재 관제 안의 카드 — 상태·마감·부족 톤은 위 소재 표(같은 값)에 있으므로 여기는 '어느 주문이 걸리나 · 누가 조치'만
     const L = (showAll ? mats : sh).slice().sort((a, b) => (b.sure - a.sure) || (b.conf.length - a.conf.length) || ((a.deadline || '9') < (b.deadline || '9') ? -1 : 1));
     const tr = (m, i) => {
-      const st = m.pos ? '<span class="ct-b ok" title="AL-STS 임가공 — 포스코가 소재 지급, 우리 발주 아님">포스코 지급</span>' : { late: '<span class="ct-b bad">마감 지남</span>', soon: '<span class="ct-b warn">2주 안 발주</span>', plan: '<span class="ct-b warn">발주 예정</span>' }[m.st] || '<span class="ct-b ok">충당</span>';   // 11/9: 상태 = 공통 기준
+      const st = m.pos ? '<span class="ct-b ok" title="AL-STS 임가공 — 포스코가 소재 지급, 우리 발주 아님">포스코 지급</span>' : { late: '<span class="ct-b bad">발주 지연</span>', soon: '<span class="ct-b warn">2주 안 발주</span>', plan: '<span class="ct-b warn">발주 예정</span>' }[m.st] || '<span class="ct-b ok">충당</span>';   // 11/9: 상태 = 공통 기준
       return `<tr class="ck" data-i="${i}"><td class="id">${esc(m.name)} <span class="sub-i">${m.plant === 'G' ? '도금' : '컬러'}</span></td><td>${st}</td>`
         + `<td class="r">${m.short > 0.5 ? `<b class="${m.conf.length ? 'ct-neg' : ''}">${n0(m.conf.length)}</b>` : '-'}</td><td class="r">${m.short > 0.5 ? n0(m.est.length) : '-'}</td><td class="r">${m.oT >= 0.5 ? n0(m.oT) : '-'}</td>`
         + `<td>${m.short > 0.5 ? esc(CT.DEPT.mat) : '-'}</td><td>${m.short > 0.5 ? '<span class="ct-b na">미조치</span>' : '-'}</td></tr>`;
@@ -52,7 +52,7 @@
     const kv = (k, v) => `<div class="ct-kv"><span>${k}</span><b>${v}</b></div>`;
     const ol = (os, off) => os.slice(0, 200).map((o, i) => `<tr class="ck" data-i="${off + i}"><td>${CT.badge(o)}</td><td class="id">${esc(o.id)}<small>${esc(o.grp)} · 생산 필요 ${md(o.needProd)}${o.pl === 'G' ? ` · 소재 ${esc(o.matSt)}` : ''}</small></td><td class="r">${n1(o.remT)}t</td></tr>`).join('');
     const cs = m.conf.slice().sort(CT.riskSort), es = m.est.slice().sort(CT.riskSort), all = cs.concat(es);
-    const html = kv('상태', m.sure ? `<span class="ct-neg">마감 지남 ${n0(m.lateT)}t</span>` : m.short > 0.5 ? '부족 예상' : '충당')   // 11/9: 공통 기준
+    const html = kv('상태', m.sure ? `<span class="ct-neg">발주 지연 ${n0(m.lateT)}t</span>` : m.short > 0.5 ? '부족 예상' : '충분')   // 11/9: 공통 기준
       + kv('3달 필요', `${n0(m.need)}t`) + kv('재고', `${n0(m.stock)}t`) + kv('입고 예정', `${n0(m.arr)}t`) + kv('3달 발주 필요', m.short ? `${n0(m.short)}t` : '-')
       + kv('부족 시작', m.first ? md(m.first) : '-') + kv('발주 마감', m.deadline ? `${md(m.deadline)}${m.sure ? ' 지남' : ''}` : '-') + (m.sure && m.next ? kv('다음 발주일', md(m.next)) : '') + kv('발주 규칙', esc(m.rule || '-')) + kv('공급사', esc((m.sup || []).filter(Boolean).join(' · ') || '-')) + kv('리드타임', `${m.lt}일${m.ltDef ? '(업체 기준정보 없음 — 기본)' : ''} + 투입 여유 ${m.safe || '-'}일`)
       + (m.gs.length ? `<h4>사용 판매그룹(3달)</h4>${m.gs.map((x) => kv(esc(x.group), `${n0(x.use)}t`)).join('')}` : '')

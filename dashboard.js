@@ -70,7 +70,7 @@
     const P = R.P, H = A.H, L = P.lines;
     $('d-empty').hidden = true; $('d-body').hidden = false;
     $('d-title').textContent = `'${String(H.ym[0][0]).slice(2)}.${H.ym.map(([, m]) => m).join('·')}월 도금 CGL 가동계획`;
-    $('d-meta').textContent = [meta.asOf && `판매계획 기준 ${meta.asOf}`, meta.savedAt && `계산 ${UI.fmtDateTime(new Date(meta.savedAt))}`, meta.auto && `자동 갱신 ${UI.fmtDateTime(new Date(meta.auto.runAt))}${meta.auto.actualTo ? ` (실적 ~${GP.md(meta.auto.actualTo)})` : ''}`, `계획 기간 ${UI.fmtDate(H.D0)}~${UI.fmtDate(H.D1)}`].filter(Boolean).join(' · ');
+    $('d-meta').textContent = [meta.asOf && `판매계획 기준 ${meta.asOf}`, meta.savedAt && `계산 ${UI.fmtDateTime(new Date(meta.savedAt))}`, meta.auto && `자동 갱신 ${UI.fmtDateTime(new Date(meta.auto.runAt))}${meta.auto.actualTo ? ` (실적 ${GP.md(meta.auto.actualTo)}까지)` : ''}`, `계획 기간 ${UI.fmtDate(H.D0)}~${UI.fmtDate(H.D1)}`].filter(Boolean).join(' · ');
     renderNow(); renderReplan();
     const fams = [...new Set(L.flatMap((l) => P.lineFamilies[l]))];
     const leg = fams.map((f) => `<span><i class="sw" style="background:${famVar(f)}"></i>${f}</span>`).join('') + '<span><i class="sw" style="background:var(--mc)"></i>M/C·재가동</span><span><i class="sw" style="background:var(--down)"></i>설비정지·실적 미달</span><span><i class="sw" style="background:var(--sd)"></i>정기수리</span>';
@@ -132,7 +132,7 @@
         leg = `<span><i style="background:var(--brand-2)"></i>계획 생산 ${hh(used)}h</span><span><i style="background:var(--grid)"></i>여유 ${hh(Math.max(0, cap - used))}h</span><span><i style="background:var(--mc)"></i>${c.event ? esc(c.event.split(' · ')[0]) + '·' : ''}더미·설비 정지 공제 ${hh(Math.max(0, 1440 - cap))}h</span>`;
       }
       const pr = monthPlan ? Math.min(1, toDate / monthPlan) : 0;
-      const chips = [cp ? `<span class="tag">캠페인 ${cp.fam} ${GP.md(cp.start)}~${GP.md(cp.end)} (${GP.diffDays(d, cp.start) + 1}/${GP.diffDays(cp.end, cp.start) + 1}일)</span>` : '',
+      const chips = [cp ? `<span class="tag">연속 생산 ${cp.fam} ${GP.md(cp.start)}~${GP.md(cp.end)} (${GP.diffDays(d, cp.start) + 1}/${GP.diffDays(cp.end, cp.start) + 1}일)</span>` : '',
         next ? `<span class="tag ${GP.diffDays(next.date, d) <= 7 ? 'warn' : ''}">${next.kind === 'M/C' ? `M/C ${next.from}→${next.to}` : `재가동 ${next.from === next.to ? next.to + ' 유지' : next.from + '→' + next.to}`} ${GP.md(next.date)} · D-${GP.diffDays(next.date, d)}</span>` : '<span class="tag">분기 내 전환 없음</span>',
         sdNext ? `<span class="tag">정기수리 ${GP.md(sdNext.start)}~${GP.md(sdNext.end)} · D-${GP.diffDays(sdNext.start, d)}</span>` : ''].filter(Boolean).join('');
       return `<div class="ln-card${off ? ' off' : ''}"><div class="ln-h"><b>${l} ${c.blackout ? '' : `<small style="font-size:14px;color:var(--ink-3)">${c.fam}</small>`}</b><span class="tag ${st[1]}">${st[0]}</span></div>
@@ -140,7 +140,7 @@
         <div class="ln-gauge" title="가동시간"><i style="width:${Math.min(100, hrs / 24 * 100)}%"></i></div>
         ${seg ? `<p class="ln-l">24시간 구성 ${x ? '<span>MES 실적</span>' : '<span>계획</span>'}</p><div class="ln-mix">${seg}</div><div class="ln-mixl">${leg}</div>${list}` : ''}
         <p class="ln-l">부서 구성</p><div class="ln-mixl">${deps.map(([k, v]) => `<span>${esc(DSHORT[k] || k)} ${GP.fmt(v)}t</span>`).join('') || '<span class="muted">-</span>'}</div>
-        <p class="ln-l">${mm}월 진도 <span title="실적 ÷ 월 계획(지금 계획의 ${mm}월 합)${vsM0 != null ? ` · 월차 대비 = ~${GP.md(dA)} 월차(첫 게시 계획) ${GP.fmt(m0To)}t 대비` : ''}">실적 ${GP.fmt(toDate)} / 월 계획 ${GP.fmt(monthPlan)}t · ${Math.round(pr * 100)}%${vsM0 != null ? ` · 월차 대비 ${vsM0}%` : ''}</span></p>
+        <p class="ln-l">${mm}월 진도 <span title="실적 ÷ 월 계획(지금 계획의 ${mm}월 합)${vsM0 != null ? ` · 월차 대비 = ${GP.md(dA)}까지 월차(첫 게시 계획) ${GP.fmt(m0To)}t 대비` : ''}">실적 ${GP.fmt(toDate)} / 월 계획 ${GP.fmt(monthPlan)}t · ${Math.round(pr * 100)}%${vsM0 != null ? ` · 월차 대비 ${vsM0}%` : ''}</span></p>
         <div class="ln-prog" title="세로선 = 경과일 ${Math.round(el * 100)}%"><i style="width:${pr * 100}%"></i><u style="left:${el * 100}%"></u></div>
         <div class="ln-chips">${chips}</div></div>`;
     }).join('');

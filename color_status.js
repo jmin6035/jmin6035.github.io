@@ -59,7 +59,7 @@
     $('d-empty').hidden = true; $('d-body').hidden = false;
     const mL = MONTHS[MONTHS.length - 1];
     $('d-title').textContent = `'${MONTHS[0].slice(2, 4)}.${MONTHS[0].slice(0, 4) === mL.slice(0, 4) ? MONTHS.map((m) => +m.slice(5)).join('·') : `${+MONTHS[0].slice(5)}~'${mL.slice(2, 4)}.${+mL.slice(5)}`}월 컬러 CCL 가동계획`;   // 11/9: 달 = 자료(해 넘으면 '26.10~'27.2월)
-    $('d-meta').textContent = [`기준 계획(계획재 = 운영안 반영)`, `계산 ${UI.fmtDateTime(O.built)}`, lastAct && `실적 ~${md(lastAct)}`, `계획 기간 ${UI.fmtDate(D0)}~${UI.fmtDate(D1)}`].filter(Boolean).join(' · ');   // 11/9: 기간 = 자료
+    $('d-meta').textContent = [`기준 계획(계획재 = 운영안 반영)`, `계산 ${UI.fmtDateTime(O.built)}`, lastAct && `실적 ${md(lastAct)}까지`, `계획 기간 ${UI.fmtDate(D0)}~${UI.fmtDate(D1)}`].filter(Boolean).join(' · ');   // 11/9: 기간 = 자료
     const kinds = new Set((O.colorDown || []).map((x) => x[2]));
     void kinds;
     $('g-tabs').innerHTML = MONTHS.map((m, i) => `<button type="button" data-g="${i}">${+m.slice(5)}월</button>`).join('');
@@ -157,7 +157,7 @@
       const M0 = (window.CSM0 || {})[m], aTo = O.color.filter((x) => x.l === l && x.d.startsWith(m) && x.d <= d && x.act).reduce((a, x) => (x.d > a ? x.d : a), '');
       const m0To = M0 && aTo ? Object.entries(M0).reduce((a, [k, v]) => { const [ll, dd_] = k.split('|'); return a + (ll === l && dd_.startsWith(m) && dd_ <= aTo ? v[0] || 0 : 0); }, 0) : 0, vsM0 = m0To > 0 ? Math.round(toDate / m0To * 100) : null;
       const chips = [dnTxt(l, d) ? `<span class="tag warn">당일 ${esc(dnTxt(l, d))}</span>` : '',
-        runEnd && ck ? `<span class="tag bad">${KN[ck[0]]} 중 ~${md(runEnd)}</span>` : '',
+        runEnd && ck ? `<span class="tag bad">${KN[ck[0]]} 중 ${md(runEnd)}까지</span>` : '',
         nx ? `<span class="tag ${dd(nx[0]) <= 7 ? 'bad' : ''}">${KN[nx[2]]} ${md(nx[0])} · D-${dd(nx[0])}</span>` : '<span class="tag">이후 S/D·수리 없음</span>',
         next ? `<span class="tag">비가동 ${md(next)} · D-${dd(next)}</span>` : ''].filter(Boolean).join('');
       return `<div class="ln-card${off ? ' off' : ''}"><div class="ln-h"><b>${l}</b><span class="tag ${st[1]}">${st[0]}</span></div>
@@ -167,7 +167,7 @@
         <div class="ln-mix">${gs.length ? gs.map(([g, v]) => `<i style="flex:${v};background:${GVAR[g]}" title="${GL(g)} ${fmt(v)}t"></i>`).join('') : '<i style="flex:1;background:var(--grid)"></i>'}</div>
         <div class="ln-mixl">${gs.map(([g, v]) => `<span><i style="background:${GVAR[g]}"></i>${GL(g)} ${fmt(v)}t</span>`).join('') || '<span class="muted">-</span>'}</div>
         ${items ? `<p class="ln-l">주요 품목</p><ul class="ln-items">${items}</ul>` : ''}
-        <p class="ln-l">${mm}월 진도 <span title="실적 ÷ 월 계획(지금 계획의 ${mm}월 합)${vsM0 != null ? ` · 월차 대비 = ~${md(aTo)} 월차(첫 게시 계획) ${fmt(m0To)}t 대비` : ''}${mc ? ` · 참고: 판생 월차 ${fmt(mc)}t` : ''}">실적 ${fmt(toDate)} / 월 계획 ${fmt(mPlan)}t · ${Math.round(pr * 100)}%${vsM0 != null ? ` · 월차 대비 ${vsM0}%` : ''}</span></p>
+        <p class="ln-l">${mm}월 진도 <span title="실적 ÷ 월 계획(지금 계획의 ${mm}월 합)${vsM0 != null ? ` · 월차 대비 = ${md(aTo)}까지 월차(첫 게시 계획) ${fmt(m0To)}t 대비` : ''}${mc ? ` · 참고: 판생 월차 ${fmt(mc)}t` : ''}">실적 ${fmt(toDate)} / 월 계획 ${fmt(mPlan)}t · ${Math.round(pr * 100)}%${vsM0 != null ? ` · 월차 대비 ${vsM0}%` : ''}</span></p>
         <div class="ln-prog" title="세로선 = 경과일 ${Math.round(el * 100)}%"><i style="width:${pr * 100}%"></i><u style="left:${el * 100}%"></u></div>
         <p class="ln-sub">세로선 = 경과일(${Math.round(el * 100)}%)</p>
         <div class="ln-chips">${chips}</div></div>`;

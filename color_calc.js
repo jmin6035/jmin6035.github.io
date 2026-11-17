@@ -47,7 +47,7 @@
       ['품목별 적용라인', lr ? `${esc(lr.source || '')} · 받은 날 ${esc(lr.extracted || '')} · ${lr.rules.length}행` : '없음', '필수라인 → 우선라인1 → 2 → 3 순서로 라인 배정', lr ? 'good' : 'warn'],
       ['컬러 휴지계획', dn ? `${esc(dn.src || '')} · ${dn.items.length}건` : '없음', '계획휴지·S/D·수리 · 청소·Test·샘플', dn ? 'good' : 'warn'],
       ['MES 실적 · 재고', `자료 ${fmtT(D.mes.savedAt || E.mes.created)}`, '컬러 생산 실적 · 재고 · 출하 · 판매생산속보(사내 PC 매일 갱신)', 'good'],
-      ['현재 게시 계획', D.cur ? `계산 ${fmtT(D.cur.built)} · 실적 ~${esc(D.cur.asOf || '')}` : '없음', D.prev ? '지난 컬러 계획 자리를 먼저 씀(일정이 덜 바뀌게)' : '도금 = 기준 계획(바뀌지 않음)', D.cur ? 'good' : 'warn'],
+      ['현재 게시 계획', D.cur ? `계산 ${fmtT(D.cur.built)} · 실적 ${esc(D.cur.asOf || '')}까지` : '없음', D.prev ? '지난 컬러 계획 자리를 먼저 씀(일정이 덜 바뀌게)' : '도금 = 기준 계획(바뀌지 않음)', D.cur ? 'good' : 'warn'],
     ];
     $('c-src').innerHTML = S.map(([t, a, b, st]) => `<div class="cc-src"><b>${t}</b><small>${a}</small><small>${b}</small><span class="st ${st}">${st === 'good' ? '사용' : '확인'}</span></div>`).join('');
   }
@@ -182,7 +182,7 @@
     $('dv-mon').innerHTML = months.map((m) => `<button type="button" data-m="${m}" aria-pressed="${m === cv.mon}">${+m.slice(5)}월</button>`).join('');
     $('dv-line').querySelectorAll('button').forEach((b) => b.onclick = () => { cv.line = b.dataset.l; calRender(); });
     $('dv-mon').querySelectorAll('button').forEach((b) => b.onclick = () => { cv.mon = b.dataset.m; calRender(); });
-    $('dv-src').textContent = result ? '새 계산 결과(게시 전)' : `현재 게시 계획 · 실적 ~${md(act || '2026-10-01')}`;
+    $('dv-src').textContent = result ? '새 계산 결과(게시 전)' : `현재 게시 계획 · 실적 ${md(act || '2026-10-01')}까지`;
     const by = {}; for (const c of o.color) if (c.l === cv.line && c.d.slice(0, 7) === cv.mon) by[c.d] = c;
     const [y, m] = cv.mon.split('-').map(Number), nd = new Date(Date.UTC(y, m, 0)).getUTCDate(), lead = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
     const pend = moves.filter((v) => v.line === cv.line);
@@ -247,7 +247,7 @@
   function ask(x, from, to) {
     const dlg = $('dv-dlg'), n = $('dv-dlg-n'), max = Math.round(x.t * 10) / 10;
     $('dv-dlg-t').textContent = `${cv.line} ${x.p}  ${md(from)} → ${md(to)}`;
-    $('dv-dlg-s').textContent = `${GL(x.g)} · ${[x.c, x.dest, x.ship].filter(Boolean).join(' · ')} — 그 날 ${n0(x.t)}t (${(x.min / 60).toFixed(1)}시간, ${(x.t / x.min * 60).toFixed(1)}t/h)`;
+    $('dv-dlg-s').textContent = `${GL(x.g)} · ${[x.c, x.dest, x.ship].filter(Boolean).join(' · ')} — 그 날 ${n0(x.t)}t (${(x.min / 60).toFixed(1)}시간, ${(x.t / x.min * 60).toFixed(1)}t/시간)`;
     $('dv-dlg-max').textContent = `최대 ${max}t`;
     n.max = max; n.value = max;
     dlg.onclose = () => {
