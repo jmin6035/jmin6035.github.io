@@ -66,7 +66,7 @@ ${v.stale > 0.5 ? `<div class="hy-mn"${sl.length ? ` title="${sl.map((z) => `${e
     // 마감 지남 = 빨강 '부족'(지금 발주해도 못 댐) · 마감 전 = 주황 '발주 필요(마감 범위)'(검토 11/17)
     const md_ = (d) => (d ? `${+d.slice(5, 7)}/${+d.slice(8)}` : '');
     const rg = (a, b) => (a === b ? md_(a) : `${md_(a)}~${md_(b)}`);
-    const one = (n, late, op, a, b) => [late > 0.5 ? `<b class="bad">${n}발주 늦음 ${n0(late)}</b>` : '', op > 0.5 ? `<b class="warn">${n}발주 필요 ${n0(op)} · 마감 ${rg(a, b)}</b>` : ''].filter(Boolean).join(' · ');
+    const one = (n, late, op, a, b) => [late > 0.5 ? `<b class="bad">${n}발주 지연 ${n0(late)}</b>` : '', op > 0.5 ? `<b class="warn">${n}발주 필요 ${n0(op)} · 마감 ${rg(a, b)}</b>` : ''].filter(Boolean).join(' · ');
     const lines = (v.shortBy || []).map(([n, late, op, a, b]) => one(`${esc(SN(n))} `, late, op, a, b));
     const pc_ = pct(v.cov, v.use), hv = (v.beg || 0) + (v.arr || 0) || 1, cb = v.cov * (v.beg || 0) / hv, ca = v.cov * (v.arr || 0) / hv;   // 막대 = 필요 대비 소재별 확보(남는 소재로 모자란 소재를 덮지 않음), 재고·발주 비율로 나눔
     const sl = v.staleBy ? v.staleBy.map(([n_, t_]) => [n_, 0, 0, 0, 0, t_]) : (v.shortBy || []).filter((z) => z[5] > 0.5), st = sl.length ? `빼고 계산: 예정일 30일 넘게 지난 미입고 ${sl.map((z) => `${esc(z[0])} ${n0(z[5])}t`).join(' · ')}(입고 여부 확인)` : '';

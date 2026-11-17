@@ -490,7 +490,7 @@
       + `</ul>${oT >= 1 ? `<span class="msg" style="color:var(--bad)">${END()} 뒤로 순연된 주문 ${outs.length}조각 ${n0(oT)}t: ${outs.slice(0, 6).map(([l, p]) => `${esc(p.con)} ${n0(p.t)}t`).join(' · ')}${outs.length > 6 ? ' …' : ''}</span>` : ''}</div>`;
   }
 
-  const who = (i) => [i.cus && esc(i.cus), i.dst && `<span class="nw">→ ${esc(i.dst)}</span>`, i.man && `<span class="nw">담당 ${esc(i.man)}</span>`].filter(Boolean).join(' · ');
+  const who = (i) => [[i.cus && esc(i.cus), i.dst && `<span class="nw">→ ${esc(i.dst)}</span>`].filter(Boolean).join(' '), i.man && `<span class="nw">담당 ${esc(i.man)}</span>`].filter(Boolean).join(' · ');   // 11/17: '고객 · → 목적지' 구두점 겹침
   function moveOpts(i, ln, d) {                              // 옮길 날 목록: 안 되는 날은 이유와 함께(고르면 가장 가까운 가능한 날 제시)
     const lines = lnOf(i, i.pline || ln), opt = [];
     lines.forEach((l) => O.days.forEach((dd) => {

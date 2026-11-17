@@ -246,9 +246,11 @@
   /* 소재 '발주 마감 지남' 한 기준(11/8 사용자 '화면마다 87·797·4,430·5,514t'): 앞으로 3달 생산에 필요한데 재고·입고 예정으로 못 채우는 양 중
      발주 마감(필요일 − 리드타임 − 투입 여유)이 기준일 전인 몫 — tools/mat_order_spec.py late_summary 가 계산해 mat_order.late 로 게시. 화면은 이 값만 씀
      UI.matLate(late) → {t, items, tip} | null(아직 게시 전) */
+  /* 11/17 사용자 '아예 발주를 안 하는 식으로': 계획재(재고 보충, 납기 없음) 사양은 필요일에 못 대면 발주 대상이 아님 — 생산을 소재 들어온 뒤로. by = 'spec' 항목 = 계획재 사양 */
+  UI.lateItems = (L) => ((L && L.items) || []).filter((x) => x.by !== 'spec');
   UI.matLate = (L) => {
     if (!L || !L.items) return null;
-    const items = L.items.filter((x) => UI.inScope(x.plant));
+    const items = UI.lateItems(L).filter((x) => UI.inScope(x.plant));
     return { t: items.reduce((a, x) => a + (x.t || 0), 0), items,
       tip: items.map((x) => `${x.name} ${Math.round(x.t)}t${x.by === 'spec' && x.sizes ? `(${x.sizes.map((s) => `${s[1]} ${s[2]}t`).join(', ')})` : ''}`).join(' · ') };
   };
@@ -256,7 +258,7 @@
      발주 마감 = mat_order(tools/mat_order_spec.py) 의 정해진 발주일(P-FH 화 · 그 외 월 · 수입 10~20일 등 창구), next = 남은 부족의 다음 발주일
      UI.matView(MO = mat_order) → MO.groups.mats 각각 {…m, st, lateT, deadline, next} */
   UI.matView = (MO) => {   // 11/10: 마감일 = mat_order 한 곳(정해진 발주일, 11/9 회의 F14) — 예전 portal 업체별 마감(nearAll)과 섞어 화면마다 날짜가 달랐음
-    const G = (MO && MO.groups) || {}, LI = MO && MO.late && MO.late.items ? new Map(MO.late.items.map((x) => [x.key, x])) : null, td = (MO && MO.today) || clockDay();
+    const G = (MO && MO.groups) || {}, LI = MO && MO.late && MO.late.items ? new Map(UI.lateItems(MO.late).map((x) => [x.key, x])) : null, td = (MO && MO.today) || clockDay();
     const soon = new Date(Date.parse(td + 'T00:00:00Z') + 14 * 864e5).toISOString().slice(0, 10);
     return (G.mats || []).map((m) => {
       const li = LI ? LI.get(m.key) : null, lt = LI ? (li ? li.t || 0 : 0) : m.late || 0;
