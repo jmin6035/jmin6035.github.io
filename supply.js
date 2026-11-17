@@ -591,7 +591,8 @@
     const ords = Object.entries(byT).sort((x, y) => y[1].sh - x[1].sh).map(([c, t]) => `${esc(c)} ${md(add(need, -t.lt))}`).join(' · ') || '-';
     const j = MP && MP.J.find((x) => x.plant === 'G' && x.code === code && x.wk === mondayOf(d));
     const st = !j ? ['info', '-'] : j.short < 1 ? ['ok', '재고·발주 완료분로 충당'] : ['warn', `그 주 부족 ${n0(j.short)}t — 소재 발주에서 확인`];
-    return { what: nm, steps: [['발주 마감', ords, null], [need <= today ? '소재 입고' : '입고 필요', md(need), need]], st };
+    const stc = !j ? null : j.short < 1 ? ['F/H 상태', '재고·발주분으로 확보', null, 'due'] : ['F/H 상태', `그 주 ${n0(j.short)}t 모자람 — 발주 필요`, null, 'warn'];   // 11/17 검토: 발주했는지·확보됐는지
+    return { what: nm, steps: [['발주 마감', ords, null, 'due'], [need <= today ? '소재 입고' : '입고 필요', md(need), need], ...(stc ? [stc] : [])], st };
   }
 
   // 날짜 상세 카드(라인별 품목·소재·일정) — 가동 캘린더 상세와 계획 화면(gyehoek.js, window.supDet)이 같이 씀. ls = 보일 라인(없으면 전부)

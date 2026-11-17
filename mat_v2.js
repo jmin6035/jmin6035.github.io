@@ -32,7 +32,7 @@
         const ti = sumT(I.filter((e) => e.kind !== 'new')), tn = sumT(I.filter((e) => e.kind === 'new')), to = sumT(O);
         if (ti >= 0.5) o.ib[d] = ti; if (tn >= 0.5) o.ibN[d] = tn;
         { const ods = [...new Set(I.filter((e) => e.kind === 'arr' && e.a).map((e) => (S.poDate && S.poDate(e.a.po)) || ((/(\d{2})\/(\d{2}) 발주/.exec(e.a.note || '') || [])[0] ? `${mon.slice(0, 4)}-${/(\d{2})\/(\d{2}) 발주/.exec(e.a.note)[1]}-${/(\d{2})\/(\d{2}) 발주/.exec(e.a.note)[2]}` : null)).filter(Boolean))].sort(); if (ods.length) o.odt[d] = ods; }   // 입고 예정분의 발주일
-        if (to >= 0.5) { o.od[d] = to; const lt_ = sumT(O.filter((e) => e.late)); if (lt_ >= 0.5 && lt_ >= to * 0.5) o.late[d] = 1; }   // 마감 지난 몫이 절반 넘을 때만 빨강(P-FH 오늘 9,803t 중 483t 같은 경우는 주황)
+        if (to >= 0.5) { o.od[d] = to; const lt_ = sumT(O.filter((e) => e.late)); if (lt_ >= 0.5 && lt_ >= to * 0.5) o.late[d] = 1; else if (lt_ >= 0.5) (o.lateP = o.lateP || {})[d] = lt_; }   // 마감 지난 몫이 절반 넘을 때만 빨강(P-FH 오늘 9,803t 중 483t 같은 경우는 주황)
         for (const e of O) if (e.kind === 'mlate' && e.m) { const f = e.m.first || (e.m.sizes || []).map((z) => z[3]).filter(Boolean).sort()[0]; if (f && (!o.mlDay || f < o.mlDay)) o.mlDay = f; }   // 마감 지난 부족(수주 관제 matLate 와 같은 목록)의 첫 부족일
         o.use += sumT(R.use[d]);
       }
@@ -125,8 +125,8 @@
       const cells = ds.map((d) => { const v = V[d], vn = k === 'po' ? 0 : t.ibN[d] || 0; if (v) s += v; if (vn) s += vn;
         if (!v && vn) { const cl0 = [d < td ? 'ps' : '', d === td ? 'td' : ''].filter(Boolean).join(' '); return `<td${cl0 ? ` class="${cl0}"` : ''}><span class="ib nd${vn >= 9999.5 ? ' w5' : ''}" data-c="${esc(t.c)}" data-k="inb" data-d="${d}" title="${esc(`${md(d)} ${t.c} 미발주 — 이 날까지 입고 필요 ${n0(vn)}t(아직 발주 안 함)`)}">${n0(vn)}</span></td>`; }
         const cl = [d < td ? 'ps' : '', d === td ? 'td' : ''].filter(Boolean).join(' ');
-        const late = k === 'po' && t.late[d];
-        return `<td${cl ? ` class="${cl}"` : ''}>${v ? `<span class="${k}${late ? ' late' : ''}${v >= 9999.5 ? ' w5' : ''}" data-c="${esc(t.c)}" data-k="${k === 'po' ? 'ord' : 'inb'}" data-d="${d}" title="${esc(`${md(d)} ${t.c} ${k === 'po' ? '발주' : '입고'} ${n0(v)}t${late ? ' — 마감 지난 몫 포함' : ''}`)}">${n0(v)}</span>` : ''}${v && vn ? `<span class="ib nd" data-c="${esc(t.c)}" data-k="inb" data-d="${d}" title="${esc(`${md(d)} ${t.c} 미발주 — 입고 필요 ${n0(vn)}t`)}">+${n0(vn)}</span>` : ''}</td>`; }).join('');
+        const late = k === 'po' && t.late[d], lp = k === 'po' && t.lateP && t.lateP[d];
+        return `<td${cl ? ` class="${cl}"` : ''}>${v ? `<span class="${k}${late ? ' late' : ''}${lp ? ' plate' : ''}${v >= 9999.5 ? ' w5' : ''}" data-c="${esc(t.c)}" data-k="${k === 'po' ? 'ord' : 'inb'}" data-d="${d}" title="${esc(`${md(d)} ${t.c} ${k === 'po' ? '발주' : '입고'} ${n0(v)}t${late ? ' — 마감 지난 몫 포함' : lp ? ` — 그중 마감 지남 ${n0(lp)}t(빨간 밑줄)` : ''}`)}">${n0(v)}</span>` : ''}${v && vn ? `<span class="ib nd" data-c="${esc(t.c)}" data-k="inb" data-d="${d}" title="${esc(`${md(d)} ${t.c} 미발주 — 입고 필요 ${n0(vn)}t`)}">+${n0(vn)}</span>` : ''}</td>`; }).join('');
       return `<tr class="${first ? 'r1' : 'r2'}"${first ? ` data-row="${esc(t.c)}"` : ''}>${first ? `<th class="nm" rowspan="3">${esc(t.c)}</th>` : ''}<th class="kd"><i class="${k}">${k === 'po' ? '발주' : '입고'}</i></th>${cells}<td class="tt">${s >= 0.5 ? n0(s) : ''}</td></tr>`;
     };
     let b = '';
