@@ -12,8 +12,14 @@
   const fmtT = (s) => { if (!s) return '-'; const t = String(s); if (/(Z|[+-]\d\d:?\d\d)$/.test(t)) { const d = new Date(t); if (!isNaN(d)) return new Date(d.getTime() + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' '); } return t.replace('T', ' ').slice(0, 16); };   // 11/10 점검: UTC 시각(14:49)을 한국 시각(23:49)으로
   let pw = '', E = {}, D = {}, worker = null, result = null, uploads = {}, names = {}, reading = 0, moves = [];
 
-  const envs = Promise.all(['color_calc_files.enc.json', 'color_calc_mes.enc.json', 'integrated.enc.json', 'color_prev.enc.json'].map((n) => GP.latest(n)))
-    .then(([files, mes, cur, prev]) => { E = { files, mes, cur, prev }; return E; });
+  // 11/17 검토: color_prev(지난 컬러 계획)는 이 화면에서 GitHub 에 게시할 때만 생김 → 게시 폴더 목록(GitHub)에 있을 때만 받음(없는 파일 404·400 방지).
+  //   목록을 못 받으면(네트워크·한도) 예전처럼 그냥 받아 봄
+  const prevListed = () => { const { owner, repo, branch } = GP.PUBLISH_REPO; return fetch(`https://api.github.com/repos/${owner}/${repo}/contents/published?ref=${branch}`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((L) => (Array.isArray(L) ? L.some((x) => x.name === 'color_prev.enc.json') : null)).catch(() => null); };
+  const envs = Promise.all(['color_calc_files.enc.json', 'color_calc_mes.enc.json', 'integrated.enc.json'].map((n) => GP.latest(n)).concat([prevListed()]))
+    .then(async ([files, mes, cur, has]) => {
+      const prev = has === false ? null : has ? await GP.fetchPublished(['published/color_prev.enc.json']) : await GP.latest('color_prev.enc.json');
+      E = { files, mes, cur, prev }; return E;
+    });
 
   function lockMsg(t, m) { $('c-lock-t').textContent = t; $('c-lock-msg').textContent = m || ''; }
   async function unlock(p) {

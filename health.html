@@ -32,11 +32,11 @@ ol.fix li { margin: 8px 0; font-size: 16px; } ol.fix code { background: var(--ti
   const kst = (s) => (s ? UI.fmtDateTime(s) : '-');   // 날짜·시각 표기 = 공통(M/D HH:MM)
   const get = (u) => fetch(u + (u.startsWith('http') ? '?v=' + Date.now() : ''), { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   const PAGES = [['portal.enc.json', '홈 요약', '매일 자동'], ['color_actual.enc.json', '컬러 실적', '매일 자동'], ['procure.enc.json', '발주 검토', '자동(재고) · 수요는 계획 갱신 시'],
-    ['latest.plan.enc.json', '가동 현황(도금 계획·재계획)', '매일 자동'], ['analysis.enc.json', '도금 실적 분석', '매일 자동'], ['weekly_report.enc.json', '주간 보고', '주 1회(수동)'],
+    ['latest.plan.enc.json', '가동 현황(도금 계획·재계획)', '매일 자동'], ['analysis.enc.json', '도금 실적 분석', '매일 자동', 'remote'], ['weekly_report.enc.json', '주간 보고', '주 1회(수동)'],
     ['integrated.enc.json', '통합 가동계획', '계획 변경 시(수동)']];
   (async () => {
     const st = (await Promise.all([get(SUPA + 'status.json'), get('published/status.json')])).filter(Boolean).sort((a, b) => (String(a.runAt) < String(b.runAt) ? 1 : -1))[0];
-    const envs = await Promise.all(PAGES.map(async ([n]) => { const [a, b] = await Promise.all([get(SUPA + n), get('published/' + n)]); const ca = a && (a.created || a.savedAt), cb = b && (b.created || b.savedAt); return ca && (!cb || ca > cb) ? { src: '사내 PC 자동', at: ca } : cb ? { src: '수동 게시', at: cb } : null; }));
+    const envs = await Promise.all(PAGES.map(async ([n, , , only]) => { const [a, b] = await Promise.all([get(SUPA + n), only === 'remote' ? null : get('published/' + n)]); /* remote = 사내 PC 가 Supabase 에만 올리는 파일(사이트 쪽 요청은 404) */ const ca = a && (a.created || a.savedAt), cb = b && (b.created || b.savedAt); return ca && (!cb || ca > cb) ? { src: '사내 PC 자동', at: ca } : cb ? { src: '수동 게시', at: cb } : null; }));
     let h = '';
     if (st) {
       const fs = st.feeds || [];

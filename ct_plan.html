@@ -74,7 +74,7 @@ td.jg .mk { display: inline-block; font-size: 13.5px; background: var(--tint-2);
 .seg button[aria-pressed="true"] { background: var(--brand-2); color: var(--on-brand, #fff); font-weight: 700; }
 .rg { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 12px; overflow: hidden; }
 .rg > h3 { margin: 0; padding: 9px 14px; background: var(--tint-2); font-size: 16px; display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
-.rg > h3 span { font-size: 14px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.rg > h3 span { font-size: 14px; font-weight: 600; color: var(--ink-2); white-space: nowrap; } @media (max-width: 640px) { .rg > h3 span { white-space: normal; } }
 table.it { width: 100%; border-collapse: collapse; font-size: 14.5px; }
 table.it th { text-align: left !important; font-size: 13.5px; color: var(--ink-2); font-weight: 700; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 table.it td { text-align: left !important; padding: 8px 10px; border-bottom: 1px solid var(--grid); vertical-align: top; line-height: 1.5; word-break: keep-all; }
@@ -83,6 +83,7 @@ table.it tr:last-child td { border-bottom: 0; }
 .con { font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .sub { font-size: 13.5px; color: var(--ink-2); }
 .nw { white-space: nowrap; }
+/* 미편성 주문: 이유는 칸 안에서 줄바꿈(넣기 칸 침범 방지) · 고객사·담당은 잘리지 않게 줄바꿈 */ table.it td.why { overflow-wrap: anywhere; word-break: normal; } table.it .sub.wrp, .rg table.it .con { white-space: normal; overflow-wrap: anywhere; }
 .chs { display: flex; flex-wrap: wrap; gap: 4px; }
 .ch { display: inline-block; border-radius: 6px; padding: 1px 8px; font-size: 14.5px; font-weight: 700; background: var(--sub); white-space: nowrap; }
 .ch.exp { background: var(--tint-2); color: var(--brand-2); } .ch.gr { background: #fff1e0; color: #8a4b08; }

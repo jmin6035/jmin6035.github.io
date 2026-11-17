@@ -173,6 +173,14 @@
       stock: { name: '재고', key: [cp ? `컬러 제품 <b>${n0(cp.current)}</b>t · 목표의 <b>${rate(cp.current, cp.target)}%</b>` : '', gm ? `도금 소재 ${n0(gm.current)}t · 목표의 ${rate(gm.current, gm.target)}%` : ''], st: ST_ && ST_.now ? (ST_.now.some((x) => x.target && x.current / x.target > 1.3) ? 'bad' : ST_.now.some((x) => x.target && x.current / x.target > 1.1) ? 'warn' : 'good') : null },
     };
     let h = '';
+    // 11/17 검토: 지난 보고가 그대로 보일 때 — 끝난 최신 주(어제까지)가 보고 주보다 뒤면 위에 알림
+    const wkGap = (() => {
+      const e0 = new Date(String(P.w1[1]).slice(0, 10) + 'T00:00:00'), y = new Date(); y.setHours(0, 0, 0, 0); y.setDate(y.getDate() - 1);
+      const n = Math.floor((y - e0) / 864e5 / 7); if (!(n >= 1)) return null;
+      const e = new Date(e0); e.setDate(e.getDate() + 7 * n); const s0 = new Date(e); s0.setDate(e.getDate() - 6);
+      const f = (d) => `${d.getMonth() + 1}/${d.getDate()}`; return `${f(s0)}~${f(e)}`;
+    })();
+    if (wkGap) h += `<div class="stale">⚠ ${wkGap} 주간 보고는 아직 게시되지 않았습니다 — 아래는 지난 보고(${w1}, 작성 ${UI.fmtDate(o.createdAt)})입니다.</div>`;
     if (o.status && o.status.stale) h += `<div class="stale">⚠ 사내 PC 자동 실행이 하루 넘게 멈춰 있습니다(마지막 자료 ${UI.fmtDateTime(new Date(o.status.savedAt))}).</div>`;
 
     // ① 한 장 요약: 구분별 타일(상태 · 대표 수치 1개 · 진도 막대 · 조치 한 줄) + 결정 필요 사항 카드
