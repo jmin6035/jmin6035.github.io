@@ -216,12 +216,12 @@ html.v2 .sj2-dl > b { color: var(--ink-2); font-size: 14px; } html.v2 .sj2-dl .d
 @media (max-width: 1300px) { html.v2 .sj2-sch ol { grid-template-columns: repeat(4, minmax(0, 1fr)); } html.v2 .sj2-sch li:nth-child(4n + 1) { border-left: 0; padding-left: 0; } html.v2 .sj2-sch li:nth-child(n + 5) { border-top: 1px solid var(--v2-line); } }
 @media (max-width: 700px) { html.v2 .sj2-sch ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } html.v2 .sj2-sch li { border-left: 1px solid var(--v2-line) !important; padding-left: 12px !important; border-top: 0 !important; } html.v2 .sj2-sch li:nth-child(2n + 1) { border-left: 0 !important; padding-left: 0 !important; } html.v2 .sj2-sch li:nth-child(n + 3) { border-top: 1px solid var(--v2-line) !important; } }
 @media (max-width: 700px) { html.v2 .sj2-k .ct-kpi .s.s { white-space: normal; } html.v2 .sj2-mx col.c-nm { width: 132px; } html.v2 body main .sj2-mx tr.sj2-cb td.nm { padding-left: 12px !important; } html.v2 .sj2-mx td.nm .cv { margin-right: 6px; } }
-html.v2 .sj2-k { margin-bottom: 18px; } html.v2 .sj2-k .ct-kpi { padding: 14px 18px; } html.v2 .sj2-k .ct-kpi .s { margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.v2 .sj2-k { margin-bottom: 18px; } html.v2 .sj2-k .ct-kpi { padding: 14px 18px; } html.v2 .sj2-k .ct-kpi .s { margin-top: 4px; white-space: normal; overflow-wrap: anywhere; }
 /* 매트릭스 */
 html.v2 .sj2-mxw { overflow-x: auto; }
 html.v2 body main table.ct-t.sj2-mx { table-layout: fixed; width: 100%; min-width: 1360px; max-width: 1580px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 html.v2 .sj2-mx col.c-nm { width: 176px; } html.v2 .sj2-mx col.c-n { width: 86px; } html.v2 .sj2-mx col.c-p { width: 86px; } html.v2 .sj2-mx col.c-d { width: 70px; } html.v2 .sj2-mx col.c-st { width: 132px; }
-html.v2 body main table.sj2-mx :is(th, td) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.v2 body main table.sj2-mx :is(th, td) { white-space: nowrap; } html.v2 body main table.sj2-mx td { min-width: 52px; }
 html.v2 body main table.sj2-mx thead tr.g th { color: var(--ink) !important; font-size: 14.5px !important; } html.v2 .sj2-mx thead tr.g th small { margin-left: 6px; color: var(--ink-2); }
 html.v2 body main table.sj2-mx :is(th, td).bk { border-left: 2px solid var(--v2-line) !important; }
 html.v2 body main table.sj2-mx :is(th, td).sx { border-left: 2px solid var(--v2-line) !important; }

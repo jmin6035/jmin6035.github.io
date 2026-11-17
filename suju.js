@@ -199,7 +199,7 @@
         const r = R[i], past = r.d <= D.asOf, e = evOf(ln, r);
         P += `<td class="${e ? 'y' : ''}" title="${md(r.d)}${e ? ' ' + esc(e) : ''} 계획 ${n0(r.p)}t${past ? ` · 실적 ${r.a == null ? '-' : n0(r.a)}t` : ''}">${r.p > 0.5 ? nf(r.p) : ''}</td>`;
         Q += past && r.a != null && r.a > 0.5 ? `<td class="${r.a + 0.5 < r.p ? 'lo' : ''}">${nf(r.a)}</td>` : '<td></td>'; }
-      // 11/13 사용자 '모든 화면 같은 값': 계획 줄 계 = 월 계획(지난 날 실적 + 앞날 계획 = 01 계·02 현황와 같은 값)
+      // 11/13 사용자 '모든 화면 같은 값': 계획 줄 계 = 월 계획(지난 날 실적 + 앞날 계획 = 01 계·02 현황과 같은 값)
       const mp = R.reduce((s_, r) => s_ + ((r.d <= D.asOf ? r.a : r.p) || 0), 0), cp = R.reduce((s_, r) => s_ + (r.d <= D.asOf ? r.p || 0 : 0), 0), ca = R.reduce((s_, r) => s_ + (r.a || 0), 0);
       const tt = ` title="${sub ? esc(sub) + ' · ' : ''}월 계획 ${n0(mp)}t · 1일~${md(D.asOf)} 계획 ${n0(cp)}t → 실적 ${n0(ca)}t"`;
       const c0 = kind === 'sum' ? 'c0' : kind === 'ln' ? `c0 ${/CGL$/.test(ln) ? 'lnG' : 'lnC'} le` : 'c0 le';
@@ -254,7 +254,7 @@
     const sg = D.groups.filter((g) => inPl(g.plant) && g.key !== '자가재'), sales = sg.reduce((a, g) => a + (g.sales || 0), 0), on = sg.reduce((a, g) => a + (g.orders || 0), 0), off = sg.reduce((a, g) => a + Math.max(0, (g.ordReg || 0) - (g.orders || 0)), 0);
     const pg = sales ? (on + off) / sales * 100 : null;
     const k1 = kc('#order', '수주 진도', pg == null ? '' : pg >= 100 ? 'ok' : pg >= 90 ? 'warn' : 'bad', pctK(pg), `소재 ON+OFF ${T(on + off)} / 판매계획 ${T(sales)}t`,
-      `(소재 ON + 소재 OFF) ÷ 판매계획 — 02 현황와 같은 값 · 소재 ON(확정) ${T(on)}t · OFF ${T(off)}t · 기준선(~${md(D.cut)} 편성) ${T(sb)}t 대비 확정 ${pct(prog)}`);
+      `(소재 ON + 소재 OFF) ÷ 판매계획 — 02 현황과 같은 값 · 소재 ON(확정) ${T(on)}t · OFF ${T(off)}t · 기준선(~${md(D.cut)} 편성) ${T(sb)}t 대비 확정 ${pct(prog)}`);
     const PMx = UI.prodMon(D, ['1CGL', '2CGL', '1CCL', '2CCL', '3CCL', '4CCL'].filter((l) => inPl(/CGL/.test(l) ? 'G' : 'C')));
     const p0 = PMx && PMx.pct0 != null ? Math.round(PMx.pct0) : null;
     const k2 = kc('#prod', '생산 달성', PMx ? UI.rate(p0) : '', PMx ? pctK(PMx.pct) : '–', PMx ? `실적 ${T(PMx.act)} / 월 계획 ${T(PMx.mon)}t · ~${md(D.asOf)} 월차 대비 ${p0 == null ? '–' : p0 + '%'}` : '',
@@ -262,10 +262,10 @@
     const rl = []; if (D.mats) for (const x of D.mats.filter((y) => inPl(y.plant) && y.st === '경고')) rl.push(x.name);
     for (const it of ((D.matLate || {}).items || [])) { if (!inPl(it.plant)) continue; const f = it.first || (it.sizes || []).map((z) => z[3]).filter(Boolean).sort()[0]; if (f && f.slice(0, 7) === D.month) rl.push(it.name); }
     const k3 = kc('#mat', '소재 결품 위험', rl.length ? 'bad' : 'ok', `${rl.length}<small>건</small>`, rl.length ? `${esc(rl.slice(0, 2).join(' · '))}${rl.length > 2 ? ` 외 ${rl.length - 2}건` : ''}` : '결품 위험 소재 없음',
-      `월말 재고 5일분 미만(${mw.map((x) => `${x.name} ${x.days}일분`).join(' · ') || '없음'}) + 발주 마감 지난 부족 중 이달 부족 시작 — 02 현황와 같은 목록 · 주의(7일분 미만) ${mo.length}건`);
-    const BRG = (D.bridge || []).filter((b) => inPl(b.eng[0])), whMat = ['G', 'C'].filter(inPl).reduce((a, p) => a + ((D.wh[p].parts || [])[0] || [0, 0])[1], 0), whPrd = BRG.reduce((a, b) => a + (b.begin || 0), 0), whAll = whMat + whPrd, r4b = whCap ? whAll / whCap : 0;
+      `월말 재고 5일분 미만(${mw.map((x) => `${x.name} ${x.days}일분`).join(' · ') || '없음'}) + 발주 마감 지난 부족 중 이달 부족 시작 — 02 현황과 같은 목록 · 주의(7일분 미만) ${mo.length}건`);
+    const BRG = (D.bridge || []).filter((b) => inPl(b.eng[0])), whMat = ['G', 'C'].filter(inPl).reduce((a, p) => a + ((D.wh[p].parts || [])[0] || [0, 0])[1], 0), whPrd = BRG.filter((b) => b.eng !== 'G자가재').reduce((a, b) => a + (b.begin || 0), 0), whAll = whMat + whPrd, r4b = whCap ? whAll / whCap : 0;
     const k4 = kc('#stock', '창고 재고', r4b > 1 ? 'bad' : r4b > 0.9 ? 'warn' : 'ok', `${T(whAll)}<small>t</small>`, `소재 ${T(whMat)} + 제품 ${T(whPrd)} · 상한 ${T(whCap)}t의 ${Math.round(r4b * 100)}%`,
-      `판생 재고 기준(소재 + 제품, 제품은 도금 자가재 포함) · 상한 = '27 판생 월말 최대 — 02 현황은 소재를 MES 코드별·제품을 자가재 빼고 봐서 값이 다름`);
+      `판생 재고 기준(소재 + 제품, 도금 자가재 제외 — 상한과 같은 범위) · 상한 = '27 판생 월말 최대 · 02 현황 소재는 MES 코드별이라 값이 다를 수 있음`);
     const spec = fold('fd', `<h3>신호등 기준</h3>` + tbl(['지표', '산식', '정상', '주의', '경고'], D.cfg.signals.map((s) => `<tr><td class="nm">${esc(s.name)}</td><td class="wrap">${esc(s.calc)}</td><td class="pos">${esc(s.ok)}</td><td class="wrn">${esc(s.warn)}</td><td class="neg">${esc(s.bad)}</td></tr>`))
       + `<h3>용어·산식</h3>` + defs([['기준선', `오늘까지 주문이 확정돼 있어야 할 양 = 이달 1일 ~ ${md(D.cut)}(지난 수요일 마감으로 확정되는 다음 생산주의 끝) 일별가동계획 편성량`],
         ['확정 주문', `이달 생산 실적 + ${md(D.cut)}까지 만들 잔량 중 소재 매치(도금 = 소재 입고·생산 중) · 숫자에 마우스 = 소재 매치 전 포함 등록 주문`],

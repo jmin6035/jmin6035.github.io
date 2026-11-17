@@ -14,10 +14,10 @@
 
   // 11/17 검토: color_prev(지난 컬러 계획)는 이 화면에서 GitHub 에 게시할 때만 생김 → 게시 폴더 목록(GitHub)에 있을 때만 받음(없는 파일 404·400 방지).
   //   목록을 못 받으면(네트워크·한도) 예전처럼 그냥 받아 봄
-  const prevListed = () => { const { owner, repo, branch } = GP.PUBLISH_REPO; return fetch(`https://api.github.com/repos/${owner}/${repo}/contents/published?ref=${branch}`, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((L) => (Array.isArray(L) ? L.some((x) => x.name === 'color_prev.enc.json') : null)).catch(() => null); };
+  const prevListed = () => Promise.resolve(null);   // 11/17 재검토: GitHub API(로그인 없이 시간당 한도) 호출 안 함 — 게시본에 자리표시 파일(absent)을 둬서 404 없이 '없음'을 앎
   const envs = Promise.all(['color_calc_files.enc.json', 'color_calc_mes.enc.json', 'integrated.enc.json'].map((n) => GP.latest(n)).concat([prevListed()]))
     .then(async ([files, mes, cur, has]) => {
-      const prev = has === false ? null : has ? await GP.fetchPublished(['published/color_prev.enc.json']) : await GP.latest('color_prev.enc.json');
+      const p0 = has === false ? null : has ? await GP.fetchPublished(['published/color_prev.enc.json']) : await GP.latest('color_prev.enc.json'), prev = p0 && p0.absent ? null : p0;
       E = { files, mes, cur, prev }; return E;
     });
 

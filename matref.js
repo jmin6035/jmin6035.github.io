@@ -56,7 +56,7 @@
     const L = ((PT && PT.sr && PT.sr.stock) || []).filter((s) => re.test(s.name) && s.target && UI.inScope(/^도금/.test(s.name) ? 'G' : 'C'));
     if (!L.length) return '';
     return L.map((s) => { const r = s.current / s.target, tone = r > 1 ? 'bad' : r < 0.9 ? 'warn' : 'ok';
-      return `<span class="ref-c ${tone}" title="판매생산속보 ${esc(UI.fmtDateTime(PT.sr.asOf))} · 목표 = '27 판생그룹 월말 최대"><b>${esc(s.name)}</b> ${UI.fmtT(s.current)} <span>목표 ${UI.fmtT(s.target)}의</span> <em>${Math.round(r * 100)}%</em>${r > 1 ? ` <span>초과 ${UI.fmtT(s.current - s.target)}</span>` : r < 0.9 ? ` <span>미달 ${UI.fmtT(s.target - s.current)}</span>` : ''}</span>`; }).join('');
+      return `<span class="ref-c ${tone}" title="판매생산속보 창고 재고 ${esc(UI.fmtDateTime(PT.sr.asOf))} · 상한 = '27 판생그룹 월말 최대(02 현황 소재는 MES 코드별)"><b>${esc(s.name)}</b> 판생 ${UI.fmtT(s.current)} <span>상한 ${UI.fmtT(s.target)}의</span> <em>${Math.round(r * 100)}%</em>${r > 1 ? ` <span>초과 ${UI.fmtT(s.current - s.target)}</span>` : r < 0.9 ? ` <span>여유 ${UI.fmtT(s.target - s.current)}</span>` : ''}</span>`; }).join('');
   };
 
   const F = { lt: ['leadtime.enc.json', MatRef.ltHtml], spec: ['planstock.enc.json', MatRef.specHtml],
