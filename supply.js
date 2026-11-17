@@ -863,7 +863,9 @@
     const SD = PO.shipDay, shipA = (g) => (SD && SD.g && SD.g[g] ? Object.entries(SD.g[g]).filter(([d]) => d.slice(0, 7) === m).reduce((a, [, v]) => a + v, 0) : 0);
     const val = (g, k) => {   // [진한(실적), 옅은(남은 계획), 월 계획]
       if (k === 'prod') {   // 11/13 사용자 결정: 월 계획 = 지금 계획의 그 달 합(실적 + 앞날 가동 캘린더 계획, 그룹 배정)
-        if (kind === 'cur') { const a = act[g] != null ? act[g] : GR[g] && GR[g].prod ? GR[g].prod.actual : 0; return [a, pln[g] || 0, a + (pln[g] || 0)]; }
+        if (kind === 'cur') { const sk = Object.keys(GMAP).filter((c) => GMAP[c] === g).map((c) => (c.startsWith('자동차') ? '자동차' : c)), gm = D.SJ && D.SJ.month === m && UI.grpMon && UI.grpMon(D.SJ, [...new Set(sk)]);
+          if (gm) return [gm.act, Math.max(0, gm.mon - gm.act), gm.mon];
+          const a = act[g] != null ? act[g] : GR[g] && GR[g].prod ? GR[g].prod.actual : 0; return [a, pln[g] || 0, a + (pln[g] || 0)]; }
         return kind === 'past' ? [act[g] || 0, 0, act[g] || 0] : [0, (act[g] || 0) + (pln[g] || 0), (act[g] || 0) + (pln[g] || 0)];
       }
       const p = kind === 'cur' && GR[g] && GR[g].ship ? GR[g].ship.month : mp(g, 'sales');
@@ -1027,6 +1029,7 @@
     let MOx = null;
     if (document.getElementById('s-ojudge')) { try { const me = await GP.latest('mat_order.enc.json'); MOx = me ? await GP.decryptJSON(me, pw) : null; orderJudge(MOx); } catch (e) { orderJudge(null); } }
     if (!render.sub) { render.sub = true; UI.onScope(() => { if (!D) return; if (document.getElementById('s-ojudge')) orderJudge(MOx); weekBox(); progress(); monthSum(); cal(); }); }   // 11/11 사용자 '도금·컬러·전체를 눌러도 표가 안 바뀜'
+    try { const se = await GP.latest('suju.enc.json'); D.SJ = se ? await GP.decryptJSON(se, pw) : null; } catch (e) { D.SJ = null; }   // 11/17 재검토: 월간 그룹 생산 = 수주 관제 매트릭스와 같은 값(UI.grpMon — 일별 칸 정수 합)
     try { const pe = await GP.latest('procure.enc.json'); const P = pe ? await GP.decryptJSON(pe, pw) : null; matExtend(P); PM = P ? prepMat(P, MOx) : null; MP = P ? matPlan(P, MOx) : null; } catch (e) { PM = null; MP = null; }
     const POD = {}; for (const [k, L] of Object.entries((FHP && FHP.ord) || {})) { const dt = k.split('|').pop(); for (const p_ of L) POD[String(p_).replace(/\s/g, '')] = dt; }   // 11/17 사용자 '입고 보면 언제 발주했는지' — 발주번호 → 발주일(소재 주문 요청 원장)
     window.SupMat = { MP, PM, today, sumT, typeDetail, fhp: FHP, poDate: (po) => POD[String(po || '').replace(/\s/g, '')] || null, ext: (D.matMonths || []).filter((m) => !D.months.includes(m)) };   // ext = 통합 계획 너머 소재 달(matExtend)   // 계획 > 소재(mat_v2.js)가 같은 값을 읽음
