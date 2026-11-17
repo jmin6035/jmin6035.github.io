@@ -144,11 +144,11 @@
         const cl = [d < td ? 'ps' : '', d === td ? 'td' : ''].filter(Boolean).join(' ');
         const late = k === 'po' && t.late[d], lp = k === 'po' && t.lateP && t.lateP[d], io = k === 'ib' && t.ibO[d];
         return `<td${cl ? ` class="${cl}"` : ''}>${v ? `<span class="${k}${late ? ' late' : ''}${v >= 9999.5 ? ' w5' : ''}" data-c="${esc(t.c)}" data-k="${k === 'po' ? 'ord' : 'inb'}" data-d="${d}" title="${esc(`${md(d)} ${t.c} ${k === 'po' ? '발주' : '입고'} ${n0(v)}t${late || lp ? ` — 그중 발주 지연 ${n0(late || lp)}t` : ''}${io ? ` — 그중 입고 지연 ${n0(io)}t(예정일 지난 미입고, 내일 입고로 봄)` : ''}`)}">${n0(v)}</span>${lp ? `<small class="lt">발주 지연<br>${n0(lp)}</small>` : ''}${io ? `<small class="lt">입고 지연<br>${n0(io)}</small>` : ''}` : ''}${v && vn ? `<span class="ib nd" data-c="${esc(t.c)}" data-k="inb" data-d="${d}" title="${esc(`${t.c} 미발주 ${n0(vn)}t — ${md(d)}까지 입고 필요`)}">+${n0(vn)}</span>` : ''}</td>`; }).join('');
-      return `<tr class="${first ? 'r1' : 'r2'}"${first ? ` data-row="${esc(t.c)}"` : ''}>${first ? `<th class="nm" rowspan="3">${esc(t.c)}</th>` : ''}<th class="kd"><i class="${k}">${k === 'po' ? '발주' : '입고'}</i></th>${cells}<td class="tt">${s >= 0.5 ? n0(s) : ''}</td></tr>`;
+      return `<tr class="${first ? 'r1' : 'r2'}"${first ? ` data-row="${esc(t.c)}"` : ''}>${first ? `<th class="nm" rowspan="2">${esc(t.c)}</th>` : ''}<th class="kd"><i class="${k}">${k === 'po' ? '발주' : '입고'}</i></th>${cells}<td class="tt">${s >= 0.5 ? n0(s) : ''}</td></tr>`;
     };
     let b = '';
     const odLine = (t) => `<tr class="r3"><th class="kd"><i class="odt">발주한 날</i></th>${ds.map((d) => { const L = t.odt[d]; return `<td class="odt"${L ? ` title="${esc(`${md(d)} 입고 예정분 발주일: ${L.map(md).join(' · ')}`)}"` : ''}>${L ? `${md(L[0])}${L.length > 1 ? `<small>외 ${L.length - 1}건</small>` : ''}` : ''}</td>`; }).join('')}<td class="tt"></td></tr>`;
-    for (const g of R.calRows) { if (!g.rows.length) continue; b += `<tr class="sec"><th colspan="${nc}"><span>${PLN[g.pl]}</span></th></tr>` + g.rows.map((t) => line(t, 'po', true) + line(t, 'ib', false) + odLine(t)).join(''); }
+    for (const g of R.calRows) { if (!g.rows.length) continue; b += `<tr class="sec"><th colspan="${nc}"><span>${PLN[g.pl]}</span></th></tr>` + g.rows.map((t) => line(t, 'po', true) + line(t, 'ib', false)).join(''); }
     if (R.quiet.length) b += `<tr class="fold"><td colspan="${nc}"><span>▸ 이달 발주·입고 없음 ${R.quiet.length}종 <small>${R.quiet.map(esc).join(' · ')}</small></span></td></tr>`;
     // 이번 주 발주(11/17 사용자 '발주·입고 캘린더랑 연결해서 같이') — 소재 관제와 같은 계산(월~일, 마감 지난 부족 포함) · 누르면 아래 그 소재 줄로
     const S = window.SupMat, w0 = td, w1 = addD(td, 6);   // 오늘(마감 지난 몫이 모이는 칸)부터 7일   // 수~화(주간 관제와 같은 주)
