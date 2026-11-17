@@ -66,7 +66,7 @@
       const lots = {};                                              // 공장:코드 → [{date, t}] (재고 = 오늘)
       Object.entries(D.stock).forEach(([k, t]) => { (lots[k] = lots[k] || []).push({ date: S.today, t, src: '재고' }); });
       S.arr.forEach((a) => { const k = `${plantOf(a.code)}:${a.code}`; (lots[k] = lots[k] || []).push({ date: a.date, t: +a.t || 0, src: a.sup || '입고예정' }); });
-      autoArr().forEach((a) => { const k = `${a.plant}:${a.code}`; (lots[k] = lots[k] || []).push({ date: a.date, t: a.t, src: 'MES 기발주' }); });
+      autoArr().forEach((a) => { const k = `${a.plant}:${a.code}`; (lots[k] = lots[k] || []).push({ date: a.date, t: a.t, src: 'MES 발주 완료분' }); });
       Object.values(lots).forEach((L) => L.sort((a, b) => (a.date < b.date ? -1 : 1)));
       return U.map((u) => {
         const POS = u.plant === 'G' && u.code === 'N';                // 임가공(AL-STS F/H) = 포스코 지급 — 우리 발주 아님
@@ -95,7 +95,7 @@
         if (POS) kind = 'pos';
         else if (short < 1) kind = 'ok';
         else if (!cand.length) kind = 'nosup';
-        else if (!okP.length) kind = S.arr.some((a) => a.code === u.code && plantOf(a.code) === u.plant) || autoArr().some((a) => a.code === u.code && a.plant === u.plant) ? 'adjust' : 'check';   // 그 소재 기발주를 넣었으면 '조정', 아니면 '기발주 확인'
+        else if (!okP.length) kind = S.arr.some((a) => a.code === u.code && plantOf(a.code) === u.plant) || autoArr().some((a) => a.code === u.code && a.plant === u.plant) ? 'adjust' : 'check';   // 그 소재 발주 완료분를 넣었으면 '조정', 아니면 '발주 완료분 확인'
         else if (lateT >= 1) kind = 'alt';
         else kind = 'normal';
         const deadline = parts.length ? parts.map((x) => x.dl).sort()[0] : (cand[0] ? orderDay(addD(needBy, -cand[0].lt), cand[0].cls) : null);

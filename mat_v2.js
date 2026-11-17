@@ -1,7 +1,7 @@
 /* 계획 > 소재(11/12 사용자 시안4): ① 소재 현황 표(이달 확보 · 지금 재고로 버티나) ② 발주 · 입고 캘린더(소재마다 발주·입고 두 줄)
    숫자 = supply.js 소재 캘린더와 같은 계산(window.SupMat.MP — 소재 유형별 일별 발주·입고·생산 투입)
-   · 이달 필요 = 그 달 입고 줄 합 = 입고 완료(MES 실입고) + 발주(기발주 입고 예정) + 미발주(새 발주분)
-   · 지금 재고 · 판정 = 소재 코드별 재고(SupMat.PM: 소재재고List · FH 추정)를 오늘부터 기발주 입고 + , 생산 투입 − 로 굴림(추가 발주 없음 가정)
+   · 이달 필요 = 그 달 입고 줄 합 = 입고 완료(MES 실입고) + 발주(발주 완료분 입고 예정) + 미발주(아직 발주 안 함)
+   · 지금 재고 · 판정 = 소재 코드별 재고(SupMat.PM: 소재재고List · FH 추정)를 오늘부터 발주 완료분 입고 + , 생산 투입 − 로 굴림(추가 발주 없음 가정)
      재고는 소재 코드(CGI · F/H 등) 단위라 같은 코드를 쓰는 유형(P-GI · 서림GI …)은 한 칸으로 묶음 */
 (function () {
   'use strict';
@@ -28,7 +28,7 @@
         const I = R.inb[d] || [], O = R.ord[d] || [];
         for (const e of I) { if (e.kind === 'act') o.rec += e.t; else if (e.kind === 'new') o.nw += e.t; else o.ord += e.t;
           if (e.kind === 'new' && e.x && e.x.dl < today) { o.lateNw += e.t; const f = (e.j && e.j.first) || d; if (!o.lateDay || f < o.lateDay) o.lateDay = f < today ? today : f; } }   // 발주 마감 지난 미발주
-        // 11/13 점검: 입고 줄 = 입고 완료·기발주 입고 예정만(초록) · 미발주 필요량(new)은 따로(빨강 '필요') — 발주 안 한 양이 입고처럼 보이던 것
+        // 11/13 점검: 입고 줄 = 입고 완료·발주 완료분 입고 예정만(초록) · 미발주 필요량(new)은 따로(빨강 '필요') — 발주 안 한 양이 입고처럼 보이던 것
         const ti = sumT(I.filter((e) => e.kind !== 'new')), tn = sumT(I.filter((e) => e.kind === 'new')), to = sumT(O);
         if (ti >= 0.5) o.ib[d] = ti; if (tn >= 0.5) o.ibN[d] = tn;
         if (to >= 0.5) { o.od[d] = to; if (O.some((e) => e.late)) o.late[d] = 1; }
@@ -91,7 +91,7 @@
   const nums = (r) => `<td>${n0(r.need)}</td><td class="c-in">${n0(r.rec)}</td><td>${n0(r.ord)}</td><td class="${r.nw >= 0.5 ? 'c-no' : 'mu'}">${r.nw >= 0.5 ? n0(r.nw) : '–'}</td><td class="pc">${bar(r)}</td>`;
   function judge(C) {
     if (C.st === 'na') return '<span class="m4-jd na" title="이 소재 코드의 재고 자료 없음">–</span>';
-    if (C.st === 'bad') return `<span class="m4-jd bad" title="${esc(C.lateNw ? `발주 마감 지난 미발주 ${n0(C.lateNw)}t — ${md(C.day)}부터 부족` : `${md(C.day)} 부터 재고 부족(추가 발주 없음 가정 · 기발주 입고 반영)`)}">${md(C.day)}부터 부족</span>`;
+    if (C.st === 'bad') return `<span class="m4-jd bad" title="${esc(C.lateNw ? `발주 마감 지난 미발주 ${n0(C.lateNw)}t — ${md(C.day)}부터 부족` : `${md(C.day)} 부터 재고 부족(추가 발주 없음 가정 · 발주 완료분 입고 반영)`)}">${md(C.day)}부터 부족</span>`;
     if (C.st === 'warn' && C.low) return `<span class="m4-jd warn" title="${esc(`월말 재고 ${n0(C.low.v)}t = 하루 평균 투입의 ${C.low.days.toFixed(1)}일분(5일분 미만)`)}">월말 ${C.low.days.toFixed(1)}일분</span>`;
     if (C.st === 'warn') return `<span class="m4-jd warn" title="${esc(`${md(C.day)} 재고 ${n0(C.v2)}t < 다음 이틀 투입 ${n0(C.n2)}t`)}">${md(C.day)} 빠듯</span>`;
     return `<span class="m4-jd ok"${C.min ? ` title="${esc(`말일까지 최저 ${md(C.min.d)} ${n0(C.min.v)}t`)}"` : ''}>충분</span>`;
@@ -108,7 +108,7 @@
           + (i === 0 ? `<td class="stk" rowspan="${C.rows.length}"${C.names.length ? ` title="${esc(C.names.join(' · '))} 재고(${C.rows.length > 1 ? '같은 소재 코드를 쓰는 유형 공용' : '소재 코드 기준'})"` : ''}>${C.stock == null ? '–' : n0(C.stock)}${C.rows.length > 1 ? `<small>${esc(C.names.join(' · '))} 공용</small>` : ''}</td><td class="jdc" rowspan="${C.rows.length}">${judge(C)}</td>` : '') + '</tr>';
       });
     }
-    return `<h2 class="m4-h">${M}월 소재 현황</h2><div class="m4-q" title="${esc(`${(window.SupMat.ext || []).includes(R.mon) ? '필요 = 도금 재계획 · 컬러 3개월 계획 · ' : ''}확인할 소재가 각 묶음 맨 위 · 판정 = 지금 재고 + 기발주 입고 − 생산 투입(추가 발주 없음) · 발주 마감 지난 미발주 = 부족 · 월말 5일분 미만 = 빠듯`)}">톤 · 기준 ${md(R.today)} · 지금 재고 = MES 소재재고 목록(소재 코드별) — 소재 관제·02 현황의 소재 재고(판생속보 창고)와 출처 다름</div>`
+    return `<h2 class="m4-h">${M}월 소재 현황</h2><div class="m4-q" title="${esc(`${(window.SupMat.ext || []).includes(R.mon) ? '필요 = 도금 재계획 · 컬러 3개월 계획 · ' : ''}확인할 소재가 각 묶음 맨 위 · 판정 = 지금 재고 + 발주 완료분 입고 − 생산 투입(추가 발주 없음) · 발주 마감 지난 미발주 = 부족 · 월말 5일분 미만 = 빠듯`)}">톤 · 기준 ${md(R.today)} · 지금 재고 = MES 소재재고 목록(소재 코드별) — 소재 관제·02 현황의 소재 재고(판생속보 창고)와 출처 다름</div>`
       + `<div class="m4-sc"><table class="m4-mx"><colgroup><col style="width:150px"><col><col><col><col><col style="width:28%"><col style="width:210px"><col style="width:150px"></colgroup>`
       + `<thead><tr><th rowspan="2">소재</th><th colspan="5" class="gq">① 이달 필요한 만큼 확보했나</th><th colspan="2" class="gq sl">② 지금 재고로 버티나</th></tr>`
       + `<tr><th>이달 필요</th><th>입고 완료</th><th>발주(입고 예정)</th><th>미발주</th><th>확보율</th><th class="sl">지금 재고</th><th>판정</th></tr></thead><tbody>${b}</tbody></table></div>`

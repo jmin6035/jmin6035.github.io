@@ -358,7 +358,7 @@
     cccal: '컬러 1~4CCL 라인별 월말까지 생산 캘린더 — MES 작업지시 · 컬러 계획 편성 · 소재 현황',
     cgtasks: '도금 수주 업무 달력 — 날짜·오전/오후별 할 일, 누르면 왜·순서·보는 곳·기준·결과물',
     report: '주 1회 임원 보고 양식. 인쇄/PDF 로 그대로 씀',
-    procure: '발주 캘린더로 날짜별 발주 마감·입고 필요를 보고, 판단 목록에서 업체·수량을 정해 구매 요청서를 만듦. 기발주는 입고예정 탭에 넣어야 정확',
+    procure: '발주 캘린더로 날짜별 발주 마감·입고 필요를 보고, 판단 목록에서 업체·수량을 정해 구매 요청서를 만듦. 발주 완료분는 입고예정 탭에 넣어야 정확',
     decisions: '회의·보고에서 정한 것과 할 일을 남기고 기한·상태를 추적(공유 설정 후 모두가 같은 기록)',
     health: '숫자가 언제 기준인지 확인. 일일 자료가 2일 넘게 멈추면 사내 PC 자동 실행 점검',
     docs: '계획 조건식·용어 정의·사용법·요청 메일 모음',
@@ -368,7 +368,16 @@
   /* 표가 있는 카드마다 '엑셀(CSV)' 내려받기 */
   function csvOf(card) {
     const q = (v) => { v = String(v == null ? '' : v).replace(/\s+/g, ' ').trim(); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
-    return [...card.querySelectorAll('table')].map((t) => [...t.rows].map((r) => [...r.cells].map((c) => q(c.innerText)).join(',')).join('\r\n')).join('\r\n\r\n');
+    // 11/17: 합친 칸(rowspan·colspan)을 칸 번호로 풀어 열이 밀리지 않게(발주·입고 캘린더 등) — 합친 칸의 나머지 자리는 빈칸
+    const grid = (t) => { const G = [], vis = (r) => !r.hidden && getComputedStyle(r).display !== 'none';
+      [...t.rows].filter(vis).forEach((r, i) => { G[i] = G[i] || []; let j = 0;
+        for (const c of r.cells) { if (getComputedStyle(c).display === 'none') continue; while (G[i][j] !== undefined) j++;
+          const rs = Math.max(1, c.rowSpan || 1), cs = Math.max(1, c.colSpan || 1);
+          for (let a = 0; a < rs; a++) for (let b = 0; b < cs; b++) { G[i + a] = G[i + a] || []; G[i + a][j + b] = a || b ? '' : q(c.innerText); }
+          j += cs; } });
+      const w = Math.max(0, ...G.map((r) => r.length));
+      return G.map((r) => Array.from({ length: w }, (_, k) => (r[k] == null ? '' : r[k])).join(',')).join('\r\n'); };
+    return [...card.querySelectorAll('table')].map(grid).join('\r\n\r\n');
   }
   function addExport(root) {
     (root || document).querySelectorAll('.card').forEach((c) => {

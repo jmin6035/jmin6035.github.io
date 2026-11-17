@@ -169,7 +169,7 @@ table.t.fwt { margin: 4px 0 0; font-size: 13.5px; width: auto; } table.t.fwt td 
 #mt-orders .card .hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-right: 96px; } #mt-orders .card .hd .ct-seg { margin: 0; }
 #mt-orders .sub-i { font-size: 13.5px; color: var(--ink-2); } #mt-orders .hd h2 small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 6px; } #mt-orders table.mt td, #mt-orders table.mt th { white-space: nowrap; }
 .mt-ul { margin: 4px 0 8px; padding-left: 20px; font-size: 13.5px; line-height: 1.7; color: var(--ink-2); }
-/* 11/13 소재 캘린더·재고 표 = 01 표 모양(ui/optable.css) — 숫자 색만 이 화면 것: 발주 주황 · 입고 초록 · 마감 지남 빨강 · 새 발주분 초록 테 */
+/* 11/13 소재 캘린더·재고 표 = 01 표 모양(ui/optable.css) — 숫자 색만 이 화면 것: 발주 주황 · 입고 초록 · 마감 지남 빨강 · 아직 발주 안 함 초록 테 */
 html:root body main table.gk.tcal td.v { cursor: pointer; font-weight: 700; }
 html:root body main table.gk.tcal tr.m-ord td.v, html:root body main table.gk.tcal th.c1.m-ord { color: #b45f06 !important; }
 html:root body main table.gk.tcal tr.m-inb td.v, html:root body main table.gk.tcal th.c1.m-inb { color: #1e7b3a !important; }
@@ -217,9 +217,9 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
     <section class="card matcal"><h2>소재 캘린더 <small>소재 유형별 발주 → 입고 → 생산 투입 — 칸을 누르면 업체·양·용도</small><span class="unit">톤</span></h2>
       <div id="s-mcal"></div>
       <div id="s-cal3"></div>
-      <details class="tv"><summary>자가재·구매 소재 일별 재고 표 보기 <small class="muted">기말 재고(천t) — 자가재는 계획 기준, 구매 소재는 추가 발주 없음 가정. 초록 칸 = 입고(기발주), 붉은 테 = 발주 마감</small></summary>
+      <details class="tv"><summary>자가재·구매 소재 일별 재고 표 보기 <small class="muted">기말 재고(천t) — 자가재는 계획 기준, 구매 소재는 추가 발주 없음 가정. 초록 칸 = 입고 예정(발주 완료), 붉은 테 = 발주 마감</small></summary>
       <div id="s-cal2"></div>
-      <div class="lg"><span><i style="background:var(--pt-inb)"></i>입고(기발주)</span><span><i style="background:#fff;box-shadow:inset 0 0 0 2px var(--bad)"></i>발주 마감</span><span><i style="background:var(--warn-bg)"></i>재고 부족 주의(자가재 3일분 · 구매 소재 7일분 미만)</span><span><i style="background:var(--bad-bg)"></i>재고 소진·목표 130% 초과</span></div>
+      <div class="lg"><span><i style="background:var(--pt-inb)"></i>입고 예정(발주 완료)</span><span><i style="background:#fff;box-shadow:inset 0 0 0 2px var(--bad)"></i>발주 마감</span><span><i style="background:var(--warn-bg)"></i>재고 부족 주의(자가재 3일분 · 구매 소재 7일분 미만)</span><span><i style="background:var(--bad-bg)"></i>재고 소진·목표 130% 초과</span></div>
       </details>
     </section>
     <div class="det" id="s-det2"></div>
@@ -236,7 +236,7 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
       <ul class="mt-ul">
         <li>가동·자가재·구매 소재·제품 재고 = 확정 통합 계획 기준. 매일 재계획 연동은 추후 반영.</li>
         <li>자가재 = 도금이 만든 컬러 소재(AZ·MAC·AL). 기말 재고 = 전일 재고 + 도금 입고 − 컬러 출고(컬러 생산일 5일 전 출고로 계산).</li>
-        <li>구매 소재(F/H · 컬러 소재)의 업체별 발주·구매 요청은 <a href="procure.html">발주</a>에서(업체별 리드타임·재고·기발주 반영).</li>
+        <li>구매 소재(F/H · 컬러 소재)의 업체별 발주·구매 요청은 <a href="procure.html">발주</a>에서(업체별 리드타임·재고·발주 완료분 반영).</li>
         <li>제품 재고 = 그룹별 기말 재고 추정. 컬러(건재·수출) 출하 = 월 판매계획을 MES 출하 실적의 월중 분포로 나눔(월말 6일에 건재 48%·수출 33%). 도금 = 판매계획 품목이 납기일에 출고(계획과 같은 기준), 목표 = 통합 속보 기준.</li>
         <li>12월 말 흐린 숫자 = 계획 기간 밖(1월)을 추정한 값. 구매 소재 발주는 1월 이후 소요를 4분기 일평균으로, 자가재 12/27~31 출고는 12월 일평균으로 가정.</li>
         <li>날짜 상세의 품목 줄 = 요청 납기(수출 벌크는 선적 완료기한, 그 외는 선적 반순) → 생산일 → 소재. 자가재는 그 반순 품목의 도금 생산일과 컬러 입고(+1일), 팀 기준(도금 생산 → 컬러 투입 8일)으로 판정. 구매 소재는 품명 → 소재 코드 비중(13주 실적)으로 소재를 정하고, 아래 리드타임 표로 입고 예정일·발주일 계산(입고 필요일 = 컬러 생산 − 7일).</li>

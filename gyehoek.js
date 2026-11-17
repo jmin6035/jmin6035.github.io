@@ -65,7 +65,7 @@
     if (SJ && SJ.daily && SJ.month) for (const [l, rows] of Object.entries(SJ.daily)) for (const r of rows) p0[`${l}|${r[0]}`] = +r[1] || 0;
     const ms = [today.slice(0, 7), mAdd(today.slice(0, 7), 1), mAdd(today.slice(0, 7), 2)];
     const MATS = Object.fromEntries((((MO || {}).groups || {}).mats || []).filter((m) => m.plant === 'G').map((m) => [m.key, m]));
-    D = { sts: R && R.rows ? OPT.sts(R) : {}, W, pl, ev, co, BD, actG, actC, cdn, cdx, dayMin, gsd, SW, p0, m0: SJ && SJ.month, at, ms, LT, H: HI && Array.isArray(HI.vers) ? HI : null, MATS, AD: AD && AD.days ? AD : null,
+    D = { WK: SJ && SJ.wk8, sts: R && R.rows ? OPT.sts(R) : {}, W, pl, ev, co, BD, actG, actC, cdn, cdx, dayMin, gsd, SW, p0, m0: SJ && SJ.month, at, ms, LT, H: HI && Array.isArray(HI.vers) ? HI : null, MATS, AD: AD && AD.days ? AD : null,
       SR: PT && Array.isArray(PT.lines) ? { m: String((PT.lines.find((x) => x.asOf) || {}).asOf || '').slice(0, 7), v: Object.fromEntries(PT.lines.filter((x) => x.month > 0).map((x) => [x.line, x.month])) } : null };   // 판매생산속보 월차계획(라인별, 이번 달) — 11/13 사용자 '월차 대비에 판생 월차 추가'
     mon = ms[0];
   }
@@ -222,7 +222,30 @@
   }
 
   // ---------- 소재 탭: supply.js 의 월 탭(#s-mon, 숨김)을 위 월 선택과 맞춤 ----------
+  // 소재 대시보드(11/17 사용자 '그룹별로 이달 필요·입고 완료·발주 예정·미발주·확보율') — 수주 관제 주간과 같은 주문 채움(그 달 생산분)
+  const GRP_ORD = [['G', ['도금수출', '도금국내', '자동차']], ['C', ['컬러수출', '가전내수', '컬러건재', '수요개발']]];
+  function matDash() {
+    const el = $('m4-grp'); if (!el) return;
+    const K = D && D.WK, M = K && K.mon && K.mon[mon], cv = K && K.monCov && K.monCov[mon];
+    if (!M) { el.innerHTML = `<h2 class="m4-h">${+mon.slice(5)}월 그룹별 소재 확보</h2><p class="gk-none">이 달은 주문 자료 범위(9주) 밖입니다</p>`; return; }
+    const z = (v, c) => (v >= 0.5 ? `<td class="${c || ''}">${n0(v)}</td>` : '<td class="z">–</td>');
+    const row = (g, c, tot) => { const ord = c.o || 0, ok = c.ok || 0, inb = (c.on || 0) + (c.late || 0) + (c.wait || 0), no = c.none || 0, r = ord ? Math.round((ok + (c.on || 0)) / ord * 100) : null, nop = Math.max(0, (c.p || 0) - ord);
+      return `<tr class="${tot ? 'tot' : ''}"><th>${esc(g)}</th><td class="b">${n0(ord)}</td>${z(ok)}${z(inb)}${z(no, 'bad')}<td class="pc ${r == null ? '' : r < 50 ? 'bad' : r < 80 ? 'warn' : 'good'}">${r == null ? '–' : r + '%'}</td><td class="gbar">${ord ? `<div style="display:flex;width:100%;height:10px;border-radius:5px;overflow:hidden;background:var(--surface-2)"><div style="width:${ok / ord * 100}%;background:var(--m4-in)"></div><div style="width:${inb / ord * 100}%;background:var(--m4-po)"></div><div style="width:${no / ord * 100}%;background:var(--m4-no)"></div></div>` : ''}</td>${((ob) => (ob ? `<td class="ob ${ob[0] < today ? 'bad' : ''}">${ob[0] === ob[1] ? md(ob[0]) : `${md(ob[0])}~${md(ob[1])}`}${ob[0] < today ? '<small>지남</small>' : '<small>까지</small>'}</td>` : '<td class="z">–</td>'))(c.ordBy)}${z(c.late || 0, 'warn')}${z(nop, 'muted')}</tr>`; };
+    const add = (a, c) => { for (const [k, v] of Object.entries(c)) { if (k === 'ordBy') a.ordBy = a.ordBy ? [v[0] < a.ordBy[0] ? v[0] : a.ordBy[0], v[1] > a.ordBy[1] ? v[1] : a.ordBy[1]] : v.slice(); else if (typeof v === 'number') a[k] = (a[k] || 0) + v; } return a; };
+    let body = '';
+    for (const [pl, gs] of GRP_ORD) {
+      if (!UI.inScope(pl)) continue;
+      const L = gs.filter((g) => M[g] && (M[g].p || M[g].o)); if (!L.length) continue;
+      const T = L.reduce((a, g) => add(a, M[g]), {});
+      body += row(PN[pl] + ' 합계', T, true) + L.map((g) => row(g, M[g])).join('');
+    }
+    el.innerHTML = `<h2 class="m4-h">${+mon.slice(5)}월 그룹별 소재 확보</h2><div class="m4-q">톤 · ${cv ? `${md(cv[0])}~${md(cv[1])} 생산분(주문 기준)` : ''} · 확보율 = (입고 완료 + 제때 입고 예정) ÷ 이달 필요 · 발주일 = 생산일 − 소재 리드타임</div>
+<div class="m4-sc"><table class="m4-gd"><colgroup><col style="width:120px"><col><col><col><col><col style="width:70px"><col style="width:16%"><col style="width:150px"><col><col></colgroup>
+<thead><tr><th>그룹</th><th>이달 필요</th><th>입고 완료</th><th>입고 예정<small>발주 완료</small></th><th>미발주</th><th>확보율</th><th></th><th>미발주 발주일</th><th>늦게 입고<small>입고 예정 중</small></th><th>주문 없음<small>계획만</small></th></tr></thead><tbody>${body}</tbody></table></div>
+<div class="m4-lg"><span><i class="in"></i>입고 완료</span><span><i class="po"></i>입고 예정(발주 완료)</span><span><i class="no"></i>미발주</span></div>`;
+  }
   function matSync() {
+    matDash();
     const b = document.querySelector(`#s-mon button[data-m="${mon}"]`);
     $('gk-matnone').hidden = !!b || !document.querySelector('#s-mon button');
     $('gk-matbody').hidden = !b && !!document.querySelector('#s-mon button');
@@ -249,7 +272,7 @@
       $('lock').hidden = true; $('main').hidden = false;
       bar(); render(); leadTable(); setTab(location.hash === '#mat' ? 'mat' : 'plan');
       if (UI.v2) $('gk-tab').hidden = true;                              // 새 양식: 하위 탭(일별 가동계획 · 소재)은 공통 머리(shell) 탭 막대가 그림
-      UI.onScope(() => { if (D) render(); });
+      UI.onScope(() => { if (D) render(); if (D && tab === 'mat') matDash(); });
     } catch (e) { console.error(e); } finally { busy = false; }
   }
   $('gk-tab').querySelectorAll('button').forEach((b) => b.onclick = () => { location.hash = b.dataset.t === 'mat' ? 'mat' : ''; });
