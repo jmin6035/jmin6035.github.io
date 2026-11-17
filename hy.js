@@ -54,7 +54,7 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
     const SB = Object.fromEntries((v.shortBy || []).map((z) => [z[0], z]));
     const L = v.by.filter((z) => z[3] > 0.5 || z[2] > 0.5 || (v.shortBy || []).some((y) => y[0] === z[0] || y[0].startsWith(z[0] + '(')));   // 부족 판정이 있는 소재는 사용·입고 없어도 보임
     const one_ = (z, lb) => [z[1] > 0.5 ? `<b class="bad">${lb}부족 ${n0(z[1])}톤(발주 시기 지남)</b>` : '', z[2] > 0.5 ? `<b class="warn">${lb}추가 발주(재고 바닥 기준) ${n0(z[2])}톤 · ${z[3] === z[4] ? `${mdd(z[3])}까지` : `${mdd(z[3])}부터 차례로(~${mdd(z[4])})`}</b>` : ''].filter(Boolean).join(' · ');
-    const stat = (n) => { const zs = (v.shortBy || []).filter((z) => z[0] === n || z[0].startsWith(n + '(')); if (!zs.length) return '<span class="ok">확보</span>'; return zs.map((z) => one_(z, z[0] === n ? '' : `${esc(z[0].slice(n.length).replace(/[()]/g, ''))} `)).join('<br>'); };   // 11/17 검토: F/H 는 코드별(AL용·GI/GL용) 판정
+    const stat = (n) => { if (p === 'G' && n === 'SUS') return '<span class="ok">포스코 지급(발주 당일 입고)</span>'; const zs = (v.shortBy || []).filter((z) => z[0] === n || z[0].startsWith(n + '(')); if (!zs.length) return '<span class="ok">확보</span>'; return zs.map((z) => one_(z, z[0] === n ? '' : `${esc(z[0].slice(n.length).replace(/[()]/g, ''))} `)).join('<br>'); };   // 11/17 검토: F/H 는 코드별(AL용·GI/GL용) 판정
     const sl = v.staleBy ? v.staleBy.map(([n_, t_]) => [n_, 0, 0, 0, 0, t_]) : (v.shortBy || []).filter((z) => z[5] > 0.5);
     return `<div class="hy-row"><div class="hy-num"><b>${n0(v.arr)}</b><small>톤</small><span class="d1">입고 예정</span></div>
 <div class="hy-po">${L.map(([n, , a]) => `<div class="pr"><span class="sn">${esc(SN(n))}</span><span class="pa">입고 ${n0(a)}</span><span class="ps">${stat(n)}</span></div>`).join('')}</div>
@@ -115,7 +115,7 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
     ] : [
       ['수주', '실적 + 소재 확보 주문', null, (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', null, { grp: H[p].sales.grp })],
       ['생산', '목표 대비 실적', 'gyehoek.html', (p) => prod(p, H[p].prod, td)],
-      ['소재', '이달 실입고 / 입고 대상', 'gyehoek.html#mat', (p) => bar(p, H[p].mat, `${mo}월 입고 발주`, td)],
+      ['소재', '이달 실입고 / 발주한 입고분', 'gyehoek.html#mat', (p) => bar(p, H[p].mat, `${mo}월 입고 발주(미발주 제외)`, td)],
       ['출하', '계획 대비 출하', null, (p) => bar(p, H[p].ship, '이달 계획', td, { grp: H[p].ship.grp })],
       ['소재 재고', '현재 → 월말', null, (p) => stock(H[p].stockMat)],
       ['제품 재고', '현재 → 월말', 'integrated.html', (p) => stock(H[p].stockPdt)],
