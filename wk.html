@@ -26,9 +26,12 @@ main.wrap { max-width: none; }
 .wk-dash .pl.G { background: var(--wk-g); } .wk-dash .pl.C { background: var(--wk-c); }
 .wk-dash .wkc { display: block; background: var(--surface); border: 1px solid var(--v2-line, var(--line)); border-radius: 8px; padding: 6px 8px; cursor: pointer; min-width: 0; }
 .wk-dash .wkc.sel { border: 2px solid #fbbf24; padding: 5px 7px; }
+.wk-top .wk-seg { display: flex; gap: 4px; } .wk-top .wk-seg:first-of-type { margin-left: auto; } .wk-seg button { font: inherit; font-size: 15px; font-weight: 700; padding: 5px 16px; border-radius: 8px; border: 1px solid var(--v2-line, var(--line)); background: var(--surface); color: var(--ink-2); cursor: pointer; } .wk-seg button.on { background: var(--wk-sec); border-color: var(--wk-sec); color: #fff; } .wk-seg.mo { margin-left: 14px; }
+.wk-dash .wkc .bg { font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.wk-lf .sp { margin-left: 18px; }
 .wk-dash .wkc .v { display: flex; justify-content: space-between; align-items: baseline; font-variant-numeric: tabular-nums; line-height: 1.25; }
 .wk-dash .wkc .v b { font-size: 20px; font-weight: 800; } .wk-dash .wkc .v small { font-size: 13.5px; color: var(--ink-2); }
-.wk-dash .wkc .na { font-size: 14px; color: var(--ink-2); padding: 18px 0; }
+.wk-dash .wkc .na { font-size: 15px; color: var(--ink-2); padding: 22px 0; }
 .wk-dash .wkc .t { font-size: 13.5px; color: var(--ink-2); }
 .sb { display: flex; height: 12px; border-radius: 3px; overflow: hidden; margin: 5px 0 3px; }
 .sb i { display: block; height: 100%; box-shadow: inset -2px 0 0 var(--surface); } .sb .ok { background: var(--m-ok); } .sb .stock { background: var(--m-stock); } .sb .on { background: var(--m-on); } .sb .late { background: var(--m-late); }
@@ -53,6 +56,7 @@ table.wk-t td.nap { color: var(--ink-2); }
 .wk-lg i { display: inline-block; width: 16px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: 0; }
 .wk-ft { font-size: 13.5px; color: var(--ink-2); margin-top: 4px; }
 @media (max-width: 900px) {
+  .wk-top { flex-wrap: wrap; } .wk-top .wk-seg:first-of-type { margin-left: 0; } .wk-seg.mo { margin-left: 0; }
   .wk-dash { grid-template-columns: 48px repeat(var(--n), minmax(86px, 1fr)); overflow-x: auto; }
   .wk-scroll { overflow-x: auto; } table.wk-t { min-width: 820px; }
 }
