@@ -71,7 +71,8 @@ ${((he) => `<div class="k-con ${he ? '' : 'ne'}" id="${id}" hidden><div class="r
     const list = (L, extra, empty) => (L.length ? L.slice(0, 8).map((g) => li(g, extra)).join('') + (L.length > 8 ? `<div class="k-more">외 ${L.length - 8}줄 · ${n0(L.slice(8).reduce((a, g) => a + g.t, 0))}톤</div>` : '') : `<div class="k-more">${empty}</div>`);
     const GAPS = V.flatMap(([d, v]) => (d[2] === 'G' ? v.rows.filter((r) => r.p - r.o > 0.5).map((r) => ({ dept: d[0], dst: r.d, t: r.p - r.o, p: r.p })) : (v.p - v.o > 0.5 ? [{ dept: d[0], dst: `시장 ${v.mkt.slice(0, 3).map(([a]) => a).join('·')}`, t: v.p - v.o, p: v.p }] : []))).sort((a, b) => b.t - a.t);
     const gapT = GAPS.reduce((a, g) => a + g.t, 0);
-    const MAT = grp(ALL.filter((it) => ['none', 'late', 'wait'].includes(it.k))), matT = MAT.reduce((a, g) => a + g.t, 0);
+    const MAT = grp(ALL.filter((it) => ['none', 'late', 'wait'].includes(it.k) && !it.self && !it.rcv)),   // 배정 전(자가재 재고·입고분 매치 안 됨)은 입고 독촉 대상 아님 — 표 '배정 전' 칸
+    matT = MAT.reduce((a, g) => a + g.t, 0);
     const SUBs = grp(ALL.filter((it) => it.k === 'sub')), subT = SUBs.reduce((a, g) => a + g.t, 0);
     const DLs = grp(ALL.filter((it) => it.k === 'dl' && it.due >= K.today)), dlT = DLs.reduce((a, g) => a + g.t, 0);   // 계획 때문에 새로 납기 넘김
     const OLDs = grp(ALL.filter((it) => it.k === 'dl' && it.due < K.today)), oldT = OLDs.reduce((a, g) => a + g.t, 0);   // 이미 납기 지난 주문 — 출하 일정 안내

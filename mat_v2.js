@@ -32,7 +32,7 @@
         const ti = sumT(I.filter((e) => e.kind !== 'new')), tn = sumT(I.filter((e) => e.kind === 'new')), to = sumT(O);
         if (ti >= 0.5) o.ib[d] = ti; if (tn >= 0.5) o.ibN[d] = tn;
         { const ods = [...new Set(I.filter((e) => e.kind === 'arr' && e.a).map((e) => (S.poDate && S.poDate(e.a.po)) || ((/(\d{2})\/(\d{2}) 발주/.exec(e.a.note || '') || [])[0] ? `${mon.slice(0, 4)}-${/(\d{2})\/(\d{2}) 발주/.exec(e.a.note)[1]}-${/(\d{2})\/(\d{2}) 발주/.exec(e.a.note)[2]}` : null)).filter(Boolean))].sort(); if (ods.length) o.odt[d] = ods; }   // 입고 예정분의 발주일
-        if (to >= 0.5) { o.od[d] = to; if (O.some((e) => e.late)) o.late[d] = 1; }
+        if (to >= 0.5) { o.od[d] = to; const lt_ = sumT(O.filter((e) => e.late)); if (lt_ >= 0.5 && lt_ >= to * 0.5) o.late[d] = 1; }   // 마감 지난 몫이 절반 넘을 때만 빨강(P-FH 오늘 9,803t 중 483t 같은 경우는 주황)
         for (const e of O) if (e.kind === 'mlate' && e.m) { const f = e.m.first || (e.m.sizes || []).map((z) => z[3]).filter(Boolean).sort()[0]; if (f && (!o.mlDay || f < o.mlDay)) o.mlDay = f; }   // 마감 지난 부족(수주 관제 matLate 와 같은 목록)의 첫 부족일
         o.use += sumT(R.use[d]);
       }
@@ -112,7 +112,7 @@
     return `<h2 class="m4-h">${M}월 소재 현황</h2><div class="m4-q" title="${esc(`${(window.SupMat.ext || []).includes(R.mon) ? '필요 = 도금 재계획 · 컬러 3개월 계획 · ' : ''}확인할 소재가 각 묶음 맨 위 · 판정 = 지금 재고 + 발주 완료분 입고 − 생산 투입(추가 발주 없음) · 발주 마감 지난 미발주 = 부족 · 월말 5일분 미만 = 빠듯`)}">톤 · 기준 ${md(R.today)} · 지금 재고 = MES 소재재고 목록(소재 코드별) — 소재 관제·02 현황의 소재 재고(판생속보 창고)와 출처 다름</div>`
       + `<div class="m4-sc"><table class="m4-mx"><colgroup><col style="width:150px"><col><col><col><col><col><col style="width:24%"><col style="width:210px"><col style="width:150px"></colgroup>`
       + `<thead><tr><th rowspan="2">소재</th><th colspan="6" class="gq">① 이달 필요한 만큼 확보했나</th><th colspan="2" class="gq sl">② 지금 재고로 버티나</th></tr>`
-      + `<tr><th>이달 필요</th><th>이달 실입고</th><th>발주(입고 예정)</th><th>예정일 지남</th><th>미발주</th><th>확보율</th><th class="sl">지금 재고</th><th>판정</th></tr></thead><tbody>${b}</tbody></table></div>`
+      + `<tr><th>이달 필요</th><th>이달 실입고</th><th>발주(입고 예정)</th><th>예정일 지남<small>30일 이내</small></th><th>미발주</th><th>확보율</th><th class="sl">지금 재고</th><th>판정</th></tr></thead><tbody>${b}</tbody></table></div>`
       + `<div class="m4-lg"><span><i class="in"></i>이달 실입고</span><span><i class="po"></i>발주(입고 예정)</span><span><i class="no"></i>미발주</span></div>`;
   }
 
