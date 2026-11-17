@@ -143,9 +143,9 @@
     let pw = null; for (const k of ['cgl-analysis-pw', 'cgl-supply-pw']) { try { pw = pw || localStorage.getItem(k); } catch (e) { /* 무시 */ } }
     if (!pw) return null;
     const get = (n) => GP.latest(n).then((e) => (e ? GP.decryptJSON(e, pw) : null)).catch(() => null);
-    extra = Promise.all([get('risk.enc.json'), get('integrated.enc.json')]).then(([rk, ig]) => {
-      if (!rk && !ig) return;
-      RKc = RKc || rk; IGc = IGc || ig;
+    extra = Promise.all([get('risk.enc.json'), get('integrated.enc.json'), UI._SJ ? Promise.resolve(UI._SJ) : get('suju.enc.json')]).then(([rk, ig, sj]) => {
+      if (!rk && !ig && !sj) return;
+      RKc = RKc || rk; IGc = IGc || ig; UI._SJ = UI._SJ || sj;   // 11/17 재검토: 관제 띠도 월말 생산 예상 = UI.grpMon(본표·월간 가동과 같은 값)
       const b = document.querySelector('#ui-ctl .cs-sum');   // 띠를 그리는 ui/shell.js draw() 를 다시 부름(펼침 상태는 두 번 눌러 그대로)
       if (b) { b.click(); const b2 = document.querySelector('#ui-ctl .cs-sum'); if (b2) b2.click(); }
     });
