@@ -38,18 +38,18 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
   // 다음 달 소재(11/17 사용자 '12월·1월 소재 — 이미 나간 발주'): 확보 = 월초 재고(이달 월말 예상) + 이미 나간 발주 입고 예정 · 대비 = 그 달 사용 계획
   function matNext(p, v) {
     if (!v) return '<div class="hy-na">자료 없음</div>';
-    const have = (v.beg || 0) + (v.arr || 0);
-    // 부족 = 도금 F/H(합), 컬러 소재별 모자람 합(서로 메우지 않음) · 도금 그 달 1일 − 리드타임이 아직이면 '발주 필요(마감 m/d)'로(부족 아님)
-    // 재고가 바닥나는 날 − 리드타임 = 발주 마감: 마감 전이면 주황 '발주 필요 · 마감', 지났으면 빨강 '부족'(검토 11/17)
-    const md_ = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
-    const one = (n, t, dl, op) => (op ? `<b class="warn">${n ? esc(n) + ' ' : ''}발주 필요 ${n0(t)} · 마감 ${md_(dl)}</b>` : `<b class="bad">${n ? esc(n) + ' ' : ''}부족 ${n0(t)}</b>`);
-    const sh = !v.short ? '' : ' · ' + (v.shortBy ? v.shortBy.map(([n, t, dl, op]) => one(n, t, dl, op)).join(' · ') : one('', v.short, v.dl, v.open));
-    const pc_ = pct(have, v.use), mx = Math.max(have, v.use) || 1;
-    const nd = [v.noDate ? `날짜 없는 기발주 ${n0(v.noDate)}` : '', v.stale ? `예정일 30일 넘게 지난 미입고 ${n0(v.stale)}` : ''].filter(Boolean).join(' · ');
-    return `<div class="hy-row"><div class="hy-num"><b>${n0(have)}</b><small>톤</small><b class="pc">${pc_ ?? '–'}<small>%</small></b></div>
-<div class="hy-trk ${p}"><i class="fl" style="width:${W(have / mx * 100)}"></i><i class="tg" style="left:${W(v.use / mx * 100)}"></i></div>
-<div class="hy-ml"><span>재고 ${n0(v.beg)} + 입고 예정 ${n0(v.arr)}</span><span>필요 ${n0(v.use)}톤</span></div>
-${sh ? `<div class="hy-ms">${sh.replace(/^ · /, '')}</div>` : ''}${nd ? `<div class="hy-mn">미포함 · ${nd}</div>` : ''}</div>`;
+    // 확보율 = 소재별 min(확보, 필요) 합 ÷ 필요(남는 소재가 모자란 소재를 덮지 않음) · 모자란 몫은 그날 발주 마감(바닥일 − 리드타임)으로 나눔:
+    // 마감 지남 = 빨강 '부족'(지금 발주해도 못 댐) · 마감 전 = 주황 '발주 필요(마감 범위)'(검토 11/17)
+    const md_ = (d) => (d ? `${+d.slice(5, 7)}/${+d.slice(8)}` : '');
+    const rg = (a, b) => (a === b ? md_(a) : `${md_(a)}~${md_(b)}`);
+    const one = (n, late, op, a, b) => [late > 0.5 ? `<b class="bad">${n}부족 ${n0(late)}</b>` : '', op > 0.5 ? `<b class="warn">${n}발주 필요 ${n0(op)} · 마감 ${rg(a, b)}</b>` : ''].filter(Boolean).join(' · ');
+    const lines = p === 'G' ? [one('', v.late, v.openT, v.dlFrom, v.dlTo, 0)] : (v.shortBy || []).map(([n, late, op, a, b, st]) => one(`${esc(n)} `, late, op, a, b, st));
+    const pc_ = pct(v.cov, v.use), mx = Math.max(v.use, (v.beg || 0) + (v.arr || 0)) || 1;
+    const st = p === 'G' ? (v.stale ? `예정일 30일 넘게 지난 미입고 ${n0(v.stale)} 미포함` : '') : (v.shortBy || []).filter((z) => z[5] > 0.5).map((z) => `${esc(z[0])} 예정일 30일 넘게 지난 미입고 ${n0(z[5])} 미포함(들어오면 부족 해소)`).join(' · ');
+    // 11/17 사용자 '소재는 발주랑 재고를 같이 만들었노 구분해라': 월초 재고 · 발주 입고 예정을 따로(막대도 두 칸)
+    return `<div class="hy-row"><div class="hy-m2"><div><span>월초 재고</span><b>${n0(v.beg)}</b><small>톤</small></div><div><span>발주 입고 예정</span><b>${n0(v.arr)}</b><small>톤</small></div><div><span>필요</span><b>${n0(v.use)}</b><small>톤</small></div><div><span>확보율</span><b class="${pc_ < 100 ? (lines.some((l) => l.includes('bad')) ? 'bad' : 'warn') : ''}">${pc_ ?? '–'}</b><small>%</small></div></div>
+<div class="hy-trk ${p}"><i class="fl" style="width:${W((v.beg || 0) / mx * 100)}"></i><i class="po" style="left:${W((v.beg || 0) / mx * 100)};width:${W((v.arr || 0) / mx * 100)}"></i><i class="tg" style="left:${W(v.use / mx * 100)}"></i></div>
+${lines.filter(Boolean).map((l) => `<div class="hy-ms">${l}</div>`).join('')}${st ? `<div class="hy-mn">${st}</div>` : ''}</div>`;
   }
   // 다음 달: 월말 예상(○)만
   function stockEnd(v) {
@@ -102,7 +102,7 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
 <div class="hy-g${PS.length < 2 ? ' one' : ''}"><div></div>${PS.map((p) => `<div class="hd ${p === 'G' ? 'g' : 'c'}">${p === 'G' ? '도금' : '컬러'}</div>`).join('')}
 ${R.map(([a, b, u, f]) => `${sec(a, b, u)}${PS.map((p) => cell(p, a, f(p))).join('')}`).join('')}</div>
 <div class="hy-lg">${M ? '<span><i class="k-g"></i>도금 주문·소재 확보</span><span><i class="k-c"></i>컬러 주문·소재 확보</span>' : '<span><i class="k-g"></i>도금 실적</span><span><i class="k-c"></i>컬러 실적</span>'}${M ? '' : '<span><i class="k-rm"></i>남은 계획</span><span><i class="k-tg"></i>목표</span><span><i class="k-td"></i>오늘</span><span>● 현재 · ○ 월말</span>'}<span><i class="k-ov"></i>상한 초과</span>${M ? '<span>○ 월말</span>' : '<span class="bad">빨강 = 7일치 미만</span>'}</div>
-<div class="hy-ft">${M ? '확정 주문 = 납기가 그 달인 등록 주문 · 판매계획 = 도금 재계획 · 컬러 3개월 계획 · 소재 확보 = 월초 재고(전달 월말 예상) + 이미 나간 발주 입고 예정(MES 미입고 발주), 필요 = 그 달 생산 계획의 소재 사용(도금 F/H · 컬러 구매 소재, 자가재 제외)' : '수주 = 이달 생산 실적 + 다음 주까지 만들 소재 매치 주문 · 생산·출하 = MES 판매생산속보(출하 = 내수 송장 · 수출 B/L)'}</div>`;
+<div class="hy-ft">${M ? '확정 주문 = 납기가 그 달인 등록 주문 · 판매계획 = 도금 재계획 · 컬러 3개월 계획 · 소재 = 소재별 확보(월초 재고 + MES 미입고 발주 입고 예정) ÷ 필요(그 달 계획 사용, 컬러 자가재 제외) · 부족 = 발주 마감(바닥일 − 리드타임) 지남, 발주 필요 = 아직 발주 가능' : '수주 = 이달 생산 실적 + 다음 주까지 만들 소재 매치 주문 · 생산·출하 = MES 판매생산속보(출하 = 내수 송장 · 수출 B/L)'}</div>`;
     m.querySelectorAll('.hy-tabs button').forEach((b) => b.addEventListener('click', () => { MI = +b.dataset.mi; try { sessionStorage.setItem('hy-mi', MI); } catch (e) { /* 무시 */ } render(D); }));
   }
   let LD = null, SUB = false;
