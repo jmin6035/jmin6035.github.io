@@ -259,7 +259,7 @@
     const M_ = +mon.slice(5);
     el.innerHTML = `<h2 class="m4-h">${M_}월 그룹별 소재 발주 · 입고 <small>톤</small></h2>
 <div class="m4-sc"><table class="m4-gd" style="min-width:720px"><colgroup><col style="width:150px"><col><col><col>${cur ? '<col>' : ''}</colgroup>
-<thead><tr><th>판매그룹</th>${cur ? '<th>입고 지연<small>예정일 지남</small></th>' : ''}<th>${M_}월 발주<small>이달 낸 발주</small></th><th>미입고<small>${M_}월 발주 중</small></th><th>${M_}월 입고 예정<small>${cur ? `${md(today)}~ · ` : ''}앞 달 발주 포함</small></th></tr></thead><tbody>${body || `<tr><td colspan="${cur ? 5 : 4}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>
+<thead><tr><th>판매그룹</th>${cur ? '<th>입고 지연<small>예정일 지남</small></th>' : ''}<th>${M_}월 발주<small>이달 낸 발주</small></th><th>미입고<small>${M_}월 발주 중</small></th><th>${M_}월 입고 예정<small>${cur ? `<b class="dt">${md(today)}~</b> · ` : ''}앞 달 발주 포함</small></th></tr></thead><tbody>${body || `<tr><td colspan="${cur ? 5 : 4}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>
 <div class="m4-lg"><span>판매그룹 = 발주 원장 기준(가전내수는 컬러수출에 포함 — 02 현황·주간 관제와 같음)</span></div>`;
   }
   function matSync() {
