@@ -64,6 +64,8 @@ table.sv tr > :nth-last-child(-n+3):not([colspan]) { position: sticky; z-index: 
 table.sv tr.z > :nth-last-child(-n+3):not([colspan]) { background: var(--zebra); }
 table.sv tr > :nth-last-child(1):not([colspan]) { right: 0; } table.sv tr > :nth-last-child(2):not([colspan]) { right: 96px; } table.sv tr > :nth-last-child(3):not([colspan]) { right: 208px; box-shadow: -4px 0 6px -4px rgba(0,0,0,.25); }
 html body main table.sv thead tr > th:nth-last-child(-n+3):not([colspan]) { z-index: 3; background: #1f3864 !important; }
+@media (max-width: 1499px) { table.sv { min-width: 0; } html body main table.sv.v2-grid :is(td, th), html.v2 body main table.sv.v2-grid :is(td, th) { font-size: 14px !important; } table.sv th, table.sv td { padding: 5px 4px; } table.sv tr > :nth-last-child(2):not([colspan]) { right: 84px; } table.sv tr > :nth-last-child(3):not([colspan]) { right: 184px; } }
+@media (max-width: 700px) { table.sv tr > :nth-last-child(-n+3):not([colspan]) { position: static; box-shadow: none; } html body main table.sv thead tr > th:nth-last-child(-n+3):not([colspan]) { position: sticky; right: auto; } }
 </style>
 </head>
 <body>

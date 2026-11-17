@@ -255,7 +255,7 @@
       + `<td class="c-con"><div class="cn">${esc(x.con || '계약 미연결')}</div><div class="cd">${tag}${due ? `<span class="${due < dayOf(v.e) ? 'cp bd' : 'cp'}" title="납기">납기 ${md(due)}</span>` : ''}</div><div class="sub">${sub}</div></td>`
       + `<td class="c-sp"><div class="sp">${chips(x)}</div></td>`
       + (plant === 'cg' ? `<td class="nm"><b>${n1(x.t)}<small>t</small></b><div class="sub">${hrs(v.rm)} · ${n1(x.tph)}t/h</div></td>`
-        : `<td class="nm" title="잔량 톤 · 시간 = 길이 ÷ L/S(26년 1월~ 실적) × 라인 보정"><b>${n1(x.t)}<small>t</small></b><div class="sub">${hrs(v.rm)}${x.ls && x.ls[l] && !x.dummy ? ` · L/S ${n0(x.ls[l])}` : ''}</div></td>`)
+        : `<td class="nm" title="잔량 톤 · 시간 = 길이 ÷ L/S(26년 1월~ 실적) × 라인 보정"><b>${n1(x.t)}<small>t</small></b><div class="sub">${hrs(v.rm)}${x.ls && x.ls[l] && !x.dummy ? ` · 기준 속도 ${n0(x.ls[l])}m/분` : ''}</div></td>`)
 
       + `<td class="ac"><span class="acd"><button data-a="up" data-i="${v.i}" title="위로">↑</button><button data-a="dn" data-i="${v.i}" title="아래로">↓</button>`
       + `<select data-a="day" data-i="${v.i}" title="다른 날로"><option value="">날</option>${days.map((d) => `<option value="${d}">${dnm(d)}</option>`).join('')}</select>`
@@ -303,7 +303,7 @@
     const stsH = (d) => { const x = (((R && R.stsPlan) || {})[line] || {})[d]; if (!x || !(x[0] >= 0.5)) return '';   // AL-STS 날(재계획, 11/13) — 청록 칩 + 예약(판매계획 물량, 주문 D-3 확정)
       return `<span class="stsc" title="재계획 AL-STS ${n0(x[0])}t${x[1] >= 0.5 ? ` · 그중 예약 ${n0(x[1])}t = 판매계획 물량(외부 소재처 주문 D-3 확정)` : ' · 주문'}">AL-STS ${n0(x[0])}t${x[1] >= 0.5 ? ` · 예약 ${n0(Math.min(x[1], x[0]))}t(D-3 확정)` : ''}</span>`; };
     const dayHead = (d) => { const o = dsum[d] || { n: 0, t: 0, run: 0, dn: 0 }; const over = o.run + o.dn > 1440.5;
-      return `<tr class="dh" data-d="${d}"><td colspan="7"><div class="dhh"><b>${d === 'over' ? `기간 끝(${md(iso(W1))} 07:00) 초과` : dnm(d)}</b><span>작업 ${o.n}건 · ${n0(o.t)}t</span><span>생산 ${n0(o.run)}분 · 휴지 ${n0(o.dn)}분</span>${stsH(d)}${over && d !== 'over' ? `<em title="그날 시작한 작업·휴지 합이 1,440분 초과">다음날로 ${n0(o.run + o.dn - 1440)}분</em>` : ''}</div>${d === 'over' ? '' : bar(d)}</td></tr>`; };
+      return `<tr class="dh" data-d="${d}"><td colspan="7"><div class="dhh"><b>${d === 'over' ? `기간 끝(${md(iso(W1))} 07:00) 초과` : dnm(d)}</b><span>작업 ${o.n}건 · ${n0(o.t)}t</span><span>그날 시작한 작업 · 생산 ${hrs(o.run)} · 휴지 ${hrs(o.dn)}</span>${stsH(d)}${over && d !== 'over' ? `<em title="그날 시작한 작업·휴지 합이 1,440분 초과"> 그중 다음날로 ${hrs(o.run + o.dn - 1440)}</em>` : ''}</div>${d === 'over' ? '' : bar(d)}</td></tr>`; };
     const shown = new Set();
     ev.forEach((q) => {
       const d = q.s >= W1 ? 'over' : dayOf(q.s);

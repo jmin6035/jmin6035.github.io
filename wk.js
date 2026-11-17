@@ -36,11 +36,11 @@
     const w = W[SEL], V = DP.map((d) => [d, dv(w, d)]), T = tot(V.map(([, v]) => v));
     const sub = T.so + T.sw + T.sb + T.sn;
     const SELF_T = w.g.filter((x) => PS.includes(x.pl)).reduce((a_, x) => a_ + Object.values(x.byLn || {}).reduce((b_, c_) => b_ + (c_.noneSelf || 0), 0), 0);   // 자가재 대기(도금 생산) — 미발주와 나눔
-    const kpi = T.p < 0.5 && T.o < 0.5 ? `<div class="k-card"><div class="k-more" style="font-size:16px;padding:6px 0"><b>${md(w.from)}~${md(w.to)} 판매재 생산 계획 없음</b></div></div>` : `<div class="k-kpi">
+    const kpi = T.p < 0.5 && T.o < 0.5 ? `<div class="k-card"><div class="k-more" style="font-size:16px;padding:6px 0"><b>${md(w.from)}~${md(w.to)} 판매재 생산 계획 없음</b></div></div>` : `<div class="k-kpi${PS.includes('C') ? '' : ' n3'}">
 <div><div class="l">판매재 생산 계획<small> (자가재 제외)</small></div><div class="v">${n0(T.p)}<small>톤</small></div><div class="s">${DP.map(([n], i) => `${n} ${n0(V[i][1].p)}`).filter((_, i) => V[i][1].p).join(' · ')}</div></div>
 <div><div class="l">수주 확보율</div><div class="v ${pc(T.o, T.p) < 90 ? 'bad' : ''}">${pc(T.o, T.p) ?? '–'}<small>%</small></div><div class="s">${n0(T.o)}톤 · 주문 미달 ${n0(Math.max(0, T.p - T.o))}톤</div></div>
 <div><div class="l">소재 확보율(생산 전날까지)</div><div class="v ${pc(T.ok + T.on, T.o) < 50 ? 'bad' : pc(T.ok + T.on, T.o) < 80 ? 'warn' : ''}">${pc(T.ok + T.on, T.o) ?? '–'}<small>%</small></div><div class="s">확보 ${n0(T.ok)} · 입고 예정 ${n0(T.on)} · 입고 지연 ${n0(T.late)} · 입고일 모름 ${n0(T.wait)} · 배정 전 ${n0(SELF_T)} · 미발주 ${n0(Math.max(0, T.none - SELF_T))}</div></div>
-<div><div class="l">부자재 준비(컬러)</div><div class="v ${sub && pc(T.so, sub) < 80 ? 'subc' : ''}">${sub ? pc(T.so, sub) : '–'}<small>%</small></div><div class="s">${sub ? `준비 ${n0(T.so)} · 대기 ${n0(T.sw + T.sb)} · 작업지시 전 ${n0(T.sn)}` : '도금은 주문 단위 부자재 없음'}</div></div></div>`;
+${PS.includes('C') ? `<div><div class="l">부자재 준비(컬러)</div><div class="v ${sub && pc(T.so, sub) < 80 ? 'subc' : ''}">${sub ? pc(T.so, sub) : '–'}<small>%</small></div><div class="s">${sub ? `준비 ${n0(T.so)} · 대기 ${n0(T.sw + T.sb)} · 작업지시 전 ${n0(T.sn)}` : '도금은 주문 단위 부자재 없음'}</div></div>` : ''}</div>`;
     // 부서별 준비 현황
     const z = (v, c) => (v > 0.5 ? `<td class="${c || ''}">${n0(v)}</td>` : '<td class="z">–</td>');
     // 라인별 대구분 → 그룹별(11/17 사용자): 라인 머리 줄(합계) 아래 그 라인에서 만드는 그룹
@@ -146,9 +146,9 @@ ${false && (LF.length || ST.length) ? `<div class="k-ask">${LF.length ? `<div cl
       if (l.gap > 0.5) acts.push(`<li><b>주문 미달 ${n0(l.gap)}t</b> — 수주 요청 <span class="who">마케팅</span></li>`);
       acts.push(rem > 0.5 ? (small ? `<li class="last">남는 ${n0(rem)}t는 하루치가 안 됨 → <b>작업 순서 조정</b> <span class="who">편성</span></li>` : `<li class="last bad">그래도 <b>${n0(rem)}t 빔 → 휴지 약 ${d.toFixed(1)}일 검토</b> <span class="who">생산계획 결정</span></li>`) : '<li class="last ok"><b>다 채움</b> — 휴지 없음</li>');
       if (l.sel > 0.5) acts.push(`<li class="note">배정 전 ${n0(l.sel)}t(자가재·입고분 매치 대기)는 못 만드는 양에서 뺌 → 소재 배정 확인</li>`);
-      const hoX = ho.filter(([k_]) => k_.split('|')[2] === 'x').reduce((a_, [k_, v]) => { const t_ = k_.split('|')[3]; a_[t_] = (a_[t_] || 0) + v; return a_; }, {});   // 다른 라인이 이 라인 주문을 옮겨 감
+      const hoX = ho.filter(([k_]) => k_.split('|')[2] === 'x').reduce((a_, [k_, v]) => { const [, n_, , t_] = k_.split('|'); (a_[t_] = a_[t_] || {})[n_] = (a_[t_][n_] || 0) + v; return a_; }, {});   // 다른 라인이 이 라인 주문을 옮겨 감(주별)
       const outX = Object.entries(HOLE).filter(([k_, v]) => k_.split('|')[2] === 'x' && k_.split('|')[3] === l.line && v > 0.5).reduce((a_, [k_, v]) => { const f_ = k_.split('|')[0]; a_[f_] = (a_[f_] || 0) + v; return a_; }, {});
-      if (hoW.length) acts.push(`<li class="note">당긴 만큼 뒤 주가 빔: ${hoW.map(([n_, v]) => `${lab(SEL + +n_)} ${n0(v)}t`).join(' · ')}${Object.keys(hoX).length ? `(${Object.entries(hoX).map(([t_, v]) => `${esc(t_)}이 옮겨 간 ${n0(v)}t 포함`).join(' · ')})` : ''} → 그 주 다시 확인</li>`);
+      if (hoW.length) acts.push(`<li class="note">당긴 만큼 뒤 주가 빔: ${hoW.map(([n_, v]) => `${lab(SEL + +n_)} ${n0(v)}t`).join(' · ')}${Object.keys(hoX).length ? ` — 이 중 ${Object.entries(hoX).map(([t_, W_]) => `${esc(t_)}이 옮겨 간 ${Object.entries(W_).sort((a_, b_) => a_[0] - b_[0]).map(([n_, v]) => `${lab(SEL + +n_)} ${n0(v)}t`).join('·')}`).join(' · ')}` : ''} → 그 주 다시 확인</li>`);
       if (Object.keys(outX).length) acts.push(`<li class="note">${Object.entries(outX).map(([f_, v]) => `${esc(f_)} 주문 ${n0(v)}t을 옮겨 옴 → ${esc(f_)} 그 주가 빔`).join(' · ')}</li>`);
       return `<div class="${rem > 0.5 && !small ? 'idle' : ''}"><div class="h">${esc(l.line)} <small>${l.fams && l.fams.length ? `${l.fams.join('·')} · ` : ''}판매재 ${n0(l.plan)}t${l.runD < 7 ? ` · 가동 ${l.runD}일` : ''}</small></div>
 <div class="v">못 만드는 양 ${n0(l.need)}t</div><div class="s flow">소재 늦음·없음 ${n0(l.out)}t${l.gap > 0.5 ? ` + 주문 미달 ${n0(l.gap)}t` : ''} → 당겨서 ${n0(pu)}t 채움 → ${rem > 0.5 ? `<b class="bad">${n0(rem)}t 남음</b>` : '<b>다 채움</b>'}</div><ol class="k-act">${acts.join('')}</ol></div>`;
@@ -180,7 +180,8 @@ ${false && (LF.length || ST.length) ? `<div class="k-ask">${LF.length ? `<div cl
     const VW = [['a', '준비 현황'], ['b', '부족 대응'], ['c', '일정 지연 대비']];
     const seg = `<div class="k-seg">${VW.map(([k, t]) => `<button type="button" data-v="${k}" class="${VIEW === k ? 'on' : ''}">${t}</button>`).join('')}</div>`;
     const pull0 = PLANS.reduce((a_, P) => a_ + P.st.filter((s_) => !s_.k).reduce((b_, s_) => b_ + s_.tt, 0), 0);
-    const body = VIEW === 'a' ? `${kpi}<div style="margin:14px 0">${dtab}</div>${ask.replace('@@PULL@@', pull0 > 0.5 ? ` · 이 중 ${n0(pull0)}t은 이 주 부족분에 당김` : '')}`
+    const NOP = T.p < 0.5 && T.o < 0.5;   // 11/17 검토: 판매재 계획 없는 주 = 한 줄만
+    const body = NOP && VIEW !== 'c' ? kpi : VIEW === 'a' ? `${kpi}<div style="margin:14px 0">${dtab}</div>${ask.replace('@@PULL@@', pull0 > 0.5 ? ` · 이 중 ${n0(pull0)}t은 이 주 부족분에 당김` : '')}`
       : VIEW === 'b' ? `${sumHtml}<div class="k-h">그룹·라인별 상세<small>눌러서 당길 주문·미룰 주문 계약번호 보기</small></div>${swHtml}`
       : `<div class="k-h">수리·M/C·휴지 지연 대비<small>${md(w.from)}~${md(W[Math.min(SEL + 3, W.length - 1)].to)}</small></div><div class="k-card k-side">${dlHtml}</div>`;
     m.innerHTML = `<div class="k-top"><span class="as">${md(K.today)} 기준 · 생산주 = 수~화 · 계획 = ${K.planAt ? md(K.planAt) + ' 재계획' : '재계획'}·통합 계획</span>${seg}</div>
