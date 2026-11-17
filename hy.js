@@ -40,13 +40,13 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
   }
   // 다음 달 소재(11/17 사용자 '12월·1월 소재 — 이미 나간 발주'): 확보 = 월초 재고(이달 월말 예상) + 이미 나간 발주 입고 예정 · 대비 = 그 달 사용 계획
   // 11/17 사용자 '재고는 재고대로 발주는 발주대로 구분': 다음 달 소재를 두 행으로 — 소재별(도금 F/H·SUS / 컬러 CGI·AZ·EGI·SUS…)
-  const SN = (n) => ({ 'GALVALUME(AZ)': 'AZ', 'PosMAC1.5': 'MAC1.5', 'PosMAC3.0': 'MAC3.0', 'ALUMINIUM': 'AL' }[n] || n);
+  const SN = (n) => ({ 'GALVALUME(AZ)': 'AZ', 'PosMAC1.5': 'MAC1.5', 'PosMAC3.0': 'MAC3.0', 'ALUMINIUM': 'AL', 'F/H(GI/GL용)': 'F/H GI·GL', 'F/H(AL용)': 'F/H AL', 'F/H(Ti용)': 'F/H Ti' }[n] || n);
   const mdd = (d) => (d ? `${+d.slice(5, 7)}/${+d.slice(8)}` : '');
   function matStock(p, v, sm) {
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
     const L = v.by.filter((z) => z[3] > 0.5), cap = sm && sm.cap, bg = sm ? sm.beg : v.beg, en = sm ? sm.end : v.endT, su = sm && sm.sus;
     return `<div class="hy-row"><div class="hy-num sk">${su ? '<span class="hlb">F/H</span>' : ''}<span class="hlb">월초</span><b>${n0(bg)}<small>톤</small></b><span class="ar">→</span><span class="hlb">월말</span><b class="${(cap && en > cap) || (en < 0.5 && bg > 0.5) ? 'bad' : ''}">${n0(en)}<small>톤</small>${en < 0.5 && bg > 0.5 ? ' 바닥' : cap ? ` ${pct(en, cap)}%` : ''}</b></div>
-<div class="hy-mn">${su ? `SUS 별도 월초 ${n0(su.beg)} → 월말 ${n0(su.end)}톤 · ` : ''}월말 = 추가 발주 없이 입고 예정만 들어올 때${cap ? ` · 상한 ${n0(cap)}톤` : ''}</div>
+<div class="hy-mn">${(v.shortBy || []).filter((z) => z[6] && z[0] !== 'SUS').map((z) => `<b class="bad">${esc(SN(z[0]))} ${z[6].slice(8) === '01' ? '월초부터' : mdd(z[6])} 바닥</b> · `).join('')}${su ? `SUS 별도 월초 ${n0(su.beg)} → 월말 ${n0(su.end)}톤 · ` : ''}월말 = 추가 발주 없이 입고 예정만 들어올 때${cap ? ` · 상한 ${n0(cap)}톤` : ''}</div>
 <div class="hy-sub">${L.filter(([, , , u]) => u >= 0.5).map(([n, b, , u]) => `<div class="sr"><span class="sn">${esc(SN(n))}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(Math.min(100, b / u * 100))}"></i></div><span class="sv">월초 재고로 ${b >= u ? '<b>모두 충당</b>' : `충당 <b>${pct(b, u)}%</b>`}</span></div>`).join('')}</div></div>`;   // 11/17 검토: 100% 넘으면 '모두 충당'(1151% 같은 값 안 보임)
   }
   function matPo(p, v) {
@@ -67,7 +67,7 @@ ${v.stale > 0.5 ? `<div class="hy-mn">제외: 입고 예정일이 30일 넘게 �
     const md_ = (d) => (d ? `${+d.slice(5, 7)}/${+d.slice(8)}` : '');
     const rg = (a, b) => (a === b ? md_(a) : `${md_(a)}~${md_(b)}`);
     const one = (n, late, op, a, b) => [late > 0.5 ? `<b class="bad">${n}부족 ${n0(late)}</b>` : '', op > 0.5 ? `<b class="warn">${n}발주 필요 ${n0(op)} · 마감 ${rg(a, b)}</b>` : ''].filter(Boolean).join(' · ');
-    const lines = (v.shortBy || []).map(([n, late, op, a, b]) => one(`${esc(n)} `, late, op, a, b));
+    const lines = (v.shortBy || []).map(([n, late, op, a, b]) => one(`${esc(SN(n))} `, late, op, a, b));
     const pc_ = pct(v.cov, v.use), hv = (v.beg || 0) + (v.arr || 0) || 1, cb = v.cov * (v.beg || 0) / hv, ca = v.cov * (v.arr || 0) / hv;   // 막대 = 필요 대비 소재별 확보(남는 소재로 모자란 소재를 덮지 않음), 재고·발주 비율로 나눔
     const sl = v.staleBy ? v.staleBy.map(([n_, t_]) => [n_, 0, 0, 0, 0, t_]) : (v.shortBy || []).filter((z) => z[5] > 0.5), st = sl.length ? `빼고 계산: 예정일 30일 넘게 지난 미입고 ${sl.map((z) => `${esc(z[0])} ${n0(z[5])}t`).join(' · ')}(입고 여부 확인)` : '';
     // 11/17 사용자 '소재는 발주랑 재고를 같이 만들었노 구분해라': 월초 재고 · 발주 입고 예정을 따로(막대도 두 칸)
@@ -90,7 +90,7 @@ ${lines.filter(Boolean).map((l) => `<div class="hy-ms">${l}</div>`).join('')}${s
     return `<div class="hy-row"><div class="hy-num sk"><span class="hlb">현재</span><b class="${a > cap ? 'bad' : ''}">${n0(a)}<small>톤</small> ${pct(a, cap)}%</b>${d1(v)}<span class="ar">→</span><span class="hlb">월말</span><b class="${e > cap ? 'bad' : ''}">${n0(e)}<small>톤</small> ${pct(e, cap)}%</b></div>
 <div class="hy-zone"><i class="ok" style="width:${W(xc)}"></i><i class="ov" style="left:${W(xc)}"></i><i class="cp" style="left:${W(xc)}"></i>
 ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i class="de${e > cap ? ' bad' : ''}" style="left:${W(xe)}"></i><i class="dn${a > cap ? ' bad' : ''}" style="left:${W(xa)}"></i></div>
-<div class="hy-cap"><span></span><span>상한 ${n0(cap)}톤</span></div></div>`;
+<div class="hy-cap"><span>${v.sr != null ? `현재·월말 = MES 소재재고(코드별) · 판생 재고 ${n0(v.sr)}톤` : ''}</span><span>상한 ${n0(cap)}톤</span></div></div>`;
   }
   const cover = (L, noDays) => `<div class="hy-cv">${(L || []).map((x) => `<div class="c${x.days != null && x.days < 7 ? ' r' : ''}"><div class="n">${esc(x.line)}</div><div class="v">${n0(x.t)}<small>톤</small></div>${noDays ? '' : `<div class="d">${x.days != null ? x.days + '일치' : '–'}</div>`}</div>`).join('')}</div>`;
 
