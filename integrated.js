@@ -154,7 +154,7 @@
       return `<div class="st-chart st-${now}"${r.title ? ` title="${esc(r.title)}"` : ''}><div class="st-h"><b>${esc(GN[r.k] || r.k)}</b><span class="st-b">${now === 'ok' ? '정상' : SN[now]}</span></div>
         <div class="st-s st-top"><b class="st-n">${n0(r.v[wi])}t</b><span>${md(W[wi])} 주말${r.tgt ? ` · 목표 ${n0(r.tgt[wi])}t의 ${Math.round(r.v[wi] / r.tgt[wi] * 100)}%` : ''}</span>${a ? `<span>실제 ${md(a[0])} <b>${n0(a[1])}t</b></span>` : ''}</div>
         <svg viewBox="0 0 ${Wd} ${H}" class="cv" role="img" aria-label="${esc(GN[r.k] || r.k)} 주말 재고 추이">${g}</svg>
-        ${ahead ? `<div class="st-w st-${ahead}">앞으로 ${SN[ahead]}: ${md(W[wk])} 주 ${n0(r.v[wk])}t</div>` : `<div class="st-w ok">12월 말 ${n0(r.v[last])}t — ${r.tgt ? '목표 미만 없음' : '바닥나지 않음'}</div>`}</div>`;
+        ${ahead ? `<div class="st-w st-${ahead}">앞으로 ${SN[ahead]}: ${md(W[wk])} 주 ${n0(r.v[wk])}t</div>` : `<div class="st-w ok">12월 말 ${n0(r.v[last])}t — ${r.tgt ? '목표 미만 없음' : '부족 없음'}</div>`}</div>`;
     };
     // ② 공장별 전체 재고(2026-10-14 사용자): 도금 = 판매재(국내·수출·자동차) + 자가재, 컬러 = 건재 + 수출 — 실제(속보 원천 표, 전월 말부터 일별) vs 계획(주말 예측)
     const AD = {}; ((PT && PT.stockTrend) || []).forEach(([d, k, t]) => { (AD[d] = AD[d] || {})[k] = t; });
@@ -230,7 +230,7 @@
     return { html: card('s-stock', '①', '제품·자가재 재고 추이', `${SRL ? `제품${SRL.v && SRL.v['G자가재'] ? '·자가재' : ''} = 매일 롤링(어제 ${md(SRL.asOf)} 실제 재고 + 아침 재계획)${SRL.v && SRL.v['G자가재'] ? '' : ` · 자가재 = ${VN[V]}`}` : `${VN[V]} 기준`} · 주말 재고 · ${md(W[wi])} 주부터 12월 말까지`, `
       ${topH}
       ${plants ? `<h3 class="st-sec">공장별 전체 재고 <small>숫자 = 천t · 초록 = 실제(판매생산속보, 일별) · 파랑 = 계획(주말 예측)</small></h3><div class="dc-grid st-charts st-plant">${plants}</div>` : ''}
-      <h3 class="st-sec">판매그룹별 재고 <small>숫자 = 주말 재고(천t) · 목표 = TF 목표 일수 × 다음 달 하루 판매 · 자가재 = 도금 → 컬러 소재(목표 없음, 바닥나지 않게)</small></h3>
+      <h3 class="st-sec">판매그룹별 재고 <small>숫자 = 주말 재고(천t) · 목표 = TF 목표 일수 × 다음 달 하루 판매 · 자가재 = 도금 → 컬러 소재(목표 없음, 부족해지지 않게)</small></h3>
       <div class="legend"><span><i style="background:var(--brand)"></i>주말 재고(계획)</span><span><i style="background:var(--s3)"></i>실제(속보, 일별)</span><span><i class="dash" style="background:var(--ink-2)"></i>목표</span><span><i class="box" style="background:color-mix(in srgb, var(--good) 18%, transparent)"></i>정상 범위(목표의 90~130%)</span><span><i class="dash" style="background:var(--bad)"></i>안전재고</span></div>
       <div class="dc-grid st-charts">${rows.map(mini).join('')}</div>
       <details class="tv"><summary>주별 표로 보기 (단위 천t)</summary><div class="scroll"><table class="t heat"><thead>${head}</thead><tbody>${body}</tbody></table></div></details>
@@ -421,7 +421,7 @@
       <li><b>목표(점선)</b> = TF 목표 일수 × 다음 달 하루 판매 · <b>정상 범위</b> = 목표의 90%~상한 · <b>상한 초과</b> = 상한 일수를 넘는 재고 · <b>안전재고(붉은 점선)</b> 아래 = 부족 위험</li>
       <li><b>제품 재고 목표</b> = '27 판생그룹 월말 최대(${Object.entries(MX).map(([k, v]) => `${esc(k)} ${n0(v)}t`).join(' · ')})</li>
       <li><b>제품 재고</b> = 매일 롤링 — 어제 말 실제 재고(판매생산속보 원천 표) + 아침 재계획 생산 − 계획 출고(가동 캘린더 재고와 같은 값). 실제(초록 선) = 판매생산속보 원천 표 부서별 날짜별 합계</li>
-      <li><b>자가재</b> = 기초재고(재고현황 월말) + 도금 입고 − 컬러 출고(생산일 8일 전) · 목표 없음(바닥나지 않게) · 속보에 강종별 값이 없어 실제 선은 합계만</li>
+      <li><b>자가재</b> = 기초재고(재고현황 월말) + 도금 입고 − 컬러 출고(생산일 8일 전) · 목표 없음(부족해지지 않게) · 속보에 강종별 값이 없어 실제 선은 합계만</li>
       <li>구매 소재(F/H · 컬러 소재) 재고·입고·발주 = <a href="matcal.html">소재 관제</a> · <a href="procure.html">발주</a></li></ul>
       ${ks.length ? `<div class="scroll"><table class="t ref-t"><thead><tr><th class="l">판매그룹·구분</th><th>상한 일수</th><th>목표 일수</th></tr></thead><tbody>${ks.map((k) => `<tr><td class="l">${esc(GN[k] || k)}</td><td>${n0(D[k])}</td><td>${T[k] != null ? n0(T[k]) : '<span class="muted">상한과 같음</span>'}</td></tr>`).join('')}</tbody></table></div>
       <p class="ref-n">${esc((TR.src && TR.src.who) || 'TF 확정값')} · ${esc(UI.fmtDate((TR.src && TR.src.at) || ''))} — 일수를 바꾸려면 <a href="rules.html">계획 규칙</a></p>` : ''}`;
