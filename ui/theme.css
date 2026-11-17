@@ -1170,7 +1170,7 @@ html body main .card > h2 small, html body main .card > summary h2 small { font-
 /* ── KPI 카드: 큰 숫자 + 단위 + 한 줄 설명 ── */
 html .ct-kpis { gap: 12px; margin: 0 0 16px; }
 html .ct-kpi { padding: 12px 14px 12px; min-width: 0; }
-html body main .ct-kpi .l { font-size: 14px !important; line-height: 1.5; font-weight: 700; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body main .ct-kpi .l { font-size: 14px !important; line-height: 1.5; font-weight: 700; color: var(--ink-2); white-space: normal; overflow-wrap: anywhere; }   /* 11/17 검토: 보조 글 잘림 → 줄바꿈 */
 html body main .ct-kpi .v { font-size: 30px; line-height: 1.25; margin-top: 2px; }
 html body main .ct-kpi .v small { font-size: 18px !important; font-weight: 700; margin-left: 3px; }
 html body main .ct-kpi .s { font-size: 13.5px !important; line-height: 1.5; margin-top: 4px; color: var(--ink-2); }

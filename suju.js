@@ -264,8 +264,8 @@
     const k3 = kc('#mat', '소재 결품 위험', rl.length ? 'bad' : 'ok', `${rl.length}<small>건</small>`, rl.length ? `${esc(rl.slice(0, 2).join(' · '))}${rl.length > 2 ? ` 외 ${rl.length - 2}건` : ''}` : '결품 위험 소재 없음',
       `월말 재고 5일분 미만(${mw.map((x) => `${x.name} ${x.days}일분`).join(' · ') || '없음'}) + 발주 마감 지난 부족 중 이달 부족 시작 — 02 현황와 같은 목록 · 주의(7일분 미만) ${mo.length}건`);
     const BRG = (D.bridge || []).filter((b) => inPl(b.eng[0])), whMat = ['G', 'C'].filter(inPl).reduce((a, p) => a + ((D.wh[p].parts || [])[0] || [0, 0])[1], 0), whPrd = BRG.reduce((a, b) => a + (b.begin || 0), 0), whAll = whMat + whPrd, r4b = whCap ? whAll / whCap : 0;
-    const k4 = kc('#stock', '창고 재고', r4b > 1 ? 'bad' : r4b > 0.9 ? 'warn' : 'ok', `${T(whAll)}<small>t</small>`, `소재 ${T(whMat)} + 제품 ${T(whPrd)} · 목표 ${T(whCap)}t의 ${Math.round(r4b * 100)}%`,
-      `목표 = '27 판생 적정재고(소재 + 제품) · 제품 재고는 도금 자가재 포함(그룹별 재고 합) — 02 현황와 같은 값`);
+    const k4 = kc('#stock', '창고 재고', r4b > 1 ? 'bad' : r4b > 0.9 ? 'warn' : 'ok', `${T(whAll)}<small>t</small>`, `소재 ${T(whMat)} + 제품 ${T(whPrd)} · 상한 ${T(whCap)}t의 ${Math.round(r4b * 100)}%`,
+      `판생 재고 기준(소재 + 제품, 제품은 도금 자가재 포함) · 상한 = '27 판생 월말 최대 — 02 현황은 소재를 MES 코드별·제품을 자가재 빼고 봐서 값이 다름`);
     const spec = fold('fd', `<h3>신호등 기준</h3>` + tbl(['지표', '산식', '정상', '주의', '경고'], D.cfg.signals.map((s) => `<tr><td class="nm">${esc(s.name)}</td><td class="wrap">${esc(s.calc)}</td><td class="pos">${esc(s.ok)}</td><td class="wrn">${esc(s.warn)}</td><td class="neg">${esc(s.bad)}</td></tr>`))
       + `<h3>용어·산식</h3>` + defs([['기준선', `오늘까지 주문이 확정돼 있어야 할 양 = 이달 1일 ~ ${md(D.cut)}(지난 수요일 마감으로 확정되는 다음 생산주의 끝) 일별가동계획 편성량`],
         ['확정 주문', `이달 생산 실적 + ${md(D.cut)}까지 만들 잔량 중 소재 매치(도금 = 소재 입고·생산 중) · 숫자에 마우스 = 소재 매치 전 포함 등록 주문`],

@@ -243,7 +243,7 @@
       if (over) { if (cur) get(pl, g).od += x.t; }
       else if (x.date >= mon + '-01' && x.date <= mEnd) get(pl, g).arr += x.t;
     }
-    for (const [k, v] of Object.entries(F.po || {})) { const kk = nz(k), I = info[kk]; if (!I || I.dt.slice(0, 7) !== mon) continue; const a = get(I.pl, gname(v[2])); a.o += v[1] || 0; a.op += v.length > 10 ? (v[10] ? 0 : v[1] || 0) : Math.min(v[1] || 0, open[kk] || 0); }   // 11/17 검토: MES 발주 종료(PUR_END_YN) 아니면 아직 안 들어옴 — 미입고 목록에 아직 안 오른 발주도 셈
+    for (const [k, v] of Object.entries(F.po || {})) { const kk = nz(k), I = info[kk]; if (!I || I.dt.slice(0, 7) !== mon) continue; const a = get(I.pl, gname(v[2])); a.o += v[1] || 0; a.op += Math.min(v[1] || 0, open[kk] || 0); }   // 아직 안 들어옴 = MES 미입고(발주 − 입고 실적). 11/17 확인: 발주 종료(PUR_END_YN) 표시는 입고 뒤에도 N 으로 남는 것이 많아(포스코 지급 SUS 'Y' 발주는 발주일 전량 입고) 쓰지 않음
     const z = (v, c) => (v >= 0.5 ? `<td class="${c || ''}">${n0(v)}</td>` : '<td class="z">–</td>');
     const row = (lab, c, tot) => `<tr class="${tot ? 'tot' : ''}"><th>${esc(lab)}</th>${cur ? z(c.od, 'bad') : ''}<td class="b">${c.o >= 0.5 ? n0(c.o) : '–'}</td>${z(c.op)}${z(c.arr, 'b')}</tr>`;
     const PL0 = [['G', ['도금수출', '도금국내', '자동차', '자가재']], ['C', ['컬러수출(가전 포함)', '컬러건재', '수요개발']]];
@@ -259,7 +259,7 @@
     const M_ = +mon.slice(5);
     el.innerHTML = `<h2 class="m4-h">${M_}월 그룹별 소재 발주 · 입고</h2><div class="m4-q">톤 · 발주 원장(발주번호 → 판매그룹·발주일)과 MES 미입고 목록 기준 · 생산 계획과 무관</div>
 <div class="m4-sc"><table class="m4-gd" style="min-width:720px"><colgroup><col style="width:150px"><col><col><col>${cur ? '<col>' : ''}</colgroup>
-<thead><tr><th>판매그룹</th>${cur ? '<th>예정일 지났는데 안 들어옴<small>독촉 대상</small></th>' : ''}<th>${M_}월에 낸 발주</th><th>그중 아직 안 들어옴<small>MES 발주 종료 전</small></th><th>${M_}월 들어올 예정<small>${cur ? `${md(today)}부터 · ` : ''}앞 달 발주분 포함</small></th></tr></thead><tbody>${body || `<tr><td colspan="${cur ? 5 : 4}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>
+<thead><tr><th>판매그룹</th>${cur ? '<th>예정일 지났는데 안 들어옴<small>독촉 대상</small></th>' : ''}<th>${M_}월에 낸 발주</th><th>그중 아직 안 들어옴<small>MES 발주 − 입고 실적</small></th><th>${M_}월 들어올 예정<small>${cur ? `${md(today)}부터 · ` : ''}앞 달 발주분 포함</small></th></tr></thead><tbody>${body || `<tr><td colspan="${cur ? 5 : 4}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>
 <div class="m4-lg"><span>판매그룹 = 발주 원장 기준(가전내수는 컬러수출에 포함 — 02 현황·주간 관제와 같음)</span></div>`;
   }
   function matSync() {
