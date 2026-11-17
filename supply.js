@@ -784,10 +784,10 @@
 
   // ---------- 소재 월별 요약(2026-10-20 회의: 위는 월로 — 그 달에 들어와야 할 양 중 입고·발주된 양과 남은 양, 소재 그룹별 막대) ----------
   let msMode = 'grp';
-  const USE_G = (pl, lb) => (pl === 'G' ? ({ 도금국내: '도금국내', 도금수출: '도금수출', 자가재: '자가재', 자동차: '자동차강판', 자동차내수: '자동차강판', 자동차수출: '자동차강판' }[lb] || '미상')
+  const USE_G = (pl, lb) => (pl === 'G' ? ({ 도금국내: '도금국내', 도금수출: '도금수출', 자가재: '자가재', 자동차: '자동차강판', 자동차내수: '자동차강판', 자동차수출: '자동차강판' }[lb] || '기타')
     : (/계획재|주문재/.test(lb) ? '컬러건재' : /수요/.test(lb) ? '수요개발' : /건재수출/.test(lb) ? '건재수출' : /내수/.test(lb) ? '가전내수' : '가전수출'));   // 10/20: 소재 발주엔 색이 없어(컬러건재 669건 중 21건) 계획재·주문재를 소재 단계에서 못 나눔 → 한 줄
   const GORD = { G: ['도금수출', '도금국내', '자동차강판', '자가재'], C: ['가전수출', '가전내수', '건재수출', '컬러건재', '수요개발'] };
-  const GLB = { 자동차강판: '자동차', 컬러건재: '컬러건재', 미상: '미상', '컬러수출(세부 대기)': '컬러수출(세부?)', '컬러건재(세부 대기)': '컬러건재(세부?)' };
+  const GLB = { 자동차강판: '자동차', 컬러건재: '컬러건재', 기타: '기타', '컬러수출(세부 대기)': '컬러수출(세부?)', '컬러건재(세부 대기)': '컬러건재(세부?)' };
   // 월별 막대(2026-10-20 사용자: 알아보기 쉽게) — 막대 통 높이 = 그 달 들어와야 할 양, 아래부터 입고(진하게)·발주(연하게)로 차오르고 빈 곳(빨간 점선) = 아직 발주 안 한 양
   function fillChart(pl, codes, cell, ms, nmf) {   // 월 × 그룹 칸: 확보(입고+발주)/계획 톤 + 막대(입고·발주·남음) — 사용자 10/20: 글자 겹침·%만으로는 톤을 모름 → 칸 표로
     const v = (c, m) => cell[`${pl}|${c}|${m}`] || { rec: 0, ord: 0, nw: 0 };
@@ -804,7 +804,7 @@
     };
     return `<div class="scroll"><table class="fm fm-${pl}"><thead><tr><th class="l">${msMode === 'grp' ? '판매그룹' : '소재 유형'}</th>${ms.map((m) => `<th>${+m.slice(5)}월</th>`).join('')}</tr></thead><tbody>`
       + `<tr class="fm-tr"><td class="l"><b>합계</b></td>${ms.map((m) => td(sum(m), true)).join('')}</tr>`
-      + codes.map((c) => `<tr${/^미상|대기/.test(c) ? ' class="unk"' : ''}><td class="l">${esc(nmf(c))}</td>${ms.map((m) => td(v(c, m))).join('')}</tr>`).join('')
+      + codes.map((c) => `<tr${/^(미상|기타)|대기/.test(c) ? ' class="unk"' : ''}><td class="l">${esc(nmf(c))}</td>${ms.map((m) => td(v(c, m))).join('')}</tr>`).join('')
       + '</tbody></table></div>'
       + '<div class="fm-lg"><span><i class="r"></i>입고 완료</span><span><i class="o"></i>발주(입고 예정)</span><span><i class="e"></i>미발주</span><span>굵은 숫자 = 확보(입고+발주) / 입고 계획</span></div>';
   }
@@ -822,14 +822,14 @@
     if (!$('s-msum').id) return;
     if (!MP) { $('s-msum').innerHTML = '<p class="small">소재 발주 자료가 없습니다.</p>'; return; }
     const PO_ = D.PO || {}, RV = msMode === 'grp' ? ((PO_.matGrp || {}).recv) : PO_.matRecv, POG = (PO_.matGrp || {}).po || {}, ms = D.months, ym = (d) => d.slice(0, 7);
-    const cell = {}, add_ = (pl, c, m, k, t) => { if (!ms.includes(m) || t < 0.01) return; if (msMode === 'grp' && /^미상/.test(c)) c = '미상'; const x = (cell[`${pl}|${c}|${m}`] = cell[`${pl}|${c}|${m}`] || { rec: 0, ord: 0, nw: 0 }); x[k] += t; };
+    const cell = {}, add_ = (pl, c, m, k, t) => { if (!ms.includes(m) || t < 0.01) return; if (msMode === 'grp' && /^(미상|기타)/.test(c)) c = '기타'; const x = (cell[`${pl}|${c}|${m}`] = cell[`${pl}|${c}|${m}`] || { rec: 0, ord: 0, nw: 0 }); x[k] += t; };
     for (const [k, t] of Object.entries(RV || {})) { const [pl, c, d] = k.split('|'); if (msMode !== 'grp' && pl === 'G' && c === 'N') continue; if (d >= today) continue; add_(pl, c, ym(d), 'rec', t); }   // 11/13 점검: 오늘 실입고는 MES 입고 예정(arrs, 오늘 칸)에도 남아 있어 두 번 셈(도금 1,336t) — 입고 완료 = 어제까지(01 소재와 같은 값)
-    for (const a of MP.arrs || []) { if (a.plant === 'G' && a.code === 'N') continue; add_(a.plant, msMode === 'grp' ? (POG[a.po] || '미상(계약 부서 없음)') : a.code, ym(a.date < today ? today : a.date), 'ord', +a.t || 0); }
+    for (const a of MP.arrs || []) { if (a.plant === 'G' && a.code === 'N') continue; add_(a.plant, msMode === 'grp' ? (POG[a.po] || '기타(계약 부서 없음)') : a.code, ym(a.date < today ? today : a.date), 'ord', +a.t || 0); }
     for (const j of MP.J) {
       if (j.kind === 'pos' || j.short < 1) continue;
       const tot = (j.use || []).reduce((a, r) => a + (+r[3] || 0), 0), sh = {};
       for (const r of j.use || []) { const g = USE_G(j.plant, r[1]); sh[g] = (sh[g] || 0) + (tot > 0 ? (+r[3] || 0) / tot : 0); }
-      if (!Object.keys(sh).length) sh['미상'] = 1;
+      if (!Object.keys(sh).length) sh['기타'] = 1;
       for (const x of j.split) if (x.t >= 1) { const m = ym(j.needBy < today ? today : j.needBy); if (msMode === 'grp') for (const [g, w] of Object.entries(sh)) add_(j.plant, g, m, 'nw', x.t * w); else add_(j.plant, j.code, m, 'nw', x.t); }
     }
     const nm = (c) => (msMode === 'grp' ? c : MP.codeNm(c)), html = [];
@@ -840,10 +840,10 @@
       if (!codes.length) continue;
       html.push(`<div class="mss" data-dom="${pl}">${vMat(pl, codes, cell, ms.includes(mon) ? mon : ms[0], (c) => (msMode === 'grp' ? (GLB[c] || c) : MP.codeNm(c)))}</div>`);
     }
-    const unk = Object.entries(cell).filter(([k]) => /\|미상/.test(k)).reduce((a, [, x]) => a + x.rec + x.ord, 0);
+    const unk = Object.entries(cell).filter(([k]) => /\|(미상|기타)/.test(k)).reduce((a, [, x]) => a + x.rec + x.ord, 0);
     $('s-msum').innerHTML = `<h2>월별 소재 입고 계획 <small>입고 계획 = 입고 완료 + 발주(입고 예정) + 미발주</small><span class="unit">톤</span></h2>`
       + `<div class="seg" id="s-msm" style="margin:2px 0 8px"><button type="button" data-m="grp" aria-pressed="${msMode === 'grp'}">판매그룹별</button><button type="button" data-m="code" aria-pressed="${msMode === 'code'}">소재 유형별</button></div>`
-      + (msMode === 'grp' ? `<p class="small muted">판매그룹: 미발주 = 그 소재를 쓰는 생산 계획의 판매그룹 비중으로 나눔 · 입고·발주 = 소재 발주의 판매 계약 → 계약 부서. 도금 소재인데 컬러 부서 계약이면 자가재.${unk >= 1 ? ` <b style="color:var(--warn)">판매그룹을 못 정한 입고·발주 ${n0(unk)}t는 "미상" — 대부분 발주를 찾지 못한 입고(조회 범위 180일보다 오래된 발주, 또는 발주 없이 들어온 입고).</b>` : ''}</p>` : '')
+      + (msMode === 'grp' ? `<p class="small muted">판매그룹: 미발주 = 그 소재를 쓰는 생산 계획의 판매그룹 비중으로 나눔 · 입고·발주 = 소재 발주의 판매 계약 → 계약 부서. 도금 소재인데 컬러 부서 계약이면 자가재.${unk >= 1 ? ` <b style="color:var(--warn)">판매그룹을 못 정한 입고·발주 ${n0(unk)}t는 "기타" — 대부분 발주를 찾지 못한 입고(조회 범위 180일보다 오래된 발주, 또는 발주 없이 들어온 입고).</b>` : ''}</p>` : '')
       + (RV ? '' : '<p class="small" style="color:var(--warn)">입고 실적(MES 소재 입고)이 아직 게시되지 않았습니다 — 다음 자동 실행부터 들어옵니다.</p>')
 
       + `<div class="mss2">${html.join('')}</div>`
@@ -1031,7 +1031,7 @@
         + `<td class="r nw">${m.short ? n0(m.short) : '<span class="muted">–</span>'}</td>`
         + `<td class="nw muted">${m.first ? `${md(m.first)}부터` : ''}</td>`
         + gs.map((g) => cell(g, m)).join('')
-        + `<td class="r nw" title="${esc(`업체 ${(m.sup || []).filter(Boolean).join(' · ') || '미상'} · 필요 ${n0(m.need)} · 재고 ${n0(m.stock)} · 입고 예정 ${n0(m.arr)} · ${m.rule || ''} · 리드타임 ${m.lt}일 + 투입 여유 ${m.safe || (pl === 'G' ? 5 : 7)}일${m.ltDef ? ' · 업체 기준정보 없음 — 기본 35일' : ''}`)}">${m.lt}일${m.ltDef ? ' <span class="oj-def">기본</span>' : ''}</td></tr>`;
+        + `<td class="r nw" title="${esc(`업체 ${(m.sup || []).filter(Boolean).join(' · ') || '정보 없음'} · 필요 ${n0(m.need)} · 재고 ${n0(m.stock)} · 입고 예정 ${n0(m.arr)} · ${m.rule || ''} · 리드타임 ${m.lt}일 + 투입 여유 ${m.safe || (pl === 'G' ? 5 : 7)}일${m.ltDef ? ' · 업체 기준정보 없음 — 기본 35일' : ''}`)}">${m.lt}일${m.ltDef ? ' <span class="oj-def">기본</span>' : ''}</td></tr>`;
       const head = `<tr><th>소재</th><th>상태</th><th>발주 마감</th><th class="r" title="발주 지연 = 원래 발주 마감이 지난 부족량(오늘 발주해도 필요일보다 늦게 들어옴)">발주 지연(t)</th><th class="r" title="3달 필요 − 재고 − 입고 예정. 경고 아님(11/9 회의 F13)">3달 발주 필요(t)</th><th>부족 시작</th>${gs.map((g) => `<th class="r oj-gh" title="${esc(g.group)}">${esc(short(g.group))}</th>`).join('')}<th class="r">리드타임</th></tr>`
         + `<tr class="oj-gst"><td colspan="6" class="muted">판매그룹 상태 · 3달 소재 필요(t)</td>${gs.map((g) => `<td class="r nw">${dot(gst(g))}<div class="oj-gn">${n0(g.need)}</div></td>`).join('')}<td></td></tr>`;
       return `<h3 class="oj-h">${title}</h3><div class="oj-wrap"><table class="oj-t oj-mx"><thead>${head}</thead><tbody>${rows.map(tr).join('')}</tbody></table></div>`;
