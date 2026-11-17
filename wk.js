@@ -58,7 +58,7 @@
     const none_ = GS.filter((x) => !x.p).map((x) => { const lt = (K.left || {})[x.g] || 0; return `<tr class="gr"><th>${esc(x.g)}</th><td colspan="13" class="na">${x.pl === 'G' ? '판매재 계획 없음(자가재·정기수리 주간)' : `이 주 계획 없음${lt >= 50 ? ` — 계획 없는 주문 ${n0(lt)}t 대기(9주 합)` : ''}`}</td></tr>`; }).join('');
     const dtab = `<div class="k-card"><h2>${lab(SEL)} 라인별 생산 계획<small>${md(w.from)}~${md(w.to)} · 톤 · 라인 아래 = 그 라인에서 만드는 그룹</small></h2><div class="k-dscroll"><table class="k-d k-dl">
 <thead><tr class="grp"><th></th><th class="gs">생산</th><th colspan="2" class="gs">주문</th><th colspan="7" class="gs">소재</th><th colspan="2" class="gs">부자재(컬러)</th><th class="gs">납기</th></tr>
-<tr><th></th><th>계획</th><th>주문</th><th>주문 미달</th><th class="sep">확보율</th><th>확보</th><th>입고 예정</th><th>입고 지연</th><th>입고일 모름<small>발주함</small></th><th>배정 전<small>재고 있음·매치 안 됨</small></th><th>미발주</th><th class="sep">준비</th><th>대기</th><th>새 납기 지연</th></tr></thead>
+<tr><th></th><th>계획</th><th>주문</th><th>주문 미달</th><th class="sep">확보율</th><th>확보</th><th>입고 예정</th><th>입고 지연</th><th>입고일 모름<small>발주함</small></th><th>배정 전<small>재고 있음·매치 안 됨 · 소재 확인</small></th><th>미발주</th><th class="sep">준비</th><th>대기</th><th>새 납기 지연</th></tr></thead>
 <tbody>${body_}${none_}<tr class="tot"><th>합계</th>${cells(TT, PS.includes('C') ? 'C' : 'G')}</tr></tbody></table></div>
 <div class="k-lg"><span class="bad">빨강 = 주문 미달·소재 없음</span><span class="warn">주황 = 입고 지연·입고일 모름</span><span class="self">연보라 = 배정 전(자가재·입고분 매치 안 됨)</span><span class="subc">남색 = 부자재 대기</span><span class="dlc">보라 = 새 납기 지연</span></div></div>`;
     // 독촉할 곳: 마케팅(빈 곳) · 소재(늦음·없음·부자재 대기) · 공정·출하(납기 넘김)

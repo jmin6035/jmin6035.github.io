@@ -160,6 +160,16 @@ html body main #m4 table.m4-cl td.odt { font-size: 13px !important; color: var(-
 html body main #m4 table.m4-cl tr.hl > :is(td, th) { background: color-mix(in srgb, #f2b705 16%, var(--surface)) !important; }
 .gk-rl { margin: 14px 0 0; text-align: right; font-size: 14.5px; } .gk-rl a { font-weight: 700; color: var(--brand-2, var(--ink)); }
 #m4-grp .m4-q { font-size: 15px; color: var(--ink-2); }
+@media (max-width: 700px) {   /* 날짜 상세 390px: 일정 칸을 품목 아래 줄로 */
+  .gk-det table.dt.mt.fl thead { display: none; }
+  .gk-det table.dt.mt.fl tbody tr { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .gk-det table.dt.mt.fl tbody td { display: block; border: 0 !important; padding: 0 !important; text-align: left !important; }
+  .gk-det table.dt.mt.fl tbody td:nth-child(2) { grid-column: 1 / -1; font-size: 13px; color: var(--ink-3); }
+  .gk-det table.dt.mt.fl tbody td:nth-child(4), .gk-det table.dt.mt.fl tbody td:last-child { grid-column: 1 / -1; }
+  .gk-det .flw { flex-wrap: wrap; }
+  .gk-det table.dt.mt.fl tbody td.r::after { content: '톤'; margin-left: 2px; font-size: 13px; color: var(--ink-3); }
+}
+html body main #m4 table.m4-cl span.po.plate { box-shadow: inset 0 -3px 0 var(--bad); }
 </style>
 <style>
 /* 소재 탭 = 소재 관제(matcal.html)의 소재 캘린더·월별 소재 입고 계획 서식 그대로 */
