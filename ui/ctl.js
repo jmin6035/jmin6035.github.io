@@ -51,8 +51,10 @@
     const rank = { bad: 0, warn: 1, ok: 2, na: 3 };
     return G.map((g) => {
       // 생산: 월말 예상(실적 + 남은 계획) ÷ 월 계획
-      const P = g.prod || {}, fin = (P.actual || 0) + (P.after || 0), pp = P.month > 0 ? fin / P.month : null;
-      const prod = { actual: P.actual || 0, month: P.month || 0, fin, pct: pp, tone: pp == null ? 'na' : UI.rate(pp * 100), note: P.note };
+      const SJK = { G수출: ['도금수출'], G국내: ['도금국내'], G자동차: ['자동차'], G자가재: ['자가재'], C수출: ['건재수출', '가전수출', '가전내수'], C건재: ['주문재', '계획재'], C수요: ['수요개발'] };
+      const gm = UI._SJ && UI._SJ.month === mon && SJK[g.key] && UI.grpMon && UI.grpMon(UI._SJ, SJK[g.key]);   // 11/17 재검토: 실적·월말 예상 = 일별 칸 정수 합(월간 가동·수주 관제와 같은 값)
+      const P = g.prod || {}, act0 = gm ? gm.act : (P.actual || 0), fin = gm ? gm.mon : (P.actual || 0) + (P.after || 0), pp = P.month > 0 ? fin / P.month : null;
+      const prod = { actual: act0, month: P.month || 0, fin, pct: pp, tone: pp == null ? 'na' : UI.rate(pp * 100), note: P.note };
       prod.v = pp == null ? (P.note ? ['na', '계획 0', `실적 ${n0(P.actual || 0)}t`] : ['na', '–', '']) : [prod.tone, `${Math.round(pp * 100)}%`, `월말 예상 ${n0(fin)} / ${n0(P.month)}t`];
       // 출하: 실적 ÷ 오늘까지 기준선(그룹 출하 실적 패턴, portal ship.due — 없으면 일정 누계)
       const S = g.ship, base = S ? (S.due != null ? S.due : S.sched) : null, sp = S && base >= 1 ? S.actual / base : null;
