@@ -187,7 +187,7 @@
       const tot = pl === 'G' ? (AD[a[0]] || {})['도금 제품(판매재)'] != null ? AD[a[0]]['도금 제품(판매재)'] + (AD[a[0]]['도금 제품(자가재)'] || 0) : null : (AD[a[0]] || {})['컬러 제품'], un = tot != null ? tot - a[1] : 0;
       g += LB(X(a[0]), Y(a[1]) + 18, k1(a[1]), 'var(--s3)');                     // 실제 마지막 값
       return `<div class="st-chart"><h3>${K.nm} <small style="font-weight:500;color:var(--ink-3)">${K.sub}</small></h3>
-        <div class="st-s" style="margin:2px 0 4px"><b class="st-n">${n0(tot != null ? tot : a[1])}t</b> 실제 ${md(a[0])} 말${Math.abs(un) >= 0.5 ? ` · 그룹 합 ${n0(a[1])}t ${un >= 0 ? '+' : '−'} 그룹 미지정 ${n0(Math.abs(un))}t` : ''} (그룹 합 ${md(d0)} 대비 ${a[1] >= ad[0][1] ? '+' : ''}${n0(a[1] - ad[0][1])}t)${pl === 'G' && (O.stockMax || {})['도금 제품(판매재)'] ? ` · 판매재 월말 최대 ${n0(O.stockMax['도금 제품(판매재)'])}t('27 목표)` : ''}</div>
+        <div class="st-s" style="margin:2px 0 4px"><b class="st-n">${n0(tot != null ? tot : a[1])}t</b> 실제 ${md(a[0])} 말${Math.abs(un) >= 0.5 ? ` · 그룹 합 ${n0(a[1])}t ${un >= 0 ? '+' : '−'} 그룹 미지정 ${n0(Math.abs(un))}t` : ''} (그룹 합 ${md(d0)} 대비 ${a[1] >= ad[0][1] ? '+' : ''}${n0(a[1] - ad[0][1])}t)${pl === 'G' && (O.stockMax || {})['도금 제품(판매재)'] ? ` · 판매재 재고 상한 ${n0(O.stockMax['도금 제품(판매재)'])}t` : ''}</div>
         <svg viewBox="0 0 ${Wd} ${H}" class="cv" role="img" aria-label="${K.nm} 전체 재고 추이">${g}</svg></div>`;
     };
     const plants = ['G', 'C'].filter((pl) => inS(pl)).map(plant).join('');

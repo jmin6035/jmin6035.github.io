@@ -135,7 +135,7 @@
   }
   const monLabel = (m) => `${+m.slice(5)}월${O.from && O.from.slice(0, 7) === m && +O.from.slice(8) > 1 ? `<small class="muted">(${+O.from.slice(8)}일~)</small>` : ''}`;
   function monthly() {
-    const D = O.dept, nm = (k) => (/^\d+$/.test(k) ? `기타(${k})` : k.replace(/그룹$/, ''));
+    const D = O.dept, nm = (k) => (/^\d+$/.test(k) ? `기타(${k})` : k.replace(/그룹$/, '').replace(/^자동차강판(판매)?$/, '자동차').replace(/^도금판매$/, '도금국내').replace(/^컬러건재판매$/, '컬러건재'));
     return card('ca-mon', '월별 생산', `라인별 · 부서별 · 월 단위 (${+O.asOf.slice(5, 7)}월은 ${md(O.asOf)}까지 누계)`, '단위: 톤', `<div class="grid2" style="grid-template-columns:${PLANT === 'G' ? 'auto minmax(0,1fr)' : ''}"><div class="scroll"><table class="t big"><thead><tr><th class="l">월</th>${L.map((l) => `<th>${l}</th>`).join('')}<th>합계</th></tr></thead><tbody>${O.monthly.map((m) => `<tr><td class="l">${monLabel(m.m)}</td>${L.map((l) => `<td>${n0(m[l])}</td>`).join('')}<td><b>${n0(L.reduce((a, l) => a + m[l], 0))}</b></td></tr>`).join('')}</tbody></table></div>
       <div class="scroll"><table class="t big"><thead><tr><th class="l">월</th>${D.names.map((k) => `<th>${esc(nm(k))}</th>`).join('')}</tr></thead><tbody>${D.rows.map((m) => `<tr><td class="l">${monLabel(m.m)}</td>${D.names.map((k) => `<td>${n0(m[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`);
   }

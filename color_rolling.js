@@ -41,7 +41,7 @@
     $('r-groups').innerHTML = `<div class="rg-leg"><span><i class="a"></i>실적</span><span><i class="c"></i>확정 작업지시</span><span><i class="p"></i>남은 배치</span><span><u></u>월 계획(지금 판 합)</span></div>`
       + G.map(bar).join('') + bar(tot);
     const A = R.alarms.filter((a) => a.ym === m);
-    $('r-alarms').innerHTML = A.length ? A.map((a) => `<li><span class="st ${KIND[a.kind][1]}">${KIND[a.kind][0]}</span><b class="ra-k">${esc(a.g ? GL(a.g) : a.l)}</b><span class="ra-t">${esc(a.text)}${a.offset ? `<small> · ${esc(a.offset)}</small>` : ''}</span></li>`).join('')
+    $('r-alarms').innerHTML = A.length ? A.map((a) => `<li><span class="st ${KIND[a.kind][1]}">${KIND[a.kind][0]}</span><b class="ra-k">${esc(a.g ? GL(a.g) : a.l)}</b><span class="ra-t">${esc(String(a.text || '').replace(/(\d)h\b/g, '$1시간'))}${a.offset ? `<small> · ${esc(a.offset)}</small>` : ''}</span></li>`).join('')
       : '<li><span class="st good">없음</span><span class="ra-t">그룹 차이 ±5% 안 · 빈 시간 없음</span></li>';
     renderTable(m);
   }

@@ -32,7 +32,7 @@
         : c1('ct_prod.html#ship', ship.tone, ship.month > 0 ? `${Math.round(ship.actual / ship.month * 100)}<small>%</small>` : `${n0(ship.actual)}<small>t</small>`, `${n0(ship.actual)} / ${n0(ship.month)}t · 기준 ${ship.pct == null ? '–' : Math.round(ship.pct * 100) + '%'}`, `큰 숫자 = 실적 ÷ 월 계획 ${n0(ship.month)}t · 색·기준 대비 = 오늘까지 나갔어야 할 양 ${n0(ship.base)}t(월 계획 × 출하 패턴) 대비`);   // 11/13: 다른 화면과 같은 형식(큰 숫자 = 월 대비, 작은 글씨 = 오늘까지 기준 대비)
       const sT = stock.target;
       const cStock = stock.end == null || !sT ? c1('integrated.html', stock.tone, esc(r.vals[2][0]), esc(r.vals[2][1]))
-        : c1('integrated.html', stock.tone, `${n0(stock.end)}<small>t</small>`, `목표 ${n0(sT)}t`, `월말 예상 ${n0(stock.end)}t · 목표 ${n0(sT)}t · 오늘 ${stock.now != null ? n0(stock.now) : '–'}t`);
+        : c1('integrated.html', stock.tone, `${n0(stock.end)}<small>t</small>`, `목표 재고 ${n0(sT)}t`, `월말 예상 ${n0(stock.end)}t · 목표 재고 ${n0(sT)}t · 오늘 ${stock.now != null ? n0(stock.now) : '–'}t`);
       return `<tr class="${r.w4}"><th scope="row" class="bg" title="${esc(SLB[r.w4])}"><span class="cdot ${r.w4}"></span><b>${esc(r.name)}</b></th>${cDue}${cWhy}${cProd}${cShip}${cStock}</tr>`;
     };
     // 11/17 검토: 판매그룹에 안 묶이는 납기 위험 그룹(그룹 미상 등)도 줄로 보여 합계를 통합 관제·납기 위험 화면과 맞춤

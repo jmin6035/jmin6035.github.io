@@ -90,7 +90,7 @@
         const rc = r.k === 'fam' ? 'cr' : r.k === 'ev' ? 'ev' : r.k === 'hrs' || r.k === 'stop' ? 'hr' : 'dp';
         h += `<tr class="${rc} r-${r.k}${ri === rows.length - 1 ? ' le' : ''}">`;
         if (ri === 0) h += `<th class="c0 lnC" rowspan="${rows.length}">${l}</th>`;
-        h += `<th class="c1">${r.k === 'fam' ? '생산' : r.k === 'ev' ? '' : r.k === 'dep' ? GL(r.g) : r.k === 'hrs' ? '가동시간' : '휴지(h)'}</th>`;
+        h += `<th class="c1">${r.k === 'fam' ? '생산' : r.k === 'ev' ? '' : r.k === 'dep' ? GL(r.g) : r.k === 'hrs' ? '가동시간' : '휴지(시간)'}</th>`;
         let t = 0;
         ds.forEach((d, i) => {
           const run = runs.find((x) => x[0] <= i && i <= x[1]);
@@ -161,7 +161,7 @@
         nx ? `<span class="tag ${dd(nx[0]) <= 7 ? 'bad' : ''}">${KN[nx[2]]} ${md(nx[0])} · D-${dd(nx[0])}</span>` : '<span class="tag">이후 S/D·수리 없음</span>',
         next ? `<span class="tag">비가동 ${md(next)} · D-${dd(next)}</span>` : ''].filter(Boolean).join('');
       return `<div class="ln-card${off ? ' off' : ''}"><div class="ln-h"><b>${l}</b><span class="tag ${st[1]}">${st[0]}</span></div>
-        <div class="ln-big">${off ? '-' : fmt(T)}<small>t</small><span>${off ? '당일 생산 없음' : `가동 ${fmt(hrs, 1)}h / 24h`}</span></div>
+        <div class="ln-big">${off ? '-' : fmt(T)}<small>t</small><span>${off ? '당일 생산 없음' : `가동 ${fmt(hrs, 1)}시간 / 24시간`}</span></div>
         <div class="ln-gauge" title="가동시간"><i style="width:${Math.min(100, hrs / 24 * 100)}%"></i></div>
         <p class="ln-l">그룹 구성</p>
         <div class="ln-mix">${gs.length ? gs.map(([g, v]) => `<i style="flex:${v};background:${GVAR[g]}" title="${GL(g)} ${fmt(v)}t"></i>`).join('') : '<i style="flex:1;background:var(--grid)"></i>'}</div>

@@ -92,7 +92,7 @@
     return { run: Math.min(1440, run), dm, st, sm, gap, known: !!A.actStops };
   }
   const hh = (m) => (m / 60).toFixed(m % 60 ? 1 : 0);
-  const mixTxt = (x) => [`생산 ${hh(x.run)}h`, x.dm ? `더미 코일 ${hh(x.dm)}h` : '', ...x.st.map((s) => `${s[2]}(${s[0]}) ${hh(s[1])}h`), x.gap >= 15 ? `기록 없음 ${hh(x.gap)}h` : ''].filter(Boolean).join(' · ');
+  const mixTxt = (x) => [`생산 ${hh(x.run)}시간`, x.dm ? `더미 코일 ${hh(x.dm)}시간` : '', ...x.st.map((s) => `${s[2]}(${s[0]}) ${hh(s[1])}시간`), x.gap >= 15 ? `기록 없음 ${hh(x.gap)}시간` : ''].filter(Boolean).join(' · ');
 
   // ---------------- 기준일 현황(컬러 가동 현황과 같은 카드, 10/22 사용자) ----------------
   function renderNow() {
@@ -119,24 +119,24 @@
       let seg, leg, list = '';
       if (x) {
         const S = [['생산', x.run, 'var(--brand-2)'], ['더미 코일', x.dm, 'color-mix(in srgb, var(--mc) 45%, var(--surface))']].concat(x.st.map((s) => [`${s[2]}`, s[1], SCOL[s[0]] || '#9aa5b1', s[0]]), [['기록 없음', x.gap, 'repeating-linear-gradient(135deg,#c9cfd7 0 3px,transparent 3px 6px)']]).filter((q) => q[1] >= 1);
-        seg = S.map((q) => `<i style="flex:${q[1]};background:${q[2]}" title="${esc(q[0])} ${hh(q[1])}h"></i>`).join('');
+        seg = S.map((q) => `<i style="flex:${q[1]};background:${q[2]}" title="${esc(q[0])} ${hh(q[1])}시간"></i>`).join('');
         const cat = {}; x.st.forEach((s) => { cat[s[0]] = (cat[s[0]] || 0) + s[1]; });
         leg = [['생산', x.run, 'var(--brand-2)'], ['더미 코일', x.dm, 'color-mix(in srgb, var(--mc) 45%, var(--surface))'], ...Object.entries(cat).map(([k, v]) => [k, v, SCOL[k]]), ['기록 없음', x.gap, '#c9cfd7']].filter((q) => q[1] >= 1)
-          .map((q) => `<span><i style="background:${q[2]}"></i>${q[0]} ${hh(q[1])}h</span>`).join('');
-        list = x.st.length ? `<ul class="ln-items">${x.st.map((s) => `<li><span>${esc(s[2])} <small class="muted">${esc(s[0])}</small></span><b>${hh(s[1])}h</b></li>`).join('')}</ul>`
+          .map((q) => `<span><i style="background:${q[2]}"></i>${q[0]} ${hh(q[1])}시간</span>`).join('');
+        list = x.st.length ? `<ul class="ln-items">${x.st.map((s) => `<li><span>${esc(s[2])} <small class="muted">${esc(s[0])}</small></span><b>${hh(s[1])}시간</b></li>`).join('')}</ul>`
           : (x.known ? '' : '<p class="ln-sub">휴지 사유는 사내 PC 설치 묶음 v69 이상부터 표시</p>');
-        if (x.gap >= 60) list += `<p class="ln-sub">기록 없음 ${hh(x.gap)}h = MES 에 코일·휴지 기록이 없는 시간(코일 사이 대기·통판 등)</p>`;
+        if (x.gap >= 60) list += `<p class="ln-sub">기록 없음 ${hh(x.gap)}시간 = MES 에 코일·휴지 기록이 없는 시간(코일 사이 대기·통판 등)</p>`;
       } else if (!c.blackout) {
         const cap = c.cap || 0;
-        seg = `<i style="flex:${used};background:var(--brand-2)" title="계획 생산 ${hh(used)}h"></i><i style="flex:${Math.max(0, cap - used)};background:var(--grid)" title="여유 ${hh(Math.max(0, cap - used))}h"></i><i style="flex:${Math.max(0, 1440 - cap)};background:var(--mc)" title="M/C·더미·설비 정지 공제 ${hh(Math.max(0, 1440 - cap))}h"></i>`;
-        leg = `<span><i style="background:var(--brand-2)"></i>계획 생산 ${hh(used)}h</span><span><i style="background:var(--grid)"></i>여유 ${hh(Math.max(0, cap - used))}h</span><span><i style="background:var(--mc)"></i>${c.event ? esc(c.event.split(' · ')[0]) + '·' : ''}더미·설비 정지 공제 ${hh(Math.max(0, 1440 - cap))}h</span>`;
+        seg = `<i style="flex:${used};background:var(--brand-2)" title="계획 생산 ${hh(used)}시간"></i><i style="flex:${Math.max(0, cap - used)};background:var(--grid)" title="여유 ${hh(Math.max(0, cap - used))}시간"></i><i style="flex:${Math.max(0, 1440 - cap)};background:var(--mc)" title="M/C·더미·설비 정지 공제 ${hh(Math.max(0, 1440 - cap))}시간"></i>`;
+        leg = `<span><i style="background:var(--brand-2)"></i>계획 생산 ${hh(used)}시간</span><span><i style="background:var(--grid)"></i>여유 ${hh(Math.max(0, cap - used))}시간</span><span><i style="background:var(--mc)"></i>${c.event ? esc(c.event.split(' · ')[0]) + '·' : ''}더미·설비 정지 공제 ${hh(Math.max(0, 1440 - cap))}시간</span>`;
       }
       const pr = monthPlan ? Math.min(1, toDate / monthPlan) : 0;
       const chips = [cp ? `<span class="tag">연속 생산 ${cp.fam} ${GP.md(cp.start)}~${GP.md(cp.end)} (${GP.diffDays(d, cp.start) + 1}/${GP.diffDays(cp.end, cp.start) + 1}일)</span>` : '',
         next ? `<span class="tag ${GP.diffDays(next.date, d) <= 7 ? 'warn' : ''}">${next.kind === 'M/C' ? `M/C ${next.from}→${next.to}` : `재가동 ${next.from === next.to ? next.to + ' 유지' : next.from + '→' + next.to}`} ${GP.md(next.date)} · D-${GP.diffDays(next.date, d)}</span>` : '<span class="tag">분기 내 전환 없음</span>',
         sdNext ? `<span class="tag">정기수리 ${GP.md(sdNext.start)}~${GP.md(sdNext.end)} · D-${GP.diffDays(sdNext.start, d)}</span>` : ''].filter(Boolean).join('');
       return `<div class="ln-card${off ? ' off' : ''}"><div class="ln-h"><b>${l} ${c.blackout ? '' : `<small style="font-size:14px;color:var(--ink-3)">${c.fam}</small>`}</b><span class="tag ${st[1]}">${st[0]}</span></div>
-        <div class="ln-big">${c.blackout ? '-' : GP.fmt(prod)}<small>t</small><span>${c.blackout ? '정기수리' : x ? `가동 ${hrs.toFixed(1)}h / 24h` : `계획 가동 ${hrs.toFixed(1)}h · 가동률 ${c.cap > 0 ? GP.fmt(used / c.cap * 100) : 0}%`}</span></div>
+        <div class="ln-big">${c.blackout ? '-' : GP.fmt(prod)}<small>t</small><span>${c.blackout ? '정기수리' : x ? `가동 ${hrs.toFixed(1)}시간 / 24시간` : `계획 가동 ${hrs.toFixed(1)}시간 · 가동률 ${c.cap > 0 ? GP.fmt(used / c.cap * 100) : 0}%`}</span></div>
         <div class="ln-gauge" title="가동시간"><i style="width:${Math.min(100, hrs / 24 * 100)}%"></i></div>
         ${seg ? `<p class="ln-l">24시간 구성 ${x ? '<span>MES 실적</span>' : '<span>계획</span>'}</p><div class="ln-mix">${seg}</div><div class="ln-mixl">${leg}</div>${list}` : ''}
         <p class="ln-l">부서 구성</p><div class="ln-mixl">${deps.map(([k, v]) => `<span>${esc(DSHORT[k] || k)} ${GP.fmt(v)}t</span>`).join('') || '<span class="muted">-</span>'}</div>
@@ -231,8 +231,8 @@
   // 손실: 지난 날(재계획 기준일까지) = MES 실적 시간(plating_actual mc), 앞날 = 계획 손실(엔진 M/C 정지 분)
   const lossTxt = (e) => {
     const t0 = (R.replan || {}).t0 || '';
-    if (t0 && e.date <= t0) { const m = (A.mcAct || []).find((x) => x.d === e.date && x.line === e.line); return m ? `<span title="MES 실적">${GP.fmt(m.h, 1)}h</span>` : '<span class="muted" title="MES M/C 실적 기록 없음">-</span>'; }
-    return `<span title="계획(엔진 M/C 정지)">${GP.fmt(e.loss / 60, 1)}h</span>`;
+    if (t0 && e.date <= t0) { const m = (A.mcAct || []).find((x) => x.d === e.date && x.line === e.line); return m ? `<span title="MES 실적">${GP.fmt(m.h, 1)}시간</span>` : '<span class="muted" title="MES M/C 실적 기록 없음">-</span>'; }
+    return `<span title="계획(엔진 M/C 정지)">${GP.fmt(e.loss / 60, 1)}시간</span>`;
   };
   function renderEvents() {
     const P = R.P;

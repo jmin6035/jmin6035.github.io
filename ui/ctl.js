@@ -64,7 +64,7 @@
       const now = nowSt(g.key), end = endSt(g.key), r = V && V.plan && mi >= 0 && (V.plan[g.key] || [])[mi], tg = r ? r.target : null;
       const dy = (TR.days || {})[g.key], tt = (TR.target || {})[g.key], over = dy && tt ? dy / tt : 1.3;   // 과잉 = 통합 계획 재고 추이와 같은 기준(상한 ÷ 목표, 없으면 1.3배)
       const stock = { now, end, target: tg, over };
-      if (end != null && tg) { stock.tone = end < tg * 0.7 ? 'bad' : end > tg * over ? 'warn' : 'ok'; stock.v = [stock.tone, `월말 ${n0(end)}t`, `목표 ${n0(tg)} · 오늘 ${now != null ? n0(now) : '–'}`]; }
+      if (end != null && tg) { stock.tone = end < tg * 0.7 ? 'bad' : end > tg * over ? 'warn' : 'ok'; stock.v = [stock.tone, `월말 ${n0(end)}t`, `목표 재고 ${n0(tg)} · 오늘 ${now != null ? n0(now) : '–'}`]; }
       else {
         const d = UI.ctlTfd(g.key), dly = S && S.month ? S.month / nd : 0, cov = now != null && dly ? now / dly : null;
         stock.tone = cov == null || !d ? 'na' : cov < d * 0.5 ? 'bad' : cov > d ? 'warn' : 'ok';
@@ -116,7 +116,7 @@
         c1 = ['ok', `${n0(pp || 0)}t`, '생산 계획']; c2 = g.key === 'G자가재' || g.key === 'C수요' ? ['na', '–', ''] : ['ok', `${n0(sp || 0)}t`, '출하 계획'];
         const r = V && V.plan && (V.plan[g.key] || [])[mi], e = r ? r.end : null, tg = r ? r.target : null;
         const TR = (IG && IG.tfRules) || {}, dy = (TR.days || {})[g.key], tt = (TR.target || {})[g.key];
-        c3 = e == null ? ['na', '–', ''] : [tg && e < tg * 0.7 ? 'bad' : tg && e > tg * (dy && tt ? dy / tt : 1.3) ? 'warn' : 'ok', `${n0(e)}t`, `월말 예상 · 목표 ${n0(tg || 0)}`];
+        c3 = e == null ? ['na', '–', ''] : [tg && e < tg * 0.7 ? 'bad' : tg && e > tg * (dy && tt ? dy / tt : 1.3) ? 'warn' : 'ok', `${n0(e)}t`, `월말 예상 · 목표 재고 ${n0(tg || 0)}`];
         const mg = (mo && mo.groups ? mo.groups.groups : []).filter((x) => (MOG[g.key] || []).includes(x.group));
         const VM = new Map(UI.matView(mo, O).map((x) => [x.key, x]));
         const ms = mg.flatMap((x) => x.mats).map((x) => VM.get(x.key) || x).filter((x) => x.first && x.first.slice(0, 7) <= m && x.st !== 'ok').sort((a, b) => (a.deadline < b.deadline ? -1 : 1))[0];

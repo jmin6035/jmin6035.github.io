@@ -366,7 +366,7 @@
     const gT = {}, cT = {};
     for (const r of L.rows || []) if (days.includes(r[0])) gT[r[0]] = (gT[r[0]] || 0) + (+r[4] || 0);
     for (const x of W.color || []) if (days.includes(x.d) && !x.act) cT[x.d] = (cT[x.d] || 0) + Object.values(x.g || {}).reduce((a, v) => a + v, 0);
-    const ev = {}; for (const e of ((P.week || {}).events || [])) if (days.includes(e.d) && CT.inScope(e.pl)) (ev[e.d] = ev[e.d] || []).push(e.text);
+    const ev = {}; for (const e of ((P.week || {}).events || [])) if (days.includes(e.d) && CT.inScope(e.pl)) (ev[e.d] = ev[e.d] || []).push(String(e.text || '').replace(/(\d)h\b/g, '$1시간'));
     const buckets = view === 'month' ? Object.values(days.reduce((m, d) => ((m[CT.wed(d)] = m[CT.wed(d)] || []).push(d), m), {})) : days.map((d) => [d]);   // 월간 = 수요일 시작 주로 끊음(월 경계에서 자름)
     // 11/10 점검: 지난 날 = MES 실적(도금 칸에 재계획의 실적 행, 컬러 0 이던 것), 같은 일정이 주 칸에 날마다 반복되던 것 → 한 번(기간)
     const actPl = (pl, d) => (P.lines || []).filter((x) => x.pl === pl).reduce((a, x) => a + (actOn(x, d) || 0), 0);

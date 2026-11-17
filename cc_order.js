@@ -29,7 +29,7 @@
   if (!BY[by]) by = 'cus';
   const ST = { '매치 완료': 'ok', '소재 있음': 'mid', '입고 대기': 'hurry', '소재 없음': 'late' };
   const stBadge = (x) => `<span class="st ${ST[x.st] || 'na'}">${esc(x.st)}</span>` + (x.lateDue ? '<div class="sub" style="color:var(--bad);font-weight:700">납기 경과</div>' : '');
-  const GS = { 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발' };
+  const GS = { 컬러수출그룹: '컬러수출', 컬러건재판매그룹: '컬러건재', 수요개발그룹: '수요개발', 자동차강판판매그룹: '자동차', 도금판매그룹: '도금국내', 도금수출그룹: '도금수출' };
   const gs = (g) => GS[g] || g;
   function matCell(x) {                                       // 소재 연결: 재고기반(규격상 재고) · 소재 발주(공급사·발주일·인도기한·입고) · 자가재(도금 주문 진행)
     const out = [`<span class="ch rt-${x.route === '소재발주' ? 'po' : x.route === '재고기반' ? 'stk' : 'etc'}">${esc(x.route)}</span>`];
