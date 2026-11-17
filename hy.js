@@ -41,10 +41,10 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
     if (!H) { m.innerHTML = '<section class="card"><h2>현황 자료가 아직 없습니다</h2><p>다음 2시간 갱신 때 만들어집니다.</p></section>'; return; }
     const td = H.day / H.nDays, mo = +H.asOf.slice(5, 7), dd = `${mo}/${+H.asOf.slice(8)}`;
     const R = [
-      ['판매', '수주 ÷ 판매계획', (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', td)],
-      ['생산', '실적 ÷ 목표', (p) => prod(p, H[p].prod, td)],
-      ['소재', '입고 ÷ 발주', (p) => bar(p, H[p].mat, `${mo}월 입고 발주`, td)],
-      ['출하', '출하 ÷ 계획', (p) => bar(p, H[p].ship, '이달 계획', td)],
+      ['판매', '판매계획 대비 수주', (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', td)],
+      ['생산', '목표 대비 실적', (p) => prod(p, H[p].prod, td)],
+      ['소재', '발주 대비 입고', (p) => bar(p, H[p].mat, `${mo}월 입고 발주`, td)],
+      ['출하', '계획 대비 출하', (p) => bar(p, H[p].ship, '이달 계획', td)],
       ['소재 재고', '현재 → 월말', (p) => stock(H[p].stockMat)],
       ['제품 재고', '현재 → 월말', (p) => stock(H[p].stockPdt)],
       ['주문충당량', '소재 매치 주문', (p) => cover(H[p].cover)],
