@@ -29,7 +29,7 @@
     const { now: a, end: e, cap } = v; if (a == null || !cap) return '<div class="hy-na">자료 없음</div>';
     const mx = Math.max(a, e || 0, cap) * 1.1, xa = a / mx * 100, xe = (e || 0) / mx * 100, xc = cap / mx * 100, close = Math.abs(xa - xe) < 3;
     const L = Math.min(xa, xe), R = Math.max(xa, xe);
-    return `<div class="hy-row"><div class="hy-num sk"><span class="hlb">지금</span><b class="${a > cap ? 'bad' : ''}">${n0(a)}<small>톤</small> ${pct(a, cap)}%</b><span class="ar">→</span><span class="hlb">월말</span><b class="${e > cap ? 'bad' : ''}">${n0(e)}<small>톤</small> ${pct(e, cap)}%</b></div>
+    return `<div class="hy-row"><div class="hy-num sk"><span class="hlb">현재</span><b class="${a > cap ? 'bad' : ''}">${n0(a)}<small>톤</small> ${pct(a, cap)}%</b><span class="ar">→</span><span class="hlb">월말</span><b class="${e > cap ? 'bad' : ''}">${n0(e)}<small>톤</small> ${pct(e, cap)}%</b></div>
 <div class="hy-zone"><i class="ok" style="width:${W(xc)}"></i><i class="ov" style="left:${W(xc)}"></i><i class="cp" style="left:${W(xc)}"></i>
 ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i class="de${e > cap ? ' bad' : ''}" style="left:${W(xe)}"></i><i class="dn${a > cap ? ' bad' : ''}" style="left:${W(xa)}"></i></div>
 <div class="hy-cap"><span></span><span>상한 ${n0(cap)}톤</span></div></div>`;
@@ -45,14 +45,14 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
       ['생산', '실적 ÷ 목표', (p) => prod(p, H[p].prod, td)],
       ['소재', '입고 ÷ 발주', (p) => bar(p, H[p].mat, `${mo}월 입고 발주`, td)],
       ['출하', '출하 ÷ 계획', (p) => bar(p, H[p].ship, '이달 계획', td)],
-      ['소재 재고', '지금 → 월말', (p) => stock(H[p].stockMat)],
-      ['제품 재고', '지금 → 월말', (p) => stock(H[p].stockPdt)],
+      ['소재 재고', '현재 → 월말', (p) => stock(H[p].stockMat)],
+      ['제품 재고', '현재 → 월말', (p) => stock(H[p].stockPdt)],
       ['주문충당량', '소재 매치 주문', (p) => cover(H[p].cover)],
     ];
     m.innerHTML = `<div class="hy-top"><h1>${mo}월 판매·생산 현황</h1><span>${dd}까지</span></div>
 <div class="hy-g"><div></div><div class="hd g">도금</div><div class="hd c">컬러</div>
 ${R.map(([a, b, f]) => `<div class="sec"><b>${a}</b><small>${b}</small></div><div class="cell" data-pl="도금 · ${a}">${f('G')}</div><div class="cell" data-pl="컬러 · ${a}">${f('C')}</div>`).join('')}</div>
-<div class="hy-lg"><span><i class="k-g"></i>도금 실적</span><span><i class="k-c"></i>컬러 실적</span><span><i class="k-rm"></i>남은 계획</span><span><i class="k-tg"></i>목표</span><span><i class="k-td"></i>오늘</span><span>● 지금 · ○ 월말</span><span><i class="k-ov"></i>상한 초과</span><span class="bad">빨강 = 7일치 미만</span></div>`;
+<div class="hy-lg"><span><i class="k-g"></i>도금 실적</span><span><i class="k-c"></i>컬러 실적</span><span><i class="k-rm"></i>남은 계획</span><span><i class="k-tg"></i>목표</span><span><i class="k-td"></i>오늘</span><span>● 현재 · ○ 월말</span><span><i class="k-ov"></i>상한 초과</span><span class="bad">빨강 = 7일치 미만</span></div>`;
   }
   CT.boot(['suju.enc.json'], render);
 })();
