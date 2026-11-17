@@ -131,7 +131,7 @@
       sm = /합계/.test(cols[j][0]) ? ' sm' : '';
       return `<td class="bl${sm}"><b>${n0(v)}</b></td><td class="df${sm}${df != null && df <= -0.5 ? ' dn' : df != null && df >= 0.5 ? ' up' : ''}">${df == null ? '–' : df === 0 ? '0' : sg(df)}</td>`; }).join('')}</tr>`).join('');
     const SRm = D.SR && D.SR.m === ds[0].slice(0, 7) && Object.keys(D.SR.v).length ? D.SR.v : null;
-    const srRow = SRm ? `<tr class="sr"><th>판생 월차 <small>판매생산속보</small></th>${cols.map(([n, ls], j) => { const ok = ls.every((l) => SRm[l] != null), v = ok ? ls.reduce((a, l) => a + SRm[l], 0) : null, df = v == null ? null : Math.round(v - A[0][j]), sm = /합계/.test(n) ? ' sm' : '';
+    const srRow = SRm ? `<tr class="sr"><th>판생 계획 <small>판매생산속보 월 계획</small></th>${cols.map(([n, ls], j) => { const ok = ls.every((l) => SRm[l] != null), v = ok ? ls.reduce((a, l) => a + SRm[l], 0) : null, df = v == null ? null : Math.round(v - A[0][j]), sm = /합계/.test(n) ? ' sm' : '';
       return `<td class="bl${sm}"><b>${v == null ? '–' : n0(v)}</b></td><td class="df${sm}${df != null && df <= -0.5 ? ' dn' : df != null && df >= 0.5 ? ' up' : ''}">${df == null ? '–' : df === 0 ? '0' : sg(df)}</td>`; }).join('')}</tr>` : '';
     return `<h3 class="gk-adjh">판별 월 생산 합계 <small>톤</small></h3><div class="gk-adjw"><table class="gk-adj"><thead><tr><th rowspan="2">판</th>${cols.map(([n]) => `<th colspan="2" class="bl${/합계/.test(n) ? ' sm' : ''}">${n}</th>`).join('')}</tr><tr>${cols.map(([n]) => `<th class="sub bl${/합계/.test(n) ? ' sm' : ''}">월 합계</th><th class="sub${/합계/.test(n) ? ' sm' : ''}">월차 대비</th>`).join('')}</tr></thead><tbody>${rows}${srRow}</tbody></table></div>`;
   }

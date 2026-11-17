@@ -19,6 +19,9 @@
   // 그룹별(판매 = 판매 그룹 · 생산 = 라인 · 출하 = 출하 그룹) — 늘 펼쳐 보임(11/17 사용자 '이 화면에 적용')
   function sub(p, L, td) {
     if (!L || L.length < 2) return '';
+    const ORD = ['도금수출', '도금국내', '도금판매', '자동차', '자동차강판', '컬러수출', '가전내수', '컬러건재', '수요개발', '컬러공장'];   // 11/17 검토: 화면·달마다 같은 순서
+    const oi = (g) => { const i = ORD.findIndex((k) => String(g).startsWith(k)); return i < 0 ? 99 : i; };
+    L = [...L].sort((a_, b_) => (/CGL|CCL/.test(a_.g) && /CGL|CCL/.test(b_.g) ? String(a_.g).localeCompare(b_.g) : oi(a_.g) - oi(b_.g)));
     return `<div class="hy-sub">${L.map((x) => `<div class="sr"><span class="sn">${esc(x.g)}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(x.plan ? x.act / x.plan * 100 : 0)}"></i>${td != null ? `<i class="td" style="left:${W(td * 100)}"></i>` : ''}</div><span class="sv"><b>${pct(x.act, x.plan) ?? '–'}%</b> ${n0(x.act)} / ${n0(x.plan)}톤</span></div>`).join('')}</div>`;
   }
   function bar(p, v, cap, td, opt = {}) {
@@ -102,7 +105,7 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
     const tabs = [`${mo}월`, ...MS.map((x) => `${+x.ym.slice(5)}월`)];
     const M = MI ? MS[MI - 1] : null, mm = M ? +M.ym.slice(5) : mo;
     const R = M ? [
-      ['판매', '판매계획 대비 주문', null, (p) => bar(p, M[p].sales, '판매계획', null, { grp: M[p].sales.grp })],
+      ['수주', '판매계획 대비 주문', null, (p) => bar(p, M[p].sales, '판매계획', null, { grp: M[p].sales.grp })],
       ['생산', '월 계획', 'gyehoek.html', (p) => `<div class="hy-row"><div class="hy-num"><b>${n0(M[p].prod.plan)}</b><small>톤</small></div>${cover((M[p].prod.lines || []).map((x) => ({ line: x.g, t: x.plan })), true)}</div>`],
       ['소재 입고', '입고 예정 · 추가 발주', 'matcal.html', (p) => matPo(p, M[p].mat)],
       ['소재 재고', '월초 → 월말', null, (p) => matStock(p, M[p].mat, M[p].stockMat)],

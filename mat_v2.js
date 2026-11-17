@@ -52,15 +52,21 @@
       C.names = ms.map((m) => m.nm);
       if (!ms.length || mEnd < today) { C.stock = null; C.st = 'na'; continue; }
       C.stock = ms.reduce((a, m) => a + m.stock0, 0);
-      const st = (d) => ms.reduce((a, m) => a + (m.stock[d] != null ? m.stock[d] : 0), 0), us = (d) => ms.reduce((a, m) => a + (m.use[d] || 0), 0);
+      C.byNm = ms.length > 1 ? ms.map((m) => [m.nm, m.stock0]) : null;   // 11/17 검토: 서로 대신 못 쓰는 코드(PosMAC1.5·3.0)는 코드마다 판정
       C.st = 'ok'; C.min = null;
-      for (let d = today; d <= mEnd; d = addD(d, 1)) {
-        if (!ms.some((m) => m.stock[d] != null)) break;
-        const v = st(d), need2 = us(addD(d, 1)) + us(addD(d, 2));
-        if (C.min == null || v < C.min.v) C.min = { d, v };
-        if (v < -0.5) { C.st = 'bad'; C.day = d; break; }
-        if (C.st === 'ok' && need2 >= 0.5 && v < need2) { C.st = 'warn'; C.day = d; C.n2 = need2; C.v2 = v; }
+      const rk = { bad: 0, warn: 1, ok: 2 };
+      for (const m of ms) {
+        let s_ = 'ok', day = null, n2 = null, v2 = null;
+        for (let d = today; d <= mEnd; d = addD(d, 1)) {
+          if (m.stock[d] == null) break;
+          const v = m.stock[d], need2 = (m.use[addD(d, 1)] || 0) + (m.use[addD(d, 2)] || 0);
+          if (C.min == null || v < C.min.v) C.min = { d, v, nm: ms.length > 1 ? m.nm : '' };
+          if (v < -0.5) { s_ = 'bad'; day = d; break; }
+          if (s_ === 'ok' && need2 >= 0.5 && v < need2) { s_ = 'warn'; day = d; n2 = need2; v2 = v; }
+        }
+        if (rk[s_] < rk[C.st] || (s_ === C.st && s_ !== 'ok' && day < C.day)) { C.st = s_; C.day = day; C.n2 = n2; C.v2 = v2; C.dNm = ms.length > 1 ? m.nm : ''; }
       }
+      const st = (d) => ms.reduce((a, m) => a + (m.stock[d] != null ? m.stock[d] : 0), 0), us = (d) => ms.reduce((a, m) => a + (m.use[d] || 0), 0);
       // 11/13 점검(02 현황 결품 위험과 같은 기준): ① 발주 마감 지난 미발주가 있으면 부족(첫 부족일) ② 월말 재고 5일분 미만(수주 관제 신호 matDays 경고)이면 빠듯
       const ln = C.types.filter((t) => t.lateNw >= 0.5);
       if (ln.length && C.st !== 'bad') { C.st = 'bad'; C.day = ln.map((t) => t.mlDay || t.lateDay).sort()[0]; C.lateNw = ln.reduce((a, t) => a + t.lateNw, 0); }   // 첫 부족일 = 수주 관제(04)와 같은 값 우선
@@ -92,9 +98,9 @@
   const nums = (r) => `<td>${n0(r.need)}</td><td class="c-in">${n0(r.rec)}</td><td>${n0(r.ord)}</td><td class="${(r.ovr || 0) >= 0.5 ? 'c-no' : 'mu'}">${(r.ovr || 0) >= 0.5 ? n0(r.ovr) : '–'}</td><td class="${r.nw >= 0.5 ? 'c-no' : 'mu'}">${r.nw >= 0.5 ? n0(r.nw) : '–'}</td><td class="pc">${bar(r)}</td>`;
   function judge(C) {
     if (C.st === 'na') return '<span class="m4-jd na" title="이 소재 코드의 재고 자료 없음">–</span>';
-    if (C.st === 'bad') return `<span class="m4-jd bad" title="${esc(C.lateNw ? `발주 마감 지난 미발주 ${n0(C.lateNw)}t — ${md(C.day)}부터 부족` : `${md(C.day)} 부터 재고 부족(추가 발주 없음 가정 · 발주 완료분 입고 반영)`)}">${md(C.day)}부터 부족</span>`;
+    if (C.st === 'bad') return `<span class="m4-jd bad" title="${esc(C.lateNw ? `발주 마감 지난 미발주 ${n0(C.lateNw)}t — ${md(C.day)}부터 부족` : `${C.dNm ? C.dNm + ' ' : ''}${md(C.day)} 부터 재고 부족(추가 발주 없음 가정 · 발주 완료분 입고 반영)`)}">${md(C.day)}부터 부족${C.dNm ? `<small> ${esc(C.dNm)}</small>` : ''}</span>`;
     if (C.st === 'warn' && C.low) return `<span class="m4-jd warn" title="${esc(`월말 재고 ${n0(C.low.v)}t = 하루 평균 투입의 ${C.low.days.toFixed(1)}일분(5일분 미만)`)}">월말 ${C.low.days.toFixed(1)}일분</span>`;
-    if (C.st === 'warn') return `<span class="m4-jd warn" title="${esc(`${md(C.day)} 재고 ${n0(C.v2)}t < 다음 이틀 투입 ${n0(C.n2)}t`)}">${md(C.day)} 빠듯</span>`;
+    if (C.st === 'warn') return `<span class="m4-jd warn" title="${esc(`${C.dNm ? C.dNm + ' ' : ''}${md(C.day)} 재고 ${n0(C.v2)}t < 다음 이틀 투입 ${n0(C.n2)}t`)}">${md(C.day)} 빠듯${C.dNm ? `<small> ${esc(C.dNm)}</small>` : ''}</span>`;
     return `<span class="m4-jd ok"${C.min ? ` title="${esc(`말일까지 최저 ${md(C.min.d)} ${n0(C.min.v)}t`)}"` : ''}>충분</span>`;
   }
   function table(R) {
@@ -106,13 +112,13 @@
       for (const C of g.cs) C.rows.forEach((t, i) => {
         const cls = C.st === 'bad' || C.st === 'warn' || t.nw >= 0.5 ? 'hot' : 'calm';
         b += `<tr class="${cls}${i === 0 ? ' c0' : ''}"><th>${esc(t.c)}</th>${nums(t)}`
-          + (i === 0 ? `<td class="stk" rowspan="${C.rows.length}"${C.names.length ? ` title="${esc(C.names.join(' · '))} 재고(${C.rows.length > 1 ? '같은 소재 코드를 쓰는 유형 공용' : '소재 코드 기준'})"` : ''}>${C.stock == null ? '–' : n0(C.stock)}${C.rows.length > 1 ? `<small>${esc(C.names.join(' · '))} 공용</small>` : ''}</td><td class="jdc" rowspan="${C.rows.length}">${judge(C)}</td>` : '') + '</tr>';
+          + (i === 0 ? `<td class="stk" rowspan="${C.rows.length}"${C.names.length ? ` title="${esc(C.names.join(' · '))} 재고(${C.rows.length > 1 ? '같은 소재 코드를 쓰는 유형 공용' : '소재 코드 기준'})"` : ''}>${C.stock == null ? '–' : C.byNm ? C.byNm.map(([nm, v]) => `<span class="m4-bn">${esc(nm)} <b>${n0(v)}</b></span>`).join('') : n0(C.stock)}${C.rows.length > 1 ? `<small>${esc(C.names.join(' · '))} 공용</small>` : ''}</td><td class="jdc" rowspan="${C.rows.length}">${judge(C)}</td>` : '') + '</tr>';
       });
     }
     return `<h2 class="m4-h">${M}월 소재 현황</h2><div class="m4-q" title="${esc(`${(window.SupMat.ext || []).includes(R.mon) ? '필요 = 도금 재계획 · 컬러 3개월 계획 · ' : ''}확인할 소재가 각 묶음 맨 위 · 판정 = 지금 재고 + 발주 완료분 입고 − 생산 투입(추가 발주 없음) · 발주 마감 지난 미발주 = 부족 · 월말 5일분 미만 = 빠듯`)}">톤 · 기준 ${md(R.today)} · 지금 재고 = MES 소재재고 목록(소재 코드별) — 소재 관제·02 현황의 소재 재고(판생속보 창고)와 출처 다름</div>`
-      + `<div class="m4-sc"><table class="m4-mx"><colgroup><col style="width:150px"><col><col><col><col><col><col style="width:24%"><col style="width:210px"><col style="width:150px"></colgroup>`
+      + `<div class="m4-sc"><table class="m4-mx"><colgroup><col style="width:124px"><col><col><col><col><col><col style="width:15%"><col style="width:190px"><col style="width:150px"></colgroup>`
       + `<thead><tr><th rowspan="2">소재</th><th colspan="6" class="gq">① 이달 필요한 만큼 확보했나</th><th colspan="2" class="gq sl">② 지금 재고로 버티나</th></tr>`
-      + `<tr><th>이달 입고 대상</th><th>이달 실입고</th><th>발주(입고 예정)</th><th>예정일 지남<small>30일 이내</small></th><th>미발주<small>발주 계획 기준(업체·주 단위)</small></th><th>확보율</th><th class="sl">지금 재고</th><th>판정</th></tr></thead><tbody>${b}</tbody></table></div>`
+      + `<tr><th>이달 입고 대상</th><th>이달 실입고</th><th>발주(입고 예정)</th><th>예정일 지남<small>30일 이내</small></th><th>미발주<small>업체·주 단위</small></th><th>확보율</th><th class="sl">지금 재고</th><th>판정</th></tr></thead><tbody>${b}</tbody></table></div>`
       + `<div class="m4-lg"><span><i class="in"></i>이달 실입고</span><span><i class="po"></i>발주(입고 예정)</span><span><i class="no"></i>미발주</span></div>`;
   }
 
