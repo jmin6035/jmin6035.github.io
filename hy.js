@@ -105,7 +105,7 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
       ['판매', '판매계획 대비 주문', null, (p) => bar(p, M[p].sales, '판매계획', null, { grp: M[p].sales.grp })],
       ['생산', '월 계획', 'gyehoek.html', (p) => `<div class="hy-row"><div class="hy-num"><b>${n0(M[p].prod.plan)}</b><small>톤</small></div>${cover((M[p].prod.lines || []).map((x) => ({ line: x.g, t: x.plan })), true)}</div>`],
       ['소재 입고', '입고 예정 · 추가 발주', 'matcal.html', (p) => matPo(p, M[p].mat)],
-      ['소재 재고', '월초 → 월말', 'matcal.html', (p) => matStock(p, M[p].mat, M[p].stockMat)],
+      ['소재 재고', '월초 → 월말', null, (p) => matStock(p, M[p].mat, M[p].stockMat)],
       ['제품 재고', '월말 예상', 'integrated.html', (p) => stockEnd(M[p].stockPdt)],
       ['총 재고', '소재 + 제품 · 월말', null, (p) => stockEnd(M[p].stockAll)],
     ] : [
@@ -113,7 +113,7 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
       ['생산', '목표 대비 실적', 'gyehoek.html', (p) => prod(p, H[p].prod, td)],
       ['소재', '발주 대비 입고', 'matcal.html', (p) => bar(p, H[p].mat, `${mo}월 입고 발주`, td)],
       ['출하', '계획 대비 출하', null, (p) => bar(p, H[p].ship, '이달 계획', td, { grp: H[p].ship.grp })],
-      ['소재 재고', '현재 → 월말', 'matcal.html', (p) => stock(H[p].stockMat)],
+      ['소재 재고', '현재 → 월말', null, (p) => stock(H[p].stockMat)],
       ['제품 재고', '현재 → 월말', 'integrated.html', (p) => stock(H[p].stockPdt)],
       ['총 재고', '소재 + 제품 · 현재 → 월말', null, (p) => stock(H[p].stockAll)],
       ['주문충당량', '소재 매치 주문', 'pyeonseong.html', (p) => cover(H[p].cover)],
