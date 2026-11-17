@@ -12,7 +12,7 @@
   function render(a, sourceNote) {
     A = a;
     $('a-empty').hidden = true; $('a-body').hidden = false;
-    $('a-meta').textContent = [sourceNote, a.analyzedAt && `분석 ${new Date(a.analyzedAt).toLocaleString('ko-KR')}`, a.auto && a.auto.actualTo && `재계획 실적 ~${GP.md(a.auto.actualTo)}`].filter(Boolean).join(' · ');
+    $('a-meta').textContent = [sourceNote, a.analyzedAt && `분석 ${new Date(a.analyzedAt).toLocaleString('ko-KR')}`, a.auto && a.auto.actualTo && `재계획 실적 ${GP.md(a.auto.actualTo)}까지`].filter(Boolean).join(' · ');
     $('a-period').textContent = a.period ? `— 실적 ${a.period.from} ~ ${a.period.to}` : '';
     $('a-lines').innerHTML = Object.entries(a.lines).map(([l, x]) => `<div class="line-card"><h3>${l}</h3><dl>
       <dt>제품 생산</dt><dd>${GP.fmt(x.tons)}t · 코일 ${GP.fmt(x.coils)}개 (더미 ${GP.fmt(x.dummyT)}t)</dd>

@@ -97,8 +97,8 @@
         + '</tbody></table></div>';
       return `<section class="card"><h2>${mm} 라인별 부하 <small>${rng}</small></h2><div class="ld-row"><div class="ld-l">${sumT}</div><div class="ld-r"><h4 class="ld-h">주별 부하율 <small>수요일 시작 · 달 경계에서 끊음</small></h4>${heat}<p class="ct-note" style="margin:8px 0 0">색 = 부하율: <b style="color:var(--good)">초록</b> 95% 미만(여유) · <b style="color:var(--warn)">주황</b> 95~100%(꽉 참) · <b style="color:var(--bad)">빨강</b> 100% 초과(능력 넘침)</p></div></div></section>`;   // 11/5 사용자 '옆으로 붙여 — 전부'
     });
-    const tl = LG.filter((l) => X.tph[l]).map((l) => `${l} ${n1(X.tph[l])}t/h`).join(' · ');
-    const f = `<ul class="ps-ul"><li>도금 능력 = 가용분(캘린더 − 정지) ÷ 60 × 최근 t/h(${tl})</li><li>컬러 부하 = 편성분 ÷ 정지 뺀 가용분(편성이 하루를 채워 100% 가 보통 → 100% 초과 = 병목)</li><li>주 = 수요일 시작 · 달 경계에서 끊음 · 오늘(${md(X.today)}) 이후만 · 주별 초과 합 = 주마다 능력을 넘는 양의 합</li><li>도금 = 게시 재계획 · 컬러 = 통합 컬러 계획</li></ul>`;
+    const tl = LG.filter((l) => X.tph[l]).map((l) => `${l} ${n1(X.tph[l])}t/시간`).join(' · ');
+    const f = `<ul class="ps-ul"><li>도금 능력 = 가용분(캘린더 − 정지) ÷ 60 × 최근 t/시간(${tl})</li><li>컬러 부하 = 편성분 ÷ 정지 뺀 가용분(편성이 하루를 채워 100% 가 보통 → 100% 초과 = 병목)</li><li>주 = 수요일 시작 · 달 경계에서 끊음 · 오늘(${md(X.today)}) 이후만 · 주별 초과 합 = 주마다 능력을 넘는 양의 합</li><li>도금 = 게시 재계획 · 컬러 = 통합 컬러 계획</li></ul>`;
     return { html: sec.join(''), R: allR, note: f, m0 };
   }
 
@@ -125,8 +125,8 @@
       return `<tr><td class="id">${l}</td><td>${x.map((d) => `<span class="${sy.has(d) ? '' : 'gone'}">${md(d)}</span>`).join(' ') || '-'}</td><td>${y.map((d) => `<span class="${sx.has(d) ? '' : 'new'}">${md(d)}</span>`).join(' ') || '-'}</td></tr>`; }).join('')}</tbody></table></div>`;
     const ma = ra.milp || {}, mb = rb.milp || {}, la = dueLate(ra), lb = dueLate(rb);
     const kp = CT.kpis([
-      { label: '결품', v: `${n0(ma.short)}→${n0(mb.short)}`, unit: 't', tone: (mb.short || 0) > (ma.short || 0) + 0.5 ? 'bad' : 'ok', sub: `차이 ${n0((mb.short || 0) - (ma.short || 0))}t` },
-      { label: '지연(천 t·일)', v: `${n0(la / 1000)}→${n0(lb / 1000)}`, unit: '', tone: lb > la + 0.5 ? 'bad' : 'ok', sub: `차이 ${n0((lb - la) / 1000)}천` },
+      { label: '결품', v: `${n0(ma.short)}→${n0(mb.short)}`, unit: 't', tone: (mb.short || 0) > (ma.short || 0) + 0.5 ? 'bad' : 'ok', sub: Math.abs((mb.short || 0) - (ma.short || 0)) < 0.5 ? '변화 없음' : `${(mb.short || 0) > (ma.short || 0) ? '+' : '−'}${n0(Math.abs((mb.short || 0) - (ma.short || 0)))}t` },
+      { label: '지연(천 t·일)', v: `${n0(la / 1000)}→${n0(lb / 1000)}`, unit: '', tone: lb > la + 0.5 ? 'bad' : 'ok', sub: Math.abs(lb - la) < 0.5 ? '변화 없음' : `${lb > la ? '+' : '−'}${n0(Math.abs(lb - la))} t·일` },
       { label: 'M/C', v: `${ma.K ?? '-'}→${mb.K ?? '-'}`, unit: '회', tone: 'info' },
     ]);
     const mv = [];
@@ -218,7 +218,7 @@
     if (v !== 'cg' && v !== 'cc') { el.innerHTML = ''; return; }
     const pls = ['G', 'C'].filter((p) => CT.inScope(p));
     const blk = (p) => `<section class="card ps-b${(p === 'G') === (v === 'cg') ? ' on' : ''}"><h2>${PLN[p]} <small title="주 = 수~화 생산주 · 이 칸은 오늘부터 7일 합">오늘부터 7일 ${wk7(AT[p])}</small>${pls.length > 1 ? `<a class="ps-cal" href="#${p === 'G' ? 'cg' : 'cc'}">${(p === 'G') === (v === 'cg') ? '아래 캘린더' : '캘린더 보기 →'}</a>` : ''}</h2>${SUM[p] || '<p class="ct-note">불러오는 중…</p>'}</section>`;
-    const more = DD && X ? `<section class="card ps-m"><a class="ps-ln" href="#cmp"><i>계획 변경</i>${chgLine(DD) || '<span class="sub">직전 판 없음</span>'}<em>→</em></a><a class="ps-ln" href="#load" title="게시 재계획 물량 ÷ 가용 능력(도금 = 2026년 실적 t/h, 컬러 = 편성분 ÷ 가용분) — 위 '시간 부하'(현장 편성 주문 × 두께·폭별 t/hr)와 기준이 다름"><i>${+X.today.slice(5, 7)}월 재계획 부하</i>${LR ? loadLine(LR) : ''}<em>→</em></a></section>` : '';
+    const more = DD && X ? `<section class="card ps-m"><a class="ps-ln" href="#cmp"><i>계획 변경</i>${chgLine(DD) || '<span class="sub">직전 판 없음</span>'}<em>→</em></a><a class="ps-ln" href="#load" title="게시 재계획 물량 ÷ 가용 능력(도금 = 2026년 실적 t/시간, 컬러 = 편성분 ÷ 가용분) — 위 '시간 부하'(현장 편성 주문 × 두께·폭별 t/시간)와 기준이 다름"><i>${+X.today.slice(5, 7)}월 재계획 부하</i>${LR ? loadLine(LR) : ''}<em>→</em></a></section>` : '';
     el.innerHTML = `<div class="ps-g${pls.length > 1 ? ' two' : ''}">${pls.map(blk).join('')}</div>${more}`;
     el.querySelectorAll('.ps-go').forEach((b) => (b.onclick = () => { const t = $(b.dataset.go); if (t) t.scrollIntoView({ block: 'start', behavior: 'smooth' }); }));
   }
@@ -232,7 +232,7 @@
     else h = '<ul class="ps-ul"><li>직전 = 바로 앞 게시 계획(도금 plan_prev · 컬러 = 오늘 이후 편성이 지금과 다른 가장 최근 판) · 지금 = 최신 게시</li><li>도금은 두 판의 계획 끝 중 짧은 쪽까지만 비교(위 결품·지연·M/C 회수는 각 판 전체 기간)</li><li>주 = 수요일 시작 · 달 경계에서 끊음 · 비교만 — 계획에 반영하지 않음</li></ul>';
     b.innerHTML = bs + h;
     const sm = $('ps-fold').querySelector('summary small');
-    if (sm) sm.textContent = v === 'load' ? '능력·부하 계산식 · 자료 기준일' : v === 'cmp' ? '비교 기준 · 자료 기준일' : '편성 순서 · 라인 속도(t/hr) · 24시간 규칙 · 자료 기준일';
+    if (sm) sm.textContent = v === 'load' ? '능력·부하 계산식 · 자료 기준일' : v === 'cmp' ? '비교 기준 · 자료 기준일' : '편성 순서 · 라인 속도(t/시간) · 24시간 규칙 · 자료 기준일';
   }
   /* 보기: #cg 도금 캘린더 · #cc 컬러 캘린더 · #load · #cmp — 옛 #week 와 보기(전체·도금·컬러)에 안 맞는 캘린더는 맞는 쪽으로 */
   function view() {

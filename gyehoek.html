@@ -6,8 +6,8 @@
 <title>계획</title>
 <meta name="description" content="일별 가동계획(라인 × 날짜 계획 톤) · 조정(실적 반영) · 소재 캘린더와 월별 소재 입고">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611171304">
-<link rel="stylesheet" href="ui/optable.css?v=2611171304">
+<link rel="stylesheet" href="ui/theme.css?v=2611120206">
+<link rel="stylesheet" href="ui/optable.css?v=2611141900">
 <style>
 /* 계획 화면(11/12 회의·화이트보드 '#계획'): 사용자가 보낸 엑셀 일별 가동계획 양식 그대로 — 표 색은 엑셀 색(AZ #f8cbad · AL #9dc3e6 · MACOSTA #8e7cc3 · M/C 노랑 · 정지 남색 #1f3864 · 가동시간 #e2efda), 종이처럼 흰 바탕 */
 main.wrap { max-width: none; }
@@ -153,7 +153,7 @@ html body main #m4 table.m4-gd td.bad { color: var(--bad) !important; } html bod
 html body main #m4 table.m4-gd td.ob small { margin-left: 3px; font-size: 12.5px; color: var(--ink-3); } html body main #m4 table.m4-gd td.ob.bad small { color: var(--bad); }
 html body main #m4 table.m4-cl td.odt { font-size: 13px !important; color: var(--ink-3); white-space: nowrap; letter-spacing: -0.3px; } html body main #m4 table.m4-cl td.odt small { display: block; font-size: 12px; margin-left: 0; } #m4 table.m4-cl th.kd i.odt { font-style: normal; font-size: 13px; color: var(--ink-3); }
 #m4 .m4-wk { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 0 0 14px; background: var(--surface); }
-#m4 .m4-wk .h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; } #m4 .m4-wk .h > b { font-size: 16px; } #m4 .m4-wk .h > b.dt { font-size: 18px; color: #fff; background: var(--brand-2, #1f5fae); border-radius: 6px; padding: 1px 10px; } #m4 .m4-wk .h small { font-size: 13px; color: var(--ink-3); } #m4 .m4-wk .h .t { margin-left: auto; font-size: 18px; }
+#m4 .m4-wk .h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin-bottom: 8px; } #m4 .m4-wk .h > * { white-space: nowrap; } #m4 .m4-wk .h > b { font-size: 16px; } #m4 .m4-wk .h > b.dt { font-size: 18px; color: #fff; background: var(--brand-2, #1f5fae); border-radius: 6px; padding: 1px 10px; } #m4 .m4-wk .h small { font-size: 13px; color: var(--ink-3); } #m4 .m4-wk .h .t { margin-left: auto; font-size: 18px; }
 #m4 .m4-wk .l { display: flex; flex-wrap: wrap; gap: 8px; } #m4 .m4-wk button { font: inherit; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 7px 12px; min-width: 104px; cursor: pointer; }
 #m4 .m4-wk button:hover { border-color: var(--ink-2); } #m4 .m4-wk button span { display: block; font-size: 13px; color: var(--ink-2); font-weight: 700; } #m4 .m4-wk button b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
 #m4 .m4-wk button small { display: block; font-size: 12.5px; color: var(--bad); font-weight: 600; } #m4 .m4-wk button small.ok { color: var(--ink-3); font-weight: 500; }
@@ -169,7 +169,9 @@ html body main #m4 table.m4-cl tr.hl > :is(td, th) { background: color-mix(in sr
   .gk-det .flw { flex-wrap: wrap; }
   .gk-det table.dt.mt.fl tbody td.r::after { content: '톤'; margin-left: 2px; font-size: 13px; color: var(--ink-3); }
 }
-html body main #m4 table.m4-cl span.po.plate { box-shadow: inset 0 -3px 0 var(--bad); }
+html body main #m4 table.m4-cl td small.lt { display: block; font-size: 12px !important; font-weight: 700; color: var(--bad); line-height: 1.1; white-space: nowrap; letter-spacing: -.3px; }   /* 그중 발주 마감 지난 양 */
+html body main #m4 table.m4-cl tbody td:not(.tt):not(.odt) { padding: 3px 4px !important; overflow: visible; }   /* 칸 폭 66px(표 min-width 를 날짜 수로) — 5자리(10,324)·오늘 테두리(2px)가 숫자에 닿지 않게 */
+#m4 .m4-cl td span.w5 { letter-spacing: -.3px !important; }
 </style>
 <style>
 /* 소재 탭 = 소재 관제(matcal.html)의 소재 캘린더·월별 소재 입고 계획 서식 그대로 */
@@ -422,6 +424,8 @@ html body main #m4 table.m4-cl thead th.we { background: #ffff00 !important; col
 html body main #m4 table.m4-cl thead th.td { background: #fff !important; color: #000 !important; box-shadow: inset 0 0 0 2px #1f3864 !important; } html body main #m4 table.m4-cl thead th.td small { color: #1f3864 !important; opacity: 1; }
 html body main #m4 table.m4-cl tbody td.td { box-shadow: inset 2px 0 0 #1f3864, inset -2px 0 0 #1f3864 !important; }
 table.gk-adj tr.sr > * { background: #fff8e1 !important; border-top: 2px solid #c9d1db; } table.gk-adj tr.sr th small { display: block; font-size: 13.5px; font-weight: 500; color: var(--ink-2); }   /* 판생 월차(참고 줄) */
+b.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 날짜·기간 강조(용어 기준 11/17) — table.dt(상세 표)와 겹치지 않게 b 에만 */
+#m4 .m4-wk button small b.dt { display: inline; font-size: 13.5px; } #m4 .m4-wk button small.ok { font-size: 13.5px; color: var(--ink-2); }
 </style>
 </head>
 <body>
@@ -436,7 +440,7 @@ table.gk-adj tr.sr > * { background: #fff8e1 !important; border-top: 2px solid #
     <div class="tabs big" id="gk-tab" role="tablist"><button type="button" data-t="plan" aria-pressed="true">일별 가동계획</button><button type="button" data-t="mat" aria-pressed="false">소재</button></div>
     <div class="gk-bar"><div class="seg" id="gk-mon" role="group" aria-label="월"></div><span class="sp"></span><button type="button" class="pbtn noprint" id="gk-print">인쇄</button></div>
     <div id="gk-plan"></div>
-    <p class="gk-rl noprint" id="gk-rl"><a href="rules.html">계획 규칙 보기 — 이 계획이 어떤 규칙으로 만들어졌나 ›</a></p>
+    <p class="gk-rl noprint" id="gk-rl"><a href="rules.html">계획 규칙 보기 ›</a></p>
     <div id="gk-mat" hidden>
       <div class="sbar"><span id="s-meta"></span><div class="tabs" id="s-mon" role="group" aria-label="월"></div></div>
       <section id="s-ojudge" hidden></section>
@@ -454,16 +458,16 @@ table.gk-adj tr.sr > * { background: #fff8e1 !important; border-top: 2px solid #
     </div>
   </div>
 </main>
-<footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<footer class="foot"><div class="wrap"><span></span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
 <div class="gk-tip" id="gk-tip" role="tooltip" hidden></div>
-<script src="ui/shell.js?v=2611171304"></script>
-<script src="engine/crypto.js?v=2611171304"></script>
-<script src="ui/cal.js?v=2611171304"></script>
-<script src="ui/proccalc.js?v=2611171304"></script>
-<script src="ui/optable.js?v=2611171304"></script>
-<script src="supply.js?v=2611171304"></script>
-<script src="gyehoek.js?v=2611171304"></script>
-<script src="mat_v2.js?v=2611171304"></script>
+<script src="ui/shell.js?v=2611141500"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script src="ui/cal.js?v=2611120206"></script>
+<script src="ui/proccalc.js?v=2611120206"></script>
+<script src="ui/optable.js?v=2611172200"></script>
+<script src="supply.js?v=2611172300"></script>
+<script src="gyehoek.js?v=2611172200"></script>
+<script src="mat_v2.js?v=2611172300"></script>
 </body>
 </html>

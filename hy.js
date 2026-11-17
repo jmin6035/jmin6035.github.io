@@ -22,7 +22,7 @@
     const ORD = ['도금수출', '도금국내', '도금판매', '자동차', '자동차강판', '컬러수출', '가전내수', '컬러건재', '수요개발', '컬러공장'];   // 11/17 검토: 화면·달마다 같은 순서
     const oi = (g) => { const i = ORD.findIndex((k) => String(g).startsWith(k)); return i < 0 ? 99 : i; };
     L = [...L].sort((a_, b_) => (/CGL|CCL/.test(a_.g) && /CGL|CCL/.test(b_.g) ? String(a_.g).localeCompare(b_.g) : oi(a_.g) - oi(b_.g)));
-    return `<div class="hy-sub">${L.map((x) => `<div class="sr"><span class="sn">${esc(x.g)}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(x.plan ? x.act / x.plan * 100 : 0)}"></i>${td != null ? `<i class="td" style="left:${W(td * 100)}"></i>` : ''}</div><span class="sv"><b>${pct(x.act, x.plan) ?? '–'}%</b> ${n0(x.act)} / ${n0(x.plan)}톤</span></div>`).join('')}</div>`;
+    return `<div class="hy-sub">${L.map((x) => `<div class="sr"><span class="sn">${esc(x.g)}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(x.plan ? x.act / x.plan * 100 : 0)}"></i>${td != null ? `<i class="td" style="left:${W(td * 100)}"></i>` : ''}</div><span class="sv">${n0(x.act)} / ${n0(x.plan)}톤 <b>(${pct(x.act, x.plan) ?? '–'}%)</b></span></div>`).join('')}</div>`;
   }
   function bar(p, v, cap, td, opt = {}) {
     const a = v.act || 0, pl = v.plan, mx = opt.max || pl || 1;
@@ -36,7 +36,7 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
     const a = v.act || 0, rem = v.rem || 0, pl = v.plan || 0, mx = Math.max(a + rem, pl) * 1.03;
     const [lo, hi] = v.est || [];
     const est = lo == null ? null : lo === hi ? `${r100(lo)}톤` : `${r100(lo)}~${r100(hi)}톤`;
-    return bar(p, v, '목표', td, { max: mx, rem, tgt: true, tdBase: pl, est, grp: v.lines });
+    return bar(p, v, '판생 계획', td, { max: mx, rem, tgt: true, tdBase: pl, est, grp: v.lines });
   }
   // 다음 달 소재(11/17 사용자 '12월·1월 소재 — 이미 나간 발주'): 확보 = 월초 재고(이달 월말 예상) + 이미 나간 발주 입고 예정 · 대비 = 그 달 사용 계획
   // 11/17 사용자 '재고는 재고대로 발주는 발주대로 구분': 다음 달 소재를 두 행으로 — 소재별(도금 F/H·SUS / 컬러 CGI·AZ·EGI·SUS…)
@@ -45,20 +45,20 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
   function matStock(p, v, sm) {
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
     const L = v.by.filter((z) => z[3] > 0.5), cap = sm && sm.cap, bg = sm ? sm.beg : v.beg, en = sm ? sm.end : v.endT, su = sm && sm.sus;
-    return `<div class="hy-row"><div class="hy-num sk">${su ? '<span class="hlb">F/H</span>' : ''}<span class="hlb">월초</span><b>${n0(bg)}<small>톤</small></b><span class="ar">→</span><span class="hlb">월말</span><b class="${(cap && en > cap) || (en < 0.5 && bg > 0.5) ? 'bad' : ''}">${n0(en)}<small>톤</small>${en < 0.5 && bg > 0.5 ? ' (재고 없음)' : cap ? ` ${pct(en, cap)}%` : ''}</b></div>
-<div class="hy-mn">${(v.shortBy || []).filter((z) => z[6] && (p !== 'G' || z[0] !== 'SUS')).map((z) => `<b class="bad">${esc(SN(z[0]))} ${z[6].slice(8) === '01' ? '월초부터' : mdd(z[6]) + '부터'} 부족</b> · `).join('')}${su ? 'SUS = 지급재(발주 당일 입고) — 재고 굴림에서 뺌 · ' : ''}월말 = 추가 발주 없이 입고 예정만 들어올 때${cap ? ` · 상한 ${n0(cap)}톤` : ''}</div>
-<div class="hy-sub">${L.filter(([n, , , u]) => u >= 0.5 && !(p === 'G' && n === 'SUS')).map(([n, b, , u]) => `<div class="sr"><span class="sn">${esc(SN(n))}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(Math.min(100, b / u * 100))}"></i></div><span class="sv">월초 재고로 ${b >= u ? '<b>모두 충당</b>' : `충당 <b>${pct(b, u)}%</b>`}</span></div>`).join('')}</div></div>`;   // 11/17 검토: 100% 넘으면 '모두 충당'(1151% 같은 값 안 보임)
+    return `<div class="hy-row"><div class="hy-num sk">${su ? '<span class="hlb">F/H</span>' : ''}<span class="kv"><span class="hlb">월초</span><b>${n0(bg)}<small>톤</small></b></span><span class="ar">→</span><span class="kv"><span class="hlb">월말</span><b class="${(cap && en > cap) || (en < 0.5 && bg > 0.5) ? 'bad' : ''}">${n0(en)}<small>톤</small>${en < 0.5 && bg > 0.5 ? ' (재고 없음)' : cap ? `<small> · 상한의</small> ${pct(en, cap)}%` : ''}</b></span></div>
+<div class="hy-mn">${(v.shortBy || []).filter((z) => z[6] && (p !== 'G' || z[0] !== 'SUS')).map((z) => `<b class="bad">${esc(SN(z[0]))} <b class="dt">${mdd(z[6])}</b>부터 부족</b> · `).join('')}${su ? 'SUS(지급재) 제외 · ' : ''}월말 = 추가 발주 없을 때${cap ? ` · 상한 ${n0(cap)}톤` : ''}</div>
+<div class="hy-sub">${L.filter(([n, , , u]) => u >= 0.5 && !(p === 'G' && n === 'SUS')).map(([n, b, , u]) => `<div class="sr"><span class="sn">${esc(SN(n))}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(Math.min(100, b / u * 100))}"></i></div><span class="sv">월초 재고로 ${b >= u ? '<b>충분</b>' : `<b>${pct(b, u)}%</b>`}</span></div>`).join('')}</div></div>`;   // 11/17 검토: 100% 넘으면 '충분'(1151% 같은 값 안 보임)
   }
   function matPo(p, v) {
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
     const SB = Object.fromEntries((v.shortBy || []).map((z) => [z[0], z]));
     const L = v.by.filter((z) => z[3] > 0.5 || z[2] > 0.5 || (v.shortBy || []).some((y) => y[0] === z[0] || y[0].startsWith(z[0] + '(')));   // 부족 판정이 있는 소재는 사용·입고 없어도 보임
-    const one_ = (z, lb) => [z[1] > 0.5 ? `<b class="bad">${lb}발주 늦음 ${n0(z[1])}톤(지금 발주해도 못 맞춤)</b>` : '', z[2] > 0.5 ? `<b class="warn">${lb}추가 발주(재고 부족 기준) ${n0(z[2])}톤 · ${z[3] === z[4] ? `${mdd(z[3])}까지` : `${mdd(z[3])}부터 차례로(~${mdd(z[4])})`}</b>` : ''].filter(Boolean).join(' · ');
-    const stat = (n) => { if (p === 'G' && n === 'SUS') return '<span class="ok">지급재(발주 당일 입고)</span>'; const zs = (v.shortBy || []).filter((z) => z[0] === n || z[0].startsWith(n + '(')); if (!zs.length) return '<span class="ok">확보</span>'; return zs.map((z) => one_(z, z[0] === n ? '' : `${esc(z[0].slice(n.length).replace(/[()]/g, ''))} `)).join('<br>'); };   // 11/17 검토: F/H 는 코드별(AL용·GI/GL용) 판정
+    const one_ = (z, lb) => [z[1] > 0.5 ? `<b class="bad">${lb}발주 지연 ${n0(z[1])}톤</b>` : '', z[2] > 0.5 ? `<b class="warn">${lb}추가 발주 ${n0(z[2])}톤 · 마감 <b class="dt">${z[3] === z[4] ? mdd(z[3]) : `${mdd(z[3])}~${mdd(z[4])}`}</b></b>` : ''].filter(Boolean).join(' · ');
+    const stat = (n) => { if (p === 'G' && n === 'SUS') return '<span class="ok">지급재</span>'; const zs = (v.shortBy || []).filter((z) => z[0] === n || z[0].startsWith(n + '(')); if (!zs.length) return '<span class="ok">확보</span>'; return zs.map((z) => one_(z, z[0] === n ? '' : `${esc(z[0].slice(n.length).replace(/[()]/g, ''))} `)).join('<br>'); };   // 11/17 검토: F/H 는 코드별(AL용·GI/GL용) 판정
     const sl = v.staleBy ? v.staleBy.map(([n_, t_]) => [n_, 0, 0, 0, 0, t_]) : (v.shortBy || []).filter((z) => z[5] > 0.5);
     return `<div class="hy-row"><div class="hy-num"><b>${n0(v.arr)}</b><small>톤</small><span class="d1">입고 예정</span></div>
 <div class="hy-po">${L.map(([n, , a]) => `<div class="pr"><span class="sn">${esc(SN(n))}</span><span class="pa">입고 ${n0(a)}</span><span class="ps">${stat(n)}</span></div>`).join('')}</div>
-${v.stale > 0.5 ? `<div class="hy-mn">제외: 입고 예정일이 30일 넘게 지난 물량 ${n0(v.stale)}톤${sl.length ? `(그중 ${sl.map((z) => `${esc(z[0])} ${n0(z[5])}`).join(' · ')})` : ''} — 입고 확인 필요</div>` : ''}</div>`;
+${v.stale > 0.5 ? `<div class="hy-mn"${sl.length ? ` title="${sl.map((z) => `${esc(z[0])} ${n0(z[5])}톤`).join(' · ')}"` : ''}>입고 확인 필요 ${n0(v.stale)}톤(예정일 30일 경과)</div>` : ''}</div>`;
   }
   function matNext(p, v) {
     if (!v) return '<div class="hy-na">자료 없음</div>';
@@ -79,7 +79,7 @@ ${lines.filter(Boolean).map((l) => `<div class="hy-ms">${l}</div>`).join('')}${s
   function stockEnd(v) {
     const { end: e, cap } = v || {}; if (e == null || !cap) return '<div class="hy-na">계획 기간 밖 · 자료 없음</div>';
     const mx = Math.max(e, cap) * 1.1, xe = e / mx * 100, xc = cap / mx * 100;
-    return `<div class="hy-row"><div class="hy-num sk"><span class="hlb">월말</span><b class="${e > cap ? 'bad' : ''}">${n0(e)}<small>톤</small> ${pct(e, cap)}%</b></div>
+    return `<div class="hy-row"><div class="hy-num sk"><span class="hlb">월말</span><b class="${e > cap ? 'bad' : ''}">${n0(e)}<small>톤 · 상한의</small> ${pct(e, cap)}%</b></div>
 <div class="hy-zone"><i class="ok" style="width:${W(xc)}"></i><i class="ov" style="left:${W(xc)}"></i><i class="cp" style="left:${W(xc)}"></i><i class="de${e > cap ? ' bad' : ''}" style="left:${W(xe)}"></i></div>
 <div class="hy-cap"><span></span><span>상한 ${n0(cap)}톤</span></div></div>`;
   }
@@ -87,10 +87,10 @@ ${lines.filter(Boolean).map((l) => `<div class="hy-ms">${l}</div>`).join('')}${s
     const { now: a, end: e, cap } = v; if (a == null || !cap) return '<div class="hy-na">자료 없음</div>';
     const mx = Math.max(a, e || 0, cap) * 1.1, xa = a / mx * 100, xe = (e || 0) / mx * 100, xc = cap / mx * 100, close = Math.abs(xa - xe) < 3;
     const L = Math.min(xa, xe), R = Math.max(xa, xe);
-    return `<div class="hy-row"><div class="hy-num sk"><span class="hlb">현재</span><b class="${a > cap ? 'bad' : ''}">${n0(a)}<small>톤</small> ${pct(a, cap)}%</b>${d1(v)}<span class="ar">→</span><span class="hlb">월말</span><b class="${e > cap ? 'bad' : ''}">${n0(e)}<small>톤</small> ${pct(e, cap)}%</b></div>
+    return `<div class="hy-row"><div class="hy-num sk"><span class="kv"><span class="hlb">현재</span><b class="${a > cap ? 'bad' : ''}">${n0(a)}<small>톤 · 상한의</small> ${pct(a, cap)}%</b></span>${d1(v)}<span class="ar">→</span><span class="kv"><span class="hlb">월말</span><b class="${e > cap ? 'bad' : ''}">${n0(e)}<small>톤 · 상한의</small> ${pct(e, cap)}%</b></span></div>
 <div class="hy-zone"><i class="ok" style="width:${W(xc)}"></i><i class="ov" style="left:${W(xc)}"></i><i class="cp" style="left:${W(xc)}"></i>
 ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i class="de${e > cap ? ' bad' : ''}" style="left:${W(xe)}"></i><i class="dn${a > cap ? ' bad' : ''}" style="left:${W(xa)}"></i></div>
-<div class="hy-cap"><span>${v.sr != null ? `${v.lab ? `${esc(v.lab)} · ` : ''}현재·월말 = MES 소재재고(코드별) · 판생 재고 ${n0(v.sr)}톤` : ''}</span><span>상한 ${n0(cap)}톤</span></div></div>`;
+<div class="hy-cap"><span${v.sr != null ? ` title="판생 재고 ${n0(v.sr)}톤"` : ''}>${v.lab ? esc(v.lab) : ''}</span><span>상한 ${n0(cap)}톤</span></div></div>`;
   }
   const cover = (L, noDays) => `<div class="hy-cv">${(L || []).map((x) => `<div class="c${x.days != null && x.days < 7 ? ' r' : ''}"><div class="n">${esc(x.line)}</div><div class="v">${n0(x.t)}<small>톤</small></div>${noDays ? '' : `<div class="d">${x.days != null ? x.days + '일치' : '–'}</div>`}</div>`).join('')}</div>`;
 
@@ -113,23 +113,22 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
       ['제품 재고', '월말 예상', 'integrated.html', (p) => stockEnd(M[p].stockPdt)],
       ['총 재고', '소재 + 제품 · 월말', null, (p) => stockEnd(M[p].stockAll)],
     ] : [
-      ['수주', '실적 + 소재 확보 주문', null, (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', null, { grp: H[p].sales.grp })],
-      ['생산', '목표 대비 실적', 'gyehoek.html', (p) => prod(p, H[p].prod, td)],
-      ['소재', '이달 실입고 / 발주한 입고분', 'gyehoek.html#mat', (p) => bar(p, H[p].mat, `${mo}월 입고 발주(미발주 제외)`, td)],
-      ['출하', '계획 대비 출하', null, (p) => bar(p, H[p].ship, '이달 계획', td, { grp: H[p].ship.grp })],
+      ['수주', '생산 실적 + 확정 주문', null, (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', null, { grp: H[p].sales.grp })],
+      ['생산', '판생 계획 대비 실적', 'gyehoek.html', (p) => prod(p, H[p].prod, td)],
+      ['소재', `입고 실적 / ${mo}월 입고 계획`, 'gyehoek.html#mat', (p) => bar(p, H[p].mat, `${mo}월 입고 계획`, td)],
+      ['출하', '계획 대비 출하', null, (p) => bar(p, H[p].ship, '판매계획', td, { grp: H[p].ship.grp })],
       ['소재 재고', '현재 → 월말', null, (p) => stock(H[p].stockMat)],
       ['제품 재고', '현재 → 월말', 'integrated.html', (p) => stock(H[p].stockPdt)],
       ['총 재고', '소재 + 제품 · 현재 → 월말', null, (p) => stock(H[p].stockAll)],
-      ['주문충당량', '소재 매치 주문', 'pyeonseong.html', (p) => cover(H[p].cover)],
+      ['작업 가능 주문', '소재 들어온 주문', 'pyeonseong.html', (p) => cover(H[p].cover)],
     ];
     const sec = (a, b, u) => u ? `<a class="sec" href="${u}"><b>${a} ›</b><small>${b}</small></a>` : `<div class="sec"><b>${a}</b><small>${b}</small></div>`;
     const cell = (p, a, h) => `<div class="cell" data-pl="${p === 'G' ? '도금' : '컬러'} · ${a}">${h}</div>`;
-    m.innerHTML = `<div class="hy-top"><h1>${mm}월 판매·생산 현황</h1><span>${M ? `수주 ${dd}까지 · 생산·재고 = 계획` : `${dd}까지`}</span>
+    m.innerHTML = `<div class="hy-top"><h1>${mm}월 판매·생산 현황</h1><span>${M ? `주문 <b class="dt">${dd}</b> 기준 · 생산·재고는 계획값` : `실적 <b class="dt">${dd}</b>까지`}</span>
 <div class="hy-tabs">${tabs.map((t, i) => `<button type="button" data-mi="${i}" class="${i === MI ? 'on' : ''}">${t}</button>`).join('')}</div></div>
 <div class="hy-g${PS.length < 2 ? ' one' : ''}"><div></div>${PS.map((p) => `<div class="hd ${p === 'G' ? 'g' : 'c'}">${p === 'G' ? '도금' : '컬러'}</div>`).join('')}
 ${R.map(([a, b, u, f]) => `${sec(a, b, u)}${PS.map((p) => cell(p, a, f(p))).join('')}`).join('')}</div>
-<div class="hy-lg">${M ? `${UI.inScope('G') ? '<span><i class="k-g"></i>도금 주문·소재 확보</span>' : ''}${UI.inScope('C') ? '<span><i class="k-c"></i>컬러 주문·소재 확보</span>' : ''}` : '<span><i class="k-g"></i>도금 실적</span><span><i class="k-c"></i>컬러 실적</span>'}${M ? '' : '<span><i class="k-rm"></i>남은 계획</span><span><i class="k-tg"></i>목표</span><span><i class="k-td"></i>오늘</span><span>● 현재 · ○ 월말</span>'}<span><i class="k-ov"></i>상한 초과</span>${M ? '<span>○ 월말</span>' : '<span class="bad">빨강 = 7일치 미만</span>'}</div>
-<div class="hy-ft">${M ? '확정 주문 = 납기가 그 달인 등록 주문 · 판매계획 = 도금 재계획 · 컬러 3개월 계획 · 소재 입고 예정 = 발주된 물량 중 그 달 입고분 · 추가 발주 = 지금 발주하면 맞출 수 있는 양과 기한 · m/d부터 부족 = 추가 발주가 없을 때 재고가 모자라기 시작하는 날 · 발주 늦음 n톤 = 발주 기한(부족 시작일 − 리드타임)이 지나 지금 발주해도 못 맞추는 양 · 총 재고 = 소재 + 제품, 상한 = 판생 기준 재고 상한 합' : '수주 = 이달 생산 실적 + 다음 주까지 만들 소재 매치 주문 · 생산 = MES 코일 실적 · 출하 = 판매생산속보 출하현황(내수 송장 · 수출 B/L) — 모든 화면 같은 값'}</div>`;
+<div class="hy-lg">${M ? `${UI.inScope('G') ? '<span><i class="k-g"></i>도금 주문·소재 확보</span>' : ''}${UI.inScope('C') ? '<span><i class="k-c"></i>컬러 주문·소재 확보</span>' : ''}` : '<span><i class="k-g"></i>도금 실적</span><span><i class="k-c"></i>컬러 실적</span>'}${M ? '' : '<span><i class="k-rm"></i>남은 계획</span><span><i class="k-tg"></i>판생 계획</span><span><i class="k-td"></i>오늘</span><span>● 현재 · ○ 월말</span>'}<span><i class="k-ov"></i>상한 초과</span>${M ? '<span>○ 월말</span>' : '<span class="bad">빨강 = 7일치 미만</span>'}</div>`;
     m.querySelectorAll('.hy-tabs button').forEach((b) => b.addEventListener('click', () => { MI = +b.dataset.mi; try { sessionStorage.setItem('hy-mi', MI); } catch (e) { /* 무시 */ } render(D); }));
   }
   let LD = null, SUB = false;

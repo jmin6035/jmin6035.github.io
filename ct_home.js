@@ -68,10 +68,10 @@
       return { x, p: ds.length && !miss ? p : null, a, ds };
     });
     let plan, act, prSub, pr0 = null;
-    // 11/13 사용자 결정: 월 계획 = 지금 계획의 그 달 합계(지난 날 실적 + 앞날 계획) · 큰 숫자 = 실적 ÷ 월 계획 · 색·작은 글씨 = 전일까지 월차(그 달 첫 판) 계획 대비 — UI.prodMon 한 곳(02 현황와 같은 값)
+    // 11/13 사용자 결정: 월 계획 = 지금 계획의 그 달 합계(지난 날 실적 + 앞날 계획) · 큰 숫자 = 실적 ÷ 월 계획 · 색·작은 글씨 = 전일까지 월차(그 달 첫 판) 계획 대비 — UI.prodMon 한 곳(02 현황과 같은 값)
     const SJ = D.suju, LIN = (P.lines || []).filter((x) => CT.inScope(x.pl)).map((x) => x.line);
     const PMv = SJ && SJ.daily ? (view === 'month' ? UI.prodMon(SJ, LIN) : UI.prodMon(SJ, LIN, view === 'day' ? SJ.asOf : p0, view === 'day' ? SJ.asOf : p1)) : null;
-    if (PMv && view === 'month') { plan = PMv.mon; act = PMv.act; pr0 = PMv.pct0 == null ? null : Math.round(PMv.pct0); prSub = `실적 ${n0(act)} / 월 계획 ${n0(plan)}t · ~${md(SJ.asOf)} 월차 계획 대비 ${pr0 == null ? '–' : pr0 + '%'}`; }
+    if (PMv && view === 'month') { plan = PMv.mon; act = PMv.act; pr0 = PMv.pct0 == null ? null : Math.round(PMv.pct0); prSub = `실적 ${n0(act)} / 월 계획 ${n0(plan)}t · ${md(SJ.asOf)}까지 월차 계획 대비 ${pr0 == null ? '–' : pr0 + '%'}`; }
     else if (PMv) { plan = PMv.due0; act = PMv.act; const dd = PMv.days; prSub = dd.length ? `${dd.length > 1 ? `${md(dd[0])}~${md(dd[dd.length - 1])}` : md(dd[0])} 실적 ${n0(act)} / 월차 계획 ${n0(plan)}t` : `${pLbl} 실적 집계 전`; if (!dd.length) plan = 0; }
     else if (view === 'month') { plan = cgP + ccP; act = cgA + ccA; prSub = `실적 ${n0(act)} / 일정 누계 ${n0(plan)}t`; }
     else {
@@ -122,7 +122,7 @@
     const rkTbl = RK ? `<div class="ct-wrap"><table class="ct-t hm-rk"><colgroup><col style="width:92px"><col style="width:88px"><col style="width:150px"><col style="width:84px"><col style="width:60px"><col></colgroup><thead><tr><th>그룹</th><th class="r">미결</th><th>상태</th><th class="r">위험</th><th class="r">비율</th><th>주요 원인 <small>· 언제 풀리나</small></th></tr></thead><tbody>${RKG.slice(0, 9).map((g) => { const tn = UI.riskTone(g.risk, g.t); return `<tr onclick="location.href='risk.html'" style="cursor:pointer"><td class="nw"><span class="cdot ${tn}"></span><b>${esc(g.g)}</b></td><td class="r">${n0(g.t)}t</td><td>${rkBar(g)}</td><td class="r"><b class="${tn}">${n0(g.risk)}t</b></td><td class="r"><b class="${tn}">${Math.round(g.risk / g.t * 100)}%</b></td><td class="hm-w">${g.cz ? UI.causeHtml(RK, g.cz, 2, 2) : esc(g.msg)}</td></tr>`; }).join('') || '<tr><td colspan="6">위험 없음</td></tr>'}</tbody></table></div>` : null;
     // 새 양식(?ui=v2, 11/12): 그룹 = 공통 순서(도금 → 컬러 → 수요개발), 칸 = 그룹 | 미결 | 위험 | 비율 | 주요 원인(1개) | 언제 풀리나 — 나머지 원인은 줄 눌러 펼침. 상태 막대·원인 칩 없음
     const V2 = !!(window.UI && UI.v2);
-    const RKNM = { 자동차: '자동차강판', 자가재: '도금 자가재', 건재수출: '컬러수출(건재)', 가전수출: '컬러수출(가전)', 가전내수: '컬러수출(가전내수)' };   // 11/13: 판매그룹 이름 = 관제판·납기 위험과 같게
+    const RKNM = { 자동차: '자동차', 자가재: '도금 자가재', 건재수출: '컬러수출(건재)', 가전수출: '컬러수출(가전)', 가전내수: '컬러수출(가전내수)' };   // 11/13: 판매그룹 이름 = 관제판·납기 위험과 같게
     const RKO = ['도금수출', '도금국내', '자동차', '자가재', '건재수출', '가전수출', '가전내수', '컬러건재', '수요개발'];
     const rkTbl2 = RK && V2 ? (() => {
       const oi = (g) => { const i = RKO.indexOf(g.g); return i < 0 ? (g.pl === 'G' ? 50 : 80) : i; };
@@ -142,7 +142,7 @@
     const K = [
       RKT ? { label: '납기 위험', v: n0(RKT.will + RKT.past), unit: 't', sub: `미결 ${n0(RKT.t)}t 중 ${RKT.t ? Math.round((RKT.will + RKT.past) / RKT.t * 100) : 0}% · 납기 지남 ${n0(RKT.past)} · 지연 예상 ${n0(RKT.will)}`, tone: RKT.will + RKT.past >= 0.5 ? 'bad' : 'ok', href: 'risk.html' }
         : { label: '납기 지연 예상', v: n0(risk.length), unit: '건', sub: `${n0(T(risk))}t · 점검 ${warn.length}건 · 이미 지난 ${n0(overdue.length)}건 별도`, tone: risk.length ? 'bad' : 'ok', href: 'risk.html' },
-      { label: '소재 부족', v: n0(lateSum), unit: 't', sub: lateM.length ? `발주 마감 지난 부족 ${lateM.length}종(${lateM.slice().sort((x, y) => (y.lateT || 0) - (x.lateT || 0)).slice(0, 3).map((m) => esc(m.name)).join('·')})` : '발주 마감 지난 부족 없음', tone: lateSum >= 0.5 ? 'bad' : mats.length ? 'warn' : 'ok', href: 'matcal.html#mt-orders' },   // 11/10 점검(F13): 소재 부족 = 마감 지난 부족(lateT)만 — 월간 55,518t(3달 합)·금일 0t(기간 안 시작만)이던 것 → 모든 소재 화면 공통값
+      { label: '소재 부족', v: n0(lateSum), unit: 't', sub: lateM.length ? `발주 지연 ${lateM.length}종(${lateM.slice().sort((x, y) => (y.lateT || 0) - (x.lateT || 0)).slice(0, 3).map((m) => esc(m.name)).join('·')})` : '발주 마감 지난 부족 없음', tone: lateSum >= 0.5 ? 'bad' : mats.length ? 'warn' : 'ok', href: 'matcal.html#mt-orders' },   // 11/10 점검(F13): 소재 부족 = 마감 지난 부족(lateT)만 — 월간 55,518t(3달 합)·금일 0t(기간 안 시작만)이던 것 → 모든 소재 화면 공통값
       { label: view === 'day' ? '어제 생산 진도' : '생산 진도율', v: pr == null ? '-' : pr, unit: pr == null ? '' : '%', sub: prSub + (lag.length ? ` · 월차 대비 미달 ${lag.map((x) => `${x.line} −${n0(x.gap)}t`).join(' · ')}` : ''), tone: prTone, href: 'ct_prod.html#perf' },   // 11/11: '생산 미달' 카드를 여기 합침(같은 실적·계획)
       { label: '출하 미달', v: n0(shipGap), unit: 't', sub: shipSub, tone: shipGap > 500 ? 'bad' : shipGap > 0.5 ? 'warn' : 'ok', href: 'ct_prod.html#ship' },
       { label: '자료 확인 필요', v: n0(nd.length), unit: '건', sub: `출하 실적 없음 ${noShip.length}건 별도`, tone: nd.length ? 'warn' : 'ok', href: 'ct_orders.html#risk' },
@@ -158,7 +158,7 @@
       if (o.risk === '위험') a.risk = '위험';
     }
     for (const a of by.values()) acts.push({ id: CT.issueId('ord|' + a.k), risk: a.risk, type: a.type, grp: a.grp, what: `${a.grp} ${a.os.length}건`, t: T(a.os), last: a.last, dept: a.dept, os: a.os });
-    for (const m of mats) acts.push({ id: CT.issueId('mat|' + m.key), risk: m.st === 'late' ? '위험' : '주의', type: '소재 발주', what: m.st === 'late' ? `${m.name} 마감 지남 ${n0(m.lateT)}t` : `${m.name} 부족 ${n0(m.short)}t · ${md(m.first)}부터`, t: m.st === 'late' ? m.lateT : m.short, last: m.deadline, dept: CT.DEPT.mat, href: 'matcal.html#mt-orders' });   // 11/9: 마감 지남 = matLate 몫
+    for (const m of mats) acts.push({ id: CT.issueId('mat|' + m.key), risk: m.st === 'late' ? '위험' : '주의', type: '소재 발주', what: m.st === 'late' ? `${m.name} 발주 지연 ${n0(m.lateT)}t` : `${m.name} 부족 ${n0(m.short)}t · ${md(m.first)}부터`, t: m.st === 'late' ? m.lateT : m.short, last: m.deadline, dept: CT.DEPT.mat, href: 'matcal.html#mt-orders' });   // 11/9: 마감 지남 = matLate 몫
     for (const x of (P.exceptions || []).filter((x) => (x.lvl === 'bad' || x.lvl === 'warn') && !CT.idleSkip(D, x.text))) {   // 계획 휴지 라인 경보 제외(11/8)
       if (!CT.inScope(/도금/.test(x.area) ? 'G' : /컬러/.test(x.area) ? 'C' : 'all')) continue;
       acts.push({ id: CT.issueId('exc|' + x.text), risk: x.lvl === 'bad' ? '위험' : '주의', type: x.area, what: x.text, t: null, last: null, dept: x.who, href: x.link });
@@ -197,10 +197,10 @@
       let big, bigU = '%', sub, max, act, mark, markL, diffT = null, tn = '', mpV = null, elV = null;
       const PL_ = PMm && PMm.by[x.line];
       if (view === 'month' && PL_) {   // 11/13: 6라인 같은 식 — 큰 숫자 = 실적 ÷ 월 계획(지금 계획 그 달 합계), ▼ = 전일까지 월차 계획, 색 = 월차 대비
-        act = PL_.act; mark = PL_.due0; max = Math.max(PL_.mon, act); markL = `~${md(SJ.asOf)} 월차`;
+        act = PL_.act; mark = PL_.due0; max = Math.max(PL_.mon, act); markL = `${md(SJ.asOf)}까지 월차`;
         big = PL_.mon ? Math.round(act / PL_.mon * 100) : null; diffT = act - mark; mpV = PL_.mon; elV = PL_.pct0;
         tn = mark ? tone(PL_.pct0) : '';
-        sub = PL_.mon ? `실적 ${n0(act)} / 월 계획 ${n0(PL_.mon)}t · ~${md(SJ.asOf)} 월차 계획 ${n0(mark)}t 대비 ${PL_.pct0 == null ? '–' : Math.round(PL_.pct0) + '%'}` : '이번 달 계획 없음';
+        sub = PL_.mon ? `실적 ${n0(act)} / 월 계획 ${n0(PL_.mon)}t · ${md(SJ.asOf)}까지 월차 계획 ${n0(mark)}t 대비 ${PL_.pct0 == null ? '–' : Math.round(PL_.pct0) + '%'}` : '이번 달 계획 없음';
       } else if (view === 'month') {
         if (x.pl === 'G') {
           act = x.actual || 0; mark = x.sched || 0; max = Math.max(x.month || 0, act); markL = '일정 누계';
@@ -303,7 +303,7 @@
       const pa = rs.reduce((a, r) => a + (r.act || 0), 0), pm = rs.reduce((a, r) => a + (r.mark || 0), 0), hp = pm ? Math.round(pa / pm * 100) : null;
       if (PMm) {
         const pmon = rs.reduce((a, r) => a + (r.mpV || 0), 0), mp = pmon ? Math.round(pa / pmon * 100) : null;
-        return `<div class="ln-pl"><div class="ln-ph k2-ph"><b>${nm}</b><span>진도 = 실적 ÷ 월 계획(지금 계획의 이달 합계) · 색 = ~${md(SJ.asOf)} 월차 계획 대비</span>${mp != null ? `<span class="k2-pt">실적 ${n0(pa)} / 월 계획 ${n0(pmon)}t · <b>${mp}%</b> · 월차 대비 <b class="${tone(hp)}">${hp == null ? '–' : hp + '%'}</b></span>` : ''}</div><div class="ln-grid n${rs.length}">${rs.map(cardV2).join('')}</div></div>`;
+        return `<div class="ln-pl"><div class="ln-ph k2-ph"><b>${nm}</b><span>진도 = 실적 ÷ 월 계획(지금 계획의 이달 합계) · 색 = ${md(SJ.asOf)}까지 월차 계획 대비</span>${mp != null ? `<span class="k2-pt">실적 ${n0(pa)} / 월 계획 ${n0(pmon)}t · <b>${mp}%</b> · 월차 대비 <b class="${tone(hp)}">${hp == null ? '–' : hp + '%'}</b></span>` : ''}</div><div class="ln-grid n${rs.length}">${rs.map(cardV2).join('')}</div></div>`;
       }
       const basis = pl === 'G' ? '진도 = 실적 ÷ 일정 누계(오늘까지 재계획 일정)' : '진도 = 실적 ÷ 월 계획 · 가동일 경과율과 비교(계획 휴지일 제외)';
       return `<div class="ln-pl"><div class="ln-ph k2-ph"><b>${nm}</b><span>${basis}</span>${hp != null ? `<span class="k2-pt">실적 ${n0(pa)}t · ${pl === 'G' ? '기준' : '경과 기준'} ${n0(pm)}t · <b class="${tone(hp)}">${hp}%</b></span>` : ''}</div><div class="ln-grid n${rs.length}">${rs.map(cardV2).join('')}</div></div>`;
@@ -315,7 +315,7 @@
       const pa = rs.reduce((a, r) => a + (r.act || 0), 0), pm = rs.reduce((a, r) => a + (r.mark || 0), 0), pmax = rs.reduce((a, r) => a + (r.max || 0), 0);
       if (view === 'week' && !pa && !pm) return `<div class="ln-pl"><div class="ln-ph"><b>${nm}</b><span>실적 집계 전 · 이번 주 계획 ${n0(pmax)}t</span></div><div class="ln-grid n${rs.length}">${rs.map(card).join('')}</div></div>`;
       const hp = pm ? Math.round(pa / pm * 100) : null;
-      const lbl = view === 'month' ? (PMm ? `~${md(SJ.asOf)} 월차` : pl === 'G' ? '일정 누계' : '가동일 경과 기준') : '계획';
+      const lbl = view === 'month' ? (PMm ? `${md(SJ.asOf)}까지 월차` : pl === 'G' ? '일정 누계' : '가동일 경과 기준') : '계획';
       return `<div class="ln-pl"><div class="ln-ph"><b>${nm}</b><span>실적 ${n0(pa)}t${pm ? ` / ${lbl} ${n0(pm)}t · <b class="${tone(hp)}">${hp}%</b>` : ''}</span></div><div class="ln-grid n${rs.length}">${rs.map(card).join('')}</div></div>`;
     };
     const lineSec = V2 ? `<section class="card ln-sec k2-ls"><h2 title="막대 = 이번 달 실적(▼ 기준), 아래 = 일별 실적과 계획">라인별 진도 <small>${pLbl}</small></h2>${leg}${plant('G', '도금')}${plant('C', '컬러')}</section>` : `<section class="card ln-sec"><h2>라인별 진도 <small>${pLbl} · 공장 → 라인 · 막대 = 기간 실적(▼ 계획), 아래 = 일별 실적과 계획</small></h2>${leg}${plant('G', '도금 공장')}${plant('C', '컬러 공장')}</section>`;
@@ -366,7 +366,7 @@
     const gT = {}, cT = {};
     for (const r of L.rows || []) if (days.includes(r[0])) gT[r[0]] = (gT[r[0]] || 0) + (+r[4] || 0);
     for (const x of W.color || []) if (days.includes(x.d) && !x.act) cT[x.d] = (cT[x.d] || 0) + Object.values(x.g || {}).reduce((a, v) => a + v, 0);
-    const ev = {}; for (const e of ((P.week || {}).events || [])) if (days.includes(e.d) && CT.inScope(e.pl)) (ev[e.d] = ev[e.d] || []).push(e.text);
+    const ev = {}; for (const e of ((P.week || {}).events || [])) if (days.includes(e.d) && CT.inScope(e.pl)) (ev[e.d] = ev[e.d] || []).push(String(e.text || '').replace(/(\d)h\b/g, '$1시간'));
     const buckets = view === 'month' ? Object.values(days.reduce((m, d) => ((m[CT.wed(d)] = m[CT.wed(d)] || []).push(d), m), {})) : days.map((d) => [d]);   // 월간 = 수요일 시작 주로 끊음(월 경계에서 자름)
     // 11/10 점검: 지난 날 = MES 실적(도금 칸에 재계획의 실적 행, 컬러 0 이던 것), 같은 일정이 주 칸에 날마다 반복되던 것 → 한 번(기간)
     const actPl = (pl, d) => (P.lines || []).filter((x) => x.pl === pl).reduce((a, x) => a + (actOn(x, d) || 0), 0);
@@ -390,7 +390,7 @@
       if (!os.length || !CT.inScope(pl)) return '';
       const op = os.filter((o) => !o.closed), F = (f) => os.filter((o) => o.ful === f).length;
       const cells = [
-        ['수주 진행', `${n0(T(op))}<small>t 잔량</small>`, `${op.length}건`],
+        ['주문 진행', `${n0(T(op))}<small>t 잔량</small>`, `${op.length}건`],
         ['소재 확보', `${n0(op.filter((o) => o.matSt === '확보' || o.matSt === '재고 있음').length)}<small>건</small>`, `미확보 <b class="bad">${op.filter((o) => o.matSt !== '확보' && o.matSt !== '재고 있음').length}</b>건`],
         ['생산 중', `${n0(F('생산 중'))}<small>건</small>`, `생산 전 ${F('생산 전')}건`],
         ['생산 완료', `${n0(F('출하 확인 불가') + F('부분 출하') + F('생산 완료') + F('출하 완료'))}<small>건</small>`, `생산 ${n0(os.reduce((a, o) => a + Math.min(o.prodT || 0, o.ordT || 0), 0))}t`],
@@ -412,9 +412,9 @@
       const top3 = lateM.slice().sort((x, y) => (y.lateT || 0) - (x.lateT || 0));
       const C = [
         [K[0], [['지연 예상 + 납기 지남', K[0]]], RKT ? `미결 ${n0(RKT.t)}t 중 ${RKT.t ? Math.round((RKT.will + RKT.past) / RKT.t * 100) : 0}%` : `${n0(T(risk))}t`],
-        [K[1], [['발주 마감 지난 부족', K[1]]], top3.length ? `${top3.length}종 · ${top3[0].name}${top3.length > 1 ? ' 외' : ''}` : '없음'],
+        [K[1], [['발주 지연', K[1]]], top3.length ? `${top3.length}종 · ${top3[0].name}${top3.length > 1 ? ' 외' : ''}` : '없음'],
         [K[2], [['어제', Dd.K[2]], ['이번 주', Dw.K[2]], [`${+asOf.slice(5, 7)}월`, K[2]]], PMv ? `월 계획 ${n0(plan)}t 중 ${n0(act)}t · 월차 대비 ${pr0 == null ? '–' : pr0 + '%'}` : `월간 ${n0(act)} / ${n0(plan)}t`],
-        [K[3], [[`그룹별 미달 합${shDue ? ` ~${md(shDue)}` : ''}`, K[3]]], `미달 그룹만 더함 · 초과 ${n0(Math.max(0, shA - shP + shipGap))}t 별도`],   // 11/13 검토: 두 숫자 차(5,083)와 카드(6,109)가 다른 이유 = 그룹별 미달만 더함
+        [K[3], [[`그룹별 미달 합${shDue ? ` ${md(shDue)}까지` : ''}`, K[3]]], `미달 그룹만 더함 · 초과 ${n0(Math.max(0, shA - shP + shipGap))}t 별도`],   // 11/13 검토: 두 숫자 차(5,083)와 카드(6,109)가 다른 이유 = 그룹별 미달만 더함
         [K[4], [['판정 불가 주문', K[4]]], `출하 실적 없음 ${noShip.length}건 별도`],
       ];
       return `<div class="ct-kpis k2-kp">${C.filter(([k, cs]) => k && cs.every(([, x]) => x)).map(([k, cs, s]) => `<a href="${k.href}" class="ct-kpi k2-k" title="${esc(strip(k.sub))}"><div class="l">${esc(k.label === '생산 진도율' ? '생산 진도' : k.label)}</div><div class="k2-n${cs.length > 1 ? ' m3' : ''}">${cs.map(([l, x]) => cell(l, x)).join('')}</div><div class="s">${esc(s)}</div></a>`).join('')}</div>`;
@@ -431,7 +431,7 @@
     const defs = `<ul class="ct-ul">`
       + `<li><b>납기 위험</b> = 지연 예상 + 납기 지남(미결 주문, 납기 60일 넘게 지난 미종결 제외) — 납기 위험 화면과 같은 판정${RK ? `(${md(RK.asOf)})` : ''}. ${V2 ? '위험 숫자 색' : '그룹 색'}: 위험 ÷ 미결 30% 이상 빨강 · 15% 이상 주황</li>`
       + `<li><b>주요 원인</b> = ${V2 ? '위험 톤이 가장 큰 원인(나머지는 줄을 눌러 펼침), 언제 풀리나 = 그 원인 중 가장 큰 몫의 다음 생산일·입고 예정일' : '위험 톤이 큰 원인 2개, 옆 = 언제 풀리나(다음 생산일·입고 예정일)'}${RK ? `<ul>${Object.entries(RK.causeNm || {}).map(([k, v]) => `<li><b>${esc(v)}</b>${(RK.causeDef || {})[k] ? ` = ${esc(RK.causeDef[k])}` : ''} → ${esc((RK.dept || {})[k] || '')}</li>`).join('')}</ul>` : ''}</li>`
-      + `<li><b>생산 진도</b> = ${PMv ? `이달 = 실적 ÷ 월 계획(지금 계획의 ${+asOf.slice(5, 7)}월 합계 = 지난 날 실적 + 앞날 계획, 6라인) · 어제·이번 주·색 = 실적 ÷ 같은 날들의 월차(그 달 첫 계획) 계획 — 02 현황와 같은 값` : '라인 실적 ÷ 일정 누계'} · 월차 대비 98% 이상 정상 · 90% 이상 주의</li>`
+      + `<li><b>생산 진도</b> = ${PMv ? `이달 = 실적 ÷ 월 계획(지금 계획의 ${+asOf.slice(5, 7)}월 합계 = 지난 날 실적 + 앞날 계획, 6라인) · 어제·이번 주·색 = 실적 ÷ 같은 날들의 월차(그 달 첫 계획) 계획 — 02 현황과 같은 값` : '라인 실적 ÷ 일정 누계'} · 월차 대비 98% 이상 정상 · 90% 이상 주의</li>`
       + `<li><b>출하 미달</b> = 판매그룹 출하 실적 ÷ 오늘까지 기준(월 계획 × 그룹 월중 출하 실적 패턴) — 판매그룹 관제판과 같은 값</li>`
       + `<li><b>소재 부족</b> = 발주 마감이 지난 부족(소재 화면과 같은 값)</li></ul>`;
     const conFold = (Dd.conSec || '') && Dd.conSec.replace(/^<section class="card"><h2>오늘·내일 라인별 생산 계약 <small>/, '<details class="fold ct-f"><summary>오늘·내일 라인별 생산 계약 <small>').replace(/<\/small><\/h2>/, '</small></summary>').replace(/<\/section>$/, '</details>');

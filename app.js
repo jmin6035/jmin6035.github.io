@@ -24,7 +24,7 @@
     $('p-sd').innerHTML = P.shutdowns.map((s, i) => `<div class="sd-row"><select data-sd="${i}" data-k="line">${P.lines.map((l) => `<option ${s.line === l ? 'selected' : ''}>${l}</option>`).join('')}</select><input type="date" data-sd="${i}" data-k="start" value="${s.start}"><span>~</span><input type="date" data-sd="${i}" data-k="end" value="${s.end}"><button type="button" class="ghost x" data-sddel="${i}" aria-label="삭제">✕</button></div>`).join('') || '<p class="hint">정기수리 없음</p>';
     $('p-loss').innerHTML = `<tr><th>항목</th>${P.lines.map((l) => `<th>${l}</th>`).join('')}</tr>` + LOSS.map(([k, lab]) => `<tr><td class="l">${lab}</td>${P.lines.map((l) => `<td><input type="number" step="any" data-loss="${k}" data-line="${l}" value="${P[k][l]}"></td>`).join('')}</tr>`).join('');
     const rk = Object.keys(P.rateDept).sort();
-    $('p-rate').innerHTML = '<tr><th>라인</th><th>강종</th><th>부서</th><th>t/hr</th></tr>' + rk.map((k) => { const [l, a, c] = k.split('|'); return `<tr><td>${l}</td><td>${a}</td><td>${c}</td><td><input type="number" step="any" data-rate="${k}" value="${GP.round(P.rateDept[k] * 60, 3)}"></td></tr>`; }).join('')
+    $('p-rate').innerHTML = '<tr><th>라인</th><th>강종</th><th>부서</th><th>t/시간</th></tr>' + rk.map((k) => { const [l, a, c] = k.split('|'); return `<tr><td>${l}</td><td>${a}</td><td>${c}</td><td><input type="number" step="any" data-rate="${k}" value="${GP.round(P.rateDept[k] * 60, 3)}"></td></tr>`; }).join('')
       + Object.keys(P.rateBase).sort().map((k) => { const [l, a] = k.split('|'); return `<tr><td>${l}</td><td>${a}</td><td>(기본값)</td><td><input type="number" step="any" data-rbase="${k}" value="${GP.round(P.rateBase[k] * 60, 3)}"></td></tr>`; }).join('');
   }
   function readParams() {
@@ -117,7 +117,7 @@
     $('checks').innerHTML = m.checks.filter((c) => c.level !== 'info').concat(m.checks.filter((c) => c.level === 'info')).map((c) => `<li class="${c.level}">${{ error: '오류', warn: '경고', info: '정보' }[c.level]} · ${esc(c.msg)}</li>`).join('');
     const H = GP.horizon(P);
     $('check-summary').innerHTML = m.summary
-      ? `<p>판매계획 파일 안 기준일 <b>${esc(m.asOf || '-')}</b>(파일 시트 머리 값) · 이 계산 기간 <b>${UI.fmtDate(H.D0)} ~ ${UI.fmtDate(H.D1)}</b>${(GP.horizon(GP.DEFAULT_PARAMS) || {}).D1 === H.D1 ? '(게시 계획의 1·2월 연장분은 이 계산에 없음)' : ''} · 계획 대상 <b>${GP.fmt(m.summary.demand)}t</b> (버킷 ${m.summary.nBuckets}개)${P.firstWindowPrevMonth ? ` · 첫 달 1~5일 선적분 ${GP.fmt(m.summary.sept)}t는 전월 생산 가정` : ''}. 경고 ${warns.length}건.</p>`
+      ? `<p>판매계획 파일 안 기준일 <b>${esc(m.asOf || '-')}</b>(파일 시트 머리 값) · 이 계산 기간 <b>${UI.fmtDate(H.D0)} ~ ${UI.fmtDate(H.D1)}</b>${(GP.horizon(GP.DEFAULT_PARAMS) || {}).D1 === H.D1 ? '(게시 계획의 1·2월 연장분은 이 계산에 없음)' : ''} · 계획 대상 <b>${GP.fmt(m.summary.demand)}t</b>${P.firstWindowPrevMonth ? ` · 첫 달 1~5일 선적분 ${GP.fmt(m.summary.sept)}t는 전월 생산 가정` : ''}. 경고 ${warns.length}건.</p>`
       : '<p class="muted">입력 오류부터 해결 필요.</p>';
     // 부서×월 수요표
     const t = {};
@@ -129,7 +129,7 @@
 
   // ---------------- 계산 ----------------
   let t0 = 0, timer = null, stage = 0, wake = null;
-  const STAGES = [['1단계: M/C 최소 강종 일정 탐색', 0, 60, 120], ['2단계: M/C 고정, 선생산 최소화', 60, 97, 40], ['평준화·목적지 배정', 97, 100, 5]];
+  const STAGES = [['1단계: M/C 최소 강종 일정 탐색', 0, 60, 120], ['2단계: M/C 고정, 앞당김 생산 최소화', 60, 97, 40], ['평준화·목적지 배정', 97, 100, 5]];
   function setStage(i) { stage = i; $('stage').textContent = STAGES[i][0]; }
   function t0Run() {
     t0 = Date.now(); let stageT = t0;
@@ -186,7 +186,7 @@
     $('kpis').innerHTML = [
       [`${mcT}회`, `M/C (${L.map((l) => `${l} ${A.mc[l]}`).join(' · ')})`],
       [`${GP.fmt(A.short)}t`, '결품', A.short > 0.5], [`${GP.fmt(A.lateT)}t`, '지연', A.lateT > 0.5],
-      [`${GP.fmt(A.earlyT)}t`, '전월 선생산'], [`${A.idle.length}일`, '유휴일'], [`${GP.fmt(maxLoad * 100, 1)}%`, '최대 월 부하', maxLoad > 0.999],
+      [`${GP.fmt(A.earlyT)}t`, '전월 앞당김 생산'], [`${A.idle.length}일`, '유휴일'], [`${GP.fmt(maxLoad * 100, 1)}%`, '최대 월 부하', maxLoad > 0.999],
     ].map(([v, l, bad]) => `<div class="kpi ${bad ? 'bad' : ''}"><b>${v}</b><span>${l}</span></div>`).join('');
     $('summary-lines').innerHTML = GP.summaryLines(R, A).map((t) => `<p>${esc(t)}</p>`).join('');
     const tabs = A.H.ym.map(([, m]) => `${m}월`).concat(['분기 요약']);
@@ -245,7 +245,7 @@
   const packResult = () => JSON.stringify({ app: 'cgl-plan', version: 1, savedAt: result.savedAt || new Date().toISOString(), result, meta });
   $('dl-json').onclick = () => download(new Blob([packResult()], { type: 'application/json' }), baseName() + '_결과.json');
   $('to-dash').onclick = () => {
-    try { sessionStorage.setItem('cgl-dash-handoff', packResult()); } catch (e) { alert('브라우저 저장공간이 부족합니다. 결과 저장(.json) 후 대시보드에서 엽니다.'); return; }
+    try { sessionStorage.setItem('cgl-dash-handoff', packResult()); } catch (e) { alert('브라우저 저장공간이 부족합니다. 결과 저장 후 대시보드에서 엽니다.'); return; }
     window.open('status.html', '_blank');
   };
   $('result-file').onchange = async (ev) => {
@@ -275,7 +275,7 @@
     const pw = $('pub-pw').value, pw2 = $('pub-pw2').value;
     if (pw.length < 6) throw new Error('암호는 6자 이상 필요');
     if (pw !== pw2) throw new Error('암호 확인이 다릅니다');
-    const label = $('pub-label').value.trim() || `${result.P.year} ${result.P.months[0]}~${result.P.months[2]}월 계획${result.replan ? ` · 재계획(실적 ~${GP.md(result.replan.t0)})` : ''}`;   // 11/9: 재계획 표기 통일
+    const label = $('pub-label').value.trim() || `${result.P.year} ${result.P.months[0]}~${result.P.months[2]}월 계획${result.replan ? ` · 재계획(실적 ${GP.md(result.replan.t0)}까지)` : ''}`;   // 11/9: 재계획 표기 통일
     return GP.encryptJSON(JSON.parse(packResult()), pw, label);
   }
   $('pub-file').onclick = async () => {

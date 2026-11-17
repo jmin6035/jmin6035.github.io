@@ -48,7 +48,7 @@
   }
   /* ── 새 양식(UI.v2, ?ui=v2) — 11/12 사용자 '표 구성 자체를 다시': 한 칸 한 값, 공통 그룹 순서, 설명 문장은 title, 빨강은 위험 숫자에만 ── */
   const ORD = ['도금수출', '도금국내', '자동차', '자가재', '건재수출', '가전수출', '가전내수', '컬러건재', '수요개발'];
-  const GN = { 자동차: '자동차강판', 자가재: '도금 자가재', 건재수출: '컬러수출(건재)', 가전수출: '컬러수출(가전)', 가전내수: '컬러수출(가전내수)' };   // 11/13: 판매그룹 이름 = 관제판·관제 띠와 같게(컬러수출그룹 안 세 갈래는 괄호)
+  const GN = { 자동차: '자동차', 자가재: '도금 자가재', 건재수출: '컬러수출(건재)', 가전수출: '컬러수출(가전)', 가전내수: '컬러수출(가전내수)' };   // 11/13: 판매그룹 이름 = 관제판·관제 띠와 같게(컬러수출그룹 안 세 갈래는 괄호)
   const gnm = (g) => GN[g] || g;
   const ordIx = (g) => { const i = ORD.indexOf(g.g); return (g.pl === 'G' ? 0 : 100) + (i < 0 ? 50 : i); };
   // 언제 풀리나 = 주요 원인 내역 중 가장 늦은 해소 예정일(날짜 없는 몫은 '미정 Nt')
@@ -56,7 +56,7 @@
     const its = z[4] || [], ds = its.filter((x) => x[3]).map((x) => x[3]).sort(), und = its.filter((x) => !x[3]).reduce((a, x) => a + x[1], 0);
     const tip = its.map((x) => `${x[0]} ${n0(x[1])}t`).join(' · ');
     if (!ds.length) return ['미정', tip];
-    const dt = its.filter((x) => x[3]).reduce((a, x) => a + x[1], 0), last = `~${md(ds[ds.length - 1])}`;
+    const dt = its.filter((x) => x[3]).reduce((a, x) => a + x[1], 0), last = `${md(ds[ds.length - 1])}까지`;
     if (und > dt) return ['미정', tip, `${last} ${n0(dt)}t`];   // 날짜 없는 몫이 더 크면 '미정'이 주(主)
     return [last, tip, und >= 0.5 ? `미정 ${n0(und)}t` : ''];
   };

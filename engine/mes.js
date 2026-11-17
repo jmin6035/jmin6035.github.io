@@ -282,7 +282,7 @@
         const act = x.t / x.run;
         const s = { key: k, line: l, fam: al, cls, n: x.n, t: x.t, run: x.run, act, cur, diff: cur ? act / cur - 1 : null, thick: x.th / x.t, width: x.w / x.t };
         speed.push(s);
-        if (P.rateDept[k] != null || cur != null) cands.push({ path: ['rateDept', k], label: `${l} ${al} ${cls} 속도`, unit: 't/hr', scale: 60, cur, act, n: x.n, basis: `${x.n}코일 ${GP.fmt(x.t)}t · 평균 ${GP.fmt(s.thick, 2)}mm×${GP.fmt(s.width)}`, ok: longOk && x.n >= R.minCoils && x.t >= R.minTons });
+        if (P.rateDept[k] != null || cur != null) cands.push({ path: ['rateDept', k], label: `${l} ${al} ${cls} 속도`, unit: 't/시간', scale: 60, cur, act, n: x.n, basis: `${x.n}코일 ${GP.fmt(x.t)}t · 평균 ${GP.fmt(s.thick, 2)}mm×${GP.fmt(s.width)}`, ok: longOk && x.n >= R.minCoils && x.t >= R.minTons });
       }
     }
     for (const c of cands) { c.diff = c.cur && isFinite(c.act) ? c.act / c.cur - 1 : null; c.flag = c.diff != null && Math.abs(c.diff) >= R.tol; c.apply = c.ok && c.flag; }

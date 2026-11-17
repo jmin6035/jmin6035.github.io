@@ -35,7 +35,7 @@
     <p class="hint">양식: '지금 쓰는 파일 받기'로 받은 엑셀의 숫자만 바꿔 올리면 됩니다(시트 이름·제목 줄은 그대로). 올린 파일은 이 브라우저 안에서만 읽습니다.</p>
     <ul id="file-list" class="files"></ul>
     <details class="load-result">
-      <summary>저장해 둔 계산 결과 열기(.json) — 파일 없이 결과만 다시 보기</summary>
+      <summary>저장해 둔 계산 결과 열기</summary>
       <input type="file" id="result-file" accept=".json">
     </details>
   </section>
@@ -59,7 +59,7 @@
       <summary>고급: 시간손실·생산속도·계산 시간 제한</summary>
       <h3>시간손실(분)</h3>
       <div class="scroll"><table class="edit" id="p-loss"></table></div>
-      <h3>생산속도(t/hr) <small>— 라인×강종×부서, 실적 달성속도</small></h3>
+      <h3>생산속도(t/시간) <small>— 라인×강종×부서, 실적 달성속도</small></h3>
       <div class="scroll"><table class="edit" id="p-rate"></table></div>
       <div class="grid">
         <label>1단계 시간 제한(초) <input type="number" id="p-t1" min="30"></label>
@@ -69,7 +69,7 @@
     </details>
     <div class="row">
       <button type="button" class="ghost" id="p-reset">기본값 복원</button>
-      <button type="button" class="ghost" id="p-export">조건 저장(.json)</button>
+      <button type="button" class="ghost" id="p-export">조건 저장</button>
       <label class="ghost btnlike">조건 불러오기<input type="file" id="p-import" accept=".json" hidden></label>
     </div>
     </details>
@@ -98,7 +98,7 @@
     <div class="row">
       <button type="button" class="primary" id="dl-xlsx">엑셀 받기</button>
       <button type="button" class="ghost" id="dl-png">간트 PNG 받기</button>
-      <button type="button" class="ghost" id="dl-json">결과 저장(.json)</button>
+      <button type="button" class="ghost" id="dl-json">결과 저장</button>
       <button type="button" class="primary" id="to-dash">대시보드로 보기</button>
     </div>
     <div class="publish">
@@ -124,7 +124,7 @@
     </div>
     <div id="replan-box" class="lines" hidden></div>
     <details class="detail-results">
-      <summary>상세 결과 보기(요약·간트·전환 사유·선생산) — 전체 화면은 대시보드에서</summary>
+      <summary>상세 결과 보기(요약·간트·전환 사유·앞당김 생산) — 전체 화면은 대시보드에서</summary>
     <div id="summary-lines" class="lines"></div>
     <h3>월별 간트</h3>
     <div class="tabs" id="gantt-tabs"></div>
@@ -132,7 +132,7 @@
     <p class="hint">이미지 선택 시 원본 크기로 표시. 굵은 파란 숫자 = 자가재 포함일, 노란색 = M/C·재가동, 회색 = 정기수리.</p>
     <h3>M/C·S/D 일정과 사유</h3>
     <div class="scroll"><table class="data" id="events"></table></div>
-    <h3>전월 선생산</h3>
+    <h3>전월 앞당김 생산</h3>
     <div class="scroll"><table class="data" id="early"></table></div>
     </details>
   </section>
@@ -166,7 +166,7 @@
 </main>
 
 <footer class="wrap foot">
-  계산 순서: M/C 최소 → M/C 고정 후 선생산 최소 → 유휴 최소 평준화
+  계산 순서: M/C 최소 → M/C 고정 후 앞당김 생산 최소 → 유휴 최소 평준화
 </footer>
 
 <script src="ui/shell.js?v=2611171304"></script>

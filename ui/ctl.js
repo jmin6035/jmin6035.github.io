@@ -13,7 +13,7 @@
   const TFD = { G수출: 15, G국내: 20, G자동차: 30, C수출: 15, C건재: 20 };   // 상한 일수 — 엔진 값(integrated tfRules.days)이 없을 때만
   const TFK = { G수출: 'G수출', G국내: 'G국내', G자동차: 'AL-STS', C수출: '건재수출', C건재: '주문재' };
   UI.ctlTfd = (k, IG) => { const v = (((IG || IGc || {}).tfRules || {}).days || {})[TFK[k]]; return v != null ? v : TFD[k]; };
-  const GNM = (g) => ({ G국내: '도금국내' }[g.key] || g.name.replace(/\(.*\)/, ''));   // 11/11: 화면 전체 그룹 이름 통일(도금판매 → 도금국내 — ui/ct.js GN 과 같게)
+  const GNM = (g) => ({ G국내: '도금국내', G자동차: '자동차' }[g.key] || g.name.replace(/\(.*\)/, ''));   // 11/11: 화면 전체 그룹 이름 통일(도금판매 → 도금국내 — ui/ct.js GN 과 같게)
   const MOG = { G수출: ['도금수출'], G국내: ['도금국내'], G자동차: ['자동차'], G자가재: ['자가재'], C수출: ['컬러수출(건재)', '컬러수출(가전)', '가전내수'], C건재: ['컬러건재 주문재', '컬러건재 계획재'], C수요: ['수요개발'] };
   /* 판매그룹(portal) → 납기 위험 그룹(risk.enc.json). 컬러수출 = 건재수출 + 가전수출 + 가전내수 */
   const RKN = UI.ctlRiskGroups = { G수출: ['도금수출'], G국내: ['도금국내'], G자동차: ['자동차'], G자가재: ['자가재'], C수출: ['건재수출', '가전수출', '가전내수'], C건재: ['컬러건재'], C수요: ['수요개발'] };
@@ -64,7 +64,7 @@
       const now = nowSt(g.key), end = endSt(g.key), r = V && V.plan && mi >= 0 && (V.plan[g.key] || [])[mi], tg = r ? r.target : null;
       const dy = (TR.days || {})[g.key], tt = (TR.target || {})[g.key], over = dy && tt ? dy / tt : 1.3;   // 과잉 = 통합 계획 재고 추이와 같은 기준(상한 ÷ 목표, 없으면 1.3배)
       const stock = { now, end, target: tg, over };
-      if (end != null && tg) { stock.tone = end < tg * 0.7 ? 'bad' : end > tg * over ? 'warn' : 'ok'; stock.v = [stock.tone, `월말 ${n0(end)}t`, `목표 ${n0(tg)} · 오늘 ${now != null ? n0(now) : '–'}`]; }
+      if (end != null && tg) { stock.tone = end < tg * 0.7 ? 'bad' : end > tg * over ? 'warn' : 'ok'; stock.v = [stock.tone, `월말 ${n0(end)}t`, `목표 재고 ${n0(tg)} · 오늘 ${now != null ? n0(now) : '–'}`]; }
       else {
         const d = UI.ctlTfd(g.key), dly = S && S.month ? S.month / nd : 0, cov = now != null && dly ? now / dly : null;
         stock.tone = cov == null || !d ? 'na' : cov < d * 0.5 ? 'bad' : cov > d ? 'warn' : 'ok';
@@ -74,7 +74,7 @@
       const mg = (MO && MO.groups ? MO.groups.groups : []).filter((x) => (MOG[g.key] || []).includes(x.group));
       const gu = {}; mg.forEach((x) => (x.mats || []).forEach((m) => { gu[m.key] = (gu[m.key] || 0) + (m.use || 0); }));
       const ma = mg.flatMap((x) => x.mats || []).filter((x) => !(x.use < 1)).filter((x, i, A) => A.findIndex((y) => y.key === x.key) === i).map((x) => { const v = VM.get(x.key) || x; return Object.assign({}, v, { lateT: Math.round((v.lateT || 0) * (UT[x.key] ? gu[x.key] / UT[x.key] : 1)) }); }).sort((a, b) => SR_[a.st] - SR_[b.st] || (b.lateT || 0) - (a.lateT || 0) || String(a.deadline || '9').localeCompare(String(b.deadline || '9')))[0];
-      const mat = { m: ma, v: !mg.length ? ['na', '–', ''] : !ma || ma.st === 'ok' ? ['ok', '충당', ''] : [{ late: 'bad', soon: 'warn', plan: 'ok' }[ma.st], { late: '마감 지남', soon: '2주 안 발주', plan: '발주 예정' }[ma.st], ma.st === 'late' ? `${ma.name} ${n0(ma.lateT)}t` : `${ma.name} ${md(ma.deadline)}까지`] };
+      const mat = { m: ma, v: !mg.length ? ['na', '–', ''] : !ma || ma.st === 'ok' ? ['ok', '충분', ''] : [{ late: 'bad', soon: 'warn', plan: 'ok' }[ma.st], { late: '발주 지연', soon: '2주 안 발주', plan: '발주 예정' }[ma.st], ma.st === 'late' ? `${CT.matNm(ma.name)} ${n0(ma.lateT)}t` : `${CT.matNm(ma.name)} ${md(ma.deadline)}까지`] };
       // 납기: 납기 위험(위험 = 지연 예상 + 납기 지남) — 자료 없으면 '–'
       const due = UI.ctlRisk(RKc, g.key);
       const dv = due ? [due.tone, due.risk >= 0.5 ? `위험 ${n0(due.risk)}t` : '위험 0', due.t ? `미결 ${n0(due.t)}t 중 ${Math.round(due.risk / due.t * 100)}%` : ''] : ['na', '–', ''];
@@ -116,11 +116,11 @@
         c1 = ['ok', `${n0(pp || 0)}t`, '생산 계획']; c2 = g.key === 'G자가재' || g.key === 'C수요' ? ['na', '–', ''] : ['ok', `${n0(sp || 0)}t`, '출하 계획'];
         const r = V && V.plan && (V.plan[g.key] || [])[mi], e = r ? r.end : null, tg = r ? r.target : null;
         const TR = (IG && IG.tfRules) || {}, dy = (TR.days || {})[g.key], tt = (TR.target || {})[g.key];
-        c3 = e == null ? ['na', '–', ''] : [tg && e < tg * 0.7 ? 'bad' : tg && e > tg * (dy && tt ? dy / tt : 1.3) ? 'warn' : 'ok', `${n0(e)}t`, `월말 예상 · 목표 ${n0(tg || 0)}`];
+        c3 = e == null ? ['na', '–', ''] : [tg && e < tg * 0.7 ? 'bad' : tg && e > tg * (dy && tt ? dy / tt : 1.3) ? 'warn' : 'ok', `${n0(e)}t`, `월말 예상 · 목표 재고 ${n0(tg || 0)}`];
         const mg = (mo && mo.groups ? mo.groups.groups : []).filter((x) => (MOG[g.key] || []).includes(x.group));
         const VM = new Map(UI.matView(mo, O).map((x) => [x.key, x]));
         const ms = mg.flatMap((x) => x.mats).map((x) => VM.get(x.key) || x).filter((x) => x.first && x.first.slice(0, 7) <= m && x.st !== 'ok').sort((a, b) => (a.deadline < b.deadline ? -1 : 1))[0];
-        c4 = ms ? [{ late: 'bad', soon: 'warn', plan: 'ok' }[ms.st] || 'ok', `${esc(ms.name)}`, `${md(ms.deadline)}까지 발주 · ${md(ms.first)}부터 부족`] : ['ok', '충당', ''];
+        c4 = ms ? [{ late: 'bad', soon: 'warn', plan: 'ok' }[ms.st] || 'ok', `${esc(CT.matNm(ms.name))}`, `${md(ms.deadline)}까지 발주 · ${md(ms.first)}부터 부족`] : ['ok', '충분', ''];
         const nm = { G수출: ['도금수출'], G국내: ['도금국내'], G자동차: ['자동차내수', '자동차수출'], G자가재: ['자가재'] }[g.key] || [];
         const pick = (L) => L.filter((x) => nm.some((n) => x.startsWith(n + ' ')) && +(x.match(/ (\d+)\/\d+ /) || [0, 0])[1] === mm).map((x) => +(x.match(/([\d,]+)t$/) || [0, '0'])[1].replace(/,/g, ''));
         const sh = pick(SB), sf = pick(SF), sm = (L) => n0(L.reduce((a, b) => a + b, 0));
@@ -143,9 +143,9 @@
     let pw = null; for (const k of ['cgl-analysis-pw', 'cgl-supply-pw']) { try { pw = pw || localStorage.getItem(k); } catch (e) { /* 무시 */ } }
     if (!pw) return null;
     const get = (n) => GP.latest(n).then((e) => (e ? GP.decryptJSON(e, pw) : null)).catch(() => null);
-    extra = Promise.all([get('risk.enc.json'), get('integrated.enc.json')]).then(([rk, ig]) => {
-      if (!rk && !ig) return;
-      RKc = RKc || rk; IGc = IGc || ig;
+    extra = Promise.all([get('risk.enc.json'), get('integrated.enc.json'), UI._SJ ? Promise.resolve(UI._SJ) : get('suju.enc.json')]).then(([rk, ig, sj]) => {
+      if (!rk && !ig && !sj) return;
+      RKc = RKc || rk; IGc = IGc || ig; UI._SJ = UI._SJ || sj;   // 11/17 재검토: 관제 띠도 월말 생산 예상 = UI.grpMon(본표·월간 가동과 같은 값)
       const b = document.querySelector('#ui-ctl .cs-sum');   // 띠를 그리는 ui/shell.js draw() 를 다시 부름(펼침 상태는 두 번 눌러 그대로)
       if (b) { b.click(); const b2 = document.querySelector('#ui-ctl .cs-sum'); if (b2) b2.click(); }
     });

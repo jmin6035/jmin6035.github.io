@@ -139,7 +139,7 @@
     const P = plants(), D0 = X[P[0] || 'cg'].D;
     let tA = 0; const nF = { cg: 0, cc: 0 };
     P.forEach((p) => LINES[p].forEach((l) => { tA += lineSum(p, l).t; sim(p, l).forEach((q) => { if (q.k === 'j' && done(p, q.x)) nF[p]++; }); }));
-    $('ps-line').innerHTML = `<span>주문 마감 <b>${dnm(addD(D0.week, -7))}</b></span><span class="ar">→</span><span>다음 <b>${dnm(D0.week)}</b></span><span>작업 순서 배분 <b>${n0(tA)}t</b></span>${P.includes('cg') ? `<span>도금 지시 <b>${n0(nF.cg)}개 작업</b></span>` : ''}${P.includes('cc') ? `<span>컬러 작업대기 <b>${n0(nF.cc)}개 작업</b><small>(작업 순서 기간)</small></span>` : ''}`;   // 11/17 검토: 건 = 작업 순서 줄(계약 행)
+    $('ps-line').innerHTML = `<span>지난 마감 <b class="dt">${dnm(addD(D0.week, -7))}</b></span><span class="ar">→</span><span>다음 마감 <b class="dt">${dnm(D0.week)}</b></span><span>편성량 <b>${n0(tA)}t</b></span>${P.includes('cg') ? `<span>도금 작업지시 <b>${n0(nF.cg)}건</b></span>` : ''}${P.includes('cc') ? `<span>컬러 작업대기 <b>${n0(nF.cc)}건</b></span>` : ''}`;   // 11/17 검토: 건 = 작업 순서 줄(계약 행)
   }
   // 캘린더 — 표 양식(행 = 라인·하루 합, 열 = 수~화)은 생산 일정 화면과 같고, 칸 안은 편성 화면용으로 다시 그림
   // 11/12 사용자 '자가재 빼고, 막대그래프 필요없다, 날짜 누르면 그날 작업, 컬러랑 도금 양식 똑같이, 이어짐 쓰지 말고 전날로 넘겨라'
@@ -190,7 +190,7 @@
   }
 
   /* 칸 한 양식(도금·컬러·지난 날 같음): ① 큰 톤 + 강종/품명 칩 + 시간 부하 % ② 상태 톤 ③ 그룹 톤 ④ 경고 칩 · 정지/비가동 = 글자만 가운데 */
-  const pctB = (r, tip, h) => (r == null || r <= 1.005 ? '' : `<span class="ld ov" title="${esc(tip)}">${h != null ? `${n1(h)}시간 넘침` : `${Math.round(r * 100)}%`}</span>`);   // 11/12 사용자 '글 많다' — 넘칠 때만
+  const pctB = (r, tip, h) => (r == null || r <= 1.005 ? '' : `<span class="ld ov" title="${esc(tip)}">${h != null ? `${n1(h)}시간 초과` : `${Math.round(r * 100)}%`}</span>`);   // 11/12 사용자 '글 많다' — 넘칠 때만
   /* 그룹 이름 = 관제 판매그룹(kj.js GRP 와 같은 묶음): 컬러수출 = 건재수출·가전수출·가전내수 · 컬러건재 = 주문재+계획재 · 도금 = 도금수출·도금국내·자동차·도금 자가재 */
   const GNM = { 수출: '도금수출', 도금수출: '도금수출', 국내: '도금국내', 도금국내: '도금국내', 자동차: '자동차', 자동차내수: '자동차', 자동차수출: '자동차', 자가재: '도금 자가재',
     건재수출: '컬러수출', 가전수출: '컬러수출', 가전내수: '컬러수출', 주문재: '컬러건재', 계획재: '컬러건재', 수요개발: '수요개발' };
@@ -214,10 +214,10 @@
     const r = c.hAvail >= 1 ? (c.hrs || 0) / c.hAvail : null;
     const sr = st ? Math.min(st.res || 0, st.t) : 0;
     return cellH({ ln, d: c.d, rem, fl: !!c.flag, band: c.event ? ev : '', mc, t: fill, chips: famC(c.fam) + (st && c.fam !== 'AL-STS' ? famC('AL-STS') : ''),
-      pct: pctB(r, `이 날 배정 주문을 실적 속도(같은 두께·폭 T/Hr)로 돌리면 ${n1(c.hrs)}시간 — 가동 가능 ${n1(c.hAvail)}시간을 넘어 다음 날로 밀림`, (c.hrs || 0) - c.hAvail),
+      pct: pctB(r, `이 날 배정 주문을 실적 속도(같은 두께·폭 t/시간)로 돌리면 ${n1(c.hrs)}시간 — 가동 가능 ${n1(c.hAvail)}시간을 넘어 다음 날로 밀림`, (c.hrs || 0) - c.hAvail),
       st: [['작업대기', c.conf], ['지시대기', c.plan], ['입고예정', c.fcst]], G: c.grp,
-      sts: sr >= 0.5 ? `AL-STS 예약 ${n0(sr)}t(D-3 확정)` : '', wn: [c.flag && (c.flagS || c.flag), c.gap >= 0.5 && c.hAvail - (c.hrs || 0) >= 0.5 && `빈 시간 ${n1((c.hAvail - (c.hrs || 0)) / (c.eff || 1))}h`,   /* 11/13 점검: '빈칸 Xt'(남은 시간 × 평균 속도)는 계획 톤과 안 맞아 보임 → 컬러와 같은 '빈 시간' */ c.lateE && `출항일 초과 ${c.lateE}건`, c.late - c.lateE > 0 && `납기 초과 ${c.late - c.lateE}건`],
-      tip: `${ln} ${mdw(c.d)}${st ? ` · AL-STS ${n0(st.t)}t${sr >= 0.5 ? ` (예약 ${n0(sr)}${st.t - sr >= 0.5 ? ` · 주문 ${n0(st.t - sr)}` : ''} — 주문 D-3 확정)` : ' (주문)'}` : ''} · 생산 ${n0(fill)}t / 능력 ${n0(cap)}t · 작업대기 ${n0(c.conf)} · 지시대기 ${n0(c.plan)} · 입고예정 ${n0(c.fcst)} · ${Object.entries(regroup(c.grp)).filter(([, v]) => v >= 0.5).map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
+      sts: sr >= 0.5 ? `AL-STS 예약 ${n0(sr)}t(D-3 확정)` : '', wn: [c.flag && (c.flagS || c.flag), c.gap >= 0.5 && c.hAvail - (c.hrs || 0) >= 0.5 && `빈 시간 ${n1((c.hAvail - (c.hrs || 0)) / (c.eff || 1))}시간`,   /* 11/13 점검: '빈칸 Xt'(남은 시간 × 평균 속도)는 계획 톤과 안 맞아 보임 → 컬러와 같은 '빈 시간' */ c.lateE && `출항일 초과 ${c.lateE}건`, c.late - c.lateE > 0 && `납기 초과 ${c.late - c.lateE}건`],
+      tip: `${ln} ${mdw(c.d)}${st ? ` · AL-STS ${n0(st.t)}t${sr >= 0.5 ? ` (예약 ${n0(sr)}${st.t - sr >= 0.5 ? ` · 주문 ${n0(st.t - sr)}` : ''} — 주문 D-3 확정)` : ' (주문)'}` : ''} · 생산 ${n0(fill)}t / 능력 ${n0(cap)}t · 작업 대기 ${n0(c.conf)} · 지시 대기 ${n0(c.plan)} · 입고 예정 ${n0(c.fcst)} · ${Object.entries(regroup(c.grp)).filter(([, v]) => v >= 0.5).map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
   }
   function ccCell(x, ln, KD, rem) {
     const c = x.c;
@@ -227,8 +227,8 @@
     return cellH({ ln, d: x.d, rem, fl: c.woShort > 0 || em >= 1, t: x.t, chips: top ? `<span class="fam">${esc(top[0])}</span>` : '',
       pct: pctB(c.capH ? x.h / c.capH : null, `편성 ${n1(x.h)}시간 > 가용 ${n1(c.capH)}시간`, x.h - c.capH),
       st: KD.map(([k, nm]) => [nm, x.K[k] || 0]), G: x.G,
-      wn: [c.woShort > 0 && `작업대기 부족 ${n1(c.woShort)}h`, !(c.woShort > 0) && em >= 1 && `빈 시간 ${n1(em)}h`, c.overH && `확정본 넘침 ${n1(c.overH)}h`],
-      tip: `${ln} ${mdw(x.d)} · 생산 ${n0(x.t)}t · 편성 ${n1(x.h)}h / 가용 ${n1(c.capH)}h${c.lockT ? ` · 확정본 ${n1(c.lockT)}t` : ''} · 누르면 그날 작업 순서` });
+      wn: [c.woShort > 0 && `작업 대기 부족 ${n1(c.woShort)}시간`, !(c.woShort > 0) && em >= 1 && `빈 시간 ${n1(em)}시간`, c.overH && `확정량 초과 ${n1(c.overH)}시간`],
+      tip: `${ln} ${mdw(x.d)} · 생산 ${n0(x.t)}t · 편성 ${n1(x.h)}시간 / 가용 ${n1(c.capH)}시간${c.lockT ? ` · 확정량 ${n1(c.lockT)}t` : ''} · 누르면 그날 작업 순서` });
   }
   function pastCell(p, a, ln, d) {
     if (!a) return cellH({ ln, d, past: 1, t: null, tip: `${ln} ${mdw(d)} 실적 자료 없음(다음 날 아침 들어옴)` });
@@ -237,7 +237,7 @@
       : (a.pr || []).filter(([, v]) => v >= 0.5).slice(0, 1).map(([q]) => `<span class="fam">${esc(q)}</span>`).join('');
     /* 11/17 사용자 '특이사항 같이': 지난 날 도금 = 그날 강종 계열이 둘 이상(AL·AZ·MAC, AL-STS 는 AL) → M/C 날로 표시 */
     const fams = p === 'cg' ? [...new Set(Object.entries(a.fam || {}).filter(([, v]) => v >= 5).map(([f]) => (String(f).startsWith('AZ') ? 'AZ' : String(f).startsWith('MAC') ? 'MAC' : 'AL')))] : [];
-    return cellH({ ln, d, past: 1, t: a.t, chips, G: a.grp, band: fams.length > 1 ? `M/C ${fams.join('·')}` : '', mc: fams.length > 1, tip: `${ln} ${mdw(d)} 생산 실적(MES) ${n0(a.t)}t${a.h ? ` · ${n1(a.h)}h` : ''}${a.pr ? ` · 품명 ${a.pr.map(([q, v]) => `${q} ${n0(v)}`).join(' · ')}` : ''}` });
+    return cellH({ ln, d, past: 1, t: a.t, chips, G: a.grp, band: fams.length > 1 ? `M/C ${fams.join('·')}` : '', mc: fams.length > 1, tip: `${ln} ${mdw(d)} 생산 실적(MES) ${n0(a.t)}t${a.h ? ` · ${n1(a.h)}시간` : ''}${a.pr ? ` · 품명 ${a.pr.map(([q, v]) => `${q} ${n0(v)}`).join(' · ')}` : ''}` });
   }
   /* 2주 표(11/12 사용자 '편성은 2주치로 늘려, 칸 좀 줄여서'): 열 = 이번 생산주(수~화) + 다음 생산주 14일 · 이번 주 지난 날 = 실적 · 창(월말) 밖 = 빈 칸 */
   function grid(p) {
@@ -286,7 +286,7 @@
     const W1 = D14.slice(0, 7), W2 = D14.slice(7);
     const ov = LN.map((ln) => [ln, p === 'cg' && R.over(ln)]).filter(([, o]) => o);
     return week(W1, '이번 주') + `<div class="ps-gap"></div>` + week(W2, '다음 주')
-      + (ov.length ? `<p class="ps-ov">${ov.map(([ln, o]) => `${ln} ${R.end} 뒤로 ${n0(o.t)}t 넘침(실적 속도 기준 ${n1(o.h)}시간 모자람)`).join(' · ')}</p>` : '');
+      + (ov.length ? `<p class="ps-ov">${ov.map(([ln, o]) => `${ln} ${R.end} 뒤로 ${n0(o.t)}t 초과(${n1(o.h)}시간 부족)`).join(' · ')}</p>` : '');
   }
   function drawCal(p) {
     const host = $('ps-cal-' + p), C = CAL[p]();
@@ -314,7 +314,7 @@
       return `<tr class="${i.kind === '확정' || i.kind === '작업대기' ? 'fx' : ''}${i.late ? ' lt' : ''}"><td class="no">${k + 1}</td><td><i class="kd ${kc[1]}">${esc(kc[0])}</i></td><td class="cn" title="${esc([i.con, i.cus, i.dst].filter(Boolean).join(' · '))}">${esc(i.con || '주문 연결 전')}</td><td title="${esc(i.grp || '')}">${esc(i.grp ? gnm(i.grp) : '')}</td><td class="sp">${sp}</td><td class="sz">${sz}</td><td class="t">${n1(i.t)}t</td><td class="dl">${dl}</td></tr>`;
     };
     return `<table class="ps-seq"><colgroup><col style="width:72px"><col style="width:120px"><col style="width:230px"><col style="width:110px"><col><col style="width:150px"><col style="width:100px"><col style="width:120px"></colgroup>`
-      + `<thead><tr><th>순서</th><th>상태</th><th>계약</th><th>그룹</th><th>${p === 'cg' ? '강종·재질·도금량·후처리' : '품명·색상'}</th><th>두께 × 폭</th><th>톤</th><th>${p === 'cg' ? '출항·납기' : '부원료'}</th></tr></thead><tbody>${I.map(row).join('')}</tbody></table>`;
+      + `<thead><tr><th>순서</th><th>상태</th><th>계약</th><th>그룹</th><th>${p === 'cg' ? '강종·재질·도금량·후처리' : '품명·색상'}</th><th>두께 × 폭</th><th>톤</th><th>${p === 'cg' ? '출항·납기' : '부자재'}</th></tr></thead><tbody>${I.map(row).join('')}</tbody></table>`;
   }
   /* 지난 날 = MES 실적. 계약 단위 일 실적 게시본이 없어(재계획 rows·color_actual 은 그룹·강종/품명 합) 그룹·강종(도금) · 그룹·품명(컬러) 톤 표 */
   const pctT = (v, T) => (T ? `${Math.round(v / T * 100)}%` : '');
@@ -326,7 +326,7 @@
     const one = (l, a) => {
       if (!a) return `<div class="ps-sh"><b>${l}</b><span>실적 자료 없음</span></div>`;
       if (!(a.t >= 0.5)) return `<div class="ps-sh"><b>${l}</b><span>비가동</span></div>`;
-      const sh = `<div class="ps-sh"><b>${l}</b><span>${n0(a.t)}t${a.h ? ` · ${n1(a.h)}h` : ''}</span></div>`;
+      const sh = `<div class="ps-sh"><b>${l}</b><span>${n0(a.t)}t${a.h ? ` · ${n1(a.h)}시간` : ''}</span></div>`;
       const G = Object.entries(a.grp || {}), gt = (g) => G.filter(([k]) => gnm(k) === g).reduce((s, [, v]) => s + v, 0);
       if (p === 'cg') {
         const E = Object.entries(a.x || {}).filter(([, v]) => v >= 0.5).map(([k, v]) => { const [g, f] = k.split('|'); return [gnm(g), f, v]; })

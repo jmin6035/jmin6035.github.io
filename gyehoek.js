@@ -108,7 +108,7 @@
         return { t: x[0], fam: G ? x[1] || 'AL' : null, al: G && x[0] >= 0.5 ? { [x[1] || 'AL']: x[0] } : {}, mc: x[2] === 'M', stop: x[2] === 'M' ? '' : x[2], act: G ? !!v.aG && d <= v.aG : !!v.aC && d <= v.aC }; } }));
     if (!V.some((v) => v.kind === 'm0') && D.m0 === mon)                 // 월차 판을 못 찾은 달: 수주 관제 월초 톤만(강종·M/C·정지 없음)
       V.unshift({ id: 'm0p', kind: 'm0', lab: '월차', toneOnly: true, get: (l, d) => { const t = D.p0[`${l}|${d}`] || 0; return { t, fam: null, al: t ? { X: t } : {}, mc: false, stop: '', act: false }; } });
-    V.push({ id: 'now', kind: 'now', lab: `지금 ${D.at ? mdA(D.at) : ''}`.trim(), at: D.at, get: curCell });
+    V.push({ id: 'now', kind: 'now', lab: D.at ? `현재 계획(${mdA(D.at)})` : '현재 계획', at: D.at, get: curCell });
     return V;
   }
   const cellT = (c) => (c.stop ? 0 : c.al && Object.keys(c.al).length ? Object.values(c.al).reduce((a, v) => a + (v >= 0.5 ? Math.round(v) : 0), 0) : Math.round(c.t));   // 표 칸과 같은 반올림
@@ -131,16 +131,16 @@
       sm = /합계/.test(cols[j][0]) ? ' sm' : '';
       return `<td class="bl${sm}"><b>${n0(v)}</b></td><td class="df${sm}${df != null && df <= -0.5 ? ' dn' : df != null && df >= 0.5 ? ' up' : ''}">${df == null ? '–' : df === 0 ? '0' : sg(df)}</td>`; }).join('')}</tr>`).join('');
     const SRm = D.SR && D.SR.m === ds[0].slice(0, 7) && Object.keys(D.SR.v).length ? D.SR.v : null;
-    const srRow = SRm ? `<tr class="sr"><th>판생 계획 <small>판매생산속보 월 계획</small></th>${cols.map(([n, ls], j) => { const ok = ls.every((l) => SRm[l] != null), v = ok ? ls.reduce((a, l) => a + SRm[l], 0) : null, df = v == null ? null : Math.round(v - A[0][j]), sm = /합계/.test(n) ? ' sm' : '';
+    const srRow = SRm ? `<tr class="sr"><th>판생 계획</th>${cols.map(([n, ls], j) => { const ok = ls.every((l) => SRm[l] != null), v = ok ? ls.reduce((a, l) => a + SRm[l], 0) : null, df = v == null ? null : Math.round(v - A[0][j]), sm = /합계/.test(n) ? ' sm' : '';
       return `<td class="bl${sm}"><b>${v == null ? '–' : n0(v)}</b></td><td class="df${sm}${df != null && df <= -0.5 ? ' dn' : df != null && df >= 0.5 ? ' up' : ''}">${df == null ? '–' : df === 0 ? '0' : sg(df)}</td>`; }).join('')}</tr>` : '';
-    return `<h3 class="gk-adjh">판별 월 생산 합계 <small>톤</small></h3><div class="gk-adjw"><table class="gk-adj"><thead><tr><th rowspan="2">판</th>${cols.map(([n]) => `<th colspan="2" class="bl${/합계/.test(n) ? ' sm' : ''}">${n}</th>`).join('')}</tr><tr>${cols.map(([n]) => `<th class="sub bl${/합계/.test(n) ? ' sm' : ''}">월 합계</th><th class="sub${/합계/.test(n) ? ' sm' : ''}">월차 대비</th>`).join('')}</tr></thead><tbody>${rows}${srRow}</tbody></table></div>`;
+    return `<h3 class="gk-adjh">계획 변경 이력 — 월 생산 <small>톤</small></h3><div class="gk-adjw"><table class="gk-adj"><thead><tr><th rowspan="2">계획</th>${cols.map(([n]) => `<th colspan="2" class="bl${/합계/.test(n) ? ' sm' : ''}">${n}</th>`).join('')}</tr><tr>${cols.map(([n]) => `<th class="sub bl${/합계/.test(n) ? ' sm' : ''}">월 합계</th><th class="sub${/합계/.test(n) ? ' sm' : ''}">월차 대비</th>`).join('')}</tr></thead><tbody>${rows}${srRow}</tbody></table></div>`;
   }
 
   // 누른 칸 한 줄(가동 상세 머리): 판마다 그 칸(월차 → 매주 조정 → 지금) + 도금은 그 날 소재(F/H) 발주 마감과 발주 상태
   function info(l, d, noMat) {
     const CH = chain(), C = CH.map((V) => V.get(l, d)), last = C[C.length - 1], first = C[0];
     const tx = (c) => (c.stop ? c.stop : `${n0(c.t)}t${c.mc ? ' M/C' : c.fam ? ' ' + c.fam : ''}`);
-    let h = `<b>${md(d)}(${WD[wd(d)]}) ${l}</b> ` + CH.map((V, i) => `<span class="${i === CH.length - 1 ? 'nw' : ''}">${esc(V.lab.replace(/ \d+:\d+$/, ''))} ${esc(tx(C[i]))}</span>`).join('<i>→</i>');
+    let h = `<b>${md(d)}(${WD[wd(d)]}) ${l}</b> ` + CH.map((V, i) => `<span class="${i === CH.length - 1 ? 'nw' : ''}">${esc(V.kind === 'now' ? '현재 계획' : V.lab.replace(/ \d+:\d+$/, ''))} ${esc(tx(C[i]))}</span>`).join('<i>→</i>');
     if (CH.length > 1) { const df = Math.round(last.t - first.t); h += ` <em class="${df <= -0.5 ? 'dn' : ''}">(월차 대비 ${sg(df)}t)</em>`; }
     if (!noMat && /CGL$/.test(l) && D.LT && !last.act && last.t >= 0.5) {   // 상세 카드에 품목별 발주 마감·판정이 있으면 머리에서는 뺌(중복)
       const sf = ((D.LT.fixed || []).find((f) => f[0] === 'safety.G') || [])[2] || 0, T = Object.fromEntries((D.LT.types || []).map((t) => [t[0], t[1]]));
@@ -148,9 +148,9 @@
       if (dl) {
         let s;
         if (M && M.first && d < M.first) s = ['ok', '발주 나감 · 확보'];
-        else if (dl < today) s = ['bad', `마감 지남 · 미발주${M && M.late ? ` ${n0(M.late)}t` : ''}`];
+        else if (dl < today) s = ['bad', `발주 지연${M && M.late ? ` ${n0(M.late)}t` : ''}`];
         else s = ['', `발주 전${M && M.next ? ` · 다음 발주 ${md(M.next)}` : ''}`];
-        h += `<span class="mt">${esc(M ? M.name : 'F/H')} 발주 마감 ${md(dl)} <b class="${s[0]}">${s[1]}</b></span>`;
+        h += `<span class="mt">${esc(M ? M.name : 'F/H')} 발주 마감 <b class="dt">${md(dl)}</b> <b class="${s[0]}">${s[1]}</b></span>`;
       }
     }
     return h;
@@ -217,8 +217,8 @@
     const L = D.LT, el = $('gk-lt'); if (!L || !L.types) { el.closest('details').hidden = true; return; }
     const pt = {}; (L.sup || []).forEach((s) => { (pt[s[3]] = pt[s[3]] || new Set()).add(s[0]); });
     const grp = { G: [], C: [] }; L.types.forEach((t) => { const ps = pt[t[0]]; (ps && ps.has('G') && !ps.has('C') ? grp.G : grp.C).push(t); });
-    const tb = (pl, T) => `<div><h3 style="margin:0 0 8px;font-size:16px;font-weight:800">${PN[pl]} 소재</h3><table class="t lt"><thead><tr><th>소재 유형</th><th>발주 → 입고</th><th>발주 방식</th></tr></thead><tbody>${T.sort((a, b) => a[1] - b[1]).map((t) => `<tr><td><b>${esc(t[0])}</b></td><td><b>${t[1]}</b>일</td><td>${esc(t[2])}</td></tr>`).join('')}</tbody></table></div>`;
-    el.innerHTML = `<p style="margin:0 0 10px;font-size:14px;color:var(--ink-2)">발주 → 입고 일수 · 고치기는 <a href="leadtime.html">리드타임</a></p><div class="lt-l">${grp.G.length ? tb('G', grp.G) : ''}${tb('C', grp.C)}</div>`;
+    const tb = (pl, T) => `<div><h3 style="margin:0 0 8px;font-size:16px;font-weight:800">${PN[pl]} 소재</h3><table class="t lt"><thead><tr><th>소재 유형</th><th>발주 → 입고</th><th>발주 방식</th></tr></thead><tbody>${T.sort((a, b) => a[1] - b[1]).map((t) => `<tr><td><b>${esc(t[0])}</b></td><td><b>${t[1]}</b>일</td><td>${esc(String(t[2]).replace('동종 AZ와 같게 봄(표에 없음)', '동종AZ와 같음'))}</td></tr>`).join('')}</tbody></table></div>`;
+    el.innerHTML = `<p style="margin:0 0 10px;font-size:14px;color:var(--ink-2)">발주→입고 일수 · 수정은 <a href="leadtime.html">리드타임 화면</a></p><div class="lt-l">${grp.G.length ? tb('G', grp.G) : ''}${tb('C', grp.C)}</div>`;
   }
 
   // ---------- 소재 탭: supply.js 의 월 탭(#s-mon, 숨김)을 위 월 선택과 맞춤 ----------
@@ -259,8 +259,8 @@
     const M_ = +mon.slice(5);
     el.innerHTML = `<h2 class="m4-h">${M_}월 그룹별 소재 발주 · 입고 <small>톤</small></h2>
 <div class="m4-sc"><table class="m4-gd" style="min-width:720px"><colgroup><col style="width:150px"><col><col><col>${cur ? '<col>' : ''}</colgroup>
-<thead><tr><th>판매그룹</th>${cur ? '<th>입고 지연<small>예정일 지남</small></th>' : ''}<th>${M_}월 발주<small>이달 낸 발주</small></th><th>미입고<small>${M_}월 발주 중</small></th><th>${M_}월 입고 예정<small>${cur ? `<b class="dt">${md(today)}~</b> · ` : ''}앞 달 발주 포함</small></th></tr></thead><tbody>${body || `<tr><td colspan="${cur ? 5 : 4}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>
-<div class="m4-lg"><span>판매그룹 = 발주 원장 기준(가전내수는 컬러수출에 포함 — 02 현황·주간 관제와 같음)</span></div>`;
+<thead><tr><th>판매그룹</th>${cur ? '<th>입고 지연</th>' : ''}<th>${M_}월 발주</th><th>${M_}월 발주 중 미입고</th><th>${M_}월 입고 예정<small>(${cur ? `<b class="dt">${md(today)}~${md(mEnd)}</b>, ` : ''}지난달 발주 포함)</small></th></tr></thead><tbody>${body || `<tr><td colspan="${cur ? 5 : 4}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>
+<div class="m4-lg"><span>가전내수는 컬러수출에 포함</span></div>`;
   }
   function matSync() {
     matDash();

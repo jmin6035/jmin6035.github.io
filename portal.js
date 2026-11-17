@@ -32,7 +32,7 @@
         : c1('ct_prod.html#ship', ship.tone, ship.month > 0 ? `${Math.round(ship.actual / ship.month * 100)}<small>%</small>` : `${n0(ship.actual)}<small>t</small>`, `${n0(ship.actual)} / ${n0(ship.month)}t · 기준 ${ship.pct == null ? '–' : Math.round(ship.pct * 100) + '%'}`, `큰 숫자 = 실적 ÷ 월 계획 ${n0(ship.month)}t · 색·기준 대비 = 오늘까지 나갔어야 할 양 ${n0(ship.base)}t(월 계획 × 출하 패턴) 대비`);   // 11/13: 다른 화면과 같은 형식(큰 숫자 = 월 대비, 작은 글씨 = 오늘까지 기준 대비)
       const sT = stock.target;
       const cStock = stock.end == null || !sT ? c1('integrated.html', stock.tone, esc(r.vals[2][0]), esc(r.vals[2][1]))
-        : c1('integrated.html', stock.tone, `${n0(stock.end)}<small>t</small>`, `목표 ${n0(sT)}t`, `월말 예상 ${n0(stock.end)}t · 목표 ${n0(sT)}t · 오늘 ${stock.now != null ? n0(stock.now) : '–'}t`);
+        : c1('integrated.html', stock.tone, `${n0(stock.end)}<small>t</small>`, `목표 재고 ${n0(sT)}t`, `월말 예상 ${n0(stock.end)}t · 목표 재고 ${n0(sT)}t · 오늘 ${stock.now != null ? n0(stock.now) : '–'}t`);
       return `<tr class="${r.w4}"><th scope="row" class="bg" title="${esc(SLB[r.w4])}"><span class="cdot ${r.w4}"></span><b>${esc(r.name)}</b></th>${cDue}${cWhy}${cProd}${cShip}${cStock}</tr>`;
     };
     // 11/17 검토: 판매그룹에 안 묶이는 납기 위험 그룹(그룹 미상 등)도 줄로 보여 합계를 통합 관제·납기 위험 화면과 맞춤
@@ -50,8 +50,8 @@
     const head = `<div class="bsum"><span class="bn bad"><i class="cdot bad"></i>조치 <b>${cnt('bad')}</b></span><span class="bn warn"><i class="cdot warn"></i>주의 <b>${cnt('warn')}</b></span><span class="bn ok"><i class="cdot ok"></i>정상 <b>${cnt('ok')}</b></span>`
       + `<span class="bk">납기 위험 <b class="neg">${n0(rT)}t</b> <small>미결 ${n0(oT)}t 중 ${PCT(rT, oT) || 0}%</small></span>`
       + (sb ? `<span class="bk">출하 기준 대비 <b class="${UI.rate(sa / sb * 100)}">${Math.round(sa / sb * 100)}%</b> <small>${n0(sa)} / 오늘까지 기준 ${n0(sb)}t</small></span>` : '')
-      + (matLate ? `<a class="bk" href="matcal.html#mt-orders">소재 발주 마감 지남 <b class="neg">${matLate}개 그룹</b></a>` : '')
-      + `<span class="bd">실적 ~${md(O.asOf)} · 납기 판정 ${RK ? md(RK.asOf) : '–'}</span></div>`;
+      + (matLate ? `<a class="bk" href="matcal.html#mt-orders">소재 발주 지연 <b class="neg">${matLate}개 그룹</b></a>` : '')
+      + `<span class="bd">실적 <b class="dt">${md(O.asOf)}</b>까지 · 납기 판정 <b class="dt">${RK ? md(RK.asOf) : '–'}</b></span></div>`;
     return head + `<div class="ct-wrap"><table class="bt"><colgroup><col class="c-g"><col class="c-d"><col class="c-w"><col class="c-p"><col class="c-s"><col class="c-k"></colgroup>`
       + `<thead><tr><th>판매그룹</th><th title="지연 예상 + 납기 지남(납기 위험 화면과 같은 판정)">납기 위험</th><th>주요 원인</th><th title="월말 예상 생산(실적 + 남은 계획) ÷ 그룹 월 계획(판매 + 목표 − 기초)">월말 생산 예상</th><th title="큰 숫자 = 실적 ÷ 월 계획 · 색·작은 글씨 = 오늘까지 기준 대비">출하 진도</th><th title="월말 예상 재고 vs 목표">월말 재고</th></tr></thead>`
       + `<tbody>${sec('G', '도금')}${sec('C', '컬러')}</tbody></table></div>`;
@@ -85,14 +85,14 @@
     const th = M.map((m) => `<th>${+m.slice(5)}월${m === cur ? '<small>예상</small>' : ''}</th>`).join('');
     const c2 = (top, sub) => `<td><span class="q1">${top}</span><span class="q-s">${sub}</span></td>`;
     const pr = rows.map(([nm, R]) => `<tr><th class="l" scope="row">${nm} 생산</th>${R.map(([v, p]) => { const r = p ? v / p * 100 : null; return c2(`${n0(v)} <b class="${r == null ? '' : UI.rate(r)}">${r == null ? '–' : Math.round(r) + '%'}</b>`, `/ ${n0(p || 0)}t`); }).join('')}${c2(n0(R.reduce((a, r) => a + r[0], 0)), `/ ${n0(R.reduce((a, r) => a + (r[1] || 0), 0))}t`)}</tr>`).join('');
-    const sr = SK.map(([nm, keys]) => { const S = st[nm] || {}, mx = S.target; return `<tr><th class="l" scope="row">${nm === '컬러 제품' ? '컬러 제품' : '도금 판매재'} 재고<span class="q-s">지금 ${S.current != null ? n0(S.current) + 't' : '–'}</span></th>${M.map((m) => { const v = rollAt(keys, `${m}-${String(dim(m)).padStart(2, '0')}`); const t = v == null || !mx ? '' : v / mx > 1.3 ? 'bad' : v / mx > 1.1 ? 'warn' : 'ok'; return c2(v == null ? '–' : `<b class="${t}">${n0(v)}</b>`, mx ? `/ 최대 ${n0(mx)}t` : ''); }).join('')}<td></td></tr>`; }).join('');
-    return `<section class="card b-q"><h2>4분기 생산·재고 전망 <small>생산 예상 / 월 계획 · 월말 재고 / 최대</small></h2><div class="ct-wrap"><table class="qt q4"><thead><tr><th class="l"></th>${th}<th>4분기</th></tr></thead><tbody>${pr}${sr}</tbody></table></div></section>`;
+    const sr = SK.map(([nm, keys]) => { const S = st[nm] || {}, mx = S.target; return `<tr><th class="l" scope="row">${nm === '컬러 제품' ? '컬러 제품' : '도금 판매재'} 재고<span class="q-s">지금 ${S.current != null ? n0(S.current) + 't' : '–'}</span></th>${M.map((m) => { const v = rollAt(keys, `${m}-${String(dim(m)).padStart(2, '0')}`); const t = v == null || !mx ? '' : v / mx > 1.3 ? 'bad' : v / mx > 1.1 ? 'warn' : 'ok'; return c2(v == null ? '–' : `<b class="${t}">${n0(v)}</b>`, mx ? `/ 재고 상한 ${n0(mx)}t` : ''); }).join('')}<td></td></tr>`; }).join('');
+    return `<section class="card b-q"><h2>4분기 생산·재고 전망 <small>생산 예상 / 월 계획 · 월말 재고 / 재고 상한</small></h2><div class="ct-wrap"><table class="qt q4"><thead><tr><th class="l"></th>${th}<th>4분기</th></tr></thead><tbody>${pr}${sr}</tbody></table></div></section>`;
   }
 
   /* 기준·사양: 숫자 정의 + 그룹별 판매계획 → 필요 생산(3달, 통합 계획) */
   function basisSec(O) {
     const IG = D.integrated || {}, V = IG.variants && (IG.variants[IG.rec] || IG.variants.V1), M = IG.months || O.months || [], MP = O.monthPlan || {};
-    const GN = { G국내: '도금국내', G수출: '도금수출', G자동차: '자동차강판', G자가재: '도금 자가재', C건재: '컬러건재', C수출: '컬러수출', C수요: '수요개발' };
+    const GN = { G국내: '도금국내', G수출: '도금수출', G자동차: '자동차', G자가재: '도금 자가재', C건재: '컬러건재', C수출: '컬러수출', C수요: '수요개발' };
     const gp = (g, m, i) => { const x = (MP[m] || {})[g]; return x && x.prodSrc ? x.prod : ((V.plan[g] || [])[i] || {}).prod || 0; };
     const tb = V && V.plan ? `<div class="ct-wrap"><table class="ct-t qt"><thead><tr><th class="l">판매그룹</th>${M.map((m) => `<th>${+m.slice(5)}월 판매</th><th>필요 생산</th><th>월말 목표</th>`).join('')}</tr></thead><tbody>`
       + Object.keys(GN).filter((g) => V.plan[g] && UI.inScope(g[0])).map((g) => `<tr><td class="l"><b>${GN[g]}</b></td>${M.map((m, i) => { const r = (V.plan[g] || [])[i] || {}; return `<td>${n0(r.sales || 0)}</td><td><b>${n0(gp(g, m, i))}</b></td><td>${r.target != null ? n0(r.target) : '–'}</td>`; }).join('')}</tr>`).join('')
@@ -104,7 +104,7 @@
       + `<li><b>생산</b> = 월말 예상(이번 달 실적 + 남은 계획) ÷ 월 계획(TF 월 생산량). 98% 이상 정상 · 90% 이상 주의</li>`
       + `<li><b>출하</b> = 이번 달 출하 실적(MES) ÷ 오늘까지 기준(월 계획 × 그룹 월중 출하 실적 패턴 누계 비율)</li>`
       + `<li><b>재고</b> = 월말 예상(오늘 실재고 + 남은 생산 − 남은 출하) vs 월말 목표(통합 계획). 목표의 70% 미만 조치 · 상한 넘으면 주의</li>`
-      + `<li><b>소재</b> = 그룹이 쓰는 소재 중 가장 급한 것(발주 마감 지남 → 2주 안 발주 → 발주 예정)</li></ul>`
+      + `<li><b>소재</b> = 그룹이 쓰는 소재 중 가장 급한 것(발주 지연 → 2주 안 발주 → 발주 예정)</li></ul>`
       + (tb ? `<div class="b-cap">그룹별 판매계획 → 필요 생산(t) <small>필요 생산 = 판매 + 월말 목표 − 월초 재고</small></div>${tb}` : '') + '</details>';
   }
 

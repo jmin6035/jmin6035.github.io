@@ -11,7 +11,7 @@
 
   function render(a) {
     $('ca-empty').hidden = true; $('ca-body').hidden = false;
-    $('ca-meta').textContent = [`분석 ${String(a.built).replace('T', ' ')}`, `실적 ~${md(a.asOf)}`, `계획 조건 = ${a.planFrom} ~ ${a.planTo} 실적 속도`].join(' · ');
+    $('ca-meta').textContent = [`분석 ${String(a.built).replace('T', ' ')}`, `실적 ${md(a.asOf)}까지`, `계획 조건 = ${a.planFrom} ~ ${a.planTo} 실적 속도`].join(' · ');
     const N4 = a.n4 || 4, N12 = a.n12, N13 = a.n13 || 13; A = { N4, N12 };
     $('ca-period').textContent = `— 실적 ${a.period.from} ~ ${a.period.to} (${N13}주)`;
     if ($('ca-plan-per')) $('ca-plan-per').textContent = `${a.planFrom} ~ ${a.planTo}`;
@@ -20,8 +20,8 @@
       <dt>제품 생산</dt><dd>${fmt(x.tons)}t · 코일 ${fmt(x.coils)}개</dd>
       <dt>기간</dt><dd>${fmt(x.days)}일 (가동 ${fmt(x.opDays)}일)</dd>
       <dt>작업 비율</dt><dd>${x.util != null ? fmt(x.util * 100, 1) + '%' : '-'} <small class="muted">(작업 ÷ 작업 + 정지)</small></dd>
-      <dt>속도</dt><dd>${fmt(x.tph13, 2)} t/hr <small class="muted">(계획 조건 ${fmt(x.tphPlan, 2)})</small></dd>
-      <dt>최근 ${N4}주</dt><dd>${fmt(x.tph4, 2)} t/hr · 품목 구성 감안 <b>${pc(x.idx4 - 1)}</b></dd>
+      <dt>속도</dt><dd>${fmt(x.tph13, 2)} t/시간 <small class="muted">(계획 조건 ${fmt(x.tphPlan, 2)})</small></dd>
+      <dt>최근 ${N4}주</dt><dd>${fmt(x.tph4, 2)} t/시간 · 품목 구성 감안 <b>${pc(x.idx4 - 1)}</b></dd>
       <dt>휴지</dt><dd>${fmt(x.stopPerDay, 1)}시간/가동일 <small class="muted">(생산한 날 하루 평균 정지 — 속도에 이미 포함)</small></dd>
       <dt>휴지 구성</dt><dd>${x.stops.map(([c, h]) => `${esc(c)} ${fmt(h, 1)}h`).join(' · ') || '-'}</dd></dl></div>`).join('');
     const warn = Object.entries(a.lines).filter(([, x]) => x.idx4 != null && Math.abs(x.idx4 - 1) >= 0.05).map(([l, x]) => `${l} 최근 ${N4}주 속도가 계획 속도보다 ${pc(x.idx4 - 1)} — 계획 속도 조정 검토${N4 < 4 ? ' (자료 ' + N4 + '주뿐 — 더 쌓인 뒤 판단)' : ''}`);
@@ -61,7 +61,7 @@
     const row = (x) => { const d = Math.max(-0.4, Math.min(0.4, x.diff)), w = Math.abs(d) / 0.4 * 34, vd = verdict(x);   // 막대 반폭 최대 34% — 끝에 붙는 % 글자가 옆 칸을 넘지 않게
       return `<div class="cp-row ${x.apply ? 'ap' : x.flag ? '' : 'ok'}"><div class="cp-n"><b>${esc(x.prod)}</b><small>${A.N4}주 ${fmt(x.t)}t</small></div>
         <div class="cp-bar"><span class="mid"></span><span class="band"></span><i class="${x.diff >= 0 ? 'p' : 'n'}" style="${x.diff >= 0 ? 'left:50%' : `left:${50 - w}%`};width:${w}%"></i><em style="${x.diff >= 0 ? `left:calc(${50 + w}% + 6px)` : `right:calc(${50 + w}% + 6px)`}">${x.diff >= 0 ? '+' : ''}${fmt(x.diff * 100, 1)}%</em></div>
-        <div class="cp-v">${fmt(x.cur, 2)} → <b>${fmt(x.act, 2)}</b> <small>t/hr</small>${x.v12 != null ? `<small class="muted"> · 앞 ${A.N12}주 ${fmt(x.v12, 2)}</small>` : ''}</div>
+        <div class="cp-v">${fmt(x.cur, 2)} → <b>${fmt(x.act, 2)}</b> <small>t/시간</small>${x.v12 != null ? `<small class="muted"> · 앞 ${A.N12}주 ${fmt(x.v12, 2)}</small>` : ''}</div>
         <div class="cp-h">${x.h != null ? `${x.h > 0 ? '+' : ''}${fmt(x.h, 1)}h` : '-'}</div><div class="cp-s"><span class="tag ${vd[1]}">${vd[0]}</span></div></div>`; };
     const F = [['act', '반영 권장·검토'], ['apply', '반영 권장만'], ['ok', '유지'], ['all', '전체']];
     $('ca-cands').innerHTML = `<div class="cc-lines">${LN.map(lineCard).join('')}</div>
@@ -76,7 +76,7 @@
 
   /* 11/10 점검: 월별 제품 생산량 = 모든 품명(mtons) — 100t 이상 품명만 더하면 실적보다 작음 */
   function renderWeekly(a) {                                      // 월 단위(이번 달 = 누계, 잘린 첫 달 제외)
-    const W = a.monthly || [], ms = a.months || [], mn = (m) => `${+m.slice(5)}월${m === a.asOf.slice(0, 7) ? ` <small class="muted">(~${md(a.asOf)})</small>` : ''}`;
+    const W = a.monthly || [], ms = a.months || [], mn = (m) => `${+m.slice(5)}월${m === a.asOf.slice(0, 7) ? ` <small class="muted">(${md(a.asOf)}까지)</small>` : ''}`;
     const keys = [...new Set(W.map((r) => `${r[1]}|${r[2]}`))].sort((x, y) => (x.split('|')[0] === y.split('|')[0] ? 0 : x < y ? -1 : 1));
     const cell = (k, m) => {
       const r = W.find((x) => x[0] === m && `${x[1]}|${x[2]}` === k);

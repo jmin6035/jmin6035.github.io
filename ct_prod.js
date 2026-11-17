@@ -7,6 +7,7 @@
   const CCAT = { color: '색상교체·청소', test: '테스트·도막조정', roll: '폭·롤·두께 전환', gap: '정지(사유 기록 없음)', etc: '기타' };
   const SHIPK = { 도금판매: 'G국내', 도금수출: 'G수출', 자동차강판: 'G자동차', 컬러수출: 'C수출', 컬러건재: 'C건재' };
   const VIEWS = ['perf', 'run', 'ship'];
+  const gnm = (s) => String(s == null ? '' : s).replace(/^자동차강판(판매)?/, '자동차').replace(/^도금판매(\(국내\))?/, '도금국내');   // 11/17 용어 기준: 그룹 이름(표시만)
   let bound = false;
   /* 11/11 소재·재고 개편: '제품 재고'(#stock)는 재고 전망(integrated.html) 맨 위 '제품 재고 목표 대비'로 합침 — 옛 주소는 넘김 */
   const toStock = () => { if (location.hash === '#stock') { location.replace('integrated.html'); return true; } return false; };
@@ -82,11 +83,11 @@
     const Lc = L.filter((x) => x.plan == null);
     const k = PM ? [
       { label: `${+mon.slice(5)}월 월 계획`, v: n0(PM.mon), unit: 't', tone: 'info', sub: `지금 계획의 이달 합계 · 그룹 월 계획(판매+목표−기초) ${n0(mPlan)}t` },
-      { label: '생산실적(누계)', v: n0(PM.act), unit: 't', tone: 'info', sub: `월 계획의 ${pc(PM.act, PM.mon)}% · MES ~${md(asOfG)}${asOfC && asOfC !== asOfG ? ` · 컬러 ~${md(asOfC)}` : ''}` },
-      { label: '월차 대비 차이', v: sgn(PM.act - PM.due0), unit: 't', tone: UI.rate(PM.pct0), sub: `~${md(SJ.asOf)} 월차 계획 ${n0(PM.due0)}t 대비 ${pc(PM.act, PM.due0)}%` },
+      { label: '생산실적(누계)', v: n0(PM.act), unit: 't', tone: 'info', sub: `월 계획의 ${pc(PM.act, PM.mon)}% · MES ${md(asOfG)}까지${asOfC && asOfC !== asOfG ? ` · 컬러 ${md(asOfC)}까지` : ''}` },
+      { label: '월차 대비 차이', v: sgn(PM.act - PM.due0), unit: 't', tone: UI.rate(PM.pct0), sub: `${md(SJ.asOf)}까지 월차 계획 ${n0(PM.due0)}t 대비 ${pc(PM.act, PM.due0)}%` },
     ] : [
       { label: `${+mon.slice(5)}월 생산계획`, v: n0(mPlan), unit: 't', tone: 'info', sub: '그룹 월 계획 합(도금 TF · 컬러 월간 계획)' },   // 11/9: 값 = 확정(기준) 계획 월 물량(pages.py groups.prod.month) — '최신 가동계획' 아님
-      { label: '생산실적(누계)', v: n0(mAct), unit: 't', tone: 'info', sub: `MES ~${md(asOfG)}${Lc.length && asOfC !== asOfG ? ` · 컬러 ~${md(asOfC)}` : ''}` },
+      { label: '생산실적(누계)', v: n0(mAct), unit: 't', tone: 'info', sub: `MES ${md(asOfG)}까지${Lc.length && asOfC !== asOfG ? ` · 컬러 ${md(asOfC)}까지` : ''}` },
       { label: '계획 대비 차이', v: Lp.length ? sgn(dAct - dPlan) : '-', unit: 't', tone: !Lp.length ? '' : dAct >= dPlan ? 'ok' : dAct >= dPlan * 0.95 ? 'warn' : 'bad', sub: Lp.length ? `일정 누계 대비 ${pc(dAct, dPlan)}%` : '라인 계획 없음' },
     ];
     k.push(
@@ -97,7 +98,7 @@
       return `<tr class="ck" data-l="${esc(x.line)}" title="판생속보 월차 ${n0(x.srMonth)}t · 일정 누계 ${n0(x.sched)}t(참고)"><td class="id">${esc(x.line)}<small>${x.pl === 'G' ? '도금' : '컬러'}${x.fam ? ` · ${esc(x.fam)}` : ''}</small></td>`
         + `<td class="r">${x.pl === 'G' || PM ? n0(x.month) : '<span class="sub">없음</span>'}</td><td class="r">${x.plan != null ? n0(x.plan) : '<span class="sub">없음</span>'}</td><td class="r"><b>${n0(x.act)}</b></td>`
         + `<td class="r ${d == null ? '' : d >= 0 ? 'pos' : 'neg'}">${d == null ? '-' : sgn(d)}</td><td class="r">${r == null ? '-' : `<b class="${r >= 1 ? 'pos' : r >= 0.95 ? 'wrn' : 'neg'}">${Math.round(r * 100)}%</b>`}</td>`
-        + `<td class="w">${x.cause.length ? x.cause.slice(0, 2).map(([c, h]) => `<span class="pp-c">${esc(c)} <b>${n1(h)}h</b></span>`).join('') : '<span class="sub">기록 없음</span>'}</td></tr>`; };
+        + `<td class="w">${x.cause.length ? x.cause.slice(0, 2).map(([c, h]) => `<span class="pp-c">${esc(c)} <b>${n1(h)}시간</b></span>`).join('') : '<span class="sub">기록 없음</span>'}</td></tr>`; };
     const tbl = t([th('라인'), th('월 계획', 1, PM ? '지금 계획의 이달 합계(지난 날 실적 + 앞날 계획)' : '판매생산속보 라인 월 계획'), th(PM ? '월차 누계' : '일정 누계', 1, PM ? '전일까지 월차(이달 첫 계획) 합' : '판매생산속보 오늘까지 일정'), th('실적 누계', 1), th('차이', 1), th(PM ? '월차 대비' : '달성률', 1), th('휴지 상위(누계)')], L.map(row), 'pp-t');
     // 일별 추이(최근 14일): 도금 = 아침 계획 대비, 컬러 = 실적만
     const D14 = days(asOfG, 14), acc = {}; (GA.accHist || []).forEach((a) => { (acc[a[0]] = acc[a[0]] || {})[a[1]] = a[2]; });
@@ -108,9 +109,9 @@
     const trow = (d) => { const g = sum('G', d), c = sum('C', d), gp = acc[d] ? Object.entries(acc[d]).filter(([l]) => lines.some((x) => x.line === l)).reduce((a, [, v]) => a + v, 0) : null;
       return `<tr><td class="id">${md(d)}</td>${hasG ? `<td class="r">${gp ? n0(gp) : '-'}</td><td class="r"><b>${g == null ? '-' : n0(g)}</b></td><td class="pp-bar"><i style="width:${((g || 0) / mx * 100).toFixed(1)}%"></i></td><td class="r">${n1(dh('G', d))}</td>` : ''}`
         + `${hasC ? `<td class="r"><b>${c == null || d > asOfC ? '-' : n0(c)}</b></td><td class="pp-bar"><i class="c" style="width:${(d > asOfC ? 0 : (c || 0) / mx * 100).toFixed(1)}%"></i></td><td class="r">${d > asOfC ? '-' : n1(dh('C', d))}</td>` : ''}</tr>`; };
-    const trend = t([th('일자'), ...(hasG ? [th('도금 아침 계획', 1), th('도금 실적', 1), th(''), th('도금 비가동 h', 1)] : []), ...(hasC ? [th('컬러 실적', 1), th(''), th('컬러 비가동 h', 1)] : [])], D14.slice().reverse().map(trow));
+    const trend = t([th('일자'), ...(hasG ? [th('도금 아침 계획', 1), th('도금 실적', 1), th(''), th('도금 비가동 시간', 1)] : []), ...(hasC ? [th('컬러 실적', 1), th(''), th('컬러 비가동 시간', 1)] : [])], D14.slice().reverse().map(trow));
     // 이월·휴지 원인
-    const cg = Gs.map((g) => `<tr><td class="id">${esc(g.name)}</td><td class="r">${n0(g.prod.month)}</td><td class="r">${n0(g.prod.actual)}</td><td class="r">${n0(g.prod.after)}</td><td class="r ${carryOf(g) >= 1 ? 'wrn' : ''}"><b>${n0(carryOf(g))}</b></td></tr>`);
+    const cg = Gs.map((g) => `<tr><td class="id">${esc(gnm(g.name))}</td><td class="r">${n0(g.prod.month)}</td><td class="r">${n0(g.prod.actual)}</td><td class="r">${n0(g.prod.after)}</td><td class="r ${carryOf(g) >= 1 ? 'wrn' : ''}"><b>${n0(carryOf(g))}</b></td></tr>`);
     const cat = {}; L.forEach((x) => x.cause.forEach(([c, h]) => { const k_ = `${x.pl === 'G' ? '도금' : '컬러'}|${c}`; cat[k_] = (cat[k_] || 0) + h; }));
     const cr = Object.entries(cat).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k_, h]) => { const [pl, c] = k_.split('|'); return `<tr><td>${pl}</td><td class="w">${esc(c)}</td><td class="r"><b>${n1(h)}</b></td></tr>`; });
     return CT.basis([{ name: '도금 실적', at: asOfG, kind: '실적' }, hasC && { name: '컬러 실적', at: asOfC, kind: '실적' }, { name: '판매생산속보', at: P.sr && P.sr.asOf, kind: '확정계획' }, { name: '그룹 월 계획', at: P.built, kind: '재계획' }])
@@ -135,20 +136,20 @@
     const row = (x) => `<tr class="ck" data-l="${esc(x.l.line)}"><td class="id">${esc(x.l.line)}<small>${x.l.pl === 'G' ? '도금' : '컬러'}</small></td><td><b class="${x.st[1]}">${x.st[0]}</b><small>${md(x.l.asOfL)} 기준</small></td>`
       + `<td class="r"><b>${x.p1 == null ? '-' : n0(x.p1)}</b></td><td class="r">${n1(x.s1)}</td><td class="r"><b>${n0(x.p7)}</b></td><td class="r">${n1(x.s7)}</td><td class="r">${pc(168 - x.s7, 168)}%</td>`
       + `<td>${x.nx ? `<b>${md(x.nx[0])}</b> ${esc(x.nx[1])}` : '<span class="sub">-</span>'}</td></tr>`;
-    const tbl = t([th('라인'), th('상태'), th('하루 생산', 1), th('하루 비가동 h', 1), th('7일 생산', 1), th('7일 비가동 h', 1), th('가동률', 1, '1 − 비가동/168h'), th('다음 일정')], R.map(row));
+    const tbl = t([th('라인'), th('상태'), th('하루 생산', 1), th('하루 비가동 시간', 1), th('7일 생산', 1), th('7일 비가동 시간', 1), th('가동률', 1, '1 − 비가동/168시간'), th('다음 일정')], R.map(row));
     const loss = R.flatMap((x) => Object.entries(x.cat).filter(([, h]) => h >= 0.1).map(([c, h]) => ({ l: x.l, c, h, t: c === FULL ? 0 : h * x.l.rate }))).sort((a, b) => b.t - a.t);
     const lr = loss.map((z) => `<tr class="ck" data-l="${esc(z.l.line)}"><td class="w">${esc(z.c)}</td><td class="id">${esc(z.l.line)}</td><td class="r"><b>${n1(z.h)}</b></td><td class="r">${n1(z.l.rate)}</td><td class="r"><b>${n0(z.t)}</b></td></tr>`);
     const tot = loss.reduce((a, z) => [a[0] + z.h, a[1] + z.t], [0, 0]);
     return CT.basis([{ name: '도금 MES', at: X.asOfG, kind: '실적' }, lines.some((l) => l.pl === 'C') && { name: '컬러 MES', at: X.asOfC, kind: '실적' }])
       + card('라인 상태 <small>실시간 아님 · 최근 수집 자료 기준</small><span class="unit">톤 · 시간</span>', tbl)
-      + card(`휴지 유형별 손실 <small>최근 7일 · 합 ${n1(tot[0])}h · 추정 ${n0(tot[1])}t · 줄을 누르면 관련 주문</small><span class="unit">시간 · 톤</span>`,
-        lr.length ? t([th('휴지 유형'), th('라인'), th('시간', 1), th('t/h', 1, '기준 기간 평균 시간당 생산'), th('추정 손실(t)', 1, '시간 × t/h')], lr) : '<p class="ct-note">기록 없음</p>');
+      + card(`휴지 유형별 손실 <small>최근 7일 · 합 ${n1(tot[0])}시간 · 추정 ${n0(tot[1])}t · 줄을 누르면 관련 주문</small><span class="unit">시간 · 톤</span>`,
+        lr.length ? t([th('휴지 유형'), th('라인'), th('시간', 1), th('t/시간', 1, '기준 기간 평균 시간당 생산'), th('추정 손실(t)', 1, '시간 × t/시간')], lr) : '<p class="ct-note">기록 없음</p>');
   }
   function linePanel(X, line) {
     const l = X.lines.find((x) => x.line === line), to = CT.addD(X.M.asOf, 7);
     const O = X.M.all.filter((o) => o.line === line && !o.closed && o.remT > 0.5 && o.needProd && o.needProd <= to).sort((a, b) => String(a.needProd).localeCompare(String(b.needProd)));
     const st = []; days(l.asOfL, 7).reverse().forEach((d) => (X.stopsOn(l, d) || []).forEach((s) => st.push([d, s[2], s[1]])));
-    const html = `<div class="ct-kv"><span>관련 주문</span><b>${O.length}건 · ${n0(O.reduce((a, o) => a + o.remT, 0))}t</b></div><div class="ct-kv"><span>기준</span><b>생산 필요일 ~${md(to)} · 미완료</b></div>`
+    const html = `<div class="ct-kv"><span>관련 주문</span><b>${O.length}건 · ${n0(O.reduce((a, o) => a + o.remT, 0))}t</b></div><div class="ct-kv"><span>기준</span><b>생산 필요일 ${md(to)}까지 · 미완료</b></div>`
       + `<h4>관련 주문</h4>${O.length ? `<table class="ct-t"><tbody>${O.slice(0, 60).map((o, i) => `<tr class="ck" data-o="${i}"><td>${CT.badge(o)}</td><td class="id">${esc(o.id)}<small>${esc(o.grp)}</small></td><td class="r">${n1(o.remT)}t</td><td>${md(o.needProd)}</td></tr>`).join('')}</tbody></table>` : '<p class="ct-note">없음</p>'}`
       + `<h4>최근 7일 휴지</h4>${st.length ? `<table class="ct-t"><tbody>${st.slice(0, 40).map((s) => `<tr><td>${md(s[0])}</td><td class="w">${esc(s[1])}</td><td class="r">${n0(s[2])}분</td></tr>`).join('')}</tbody></table>` : '<p class="ct-note">기록 없음</p>'}`;
     CT.panel(html, `${line} 관련 주문`, (p) => p.querySelectorAll('tr[data-o]').forEach((r) => r.onclick = () => { const o = O[+r.dataset.o]; CT.panel(CT.orderDetail(o), o.id); }));

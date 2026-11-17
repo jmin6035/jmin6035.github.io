@@ -3,6 +3,7 @@
   const $ = (id) => document.getElementById(id), PW_KEY = 'cgl-analysis-pw';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const PL = { C: '컬러', G: '도금' };
+  const wd_ = (t) => String(t == null ? '' : t).replace('새 발주로 맞출 수 있는 최소 일수', '발주 후 투입까지 최소 일수').replace(/새 발주로 맞춤/g, '발주로 맞춤').replace('동종 AZ와 같게 봄(표에 없음)', '동종AZ와 같음');   // 화면 문구(용어 기준 11/17) — 게시 자료 글을 그대로 쓰지 않음
   let D = null, plant = 'all', PW = null, supOpen = false;
   const API = 'https://gatcqxrzaonjsixajrwd.supabase.co/rest/v1/cgl_decisions', KEY = 'sb_publishable_BlfAhxz_v3yg6iJw_nbRaA_YMFAOS7K';   // 결정 기록과 같은 공유 저장소(암호화, 추가만)
   const H = { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
@@ -36,11 +37,11 @@
     $('lt-meta').textContent = `기준 ${fdt(D.built)} · ${mdTxt(D.team.source)}`;
     $('lt-main').innerHTML = `
       <section class="card"><h2>입고 뒤 계획이 쓰는 일수</h2>
-        <div class="lt-k">${D.fixed.map((f) => `<div><small>${esc(f[1])}</small><b>${num(f[0], f[2])}<i>일</i></b><span>${esc(f[3])}</span><em>${esc(f[4])}</em></div>`).join('')}
+        <div class="lt-k">${D.fixed.map((f) => `<div><small>${esc(wd_(f[1]))}</small><b>${num(f[0], f[2])}<i>일</i></b><span>${esc(wd_(f[3]))}</span><em>${esc(f[4])}</em></div>`).join('')}
           <div><small>도금 선생산 허용</small><b class="ro">${esc(D.release.split(' · ')[0])}</b><span>${esc(D.release.split(' · ').slice(1).join(' · '))}</span><em>도금 계획 엔진 — <a href="rules.html">계획 규칙</a>에서 수정</em></div></div></section>
       <section class="card"><h2>소재 유형별 발주 → 입고 <small>발주 창이 있는 유형은 창 첫날 발주 기준(가장 긴 경우)</small></h2>
         <div class="scroll"><table class="t"><thead><tr><th class="l">소재 유형</th><th>리드타임</th><th class="l" style="min-width:260px"></th><th class="l">발주 방식</th></tr></thead><tbody>
-        ${D.types.map((t) => `<tr><td class="l"><b>${esc(t[0])}</b></td><td class="d">${num('t:' + t[0], t[1])} 일</td><td class="l"><i class="lt-bar" style="width:${Math.max(4, t[1] / mx * 240)}px"></i></td><td class="l">${esc(t[2])}</td></tr>`).join('')}
+        ${D.types.map((t) => `<tr><td class="l"><b>${esc(t[0])}</b></td><td class="d">${num('t:' + t[0], t[1])} 일</td><td class="l"><i class="lt-bar" style="width:${Math.max(4, t[1] / mx * 240)}px"></i></td><td class="l">${esc(wd_(t[2]))}</td></tr>`).join('')}
         </tbody></table></div></section>
       <section class="card lt-edit"><h2>고치기 <small>위 숫자를 바꾸고 '적용' · 2시간 안에 발주·소재·계획 화면 반영</small></h2>
         <div class="lt-bar2"><input id="lt-who" placeholder="이름" maxlength="40" aria-label="이름"><input id="lt-memo" placeholder="바꾸는 이유(선택)" maxlength="200" aria-label="바꾸는 이유"><button type="button" class="btn primary" id="lt-apply" disabled>적용</button><span id="lt-n" class="lt-n"></span><span id="lt-res" class="small"></span></div>

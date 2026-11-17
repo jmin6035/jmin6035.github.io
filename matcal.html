@@ -6,8 +6,8 @@
 <title>소재 관제</title>
 <meta name="description" content="일별 가동 · 자가재 · 구매 소재(발주·입고·재고) · 제품 재고를 한 달력에서">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611171304">
-<link rel="stylesheet" href="ui/optable.css?v=2611171304">
+<link rel="stylesheet" href="ui/theme.css?v=2611132301">
+<link rel="stylesheet" href="ui/optable.css?v=2611141900">
 <style>
 .sbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 10px; font-size: 13.5px; color: var(--ink-2); }
 .sbar b { color: var(--ink); }
@@ -174,7 +174,7 @@ html:root body main table.gk.tcal td.v { cursor: pointer; font-weight: 700; }
 html:root body main table.gk.tcal tr.m-ord td.v, html:root body main table.gk.tcal th.c1.m-ord { color: #b45f06 !important; }
 html:root body main table.gk.tcal tr.m-inb td.v, html:root body main table.gk.tcal th.c1.m-inb { color: #1e7b3a !important; }
 html:root body main table.gk.tcal tr.m-use td.v { color: #000 !important; font-weight: 400; }
-html:root body main table.gk.tcal td.v.late { color: #c00000 !important; font-weight: 800; }
+html:root body main table.gk.tcal tr td.v.late { color: #c00000 !important; font-weight: 800; }   /* tr 포함 — 'tr.m-ord td.v' 주황보다 앞서게(11/17 빨강이 안 보이던 것)
 html:root body main table.gk.tcal td.v.nw { box-shadow: inset 0 0 0 2px #1e7b3a; }
 .gk-lg i.o-ord, .gk-lg i.o-late, .gk-lg i.o-inb, .gk-lg i.o-nw, .gk-lg i.o-use { width: 14px; height: 14px; border-radius: 50%; box-shadow: none; }
 .gk-lg i.o-ord { background: #b45f06; } .gk-lg i.o-late { background: #c00000; } .gk-lg i.o-inb { background: #1e7b3a; } .gk-lg i.o-use { background: #000; } .gk-lg i.o-nw { background: #fff; border-radius: 3px; box-shadow: inset 0 0 0 2px #1e7b3a; }
@@ -183,6 +183,7 @@ html:root body main table.gk.sc2 td.lo { color: #b45f06 !important; font-weight:
 html:root body main table.gk.sc2 td.inb2 { color: #1e7b3a !important; font-weight: 800; letter-spacing: -0.6px; } html:root body main table.gk.sc2 td.inb2::before { content: '▲'; font-size: 8px; margin-right: 0; }
 html:root body main table.gk.sc2 td.dl { box-shadow: inset 0 0 0 2px #c00000; } html:root body main table.gk.sc2 td.est { font-style: italic; } html:root body main table.gk.sc2 td.nd { color: #808080 !important; }
 html:root body main table.gk.sc2 tr.sec > th, html:root body main table.gk.tcal tr.sec > th { text-align: center !important; }
+b.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 11/17 용어 기준: 날짜 = 굵은 진한 파랑 */
 </style>
 <style>
 .oj-sum{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 12px}.oj-b{flex:1;min-width:150px;border-radius:10px;padding:10px 12px;border:1px solid var(--line,#ddd)}
@@ -195,7 +196,7 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
 .oj-mx tr.oj-gst td{background:var(--surface-2,#f7f8fa);font-size:13.5px;border-bottom:2px solid var(--line,#ccc)}.oj-mx tr.oj-gst .oj-dot{padding:1px 8px}.oj-mx tr.oj-gst .oj-gn{font-size:13.5px;font-weight:700;margin-top:2px}
 .oj-mx td.oj-sup{font-size:13.5px;color:var(--ink-2,#555);white-space:normal;word-break:keep-all;min-width:120px}
 .oj-h{margin:16px 0 6px;font-size:16px}.oj-det{margin-top:14px}.oj-det summary{cursor:pointer;font-weight:700}
-.oj-t.oj-mx{table-layout:auto}.oj-t.oj-mx th{word-break:keep-all;vertical-align:bottom}.oj-t.oj-mx td.nw .oj-nx,.oj-t.oj-mx td.nw .oj-now{white-space:nowrap}
+.oj-t.oj-st{table-layout:auto}.oj-t.oj-mx{table-layout:auto}.oj-t.oj-mx th{word-break:keep-all;vertical-align:bottom}.oj-t.oj-mx td.nw .oj-nx,.oj-t.oj-mx td.nw .oj-now{white-space:nowrap}
 .oj-nx{font-size:13.5px;color:var(--ink-2,#555);font-weight:600}.oj-now{display:inline-block;margin-top:2px;font-size:13.5px;font-weight:800;color:#fff;background:var(--bad,#c92a2a);border-radius:999px;padding:0 8px}.oj-def{display:inline-block;font-size:13.5px;font-weight:700;color:var(--warn,#b35c00);background:var(--warn-bg,#fff3e0);border-radius:6px;padding:0 5px}
 .oj-t{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}.oj-t th{background:var(--surface-2,#f4f6f8);font-weight:600;color:var(--ink-2,#555)}.oj-t th,.oj-t td{border-bottom:1px solid var(--grid,#e8ebef);text-align:center}.oj-t td.r,.oj-t th.r{text-align:right}.oj-t caption{text-align:left;padding:4px 2px}.oj-t td,.oj-t th{padding:5px 8px;vertical-align:middle}.nw{white-space:nowrap}.neg{color: var(--bad)}
 </style>
@@ -228,7 +229,7 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
       <div data-ref="lt"></div>
       <h3 class="ref-h">재고 기준</h3>
       <ul class="mt-ul">
-        <li>소재 재고 목표 = '27 판생그룹 월말 최대(판매생산속보 재고 목표) — 맨 위 '소재 재고' 줄.</li>
+        <li>소재 재고 상한 = '27 판생 월말 최대(판매생산속보) — 맨 위 '소재 재고' 줄.</li>
         <li>재고 부족 주의(캘린더 주황 칸) = 자가재 3일분 · 구매 소재 7일분 미만. 붉은 칸 = 재고 소진 또는 목표 130% 초과.</li>
         <li>발주 마감 = 정해진 발주일(P-FH 화 · 그 외 월 · 수입 10~20일). 마감 지난 부족 = 발주 마감이 지나 지금 발주해도 못 대는 부족 · 3달 발주 필요 = 3달 필요 − 재고 − 입고 예정(경고 아님).</li>
       </ul>
@@ -244,16 +245,16 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
     </details>
   </div>
 </main>
-<footer class="foot"><div class="wrap"><span>자료는 암호화되어 게시되며 이 브라우저 안에서만 풉니다</span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
+<footer class="foot"><div class="wrap"><span></span><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
 <div class="tipbox" id="s-tip" role="tooltip"></div>
-<script src="ui/shell.js?v=2611171304"></script>
-<script src="engine/crypto.js?v=2611171304"></script>
-<script src="ui/cal.js?v=2611171304"></script>
-<script src="ui/proccalc.js?v=2611171304"></script>
-<script src="ui/optable.js?v=2611171304"></script>
-<script src="supply.js?v=2611171304"></script>
-<script src="ui/ct.js?v=2611171304"></script>
-<script src="ct_mat.js?v=2611171304"></script>
-<script src="matref.js?v=2611171304"></script>
+<script src="ui/shell.js?v=2611141500"></script>
+<script src="engine/crypto.js?v=2611120206"></script>
+<script src="ui/cal.js?v=2611120206"></script>
+<script src="ui/proccalc.js?v=2611120206"></script>
+<script src="ui/optable.js?v=2611141900"></script>
+<script src="supply.js?v=2611172300"></script>
+<script src="ui/ct.js?v=2611120206"></script>
+<script src="ct_mat.js?v=2611120206"></script>
+<script src="matref.js?v=2611132301"></script>
 </body>
 </html>
