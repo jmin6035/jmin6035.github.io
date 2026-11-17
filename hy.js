@@ -35,6 +35,12 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
     const est = lo == null ? null : lo === hi ? `${r100(lo)}톤` : `${r100(lo)}~${r100(hi)}톤`;
     return bar(p, v, '목표', td, { max: mx, rem, tgt: true, tdBase: pl, est, grp: v.lines });
   }
+  // 다음 달 소재(11/17 사용자 '12월·1월 소재 — 이미 나간 발주'): 확보 = 월초 재고(이달 월말 예상) + 이미 나간 발주 입고 예정 · 대비 = 그 달 사용 계획
+  function matNext(p, v) {
+    if (!v) return '<div class="hy-na">자료 없음</div>';
+    const have = (v.beg || 0) + (v.arr || 0);
+    return bar(p, { act: have, plan: v.use }, '필요', null).replace('<div class="hy-cap"><span></span>', `<div class="hy-cap"><span>재고 ${n0(v.beg)} + 입고 예정 ${n0(v.arr)}${v.short ? ` · <b class="bad">부족 ${n0(v.short)}</b>` : ''}</span>`);
+  }
   // 다음 달: 월말 예상(○)만
   function stockEnd(v) {
     const { end: e, cap } = v || {}; if (e == null || !cap) return '<div class="hy-na">계획 기간 밖 · 자료 없음</div>';
@@ -68,6 +74,7 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
     const R = M ? [
       ['판매', '판매계획 대비 주문', null, (p) => bar(p, M[p].sales, '판매계획', null, { grp: M[p].sales.grp })],
       ['생산', '월 계획', 'gyehoek.html', (p) => `<div class="hy-row"><div class="hy-num"><b>${n0(M[p].prod.plan)}</b><small>톤</small></div>${cover((M[p].prod.lines || []).map((x) => ({ line: x.g, t: x.plan })), true)}</div>`],
+      ['소재', '필요 대비 확보', 'matcal.html', (p) => matNext(p, M[p].mat)],
       ['제품 재고', '월말 예상', null, (p) => stockEnd(M[p].stockPdt)],
     ] : [
       ['판매', '판매계획 대비 수주', null, (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', null, { grp: H[p].sales.grp })],
@@ -85,7 +92,7 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
 <div class="hy-g${PS.length < 2 ? ' one' : ''}"><div></div>${PS.map((p) => `<div class="hd ${p === 'G' ? 'g' : 'c'}">${p === 'G' ? '도금' : '컬러'}</div>`).join('')}
 ${R.map(([a, b, u, f]) => `${sec(a, b, u)}${PS.map((p) => cell(p, a, f(p))).join('')}`).join('')}</div>
 <div class="hy-lg">${M ? '<span><i class="k-g"></i>도금 확정 주문</span><span><i class="k-c"></i>컬러 확정 주문</span>' : '<span><i class="k-g"></i>도금 실적</span><span><i class="k-c"></i>컬러 실적</span>'}${M ? '' : '<span><i class="k-rm"></i>남은 계획</span><span><i class="k-tg"></i>목표</span><span><i class="k-td"></i>오늘</span><span>● 현재 · ○ 월말</span>'}<span><i class="k-ov"></i>상한 초과</span>${M ? '<span>○ 월말</span>' : '<span class="bad">빨강 = 7일치 미만</span>'}</div>
-<div class="hy-ft">${M ? '확정 주문 = 납기가 그 달인 등록 주문(아직 만들지 않은 것) · 판매계획 = 도금 재계획 · 컬러 3개월 계획' : '수주 = 이달 생산 실적 + 다음 주까지 만들 소재 매치 주문 · 생산·출하 = MES 판매생산속보(출하 = 내수 송장 · 수출 B/L)'}</div>`;
+<div class="hy-ft">${M ? '확정 주문 = 납기가 그 달인 등록 주문 · 판매계획 = 도금 재계획 · 컬러 3개월 계획 · 소재 확보 = 월초 재고(전달 월말 예상) + 이미 나간 발주 입고 예정(MES 미입고 발주), 필요 = 그 달 생산 계획의 소재 사용(도금 F/H · 컬러 구매 소재, 자가재 제외)' : '수주 = 이달 생산 실적 + 다음 주까지 만들 소재 매치 주문 · 생산·출하 = MES 판매생산속보(출하 = 내수 송장 · 수출 B/L)'}</div>`;
     m.querySelectorAll('.hy-tabs button').forEach((b) => b.addEventListener('click', () => { MI = +b.dataset.mi; try { sessionStorage.setItem('hy-mi', MI); } catch (e) { /* 무시 */ } render(D); }));
   }
   let LD = null, SUB = false;

@@ -49,9 +49,11 @@
 <div class="k-lg"><span>준비율 = 주문 중 생산 전날까지 소재가 있는 몫(확보 + 입고 예정)</span><span class="bad">빨강 = 빈 곳·소재 없음</span><span class="warn">주황 = 늦게 입고·부자재 대기·납기 넘김</span></div></div>`;
     // 독촉할 곳: 마케팅(빈 곳) · 소재(늦음·없음·부자재 대기) · 공정·출하(납기 넘김)
     const ALL = V.flatMap(([, v]) => v.iss);
-    const grp = (L) => Object.values(L.reduce((a, it) => { const k = `${it.dept}|${it.k}|${it.dst || it.cus}|${it.man || ''}`; const g = a[k] || (a[k] = { ...it, t: 0, n: 0, pd: [], due: [], eta: [] }); g.t += it.t; g.n += 1; g.pd.push(it.pd); g.due.push(it.due); if (it.eta) g.eta.push(it.eta); return a; }, {})).sort((a, b) => b.t - a.t);
+    const grp = (L) => Object.values(L.reduce((a, it) => { const k = `${it.dept}|${it.k}|${it.dst || it.cus}|${it.man || ''}`; const g = a[k] || (a[k] = { ...it, t: 0, n: 0, pd: [], due: [], eta: [], items: [] }); g.items.push(it); g.t += it.t; g.n += 1; g.pd.push(it.pd); g.due.push(it.due); if (it.eta) g.eta.push(it.eta); return a; }, {})).sort((a, b) => b.t - a.t);
     const rng = (L) => { const s_ = [...L].filter(Boolean).sort(); return !s_.length ? '' : s_[0] === s_[s_.length - 1] ? md(s_[0]) : `${md(s_[0])}~${md(s_[s_.length - 1])}`; };
-    const li = (g, extra) => `<div class="k-li"><div class="n"><span class="k-tag ${g.k}">${KN[g.k]}</span>${esc(g.dept)} · ${esc(g.dst || g.cus || '')}</div><div class="t">${n0(g.t)}t</div><div class="d">${esc(g.man || '담당 미정')} · ${g.n}건 · ${extra(g)}</div></div>`;
+    let uid = 0;
+    const li = (g, extra) => { const id = `kx${uid++}`; return `<div class="k-li op" data-x="${id}"><div class="n"><span class="k-tag ${g.k}">${KN[g.k]}</span>${esc(g.dept)} · ${esc(g.dst || g.cus || '')}</div><div class="t">${n0(g.t)}t <span class="cv">▾</span></div><div class="d">${esc(g.man || '담당 미정')} · ${g.n}건 · ${extra(g)}</div></div>
+<div class="k-con" id="${id}" hidden><div class="r h"><span>계약번호</span><span>톤</span><span>생산</span><span>${g.items.some((it) => it.eta) ? '입고' : ''}</span><span>납기</span></div>${g.items.sort((a, b) => b.t - a.t).map((it) => `<div class="r"><span>${esc(it.con || '–')}</span><span>${n0(it.t)}</span><span>${md(it.pd)}</span><span>${md(it.eta)}</span><span class="${it.due < it.pd ? 'warn' : ''}">${md(it.due)}</span></div>`).join('')}</div>`; };
     const list = (L, extra, empty) => (L.length ? L.slice(0, 8).map((g) => li(g, extra)).join('') + (L.length > 8 ? `<div class="k-more">외 ${L.length - 8}줄 · ${n0(L.slice(8).reduce((a, g) => a + g.t, 0))}톤</div>` : '') : `<div class="k-more">${empty}</div>`);
     const GAPS = V.flatMap(([d, v]) => (d[2] === 'G' ? v.rows.filter((r) => r.p - r.o > 0.5).map((r) => ({ dept: d[0], dst: r.d, t: r.p - r.o, p: r.p })) : (v.p - v.o > 0.5 ? [{ dept: d[0], dst: `시장 ${v.mkt.slice(0, 3).map(([a]) => a).join('·')}`, t: v.p - v.o, p: v.p }] : []))).sort((a, b) => b.t - a.t);
     const gapT = GAPS.reduce((a, g) => a + g.t, 0);
@@ -64,10 +66,23 @@ ${GAPS.length ? GAPS.slice(0, 8).map((g) => `<div class="k-li"><div class="n"><s
 ${list(MAT, (g) => `생산 ${rng(g.pd)}${g.eta.length ? ` · 예상 입고 ${rng(g.eta)}` : ''}`, '소재·부자재 문제 없음')}</div>
 <div class="k-card k-side"><h2>공정·출하에 — 납기 넘김<span class="who">공정·출하</span></h2><div class="tt">${n0(dlT)}<small>톤 · ${DLs.length}줄</small></div>
 ${list(DLs, (g) => `생산 ${rng(g.pd)} · 납기 ${rng(g.due)}`, '납기 넘김 없음')}</div></div>`;
+    // 대응안(11/17 사용자 '생산이 계획대로 안 되거나, 주문 충당이 안 되거나, 소재가 결국 안 들어오면 — 차주 작업 당기기')
+    const SW = (w.swap || []).filter((x) => PS.includes(x.pl));
+    const PLN = { G: '도금', C: '컬러' };
+    const crow = (e, kind) => `<div class="r"><span title="${esc(e.con || '')}">${esc(e.con || '–')}</span><span>${n0(e.t)}</span><span>${esc(e.g)} · ${esc(e.dst || '')}</span><span>${md(e.pd)}</span><span class="${e.due < e.pd ? 'warn' : ''}">${md(e.due)}</span></div>`;
+    const clist = (L, kind, n) => `<div class="k-con sw"><div class="r h"><span>계약번호</span><span>톤</span><span>부서 · 목적지</span><span>${kind === 'pull' ? '원래 생산' : '생산'}</span><span>납기</span></div>${L.slice(0, n).map((e) => crow(e, kind)).join('')}${L.length > n ? `<div class="k-more">외 ${L.length - n}건 · ${n0(L.slice(n).reduce((a_, e) => a_ + e.t, 0))}톤</div>` : ''}</div>`;
+    const swHtml = SW.length ? SW.map((x) => `<div class="k-card k-sw"><h2>${PLN[x.pl]}${x.al ? ` ${esc(x.al)}` : ''}<small>${x.pl === 'G' ? '같은 강종 캠페인 안에서만 바꿈' : '컬러 전체'}</small></h2>
+<div class="k-swh"><div><div class="l">빠질 몫</div><div class="v bad">${n0(x.need)}<small>톤</small></div><div class="s">소재 늦음·없음 ${n0(x.out)}${x.gap ? ` · 빈 곳 ${n0(x.gap)}` : ''}</div></div><div class="ar">→</div>
+<div><div class="l">당겨 채울 수 있는 주문</div><div class="v ${x.pullT + 0.5 < x.need ? 'warn' : ''}">${n0(Math.min(x.pullT, x.need))}<small>톤</small></div><div class="s">${lab(SEL + 1)}~${lab(SEL + 4)} 중 소재 이미 있는 주문 ${n0(x.candT)}톤에서 납기 빠른 순${x.pullT + 0.5 < x.need ? ` · <b class="bad">${n0(x.need - x.pullT)}톤 못 채움</b>` : ''}</div></div></div>
+<div class="k-swl"><div><h3>① 미룰 주문 — 소재 늦음·없음<span>${n0(x.out)}t</span></h3>${x.push.length ? clist(x.push, 'push', 6) : '<div class="k-more">없음</div>'}</div>
+<div><h3>② 당길 주문 — 소재 있음<span>${n0(x.pullT)}t</span></h3>${x.pull.length ? clist(x.pull, 'pull', 6) : '<div class="k-more">후보 없음</div>'}</div>
+<div><h3>③ 생산 미달 시 먼저 넘길 주문 — 납기 늦은 순</h3>${(x.defer || []).length ? clist(x.defer, 'defer', 6) : '<div class="k-more">없음</div>'}</div></div></div>`).join('') : '<div class="k-card"><div class="k-more">이 주 대응할 것 없음</div></div>';
+    const swSec = `<div class="k-h">${lab(SEL)} 대응안<small>소재가 안 들어오거나 주문이 비거나 생산이 덜 나올 때 — 무엇을 빼고 무엇을 당기나</small></div>${swHtml}`;
     m.innerHTML = `<div class="k-top"><h1>주간 관제</h1><span class="as">${md(K.today)} 기준 · 주 = 수~화 · 계획 = ${K.planAt ? md(K.planAt) + ' 재계획' : '재계획'}·통합 계획</span></div>
-${chips}${kpi}<div style="margin-top:14px">${dtab}</div>${ask}
+${chips}${kpi}<div style="margin-top:14px">${dtab}</div>${ask}${swSec}
 <div class="k-ft">주문 = 그 주 계획 칸을 같은 그룹·목적지(도금은 강종까지) 주문으로 납기 순서대로 채운 양 · 소재: 도금 = 예상 입고(인도기한 + 실측), 컬러 = 발주 인도기한 · 부자재 = 컬러 작업지시 부자재(도료·필름) 상태 · 컬러는 계획이 시장 단위라 부서 전체로 채움 · 자사 주문·재고 전환 계약 제외</div>`;
     m.querySelectorAll('[data-i]').forEach((e) => e.addEventListener('click', () => { SEL = +e.dataset.i; render(D); }));
+    m.querySelectorAll('.k-li.op').forEach((e) => e.addEventListener('click', () => { const c = document.getElementById(e.dataset.x); c.hidden = !c.hidden; e.classList.toggle('open', !c.hidden); }));
   }
   let LD = null, SUB = false;
   CT.boot(['suju.enc.json'], (D) => { LD = D; render(D); if (!SUB && window.UI && UI.onScope) { SUB = true; UI.onScope(() => render(LD)); } });
