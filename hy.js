@@ -52,9 +52,10 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
   function matPo(p, v) {
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
     const SB = Object.fromEntries((v.shortBy || []).map((z) => [z[0], z]));
-    const L = v.by.filter((z) => z[3] > 0.5 || z[2] > 0.5);
-    const stat = (n) => { const z = SB[n]; if (!z) return '<span class="ok">확보</span>'; return [z[1] > 0.5 ? `<b class="bad">부족 ${n0(z[1])}톤(발주 시기 지남)</b>` : '', z[2] > 0.5 ? `<b class="warn">추가 발주(재고 바닥 기준) ${n0(z[2])}톤 · ${z[3] === z[4] ? `${mdd(z[3])}까지` : `${mdd(z[3])}부터 차례로(~${mdd(z[4])})`}</b>` : ''].filter(Boolean).join(' · '); };
-    const sl = (v.shortBy || []).filter((z) => z[5] > 0.5);
+    const L = v.by.filter((z) => z[3] > 0.5 || z[2] > 0.5 || (v.shortBy || []).some((y) => y[0] === z[0] || y[0].startsWith(z[0] + '(')));   // 부족 판정이 있는 소재는 사용·입고 없어도 보임
+    const one_ = (z, lb) => [z[1] > 0.5 ? `<b class="bad">${lb}부족 ${n0(z[1])}톤(발주 시기 지남)</b>` : '', z[2] > 0.5 ? `<b class="warn">${lb}추가 발주(재고 바닥 기준) ${n0(z[2])}톤 · ${z[3] === z[4] ? `${mdd(z[3])}까지` : `${mdd(z[3])}부터 차례로(~${mdd(z[4])})`}</b>` : ''].filter(Boolean).join(' · ');
+    const stat = (n) => { const zs = (v.shortBy || []).filter((z) => z[0] === n || z[0].startsWith(n + '(')); if (!zs.length) return '<span class="ok">확보</span>'; return zs.map((z) => one_(z, z[0] === n ? '' : `${esc(z[0].slice(n.length).replace(/[()]/g, ''))} `)).join('<br>'); };   // 11/17 검토: F/H 는 코드별(AL용·GI/GL용) 판정
+    const sl = v.staleBy ? v.staleBy.map(([n_, t_]) => [n_, 0, 0, 0, 0, t_]) : (v.shortBy || []).filter((z) => z[5] > 0.5);
     return `<div class="hy-row"><div class="hy-num"><b>${n0(v.arr)}</b><small>톤</small><span class="d1">입고 예정</span></div>
 <div class="hy-po">${L.map(([n, , a]) => `<div class="pr"><span class="sn">${esc(SN(n))}</span><span class="pa">입고 ${n0(a)}</span><span class="ps">${stat(n)}</span></div>`).join('')}</div>
 ${v.stale > 0.5 ? `<div class="hy-mn">제외: 입고 예정일이 30일 넘게 지난 물량 ${n0(v.stale)}톤${sl.length ? `(그중 ${sl.map((z) => `${esc(z[0])} ${n0(z[5])}`).join(' · ')})` : ''} — 입고 확인 필요</div>` : ''}</div>`;
@@ -68,7 +69,7 @@ ${v.stale > 0.5 ? `<div class="hy-mn">제외: 입고 예정일이 30일 넘게 �
     const one = (n, late, op, a, b) => [late > 0.5 ? `<b class="bad">${n}부족 ${n0(late)}</b>` : '', op > 0.5 ? `<b class="warn">${n}발주 필요 ${n0(op)} · 마감 ${rg(a, b)}</b>` : ''].filter(Boolean).join(' · ');
     const lines = (v.shortBy || []).map(([n, late, op, a, b]) => one(`${esc(n)} `, late, op, a, b));
     const pc_ = pct(v.cov, v.use), hv = (v.beg || 0) + (v.arr || 0) || 1, cb = v.cov * (v.beg || 0) / hv, ca = v.cov * (v.arr || 0) / hv;   // 막대 = 필요 대비 소재별 확보(남는 소재로 모자란 소재를 덮지 않음), 재고·발주 비율로 나눔
-    const sl = (v.shortBy || []).filter((z) => z[5] > 0.5), st = sl.length ? `빼고 계산: 예정일 30일 넘게 지난 미입고 ${sl.map((z) => `${esc(z[0])} ${n0(z[5])}t`).join(' · ')}(입고 여부 확인)` : '';
+    const sl = v.staleBy ? v.staleBy.map(([n_, t_]) => [n_, 0, 0, 0, 0, t_]) : (v.shortBy || []).filter((z) => z[5] > 0.5), st = sl.length ? `빼고 계산: 예정일 30일 넘게 지난 미입고 ${sl.map((z) => `${esc(z[0])} ${n0(z[5])}t`).join(' · ')}(입고 여부 확인)` : '';
     // 11/17 사용자 '소재는 발주랑 재고를 같이 만들었노 구분해라': 월초 재고 · 발주 입고 예정을 따로(막대도 두 칸)
     return `<div class="hy-row"><div class="hy-m2"><div><span>월초 재고${!v.beg ? '(전달 소진)' : ''}</span><b>${n0(v.beg)}</b><small>톤</small></div><div><span>발주 입고 예정</span><b>${n0(v.arr)}</b><small>톤</small></div><div><span>필요</span><b>${n0(v.use)}</b><small>톤</small></div><div><span>확보율</span><b class="${pc_ < 100 ? (lines.some((l) => l.includes('bad')) ? 'bad' : 'warn') : ''}">${pc_ ?? '–'}</b><small>%</small></div></div>
 <div class="hy-trk ${p}"><i class="fl" style="width:${W(cb / (v.use || 1) * 100)}"></i><i class="po" style="left:${W(cb / (v.use || 1) * 100)};width:${W(ca / (v.use || 1) * 100)}"></i></div>
