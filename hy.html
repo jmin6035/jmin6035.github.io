@@ -69,7 +69,7 @@ main.wrap { max-width: none; }
   .hy-top { flex-wrap: wrap; } .hy-top h1 { font-size: 20px; white-space: nowrap; } .hy-top .hy-tabs { margin-left: 0; width: 100%; } .hy-tabs button { flex: 1; }
   .hy-po .pr { grid-template-columns: 76px 90px minmax(0, 1fr); font-size: 13.5px; }
   .hy-sub .sr { grid-template-columns: 56px minmax(0, 1fr) 162px; font-size: 13.5px; } .hy-sub .sv { white-space: nowrap; }
-  .hy-g { grid-template-columns: minmax(0, 1fr); } .hy-g > div:first-child, .hy-g .hd { display: none; }
+  .hy-g, .hy-g.one { grid-template-columns: minmax(0, 1fr); } .hy-g > div:first-child, .hy-g .hd { display: none; }
   .hy-g .sec { flex-direction: row; gap: 8px; } .hy-g .cell { flex-direction: column; } .hy-g .cell::before { content: attr(data-pl); font-size: 14px; font-weight: 700; color: var(--ink-2); margin-bottom: 2px; }
 }
 </style>

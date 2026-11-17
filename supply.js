@@ -190,13 +190,13 @@
     }
     const arrs = [...C.autoArr(), ...S.arr.map((a) => ({ ...a, plant: ProcCalc.plantOf(a.code), t: +a.t || 0 }))];
     for (const a of arrs) {
-      if (a.plant === 'G' && a.code === 'N') continue;                     // 임가공(포스코 지급)
+      // 11/17 검토: 도금 SUS(P-FH(STS))도 발주·입고 대상(02 현황·발주 원장과 같게) — 예전엔 임가공으로 빼서 01 소재 탭에만 없었음
       push(get(a.plant, clsOf(a.plant, a.code, a.sup)).inb, a.date, { a, t: a.t, kind: 'arr' });
     }
     const act = (D && D.PO || {}).matAct || {};                            // 지난 날 = MES 실적(발주 원장 발주일 · 입고 원장 실입고일), 사용자 10/21
     for (const k of ['ord', 'inb']) for (const [key, t] of Object.entries(act[k] || {})) {
       const [pl, code, sup, d] = key.split('|');
-      if (d >= today || (pl === 'G' && code === 'N') || t < 0.05) continue;
+      if (d >= today || t < 0.05) continue;
       push(get(pl, clsOf(pl, code, sup))[k], d, { t, kind: 'act', a: { code, sup, date: d, t } });
     }
     return { T, J, P, arrs, codeNm: (c) => (P.matCode || {})[c] || c, supNm: (s_) => (s_ ? ((P.supNames || {})[s_.sup] || s_.name || s_.sup) : '-') };
@@ -584,7 +584,6 @@
   const SAFE_G = 1;
   function matG(r, d) {
     const a = r[0] || '', code = /STS/.test(a) ? 'N' : /^AL/.test(a) ? 'H' : 'F', need = add(d, -SAFE_G);
-    if (code === 'N') return { what: '도금용 SUS', steps: [['포스코 지급(임가공)', '-', null]], st: ['info', '발주 대상 아님'] };
     const P = MP && MP.P, nm = P ? (P.matCode || {})[code] || code : code;
     const sups = P ? P.suppliers.filter((x) => x.plant === 'G' && x.code === code && (x.share || 0) > 0) : [];
     const byT = {}; for (const x of sups) { const t = (byT[x.cls] = byT[x.cls] || { lt: x.lt, sh: 0 }); t.sh += x.share || 0; }
@@ -596,7 +595,7 @@
     const dl = j && j.deadline;   // 발주 마감 = 엔진 주별 마감(캘린더·소재 관제와 같은 값)
     const ok_ = j && j.short < 1;   // 그 주 확보면 마감이 지났어도 경고 아님
     const dlc = ok_ ? ['F/H', '확보됨', null, 'due'] : dl ? (dl < today ? ['발주 마감', `${md(dl)} 지남`, null, 'late'] : dl === today ? ['발주 마감', '오늘', null, 'late'] : ['발주 마감', `${md(dl)}까지`, null, 'due']) : ['발주 마감', ords, null, 'due'];
-    return { what: nm, steps: [dlc, [need <= today ? '소재 입고' : '입고 필요', md(need), need], ...(stc ? [stc] : [])], st };
+    return { what: nm, steps: ok_ ? [dlc] : [dlc, [need <= today ? '소재 입고' : '입고 기한', md(need), need], ...(stc ? [stc] : [])], st };
   }
 
   // 날짜 상세 카드(라인별 품목·소재·일정) — 가동 캘린더 상세와 계획 화면(gyehoek.js, window.supDet)이 같이 씀. ls = 보일 라인(없으면 전부)

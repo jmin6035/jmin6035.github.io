@@ -112,7 +112,7 @@
     return `<h2 class="m4-h">${M}월 소재 현황</h2><div class="m4-q" title="${esc(`${(window.SupMat.ext || []).includes(R.mon) ? '필요 = 도금 재계획 · 컬러 3개월 계획 · ' : ''}확인할 소재가 각 묶음 맨 위 · 판정 = 지금 재고 + 발주 완료분 입고 − 생산 투입(추가 발주 없음) · 발주 마감 지난 미발주 = 부족 · 월말 5일분 미만 = 빠듯`)}">톤 · 기준 ${md(R.today)} · 지금 재고 = MES 소재재고 목록(소재 코드별) — 소재 관제·02 현황의 소재 재고(판생속보 창고)와 출처 다름</div>`
       + `<div class="m4-sc"><table class="m4-mx"><colgroup><col style="width:150px"><col><col><col><col><col><col style="width:24%"><col style="width:210px"><col style="width:150px"></colgroup>`
       + `<thead><tr><th rowspan="2">소재</th><th colspan="6" class="gq">① 이달 필요한 만큼 확보했나</th><th colspan="2" class="gq sl">② 지금 재고로 버티나</th></tr>`
-      + `<tr><th>이달 필요</th><th>이달 실입고</th><th>발주(입고 예정)</th><th>예정일 지남<small>30일 이내</small></th><th>미발주</th><th>확보율</th><th class="sl">지금 재고</th><th>판정</th></tr></thead><tbody>${b}</tbody></table></div>`
+      + `<tr><th>이달 입고 대상</th><th>이달 실입고</th><th>발주(입고 예정)</th><th>예정일 지남<small>30일 이내</small></th><th>미발주<small>발주 계획 기준(업체·주 단위)</small></th><th>확보율</th><th class="sl">지금 재고</th><th>판정</th></tr></thead><tbody>${b}</tbody></table></div>`
       + `<div class="m4-lg"><span><i class="in"></i>이달 실입고</span><span><i class="po"></i>발주(입고 예정)</span><span><i class="no"></i>미발주</span></div>`;
   }
 
@@ -134,10 +134,10 @@
     for (const g of R.calRows) { if (!g.rows.length) continue; b += `<tr class="sec"><th colspan="${nc}">${PLN[g.pl]}</th></tr>` + g.rows.map((t) => line(t, 'po', true) + line(t, 'ib', false) + odLine(t)).join(''); }
     if (R.quiet.length) b += `<tr class="fold"><td colspan="${nc}">▸ 이달 발주·입고 없음 ${R.quiet.length}종 <small>${R.quiet.map(esc).join(' · ')}</small></td></tr>`;
     // 이번 주 발주(11/17 사용자 '발주·입고 캘린더랑 연결해서 같이') — 소재 관제와 같은 계산(월~일, 마감 지난 부족 포함) · 누르면 아래 그 소재 줄로
-    const S = window.SupMat, w0 = td, w1 = (() => { const k = wd(td); return addD(td, (2 - k + 7) % 7 || 7); })();   // 오늘(마감 지난 몫이 모이는 칸) ~ 다음 화요일   // 수~화(주간 관제와 같은 주)
+    const S = window.SupMat, w0 = td, w1 = addD(td, 6);   // 오늘(마감 지난 몫이 모이는 칸)부터 7일   // 수~화(주간 관제와 같은 주)
     const WR = Object.entries(S.MP.T).filter(([, T]) => inScope(T.plant)).map(([c, T]) => { let a = 0, lt = 0; for (const [d, L] of Object.entries(T.ord)) if (d >= w0 && d <= w1) { a += S.sumT(L); lt += S.sumT(L.filter((e) => e.late)); } return { c, pl: T.plant, a, lt }; }).filter((x) => x.a >= 0.5).sort((x, y) => (x.pl < y.pl ? 1 : x.pl > y.pl ? -1 : 0));
     const wtot = WR.reduce((x, r) => x + r.a, 0);
-    const wk = `<div class="m4-wk"><div class="h"><b>이번 주 발주해야 할 양</b><small>${md(w0)}~${md(w1)} · 생산 계획 기준 · 마감 지난 양 포함 · 누르면 아래 캘린더의 그 소재 줄로</small><b class="t">${n0(wtot)}t</b></div><div class="l">${WR.map((r) => `<button type="button" data-go="${esc(r.c)}"><span>${esc(r.c)}</span><b>${n0(r.a)}t</b>${r.lt >= 1 ? `<small>마감 지난 ${n0(r.lt)}t</small>` : '<small class="ok">이번 주 마감</small>'}</button>`).join('') || '<span class="muted">이번 주 발주할 소재 없음</span>'}</div></div>`;
+    const wk = `<div class="m4-wk"><div class="h"><b>앞으로 7일 발주해야 할 양</b><small>${md(w0)}~${md(w1)} · 생산 계획 기준 · 마감 지난 양 포함 · 누르면 아래 캘린더의 그 소재 줄로</small><b class="t">${n0(wtot)}t</b></div><div class="l">${WR.map((r) => `<button type="button" data-go="${esc(r.c)}"><span>${esc(r.c)}</span><b>${n0(r.a)}t</b>${r.lt >= 1 ? `<small>마감 지난 ${n0(r.lt)}t</small>` : '<small class="ok">이번 주 마감</small>'}</button>`).join('') || '<span class="muted">이번 주 발주할 소재 없음</span>'}</div></div>`;
     return `<h2 class="m4-h">발주 · 입고 캘린더</h2>${wk}<div class="m4-q" title="소재마다 위 줄 = 발주, 아래 줄 = 입고 · 지난 날은 실적(흐리게) · 숫자를 누르면 업체·양 상세">톤 · 발주 줄: 지난 날 = 실제 낸 발주, 오늘부터 = 해야 할 발주(생산 계획 기준) · 입고 줄: 지난 날 = 실입고, 앞날 = 입고 예정 · <b style="color:var(--bad)">빨강</b> = 마감 지난 발주</div>`
       + `<div class="m4-sc"><table class="m4-cl v2-grid"><colgroup><col style="width:88px"><col style="width:56px">${ds.map(() => '<col>').join('')}<col style="width:66px"></colgroup>`
       + `<thead><tr><th>소재</th><th></th>${hd}<th>계</th></tr></thead><tbody>${b}</tbody></table></div>`;
