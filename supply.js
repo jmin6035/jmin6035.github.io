@@ -866,7 +866,7 @@
       }
       const p = kind === 'cur' && GR[g] && GR[g].ship ? GR[g].ship.month : mp(g, 'sales');
       if (kind === 'fut') return [0, p, p];
-      const a = shipA(g); return [a, kind === 'cur' ? Math.max(0, p - a) : 0, p];
+      const a = kind === 'cur' && GR[g] && GR[g].ship && GR[g].ship.actual != null ? GR[g].ship.actual : shipA(g); return [a, kind === 'cur' ? Math.max(0, p - a) : 0, p];   // 11/17: 이달 출하 = 판생속보 누계(모든 화면 같은 값)
     };
     const groups = ['G수출', 'G국내', 'G자동차', 'G자가재', 'C수출', 'C건재', 'C수요'].filter((g) => UI.inScope(g[0]));
     const keys = (pl, k) => groups.filter((g) => g[0] === pl && (k === 'prod' || !['G자가재', 'C수요'].includes(g)));
