@@ -35,9 +35,16 @@
         : c1('integrated.html', stock.tone, `${n0(stock.end)}<small>t</small>`, `목표 ${n0(sT)}t`, `월말 예상 ${n0(stock.end)}t · 목표 ${n0(sT)}t · 오늘 ${stock.now != null ? n0(stock.now) : '–'}t`);
       return `<tr class="${r.w4}"><th scope="row" class="bg" title="${esc(SLB[r.w4])}"><span class="cdot ${r.w4}"></span><b>${esc(r.name)}</b></th>${cDue}${cWhy}${cProd}${cShip}${cStock}</tr>`;
     };
-    const sec = (pl, nm) => { const rs = R.filter((r) => r.pl === pl); return rs.length ? `<tr class="bsec"><td colspan="6">${nm}</td></tr>${rs.map(row).join('')}` : ''; };
+    // 11/17 검토: 판매그룹에 안 묶이는 납기 위험 그룹(그룹 미상 등)도 줄로 보여 합계를 통합 관제·납기 위험 화면과 맞춤
+    const RKN = UI.ctlRiskGroups || {}, mapped = (x) => Object.entries(RKN).some(([k, v]) => k[0] === x.pl && v.includes(x.g));
+    const EX = ((RK && RK.groups) || []).filter((x) => UI.inScope(x.pl) && !mapped(x) && (x.t || 0) >= 0.5);
+    const exRow = (x) => { const tn = UI.riskTone(x.risk, x.t); return `<tr class="na"><th scope="row" class="bg"><span class="cdot na"></span><b>${esc(x.g)}</b></th>`
+      + `<td class="bc"><a href="risk.html"><span class="bv ${tn}">${n0(x.risk >= 0.5 ? x.risk : 0)}<small>t</small></span><span class="bs">미결 ${n0(x.t)}t의 ${PCT(x.risk, x.t) || 0}%</span></a></td>`
+      + `<td class="bw">${x.risk >= 0.5 ? `<a href="risk.html">${UI.causeHtml(RK, x.cz, 2, 0)}</a>` : '<span class="ok-t">위험 없음</span>'}</td>`
+      + `<td class="bc" colspan="3"><span class="bs">판매그룹을 정하지 못한 주문 — 생산·출하·재고는 그룹별로 나누지 않음</span></td></tr>`; };
+    const sec = (pl, nm) => { const rs = R.filter((r) => r.pl === pl), ex = EX.filter((x) => x.pl === pl); return rs.length || ex.length ? `<tr class="bsec"><td colspan="6">${nm}</td></tr>${rs.map(row).join('')}${ex.map(exRow).join('')}` : ''; };
     const cnt = (t) => R.filter((r) => r.w4 === t).length;
-    const rk = R.filter((r) => r.d.due), rT = rk.reduce((a, r) => a + r.d.due.risk, 0), oT = rk.reduce((a, r) => a + r.d.due.t, 0);
+    const rk = R.filter((r) => r.d.due), rT = rk.reduce((a, r) => a + r.d.due.risk, 0) + EX.reduce((a, x) => a + (x.risk || 0), 0), oT = rk.reduce((a, r) => a + r.d.due.t, 0) + EX.reduce((a, x) => a + (x.t || 0), 0);
     const sh = R.filter((r) => r.d.ship), sa = sh.reduce((a, r) => a + r.d.ship.actual, 0), sb = sh.reduce((a, r) => a + r.d.ship.base, 0);
     const matLate = R.filter((r) => r.cells[3] === 'bad').length;
     const head = `<div class="bsum"><span class="bn bad"><i class="cdot bad"></i>조치 <b>${cnt('bad')}</b></span><span class="bn warn"><i class="cdot warn"></i>주의 <b>${cnt('warn')}</b></span><span class="bn ok"><i class="cdot ok"></i>정상 <b>${cnt('ok')}</b></span>`

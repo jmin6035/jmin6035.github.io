@@ -644,7 +644,7 @@
       const why = {};
       R.forEach((r) => { why[r.why] = (why[r.why] || 0) + r.t; });
       return `<div class="rg"><h3>${esc(g)} <span>${R.length}건 · ${n0(R.reduce((s, r) => s + r.t, 0))}t</span>${Object.entries(why).map(([w, t]) => `<span>${esc(w)} ${n0(t)}t</span>`).join('')}</h3>`
-        + `<div style="overflow-x:auto"><table class="it" style="min-width:860px;table-layout:fixed"><colgroup><col style="width:28%"><col style="width:9%"><col style="width:12%"><col style="width:8%"><col style="width:9%"><col style="width:27%"><col style="width:7%"></colgroup><thead><tr><th>계약번호 · 고객사 → 목적지</th><th>라인 · 강종</th><th>상태</th><th class="num">미편성 톤</th><th>필요 생산일</th><th>이유</th><th></th></tr></thead><tbody>`
+        + `<div style="overflow-x:auto"><table class="it" style="min-width:860px;table-layout:fixed"><colgroup><col style="width:28%"><col style="width:116px"><col style="width:11%"><col style="width:8%"><col style="width:9%"><col><col style="width:84px"></colgroup><thead><tr><th>계약번호 · 고객사 → 목적지</th><th>라인 · 강종</th><th>상태</th><th class="num">미편성 톤</th><th>필요 생산일</th><th>이유</th><th></th></tr></thead><tbody>`
         + byOrder(R).map((o) => {
           const id = 'ra-' + (oi++);
           const pieces = o.rows.flatMap((r) => (r.items || []).map((it) => Object.assign({}, it, { _line: r.line })));
@@ -655,9 +655,9 @@
               + `<input type="number" class="mvt" value="${+(+it.t).toFixed(1)}" min="0.1" max="${it.t}" step="0.1" aria-label="넣을 톤">t 를<select class="ad" aria-label="넣을 날짜"><option value="">날짜 고르기…</option>${opts}</select>에 <button type="button" class="go2 adg" disabled>넣기</button></div><div class="pv"></div>`;
           }).join('');
           RA[id] = pieces;
-          return `<tr${o.rows[0].rm ? ' class="rmrow"' : ''}><td><div class="con">${esc(o.no)}${o.rows.length > 6 ? ` <span class="sub">행 ${o.rows.length}개</span>` : o.rows.length > 1 ? ` <span class="sub">행 ${o.rows.map((r) => esc(r.con.split('-').pop())).join('·')}</span>` : `-${esc(o.rows[0].con.split('-').pop())}`}</div><div class="sub one" title="${esc([o.rows[0].cus, o.rows[0].dst, o.rows[0].man].filter(Boolean).join(' · '))}">${who(o.rows[0])}</div></td>`
+          return `<tr${o.rows[0].rm ? ' class="rmrow"' : ''}><td><div class="con">${esc(o.no)}${o.rows.length > 6 ? ` <span class="sub">행 ${o.rows.length}개</span>` : o.rows.length > 1 ? ` <span class="sub">행 ${o.rows.map((r) => esc(r.con.split('-').pop())).join('·')}</span>` : `-${esc(o.rows[0].con.split('-').pop())}`}</div><div class="sub wrp">${who(o.rows[0])}</div></td>`
             + `<td class="nw">${esc(o.rows[0].line)} ${famCh(o.rows[0].fam)}</td><td>${[...new Set(o.rows.map((r) => r.st || ''))].map(esc).join(' · ')}</td>`
-            + `<td class="num"><b>${n0(o.t)}</b></td><td class="nw">${md(o.need)}${o.rows[0].due ? `<div class="sub">납기 ${md(o.rows[0].due)}</div>` : ''}</td><td>${[...new Set(o.rows.map((r) => String(r.why || '').replace(/\bNone\b/g, '강종 미확인')))].map(esc).join('<br>')}</td>`
+            + `<td class="num"><b>${n0(o.t)}</b></td><td class="nw">${md(o.need)}${o.rows[0].due ? `<div class="sub">납기 ${md(o.rows[0].due)}</div>` : ''}</td><td class="why">${[...new Set(o.rows.map((r) => String(r.why || '').replace(/\bNone\b/g, '강종 미확인')))].map(esc).join('<br>')}</td>`
             + `<td class="nw">${pieces.length ? `<button type="button" class="lnk rab" data-id="${id}">${o.rows[0].rm ? '다시 넣기' : '넣기'}</button>` : ''}</td></tr>`
             + (pieces.length ? `<tr class="mvr${o.rows[0].rm ? ' rmrow' : ''}" id="${id}" hidden><td colspan="7">${edit}</td></tr>` : '');
         }).join('')

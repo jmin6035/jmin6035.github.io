@@ -33,7 +33,7 @@
     const done = M.G.filter((o) => CT.inScope('G') && o.src.prodLast && o.prodT > 0.5 && o.ful !== '생산 전' && o.ful !== '생산 중' && o.needProd);
     if (done.length) {
       const sumB = (L) => L.reduce((a, o) => [a[0] + o.prodT, a[1] + (o.src.prodLast <= o.needProd ? o.prodT : 0)], [0, 0]);
-      const rowsB = [], gAll = {};
+      const rowsB = [], gAll = {}, aD = String(P.asOf || M.asOf || '').slice(0, 10);
       for (const m of months) {
         const Lm = done.filter((o) => String(o.src.prodLast).slice(0, 7) === m);
         if (!Lm.length) continue;
@@ -43,7 +43,8 @@
           const Lb = Lm.filter((o) => o.src.prodLast >= a && o.src.prodLast <= z);
           if (!Lb.length) continue;
           const [tb, ob] = sumB(Lb), qb = pc(ob, tb);
-          rowsB.push(`<tr><td class="id pf-sub">${md(a)}~${md(z)}</td><td class="r">${n0(tb)}</td><td class="r">${n0(ob)}</td><td class="r"><b class="${tone(qb)}">${qb}%</b></td></tr>`);
+          const zz = aD && z > aD ? aD : z;   // 11/17 검토: 기간 끝 = 마지막 실적일(앞날은 아직 생산 완료가 없음)
+          rowsB.push(`<tr><td class="id pf-sub">${md(a)}~${md(zz)}${zz < z ? ' <span class="muted">· 진행 중</span>' : ''}</td><td class="r">${n0(tb)}</td><td class="r">${n0(ob)}</td><td class="r"><b class="${tone(qb)}">${qb}%</b></td></tr>`);
         }
         Lm.forEach((o) => { const g = gAll[`${m}|${o.grp}`] = gAll[`${m}|${o.grp}`] || [0, 0]; g[0] += o.prodT; if (o.src.prodLast <= o.needProd) g[1] += o.prodT; });
       }

@@ -102,7 +102,7 @@
       { label: '조치일 지남', v: n0(cnt.over), unit: '건', tone: cnt.over ? 'bad' : 'ok', sub: `기한 ${md(asOf)} 전 · 종결 제외` }, { label: '종결', v: n0(cnt.done), unit: '건', tone: 'ok', sub: '조치 완료' }];
     const L = list.filter((x) => (fil === 'auto' ? x.st === '신규' : fil === 'open' ? isOpen(x) : fil === 'done' ? x.st === '완료' : true));
     const chips = `<div class="seg ct-seg" id="is-fil">${FIL.map(([k_, n]) => `<button type="button" data-k="${k_}" aria-pressed="${k_ === fil}">${n} <b>${n0(list.filter((x) => (k_ === 'auto' ? x.st === '신규' : k_ === 'open' ? isOpen(x) : k_ === 'done' ? x.st === '완료' : true)).length)}</b></button>`).join('')}</div>`;
-    const row = (x) => `<tr class="ck" data-i="${x.id}"><td class="id">${esc(x.no)}</td><td class="w"><b>${esc(x.title)}</b><small>${esc(x.text)}</small></td><td class="w"><b>${esc(x.act)}</b><small>${esc(x.owner || x.dept)}</small></td>`
+    const row = (x) => `<tr class="ck" data-i="${x.id}"><td class="id">${esc(x.no)}</td><td class="w"><b>${esc(x.title)}</b>${x.text && x.text !== x.act ? `<small>${esc(x.text)}</small>` : ''}</td><td class="w"><b>${esc(x.act)}</b><small>${esc(x.owner || x.dept)}</small></td>`
       + `<td class="r">${x.n ? `${n0(x.n)}건${x.nOrdEst ? '<small>후보</small>' : ''}` : '-'}</td><td class="r">${x.t != null ? `<b>${n0(x.t)}</b>` : '-'}</td><td>${dueTd(x, asOf)}</td><td>${stCell(x)}</td></tr>`;
     const deps = [...new Set(L.map((x) => x.dept))];
     const sec = (dp) => { const R = L.filter((x) => x.dept === dp).sort((a, b) => ST.indexOf(a.st) - ST.indexOf(b.st) || String(a.dueEff || '0').localeCompare(String(b.dueEff || '0')) || (b.t || 0) - (a.t || 0));
@@ -113,11 +113,12 @@
       + (deps.length ? deps.map(sec).join('') : '<p class="ct-note">해당 이슈 없음</p>') + '</section>';
   }
 
+  // 11/17 검토: 현장 예외는 '문제 — 조치' 한 줄이라 문제 칸 작은 글씨·원인이 조치와 같은 글 → 조치와 다를 때만 보임
   /* #req 조정 요청: 접수·조치 중·보류 */
   function req(B) {
     const { asOf, list } = B, R = list.filter((x) => ['접수', '조치 중', '보류'].includes(x.st)).sort((a, b) => ST.indexOf(a.st) - ST.indexOf(b.st) || String(a.dueEff || '9').localeCompare(String(b.dueEff || '9')));
     const one = (x) => `<article class="rq ck" data-i="${x.id}"><div class="rq-l"><div class="rq-h"><span class="id">${esc(x.no)}</span>${stB(x.st)}<span class="is-t">${esc(x.type)}</span></div><b class="rq-t">${esc(x.title)}</b>`
-      + `<div class="ct-kv"><span>해당 주문</span><b>${x.n ? n0(x.n) + '건' : '-'}</b></div><div class="ct-kv"><span>해당 물량</span><b>${x.t != null ? n0(x.t) + 't' : '-'}</b></div><div class="ct-kv"><span>원인</span><b>${esc(x.why || x.text || '-')}</b></div><div class="ct-kv"><span>해야 할 조치</span><b>${esc(x.act || '-')}</b></div>`
+      + `<div class="ct-kv"><span>해당 주문</span><b>${x.n ? n0(x.n) + '건' : '-'}</b></div><div class="ct-kv"><span>해당 물량</span><b>${x.t != null ? n0(x.t) + 't' : '-'}</b></div>${(x.why || x.text) && (x.why || x.text) !== x.act ? `<div class="ct-kv"><span>원인</span><b>${esc(x.why || x.text)}</b></div>` : ''}<div class="ct-kv"><span>해야 할 조치</span><b>${esc(x.act || '-')}</b></div>`
       + `${x.orders.length ? `<div class="rq-o">${x.orders.slice(0, 4).map((o) => `<span>${esc(o.id)} <b>${n1(o.remT)}t</b> ${md(o.due)}</span>`).join('')}${x.orders.length > 4 ? `<span class="sub">외 ${x.orders.length - 4}건</span>` : ''}</div>` : ''}</div>`
       + `<div class="rq-r"><div class="ct-kv"><span>요청사항</span><b>${esc(x.note || '-')}</b></div><div class="ct-kv"><span>담당</span><b>${esc(x.owner || x.dept)}</b></div><div class="ct-kv"><span>요청일</span><b>${md(x.at0)}</b></div><div class="ct-kv"><span>기한</span><b>${dueTd(x, asOf)}</b></div>`
       + `<div class="ct-kv"><span>결과</span><b>${esc(STN[x.st] || x.st)}</b></div><ol class="rq-h2">${x.hist.slice(-3).reverse().map((e) => `<li>${md(String(e.at).slice(0, 10))} ${esc(e.by || '')} · ${esc(STN[e.st] || e.st || '')}${e.note ? ` — ${esc(e.note)}` : ''}</li>`).join('')}</ol></div></article>`;
@@ -132,7 +133,7 @@
     const form = `<form class="is-f" id="is-f"><label>진행상태<select name="st"${dis}>${ST.map((s) => `<option value="${s}"${s === x.st ? ' selected' : ''}>${esc(STN[s])}</option>`).join('')}</select></label>`
       + `<label>담당<input name="owner" value="${esc(x.owner || '')}" placeholder="${esc(x.dept)}"${dis}></label><label>조치 기한<input type="date" name="due" value="${esc(x.dueSet || x.due || '')}"${dis}></label>`
       + `<label class="w">메모<textarea name="note" rows="2" placeholder="요청사항·조치 내용"${dis}></textarea></label><button type="submit"${dis}>저장</button><p class="is-msg" id="is-msg">${evErr ? '조치 상태 미확인으로 저장할 수 없습니다' : ''}</p></form>`;
-    CT.panel(`<div class="ct-pd-h">${stB(x.st)} <span class="is-t">${esc(x.type)}</span></div>` + kv('이슈번호', esc(x.no)) + kv('내용', esc(x.title)) + (x.text ? kv('', esc(x.text)) : '') + kv('해야 할 조치', `<b>${esc(x.act || '-')}</b>`) + kv('출처', esc(x.src)) + kv('담당 부서', esc(x.dept)) + kv('조치 기한', x.dueEff ? `${md(x.dueEff)}${x.over ? ' (지남)' : ''}` : '즉시 확인')
+    CT.panel(`<div class="ct-pd-h">${stB(x.st)} <span class="is-t">${esc(x.type)}</span></div>` + kv('이슈번호', esc(x.no)) + kv('내용', esc(x.title)) + (x.text && x.text !== x.act ? kv('', esc(x.text)) : '') + kv('해야 할 조치', `<b>${esc(x.act || '-')}</b>`) + kv('출처', esc(x.src)) + kv('담당 부서', esc(x.dept)) + kv('조치 기한', x.dueEff ? `${md(x.dueEff)}${x.over ? ' (지남)' : ''}` : '즉시 확인')
       + (x.t != null ? kv('해당 물량', n0(x.t) + 't') : '') + (x.grps ? kv('쓰는 판매그룹', esc(x.grps.map(CT.grpName).join('·'))) : '') + (x.link ? kv('관련 화면', `<a href="${esc(x.link)}">열기 →</a>`) : '')
       + `<h4>상태 변경</h4>${form}<h4>조치 이력</h4>${hist}`
       + (ord ? `<h4>해당 주문 ${x.orders.length}건${x.nOrdEst ? ' <small>(판매그룹·부족 시작일 기준 후보)</small>' : ''}</h4><table class="ct-t"><tbody>${ord}</tbody></table>` : ''), `${x.no} · ${x.type}`, (p) => {

@@ -140,7 +140,19 @@
     return card('ca-mon', '월별 생산', `라인별 · 부서별 · 월 단위 (${+O.asOf.slice(5, 7)}월은 ${md(O.asOf)}까지 누계)`, '단위: 톤', `<div class="grid2" style="grid-template-columns:${PLANT === 'G' ? 'auto minmax(0,1fr)' : ''}"><div class="scroll"><table class="t big"><thead><tr><th class="l">월</th>${L.map((l) => `<th>${l}</th>`).join('')}<th>합계</th></tr></thead><tbody>${O.monthly.map((m) => `<tr><td class="l">${monLabel(m.m)}</td>${L.map((l) => `<td>${n0(m[l])}</td>`).join('')}<td><b>${n0(L.reduce((a, l) => a + m[l], 0))}</b></td></tr>`).join('')}</tbody></table></div>
       <div class="scroll"><table class="t big"><thead><tr><th class="l">월</th>${D.names.map((k) => `<th>${esc(nm(k))}</th>`).join('')}</tr></thead><tbody>${D.rows.map((m) => `<tr><td class="l">${monLabel(m.m)}</td>${D.names.map((k) => `<td>${n0(m[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`);
   }
+  // 11/17 검토: 이달 라인 실적 = 02 현황·통합 관제와 같은 값(suju daily 실적 = 01 일별 가동계획 칸 정수의 합, 11/13 사용자 규칙).
+  //   MES 코일 원값 합(예 10,634.8)과 일별 정수 합(10,637)이 2t 어긋나 화면마다 다르게 보이던 것 → 같은 날짜까지일 때만 맞춤(원값은 mesActual 로 남김)
+  function syncSJ() {
+    const S = SJ(); if (!S || !O.month || !O.month.rows) return;
+    const last = (O.daily || []).reduce((a, d) => (d.d > a ? d.d : a), '');
+    if (!last || S.asOf !== last) return;
+    const A = {}; for (const l of L) { const r = (S.daily[l] || []).filter((x) => x[0] <= S.asOf && x[3] != null); if (r.length) A[l] = r.reduce((a, x) => a + (+x[3] || 0), 0); }
+    if (!Object.keys(A).length) return;
+    for (const m of O.month.rows) if (A[m.line] != null) { if (m.mesActual == null) m.mesActual = m.actual; m.actual = A[m.line]; }
+    const mo = (O.monthly || []).find((m) => m.m === S.month); if (mo) for (const l of L) if (A[l] != null) mo[l] = A[l];
+  }
   function render() {
+    syncSJ();
     $('ca-main').innerHTML = lineTable() + daily() + weekly() + `<div class="grid2 rowc">${products()}${stops()}</div>` + (PLANT === 'G' ? mcCard() : '') + monthly();
     $('ca-meta').innerHTML = `<span><b>실적</b>~${UI.fmtDate(O.asOf)}</span><span><b>지난주</b>${md(O.w1)}~</span><span><b>비교</b>${md(O.w0[0])}~${md(O.w0[1])} 주 (${NW()}주)</span><span><b>계산</b>${UI.fmtDateTime(O.built)}</span>`;
     UI.reveal($('ca-main')); UI.count($('ca-main')); bindTip($('ca-main'));

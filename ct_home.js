@@ -417,7 +417,7 @@
         [K[3], [[`그룹별 미달 합${shDue ? ` ~${md(shDue)}` : ''}`, K[3]]], `미달 그룹만 더함 · 초과 ${n0(Math.max(0, shA - shP + shipGap))}t 별도`],   // 11/13 검토: 두 숫자 차(5,083)와 카드(6,109)가 다른 이유 = 그룹별 미달만 더함
         [K[4], [['판정 불가 주문', K[4]]], `출하 실적 없음 ${noShip.length}건 별도`],
       ];
-      return `<div class="ct-kpis k2-kp">${C.filter(([k, cs]) => k && cs.every(([, x]) => x)).map(([k, cs, s]) => `<a href="${k.href}" class="ct-kpi k2-k" title="${esc(strip(k.sub))}"><div class="l">${esc(k.label === '생산 진도율' ? '생산 진도' : k.label)}</div><div class="k2-n">${cs.map(([l, x]) => cell(l, x)).join('')}</div><div class="s">${esc(s)}</div></a>`).join('')}</div>`;
+      return `<div class="ct-kpis k2-kp">${C.filter(([k, cs]) => k && cs.every(([, x]) => x)).map(([k, cs, s]) => `<a href="${k.href}" class="ct-kpi k2-k" title="${esc(strip(k.sub))}"><div class="l">${esc(k.label === '생산 진도율' ? '생산 진도' : k.label)}</div><div class="k2-n${cs.length > 1 ? ' m3' : ''}">${cs.map(([l, x]) => cell(l, x)).join('')}</div><div class="s">${esc(s)}</div></a>`).join('')}</div>`;
     };
     const kHtml = V2 ? kpiV2() : null;
     [2].forEach((i) => {   // 납기 위험·소재 부족·출하·자료 확인은 기간과 무관(같은 값) → 한 값만
