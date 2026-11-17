@@ -100,6 +100,13 @@ table.k-d .sep { border-left: 1px solid var(--k-line); }
 .k-con .r span:nth-child(3) { padding-left: 10px; } .k-con.ne .r { grid-template-columns: minmax(150px, 2.6fr) 0.6fr 0.8fr 0.6fr; } .k-ask + .k-ask { margin-top: 14px; }
 @media (max-width: 700px) { .k-con.ne .r { grid-template-columns: minmax(124px, 1fr) 34px 52px 40px; } .k-wk { flex-wrap: nowrap; } }
 table.k-d td.pp { font-size: 17px; font-weight: 800; } table.k-d td.ln { text-align: left !important; white-space: nowrap; line-height: 1.45; } table.k-d td.ln span { display: block; color: var(--k-sub); font-size: 14px; } table.k-d td.ln b { color: var(--k-ink); font-weight: 700; } table.k-d th.lh { text-align: left; }
+html body main table.k-dl.k-d tbody tr.lnh > :is(td, th), html.v2 body main table.k-dl.k-d tbody tr.lnh > :is(td, th) { background: var(--k-soft) !important; }
+table.k-dl tr.lnh th, table.k-dl tr.lnh td { background: var(--k-soft) !important; border-top: 2px solid var(--k-sub) !important; font-weight: 800; }
+table.k-dl tbody th { text-align: left !important; }
+table.k-dl tr.lnh th { padding-left: 14px; } table.k-dl tr.lnh th b { font-size: 16px; } table.k-dl tr.lnh th small { display: block; font-size: 12.5px; font-weight: 500; color: var(--k-mute); }
+table.k-dl tr.lnh.G th::before { background: var(--k-g); top: 8px; bottom: 8px; width: 4px; } table.k-dl tr.lnh.C th::before { background: var(--k-c); top: 8px; bottom: 8px; width: 4px; }
+table.k-dl tr.gr th { font-weight: 600; color: var(--k-sub); padding-left: 30px; font-size: 14.5px; } table.k-dl tr.gr th::before { display: none; } table.k-dl tr.gr td { font-size: 14.5px; } table.k-dl tr.gr td.pp { font-size: 15px; font-weight: 700; }
+table.k-dl tr.lnh + tr.gr th, table.k-dl tr.lnh + tr.gr td { border-top: 0; }
 </style>
 </head>
 <body>
