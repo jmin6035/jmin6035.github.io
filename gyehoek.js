@@ -241,7 +241,7 @@
     }
     el.innerHTML = `<h2 class="m4-h">${+mon.slice(5)}월 그룹별 소재 확보</h2><div class="m4-q">톤 · ${cv ? `${md(cv[0])}~${md(cv[1])} 생산 계획에 들어간 판매 주문` : ''}(자가재 생산·재고 보충 제외 — 아래 '소재 현황'의 소재 전체 필요와 범위가 다름) · 확보율 = (입고 완료 + 제때 입고 예정) ÷ 필요 · 구매 발주일 = 생산일 − 리드타임</div>
 <div class="m4-sc"><table class="m4-gd"><colgroup><col style="width:120px"><col><col><col><col><col><col style="width:70px"><col style="width:16%"><col style="width:150px"><col><col></colgroup>
-<thead><tr><th>그룹</th><th>필요<small>${cv && cv[0].slice(8) !== '01' ? '남은 기간' : '그 달'}</small></th><th>입고 완료</th><th>입고 예정<small>발주 완료</small></th><th>자가재 대기<small>도금 생산 필요</small></th><th>구매 미발주</th><th>확보율</th><th></th><th>구매 발주일</th><th>늦게 입고<small>입고 예정 중</small></th><th>주문 없음<small>계획만</small></th></tr></thead><tbody>${body}</tbody></table></div>
+<thead><tr><th>그룹</th><th>필요<small>${cv && cv[0].slice(8) !== '01' ? '남은 기간' : '그 달'}</small></th><th>입고 완료</th><th>입고 예정<small>발주 완료</small></th><th>자가재 대기<small>도금 생산 필요</small></th><th>구매 미발주</th><th>확보율</th><th></th><th>구매 발주일</th><th>입고 지연<small>입고 예정 중</small></th><th>주문 미달<small>계획만</small></th></tr></thead><tbody>${body}</tbody></table></div>
 <div class="m4-lg"><span><i class="in"></i>입고 완료</span><span><i class="po"></i>입고 예정(발주 완료)</span><span><i style="background:#b9a7d9"></i>자가재 대기(도금 생산)</span><span><i class="no"></i>구매 미발주</span></div>`;
   }
   function matSync() {
@@ -260,7 +260,7 @@
   function setTab(t) {
     tab = t;
     $('gk-tab').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.t === t)));
-    $('gk-plan').hidden = t !== 'plan'; $('gk-mat').hidden = t !== 'mat';
+    $('gk-plan').hidden = t !== 'plan'; $('gk-mat').hidden = t !== 'mat'; if ($('gk-rl')) $('gk-rl').hidden = t !== 'plan';
     $('gk-print').hidden = t !== 'plan';
     if (t === 'mat') matSync(); else if (D) render();
   }
