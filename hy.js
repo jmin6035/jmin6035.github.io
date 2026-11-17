@@ -29,7 +29,7 @@
     const sb = sub(p, opt.grp, td);
     return `<div class="hy-row${sb ? ' hs' : ''}"><div class="hy-num"><b>${n0(a)}</b><small>톤</small><b class="pc">${pct(a, pl) ?? '–'}<small>%</small></b>${d1(v)}</div>
 <div class="hy-trk ${p}">${opt.rem ? `<i class="rm" style="width:${W((a + opt.rem) / mx * 100)}"></i>` : ''}<i class="fl" style="width:${W(a / mx * 100)}"></i>
-${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100)}"></i>` : ''}${opt.tgt ? `<i class="tg" style="left:${W(pl / mx * 100)}"></i>` : ''}</div>
+${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100)}"></i>` : ''}${opt.tgt ? `<i class="tg" style="left:${W(pl / mx * 100)}"></i>` : ''}</div>${opt.tgt ? `<div class="hy-tgl"><span class="t1" style="left:${W((opt.tdBase || pl) / mx * (td || 0) * 100)}">오늘까지 목표</span><span class="t2" style="left:${W(pl / mx * 100)}">${esc(cap)}</span></div>` : ''}
 <div class="hy-cap">${opt.est ? `<span>이달 예상 <b>${opt.est}</b></span>` : '<span></span>'}<span>${esc(cap)} ${n0(pl)}톤</span></div>${sb}</div>`;
   }
   function prod(p, v, td) {
@@ -76,22 +76,21 @@ ${v.stale > 0.5 ? `<div class="hy-mn"${sl.length ? ` title="${sl.map((z) => `${e
 <div class="hy-trk ${p}"><i class="fl" style="width:${W(cb / (v.use || 1) * 100)}"></i><i class="po" style="left:${W(cb / (v.use || 1) * 100)};width:${W(ca / (v.use || 1) * 100)}"></i></div>
 ${lines.filter(Boolean).map((l) => `<div class="hy-ms">${l}</div>`).join('')}${st ? `<div class="hy-mn">${st}</div>` : ''}</div>`;
   }
-  // 다음 달: 월말 예상(○)만
+  // 11/18 사용자 '더 직관적으로': 재고 = '현재'·'월말' 막대 두 줄 + 상한 세로선(이름 붙임). 상한 안 = 회색, 넘는 몫 = 빨강, 막대 끝에 톤·상한 대비 %
+  function skRows(v, rows) {
+    const { cap } = v; if (!cap) return '<div class="hy-na">자료 없음</div>';
+    const mx = Math.max(cap, ...rows.map((r) => r[1] || 0)) * 1.08, xc = cap / mx * 100;
+    const one = ([lb, x, extra]) => { const y = x || 0, w = Math.min(y, cap) / mx * 100, o = Math.max(0, y - cap) / mx * 100, over = y > cap;
+      return `<div class="sk-r"><span class="sk-l">${lb}</span><div class="sk-b"><i class="in" style="width:${W(w)}"></i>${o > 0 ? `<i class="ov" style="left:${W(xc)};width:${W(o)}"></i>` : ''}</div><span class="sk-v"><b class="${over ? 'bad' : ''}">${n0(y)}</b><small>톤</small> <em class="${over ? 'bad' : ''}">${pct(y, cap)}%</em>${extra || ''}</span></div>`; };
+    return `<div class="hy-row sk2"><div class="sk-cap" style="--xc:${xc}%"><span>상한 ${n0(cap)}톤</span></div><div class="sk-w" style="--xc:${xc}%">${rows.map(one).join('')}</div>${v.lab ? `<div class="hy-mn"${v.sr != null ? ` title="판생 재고 ${n0(v.sr)}톤"` : ''}>${esc(v.lab)}</div>` : ''}</div>`;
+  }
   function stockEnd(v) {
-    const { end: e, cap } = v || {}; if (e == null || !cap) return '<div class="hy-na">계획 기간 밖 · 자료 없음</div>';
-    const mx = Math.max(e, cap) * 1.1, xe = e / mx * 100, xc = cap / mx * 100;
-    return `<div class="hy-row"><div class="hy-num sk"><span class="hlb">월말</span><b class="${e > cap ? 'bad' : ''}">${n0(e)}<small>톤 · 상한의</small> ${pct(e, cap)}%</b></div>
-<div class="hy-zone"><i class="ok" style="width:${W(xc)}"></i><i class="ov" style="left:${W(xc)}"></i><i class="cp" style="left:${W(xc)}"></i><i class="de${e > cap ? ' bad' : ''}" style="left:${W(xe)}"></i></div>
-<div class="hy-cap"><span></span><span>상한 ${n0(cap)}톤</span></div></div>`;
+    if (!v || v.end == null || !v.cap) return '<div class="hy-na">계획 기간 밖 · 자료 없음</div>';
+    return skRows(v, [['월말', v.end]]);
   }
   function stock(v) {
-    const { now: a, end: e, cap } = v; if (a == null || !cap) return '<div class="hy-na">자료 없음</div>';
-    const mx = Math.max(a, e || 0, cap) * 1.1, xa = a / mx * 100, xe = (e || 0) / mx * 100, xc = cap / mx * 100, close = Math.abs(xa - xe) < 3;
-    const L = Math.min(xa, xe), R = Math.max(xa, xe);
-    return `<div class="hy-row"><div class="hy-num sk"><span class="kv"><span class="hlb">현재</span><b class="${a > cap ? 'bad' : ''}">${n0(a)}<small>톤 · 상한의</small> ${pct(a, cap)}%</b></span>${d1(v)}<span class="ar">→</span><span class="kv"><span class="hlb">월말</span><b class="${e > cap ? 'bad' : ''}">${n0(e)}<small>톤 · 상한의</small> ${pct(e, cap)}%</b></span></div>
-<div class="hy-zone"><i class="ok" style="width:${W(xc)}"></i><i class="ov" style="left:${W(xc)}"></i><i class="cp" style="left:${W(xc)}"></i>
-${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i class="de${e > cap ? ' bad' : ''}" style="left:${W(xe)}"></i><i class="dn${a > cap ? ' bad' : ''}" style="left:${W(xa)}"></i></div>
-<div class="hy-cap"><span${v.sr != null ? ` title="판생 재고 ${n0(v.sr)}톤"` : ''}>${v.lab ? esc(v.lab) : ''}</span><span>상한 ${n0(cap)}톤</span></div></div>`;
+    if (!v || v.now == null || !v.cap) return '<div class="hy-na">자료 없음</div>';
+    return skRows(v, [['현재', v.now, d1(v)], ['월말', v.end]]);
   }
   const cover = (L, noDays) => `<div class="hy-cv">${(L || []).map((x) => `<div class="c${x.days != null && x.days < 7 ? ' r' : ''}"><div class="n">${esc(x.line)}</div><div class="v">${n0(x.t)}<small>톤</small></div>${noDays ? '' : `<div class="d">${x.days != null ? x.days + '일치' : '–'}</div>`}</div>`).join('')}</div>`;
 
@@ -129,7 +128,7 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
 <div class="hy-tabs">${tabs.map((t, i) => `<button type="button" data-mi="${i}" class="${i === MI ? 'on' : ''}">${t}</button>`).join('')}</div></div>
 <div class="hy-g${PS.length < 2 ? ' one' : ''}"><div></div>${PS.map((p) => `<div class="hd ${p === 'G' ? 'g' : 'c'}">${p === 'G' ? '도금' : '컬러'}</div>`).join('')}
 ${R.map(([a, b, u, f]) => `${sec(a, b, u)}${PS.map((p) => cell(p, a, f(p))).join('')}`).join('')}</div>
-<div class="hy-lg">${M ? `${UI.inScope('G') ? '<span><i class="k-g"></i>도금 주문·소재 확보</span>' : ''}${UI.inScope('C') ? '<span><i class="k-c"></i>컬러 주문·소재 확보</span>' : ''}` : '<span><i class="k-g"></i>도금 실적</span><span><i class="k-c"></i>컬러 실적</span>'}${M ? '' : '<span><i class="k-rm"></i>남은 계획</span><span><i class="k-tg"></i>판생 계획</span><span><i class="k-td"></i>오늘</span><span>● 현재 · ○ 월말</span>'}<span><i class="k-ov"></i>상한 초과</span>${M ? '<span>○ 월말</span>' : '<span class="bad">빨강 = 7일치 미만</span>'}</div>`;
+<div class="hy-lg">${M ? `${UI.inScope('G') ? '<span><i class="k-g"></i>도금 주문·소재 확보</span>' : ''}${UI.inScope('C') ? '<span><i class="k-c"></i>컬러 주문·소재 확보</span>' : ''}` : '<span><i class="k-g"></i>도금 실적</span><span><i class="k-c"></i>컬러 실적</span>'}${M ? '' : '<span><i class="k-rm"></i>남은 계획</span><span><i class="k-tg"></i>판생 계획</span><span><i class="k-td"></i>오늘까지 목표</span>'}<span><i class="k-ov2"></i>상한 넘는 재고</span>${M ? '<span>○ 월말</span>' : '<span class="bad">빨강 = 7일치 미만</span>'}</div>`;
     m.querySelectorAll('.hy-tabs button').forEach((b) => b.addEventListener('click', () => { MI = +b.dataset.mi; try { sessionStorage.setItem('hy-mi', MI); } catch (e) { /* 무시 */ } render(D); }));
   }
   let LD = null, SUB = false;
