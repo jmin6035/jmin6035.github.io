@@ -14,11 +14,11 @@
   const mmdd = (d) => `${d.slice(5, 7)}/${d.slice(8, 10)}`;
   const dnm = (d) => `${+d.slice(5, 7)}/${+d.slice(8, 10)}(${WD[new Date(d + 'T00:00:00Z').getUTCDay()]})`;
   const tm = (m) => { const s = C.iso(m); return `${mmdd(s)} ${s.slice(11, 16)}`; };
-  const hrs = (m) => (m >= 1440 ? `${Math.floor(m / 1440)}일${m % 1440 >= 1 ? ' ' + hrs(m % 1440) : ''}` : m >= 60 ? `${Math.floor(m / 60)}시간${Math.round(m % 60) ? ' ' + Math.round(m % 60) + '분' : ''}` : `${Math.round(m)}분`);
+  const hrs = (m0) => { const m = Math.round(m0); return m >= 1440 ? `${Math.floor(m / 1440)}일${m % 1440 ? ' ' + hrs(m % 1440) : ''}` : m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 ? ' ' + (m % 60) + '분' : ''}` : `${m}분`; };   // 분 먼저 반올림
   const addD = (d, k) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + k); return x.toISOString().slice(0, 10); };
   const wkOf = (d) => addD(d, -((new Date(d + 'T00:00:00Z').getUTCDay() + 4) % 7));   // 생산주 = 수 ~ 화(포털 '이번 주(수~화)'·확정 키와 같음)
   const TODAY = new Date(Date.now() + 2 * 3600e3).toISOString().slice(0, 10);          // MES 일자(07시 기준, KST)
-  const COLS = ['순번', '계약번호', '행번', '두께', '폭', '중량', '길이', '부서', '담당자', '목적지', 'Top Color', 'Back Color', 'L/S', 't/hr', '시작시간', '종료시간', '상태'];
+  const COLS = ['순번', '계약번호', '행번', '두께', '폭', '중량', '길이', '부서', '담당자', '목적지', 'Top Color', 'Back Color', '라인 속도(m/분)', 't/hr', '시작시간', '종료시간', '상태'];
 
   let PW = '', plant = /cc/.test(location.hash) ? 'cc' : 'cg', line = null, V = null;
   const OP = {};   // 공정별 주문진도 { con: row }
@@ -84,8 +84,8 @@
     // 표: 생산주(수~화) 구분줄 → 날짜 구분줄(요일·건수·톤) → 줄
     const rs = R[line], wk0 = wkOf(TODAY);
     const wkNm = (w) => (w === wk0 ? '이번 주' : w === addD(wk0, 7) ? '다음 주' : w === addD(wk0, -7) ? '지난 주' : '');
-    const CW0 = [52, 136, 58, 62, 68, 66, 72, 110, 80, 210, 104, 104, 58, 62, 100, 100, 96];
-    const HID = plant === 'cg' ? [10, 11] : [], vis = (a) => a.filter((_, i) => !HID.includes(i)), NC = 17 - HID.length;   // 11/17 검토: 도금은 색 칸 없음 → 숨김, 목적지 폭 고정
+    const CW0 = [52, 136, 58, 62, 68, 66, 72, 110, 80, 210, 104, 104, 58, 62, 112, 112, 96];
+    const HID = plant === 'cg' ? [10, 11, 12] : [], vis = (a) => a.filter((_, i) => !HID.includes(i)), NC = 17 - HID.length;   // 11/17 검토: 도금은 색 칸 없음 → 숨김, 목적지 폭 고정
     const CW = vis(CW0);
     let h = `<colgroup>${CW.map((w) => (w ? `<col style="width:${w}px">` : '<col>')).join('')}</colgroup><thead><tr>${vis(COLS).map((c) => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody>`, n = 0, cw = null, cd = null, z = 0;
     rs.forEach((r) => {

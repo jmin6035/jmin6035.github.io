@@ -74,7 +74,7 @@
         for (const [a, v] of Object.entries(x.alloy)) fa[FAM(a)] = (fa[FAM(a)] || 0) + v;
         const act = d <= t0, cp = (runs[l] || []).find((r) => r[0] <= d && d <= r[1]), why = [];
         if (!act) {
-          if (cp) why.push(`${l} ${cp[2]} 캠페인 ${UI.fmtDate(cp[0])}~${UI.fmtDate(cp[1])}`);
+          if (cp) why.push(`${l} ${cp[2]} 캠페인 ${md(cp[0])}~${md(cp[1])}`);
           const early = x.items.filter((it) => diff(it[6], d) > 14);
           if (early.length) why.push(`납기보다 15일 이상 앞선 생산 ${n0(early.reduce((a, it) => a + it[5], 0))}t`);
         }
@@ -127,7 +127,7 @@
     const keys = [...new Set(P.units.map((u) => `${u.plant}:${u.code}`))];
     for (const k of keys) {
       const [plant, code] = k.split(':');
-      if (plant === 'G' && code === 'N') continue;                     // 임가공(포스코 지급)
+      // 11/17 검토: 도금 SUS(N)도 구매 소재(P-FH(STS)·외부FH(STS)) — 재고·판정에 넣음(예전엔 임가공으로 보고 뺐음)
       const use = {}, arr = {};
       for (const u of P.units) if (`${u.plant}:${u.code}` === k) {   // 날짜별 소요(days) — 예전엔 주 합을 7일로 나눠 소진일이 소재 관제와 2~3일 달랐음
         if (u.days) { for (const [d, t] of Object.entries(u.days)) if (d >= t0) use[d] = (use[d] || 0) + t; } else for (let i = 0; i < 7; i++) { const d = add(u.wk, i); if (d >= t0) use[d] = (use[d] || 0) + u.t / 7; }
@@ -167,7 +167,8 @@
     const J = C.judge(), cls = {}, top = {}, T = {};
     for (const s_ of P.suppliers) { cls[`${s_.plant}:${s_.code}:${s_.sup}`] = s_.cls; const k = `${s_.plant}:${s_.code}`; if (!top[k] || (s_.share || 0) > (top[k].share || 0)) top[k] = s_; }
     const clsOf = (plant, code, sup) => ((P.supTypes || {})[sup] || {})[code] || cls[`${plant}:${code}:${sup}`] || (top[`${plant}:${code}`] || {}).cls || '기타(코드표에 없는 업체)';   // 제조사 코드(발주번호 앞 2자리) × 소재그룹 → 코드조회 소재제조업체의 소재유형
-    const get = (plant, c) => (T[c] = T[c] || { plant, ord: {}, inb: {}, use: {} });
+    const ALIAS = { 'P-전기강판': 'P-MAC' };   // 11/17 검토: 공급사 코드표의 P-전기강판(코드 W) = PosMAC3.0 — P-MAC 으로 묶음
+    const get = (plant, c) => { c = ALIAS[c] || c; return (T[c] = T[c] || { plant, ord: {}, inb: {}, use: {} }); };
     const push = (o, d, e) => (o[d] = o[d] || []).push(e);
     for (const j of J) {                                                 // 생산 투입 = 그 주 소요(첫 사용일~주말에 고르게) × 업체 배정 비중 → 유형별
       if (j.kind === 'pos') continue;
@@ -590,7 +591,7 @@
     const ords = Object.entries(byT).sort((x, y) => y[1].sh - x[1].sh).map(([c, t]) => `${esc(c)} ${md(add(need, -t.lt))}`).join(' · ') || '-';
     const j = MP && MP.J.find((x) => x.plant === 'G' && x.code === code && x.wk === mondayOf(d));
     const st = !j ? ['info', '-'] : j.short < 1 ? ['ok', '재고·발주 완료분로 충당'] : ['warn', `그 주 부족 ${n0(j.short)}t — 소재 발주에서 확인`];
-    const stc = !j || FHS.has(d) || j.short < 1 ? null : j.kind === 'nosup' ? ['F/H(그 주)', `${n0(j.short)}t 발주할 업체 없음`, null, 'late']: j.kind === 'adjust' || j.kind === 'check' ? ['F/H(그 주)', `${n0(j.short)}t 발주 마감 지남 — 생산 조정 대상(생산계획)`, null, 'late'] : ['F/H(그 주)', `${n0(j.short)}t 발주 필요${j.deadline === today ? ' — 오늘 마감' : ''}(소재)`, null, 'warn'];
+    const stc = !j || FHS.has(d) || j.short < 1 ? null : j.kind === 'nosup' ? [`${code === 'H' ? 'F/H(AL용)' : code === 'F' ? 'F/H(GI/GL용)' : 'F/H'} 그 주`, `${n0(j.short)}t 발주할 업체 없음`, null, 'late']: j.kind === 'adjust' || j.kind === 'check' ? [`${code === 'H' ? 'F/H(AL용)' : code === 'F' ? 'F/H(GI/GL용)' : 'F/H'} 그 주`, `${n0(j.short)}t 발주 마감 지남 — 생산 조정 대상(생산계획)`, null, 'late'] : [`${code === 'H' ? 'F/H(AL용)' : code === 'F' ? 'F/H(GI/GL용)' : 'F/H'} 그 주`, `${n0(j.short)}t 발주 필요${j.deadline === today ? ' — 오늘 마감' : ''}(소재)`, null, 'warn'];
     if (stc) FHS.add(d);   // 그 주 판정은 날짜 상세에서 한 번만   // 11/17 검토: 발주했는지·확보됐는지
     const dl = j && j.deadline;   // 발주 마감 = 엔진 주별 마감(캘린더·소재 관제와 같은 값)
     const ok_ = j && j.short < 1;   // 그 주 확보면 마감이 지났어도 경고 아님

@@ -22,7 +22,7 @@
   const iso = (m) => new Date(m * 6e4).toISOString().slice(0, 16).replace('T', ' ');
   const dayOf = (m) => iso(m - 420).slice(0, 10);                 // MES 하루 = 07시 ~ 다음날 07시
   const hhmm = (m) => iso(m).slice(11);
-  const hrs = (m) => (m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 >= 1 ? ' ' + Math.round(m % 60) + '분' : ''}` : `${Math.round(m)}분`);
+  const hrs = (m0) => { const m = Math.round(m0); return m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 ? ' ' + (m % 60) + '분' : ''}` : `${m}분`; };   // 11/17 검토: 분 먼저 반올림('49시간 60분' 방지)
   const LINES = { cg: ['1CGL', '2CGL'], cc: ['1CCL', '2CCL', '3CCL', '4CCL'] };
   const POOLNM = { pre: '기간 시작 전에 끝날 작업', over: '기간 내 시간 부족(순연)', later: '미편성 작업', out: '직접 제외 작업', new: '신규 작업' };
   // 11/15 사용자 'VA·CQ·CSP1-HG 전부 한글로' — MES 코드 마스터(ORD_COT_QTY_CLS·COT_AFT_TRE_CLS_CD·PRC_AFT_TRE_CLS_CD) 이름
@@ -254,8 +254,8 @@
       + `<td class="tm"><b>${hhmm(v.s)}</b>–${hhmm(v.e)}${dayOf(v.e) !== dayOf(v.s) ? '<div class="sub">끝 다음날</div>' : ''}</td>`
       + `<td class="c-con"><div class="cn">${esc(x.con || '계약 미연결')}</div><div class="cd">${tag}${due ? `<span class="${due < dayOf(v.e) ? 'cp bd' : 'cp'}" title="납기">납기 ${md(due)}</span>` : ''}</div><div class="sub">${sub}</div></td>`
       + `<td class="c-sp"><div class="sp">${chips(x)}</div></td>`
-      + (plant === 'cg' ? `<td class="nm"><b>${n1(x.t)}<small>t</small></b><div class="sub">${n0(v.rm)}분 · ${n1(x.tph)}t/h</div></td>`
-        : `<td class="nm" title="잔량 톤 · 시간 = 길이 ÷ L/S(26년 1월~ 실적) × 라인 보정"><b>${n1(x.t)}<small>t</small></b><div class="sub">${n0(v.rm)}분${x.ls && x.ls[l] && !x.dummy ? ` · L/S ${n0(x.ls[l])}` : ''}</div></td>`)
+      + (plant === 'cg' ? `<td class="nm"><b>${n1(x.t)}<small>t</small></b><div class="sub">${hrs(v.rm)} · ${n1(x.tph)}t/h</div></td>`
+        : `<td class="nm" title="잔량 톤 · 시간 = 길이 ÷ L/S(26년 1월~ 실적) × 라인 보정"><b>${n1(x.t)}<small>t</small></b><div class="sub">${hrs(v.rm)}${x.ls && x.ls[l] && !x.dummy ? ` · L/S ${n0(x.ls[l])}` : ''}</div></td>`)
 
       + `<td class="ac"><span class="acd"><button data-a="up" data-i="${v.i}" title="위로">↑</button><button data-a="dn" data-i="${v.i}" title="아래로">↓</button>`
       + `<select data-a="day" data-i="${v.i}" title="다른 날로"><option value="">날</option>${days.map((d) => `<option value="${d}">${dnm(d)}</option>`).join('')}</select>`
