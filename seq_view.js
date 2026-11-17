@@ -84,18 +84,20 @@
     // 표: 생산주(수~화) 구분줄 → 날짜 구분줄(요일·건수·톤) → 줄
     const rs = R[line], wk0 = wkOf(TODAY);
     const wkNm = (w) => (w === wk0 ? '이번 주' : w === addD(wk0, 7) ? '다음 주' : w === addD(wk0, -7) ? '지난 주' : '');
-    const CW = [52, 150, 58, 62, 68, 66, 72, 150, 80, 0, 104, 104, 58, 62, 128, 128, 96];
-    let h = `<colgroup>${CW.map((w) => (w ? `<col style="width:${w}px">` : '<col>')).join('')}</colgroup><thead><tr>${COLS.map((c) => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody>`, n = 0, cw = null, cd = null, z = 0;
+    const CW0 = [52, 136, 58, 62, 68, 66, 72, 110, 80, 210, 104, 104, 58, 62, 100, 100, 96];
+    const HID = plant === 'cg' ? [10, 11] : [], vis = (a) => a.filter((_, i) => !HID.includes(i)), NC = 17 - HID.length;   // 11/17 검토: 도금은 색 칸 없음 → 숨김, 목적지 폭 고정
+    const CW = vis(CW0);
+    let h = `<colgroup>${CW.map((w) => (w ? `<col style="width:${w}px">` : '<col>')).join('')}</colgroup><thead><tr>${vis(COLS).map((c) => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody>`, n = 0, cw = null, cd = null, z = 0;
     rs.forEach((r) => {
       const w = wkOf(r.d);
-      if (w !== cw) { cw = w; const [k, t] = sum(rs.filter((x) => wkOf(x.d) === w)); h += `<tr class="wh"><td colspan="17"><div class="stk">${wkNm(w)} ${mmdd(w).replace(/^0/, '')}~${mmdd(addD(w, 6)).replace(/^0/, '')}<span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
-      if (r.d !== cd) { cd = r.d; z = 0; const [k, t] = sum(rs.filter((x) => x.d === r.d)); const we = /[토일]/.test(dnm(r.d)); h += `<tr class="dh"><td colspan="17"><div class="stk"><b${we ? ' class="we"' : ''}>${dnm(r.d)}</b><span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
-      if (r.k === 's') { h += `<tr class="stp ${r.yel ? 'y' : 'n'}"><td colspan="14"><div class="stk">${esc(r.lab)}</div></td><td>${tm(r.s)}</td><td>${tm(r.e)}</td><td></td></tr>`; return; }
+      if (w !== cw) { cw = w; const [k, t] = sum(rs.filter((x) => wkOf(x.d) === w)); h += `<tr class="wh"><td colspan="${NC}"><div class="stk">${wkNm(w)} ${mmdd(w).replace(/^0/, '')}~${mmdd([addD(w, 6), rs[rs.length - 1].d].sort()[0]).replace(/^0/, '')}<span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
+      if (r.d !== cd) { cd = r.d; z = 0; const [k, t] = sum(rs.filter((x) => x.d === r.d)); const we = /[토일]/.test(dnm(r.d)); h += `<tr class="dh"><td colspan="${NC}"><div class="stk"><b${we ? ' class="we"' : ''}>${dnm(r.d)}</b><span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
+      if (r.k === 's') { h += `<tr class="stp ${r.yel ? 'y' : 'n'}"><td colspan="${NC - 3}"><div class="stk">${esc(r.lab)}</div></td><td>${tm(r.s)}</td><td>${tm(r.e)}</td><td></td></tr>`; return; }
       n++; z++;
-      const c = cellsOf(r, n);
+      const c0 = cellsOf(r, n), c = vis(c0);
       h += `<tr class="${r.k === 'd' ? 'dm' : 'j'}${z % 2 === 0 ? ' z' : ''}"${r.note ? ` title="${esc(r.note)}"` : ''}>${c.map((v, i) => `<td${i === 1 ? ' class="cn"' : i === 7 || i === 8 ? ' class="mn"' : i === 9 ? ` class="ds" title="${esc(v)}"` : ''}>${esc(v)}</td>`).join('')}<td>${r.k === 'd' || !r.stt ? '-' : `<span class="chip ${r.stt[0]}">${r.stt[1]}</span>`}</td></tr>`;
     });
-    if (!rs.length) h += `<tr><td colspan="17" class="sv-empty">${line} 기간 안 작업 없음${D.lines[line] && D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}</td></tr>`;
+    if (!rs.length) h += `<tr><td colspan="${NC}" class="sv-empty">${line} 기간 안 작업 없음${D.lines[line] && D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}</td></tr>`;
     $('sv-tbl').innerHTML = h + '</tbody>';
     find();
   }
