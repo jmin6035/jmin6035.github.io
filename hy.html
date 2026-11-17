@@ -21,7 +21,7 @@ main.wrap { max-width: none; }
 .hy-g .sec { background: var(--hy-sec); color: #fff; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 4px; }
 .hy-g .sec b { font-size: 18px; font-weight: 800; } .hy-g .sec small { font-size: 13.5px; color: #cbd5e1; margin-top: 2px; }
 .hy-g .cell { background: var(--surface); border: 1px solid var(--v2-line, var(--line)); border-radius: 10px; padding: 8px 18px; min-width: 0; display: flex; align-items: center; }
-.hy-row { width: 100%; }
+.hy-row { width: 100%; } .hy-row .hy-cv { margin-top: 6px; }
 .hy-num { display: flex; justify-content: center; align-items: baseline; gap: 4px; font-variant-numeric: tabular-nums; }
 .hy-num b { font-size: 24px; font-weight: 800; } .hy-num small { font-size: 15px; color: var(--ink-2); margin-left: 1px; } .hy-num .pc { margin-left: 16px; }
 .hy-num.sk { gap: 6px; flex-wrap: wrap; } .hy-num.sk b { font-size: 20px; } .hy-num .hlb { font-size: 15px; color: var(--ink-2); } .hy-num .ar { color: var(--ink-2); margin: 0 4px; }
@@ -49,8 +49,7 @@ main.wrap { max-width: none; }
 .hy-top .hy-tabs { margin-left: auto; display: flex; gap: 4px; } .hy-tabs button { font: inherit; font-size: 15px; font-weight: 700; padding: 4px 14px; border-radius: 8px; border: 1px solid var(--v2-line, var(--line)); background: var(--surface); color: var(--ink-2); cursor: pointer; } .hy-tabs button.on { background: var(--hy-sec); border-color: var(--hy-sec); color: #fff; }
 .hy-g a.sec { text-decoration: none; } .hy-g a.sec:hover { filter: brightness(1.25); }
 .hy-num .d1 { font-size: 14px; color: var(--ink-2); margin-left: 10px; font-weight: 600; }
-.hy-g .cell.dr { cursor: pointer; } .hy-g .cell.dr:hover { border-color: var(--ink-2); }
-.hy-sub { display: none; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--v2-line, var(--line)); } .cell.open .hy-sub { display: block; }
+.hy-sub { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--v2-line, var(--line)); }
 .hy-sub .sr { display: grid; grid-template-columns: 84px minmax(0, 1fr) 170px; align-items: center; gap: 8px; font-size: 14px; } .hy-sub .sn { font-weight: 700; color: var(--ink-2); text-align: right; } .hy-sub .sv { text-align: left; font-variant-numeric: tabular-nums; color: var(--ink-2); } .hy-sub .sv b { color: var(--ink); font-size: 15px; margin-right: 4px; }
 .hy-trk.sm { height: 10px; margin: 4px 0; border-radius: 3px; } .hy-trk.sm i { border-radius: 3px; } .hy-trk.sm .td { top: -3px; bottom: -3px; }
 .hy-ft { margin-top: 4px; font-size: 13.5px; color: var(--ink-2); }
