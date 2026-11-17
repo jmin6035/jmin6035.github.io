@@ -853,15 +853,17 @@
     if (!$('s-prog').id) return;
     const m = mon, cur = today.slice(0, 7), kind = m < cur ? 'past' : m === cur ? 'cur' : 'fut', end = D.days.filter((d) => d.slice(0, 7) === m).pop() || '';
     const PO = D.PO || {}, GR = Object.fromEntries((PO.groups || []).map((g) => [g.key, g]));
-    const act = {}, pln = {};
-    for (const [k, x] of Object.entries(D.pl)) { const d = k.split('|')[1]; if (d.slice(0, 7) !== m) continue; for (const [c, t] of Object.entries(x.cls || {})) { const g = GMAP[c]; if (!g) continue; if (kind === 'past' || x.act) act[g] = (act[g] || 0) + t; else pln[g] = (pln[g] || 0) + t; } }
-    for (const [k, x] of Object.entries(D.co)) { const d = k.split('|')[1]; if (d.slice(0, 7) !== m) continue; for (const [c, t] of Object.entries(x.g || {})) { const g = GMAP[c]; if (!g) continue; if (kind === 'past' || x.act) act[g] = (act[g] || 0) + t; else pln[g] = (pln[g] || 0) + t; } }
+    const act = {}, pln = {}, AD = {}, PD_ = {};   // 11/17 재검토: 그룹·날짜 칸마다 정수로 반올림해 더함(01 일별 가동계획·수주 관제와 같은 규칙, 11/13 사용자)
+    for (const [k, x] of Object.entries(D.pl)) { const d = k.split('|')[1]; if (d.slice(0, 7) !== m) continue; for (const [c, t] of Object.entries(x.cls || {})) { const g = GMAP[c]; if (!g) continue; if (kind === 'past' || x.act) AD[`${g}|${d}`] = (AD[`${g}|${d}`] || 0) + t; else PD_[`${g}|${d}`] = (PD_[`${g}|${d}`] || 0) + t; } }
+    for (const [k, x] of Object.entries(D.co)) { const d = k.split('|')[1]; if (d.slice(0, 7) !== m) continue; for (const [c, t] of Object.entries(x.g || {})) { const g = GMAP[c]; if (!g) continue; if (kind === 'past' || x.act) AD[`${g}|${d}`] = (AD[`${g}|${d}`] || 0) + t; else PD_[`${g}|${d}`] = (PD_[`${g}|${d}`] || 0) + t; } }
+    for (const [k, v] of Object.entries(AD)) { const g = k.split('|')[0]; act[g] = (act[g] || 0) + Math.round(v); }
+    for (const [k, v] of Object.entries(PD_)) { const g = k.split('|')[0]; pln[g] = (pln[g] || 0) + Math.round(v); }
     const P = D.V.plan || {}, mi = D.months.indexOf(m), MPn = (PO.monthPlan || {})[m] || {};
     const mp = (g, k) => { const x = MPn[g] || {}; if (k === 'prod' && x.prod != null) return x.prod; if (k === 'sales' && x.ship != null) return x.ship; const r = (P[g] || [])[mi]; return r ? r[k] || 0 : 0; };
     const SD = PO.shipDay, shipA = (g) => (SD && SD.g && SD.g[g] ? Object.entries(SD.g[g]).filter(([d]) => d.slice(0, 7) === m).reduce((a, [, v]) => a + v, 0) : 0);
     const val = (g, k) => {   // [진한(실적), 옅은(남은 계획), 월 계획]
       if (k === 'prod') {   // 11/13 사용자 결정: 월 계획 = 지금 계획의 그 달 합(실적 + 앞날 가동 캘린더 계획, 그룹 배정)
-        if (kind === 'cur') { const a = GR[g] && GR[g].prod ? GR[g].prod.actual : act[g] || 0; return [a, pln[g] || 0, a + (pln[g] || 0)]; }
+        if (kind === 'cur') { const a = act[g] != null ? act[g] : GR[g] && GR[g].prod ? GR[g].prod.actual : 0; return [a, pln[g] || 0, a + (pln[g] || 0)]; }
         return kind === 'past' ? [act[g] || 0, 0, act[g] || 0] : [0, (act[g] || 0) + (pln[g] || 0), (act[g] || 0) + (pln[g] || 0)];
       }
       const p = kind === 'cur' && GR[g] && GR[g].ship ? GR[g].ship.month : mp(g, 'sales');
