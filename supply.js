@@ -272,7 +272,7 @@
     $('s-det2').innerHTML = `<div class="dethd m"><span>${esc(c)} ${k === 'ord' ? '발주' : k === 'inb' ? '입고' : '생산 투입'} · ${when} <small>${TPL[R.plant]} — 업체·양·일정과 무엇을 만들려고 쓰는지. 업체·수량을 바꾸려면 <a href="procure.html">소재 발주</a></small></span></div>
       <section class="card wide"><div class="scroll"><table class="t mt"><thead><tr><th class="l">소재</th><th class="l">업체</th><th>톤</th><th>발주 마감</th><th>상태</th><th>예상 입고일</th><th>입고 필요일</th><th class="l" title="발주 실적·입고 예정 = 발주에 걸린 계약의 판매그룹 → 목적지 · 톤 / 새로 낼 발주 = 그 주 생산 계획 용도">무엇을 위해 <small>판매그룹 → 목적지 · 톤</small></th></tr></thead><tbody>${rows || '<tr><td colspan="8">없음</td></tr>'}</tbody>
       <tfoot><tr><td class="l"><b>합계</b></td><td></td><td><b>${n0(sumT(L))}</b></td><td colspan="5"></td></tr></tfoot></table></div>
-      <p class="small">발주 마감 = 입고 필요일 − 업체 리드타임(팀 리드타임 표). 예상 입고일 = 발주 실적은 MES 입고 예정, 새로 낼 발주는 발주 마감(지났으면 오늘) + 업체 리드타임(늦으면 빨강). 입고 필요일 = 생산 투입 − 투입 여유(컬러 7일 · 도금 1일). 양은 재고·발주 완료분를 먼저 쓰고 모자라는 만큼을 27년 배정 비중대로 나눈 것.</p></section>`;
+      <p class="small">발주 마감 = 입고 필요일 − 업체 리드타임(팀 리드타임 표). 예상 입고일 = 발주 실적은 MES 입고 예정, 새로 낼 발주는 발주 마감(지났으면 오늘) + 업체 리드타임(늦으면 빨강). 입고 필요일 = 생산 투입 − 투입 여유(컬러 7일 · 도금 1일). 양은 재고·발주 완료분을 먼저 쓰고 모자라는 만큼을 27년 배정 비중대로 나눈 것.</p></section>`;
     $('s-det2').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -308,7 +308,7 @@
       (m) => `<button type="button" data-m="${m}" aria-pressed="${m === mon}">${+m.slice(5)}월</button>`).join('');
     $('s-mon').querySelectorAll('button').forEach((b) => b.onclick = () => { mon = b.dataset.m; tabs(); if (!D.months.includes(mon)) { cal(); return; } progress(); cal(); if (PAGE === 'matcal') monthSum(); });
   }
-  // 11/12 사용자 '1월껀 왜 없지': 통합 계획(가동·자가재)은 12/31까지지만 소재 수요(procure: 도금 = 일별 계획 ~2/28, 컬러 = 월 소재량)·MES 발주 완료분는 그 너머도 있음
+  // 11/12 사용자 '1월껀 왜 없지': 통합 계획(가동·자가재)은 12/31까지지만 소재 수요(procure: 도금 = 일별 계획 ~2/28, 컬러 = 월 소재량)·MES 발주 완료분은 그 너머도 있음
   // → 계획 > 소재(gyehoek)만 이번 달 + 2달까지 소재 달을 늘림(가동 캘린더 등 다른 화면은 그대로). 늘린 달은 소재 유형 캘린더만 그림
   function matExtend(P) {
     if (PAGE !== 'gyehoek' || !P) return;

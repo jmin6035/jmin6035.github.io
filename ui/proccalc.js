@@ -95,7 +95,7 @@
         if (POS) kind = 'pos';
         else if (short < 1) kind = 'ok';
         else if (!cand.length) kind = 'nosup';
-        else if (!okP.length) kind = S.arr.some((a) => a.code === u.code && plantOf(a.code) === u.plant) || autoArr().some((a) => a.code === u.code && a.plant === u.plant) ? 'adjust' : 'check';   // 그 소재 발주 완료분를 넣었으면 '조정', 아니면 '발주 완료분 확인'
+        else if (!okP.length) kind = S.arr.some((a) => a.code === u.code && plantOf(a.code) === u.plant) || autoArr().some((a) => a.code === u.code && a.plant === u.plant) ? 'adjust' : 'check';   // 그 소재 발주 완료분을 넣었으면 '조정', 아니면 '발주 완료분 확인'
         else if (lateT >= 1) kind = 'alt';
         else kind = 'normal';
         const deadline = parts.length ? parts.map((x) => x.dl).sort()[0] : (cand[0] ? orderDay(addD(needBy, -cand[0].lt), cand[0].cls) : null);
