@@ -16,7 +16,7 @@
   const sg = (x) => (x > 0 ? '+' : x < 0 ? '−' : '±') + n0(Math.abs(x));
   let PV = '어제';
   const d1 = (v) => (v && v.d1 != null && v.d1 !== 0 ? `<span class="d1">${PV} ${sg(v.d1)}</span>` : '');
-  // 그룹별(판매 = 판매 그룹 · 생산 = 라인 · 출하 = 출하 그룹) — 칸을 누르면 펼침
+  // 그룹별(판매 = 판매 그룹 · 생산 = 라인 · 출하 = 출하 그룹) — 늘 펼쳐 보임(11/17 사용자 '이 화면에 적용')
   function sub(p, L, td) {
     if (!L || L.length < 2) return '';
     return `<div class="hy-sub">${L.map((x) => `<div class="sr"><span class="sn">${esc(x.g)}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(x.plan ? x.act / x.plan * 100 : 0)}"></i>${td != null ? `<i class="td" style="left:${W(td * 100)}"></i>` : ''}</div><span class="sv"><b>${pct(x.act, x.plan) ?? '–'}%</b> ${n0(x.act)} / ${n0(x.plan)}톤</span></div>`).join('')}</div>`;
@@ -51,7 +51,7 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
 ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i class="de${e > cap ? ' bad' : ''}" style="left:${W(xe)}"></i><i class="dn${a > cap ? ' bad' : ''}" style="left:${W(xa)}"></i></div>
 <div class="hy-cap"><span></span><span>상한 ${n0(cap)}톤</span></div></div>`;
   }
-  const cover = (L) => `<div class="hy-cv">${(L || []).map((x) => `<div class="c${x.days != null && x.days < 7 ? ' r' : ''}"><div class="n">${esc(x.line)}</div><div class="v">${n0(x.t)}<small>톤</small></div><div class="d">${x.days != null ? x.days + '일치' : '–'}</div></div>`).join('')}</div>`;
+  const cover = (L, noDays) => `<div class="hy-cv">${(L || []).map((x) => `<div class="c${x.days != null && x.days < 7 ? ' r' : ''}"><div class="n">${esc(x.line)}</div><div class="v">${n0(x.t)}<small>톤</small></div>${noDays ? '' : `<div class="d">${x.days != null ? x.days + '일치' : '–'}</div>`}</div>`).join('')}</div>`;
 
   let MI = 0;
   try { MI = +sessionStorage.getItem('hy-mi') || 0; } catch (e) { /* 저장 못 해도 화면은 그대로 */ }
@@ -64,8 +64,8 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
     const tabs = [`${mo}월`, ...MS.map((x) => `${+x.ym.slice(5)}월`)];
     const M = MI ? MS[MI - 1] : null, mm = M ? +M.ym.slice(5) : mo;
     const R = M ? [
-      ['판매', '판매계획 대비 확정 주문', null, (p) => bar(p, M[p].sales, '판매계획', null)],
-      ['생산', '월 계획', 'gyehoek.html', (p) => `<div class="hy-row"><div class="hy-num"><b>${n0(M[p].prod.plan)}</b><small>톤</small></div></div>`],
+      ['판매', '판매계획 대비 주문', null, (p) => bar(p, M[p].sales, '판매계획', null, { grp: M[p].sales.grp })],
+      ['생산', '월 계획', 'gyehoek.html', (p) => `<div class="hy-row"><div class="hy-num"><b>${n0(M[p].prod.plan)}</b><small>톤</small></div>${cover((M[p].prod.lines || []).map((x) => ({ line: x.g, t: x.plan })), true)}</div>`],
       ['제품 재고', '월말 예상', null, (p) => stockEnd(M[p].stockPdt)],
     ] : [
       ['판매', '판매계획 대비 수주', null, (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', null, { grp: H[p].sales.grp })],
@@ -77,15 +77,14 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
       ['주문충당량', '소재 매치 주문', 'pyeonseong.html', (p) => cover(H[p].cover)],
     ];
     const sec = (a, b, u) => u ? `<a class="sec" href="${u}"><b>${a} ›</b><small>${b}</small></a>` : `<div class="sec"><b>${a}</b><small>${b}</small></div>`;
-    const cell = (p, a, h) => `<div class="cell${h.includes('hy-sub') ? ' dr' : ''}" data-pl="${p === 'G' ? '도금' : '컬러'} · ${a}">${h}</div>`;
+    const cell = (p, a, h) => `<div class="cell" data-pl="${p === 'G' ? '도금' : '컬러'} · ${a}">${h}</div>`;
     m.innerHTML = `<div class="hy-top"><h1>${mm}월 판매·생산 현황</h1><span>${M ? `수주 ${dd}까지 · 생산·재고 = 계획` : `${dd}까지`}</span>
 <div class="hy-tabs">${tabs.map((t, i) => `<button type="button" data-mi="${i}" class="${i === MI ? 'on' : ''}">${t}</button>`).join('')}</div></div>
 <div class="hy-g"><div></div><div class="hd g">도금</div><div class="hd c">컬러</div>
 ${R.map(([a, b, u, f]) => `${sec(a, b, u)}${cell('G', a, f('G'))}${cell('C', a, f('C'))}`).join('')}</div>
-<div class="hy-lg">${M ? '<span><i class="k-g"></i>도금 확정 주문</span><span><i class="k-c"></i>컬러 확정 주문</span>' : '<span><i class="k-g"></i>도금 실적</span><span><i class="k-c"></i>컬러 실적</span>'}${M ? '' : '<span><i class="k-rm"></i>남은 계획</span><span><i class="k-tg"></i>목표</span><span><i class="k-td"></i>오늘</span><span>● 현재 · ○ 월말</span>'}<span><i class="k-ov"></i>상한 초과</span>${M ? '<span>○ 월말</span>' : '<span class="bad">빨강 = 7일치 미만</span><span>칸 누르면 그룹별 ▾</span>'}</div>
+<div class="hy-lg">${M ? '<span><i class="k-g"></i>도금 확정 주문</span><span><i class="k-c"></i>컬러 확정 주문</span>' : '<span><i class="k-g"></i>도금 실적</span><span><i class="k-c"></i>컬러 실적</span>'}${M ? '' : '<span><i class="k-rm"></i>남은 계획</span><span><i class="k-tg"></i>목표</span><span><i class="k-td"></i>오늘</span><span>● 현재 · ○ 월말</span>'}<span><i class="k-ov"></i>상한 초과</span>${M ? '<span>○ 월말</span>' : '<span class="bad">빨강 = 7일치 미만</span>'}</div>
 <div class="hy-ft">${M ? '확정 주문 = 납기가 그 달인 등록 주문(아직 만들지 않은 것) · 판매계획 = 도금 재계획 · 컬러 3개월 계획' : '수주 = 이달 생산 실적 + 다음 주까지 만들 소재 매치 주문 · 생산·출하 = MES 판매생산속보(출하 = 내수 송장 · 수출 B/L)'}</div>`;
     m.querySelectorAll('.hy-tabs button').forEach((b) => b.addEventListener('click', () => { MI = +b.dataset.mi; try { sessionStorage.setItem('hy-mi', MI); } catch (e) { /* 무시 */ } render(D); }));
-    m.querySelectorAll('.cell.dr').forEach((c) => c.addEventListener('click', () => c.classList.toggle('open')));
   }
   CT.boot(['suju.enc.json'], render);
 })();
