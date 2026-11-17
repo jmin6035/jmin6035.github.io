@@ -4,7 +4,7 @@
    · 주문 = 계획 칸을 같은 그룹·목적지(도금은 강종까지) 주문으로 납기 순서대로 채운 양 · 빈 곳 = 계획 − 주문 → 마케팅
    · 소재 = 채운 주문의 소재: 확보 · 입고 예정(생산 전날까지) · 늦게 입고 · 없음 → 소재
    · 부자재 = 컬러 소재 확보 주문의 도료·필름(1020 부자재 상태): 준비 · 대기 → 소재(부자재) · 도금은 주문 단위 부자재 없음
-   · 납기 넘김 = 계획대로 만들면 생산일이 납기 뒤 → 공정·출하 */
+   · 납기 넘김 = 계획대로 만들면 생산일이 납기 뒤(표에만) · 공정·출하에는 부자재만 */
 (function () {
   'use strict';
   const { esc, n0 } = CT;
@@ -43,7 +43,7 @@
     const drow = ([d, v], tt) => !v.p && !tt ? `<tr><th class="${d[2]}">${d[0]}</th><td colspan="11" class="na">이 주 계획 없음</td></tr>`
       : `<tr class="${tt ? 'tot' : ''}"><th class="${tt ? '' : d[2]}">${tt ? '합계' : d[0]}</th><td>${n0(v.p)}</td>${z(v.o)}${z(Math.max(0, v.p - v.o), 'bad')}<td class="sep ${pc(v.ok + v.on, v.o) < 50 ? 'bad' : pc(v.ok + v.on, v.o) < 80 ? 'warn' : ''}">${v.o ? pc(v.ok + v.on, v.o) + '%' : '–'}</td>${z(v.ok)}${z(v.on)}${z(v.late, 'warn')}${z(v.none + v.wait, 'bad')}${d && d[2] === 'G' && !tt ? '<td class="sep z">–</td><td class="z">–</td>' : `<td class="sep">${v.so + v.sw + v.sb > 0.5 ? n0(v.so) : '–'}</td>${z(v.sw + v.sb, 'warn')}`}${z(v.dl, 'warn')}</tr>`;
     const dtab = `<div class="k-card"><h2>부서별 준비 현황<small>톤 · 계획대로 만들 때</small></h2><div class="k-dscroll"><table class="k-d">
-<thead><tr class="grp"><th></th><th colspan="3" class="gs">주문</th><th colspan="5" class="gs">소재</th><th colspan="2" class="gs">부자재(컬러)</th><th class="gs">공정·출하</th></tr>
+<thead><tr class="grp"><th></th><th colspan="3" class="gs">주문</th><th colspan="5" class="gs">소재</th><th colspan="2" class="gs">부자재(컬러) · 공정·출하</th><th class="gs">납기</th></tr>
 <tr><th></th><th>계획</th><th>주문</th><th>빈 곳</th><th class="sep">준비율</th><th>확보</th><th>입고 예정</th><th>늦게 입고</th><th>없음</th><th class="sep">준비</th><th>대기</th><th>납기 넘김</th></tr></thead>
 <tbody>${V.map((x) => drow(x)).join('')}${drow([null, T], true)}</tbody></table></div>
 <div class="k-lg"><span>준비율 = 주문 중 생산 전날까지 소재가 있는 몫(확보 + 입고 예정)</span><span class="bad">빨강 = 빈 곳·소재 없음</span><span class="warn">주황 = 늦게 입고·부자재 대기·납기 넘김</span></div></div>`;
@@ -73,14 +73,14 @@ ${list(SUBs, (g) => `생산 ${rng(g.pd)} · 납기 ${rng(g.due)}`, PS.includes('
     const clist = (L, kind, n) => `<div class="k-con sw"><div class="r h"><span>계약번호</span><span>톤</span><span>부서 · 목적지</span><span>${kind === 'pull' ? '원래 생산' : '생산'}</span><span>납기</span></div>${L.slice(0, n).map((e) => crow(e, kind)).join('')}${L.length > n ? `<div class="k-more">외 ${L.length - n}건 · ${n0(L.slice(n).reduce((a_, e) => a_ + e.t, 0))}톤</div>` : ''}</div>`;
     const swHtml = SW.length ? SW.map((x) => `<div class="k-card k-sw"><h2>${PLN[x.pl]}${x.al ? ` ${esc(x.al)}` : ''}<small>${x.pl === 'G' ? '같은 강종끼리 · 라인·시간은 주간 편성에서 확인' : '컬러 전체 · 라인·품명은 작업 순서에서 확인'}</small></h2>
 <div class="k-swh"><div><div class="l">빠질 몫</div><div class="v bad">${n0(x.need)}<small>톤</small></div><div class="s">소재 늦음·없음 ${n0(x.out)}${x.gap ? ` · 빈 곳 ${n0(x.gap)}` : ''}</div></div><div class="ar">→</div>
-<div><div class="l">당겨 채울 수 있는 주문</div><div class="v ${x.pullT + 0.5 < x.need ? 'warn' : ''}">${n0(Math.min(x.pullT, x.need))}<small>톤</small></div><div class="s">${lab(Math.min(SEL + 1, W.length - 1))}~${lab(Math.min(SEL + 4, W.length - 1))} 중 소재 이미 있는 주문 ${n0(x.candT)}톤에서 납기 빠른 순${x.pullT + 0.5 < x.need ? ` · <b class="bad">${n0(x.need - x.pullT)}톤 못 채움</b>` : ''}</div></div></div>
+<div><div class="l">당겨 채울 수 있는 주문</div><div class="v ${x.pullT + 0.5 < x.need ? 'warn' : ''}">${n0(Math.min(x.pullT, x.need))}<small>톤</small></div><div class="s">${SEL >= W.length - 1 ? '뒤 주 계획이 없어 당길 후보 없음' : `${lab(SEL + 1)}~${lab(Math.min(SEL + 4, W.length - 1))} 중 소재 이미 있는 주문`} ${n0(x.candT)}톤에서 납기 빠른 순${x.pullT + 0.5 < x.need ? ` · <b class="bad">${n0(x.need - x.pullT)}톤 못 채움</b>` : ''}</div></div></div>
 <div class="k-swl"><div><h3>① 미룰 주문 — 소재 늦음·없음<span>${n0(x.out)}t</span></h3>${x.push.length ? clist(x.push, 'push', 6) : '<div class="k-more">없음</div>'}</div>
 <div><h3>② 당길 주문 — 소재 있음<span>${n0(x.pullT)}t</span></h3>${x.pull.length ? clist(x.pull, 'pull', 6) : '<div class="k-more">후보 없음</div>'}</div>
 <div><h3>③ 생산 미달 시 먼저 넘길 주문 — 납기 늦은 순</h3>${(x.defer || []).length ? clist(x.defer, 'defer', 6) : '<div class="k-more">없음</div>'}</div></div></div>`).join('') : '<div class="k-card"><div class="k-more">이 주 대응할 것 없음</div></div>';
     // 일정 지연 대비(11/17 사용자 '수리나 test, 작업이 예상보다 늦게 진행되면')
-    const DL = (K.delay || []).filter((e) => !/재가동/.test(e.ev) && PS.includes(/CGL/.test(e.line) ? 'G' : 'C') && e.to >= w.from && e.from <= W[Math.min(SEL + 3, W.length - 1)].to);
+    const DL = (K.delay || []).filter((e) => !/재가동/.test(e.ev) && PS.includes(/CGL/.test(e.line) ? 'G' : 'C') && e.to >= (SEL === 0 ? K.today : w.from) && e.from <= W[Math.min(SEL + 3, W.length - 1)].to);
     const dlHtml = DL.length ? DL.map((e, i) => `<div class="k-li op" data-x="dl${i}"><div class="n"><span class="k-tag wait">${esc(e.line)}</span>${esc(e.ev)} · ${md(e.from)}${e.to !== e.from ? `~${md(e.to)}` : ''}</div><div class="t">하루 늦으면 −${n0(e.lost1)}t <span class="cv">▾</span></div>
-<div class="d">이틀 −${n0(e.lost2)}t · 밀리는 주문 ${n0(e.orders.reduce((a_, z) => a_ + z.t, 0))}t${e.riskT ? ` · <b class="bad">늦어지면 새로 납기 넘김 ${n0(e.riskT)}t</b>` : ''}${e.lateT ? ` · <span class="warn">이미 납기 지남 ${n0(e.lateT)}t</span>` : ''}${!e.orders.length ? ' · 그날 판매 주문 없음(자가재)' : ''}</div></div>
+<div class="d">이틀 −${n0(e.lost2)}t · 뒤 7일 밀리는 주문 ${n0(e.totT ?? 0)}t${e.riskT ? ` · <b class="bad">늦어지면 새로 납기 넘김 ${n0(e.riskT)}t</b>` : ''}${e.lateT ? ` · <span class="warn">이미 납기 지남 ${n0(e.lateT)}t</span>` : ''}${!e.orders.length ? ' · 그날 판매 주문 없음(자가재)' : ''}</div></div>
 <div class="k-con sw" id="dl${i}" hidden><div class="r h"><span>계약번호</span><span>톤</span><span>부서 · 목적지</span><span>생산</span><span>납기</span></div>${e.orders.map((z) => `<div class="r"><span>${esc(z.con || '–')}</span><span>${n0(z.t)}</span><span>${esc(z.g)} · ${esc(z.dst || '')}</span><span>${md(z.pd)}</span><span class="${z.risk ? 'bad' : z.late ? 'warn' : ''}">${md(z.due)}</span></div>`).join('')}
 <div class="k-more">대응: 빨강(늦어지면 새로 납기 넘김) 주문은 같은 강종 다른 라인·전날로 당기고, 주황(이미 지남)은 고객사와 납기 조정, 나머지는 납기 여유 있는 것부터 뒤로</div></div>`).join('') : '<div class="k-more">이 기간 수리·M/C·휴지 일정 없음</div>';
     const dlSec = `<div class="k-h">수리·M/C·휴지 지연 대비<small>${lab(SEL)}~${lab(Math.min(SEL + 3, W.length - 1))} 일정이 늦어지면 빠지는 톤과 밀리는 주문</small></div><div class="k-card k-side">${dlHtml}</div>`;

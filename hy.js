@@ -40,9 +40,16 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
     if (!v) return '<div class="hy-na">자료 없음</div>';
     const have = (v.beg || 0) + (v.arr || 0);
     // 부족 = 도금 F/H(합), 컬러 소재별 모자람 합(서로 메우지 않음) · 도금 그 달 1일 − 리드타임이 아직이면 '발주 필요(마감 m/d)'로(부족 아님)
-    const by = (v.shortBy || []).map(([n, t]) => `${esc(n)} ${n0(t)}`).join(' · ');
-    const sh = !v.short ? '' : v.open ? ` · <b class="warn">발주 필요 ${n0(v.short)} · 마감 ${+v.dl.slice(5, 7)}/${+v.dl.slice(8)}</b>` : ` · <b class="bad">부족 ${by || n0(v.short)}</b>`;
-    return bar(p, { act: have, plan: v.use }, '필요', null).replace('<div class="hy-cap"><span></span>', `<div class="hy-cap"><span>재고 ${n0(v.beg)} + 입고 예정 ${n0(v.arr)}${sh}</span>`);
+    // 재고가 바닥나는 날 − 리드타임 = 발주 마감: 마감 전이면 주황 '발주 필요 · 마감', 지났으면 빨강 '부족'(검토 11/17)
+    const md_ = (d) => `${+d.slice(5, 7)}/${+d.slice(8)}`;
+    const one = (n, t, dl, op) => (op ? `<b class="warn">${n ? esc(n) + ' ' : ''}발주 필요 ${n0(t)} · 마감 ${md_(dl)}</b>` : `<b class="bad">${n ? esc(n) + ' ' : ''}부족 ${n0(t)}</b>`);
+    const sh = !v.short ? '' : ' · ' + (v.shortBy ? v.shortBy.map(([n, t, dl, op]) => one(n, t, dl, op)).join(' · ') : one('', v.short, v.dl, v.open));
+    const pc_ = pct(have, v.use), mx = Math.max(have, v.use) || 1;
+    const nd = [v.noDate ? `날짜 없는 기발주 ${n0(v.noDate)}` : '', v.stale ? `예정일 30일 넘게 지난 미입고 ${n0(v.stale)}` : ''].filter(Boolean).join(' · ');
+    return `<div class="hy-row"><div class="hy-num"><b>${n0(have)}</b><small>톤</small><b class="pc">${pc_ ?? '–'}<small>%</small></b></div>
+<div class="hy-trk ${p}"><i class="fl" style="width:${W(have / mx * 100)}"></i><i class="tg" style="left:${W(v.use / mx * 100)}"></i></div>
+<div class="hy-ml"><span>재고 ${n0(v.beg)} + 입고 예정 ${n0(v.arr)}</span><span>필요 ${n0(v.use)}톤</span></div>
+${sh ? `<div class="hy-ms">${sh.replace(/^ · /, '')}</div>` : ''}${nd ? `<div class="hy-mn">미포함 · ${nd}</div>` : ''}</div>`;
   }
   // 다음 달: 월말 예상(○)만
   function stockEnd(v) {
