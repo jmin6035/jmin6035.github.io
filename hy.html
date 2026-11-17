@@ -14,7 +14,15 @@ main.wrap { max-width: none; }
 :root { --hy-g: #1f5fae; --hy-g2: #d6e3f3; --hy-g3: #a9c4e8; --hy-c: #0f7f73; --hy-c2: #cfe9e5; --hy-c3: #9fd3ca; --hy-bad: #c0262d; --hy-okz: #e3f2e8; --hy-ovz: #fbdcdc; --hy-sec: #1f2937; }
 :root[data-theme="dark"] { --hy-g2: #22344d; --hy-g3: #35557d; --hy-c2: #173a36; --hy-c3: #2a6159; --hy-bad: #f2777b; --hy-okz: #18321f; --hy-ovz: #4a1d1f; --hy-sec: #334155; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --hy-g2: #22344d; --hy-g3: #35557d; --hy-c2: #173a36; --hy-c3: #2a6159; --hy-bad: #f2777b; --hy-okz: #18321f; --hy-ovz: #4a1d1f; --hy-sec: #334155; } }
-#ct-main { color: var(--ink); word-break: keep-all; text-align: center; max-width: 1180px; margin-left: auto; margin-right: auto; }
+#ct-main { color: var(--ink); word-break: keep-all; text-align: center; }
+/* 11/17 사용자 '가운데 떡하니 — 다른 탭에 비해': 다른 화면처럼 전체 폭 · 칸이 넓으면 그룹별 막대를 오른쪽으로(세로 길이 줄임) */
+.hy-g .cell { container-type: inline-size; }
+@container (min-width: 600px) {
+  .hy-row.hs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 26px; align-items: center; }
+  .hy-row.hs > :not(.hy-sub) { grid-column: 1; }
+  .hy-row.hs > .hy-sub { grid-column: 2; grid-row: 1 / span 3; margin: 0; padding: 0 0 0 22px; border-top: none; border-left: 1px dashed var(--v2-line, var(--line)); }
+}
+.hy-g.one { grid-template-columns: 116px minmax(0, 1fr); }
 .hy-top { display: flex; align-items: baseline; gap: 12px; margin: 2px 0 10px; } .hy-top h1 { font-size: 24px; font-weight: 800; margin: 0; } .hy-top span { font-size: 16px; color: var(--ink-2); }
 .hy-g { display: grid; grid-template-columns: 116px minmax(0, 1fr) minmax(0, 1fr); gap: 8px 12px; }
 .hy-g .hd { font-size: 19px; font-weight: 800; color: #fff; border-radius: 10px; padding: 6px 0; } .hy-g .hd.g { background: var(--hy-g); } .hy-g .hd.c { background: var(--hy-c); }

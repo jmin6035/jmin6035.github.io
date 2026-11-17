@@ -23,10 +23,11 @@
   }
   function bar(p, v, cap, td, opt = {}) {
     const a = v.act || 0, pl = v.plan, mx = opt.max || pl || 1;
-    return `<div class="hy-row"><div class="hy-num"><b>${n0(a)}</b><small>톤</small><b class="pc">${pct(a, pl) ?? '–'}<small>%</small></b>${d1(v)}</div>
+    const sb = sub(p, opt.grp, td);
+    return `<div class="hy-row${sb ? ' hs' : ''}"><div class="hy-num"><b>${n0(a)}</b><small>톤</small><b class="pc">${pct(a, pl) ?? '–'}<small>%</small></b>${d1(v)}</div>
 <div class="hy-trk ${p}">${opt.rem ? `<i class="rm" style="width:${W((a + opt.rem) / mx * 100)}"></i>` : ''}<i class="fl" style="width:${W(a / mx * 100)}"></i>
 ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100)}"></i>` : ''}${opt.tgt ? `<i class="tg" style="left:${W(pl / mx * 100)}"></i>` : ''}</div>
-<div class="hy-cap">${opt.est ? `<span>이달 예상 <b>${opt.est}</b></span>` : '<span></span>'}<span>${esc(cap)} ${n0(pl)}톤</span></div>${sub(p, opt.grp, td)}</div>`;
+<div class="hy-cap">${opt.est ? `<span>이달 예상 <b>${opt.est}</b></span>` : '<span></span>'}<span>${esc(cap)} ${n0(pl)}톤</span></div>${sb}</div>`;
   }
   function prod(p, v, td) {
     const a = v.act || 0, rem = v.rem || 0, pl = v.plan || 0, mx = Math.max(a + rem, pl) * 1.03;
@@ -58,6 +59,7 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
   function render(D) {
     const S = D.suju || {}, H = S.hy, m = document.getElementById('ct-main');
     if (!H) { m.innerHTML = '<section class="card"><h2>현황 자료가 아직 없습니다</h2><p>다음 2시간 갱신 때 만들어집니다.</p></section>'; return; }
+    const sc = window.UI && UI.scope ? UI.scope() : 'all', PS = sc === 'G' ? ['G'] : sc === 'C' ? ['C'] : ['G', 'C'];
     const MS = H.months || [], td = H.day / H.nDays, mo = +H.asOf.slice(5, 7), dd = `${mo}/${+H.asOf.slice(8)}`;
     if (MI > MS.length) MI = 0;
     { const y = new Date(H.asOf); y.setDate(y.getDate() - 1); const ys = y.toISOString().slice(0, 10); PV = !H.prevAsOf || H.prevAsOf === ys ? '어제' : `${+H.prevAsOf.slice(5, 7)}/${+H.prevAsOf.slice(8)} 대비`; }
@@ -80,11 +82,12 @@ ${close ? '' : `<i class="ln" style="left:${W(L)};width:${W(R - L)}"></i>`}<i cl
     const cell = (p, a, h) => `<div class="cell" data-pl="${p === 'G' ? '도금' : '컬러'} · ${a}">${h}</div>`;
     m.innerHTML = `<div class="hy-top"><h1>${mm}월 판매·생산 현황</h1><span>${M ? `수주 ${dd}까지 · 생산·재고 = 계획` : `${dd}까지`}</span>
 <div class="hy-tabs">${tabs.map((t, i) => `<button type="button" data-mi="${i}" class="${i === MI ? 'on' : ''}">${t}</button>`).join('')}</div></div>
-<div class="hy-g"><div></div><div class="hd g">도금</div><div class="hd c">컬러</div>
-${R.map(([a, b, u, f]) => `${sec(a, b, u)}${cell('G', a, f('G'))}${cell('C', a, f('C'))}`).join('')}</div>
+<div class="hy-g${PS.length < 2 ? ' one' : ''}"><div></div>${PS.map((p) => `<div class="hd ${p === 'G' ? 'g' : 'c'}">${p === 'G' ? '도금' : '컬러'}</div>`).join('')}
+${R.map(([a, b, u, f]) => `${sec(a, b, u)}${PS.map((p) => cell(p, a, f(p))).join('')}`).join('')}</div>
 <div class="hy-lg">${M ? '<span><i class="k-g"></i>도금 확정 주문</span><span><i class="k-c"></i>컬러 확정 주문</span>' : '<span><i class="k-g"></i>도금 실적</span><span><i class="k-c"></i>컬러 실적</span>'}${M ? '' : '<span><i class="k-rm"></i>남은 계획</span><span><i class="k-tg"></i>목표</span><span><i class="k-td"></i>오늘</span><span>● 현재 · ○ 월말</span>'}<span><i class="k-ov"></i>상한 초과</span>${M ? '<span>○ 월말</span>' : '<span class="bad">빨강 = 7일치 미만</span>'}</div>
 <div class="hy-ft">${M ? '확정 주문 = 납기가 그 달인 등록 주문(아직 만들지 않은 것) · 판매계획 = 도금 재계획 · 컬러 3개월 계획' : '수주 = 이달 생산 실적 + 다음 주까지 만들 소재 매치 주문 · 생산·출하 = MES 판매생산속보(출하 = 내수 송장 · 수출 B/L)'}</div>`;
     m.querySelectorAll('.hy-tabs button').forEach((b) => b.addEventListener('click', () => { MI = +b.dataset.mi; try { sessionStorage.setItem('hy-mi', MI); } catch (e) { /* 무시 */ } render(D); }));
   }
-  CT.boot(['suju.enc.json'], render);
+  let LD = null, SUB = false;
+  CT.boot(['suju.enc.json'], (D) => { LD = D; render(D); if (!SUB && window.UI && UI.onScope) { SUB = true; UI.onScope(() => render(LD)); } });
 })();
