@@ -603,7 +603,7 @@
     const dl = j && j.deadline;   // 발주 마감 = 엔진 주별 마감(캘린더·소재 관제와 같은 값)
     const ok_ = j && j.short < 1;   // 그 주 확보면 마감이 지났어도 경고 아님
     const dlc = ok_ ? ['F/H', '확보됨', null, 'due'] : dl ? (dl < today ? ['발주 마감', `${md(dl)} 지남`, null, 'late'] : dl === today ? ['발주 마감', '오늘', null, 'late'] : ['발주 마감', `${md(dl)}까지`, null, 'due']) : ['발주 마감', ords, null, 'due'];
-    if (code === 'N') return { what: nm, steps: [['소재', '포스코 지급(발주 당일 입고)', null, 'due']], st: ['info', '포스코 지급재 — 발주 마감·부족 판정 안 함'] };   // 11/17 검토: MES 상 도금 SUS 는 발주일에 입고(P2…Y·Y…) — 리드타임 판정은 오경보
+    if (code === 'N') return { what: nm, steps: [['소재', '지급재(발주 당일 입고)', null, 'due']], st: ['info', '지급재 — 발주 마감·부족 판정 안 함'] };   // 11/17 검토: MES 상 도금 SUS 는 발주일에 입고(P2…Y·Y…) — 리드타임 판정은 오경보
     return { what: nm, steps: ok_ ? [dlc] : [dlc, [need <= today ? '소재 입고' : '입고 기한', md(need), need], ...(stc ? [stc] : [])], st };
   }
 
