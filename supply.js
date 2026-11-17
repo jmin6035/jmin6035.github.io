@@ -591,18 +591,21 @@
     const ords = Object.entries(byT).sort((x, y) => y[1].sh - x[1].sh).map(([c, t]) => `${esc(c)} ${md(add(need, -t.lt))}`).join(' · ') || '-';
     const j = MP && MP.J.find((x) => x.plant === 'G' && x.code === code && x.wk === mondayOf(d));
     const st = !j ? ['info', '-'] : j.short < 1 ? ['ok', '재고·발주 완료분로 충당'] : ['warn', `그 주 부족 ${n0(j.short)}t — 소재 발주에서 확인`];
-    const stc = !j ? null : j.short < 1 ? ['F/H 상태', '재고·발주분으로 확보', null, 'due'] : ['F/H 상태', `그 주 ${n0(j.short)}t 모자람 — 발주 필요`, null, 'warn'];   // 11/17 검토: 발주했는지·확보됐는지
+    const stc = !j || FHS.has(d) ? null : j.short < 1 ? ['F/H(그 주)', '재고·발주분으로 확보', null, 'due'] : j.kind === 'nosup' ? ['F/H(그 주)', `${n0(j.short)}t 발주할 업체 없음`, null, 'late']: j.kind === 'adjust' || j.kind === 'check' ? ['F/H(그 주)', `${n0(j.short)}t 발주 마감 지남 — 생산 조정 대상`, null, 'late'] : ['F/H(그 주)', `${n0(j.short)}t 발주 필요(마감 전)`, null, 'warn'];
+    if (stc) FHS.add(d);   // 그 주 판정은 날짜 상세에서 한 번만   // 11/17 검토: 발주했는지·확보됐는지
     return { what: nm, steps: [['발주 마감', ords, null, 'due'], [need <= today ? '소재 입고' : '입고 필요', md(need), need], ...(stc ? [stc] : [])], st };
   }
 
   // 날짜 상세 카드(라인별 품목·소재·일정) — 가동 캘린더 상세와 계획 화면(gyehoek.js, window.supDet)이 같이 씀. ls = 보일 라인(없으면 전부)
+  const FHS = new Set();
   function detG(d, ls) {
+    FHS.clear();
     const mergeRows = (rows, ks, ti) => { const M = new Map();          // 11/10: 0t 줄 숨김 · 보이는 값이 같은 줄은 톤 합침
       for (const r of rows) { if (!(r[ti] >= 0.5)) continue; const k = ks.map((i) => r[i] == null ? '' : r[i]).join('|'), z = M.get(k); if (z) z[ti] += r[ti]; else M.set(k, r.slice()); }
       return [...M.values()]; };
     const pcard = (l) => { const x = D.pl[`${l}|${d}`]; if (!x) return ''; return `<section class="card rv wide" data-noexport data-dom="G"><h3>${l} · ${x.t > 0.5 ? `${x.fam} ${n0(x.t)}t` : '생산 없음'} ${x.act ? '<small>(실적)</small>' : ''} ${x.ev ? `<small style="color:#8a5a00">${esc(x.ev)}</small>` : ''}</h3>
       <div class="scroll"><table class="dt mt fl"><thead><tr><th>강종 · 부서</th><th>목적지</th><th class="r">톤</th><th>소재</th><th>일정 (소재 → 생산 → 납기)</th></tr></thead><tbody>${(x.lineOnly ? [] : mergeRows(x.items, [0, 1, 2, 3, 6], 5)).map((r) => { const f = r[1] === '자가재' ? flowOf(r[6], r[2], r[0]) : null, m = matG(r, d);
-        const steps = [...m.steps, ['도금 생산', md(d), d, 'now'], ...(f ? [['컬러 투입', span(f.use), null]] : [dueChip(r[6], md(r[6]), d)])];
+        const steps = [...m.steps, ['도금 생산', md(d), d, 'now'], ...(f ? [['컬러 투입', f.use.length ? span(f.use) : '사용일 미정', null]] : [dueChip(r[6], md(r[6]), d)])];
         return `<tr><td><b>${esc(r[0])}</b> <small>${esc(r[1])}</small></td><td>${esc([String(r[2] || '').replace(/^주문 /, ''), r[3]].filter(Boolean).join(' · '))}</td><td class="r">${n0(r[5])}</td><td>${esc(m.what)}</td><td>${flowHtml(steps)}</td></tr>`; }).join('') || `<tr><td colspan="5" class="small">${x.lineOnly && x.t > 0.5 ? '라인 합계 실적 · 품목 내역 차기 재계획 반영' : '생산 없음'}</td></tr>`}</tbody></table></div>
       ${x.why.length ? `<div class="why">${x.why.map(esc).join('<br>')}</div>` : ''}</section>`; };
     const ccard = (l) => { const x0 = D.co[`${l}|${d}`]; if (!x0 || x0.t < 0.5) return ''; const x = { ...x0, rows: mergeRows(x0.rows || [], [0, 1, 2, 3, 4, 9, 13], 5) }; const fu = D.fUse[`${l}|${d}`] || []; return `<section class="card rv wide" data-noexport data-dom="C"><h3>${l} · ${n0(x.t)}t ${x.act ? '<small>(실적)</small>' : ''}</h3>
