@@ -171,6 +171,16 @@ button.cell.fl { box-shadow: inset 3px 0 0 var(--bad); }
 .tv { font-size: 17px; }
 .ps-lg i.mc { background: var(--pz-mc); box-shadow: inset 0 0 0 1px #f2d48a; } .ps-lg i.ev { background: var(--pz-ev); } .ps-lg i.sp { background: repeating-linear-gradient(135deg, var(--pz-stop1) 0 4px, var(--pz-stop2) 4px 8px); box-shadow: inset 0 0 0 1px var(--pz-line); } .ps-lg i.pst { background: var(--pz-past); box-shadow: inset 0 0 0 1px var(--pz-line); } .ps-lg i.tdy { background: var(--pz-today); box-shadow: inset 0 0 0 1px #bfd4f2; }
 .ps-lg span.src { color: var(--ink-2); }
+/* 11/17 사용자 '이번 주·다음 주 같은 표 두 개라 헷갈림' — 표 위 제목 띠 + 이번 주 = 파랑 머리 · 다음 주 = 회색 머리 + 왼쪽 색 막대 */
+.pz-cap { display: flex; align-items: baseline; gap: 12px; margin: 0 0 8px; padding: 8px 14px; border-radius: 10px; text-align: left; }
+.pz-cap b { font-size: 18px; font-weight: 800; } .pz-cap span { font-size: 15px; font-weight: 700; } .pz-cap em { font-style: normal; font-size: 14px; color: var(--ink-2); margin-left: auto; }
+.pz-cap.cur { background: color-mix(in srgb, var(--pz-brand) 10%, var(--surface)); border-left: 6px solid var(--pz-brand); } .pz-cap.cur b, .pz-cap.cur span { color: var(--pz-brand); }
+.pz-cap.nxt { background: color-mix(in srgb, #7c3aed 8%, var(--surface)); border-left: 6px solid #7c3aed; } .pz-cap.nxt b, .pz-cap.nxt span { color: #6d28d9; }
+:root[data-theme="dark"] .pz-cap.nxt b, :root[data-theme="dark"] .pz-cap.nxt span { color: #c4b5fd; } @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pz-cap.nxt b, :root:not([data-theme="light"]) .pz-cap.nxt span { color: #c4b5fd; } }
+html:root body main #ps-main table.psw.cur { border-left: 6px solid var(--pz-brand); } html:root body main #ps-main table.psw.nxt { border-left: 6px solid #7c3aed; }
+html:root body main #ps-main table.psw.cur thead tr.wh th:not(.td) { background: color-mix(in srgb, var(--pz-brand) 7%, var(--surface)) !important; }
+html:root body main #ps-main table.psw.nxt thead tr.wh th:not(.td) { background: color-mix(in srgb, #7c3aed 6%, var(--surface)) !important; }
+.ps-gap { height: 28px; }
 </style>
 </head>
 <body>
@@ -202,6 +212,6 @@ button.cell.fl { box-shadow: inset 3px 0 0 var(--bad); }
 <script src="ct_orders.js?v=2611141500"></script>
 <script src="cg_calendar.js?v=2611141900"></script>
 <script src="cc_calendar.js?v=2611141500"></script>
-<script src="pyeonseong.js?v=2611141900"></script>
+<script src="pyeonseong.js?v=2611171500"></script>
 </body>
 </html>

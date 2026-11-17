@@ -279,7 +279,9 @@
       const tot = `<tr class="dsum"><th>합계<small>${n0(LN.reduce((s, l) => s + wT(l, W), 0))}t</small></th>`
         + W.map((d) => (kind(d) === 'pad' ? pad() : kind(d) === 'pst' && !LN.some((l) => pastT(l, d) != null) ? '<td class="pst"><div class="tv">–</div></td>'
           : `<td class="${kind(d) === 'pst' ? 'pst' : tdc(d)}"><div class="tv">${n0(sumT(d))}<small>t</small></div></td>`)).join('') + '</tr>';
-      return `<table class="psw v2-grid"><thead><tr class="wh"><th class="cn">${nm}<small>${md(W[0])}~${md(W[6])}</small></th>${W.map(dh).join('')}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
+      const cur = nm === '이번 주';
+      const cap = `<div class="pz-cap ${cur ? 'cur' : 'nxt'}"><b>${nm}</b><span>${md(W[0])}(수) ~ ${md(W[6])}(화)</span><em>${cur ? '생산 중 · 지난 날 = 실적' : '편성 계획 · 수요일 주문 마감 뒤 확정'}</em></div>`;
+      return cap + `<table class="psw v2-grid ${cur ? 'cur' : 'nxt'}"><thead><tr class="wh"><th class="cn">${nm}<small>${md(W[0])}~${md(W[6])}</small></th>${W.map(dh).join('')}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
     };
     const W1 = D14.slice(0, 7), W2 = D14.slice(7);
     const ov = LN.map((ln) => [ln, p === 'cg' && R.over(ln)]).filter(([, o]) => o);
