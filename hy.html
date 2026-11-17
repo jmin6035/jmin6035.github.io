@@ -52,6 +52,7 @@ main.wrap { max-width: none; }
 .hy-cv .n { font-size: 15px; font-weight: 700; color: var(--ink-2); } .hy-cv .v { font-size: 20px; font-weight: 800; } .hy-cv .v small { font-size: 14px; margin-left: 1px; color: var(--ink-2); } .hy-cv .d { font-size: 16px; font-weight: 800; } .hy-cv .r .d { color: var(--hy-bad); }
 .hy-m2 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; font-variant-numeric: tabular-nums; } .hy-m2 span { display: block; font-size: 13.5px; color: var(--ink-2); } .hy-m2 b { font-size: 20px; font-weight: 800; } .hy-m2 small { font-size: 13.5px; color: var(--ink-2); margin-left: 2px; }
 .hy-trk.G .po { background: repeating-linear-gradient(135deg, var(--hy-g) 0 4px, var(--hy-g3) 4px 8px); } .hy-trk.C .po { background: repeating-linear-gradient(135deg, var(--hy-c) 0 4px, var(--hy-c3) 4px 8px); }
+.hy-po { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--v2-line, var(--line)); } .hy-po .pr { display: grid; grid-template-columns: 64px 96px minmax(0, 1fr); gap: 8px; font-size: 14px; padding: 2px 0; font-variant-numeric: tabular-nums; text-align: left; } .hy-po .sn { font-weight: 700; color: var(--ink-2); text-align: right; } .hy-po .pa { color: var(--ink-2); } .hy-po .ok { color: var(--ink-2); }
 .hy-ms .mu { color: var(--ink-2); font-size: 13.5px; } .bad { color: var(--hy-bad) !important; } .hy-ml { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink-2); } .hy-ms { font-size: 14.5px; margin-top: 2px; } .hy-mn { font-size: 13.5px; color: var(--ink-2); margin-top: 1px; } .warn { color: #b45309 !important; } :root[data-theme="dark"] .warn { color: #fbbf24 !important; }
 .hy-lg { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 16px; margin-top: 10px; font-size: 14px; color: var(--ink-2); }
 .hy-lg i { display: inline-block; width: 16px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
@@ -66,6 +67,7 @@ main.wrap { max-width: none; }
 .hy-na { color: var(--ink-2); width: 100%; }
 @media (max-width: 700px) {
   .hy-top { flex-wrap: wrap; } .hy-top h1 { font-size: 20px; white-space: nowrap; } .hy-top .hy-tabs { margin-left: 0; width: 100%; } .hy-tabs button { flex: 1; }
+  .hy-po .pr { grid-template-columns: 76px 90px minmax(0, 1fr); font-size: 13.5px; }
   .hy-sub .sr { grid-template-columns: 56px minmax(0, 1fr) 162px; font-size: 13.5px; } .hy-sub .sv { white-space: nowrap; }
   .hy-g { grid-template-columns: minmax(0, 1fr); } .hy-g > div:first-child, .hy-g .hd { display: none; }
   .hy-g .sec { flex-direction: row; gap: 8px; } .hy-g .cell { flex-direction: column; } .hy-g .cell::before { content: attr(data-pl); font-size: 14px; font-weight: 700; color: var(--ink-2); margin-bottom: 2px; }
