@@ -140,6 +140,17 @@ table.gk-adj :is(td, th).bl { border-left: 1px solid var(--line) !important; }
 .gk-actw { margin: 10px 0 4px; text-align: center; } .gk-actw h4 { margin: 0 0 8px; font-size: 16px; font-weight: 800; }
 .gk-acts { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
 table.gk-act { border-collapse: collapse; min-width: 260px; } table.gk-act :is(th, td) { padding: 6px 14px; text-align: center; font-size: 15px; border-bottom: 1px solid var(--line); } table.gk-act th { background: var(--surface-2, #f5f7fa); font-weight: 700; }
+html body main #m4 table.m4-gd { table-layout: fixed; width: 100%; }
+html body main #m4 table.m4-gd :is(th, td) { padding: 9px 6px !important; border-top: 1px solid var(--line); font-size: 15px !important; text-align: right !important; background: transparent !important; white-space: nowrap; }
+html body main #m4 table.m4-gd thead th { font-size: 13.5px !important; color: var(--ink-2); font-weight: 700; border-top: 0; white-space: normal; vertical-align: bottom; line-height: 1.25; }
+html body main #m4 table.m4-gd thead th small { display: block; font-size: 12px; font-weight: 500; color: var(--ink-3); }
+html body main #m4 table.m4-gd tbody th { text-align: left !important; font-weight: 600; padding-left: 22px !important; }
+html body main #m4 table.m4-gd tr.tot > :is(th, td) { font-weight: 800; background: var(--surface-2) !important; border-top: 2px solid var(--line); }
+html body main #m4 table.m4-gd tr.tot > th { padding-left: 10px !important; }
+html body main #m4 table.m4-gd td.b { font-weight: 700; } html body main #m4 table.m4-gd td.z { color: var(--line) !important; }
+html body main #m4 table.m4-gd td.pc { font-weight: 800; } html body main #m4 table.m4-gd td.good { color: var(--good) !important; } html body main #m4 table.m4-gd td.muted { color: var(--ink-3) !important; }
+html body main #m4 table.m4-gd td.bad { color: var(--bad) !important; } html body main #m4 table.m4-gd td.warn { color: var(--warn) !important; }
+html body main #m4 table.m4-gd td.ob small { margin-left: 3px; font-size: 12.5px; color: var(--ink-3); } html body main #m4 table.m4-gd td.ob.bad small { color: var(--bad); }
 </style>
 <style>
 /* 소재 탭 = 소재 관제(matcal.html)의 소재 캘린더·월별 소재 입고 계획 서식 그대로 */
@@ -409,10 +420,10 @@ table.gk-adj tr.sr > * { background: #fff8e1 !important; border-top: 2px solid #
       <p class="gk-none" id="gk-matnone" hidden></p>
       <div id="gk-matbody">
         <section class="card" id="s-msum"></section>
-        <div id="m4"><section class="card m4" id="m4-sum"></section><section class="card m4" id="m4-cal"></section></div>
+        <div id="m4"><section class="card m4" id="m4-grp"></section><section class="card m4" id="m4-cal"></section><section class="card m4" id="m4-sum"></section></div>
         <section class="card matcal" hidden><h2>소재 캘린더<span class="unit">톤</span></h2>
           <div id="s-cal3"></div>
-          <div class="lg"><span><i style="background:var(--pt-ord)"></i>발주</span><span><i style="background:var(--bad-bg)"></i>마감 지난 발주</span><span><i style="background:var(--pt-inb)"></i>입고(기발주)</span><span><i style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--good)"></i>입고(새 발주분)</span><span><i style="background:var(--pt-use)"></i>생산 투입</span></div>
+          <div class="lg"><span><i style="background:var(--pt-ord)"></i>발주</span><span><i style="background:var(--bad-bg)"></i>마감 지난 발주</span><span><i style="background:var(--pt-inb)"></i>입고 예정(발주 완료)</span><span><i style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--good)"></i>입고 필요(아직 발주 안 함)</span><span><i style="background:var(--pt-use)"></i>생산 투입</span></div>
         </section>
         <div class="det" id="s-det2"></div>
         <details class="card m4-lt"><summary>리드타임 보기</summary><section id="gk-lt"></section></details>

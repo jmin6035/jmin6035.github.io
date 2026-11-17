@@ -198,7 +198,7 @@
   }
 
   /* 계획 › 소재 탭 '소재 종합'과 같은 계산(gyehoek.js readMat ← supply.js matPlan 소재 유형 캘린더 '입고' 줄 월 합계)
-     칸 = 소재 유형 × 날짜: 입고 완료 = 지난 날 MES 입고 실적(portal.matAct.inb) · 발주 = MES 기발주 입고 예정(입고일) · 미발주 = 새 발주분(입고 필요일, 지난 건 오늘)
+     칸 = 소재 유형 × 날짜: 입고 완료 = 지난 날 MES 입고 실적(portal.matAct.inb) · 발주 = MES 발주 완료분 입고 예정(입고일) · 미발주 = 아직 발주 안 함(입고 필요일, 지난 건 오늘)
      원값 합(소재 탭 mat_v2 와 같게) · 미발주는 발주 마감이 지난 몫(아직 발주 안 함)과 마감 전(발주 시기 전)으로 나눔 · 임가공 도금 N(포스코 지급) 제외
      소재 계획이 있는 달 = 소재 탭(supply.js prep days = V.self 날짜)과 같은 달 */
   function matMonths(D, months) {
