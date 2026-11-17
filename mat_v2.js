@@ -127,13 +127,18 @@
         const cl = [d < td ? 'ps' : '', d === td ? 'td' : ''].filter(Boolean).join(' ');
         const late = k === 'po' && t.late[d];
         return `<td${cl ? ` class="${cl}"` : ''}>${v ? `<span class="${k}${late ? ' late' : ''}${v >= 9999.5 ? ' w5' : ''}" data-c="${esc(t.c)}" data-k="${k === 'po' ? 'ord' : 'inb'}" data-d="${d}" title="${esc(`${md(d)} ${t.c} ${k === 'po' ? '발주' : '입고'} ${n0(v)}t${late ? ' — 마감 지난 몫 포함' : ''}`)}">${n0(v)}</span>` : ''}${v && vn ? `<span class="ib nd" data-c="${esc(t.c)}" data-k="inb" data-d="${d}" title="${esc(`${md(d)} ${t.c} 미발주 — 입고 필요 ${n0(vn)}t`)}">+${n0(vn)}</span>` : ''}</td>`; }).join('');
-      return `<tr class="${first ? 'r1' : 'r2'}">${first ? `<th class="nm" rowspan="3">${esc(t.c)}</th>` : ''}<th class="kd"><i class="${k}">${k === 'po' ? '발주' : '입고'}</i></th>${cells}<td class="tt">${s >= 0.5 ? n0(s) : ''}</td></tr>`;
+      return `<tr class="${first ? 'r1' : 'r2'}"${first ? ` data-row="${esc(t.c)}"` : ''}>${first ? `<th class="nm" rowspan="3">${esc(t.c)}</th>` : ''}<th class="kd"><i class="${k}">${k === 'po' ? '발주' : '입고'}</i></th>${cells}<td class="tt">${s >= 0.5 ? n0(s) : ''}</td></tr>`;
     };
     let b = '';
     const odLine = (t) => `<tr class="r3"><th class="kd"><i class="odt">발주일</i></th>${ds.map((d) => { const L = t.odt[d]; return `<td class="odt"${L ? ` title="${esc(`${md(d)} 입고 예정분 발주일: ${L.map(md).join(' · ')}`)}"` : ''}>${L ? `${md(L[0])}${L.length > 1 ? '<small>외</small>' : ''}` : ''}</td>`; }).join('')}<td class="tt"></td></tr>`;
     for (const g of R.calRows) { if (!g.rows.length) continue; b += `<tr class="sec"><th colspan="${nc}">${PLN[g.pl]}</th></tr>` + g.rows.map((t) => line(t, 'po', true) + line(t, 'ib', false) + odLine(t)).join(''); }
     if (R.quiet.length) b += `<tr class="fold"><td colspan="${nc}">▸ 이달 발주·입고 없음 ${R.quiet.length}종 <small>${R.quiet.map(esc).join(' · ')}</small></td></tr>`;
-    return `<h2 class="m4-h">발주 · 입고 캘린더</h2><div class="m4-q" title="소재마다 위 줄 = 발주, 아래 줄 = 입고 · 지난 날은 실적(흐리게) · 숫자를 누르면 업체·양 상세">톤 · <b style="color:var(--bad)">빨강</b> = 마감 지난 발주 · 미발주 입고 필요</div>`
+    // 이번 주 발주(11/17 사용자 '발주·입고 캘린더랑 연결해서 같이') — 소재 관제와 같은 계산(월~일, 마감 지난 부족 포함) · 누르면 아래 그 소재 줄로
+    const S = window.SupMat, w0 = (() => { const k = wd(td); return addD(td, k === 0 ? -6 : 1 - k); })(), w1 = addD(w0, 6);
+    const WR = Object.entries(S.MP.T).filter(([, T]) => inScope(T.plant)).map(([c, T]) => { let a = 0, lt = 0; for (const [d, L] of Object.entries(T.ord)) if (d >= w0 && d <= w1) { a += S.sumT(L); lt += S.sumT(L.filter((e) => e.late)); } return { c, pl: T.plant, a, lt }; }).filter((x) => x.a >= 0.5).sort((x, y) => (x.pl < y.pl ? 1 : x.pl > y.pl ? -1 : 0));
+    const wtot = WR.reduce((x, r) => x + r.a, 0);
+    const wk = `<div class="m4-wk"><div class="h"><b>이번 주 발주</b><small>${md(w0)}~${md(w1)} · 소재 유형별 · 마감 지난 부족 포함 · 누르면 아래 캘린더의 그 소재 줄로</small><b class="t">${n0(wtot)}t</b></div><div class="l">${WR.map((r) => `<button type="button" data-go="${esc(r.c)}"><span>${esc(r.c)}</span><b>${n0(r.a)}t</b>${r.lt >= 1 ? `<small>마감 지난 ${n0(r.lt)}t</small>` : '<small class="ok">이번 주 마감</small>'}</button>`).join('') || '<span class="muted">이번 주 발주할 소재 없음</span>'}</div></div>`;
+    return `<h2 class="m4-h">발주 · 입고 캘린더</h2>${wk}<div class="m4-q" title="소재마다 위 줄 = 발주, 아래 줄 = 입고 · 지난 날은 실적(흐리게) · 숫자를 누르면 업체·양 상세">톤 · <b style="color:var(--bad)">빨강</b> = 마감 지난 발주 · 미발주 입고 필요</div>`
       + `<div class="m4-sc"><table class="m4-cl v2-grid"><colgroup><col style="width:88px"><col style="width:56px">${ds.map(() => '<col>').join('')}<col style="width:66px"></colgroup>`
       + `<thead><tr><th>소재</th><th></th>${hd}<th>계</th></tr></thead><tbody>${b}</tbody></table></div>`;
   }
@@ -149,6 +154,7 @@
     window.SupMat.view = R;   // 점검용
     $('m4-sum').innerHTML = table(R);
     $('m4-cal').innerHTML = cal(R);
+    $('m4-cal').querySelectorAll('[data-go]').forEach((b) => b.onclick = () => { const tr = $('m4-cal').querySelector(`tr[data-row="${b.dataset.go}"]`); if (!tr) return; tr.scrollIntoView({ behavior: 'smooth', block: 'center' }); $('m4-cal').querySelectorAll('tr.hl').forEach((x) => x.classList.remove('hl')); let x = tr; for (let i = 0; i < 3 && x; i++, x = x.nextElementSibling) x.classList.add('hl'); });
     $('m4-cal').querySelectorAll('span[data-c]').forEach((el) => el.onclick = () => { if (S.typeDetail) { S.typeDetail(el.dataset.c, el.dataset.d, el.dataset.k); const d2 = $('s-det2'); if (d2) d2.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
   }
   let t_ = 0;
