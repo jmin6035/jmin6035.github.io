@@ -34,7 +34,7 @@
   const K0 = '소재 매치 전', KP = '소재 매치 후';
   const MSUB = [['재고 있음', '규격 맞는 소재 재고 있음 — 매치만 하면 됨'], ['발주 진행', '소재 발주됨 — 입고 대기'], ['미발주', '재고·발주 모두 없음 — 소재 발주 필요']];
   const msub = (r) => (r.st === '소재 있음' ? '재고 있음' : r.po || r.st === '입고 대기' ? '발주 진행' : '미발주');
-  const GSUB = [['포스코 진행', '포스코 생산 중(입고 예정일 이내)'], ['입고 지연', '필요 입고일보다 늦음'], ['미발주', '소재 발주 전 — 발주 필요']];
+  const GSUB = [['포스코 진행', '포스코 생산 중(입고 예정일 이내)'], ['입고 지연', '필요 입고일 지남'], ['미발주', '소재 발주 전 — 발주 필요']];
   const gsub = (o) => (o.matSt === '지연' ? '입고 지연' : o.matSt === '미발주' && CT.posco(o.src || {}).pre === '미발주' ? '미발주' : '포스코 진행');   // F/H 발주 기록은 없어도 포스코 주문이 진행 중이면 포스코 진행(아래 포스코 진행 단계 표 '미발주'와 같게)
   const ccAsOf = () => (((D0 || {}).cc_order_progress || {}).asOf || '');
   const paintWait = (r) => r.wst === '부자재입고대기' || (/도료/.test(r.canBy || '') && r.can && r.can > ccAsOf());
@@ -63,7 +63,7 @@
      도금 매치 후 = 소재 입고 완료(지시대기) · 컬러 1020 부자재 공란 = 부자재 준비됨(계산 키는 그대로) */
   const lab = (pl, k) => (k === '불량' ? '부자재 불량' : pl === 'G' && k === KP ? '소재 입고 완료(지시대기)' : k === '작업 대기' ? (pl === 'G' ? '소재 입고 완료(지시대기)' : '부자재 준비됨') : k);
   // MES 화면번호는 화면 글자에 쓰지 않고 말풍선(title)에만
-  const CODE = { C: { '': 'MES SSCHC1010 작업지시대상선정', '부자재 대기': 'MES SSCHC1020 작업지시 편성 및 확정 — 부자재 상태 입고대기', '불량': 'MES SSCHC1020 — 부자재 상태 불량', '작업 대기': 'MES SSCHC1020 — 부자재 상태 공란', '작업지시량': 'MES SSCHC1030 생산우선순위 확정 지시 — 작업시간 = 지시중량 ÷ 계약 라인 스피드' }, G: {} };
+  const CODE = { C: { '': '작업지시 대상 주문', '부자재 대기': '소재 매치 · 부자재 입고 대기', '불량': '소재 매치 · 부자재 불량', '작업 대기': '소재 매치 · 부자재 준비됨', '작업지시량': '확정 작업지시 · 작업시간 = 지시중량 ÷ 라인 속도' }, G: {} };
   // 작업시간(h, 24시간 기준): 컬러 = 계약별 실적 t/h(cc_order_progress tph), 작업지시량은 확정 지시 남은 양 기준 · 도금 = 라인 하루 능력 ÷ 24
   const hrsOf = (r, k) => (r.pl === 'G' || r.src ? ((r.remT || 0) / ((r.src && r.src.tph) || (CAPG[r.line] || 800) / 24)) : k === KW ? (r.s1030 ? r.s1030.h : r.cfmHrs != null ? r.cfmHrs : r.hrs) || 0 : (MATCHED.includes(k) || k === KP) && r.subT != null && r.tph ? r.subT / r.tph : (r.hrs || 0));
   const tonOf = (r, k) => (!r.src && r.pl !== 'G' && k === KW ? (r.s1030 ? +r.s1030.t : (+r.cfmT || 0)) : !r.src && r.pl !== 'G' && MATCHED.includes(k) && r.subT != null ? +r.subT : (+r.remT || 0));   // 11/10: 1020 단계 = 1020 지시 잔량(1020 화면 지시중량과 같음)   // 11/9: 작업지시량 = 1030 지시중량, 그 밖 = 1010 주문잔여량
@@ -114,11 +114,11 @@
     const hd = (rs, k) => `<span class="nw">${n0(hSum(rs, k))}시간</span> · ${dayTxt(rs, k)}`;
     const wT = d.pl === 'C' ? w.rem : w.rem, wN = d.pl === 'C' ? w.rs.reduce((a, r) => a + (r.s1030 ? r.s1030.n : (+r.cfmN || 0)), 0) : w.n;
     const gTxt = (rs) => { const o = {}; rs.forEach((r) => { const g = gName(String(r.grp || '-').replace(/그룹$|판매그룹$/, '')); o[g] = (o[g] || 0) + (+r.remT || 0); }); const e = Object.entries(o).filter((x) => x[1] >= 0.5).sort((a, b) => b[1] - a[1]); return e.length ? `<div class="gq">${e.map(([g, v]) => `<span class="nw">${esc(g)} ${n0(v)}</span>`).join(' · ')}</div>` : ''; };
-    const tiles = `<div class="pts p${4 + F.tiles.length}">${tile('미생산 주문', n0(tot), 't', `<span title="주문량 − 생산량(MES 주문잔여량) · 1,000kg 넘는 것(계약번호 5번째 T·Q 포함)">${n0(n)}건</span>${gTxt(d.R, '')}`)}`
-      + tile(K0, n0(m0.rem), 't', `${n0(m0.n)}건${m0s}${gTxt(m0.rs, K0)}`, m0.rem > 0.5 ? 'bad' : '', xk(K0))
-      + tile(KP, n0(mtT), 't', `${n0(mtN)}건 · ${hd(mtR, KP)}${gTxt(mtR, KP)}`, '', xk(KP))
-      + F.tiles.map((k) => { const c = cat(k); return tile(`└ ${k}`, n0(c.rem), 't', `<span${c.remX != null && Math.abs(c.remX - c.rem) >= 0.5 ? ` title="${esc(`MES 지시 잔량 ${n0(c.remX)}t — 코일 무게 기준이라 주문 잔여(위 숫자)와 다를 수 있음`)}"` : ''}>${n0(c.n)}건</span> · ${hd(c.rs, k)}${gTxt(c.rs, k)}`, (k === '부자재 대기' || k === '불량') && c.rem > 0.5 ? 'warn' : '', xk(k)); }).join('')
-      + tile(KW, n0(wT), 't', `<span${w.remX != null ? ` title="${esc(`지시중량 ${n0(w.remX)}t — MES 지시 코일 무게 합. 위 숫자는 주문 잔여(주문량 − 생산량)라 서로 다를 수 있음`)}"` : ''}>지시 ${n0(wN)}건</span>${d.pl === 'C' && w.n !== wN ? ` · 계약 ${n0(w.n)}건` : ''} · ${hd(w.rs, KW)}${gTxt(w.rs, KW)}`, 'ok', xk(KW)) + '</div>';
+    const tiles = `<div class="pts p${4 + F.tiles.length}">${tile('미생산 주문', n0(tot), '톤', `<span title="주문량 − 생산량 · 1,000kg 넘는 것(계약번호 5번째 T·Q 포함)">${n0(n)}건</span>${gTxt(d.R, '')}`)}`
+      + tile(K0, n0(m0.rem), '톤', `${n0(m0.n)}건${m0s}${gTxt(m0.rs, K0)}`, m0.rem > 0.5 ? 'bad' : '', xk(K0))
+      + tile(KP, n0(mtT), '톤', `${n0(mtN)}건 · ${hd(mtR, KP)}${gTxt(mtR, KP)}`, '', xk(KP))
+      + F.tiles.map((k) => { const c = cat(k); return tile(`└ ${k}`, n0(c.rem), '톤', `<span${c.remX != null && Math.abs(c.remX - c.rem) >= 0.5 ? ` title="${esc(`지시 코일 무게 ${n0(c.remX)}t`)}"` : ''}>${n0(c.n)}건</span> · ${hd(c.rs, k)}${gTxt(c.rs, k)}`, (k === '부자재 대기' || k === '불량') && c.rem > 0.5 ? 'warn' : '', xk(k)); }).join('')
+      + tile(KW, n0(wT), '톤', `<span${w.remX != null ? ` title="${esc(`지시 코일 무게 ${n0(w.remX)}t`)}"` : ''}>지시 ${n0(wN)}건</span>${d.pl === 'C' && w.n !== wN ? ` · 계약 ${n0(w.n)}건` : ''} · ${hd(w.rs, KW)}${gTxt(w.rs, KW)}`, 'ok', xk(KW)) + '</div>';
     const pct = (v) => `${tot ? Math.round(v / tot * 100) : 0}%`;
     const row = (ex, cls, sw, nm, cnt, t, h, dy, txt) => `<tr class="${cls}${ex ? ' ck' : ''}"${ex ? ` data-ex="${esc(ex)}" aria-expanded="${PS.open === ex}"${tip(ex.slice(2))}` : ''}><td class="nw"${txt ? ` title="${esc(txt)}"` : ''}>${sw ? `<i class="sw" style="background:${sw}"></i>` : ''}${nm}${ex ? `<span class="tg">${PS.open === ex ? '▾' : '▸'}</span>` : ''}</td><td class="r">${n0(cnt)}</td><td class="r"><b>${n0(t)}</b></td><td class="r">${pct(t)}</td><td class="r">${h == null ? '<span class="mu">–</span>' : `${n0(h)}시간`}</td><td class="r">${dy || '<span class="mu">–</span>'}</td></tr>`;
     let body = row(xk(K0), '', F.leaves[0][1], esc(K0), m0.n, m0.rem, null, '', F.leaves[0][2])
@@ -170,7 +170,7 @@
     tb += tr(0, '미생산 주문', ag(d.R), null, 'b') + tr(1, K0, ag(m0.rs), null, 'b') + F.sub.map(([k]) => tr(2, k, ag(m0.rs.filter((r) => F.subOf(r) === k)), null)).join('')
       + tr(1, esc(lab(d.pl, KP)), ag(mtR), dy(mtR, KP), 'b') + mtS.map((c) => tr(2, esc(lab(d.pl, c.k)), ag(c.rs), dy(c.rs, c.k))).join('') + tr(1, KW, ag(w.rs), dy(w.rs, KW), 'b')
       + (d.pl === 'C' ? tr(1, '1,000kg 이하(제외)', d.exS, null, 'mu') + tr(0, '미생산 없음(제외)', d.exZ, null, 'mu') : tr(0, '미생산 없음·생산 완료(제외)', ag((d.all || []).filter((o) => !d.R.includes(o))), null, 'mu'));
-    const det = `<details class="pd"><summary${d.pl === 'C' ? ' title="MES SSCHC1010 양식"' : ''}>상세 표</summary><div class="ct-wrap"><table class="ct-t pdt"><thead><tr><th>구분</th><th class="r">건수</th><th class="r">주문량(t)</th><th class="r">생산량(t)</th><th class="r">미생산(t)</th><th class="r">매치량(t)</th><th class="r">작업가능일</th></tr></thead><tbody>${tb}</tbody></table></div></details>`;
+    const det = `<details class="pd"><summary>상세 표</summary><div class="ct-wrap"><table class="ct-t pdt"><thead><tr><th>구분</th><th class="r">건수</th><th class="r">주문량(t)</th><th class="r">생산량(t)</th><th class="r">미생산(t)</th><th class="r">매치량(t)</th><th class="r">작업가능일</th></tr></thead><tbody>${tb}</tbody></table></div></details>`;
     const note = '';   // 11/17 용어 점검: 계산 설명 줄 삭제(정의는 맨 아래 기준·사양)
     return `<section class="pc"><div class="pch"><b>${esc(title)}</b><span>기준 <b class="dt">${md(((D0 || {})[d.pl === 'C' ? 'cc_order_progress' : 'cg_order_progress'] || {}).asOf)}</b> · ${monTxt()}</span></div>${tiles}${segBar(d.cats, true, d.pl)}<div class="lg2"><div>${leg}</div>${lday ? `<div class="lg2r">${lday}</div>` : ''}</div>${pos ? `<div class="lg2b">${pos}</div>` : ''}${exp}${det}${note}</section>`;
   }
@@ -408,7 +408,7 @@
     const stale = L.filter(CT.isStale), li = (a, b) => `<dt>${a}</dt><dd>${b}</dd>`;
     const defs = [
       li('기준일', `${md(M.asOf)} · 도금 주문 ${md(cg.asOf)} · 컬러 주문 ${md(cc.asOf)} · 납기 위험 판정 ${esc(String(rk.built || '').replace('T', ' '))}`),
-      li('미생산 주문', '주문량 − 생산량(MES 주문잔여량). 생산이 끝나 출하만 남은 주문은 \'출하\' 단계(미출하량)'),
+      li('미생산 주문', '주문량 − 생산량. 생산이 끝나 출하만 남은 주문은 \'출하\' 단계(미출하량)'),
       li('위험', '납기 위험 화면과 같은 판정 — 지연 예상(소재 입고·강종 생산·작업 예정이 납기 이후) · 납기 경과(납기 지남·생산 남음). 판정일 = 도금 수출 출항 전날, 도금 내수 납기 달 말일, 컬러 납기일 <a href="risk.html">→ 납기 위험</a>'),
       v === 'cal' ? li('주', '수요일 ~ 화요일(주간 작업순서 확정 주기) · 날짜 = 계약 납기일') : li('단계', '소재 확보 → 작업 편성 → 생산 → 출하. 아직 안 끝난 첫 단계에 미생산 주문을 둠 · 미편성 = 소재는 있으나 작업 편성 전'),
       li('제외', `종결 확인(납기 60일 넘게 지난 미종결) ${n0(stale.length)}건 ${n0(sum(stale, (o) => o.remT))}t · 미생산 0.5t 미만`),

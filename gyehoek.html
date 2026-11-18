@@ -146,25 +146,25 @@ table.gk-act { border-collapse: collapse; min-width: 260px; } table.gk-act :is(t
 html body main #m4 table.m4-gd { table-layout: fixed; width: 100%; } html body main #m4 table.m4-gd thead th small b.dt { color: var(--brand-2, #1f5fae); font-weight: 800; font-size: 14px; } #m4 h2.m4-h small { font-size: 14px; font-weight: 500; color: var(--ink-3); margin-left: 6px; }
 html body main #m4 table.m4-gd :is(th, td) { padding: 10px 6px !important; border-top: 1px solid var(--line); font-size: 16px !important; text-align: center !important; background: transparent !important; white-space: nowrap; }
 html body main #m4 table.m4-gd thead th { font-size: 15px !important; color: var(--ink-2); font-weight: 700; border-top: 0; border-left: 0 !important; border-right: 0 !important; white-space: nowrap; vertical-align: bottom; line-height: 1.3; text-align: center !important; padding-bottom: 8px !important; } html body main #m4 table.m4-gd :is(th, td) { border-left: 0 !important; border-right: 0 !important; }
-html body main #m4 table.m4-gd thead th small { display: block; font-size: 13px; font-weight: 500; color: var(--ink-3); }
+html body main #m4 table.m4-gd thead th small { display: block; font-size: 13.5px; font-weight: 500; color: var(--ink-3); }
 html body main #m4 table.m4-gd tbody th { font-weight: 600; }
 /* 11/18 사용자 '왼쪽으로 맞춰라': 이름 칸(그룹·소재)은 왼쪽 정렬 */
-html body main #m4 table.m4-gd :is(tbody th, thead th:first-child) { text-align: left !important; padding-left: 14px !important; }
-html body main #m4 table.m4-cl :is(tbody th.nm, thead th:first-child) { text-align: left !important; padding-left: 8px !important; padding-right: 2px !important; letter-spacing: -0.3px; }
+html body main #m4 table.m4-gd :is(tbody th, thead th:first-child) { text-align: center !important; }   /* 11/19 검수 어긋남: 이름 칸도 가운데(docs/16 규칙 13) */
+html body main #m4 table.m4-cl :is(tbody th.nm, thead th:first-child) { text-align: center !important; padding-left: 4px !important; padding-right: 4px !important; letter-spacing: -0.3px; }
 html body main #m4 table.m4-gd tr.tot > :is(th, td) { font-weight: 800; background: var(--surface-2) !important; border-top: 2px solid var(--line); }
 
 html body main #m4 table.m4-gd td.b { font-weight: 700; } html body main #m4 table.m4-gd td.z { color: var(--line) !important; }
 html body main #m4 table.m4-gd td.pc { font-weight: 800; } html body main #m4 table.m4-gd td.good { color: var(--good) !important; } html body main #m4 table.m4-gd td.muted { color: var(--ink-3) !important; }
 html body main #m4 table.m4-gd td.bad { color: var(--bad) !important; } html body main #m4 table.m4-gd td.self { color: #6b4fa0 !important; } html body main #m4 table.m4-gd td.warn { color: var(--warn) !important; }
-html body main #m4 table.m4-gd td.ob small { margin-left: 3px; font-size: 12.5px; color: var(--ink-3); } html body main #m4 table.m4-gd td.ob.bad small { color: var(--bad); }
-html body main #m4 table.m4-cl td.odt { font-size: 13px !important; color: var(--ink-3); white-space: nowrap; letter-spacing: -0.3px; } html body main #m4 table.m4-cl td.odt small { display: block; font-size: 12px; margin-left: 0; } #m4 table.m4-cl th.kd i.odt { font-style: normal; font-size: 13px; color: var(--ink-3); }
+html body main #m4 table.m4-gd td.ob small { margin-left: 3px; font-size: 13.5px; color: var(--ink-3); } html body main #m4 table.m4-gd td.ob.bad small { color: var(--bad); }
+html body main #m4 table.m4-cl td.odt { font-size: 13.5px !important; color: var(--ink-3); white-space: nowrap; letter-spacing: -0.3px; } html body main #m4 table.m4-cl td.odt small { display: block; font-size: 13.5px; margin-left: 0; } #m4 table.m4-cl th.kd i.odt { font-style: normal; font-size: 13.5px; color: var(--ink-3); }
 #m4 .m4-pdw { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--bad) 40%, transparent); background: color-mix(in srgb, var(--bad) 8%, transparent); font-size: 14.5px; }
 #m4 .m4-pdw b { color: var(--bad); font-size: 15.5px; white-space: nowrap; } #m4 .m4-pdw span { color: var(--ink-2); } #m4 .m4-pdw .by { color: var(--ink); font-weight: 700; white-space: nowrap; }
 #m4 .m4-wk { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 0 0 14px; background: var(--surface); }
 #m4 .m4-wk .h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; margin-bottom: 8px; } #m4 .m4-wk .h > * { white-space: nowrap; } #m4 .m4-wk .h > b { font-size: 16px; } #m4 .m4-wk .h > b.dt { font-size: 18px; color: #fff; background: var(--brand-2, #1f5fae); border-radius: 6px; padding: 1px 10px; } #m4 .m4-wk .h small { font-size: 13px; color: var(--ink-3); } #m4 .m4-wk .h .t { margin-left: auto; font-size: 18px; }
 #m4 .m4-wk .l { display: flex; flex-wrap: wrap; gap: 8px; } #m4 .m4-wk button { font: inherit; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 7px 12px; min-width: 104px; cursor: pointer; }
-#m4 .m4-wk button:hover { border-color: var(--ink-2); } #m4 .m4-wk button span { display: block; font-size: 13px; color: var(--ink-2); font-weight: 700; } #m4 .m4-wk button b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
-#m4 .m4-wk button small { display: block; font-size: 12.5px; color: var(--bad); font-weight: 600; } #m4 .m4-wk button small.ok { color: var(--ink-3); font-weight: 500; }
+#m4 .m4-wk button:hover { border-color: var(--ink-2); } #m4 .m4-wk button span { display: block; font-size: 13.5px; color: var(--ink-2); font-weight: 700; } #m4 .m4-wk button b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
+#m4 .m4-wk button small { display: block; font-size: 13.5px; color: var(--bad); font-weight: 600; } #m4 .m4-wk button small.ok { color: var(--ink-3); font-weight: 500; }
 html body main #m4 table.m4-cl tr.hl > :is(td, th) { background: color-mix(in srgb, #f2b705 16%, var(--surface)) !important; }
 .gk-rl { margin: 18px 0 0; text-align: center; }   /* 11/17 사용자: 일별 가동계획 맨 아래 '일일 가동 계획 규칙' → 규칙 화면 */
 .gk-rl a { display: inline-block; padding: 12px 28px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 16px; font-weight: 800; color: var(--brand-2, #1f5fae); text-decoration: none; }
@@ -174,12 +174,12 @@ html body main #m4 table.m4-cl tr.hl > :is(td, th) { background: color-mix(in sr
   .gk-det table.dt.mt.fl thead { display: none; }
   .gk-det table.dt.mt.fl tbody tr { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 8px 0; border-top: 1px solid var(--line); }
   .gk-det table.dt.mt.fl tbody td { display: block; border: 0 !important; padding: 0 !important; text-align: left !important; }
-  .gk-det table.dt.mt.fl tbody td:nth-child(2) { grid-column: 1 / -1; font-size: 13px; color: var(--ink-3); }
+  .gk-det table.dt.mt.fl tbody td:nth-child(2) { grid-column: 1 / -1; font-size: 13.5px; color: var(--ink-3); }
   .gk-det table.dt.mt.fl tbody td:nth-child(4), .gk-det table.dt.mt.fl tbody td:last-child { grid-column: 1 / -1; }
   .gk-det .flw { flex-wrap: wrap; }
-  .gk-det table.dt.mt.fl tbody td.r::after { content: '톤'; margin-left: 2px; font-size: 13px; color: var(--ink-3); }
+  .gk-det table.dt.mt.fl tbody td.r::after { content: '톤'; margin-left: 2px; font-size: 13.5px; color: var(--ink-3); }
 }
-html body main #m4 table.m4-cl td small.lt { display: block; font-size: 12px !important; font-weight: 700; color: var(--bad); line-height: 1.1; white-space: nowrap; letter-spacing: -.3px; }   /* 그중 발주 마감 지난 양 */
+html body main #m4 table.m4-cl td small.lt { display: block; font-size: 13.5px !important; font-weight: 700; color: var(--bad); line-height: 1.1; white-space: nowrap; letter-spacing: -.3px; }   /* 그중 발주 마감 지난 양 */
 html body main #m4 table.m4-cl tbody td:not(.tt):not(.odt) { padding: 3px 4px !important; overflow: visible; }   /* 칸 폭 66px(표 min-width 를 날짜 수로) — 5자리(10,324)·오늘 테두리(2px)가 숫자에 닿지 않게 */
 #m4 .m4-cl td span.w5 { letter-spacing: -.3px !important; }
 </style>
@@ -256,7 +256,7 @@ table.sc td.nd { color: var(--ink-3); }
 .dethd { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; } .dethd > span { flex: 1; min-width: 0; }
 .dethd .fold { flex: none; font: inherit; font-size: 13.5px; font-weight: 700; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 12px; cursor: pointer; }
 .dethd .det-x { flex: none; font: inherit; font-size: 13.5px; font-weight: 700; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px 12px; cursor: pointer; } .dethd .det-x:hover { color: var(--bad); border-color: var(--bad); }
-#m4 > #s-det2:not(:empty) { margin: 0 0 16px; } #m4 #s-det2 table.t.mt { table-layout: auto; width: 100%; } #m4 #s-det2 table.t.mt td:nth-child(5) { white-space: normal !important; min-width: 150px; max-width: 220px; word-break: keep-all; }
+#m4 > #s-det2:empty { display: none; margin: 0; }   /* 11/19 검수: 빈 상세 칸 여백으로 카드 사이 20/38px → 같게 */ #m4 > #s-det2:not(:empty) { margin: 0 0 16px; } #m4 #s-det2 table.t.mt { table-layout: auto; width: 100%; } #m4 #s-det2 table.t.mt td:nth-child(5) { white-space: normal !important; min-width: 150px; max-width: 220px; word-break: keep-all; }
 .dethd .fold:hover { color: var(--brand-2); border-color: var(--brand-2); }
 .det.folded > :not(.dethd) { display: none; }
 .det table.dt td.wsrc { min-width: 170px; } .det table.dt td.wst { min-width: 210px; line-height: 1.45; } .dethd small { display: block; font-size: 13.5px; font-weight: 500; color: var(--ink-3); margin-top: 2px; }
@@ -444,7 +444,7 @@ html body main #m4 .m4-mx thead th.gq { border-bottom: 0 !important; box-shadow:
 @media (max-width: 700px) {
   html body main #m4 table.m4-mx { min-width: 1080px; }
   html body main #m4 .m4-mx thead th { white-space: normal !important; word-break: keep-all; }
-  html body main #m4 .m4-mx thead th.gq { text-align: left !important; padding-left: 16px !important; }
+  html body main #m4 .m4-mx thead th.gq { text-align: center !important; }
   html body main #m4 table.m4-gd { min-width: 600px !important; }
   html body main #m4 table.m4-gd col:first-child { width: 140px !important; }
   html body main #m4 table.m4-gd thead th { white-space: normal !important; word-break: keep-all; }
@@ -457,8 +457,8 @@ html body main #m4 table.m4-cl :is(thead th:nth-child(1), tbody th.nm) { positio
 html body main #m4 table.m4-cl :is(thead th:nth-child(2), tbody th.kd) { position: sticky; left: 104px; z-index: 2; background: var(--surface); box-shadow: 2px 0 0 var(--line); }
 html body main #m4 table.m4-cl thead th:is(:nth-child(1), :nth-child(2)) { background: var(--th); z-index: 3; }
 html body main #m4 table.m4-cl :is(tr.sec th, tr.fold td) > span { position: sticky; left: 14px; display: inline-block; }
-html body main #m4 table.m4-cl tr.sec th { text-align: left !important; }
-html body main #m4 table.m4-cl tr.fold td { text-align: left !important; }
+html body main #m4 table.m4-cl tr.sec th { text-align: center !important; }
+html body main #m4 table.m4-cl tr.fold td { text-align: center !important; }
 html body main details.card.m4-lt { padding-top: 14px !important; }   /* '리드타임 보기' 위 빈 공간(11/17 검토) */
 </style>
 </head>
