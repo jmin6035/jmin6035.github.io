@@ -12,7 +12,12 @@
     close: ['월 실적 마감', '전월 판매·생산·재고 대사 · 매월 1~5일'] };
   let D = null, EV = [], bound = false, grpSel = 'all', lineSel = null, curveG = null;
   let EVD = {};   // 정지·M/C 이름(일별 캘린더 — 01 일별 가동계획과 같은 출처: 도금 = 재계획 cal 이벤트, 컬러 = 통합 계획 정지 장부)
-  CT.boot(['suju.enc.json', 'latest.plan.enc.json', 'integrated.enc.json'], (X) => { D = X.suju; const GO = ['도금수출', '도금국내', '자동차', '자가재', '건재수출', '가전수출', '가전내수', '주문재', '계획재', '수요개발'];   // 11/11 회의: 모든 화면 도금 먼저 · 수요개발 맨 뒤
+  // 11/18 결정(검수 결정전달 기준 1): 창고 재고 = MES 소재재고 하나(02 현황 '총 재고'와 같은 값) — 판생속보 창고 값은 srCur·srParts 로 남겨 '판생' 이름 붙여 보임
+  function whMes(D_) {
+    for (const p of ['G', 'C']) { const w = (D_.wh || {})[p], h = (D_.hy || {})[p]; if (!w || !h || !h.stockAll || h.stockAll.now == null) continue;
+      D_.wh[p] = Object.assign({}, w, { srCur: w.cur, srParts: w.parts, cur: h.stockAll.now, cap: h.stockAll.cap || w.cap, parts: [['소재', (h.stockMat || {}).now || 0], ['제품', (h.stockPdt || {}).now || 0]] }); }
+  }
+  CT.boot(['suju.enc.json', 'latest.plan.enc.json', 'integrated.enc.json'], (X) => { D = X.suju; whMes(D); const GO = ['도금수출', '도금국내', '자동차', '자가재', '건재수출', '가전수출', '가전내수', '주문재', '계획재', '수요개발'];   // 11/11 회의: 모든 화면 도금 먼저 · 수요개발 맨 뒤
     if (D) D.elapsedPct = D.asOf && D.nDays ? +String(D.asOf).slice(8, 10) / D.nDays * 100 : null;
     EVD = {}; const LR = X['latest.plan'] && (X['latest.plan'].result || X['latest.plan']);
     for (const c of (LR && LR.cal) || []) if (c.event) EVD[`${c.line}|${c.date}`] = { nm: String(c.event).split(' · ')[0], full: (+c.blackout || 0) >= 1380 };
@@ -638,8 +643,9 @@
     const lo = Bk.filter((x) => x.st === '부족'), hi = Bk.filter((x) => x.st === '경고' || x.st === '주의');
     const k1 = kpi('안전재고 밑', lo.length ? 'bad' : 'ok', `${lo.length}<small>개 그룹</small>`, lo.map((x) => `<b>${esc(x.name)}</b> ${T(x.end)} / 안전 ${T(x.safety)}t`).join('<br>') || '없음');
     const k2 = kpi('상한 초과', hi.some((x) => x.st === '경고') ? 'bad' : hi.length ? 'warn' : 'ok', `${hi.length}<small>개 그룹</small>`, hi.map((x) => `<b>${esc(x.name.replace(/\(.*\)/, ''))}</b> ${x.endDays} / ${x.cap}일`).join('<br>') || '없음');
+    // 11/18 결정(검수 결정전달 기준 1): 창고 재고 = MES 소재재고 하나(02 현황 '총 재고'와 같은 값) — 판생속보 값은 '판생' 이름 붙여 따로
     const whk = ['G', 'C'].filter(inPl).map((p) => { const w = D.wh[p], r = w.cur / w.cap * 100;
-      return kpi(`${PN(p)} 창고`, r > 100 ? 'bad' : r > 90 ? 'warn' : 'ok', `${Math.round(r)}<small>%</small>`, `${T(w.cur)} / 상한 ${T(w.cap)}t<br>${w.parts.map((q) => `${esc(q[0])} ${T(q[1])}`).join(' · ')}`); }).join('');
+      return kpi(`${PN(p)} 창고`, r > 100 ? 'bad' : r > 90 ? 'warn' : 'ok', `${Math.round(r)}<small>%</small>`, `${T(w.cur)} / 상한 ${T(w.cap)}t<br>${w.parts.map((q) => `${esc(q[0])} ${T(q[1])}`).join(' · ')}${w.srCur != null ? `<br><span class="muted">판생 ${T(w.srCur)}</span>` : ''}`); }).join('');
     const rows = Bk.map((x) => { const w = x.cap ? Math.min(100, (x.endDays || 0) / (x.cap * 1.6) * 100) : 0;
       return `<tr><td class="c">${B(x.st)}</td><td class="nm"><b>${esc(x.name)}</b></td><td class="r">${T(x.begin)}</td><td class="r">+${T(x.prod)}</td><td class="r" title="판매계획 ${T(x.salesM)}t − ${md(D.month + '-01')}~${md(D.asOf)} 출고 ${T(x.shipped)}t(재고 변화로 계산 · MES 출하 ${T(x.shipMes)}t)">−${T(x.sales)}</td><td class="r"><b>${T(x.end)}</b></td><td class="r">${T(x.safety)}</td><td style="min-width:170px"><div class="sj-bar"><i style="width:${w}%;background:${stCol(x.st)}"></i>${x.cap ? `<u style="left:${100 / 1.6}%"></u>` : ''}</div><small class="nw">${x.endDays ?? '–'} / ${x.cap ?? '–'}일</small></td></tr>`; });
     const c1 = card(1, `그룹별 재고 — ${+D.month.slice(5)}월말 예상`, '막대 = 예상 월말 재고일수 · 검은 선 = 상한', tbl(['상태', '그룹', [`${md(D.asOf)} 실재고`, 'r'], ['+ 남은 생산', 'r'], ['− 남은 판매', 'r'], ['= 예상 월말', 'r'], ['안전재고', 'r'], '재고일수 / 상한'], rows));

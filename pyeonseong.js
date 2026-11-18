@@ -216,11 +216,12 @@
     if (cap < 1) return cellH({ ln, d: c.d, off: String(c.event || '').replace(/\s*\(.*\)$/, '') || '정지', tip: `${ln} ${mdw(c.d)} ${c.event || '정지'}` });   // 01 일별 가동계획과 같은 이름(정기수리·수리·휴지)
     const r = c.hAvail >= 1 ? (c.hrs || 0) / c.hAvail : null;
     const sr = st ? Math.min(st.res || 0, st.t) : 0;
-    return cellH({ ln, d: c.d, rem, fl: !!c.flag, band: c.event ? ev : '', mc, t: fill, chips: famC(c.fam) + (st && c.fam !== 'AL-STS' ? famC('AL-STS') : ''),
+    const pt = PLT ? (PLT[`${ln}|${c.d}`] || 0) : null;   // 01 계획 톤(배정 주문 톤 fill 은 툴팁)
+    return cellH({ ln, d: c.d, rem, fl: !!c.flag, band: c.event ? ev : '', mc, t: pt != null ? pt : fill, chips: famC(c.fam) + (st && c.fam !== 'AL-STS' ? famC('AL-STS') : ''),
       pct: pctB(r, `이 날 배정 주문을 실적 속도(같은 두께·폭 t/시간)로 돌리면 ${n1(c.hrs)}시간 — 가동 가능 ${n1(c.hAvail)}시간을 넘어 다음 날로 밀림`, (c.hrs || 0) - c.hAvail),
       st: [['작업대기', c.conf], ['지시대기', c.plan], ['입고예정', c.fcst]], G: c.grp,
       sts: sr >= 0.5 ? `AL-STS 예약 ${n0(sr)}t(D-3 확정)` : '', wn: [c.flag && (c.flagS || c.flag), c.gap >= 0.5 && c.hAvail - (c.hrs || 0) >= 0.5 && `빈 시간 ${n1((c.hAvail - (c.hrs || 0)) / (c.eff || 1))}시간`,   /* 11/13 점검: '빈칸 Xt'(남은 시간 × 평균 속도)는 계획 톤과 안 맞아 보임 → 컬러와 같은 '빈 시간' */ c.lateE && `출항일 초과 ${c.lateE}건`, c.late - c.lateE > 0 && `납기 초과 ${c.late - c.lateE}건`],
-      tip: `${ln} ${mdw(c.d)}${st ? ` · AL-STS ${n0(st.t)}t${sr >= 0.5 ? ` (예약 ${n0(sr)}${st.t - sr >= 0.5 ? ` · 주문 ${n0(st.t - sr)}` : ''} — 주문 D-3 확정)` : ' (주문)'}` : ''} · 생산 ${n0(fill)}t / 능력 ${n0(cap)}t · 작업대기 ${n0(c.conf)} · 지시대기 ${n0(c.plan)} · 입고예정 ${n0(c.fcst)} · ${Object.entries(regroup(c.grp)).filter(([, v]) => v >= 0.5).map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
+      tip: `${ln} ${mdw(c.d)}${st ? ` · AL-STS ${n0(st.t)}t${sr >= 0.5 ? ` (예약 ${n0(sr)}${st.t - sr >= 0.5 ? ` · 주문 ${n0(st.t - sr)}` : ''} — 주문 D-3 확정)` : ' (주문)'}` : ''} · 계획 ${n0(pt != null ? pt : fill)}t(01 계획과 같은 값) · 배정 주문 ${n0(fill)}t · 작업대기 ${n0(c.conf)} · 지시대기 ${n0(c.plan)} · 입고예정 ${n0(c.fcst)} · ${Object.entries(regroup(c.grp)).filter(([, v]) => v >= 0.5).map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
   }
   function ccCell(x, ln, KD, rem) {
     const c = x.c;
@@ -373,6 +374,12 @@
   }
   /* 맨 위 = 주문진도 화면(ct_orders.js)의 '컬러·도금 전체 주문진도' 그대로(CTORD.mount — 같은 함수·같은 자료, 라인별 미생산 카드만 뺌) */
   let ORD = null;
+  // 11/18 결정(검수 결정전달 기준 3): 03 캘린더 칸 톤 = 01 계획(게시 계획 latest.plan) 같은 날·같은 라인 숫자 그대로
+  let PLT = null;
+  async function loadPlan(pw) {
+    try { const e = await GP.latest('latest.plan.enc.json'); const o = e ? await GP.decryptJSON(e, pw) : null; const R = o && (o.result || o);
+      if (R && R.rows) { PLT = {}; for (const [d, l, , , t] of R.rows) PLT[`${l}|${d}`] = (PLT[`${l}|${d}`] || 0) + t; } } catch (e) { PLT = null; }
+  }
   async function loadOrd() {
     if (!window.CTORD) return null;
     const E = await Promise.all(CTORD.FILES.map((f) => GP.latest(f).catch(() => null))), D = {};
@@ -441,7 +448,7 @@ table.ws tr[draggable], .pl-i { cursor: default !important; }`;
       }
       try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ }
       await Promise.all(['cg', 'cc'].map(async (p) => { const sv = await lastSaved(p); X[p].ver = sv; useSaved(p, sv); }));
-      await Promise.all([window.CGCAL && CGCAL.load(pw), window.CCCAL && CCCAL.load(pw), loadOrd().then((D) => { ORD = D; })].map((x) => Promise.resolve(x).catch(() => null)));   // 캘린더 = 생산 일정 화면과 같은 자료 · 주문진도 = 주문진도 화면과 같은 자료
+      await Promise.all([window.CGCAL && CGCAL.load(pw), window.CCCAL && CCCAL.load(pw), loadOrd().then((D) => { ORD = D; }), loadPlan(pw)].map((x) => Promise.resolve(x).catch(() => null)));   // 캘린더 = 생산 일정 화면과 같은 자료 · 주문진도 = 주문진도 화면과 같은 자료
       $('ps-lock').hidden = true; $('ps-main').hidden = false;
       drawAll();
     } catch (e) {
