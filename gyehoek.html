@@ -61,6 +61,7 @@ table.gk-adj td em.dn { color: var(--warn); }
 .gk-det :is(table.dt th, table.dt td, h3, .why) { text-align: center; }
 .gk-det table.dt td small.spec { display: block; font-size: 13.5px; color: var(--ink-2); }
 .gk-det .flw { justify-content: flex-start; }   /* 줄마다 칩 시작 자리 같게(11/17 검토) */
+html body main :is(#gk-det, .gk-det) table.fl th:last-child, html body main :is(#gk-det, .gk-det) table.fl td:last-child { text-align: left !important; padding-left: 14px; }   /* 11/18 사용자 '하나는 가운데 하나는 왼쪽이면 어쩌라고': 일정 칸은 머리·칩 모두 왼쪽(칩 수가 줄마다 달라 시작 자리를 맞춤) */
 @media (min-width: 701px) { .gk-det table.dt.fl td:last-child { min-width: 430px; } html body main .gk-det table.dt.fl td:nth-child(2) { white-space: normal !important; word-break: keep-all; } }   /* 일정 칸 폭 — 칩이 2줄 안에(11/17 검토) */
 .gk-info > span, .gk-info > em, .gk-info .mt b { white-space: nowrap; }   /* 390: '729t / AL'·'(월차 / 대비)' 갈라짐 */
 .gk-det[hidden] { display: none; }
