@@ -74,9 +74,10 @@
     const mpl = (m, p) => Object.entries(MP[m] || {}).filter(([g]) => g[0] === p).reduce((a, [, x]) => a + (x.prod || 0), 0);
     const G = O.groups || [], pm = O.planMonth, pl = O.plating || {}, cl = IG.colorLines || (O.color || {}).lines || {};
     const fc = (p) => { const L = G.filter((g) => g.pl === p && g.prod); return { a: L.reduce((s, g) => s + (g.prod.actual || 0), 0), f: L.reduce((s, g) => s + (g.prod.actual || 0) + (g.prod.after || 0), 0), m: L.reduce((s, g) => s + (g.prod.month || 0), 0) }; };
-    const rows = [];
-    if (pm && UI.inScope('G')) { const F = fc('G'); rows.push(['도금', M.map((m, i) => (i === CMi ? [F.f, F.m] : [pm.g1[i] + pm.g2[i], mpl(m, 'G') || (pl.g1 || [])[i] + (pl.g2 || [])[i]]))]); }
-    if (UI.inScope('C') && Object.keys(cl).length) { const F = fc('C'), tot = (m, k) => Object.values(cl[m] || {}).reduce((a, x) => a + (x[k] || 0), 0); rows.push(['컬러', M.map((m, i) => (i === CMi ? [F.f, F.m] : [tot(m, 'placed'), mpl(m, 'C') || tot(m, 'plan')]))]); }
+    const rows = [], sp = (m, p) => ((O.srProd || {})[m] || {})[p] || 0;   // 분모 = 판생속보 월차계획(02 현황과 같은 기준, 11/18 결정전달 6) — 속보 없는 달만 계획
+    const CAm = (m) => { const r = ((X && X.CA && X.CA.monthly) || []).find((x) => x.m === m); return r ? Object.entries(r).filter(([k]) => k !== 'm').reduce((s, [, v]) => s + (v || 0), 0) : null; };   // 지난 달 컬러 = 컬러 실적
+    if (pm && UI.inScope('G')) { const F = fc('G'); rows.push(['도금', M.map((m, i) => (i === CMi ? [F.f, sp(m, 'G') || F.m] : [pm.g1[i] + pm.g2[i], sp(m, 'G') || mpl(m, 'G') || (pl.g1 || [])[i] + (pl.g2 || [])[i]]))]); }
+    if (UI.inScope('C') && Object.keys(cl).length) { const F = fc('C'), tot = (m, k) => Object.values(cl[m] || {}).reduce((a, x) => a + (x[k] || 0), 0); rows.push(['컬러', M.map((m, i) => (i === CMi ? [F.f, sp(m, 'C') || F.m] : [(m < cur ? CAm(m) : null) ?? tot(m, 'placed'), sp(m, 'C') || mpl(m, 'C') || tot(m, 'plan')]))]); }
     if (!rows.length) return '';
     const rollAt = (keys, d) => { const R = O.stockRoll; if (!R || !R.days) return null; const i = Math.round((Date.parse(d) - Date.parse(R.d0)) / 864e5); let s = 0, n = 0; keys.forEach((k) => { const v = (R.days[k] || [])[i]; if (v != null) { s += v; n++; } }); return n ? s : null; };
     const st = {}; ((O.sr || {}).stock || []).forEach((x) => { st[x.name] = x; });
@@ -112,6 +113,7 @@
     D = d; UI._SJ = d.suju || null;   // 11/17 재검토: 월말 생산 예상 = 월간 가동·수주 관제와 같은 값(UI.grpMon)
     const O = D.portal; if (!O) { document.getElementById('ct-main').innerHTML = UI.empty('관제판 자료 없음', '다음 자동 실행 때 채워짐'); return; }
     const main = document.getElementById('ct-main');
+    if (!X && !loadX.on) { loadX.on = 1; loadX(); }
     main.innerHTML = `<div class="b-top"><section class="card b-main">${board(O, D.risk, D.integrated, D.mat_order)}</section>${qSec(O)}</div>${monthSec(O)}${basisSec(O)}`;
     const bm = document.getElementById('b-month');
     if (bm) {

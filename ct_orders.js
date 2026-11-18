@@ -442,7 +442,7 @@
   /* 편성 화면(pyeonseong.js)이 맨 위에 '컬러·도금 전체 주문진도'를 그대로 씀: CTORD.mount(host, D) — D = FILES 복호화(CT.boot 와 같은 이름) · 라인별 미생산 카드는 뺌 */
   // 11/18 결정(검수 결정전달 기준 2): 작업 가능 일수 = 03 주간 편성 '라인별 작업가능일'(소재 매치 후 = 지시대기, 24시간 기준) — 02 현황도 이 값을 읽음
   function lineDays(D) {
-    D0 = D; M = CT.orders(D); const o = {};
+    D0 = D; M = CT.orders(D); const o = {}; if (!PS.mon) PS.mon = monNow();   // 03 과 같은 달(이번 달 납기)
     for (const x of psData([...Object.keys(CAPG), ...Object.keys(CAPC)])) {
       const rs = (x.cats || []).filter((z) => MATCHED.includes(z.k)).flatMap((z) => z.rs);   // 03 표 '소재 입고 완료(지시대기)' 줄과 같은 행(mtR)
       const h = byLine(rs, KP), t = {}; rs.forEach((r) => { t[r.line] = (t[r.line] || 0) + tonOf(r, KP); });
