@@ -39,18 +39,19 @@
   /* ① 메뉴: 01 계획 · 02 현황 · 03 생산 편성 · 04 주문·납기 · 05 소재·재고 · 06 생산 실적 + 관리(접힘). 칸 = [화면 id, 주소, 이름, 표시('d' = 세부 탭)] */
   const P = (f) => 'preview/' + f;
   window.PV_MENU = {
-    home: P('hy.html'),
+    home: P('room.html'),
     menu: [
+      ['v0', '수주 조정', 'plan7', [['room', P('room.html'), '순 단위 룸판'], ['room', P('room.html#test'), '시험 계산'], ['room', P('room.html#grp'), '판매그룹별']]],   // 11/18 사장님 회의: 조정·결정은 수주
       ['v1', '계획', 'supply', [['gyehoek', P('gyehoek.html'), '일별 가동계획'], ['gyehoek', P('gyehoek.html#mat'), '소재'], ['plan7', P('ct_plan.html#cmp'), '조정'], ['status', P('status.html'), '강종 전환']]],
       ['v2', '현황', 'home', [['hy', P('hy.html'), '현황'], ['suju', P('suju.html#dash'), '그룹별'], ['suju', P('suju.html#order'), '수출 선적'], ['board', P('board.html'), '4분기 전망']]],
       ['v3', '생산 편성', 'weekseq', [['wk', P('wk.html'), '주간 관제'], ['pyeonseong', P('pyeonseong.html'), '주간 편성'], ['weekseq', P('week_seq.html'), '작업 순서'], ['seqview', P('seq_view.html'), '작업 순서 조회'], ['plan7', P('ct_plan.html?pv=ins#cg'), '미편성 넣기', 'd']]],
       ['v4', '주문·납기', 'cgorder', [['risk', P('risk.html'), '납기 위험'], ['cgorder', P('cg_order.html'), '도금 주문진도'], ['ccorder', P('cc_order.html'), '컬러 주문진도'], ['orders', P('ct_orders.html#cal'), '납기 캘린더']]],
-      ['v5', '소재·재고', 'matcal', [['matcal', P('matcal.html'), '부족·발주'], ['procure', P('procure.html'), '발주'], ['planstock', P('planstock.html'), '계획재'], ['integrated', P('integrated.html'), '제품 재고'], ['prodsum', P('ct_prod.html#ship'), '출하'], ['suju', P('suju.html#mat'), 'Room·장납기 입력', 'd']]],
+      ['v5', '소재·재고', 'matcal', [['matcal', P('matcal.html'), '부족·발주'], ['procure', P('procure.html'), '발주'], ['planstock', P('planstock.html'), '계획재'], ['stockj', P('stockj.html'), '재고 판단'], ['integrated', P('integrated.html'), '제품 재고'], ['prodsum', P('ct_prod.html#ship'), '출하'], ['suju', P('suju.html#mat'), 'Room·장납기 입력', 'd']]],
       ['v6', '생산 실적', 'platact', [['platact', P('plating_actual.html'), '도금 실적'], ['coloract', P('color_actual.html'), '컬러 실적'], ['prodsum', P('ct_prod.html#run'), '가동·휴지'], ['perf', P('ct_perf.html#cause'), '미달 원인'], ['plan7', P('ct_plan.html#load'), '라인 부하']]],
     ],
     admin: [['rules', P('rules.html'), '계획 규칙'], ['plancalc', P('plan_calc.html'), '계획 계산'], ['analysis', P('analysis.html'), '조건 분석'], ['rolling', P('rolling.html'), '도금 다시 계산'], ['colorcalc', P('color_calc.html'), '컬러 다시 계산'],
       ['colorstat', P('color_status.html'), '컬러 가동 현황'], ['leadtime', P('leadtime.html'), '리드타임 기준'], ['health', P('health.html'), '자료 상태'], ['decisions', P('decisions.html'), '결정 기록'], ['cgtasks', P('cg_tasks.html'), '업무 캘린더'],
-      ['docs', P('docs.html'), '문서'], ['report', P('report.html'), '주간 보고'], ['suju', P('suju.html#close'), '월 실적 마감'], ['issues', P('ct_issue.html#now'), '이슈 현황']],
+      ['docs', P('docs.html'), '문서'], ['report', P('report.html'), '주간 보고'], ['suju', P('suju.html#close'), '월 실적 마감'], ['issues', P('ct_issue.html#now'), '이슈 현황'], ['ops', P('ops.html'), '운영·의견']],
   };
 
   addEventListener('hashchange', () => { const t = target(); if (t) location.replace(ROOT + t); }, true);
@@ -90,9 +91,37 @@
     const a = document.querySelector('.ct-tabs a[aria-current], .ct-tabs a.on'), h = document.querySelector('.shell-head h1');
     if (a && h && h.textContent !== a.textContent.trim()) h.textContent = a.textContent.trim();
   }
+  /* 의견 단추(11/18 사장님 회의 '쓰면서 고쳐라'): 모든 예시 화면 오른쪽 아래 → 공유 저장소(결정 기록과 같은 곳, 암호화) t:'fb' */
+  function fbBtn() {
+    if (document.getElementById('fb-btn') || !document.body || !window.GP || !GP.encryptJSON) return;
+    if (!document.querySelector('link[href*="preview/ops.css"]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'preview/ops.css?v=2611181'; document.head.appendChild(l); }
+    const b = document.createElement('button'); b.type = 'button'; b.id = 'fb-btn'; b.className = 'fb-btn'; b.textContent = '의견'; document.body.appendChild(b);
+    b.addEventListener('click', () => {
+      let p = document.getElementById('fb-pop'); if (p) { p.remove(); return; }
+      let me = ''; try { me = localStorage.getItem('cgl-me') || ''; } catch (e) { /* 무시 */ }
+      const pg = (document.querySelector('.shell-head h1') || {}).textContent || document.title;
+      p = document.createElement('form'); p.id = 'fb-pop'; p.className = 'fb-pop';
+      p.innerHTML = `<b>이 화면 의견 — ${pg.replace(/[<>&"]/g, '')}</b><textarea required placeholder="고칠 점·헷갈리는 점·필요한 숫자"></textarea><input placeholder="이름" value="${me.replace(/[<>&"]/g, '')}"><div class="row"><span class="m"></span><button type="button" class="btn sub">닫기</button><button type="submit" class="btn">보내기</button></div>`;
+      document.body.appendChild(p);
+      p.querySelector('.sub').onclick = () => p.remove();
+      p.addEventListener('submit', async (e) => {
+        e.preventDefault(); const t = p.querySelector('textarea').value.trim(), by = p.querySelector('input').value.trim(); if (!t) return;
+        try { localStorage.setItem('cgl-me', by); } catch (x) { /* 무시 */ }
+        const m = p.querySelector('.m'); m.textContent = '보내는 중…';
+        try {
+          let pw = null; try { pw = localStorage.getItem('cgl-analysis-pw'); } catch (x) { /* 무시 */ }
+          if (!pw) throw new Error('암호를 먼저 넣어 화면을 연 뒤 보내세요');
+          const KEY = 'sb_publishable_BlfAhxz_v3yg6iJw_nbRaA_YMFAOS7K', env = await GP.encryptJSON({ t: 'fb', page: pg, url: location.pathname.split('/').pop() + location.hash, text: t, at: new Date().toISOString(), by: by || '이름 없음' }, pw, 'decision');
+          const r = await fetch('https://gatcqxrzaonjsixajrwd.supabase.co/rest/v1/cgl_decisions', { method: 'POST', headers: { apikey: KEY, Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ payload: JSON.stringify(env) }) });
+          if (!r.ok) throw new Error('저장 실패 ' + r.status);
+          m.textContent = '보냄 — 운영·의견 화면에 모임'; setTimeout(() => p.remove(), 1200);
+        } catch (x) { m.textContent = '⚠ ' + x.message; }
+      });
+    });
+  }
   let q = 0;
   function apply() {
-    q = 0; rewrite(); flag(); title();
+    q = 0; rewrite(); flag(); title(); fbBtn();
     const re = KEEP[keyNow()]; if (re) { keepOnly(re); const sb = document.getElementById('ui-sub'); if (sb) sb.hidden = true; }   // 원래 화면 설명 줄은 남긴 칸과 안 맞음
   }
   const later = () => { if (!q) q = requestAnimationFrame(apply); };
