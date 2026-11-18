@@ -644,7 +644,7 @@
       const why = {};
       R.forEach((r) => { why[r.why] = (why[r.why] || 0) + r.t; });
       return `<div class="rg"><h3>${esc(g)} <span>${R.length}건 · ${n0(R.reduce((s, r) => s + r.t, 0))}t</span>${Object.entries(why).map(([w, t]) => `<span>${esc(w)} ${n0(t)}t</span>`).join('')}</h3>`
-        + `<div style="overflow-x:auto"><table class="it" style="min-width:860px;table-layout:fixed"><colgroup><col style="width:28%"><col style="width:116px"><col style="width:11%"><col style="width:8%"><col style="width:9%"><col><col style="width:84px"></colgroup><thead><tr><th>계약번호 · 고객사 → 목적지</th><th>라인 · 강종</th><th>상태</th><th class="num">미편성 톤</th><th>필요 생산일</th><th>이유</th><th></th></tr></thead><tbody>`
+        + `<div style="overflow-x:auto"><table class="it" style="min-width:900px;table-layout:fixed"><colgroup><col style="width:28%"><col style="width:116px"><col style="width:11%"><col style="width:8%"><col style="width:9%"><col><col style="width:84px"></colgroup><thead><tr><th>계약번호 · 고객사 → 목적지</th><th>라인 · 강종</th><th>상태</th><th class="num">미편성 톤</th><th>필요 생산일</th><th>이유</th><th></th></tr></thead><tbody>`
         + byOrder(R).map((o) => {
           const id = 'ra-' + (oi++);
           const pieces = o.rows.flatMap((r) => (r.items || []).map((it) => Object.assign({}, it, { _line: r.line })));
