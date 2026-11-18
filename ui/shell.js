@@ -254,7 +254,7 @@
     if (!L || !L.items) return null;
     const items = UI.lateItems(L).filter((x) => UI.inScope(x.plant));
     return { t: items.reduce((a, x) => a + (x.t || 0), 0), items,
-      tip: items.map((x) => `${x.name} ${Math.round(x.t)}t${x.by === 'spec' && x.sizes ? `(${x.sizes.map((s) => `${s[1]} ${s[2]}t`).join(', ')})` : ''}`).join(' · ') };
+      tip: items.map((x) => `${x.name} ${UI.fmtT(x.t)}${x.by === 'spec' && x.sizes ? `(${x.sizes.map((s) => `${s[1]} ${UI.fmtT(s[2])}`).join(', ')})` : ''}`).join(' · ') };
   };
   /* 11/9: 소재 단위 상태·발주 마감 한 기준 — late = UI.matLate 항목만(3달 총 부족 아님, lateT = 그 몫), soon = 발주 마감 2주 안, plan = 그 뒤, ok = 부족 없음.
      발주 마감 = mat_order(tools/mat_order_spec.py) 의 정해진 발주일(P-FH 화 · 그 외 월 · 수입 10~20일 등 창구), next = 남은 부족의 다음 발주일
@@ -386,7 +386,7 @@
   function addExport(root) {
     (root || document).querySelectorAll('.card').forEach((c) => {
       if (c.querySelector(':scope > .xbtn') || !c.querySelector('table') || c.classList.contains('lock') || c.hasAttribute('data-noexport')) return;
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'xbtn noprint'; b.title = '이 카드의 표를 엑셀(CSV)로 받기'; b.textContent = '⤓ 엑셀';
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'xbtn noprint'; b.textContent = '⤓ 엑셀';
       b.onclick = () => {
         const h = c.querySelector('h2'); const name = `${(document.querySelector('.shell-head h1') || {}).textContent || document.title}_${h ? h.childNodes[0].textContent.trim() : '표'}_${new Date().toISOString().slice(0, 10)}.csv`.replace(/[\\/:*?"<>|]/g, '');
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + csvOf(c)], { type: 'text/csv;charset=utf-8' })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);

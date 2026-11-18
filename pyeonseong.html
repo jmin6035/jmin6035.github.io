@@ -162,7 +162,8 @@ table.psw td.pst { background: var(--pz-past); }
 table.psw td.pst .tv { color: var(--ink-2); }
 html:root body main #ps-main table.psw td.stopc { padding: 0 !important; vertical-align: middle !important; background: repeating-linear-gradient(135deg, var(--pz-stop1) 0 9px, var(--pz-stop2) 9px 18px); }
 .stopc .sl { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 62px; font-size: 15px; font-weight: 800; color: var(--pz-stopt); }
-.stopc .sl small { font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+.stopc .sl small { font-size: 13.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.stopc .sl { flex-wrap: wrap; row-gap: 2px; padding: 4px; text-align: center; }   /* 11/19 검수: 390 폭 '정지 12/1~12/29' 칸 넘침 → 기간을 아랫줄로 */
 tr.idle .stopc .sl { min-height: 40px; }
 button.cell.stp { background: transparent !important; } button.cell.stp .off { color: var(--pz-stopt) !important; font-size: 15px; }
 .band { background: var(--pz-ev) !important; color: var(--pz-evt) !important; font-size: 13.5px; flex-basis: 22px; line-height: 22px; letter-spacing: -.2px; }
@@ -175,6 +176,7 @@ button.cell.fl { box-shadow: inset 3px 0 0 var(--bad); }
 /* 11/17 사용자 '이번 주·다음 주 같은 표 두 개라 헷갈림' — 표 위 제목 띠 + 이번 주 = 파랑 머리 · 다음 주 = 회색 머리 + 왼쪽 색 막대 */
 .pz-cap { display: flex; align-items: baseline; gap: 12px; margin: 0 0 8px; padding: 8px 14px; border-radius: 10px; text-align: left; }
 .pz-cap b { font-size: 18px; font-weight: 800; } .pz-cap span { font-size: 15px; font-weight: 700; } .pz-cap em { font-style: normal; font-size: 14px; color: var(--ink-2); margin-left: auto; }
+.pz-cap { flex-wrap: wrap; row-gap: 2px; } .pz-cap b, .pz-cap span { white-space: nowrap; }   /* 11/19: 390 폭 '이번 주'·기간이 낱말 중간에서 갈라지던 것 */
 .pz-cap.cur { background: color-mix(in srgb, var(--pz-brand) 10%, var(--surface)); border-left: 6px solid var(--pz-brand); } .pz-cap.cur b, .pz-cap.cur span { color: var(--pz-brand); }
 .pz-cap.nxt { background: color-mix(in srgb, #7c3aed 8%, var(--surface)); border-left: 6px solid #7c3aed; } .pz-cap.nxt b, .pz-cap.nxt span { color: #6d28d9; }
 :root[data-theme="dark"] .pz-cap.nxt b, :root[data-theme="dark"] .pz-cap.nxt span { color: #c4b5fd; } @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pz-cap.nxt b, :root:not([data-theme="light"]) .pz-cap.nxt span { color: #c4b5fd; } }

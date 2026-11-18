@@ -128,7 +128,7 @@
     const val = (V, ls) => ls.reduce((a, l) => a + lineSum(V, l, ds), 0);
     const A = CH.map((V) => cols.map(([, ls]) => val(V, ls)));
     // 판마다 '월 합계 | 앞 판 대비' 두 칸(11/12 사용자 '조정 이해가 안 된다 — 칸 구분')
-    const rows = CH.map((V, i) => `<tr class="${i === si ? 'on' : ''}" data-i="${i}" tabindex="0"><th>${esc(V.lab).replace(/\((.+)\)$/, '<span style="white-space:nowrap">($1)</span>')}</th>${A[i].map((v, j) => { const df = i ? Math.round(v - A[0][j]) : null,   // 월차(첫 판) 대비(11/12 사용자)
+    const rows = CH.map((V, i) => `<tr class="${i === si ? 'on' : ''}" data-i="${i}" tabindex="0"><th${V.kind === 'now' && V.at ? ` title="${esc(V.lab)}"` : ''}>${V.kind === 'now' && V.at ? `${esc(mdA(V.at).split(' ')[0])} 현재` : esc(V.lab)}</th>${A[i].map((v, j) => { const df = i ? Math.round(v - A[0][j]) : null,   // 월차(첫 판) 대비(11/12 사용자)
       sm = /합계/.test(cols[j][0]) ? ' sm' : '';
       return `<td class="bl${sm}"><b>${n0(v)}</b></td><td class="df${sm}${df != null && df <= -0.5 ? ' dn' : df != null && df >= 0.5 ? ' up' : ''}">${df == null ? '–' : df === 0 ? '0' : sg(df)}</td>`; }).join('')}</tr>`).join('');
     const SRm = D.SR && D.SR.m === ds[0].slice(0, 7) && Object.keys(D.SR.v).length ? D.SR.v : null;
