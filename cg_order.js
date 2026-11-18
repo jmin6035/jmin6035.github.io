@@ -177,7 +177,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     const need = !m.need ? '<span class="mu">-</span>'
       : md(m.need) + (m.needPast > 0 ? `<span class="dd">지남 ${m.needPast}일</span>`
         : m.etaPast ? s2(`${m.src} ${md(m.eta)} 지남`, 'wn', '예상 입고일 지남 · 미입고 — 포스코에 진행 확인')
-        : m.slack == null ? '' : m.slack < 0 ? s2(`입고 ${-m.slack}일 늦음`, 'wn', `${m.src} ${md(m.eta)}`) : s2(`여유 ${m.slack}일`, '', `${m.src} ${md(m.eta)}`));
+        : m.slack == null ? '' : m.slack < 0 ? s2(`입고 ${-m.slack}일 지연`, 'wn', `${m.src} ${md(m.eta)}`) : s2(`여유 ${m.slack}일`, '', `${m.src} ${md(m.eta)}`));
     const fc = `${x.lateIn ? 'f-late ' : ''}${x.hurry ? 'f-hurry ' : ''}${x.chk ? 'f-chk' : ''}`;
     return `<tr class="r ${fc}" title="누르면 상세"><td>${badgeV2(x)}</td>`
       + `<td class="cn">${esc(x.con)}</td>`
@@ -201,11 +201,11 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
     else if (x.st === '미발주') V.push(['bad', `미발주 — 소재(F/H) 발주 전${x.needIn ? ` · 필요 입고 ${md(x.needIn)}` : ''}`]);
     else if (x.hurry) V.push(['warn', `포스코 독촉 — 필요 입고 ${dd0(m.need, O.asOf)}일 남음 · 아직 열연 이전 ${n1(x.early)}t`]);
     else if (m.etaPast) V.push(['warn', `입고 확인 — ${m.src} ${md(m.eta)} 지남 · 미입고 ${n1(x.remIn)}t → 포스코 확인`]);
-    else if (m.slack != null && m.slack < 0) V.push(['warn', `입고 늦음 — ${m.src} ${md(m.eta)}가 필요 입고일보다 ${-m.slack}일 늦음`]);
+    else if (m.slack != null && m.slack < 0) V.push(['warn', `입고 지연 — ${m.src} ${md(m.eta)}가 필요 입고일보다 ${-m.slack}일 뒤`]);
     else if (x.chk) V.push(['warn', `입고 확인 — 필요 입고 ${dd0(m.need, O.asOf)}일 남음 · 미입고 ${n1(x.remIn)}t`]);
     if (x.shipMiss) V.push(['bad', `입항 ${md(x.arr)} 지남 · 미생산 → 배선 변경 확인`]);
     const c = CAL && CAL[x.con], pe = c ? c.to : x.sche;
-    if (np && pe && x.st !== '생산 완료' && pe > np) V.push(['warn', `생산 ${md(pe)} — 필요 생산일 ${md(np)}보다 ${dd0(pe, np)}일 늦음`]);
+    if (np && pe && x.st !== '생산 완료' && pe > np) V.push(['warn', `생산 ${md(pe)} — 필요 생산일 ${md(np)}보다 ${dd0(pe, np)}일 지연`]);
     if (!V.length) V.push(['ok', stNm(x) + (x.st === '생산 완료' ? '' : m.slack != null ? ` · 소재 여유 ${m.slack}일` : '')]);
     const tone = V.some((v) => v[0] === 'bad') ? 'bad' : V.some((v) => v[0] === 'warn') ? 'warn' : 'ok';
     return `<div class="dx-v ${tone}">${V.map((v) => `<span class="${v[0]}">${esc(v[1])}</span>`).join('')}</div>`;
@@ -247,11 +247,11 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
       `${n1(x.entT || 0)}<small> / ${n1(x.purT || ordT)}t</small>`,
       [x.entFirst && `첫 입고 ${md(x.entFirst)}`, m.rem && [`미입고 ${n1(x.remIn)}t`, 'wn'],
         m.eta && [`${m.src} ${md(m.eta)}${m.etaPast ? ' 지남' : ''}`, m.etaPast ? 'neg' : '', m.etaTip],
-        m.need && [`필요 ${md(m.need)} · ${m.needPast > 0 ? `${m.needPast}일 지남` : m.slack == null ? `${dd0(m.need, a)}일 남음` : m.slack < 0 ? `${-m.slack}일 늦음` : `여유 ${m.slack}일`}`, m.needPast > 0 || (m.slack != null && m.slack < 0) ? 'neg' : '', `필요 입고일 = ${x.exp ? '출항' : '납기'} −${(B.leadIn || 5) + (B.prep || 1)}일 · 여유 = 필요 입고일 − ${m.etaPast ? '오늘(예상일 지남)' : '예상 입고일'}`]]);
+        m.need && [`필요 ${md(m.need)} · ${m.needPast > 0 ? `${m.needPast}일 지남` : m.slack == null ? `${dd0(m.need, a)}일 남음` : m.slack < 0 ? `${-m.slack}일 지연` : `여유 ${m.slack}일`}`, m.needPast > 0 || (m.slack != null && m.slack < 0) ? 'neg' : '', `필요 입고일 = ${x.exp ? '출항' : '납기'} −${(B.leadIn || 5) + (B.prep || 1)}일 · 여유 = 필요 입고일 − ${m.etaPast ? '오늘(예상일 지남)' : '예상 입고일'}`]]);
     const mv = c && c.line && x.line && c.line !== x.line;
     const pv = done ? `완료 ${md(x.prodLast)}` : c ? `${md(c.from)}${c.to !== c.from ? `~${md(c.to)}` : ''}` : x.sche ? md(x.sche) : '미편성';
     const pLate = !done && needProd && ((c && c.to > needProd) || (!c && x.sche && x.sche > needProd));
-    const s4 = dS('생산', done ? 'done' : pLate ? 'bad' : (x.prodT || 0) >= 0.5 ? 'cur' : pv === '미편성' ? 'todo' : 'cur', done ? '끝' : pLate ? '늦음' : (x.prodT || 0) >= 0.5 ? '진행' : c || x.sche ? '예정' : '전', pv,
+    const s4 = dS('생산', done ? 'done' : pLate ? 'bad' : (x.prodT || 0) >= 0.5 ? 'cur' : pv === '미편성' ? 'todo' : 'cur', done ? '끝' : pLate ? '지연' : (x.prodT || 0) >= 0.5 ? '진행' : c || x.sche ? '예정' : '전', pv,
       [c && !done && `${mv ? `${esc(x.line)} → ` : ''}${esc(c.line || '')} ${n1(c.t)}t`, !c && x.sche && !done && '도금생산예정일', (x.prodT || 0) >= 0.5 && `실적 ${n1(x.prodT)} / ${n1(ordT)}t${!done && x.prodLast ? ` · 마지막 ${md(x.prodLast)}` : ''}`,
         x.woN ? `작업지시 ${x.woN}코일` : x.woWait ? '작업지시됨' : '', !done && needProd && [`필요 생산 ${md(needProd)}`, pLate ? 'neg' : '']]);
     const fDone = ordT && (x.fwdT || 0) >= ordT - 0.5;

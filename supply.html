@@ -246,6 +246,8 @@ html:root body main table.gk.gk td.kov, .gk-lg b.kov { color: #8a5a00 !important
 html:root body main table.gk.gk td.neg { color: var(--bad) !important; font-weight: 800; }
 html:root body main table.gk.shp td[data-d] { cursor: pointer; }
 b.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 11/17 용어 기준: 날짜 = 굵은 진한 파랑 */
+/* 11/19 수정 방: 표 칸 가운데 정렬 통일(docs/16 규칙 13, 검수 어긋남 '04 정렬 섞임') */
+html body main table :is(td, th, #al-c) { text-align: center !important; }   /* #al-c = 우선순위 올림(칸마다 붙은 왼쪽·오른쪽 규칙보다 앞서게) */
 </style>
 </head>
 <body>

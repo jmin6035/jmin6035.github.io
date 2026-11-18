@@ -127,7 +127,7 @@
   const shortWhy = (m, l) => (O.colorUnplaced || []).some((x) => x.ym === m && String(x.lines).split('·').includes(l)) ? '가동시간 부족' : '배정할 물량 없음';
   function renderEvents() {                                      // 도금 '강종 전환 일정' 자리: 라인별 편성 / MES 월차 한도
     $('d-events').innerHTML = `<tr><th>라인</th>${MONTHS.map((m) => `<th>${+m.slice(5)}월 편성 / 한도</th>`).join('')}</tr>`
-      + LINES.map((l) => `<tr class="evrow"><td>${l}</td>${MONTHS.map((m) => { const c = cap(m, l), g = c - placed(m, l); return `<td>${fmt(placed(m, l))} / ${c ? fmt(c) : '<span class="muted" title="MES 월차는 이번 달만 있음">-</span>'}${c && g > 50 ? ` <span class="pill warn" title="MES 월차까지 ${fmt(g)}t 잔여 — ${shortWhy(m, l)}">${fmt(g)}t 잔여 · ${shortWhy(m, l)}</span>` : c && g < -50 ? ` <span class="pill down" title="편성이 MES 월차보다 ${fmt(-g)}t 많음">${fmt(-g)}t 초과</span>` : ''}</td>`; }).join('')}</tr>`).join('')
+      + LINES.map((l) => `<tr class="evrow"><td>${l}</td>${MONTHS.map((m) => { const c = cap(m, l), g = c - placed(m, l); return `<td>${fmt(placed(m, l))} / ${c ? fmt(c) : '<span class="muted" title="MES 월차는 이번 달만 있음">-</span>'}${c && g > 50 ? ` <span class="pill warn" title="월차까지 ${fmt(g)}t 남음 · ${shortWhy(m, l)}">${fmt(g)}t 남음 · ${shortWhy(m, l)}</span>` : c && g < -50 ? ` <span class="pill down" title="편성이 MES 월차보다 ${fmt(-g)}t 많음">${fmt(-g)}t 초과</span>` : ''}</td>`; }).join('')}</tr>`).join('')
       + `<tr class="evrow"><td><b>계</b></td>${MONTHS.map((m) => { const c = sum(LINES, (l) => cap(m, l)); return `<td><b>${fmt(sum(LINES, (l) => placed(m, l)))}</b> / ${c ? fmt(c) : '-'}</td>`; }).join('')}</tr>`;   // 11/10 점검: 월차 없는 달 '0' → '-', 한도 초과(2CCL 118%·3CCL 102%) 경고
   }
   function renderLoad() {
@@ -186,6 +186,8 @@
         <div class="gm-bar">${r.v.map((v, i) => (v > 0 ? `<i style="width:${v / mx * 100}%;background:color-mix(in srgb, ${GVAR[r.g]} ${SH[i] * 100}%, var(--surface));color:${SH[i] < 0.6 ? 'var(--ink)' : '#fff'};text-shadow:${SH[i] < 0.6 ? 'none' : ''}" title="${GL(r.g)} ${+MONTHS[i].slice(5)}월 ${fmt(v)}t">${v / mx > 0.07 ? fmt(v) : ''}</i>` : '')).join('')}${r.u > 0.5 ? `<i class="hatch" style="width:${r.u / mx * 100}%" title="미편성 ${fmt(r.u)}t">${r.u / mx > 0.07 ? fmt(r.u) : ''}</i>` : ''}</div>
         <div class="gm-t"><b>${fmt(r.s)}t</b>${r.u > 0.5 ? `<span class="neg">미편성 ${fmt(r.u)}t</span>` : '<span class="muted">미편성 없음</span>'}</div></div>`).join('')
       + `<div class="gm-row gm-tot"><div class="gm-n">합계</div><div class="gm-sum">${MONTHS.map((m) => `<span>${+m.slice(5)}월 <b>${fmt(monT(m))}t</b></span>`).join('')}</div><div class="gm-t"><b>${fmt(sum(MONTHS, (m) => monT(m)))}t</b><span class="neg">미편성 ${fmt(unT())}t</span></div></div>`;
+    /* 11/19 수정 방: 좁은 화면에서 막대 칸보다 긴 숫자는 잘려 보이지 않게 비움(값은 마우스 올림에 그대로) */
+    $('d-dept').querySelectorAll('.gm-bar i').forEach((e) => { if (e.scrollWidth > e.clientWidth + 1) e.textContent = ''; });
   }
   function renderEarly() {
     const U = O.colorUnplaced.slice().sort((a, b) => (a.ym < b.ym ? -1 : a.ym > b.ym ? 1 : b.t - a.t));

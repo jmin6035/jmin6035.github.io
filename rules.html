@@ -94,6 +94,8 @@ b.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 날짜·기간 �
 .ref { margin: 8px 0 0; padding-left: 18px; line-height: 1.8; font-size: 14px; }
 @media (max-width: 900px) { .flow { grid-template-columns: 1fr; } .flow .pl { padding: 8px; } .flow .bx:not(:last-child)::after { content: '↓'; right: 50%; top: auto; bottom: -10px; transform: translate(50%, 50%); } .kr td.a { display: none; } }
 @media (max-width: 640px) { html body table.kr td.v { white-space: normal !important; } }
+/* 11/19 수정 방: 표 칸 가운데 정렬 통일(docs/16 규칙 13, 검수 어긋남 '04 정렬 섞임') */
+html body main table :is(td, th, #al-c) { text-align: center !important; }   /* #al-c = 우선순위 올림(칸마다 붙은 왼쪽·오른쪽 규칙보다 앞서게) */
 </style>
 </head>
 <body>

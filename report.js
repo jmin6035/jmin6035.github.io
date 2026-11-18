@@ -219,7 +219,7 @@
     d += '<div class="grid2">' + box('c-pl-trend', '주별 생산량', 't/일') + '<div>';
     if (pa) d += '<p class="ttl">강종 전환(M/C) 일정</p><div class="scroll"><table class="t"><thead><tr><th>일자</th><th>라인</th><th>전환</th></tr></thead><tbody>' +
       pa.upcomingMC.map((m) => `<tr><td class="l">${md(m.day)}</td><td class="l">${m.line}</td><td class="l">${esc(m.from)} → ${esc(m.to)}</td></tr>`).join('') + '</tbody></table></div>' +
-      `<p class="hint">재계획: 납기 지연 ${n0(pa.late)}톤·일 · 결품 ${pa.short.length ? pa.short.length + '건' : '0'} · 잔여 강종 전환 ${pa.remainMC}회</p>`;
+      `<p class="hint">재계획: 납기 지연 ${n0(pa.late)}톤·일 · 결품 ${pa.short.length ? pa.short.length + '건' : '0'} · 남은 강종 전환 ${pa.remainMC}회</p>`;
     d += '</div></div>';
     if (pa) d += '<p class="ttl" style="margin-top:12px">4분기 부서별 계획 대비 실적</p><div class="scroll"><table class="t"><thead><tr><th>부서</th><th>계획 t</th><th>실적 t</th><th>달성률</th></tr></thead><tbody>' +
       pa.byDept.filter((x) => x[1] || x[2]).map((x) => `<tr><td class="l">${esc(x[0])}</td><td>${n0(x[1])}</td><td><b>${n0(x[2])}</b></td><td>${x[1] ? rate(x[2], x[1]) + '%' : '-'}</td></tr>`).join('') + '</tbody></table></div>';

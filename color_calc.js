@@ -200,7 +200,7 @@
       }).join('');
       const hh = Math.min(24, (c.min || 0) / 60);
       const ad = pend.filter((v) => v.to === ds).reduce((a, v) => a + (+v.t || 0), 0), rm = pend.filter((v) => v.from === ds).reduce((a, v) => a + (+v.t || 0), 0);
-      h += `<div class="dv-day ${past ? 'act' : ''}" data-d="${ds}"><div class="dv-dh"><b class="${wd >= 5 ? 'we' : ''}">${d}</b><span>${past ? '실적' : hh.toFixed(1) + 'h'}${ad ? ` · +${n0(ad)}t` : ''}${rm ? ` · −${n0(rm)}t` : ''}</span></div><div class="dv-hb"><i style="width:${(hh / 24 * 100).toFixed(0)}%"></i></div>${chips}</div>`;
+      h += `<div class="dv-day ${past ? 'act' : ''}" data-d="${ds}"><div class="dv-dh"><b class="${wd >= 5 ? 'we' : ''}">${d}</b><span>${past ? '실적' : hh.toFixed(1) + '시간'}${ad ? ` · +${n0(ad)}t` : ''}${rm ? ` · −${n0(rm)}t` : ''}</span></div><div class="dv-hb"><i style="width:${(hh / 24 * 100).toFixed(0)}%"></i></div>${chips}</div>`;
     }
     $('dv-grid').innerHTML = h;
     $('dv-grid').querySelectorAll('.dv-c:not(.fixed)').forEach((el) => el.addEventListener('pointerdown', dragStart));

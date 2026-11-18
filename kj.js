@@ -292,7 +292,7 @@
   // 그래프 범례 — 막대 모양 + 글자 색 뜻 + 눈금선 두 가지
   function legend(cur) {
     return `<div class="kj-lg" aria-label="범례"><span><i class="sl"></i>${cur ? '판매계획 · 월 계획 · 목표' : '판매계획 · 생산 계획 · 목표'}</span><span><i class="ac"></i>${cur ? '주문(소재 ON + OFF) · 실적' : '납기 주문'}</span><span><i class="stk"></i>재고${cur ? ' <small title="소재 재고 = 판매생산속보 창고 재고 — 01 소재의 지금 재고(MES 소재재고 목록)와 출처 다름">(판생속보 창고)</small>' : ''}</span><span><i class="ov"></i>목표 초과</span>`
-      + (cur ? '<span><b class="bad">빨강 %</b>오늘까지 계획보다 늦음(생산·출하)</span>' : '') + '<span><b class="ov">주황 %</b>목표 초과</span></div>';
+      + (cur ? '<span><b class="bad">빨강 %</b>오늘까지 계획 미달(생산·출하)</span>' : '') + '<span><b class="ov">주황 %</b>목표 초과</span></div>';
   }
 
   /* 1. 운영 일정 — 12·1월은 같은 월 일정을 준용(운영 일정 근거 = 수주팀 PDF 월 주기 일정, 달별 일정 없음) */
@@ -316,7 +316,7 @@
     if (cur) { const act = T('pAct'), due = T('pDue'), mon = T('pPlan'), v0 = md(String(A.S.planStartAt || '').slice(0, 10) || `${mSel}-01`);
       // 11/13 사용자 결정: 월 계획 = 우리 계획 '지금' 판의 그 달 합계(지난 날 실적 + 앞날 계획 — 매트릭스·캘린더 '계'와 같은 값)
       //  큰 숫자 = 실적 ÷ 월 계획(한 달 중 얼마) · 작은 글씨 = 전일까지 월차(그 달 첫 판) 계획 대비(앞서나 뒤처지나)
-      k2 = kc('suju.html#prod', '생산 달성', '월 계획 대비', shortT(act, due), pc(pctOf(act, mon)), `실적 ${n0(act)} / 월 계획 ${n0(mon)}t<br>~${md(A.S.asOf)} 월차(${v0}) 대비 <b class="${shortT(act, due)}">${pctOf(act, due) == null ? '–' : (+pctOf(act, due)).toFixed(0) + '%'}</b>`, `큰 숫자 = 1일~${md(A.S.asOf)} 실적 ÷ 월 계획(지금 계획의 ${mLab(mSel)} 합 = 지난 날 실적 + 앞날 계획) · 작은 글씨 = ${md(A.S.asOf)}까지 월차(${v0} 첫 판) 계획 ${n0(due)}t 대비`); }
+      k2 = kc('suju.html#prod', '생산 달성', '월 계획 대비', shortT(act, due), pc(pctOf(act, mon)), `실적 ${n0(act)} / 월 계획 ${n0(mon)}t<br>~${md(A.S.asOf)} 월차(${v0}) 대비 <b class="${shortT(act, due)}">${pctOf(act, due) == null ? '–' : (+pctOf(act, due)).toFixed(0) + '%'}</b>`, `큰 숫자 = 1일부터 ${md(A.S.asOf)}까지 실적 ÷ 월 계획(지금 계획의 ${mLab(mSel)} 합 = 지난 날 실적 + 앞날 계획) · 작은 글씨 = ${md(A.S.asOf)}까지 월차(${v0} 첫 판) 계획 ${n0(due)}t 대비`); }
     else { const prod = T('pPlan'); k2 = kc('integrated.html', '생산 계획', '', '', prod == null ? '–' : `${n0(prod)}<small>t</small>`, pls.map((p, i) => `${PN[p]} ${n0(PL[i].pPlan)}`).join(' · '), `${mLab(mSel)} 통합 계획(아래 캘린더 합)`); }
     const rl = riskList(mSel);
     const k3 = kc('suju.html#mat', '소재 결품 위험', '', rl.length ? 'bad' : '', `${rl.length}<small>건</small>`, (rl.length ? esc(rl.slice(0, 2).map((x) => x.name).join(' · ')) + (rl.length > 2 ? ` 외 ${rl.length - 2}건` : '') : `${mLab(mSel)} 결품 위험 소재 없음`) + (soonList(mSel).length ? ` · 마감 앞둔 발주 ${soonList(mSel).length}건` : ''), '아래 소재 구역 결품 위험 목록과 같은 목록');
