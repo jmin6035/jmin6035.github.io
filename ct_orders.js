@@ -440,9 +440,19 @@
   CT.onView(() => { if (D0 && $('ct-main')) { CT.panel(null); render(D0); } });
   const FILES = ['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'cg_calendar.enc.json', 'risk.enc.json'];
   /* 편성 화면(pyeonseong.js)이 맨 위에 '컬러·도금 전체 주문진도'를 그대로 씀: CTORD.mount(host, D) — D = FILES 복호화(CT.boot 와 같은 이름) · 라인별 미생산 카드는 뺌 */
-  window.CTORD = { FILES, mount(host, D) {
+  // 11/18 결정(검수 결정전달 기준 2): 작업 가능 일수 = 03 주간 편성 '라인별 작업가능일'(소재 매치 후 = 지시대기, 24시간 기준) — 02 현황도 이 값을 읽음
+  function lineDays(D) {
+    D0 = D; M = CT.orders(D); const o = {};
+    for (const x of psData([...Object.keys(CAPG), ...Object.keys(CAPC)])) {
+      const rs = (x.cats || []).filter((z) => MATCHED.includes(z.k)).flatMap((z) => z.rs);   // 03 표 '소재 입고 완료(지시대기)' 줄과 같은 행(mtR)
+      const h = byLine(rs, KP), t = {}; rs.forEach((r) => { t[r.line] = (t[r.line] || 0) + tonOf(r, KP); });
+      for (const l of Object.keys(h)) o[l] = { days: Math.round(h[l] / 24 * 10) / 10, t: Math.round(t[l] || 0) };
+    }
+    return o;
+  }
+  window.CTORD = { FILES, lineDays, mount(host, D) {
     D0 = D; M = CT.orders(D); CT.D = D; L = M.all.filter((o) => CT.inScope(o.pl)); byId = Object.fromEntries(M.all.map((o) => [o.id, o]));
     host.innerHTML = `<div id="co-ps">${progSum(true)}</div>`; bindPS(true);
   } };
-  if ($('ct-main')) CT.boot(FILES, render);
+  if ($('ct-main') && !window.CTORD_LIB) CT.boot(FILES, render);   // CTORD_LIB = 다른 화면(02 현황)이 계산만 빌려 씀
 })();

@@ -120,7 +120,7 @@ ${lines.filter(Boolean).map((l) => `<div class="hy-ms">${l}</div>`).join('')}${s
       ['소재 재고', '현재 → 월말', null, (p) => stock(H[p].stockMat)],
       ['제품 재고', '현재 → 월말', 'integrated.html', (p) => stock(H[p].stockPdt)],
       ['총 재고', '소재 + 제품 · 현재 → 월말', null, (p) => stock(H[p].stockAll)],
-      ['작업 가능 주문', '소재 들어온 주문', 'pyeonseong.html', (p) => cover(H[p].cover)],
+      ['작업 가능 주문', '소재 들어온 주문', 'pyeonseong.html', (p) => cover(WD ? (H[p].cover || []).map((x) => (WD[x.line] ? { ...x, t: WD[x.line].t, days: WD[x.line].days } : x)) : H[p].cover)],
     ];
     const sec = (a, b, u) => u ? `<a class="sec" href="${u}"><b>${a} ›</b><small>${b}</small></a>` : `<div class="sec"><b>${a}</b><small>${b}</small></div>`;
     const cell = (p, a, h) => `<div class="cell" data-pl="${p === 'G' ? '도금' : '컬러'} · ${a}">${h}</div>`;
@@ -132,5 +132,10 @@ ${R.map(([a, b, u, f]) => `${sec(a, b, u)}${PS.map((p) => cell(p, a, f(p))).join
     m.querySelectorAll('.hy-tabs button').forEach((b) => b.addEventListener('click', () => { MI = +b.dataset.mi; try { sessionStorage.setItem('hy-mi', MI); } catch (e) { /* 무시 */ } render(D); }));
   }
   let LD = null, SUB = false;
-  CT.boot(['suju.enc.json'], (D) => { LD = D; render(D); if (!SUB && window.UI && UI.onScope) { SUB = true; UI.onScope(() => render(LD)); } });
+  // 11/18 결정(검수 결정전달 기준 2): '작업 가능 주문 n일치' = 03 주간 편성 라인별 작업가능일(ct_orders.js CTORD.lineDays) 그대로
+  let WD = null;
+  const wdLoad = async () => { if (WD || !window.CTORD || !window.GP) return; try { let pw = null; try { pw = localStorage.getItem('cgl-analysis-pw'); } catch (x) { /* 무시 */ } const E = await Promise.all(CTORD.FILES.map((f) => GP.latest(f).catch(() => null))), X = {};
+    for (let k = 0; k < E.length; k++) X[CTORD.FILES[k].replace(/\.enc\.json$/, '')] = E[k] ? await GP.decryptJSON(E[k], pw).catch(() => null) : null;
+    WD = CTORD.lineDays(X); if (LD) render(LD); } catch (e) { console.warn('작업 가능 일수', e); } };
+  CT.boot(['suju.enc.json'], (D) => { LD = D; render(D); wdLoad(); if (!SUB && window.UI && UI.onScope) { SUB = true; UI.onScope(() => render(LD)); } });
 })();
