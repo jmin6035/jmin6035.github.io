@@ -580,7 +580,7 @@
   }
   // 자가재 판정 칩(11/10 규칙: 컬러 생산 1~8일 전에 도금 생산) — '도금 생산 날짜·라인' 다음에 한 칩만
   // 11/18 사용자 '기준 1~8일 전 맞음·재고 사용 n일 전 생산분 — 이건 왜 넣는건데': 판정 칩 대신 소재가 컬러에 들어온 날(도금 생산 다음 날)만. 도금이 컬러 생산보다 늦은 경우만 경고
-  const selfJudge = (pd, d) => { const i = add(pd, 1); return pd >= d ? ['도금이 늦음', '컬러 생산 뒤', null, 'late'] : [i <= today ? '컬러공장 입고 완료' : '컬러공장 입고 예정', md(i), i, 'due']; };
+  const selfJudge = (pd, d) => { const i = add(pd, 1); return pd >= d ? null : [i <= today ? '컬러공장 입고 완료' : '컬러공장 입고 예정', md(i), i, 'due']; };
   // 11/18 사용자 '소재 발주 → 소재 입고 → 도금 생산 → 컬러공장 입고 완료 → 컬러 생산 → 납기': 자가재 앞에 도금 소재(F/H) 발주·입고
   const fhPre = (pd, a) => (pd ? lotSteps(`G:${/AL/.test(a || '') && !/STS/.test(a || '') ? 'H' : 'F'}`, pd, 'F/H', FAM(a)) || [] : []);
   // 11/18 사용자 '소재가 언제 발주돼서 언제 입고되는지 전부': 재고 굴림(소재 관제와 같은 순서 = 지금 재고 → 발주 입고 예정일 순)에서 그날 쓰는 몫이 어느 발주인지
@@ -659,10 +659,10 @@
 
   // 11/17 사용자: 날짜 상세의 한 품목 = 소재 하나(자가재면 도금 생산, 구매면 구매) — matLine 중 비중이 가장 큰 소재만 보임
   // ---------- 일정 흐름(칩 → 칩): 지난 날짜 = 완료(회색 ✓), 오늘 생산 = 강조 ----------
-  const dueChip = (du, txt, d) => (!du && (!txt || txt === '-') ? ['납기', '주문 전', null, 'due'] : du && du < d ?   // 11/17 사용자 '납기 - 이건 뭔데': 주문이 아직 없는 월 판매계획 물량 = '주문 전'
+  const dueChip = (du, txt, d) => (!du && (!txt || txt === '-') ? ['납기', '당월 내 출고', null, 'due'] : du && du < d ?   // 11/17 사용자 '납기 - 이건 뭔데': 주문이 아직 없는 월 판매계획 물량 = '주문 전'
     [`납기 · ${Math.round((new Date(d) - new Date(du)) / 864e5)}일 늦음`, txt, du, 'warn'] : ['납기', txt, du || null, 'due']);   // 납기가 생산보다 앞서면 빨강
   // 칩 하나 = '›' + 칩(한 덩어리로 줄바꿈 — '›'만 혼자 남지 않게) · 지난 날짜 단계(발주 마감 포함) = 모두 완료(흐림 + ✓), 11/17 검토
-  const flowHtml = (steps) => `<div class="flw">${steps.map(([lb, v, dt, cl], i) => `<span class="fu">${i ? '<i>›</i>' : ''}<span class="fs ${cl || ''} ${dt && dt < today && (!cl || cl === 'due') ? 'done' : ''}"><small>${esc(lb)}</small><b>${v}</b></span></span>`).join('')}</div>`;
+  const flowHtml = (steps0) => { const steps = steps0.filter(Boolean); return `<div class="flw">${steps.map(([lb, v, dt, cl], i) => `<span class="fu">${i ? '<i>›</i>' : ''}<span class="fs ${cl || ''} ${dt && dt < today && (!cl || cl === 'due') ? 'done' : ''}"><small>${esc(lb)}</small><b>${v}</b></span></span>`).join('')}</div>`; };
   // 도금 소재(F/H): 강종 → 소재 코드, 입고 필요 = 생산일 − 투입 여유(팀 리드타임 표 1일 — 11/9 회의, 예전 5일), 발주 마감 = 입고 필요 − 업체 유형별 리드타임(27년 배정 업체)
   const SAFE_G = 1;
   const negDay = (k) => { const m = (PM || []).find((x) => x.k === k); if (!m) return null; return Object.keys(m.stock).sort().find((d) => d >= today && m.stock[d] < -0.5) || null; };   // 11/17 검토: 재고 굴림 첫 음수일
