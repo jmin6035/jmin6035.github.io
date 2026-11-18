@@ -15,6 +15,7 @@
   };
   const ORDER = ['short', 'low', 'shortNext', 'behind', 'over', 'fcHigh'];
   let O = null, flt = 'risk', sortK = 'end';
+  const PS_TARGET = 5100;   // 11/18 사용자 '안전재고 빼고, 목표 5,100t으로 바꿔라' — 계획재 전체 목표(사양별 목표 합 대신). cglplan/planstock.py 와 같은 값
   const card = (id, title, sm, unit, body) => `<section class="card" id="${id}"><h2>${esc(title)} ${sm ? `<small>${esc(sm)}</small>` : ''}${unit ? `<span class="unit">${unit}</span>` : ''}</h2>${body}</section>`;
   const tip = () => $('ca-tip');
   function bindTip(root) {
@@ -81,7 +82,7 @@
   function trend() {
     const D = O.daily, W = 1200, H = 340, pl0 = 64, pr = 150, pt = 16, pb = 34;
     const xs = D.days.concat(D.future.map((x) => x[0]));
-    const vals = D.stock.concat(D.future.map((x) => x[1]), [O.tot.target, O.tot.safe]);
+    const vals = D.stock.concat(D.future.map((x) => x[1]), [O.tot.target]);
     const sc = UI.scale(Math.max(...vals) * 1.05), ym = sc.hi;
     const x = (i) => pl0 + (W - pl0 - pr) * (xs.length > 1 ? i / (xs.length - 1) : 0.5), y = (v) => pt + (H - pt - pb) * (1 - v / ym);
     let g = '';
@@ -89,7 +90,7 @@
     const every = Math.max(1, Math.ceil(xs.length / 16));
     xs.forEach((d, i) => { if (i % every === 0) g += `<text x="${x(i)}" y="${H - 10}" text-anchor="middle">${md(d)}</text>`; });
     const ref = (v, c, lab) => `<line x1="${pl0}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="${c}" stroke-width="2" stroke-dasharray="7 6"/><text x="${W - pr + 8}" y="${y(v) + 5}" class="lab" style="fill:${c}">${lab} ${n0(v)}</text>`;
-    g += ref(O.tot.target, 'var(--good)', '목표') + ref(O.tot.safe, 'var(--warn)', '안전');
+    g += ref(O.tot.target, 'var(--good)', '목표');
     const n = D.days.length;
     g += `<polyline class="ln" fill="none" stroke="var(--s1)" stroke-width="3" points="${D.stock.map((v, i) => `${x(i)},${y(v)}`).join(' ')}"/>`;
     if (D.future.length) g += `<polyline fill="none" stroke="var(--s1)" stroke-width="3" stroke-dasharray="4 6" opacity=".75" points="${[[n - 1, D.stock[n - 1]]].concat(D.future.map((f, j) => [n + j, f[1]])).map(([i, v]) => `${x(i)},${y(v)}`).join(' ')}"/>`;
@@ -102,9 +103,9 @@
       g += `<rect class="hit" x="${x(i) - (W - pl0 - pr) / xs.length / 2}" y="${pt}" width="${(W - pl0 - pr) / xs.length}" height="${H - pt - pb}" data-tip="${tp}"/>`;
     });
     const T = O.tot, sr = T.stock / T.target, er = T.end[0] / T.target, tn = (r) => (r > 1.5 ? 'bad' : r > 1.1 ? 'warn' : 'good');
-    const head = `<div class="ps-head"><span><b class="ps-n">${n0(T.stock)}t</b> ${md(O.asOf)} 추정 · 목표 ${n0(T.target)}t의 <b class="tone-${tn(sr)}">${Math.round(sr * 100)}%</b></span><span>${mon(O.month)} 생산 <b>${n0(T.prodM)}t</b> / 계획 ${n0(T.planM)}t · 출하 <b>${n0(T.shipM)}t</b> / 예측 ${n0(T.fcM)}t</span><span>${mon(O.month)}말 예상 <b>${n0(T.end[0])}t</b> (목표의 <b class="tone-${tn(er)}">${Math.round(er * 100)}%</b>) · 결품·안전재고 미만 ${(O.flags.short || 0) + (O.flags.low || 0)}개 사양</span></div>`;   // 예전 '주요 지표' 4칸을 그래프 머리로(11/2 사용자 '숫자 따로 그래프 따로 말고 하나로')
+    const head = `<div class="ps-head"><span><b class="ps-n">${n0(T.stock)}t</b> ${md(O.asOf)} 추정 · 목표 ${n0(T.target)}t의 <b class="tone-${tn(sr)}">${Math.round(sr * 100)}%</b></span><span>${mon(O.month)} 생산 <b>${n0(T.prodM)}t</b> / 계획 ${n0(T.planM)}t · 출하 <b>${n0(T.shipM)}t</b> / 예측 ${n0(T.fcM)}t</span><span>${mon(O.month)}말 예상 <b>${n0(T.end[0])}t</b> (목표의 <b class="tone-${tn(er)}">${Math.round(er * 100)}%</b>)${O.flags.short ? ` · 월말 결품 ${O.flags.short}개 사양` : ''}</span></div>`;   // 예전 '주요 지표' 4칸을 그래프 머리로(11/2 사용자 '숫자 따로 그래프 따로 말고 하나로')
     return card('ps-trend', '계획재 재고 추이', `${+String(O.stockMonth).slice(4)}월말 MES 재고 + 매일 생산 − 출하 · 점선 = ${mon(O.month)}말까지 예상(남은 계획 생산 − 남은 예측 판매)`, '단위: 톤',
-      head + `<div class="legend"><span><i class="box" style="background:var(--s1)"></i>계획재 ${O.n}개 사양 재고</span><span><i class="box" style="background:var(--good)"></i>목표재고 합</span><span><i class="box" style="background:var(--warn)"></i>안전재고 합</span></div><div class="chart"><svg viewBox="0 0 ${W} ${H}" class="cv" role="img" aria-label="계획재 재고 추이">${g}</svg></div>`);
+      head + `<div class="legend"><span><i class="box" style="background:var(--s1)"></i>계획재 ${O.n}개 사양 재고</span><span><i class="box" style="background:var(--good)"></i>목표 ${n0(O.tot.target)}t</span></div><div class="chart"><svg viewBox="0 0 ${W} ${H}" class="cv" role="img" aria-label="계획재 재고 추이">${g}</svg></div>`);
   }
 
   function months() {
@@ -115,7 +116,7 @@
     }).join('');
     return card('ps-mon', '월별 예측', '다음 달부터 출하 = 실제 출하 속도 반영 · 생산 = 목표 재고 유지 양(컬러 계획과 같은 기준)', '단위: 톤',
       `<div class="scroll"><table class="t big"><thead><tr><th class="l">월</th><th title="TF 판매 예측과 최근 3개월 실제 출하 평균 중 작은 값(이번 달은 TF 예측)">출하 예상</th><th title="운영안 이하, 목표 재고를 지키는 양까지(이번 달은 운영안)">생산</th><th>월말 예상 재고</th><th>목표 대비</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="small">목표 = 사양별 목표재고 합 ${n0(T.target)}t</p>`);
+      <p class="small">목표 ${n0(T.target)}t</p>`);
   }
 
   function byMat() {
@@ -184,7 +185,7 @@
   async function unlock(pw) {
     if (!env) env = await envReady;
     if (pw) { $('ca-lockbox').hidden = true; $('ca-skel').hidden = false; }
-    try { O = await GP.decryptJSON(env, pw); try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ }
+    try { O = await GP.decryptJSON(env, pw); if (O && O.tot) { O.tot.targetSpec = O.tot.target; O.tot.target = PS_TARGET; } try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ }
       try { const me = await GP.latest('mat_order.enc.json'); MO = me ? await GP.decryptJSON(me, pw) : null; } catch (e) { MO = null; }   // 발주 마감 지남(공통 기준)
       await UI.ready(); render(); }
     catch (e) { $('ca-lockbox').hidden = false; $('ca-skel').hidden = true; $('ca-form').hidden = false; $('ca-msg').textContent = pw ? '암호가 맞지 않습니다' : ''; }

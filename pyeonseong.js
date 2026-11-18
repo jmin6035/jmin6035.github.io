@@ -319,7 +319,7 @@
     const td0 = UI.today();
     const row = (i, k) => {
       const kc = KC[i.kind] || [i.kind, ''], sz = i.thk ? `${(+i.thk).toFixed(2)} × ${n0(i.wdt)}` : '–';
-      const sp = p === 'cg' ? chip(i.fam, 'al') + chip(GRN[i.grade] || i.grade) + chip(i.cot) + chip(i.aft) : chip(i.item) + chip(i.color, 'cl');
+      const sp = p === 'cg' ? chip(i.fam, 'al') + chip(GRN[i.grade] || i.grade) + chip(i.cot) + chip(i.aft) : chip(i.item) + chip(i.code || i.top || i.color, 'cl');
       const dd = p === 'cg' ? i.dept || i.arr || i.due : i.ready;
       const dl = p === 'cg' ? (i.dept ? `출항 ${ymd(i.dept)}` : i.arr ? `입항 ${ymd(i.arr)}` : i.due ? `납기 ${ymd(i.due)}` : '–') : (i.ready ? `준비 ${ymd(i.ready)}` : '–');
       /* 11/17 검토: 이미 지난 납기·생산일 뒤 납기 = 빨강(작업 순서 화면과 같은 방식) */
