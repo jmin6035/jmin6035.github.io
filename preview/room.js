@@ -22,7 +22,7 @@
 
   const suns = () => [...new Set([...Object.values(X.color), ...Object.values(X.cgl)].flatMap((o) => Object.keys(o)))].sort();
   const cc = (l, s) => (X.color[l] || {})[s] || null;
-  const room = (c) => (c ? Math.max(0, c.cap - c.dom - c.exp) : 0);
+  const room = (c) => (c ? Math.max(0, c.free != null ? c.free : c.cap - c.dom - c.exp) : 0);   // 빈 룸 = 남는 가동 시간 × 라인 평균 속도
   const used = (c) => (c ? c.dom + c.exp : 0);
   function selfMin(s) {   // 그 순 안 강종별 자가재 재고 최저(음수만)
     const a = sunStart(s), z = sunEnd(s), out = [];
@@ -32,20 +32,21 @@
     }
     return out;
   }
-  const pullFor = (line, s) => X.pull.rows.filter((r) => (!line || r.line === line) && r.due > sunEnd(s));
+  const PR = () => X.pull.rows.filter((r) => r.exp);   // 당길 오더 = 수출만(컬러수출그룹의 가전내수 주문은 내수 = 순 고정 몫)
+  const pullFor = (line, s) => PR().filter((r) => (!line || r.line === line) && r.due > sunEnd(s));
   const decs = (key) => EV.filter((e) => e.t === 'room' && (!key || e.key === key));
 
   /* ---------- 룸판 ---------- */
   function board() {
     const S = suns(), S3 = S.slice(0, 3);
     const room3 = S3.reduce((a, s) => a + MAIN.reduce((b, l) => b + room(cc(l, s)), 0), 0);
-    const pT = X.pull.rows.reduce((a, r) => a + r.t, 0), pOk = X.pull.rows.filter((r) => ST(r.st)[0] === 'ok').reduce((a, r) => a + r.t, 0);
+    const pT = PR().reduce((a, r) => a + r.t, 0), pOk = PR().filter((r) => ST(r.st)[0] === 'ok').reduce((a, r) => a + r.t, 0);
     const s2 = S.filter((s) => used(cc('2CCL', s)) >= 0.5), t2 = s2.reduce((a, s) => a + used(cc('2CCL', s)), 0);
     let low = null; for (const [al, ser] of Object.entries(X.self || {})) for (const r of ser) if (r[0] >= X.today && (!low || r[1] < low[1])) low = [al, r[1], r[0]];
     const kpi = `<div class="op-k">
       <div class="${room3 >= 500 ? 'warn' : 'ok'}"><span>앞 3순 빈 룸(1·3·4CCL)</span><b>${n0(room3)}<small>t</small></b><em>${sunLab(S3[0])} ~ ${sunLab(S3[S3.length - 1])} · 수출·가전 오더로 채울 몫</em></div>
       <div><span>당길 수 있는 수출 오더</span><b>${n0(pT)}<small>t</small></b><em>그중 소재 확보 ${n0(pOk)}t · 납기 ${md(X.pull.from)} 이후</em></div>
-      <div class="${s2.length ? 'bad' : 'ok'}"><span>2CCL 가동(최후 라인)</span><b>${s2.length ? `${s2.length}<small>순 · ${n0(t2)}t</small>` : '없음'}</b><em>${s2.length ? '사장님 결정 필요: ' + s2.map(sunLab).join(' · ') : '나머지 CCL 로 소화'}</em></div>
+      <div class="${s2.length ? 'bad' : 'ok'}"><span>2CCL 가동(최후 라인)</span><b>${s2.length ? `${s2.length}<small>순 · ${n0(t2)}t</small>` : '없음'}</b><em>${s2.length ? `사장님 결정 필요: ${s2.map(sunLab).join(' · ')} · 12월까지는 판생 배포 계획 그대로` : '나머지 CCL 로 소화'}</em></div>
       <div class="${low && low[1] < -0.5 ? 'bad' : 'ok'}"><span>컬러용 자가재(고정 몫) 최저</span><b>${low ? sg(low[1]) : '–'}<small>t</small></b><em>${low ? `${low[0]} ${md(low[2])}${low[1] < -0.5 ? ' — 도금 자가재 몫 부족' : ''}` : ''}</em></div></div>`;
     let mPrev = '';
     const head = S.map((s) => { const mb = s.slice(0, 7) !== mPrev; mPrev = s.slice(0, 7); return `<th class="${mb ? 'mb' : ''}">${sunLab(s)}</th>`; }).join('');
@@ -73,7 +74,7 @@
     const log = decs();
     return `${kpi}<section class="card"><h2>순 단위 룸판 <small>이번 순(${md(X.today)}부터 남은 날) ~ 2월 · 칸을 누르면 배정·당길 오더·결정 기록</small></h2>
       <div class="op-w"><table class="rb"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
-      <p class="rb-lg"><span><b>빈 룸</b> = 가용 시간 × 라인 평균 속도 − 배정(내수 + 수출)</span><span><b>내수</b> = 순 단위로 정해 끊는 몫</span><span><b>2CCL</b> = 다른 CCL 이 모자랄 때만, 가동하면 사장님 결정</span><span><b>자가재</b> = 컬러가 쓸 몫(건드리지 않음)</span></p>
+      <p class="rb-lg"><span><b>빈 룸</b> = 배정 뒤 남는 가동 시간 × 라인 평균 속도</span><span><b>내수</b> = 순 단위로 정해 끊는 몫</span><span><b>2CCL</b> = 다른 CCL 이 모자랄 때만, 가동하면 사장님 결정</span><span><b>자가재</b> = 컬러가 쓸 몫(건드리지 않음)</span></p>
       <div id="rb-pd"></div></section>
       <section class="card"><h2>결정 기록 <small>수주가 결정하고 책임 — 칸에서 남긴 기록 ${log.length}건</small></h2>${logList(log)}</section>`;
   }
@@ -85,7 +86,7 @@
     if (CCL.includes(l)) {
       const c = cc(l, s) || { g: {}, cap: 0, dom: 0, exp: 0, days: 0 };
       left = `<h3>${l} ${sunLab(s)} 배정 <small>${c.days}일 가동 · 가용 ${n0(c.cap)}t</small></h3><ul>${Object.entries(c.g).sort((a, b) => b[1] - a[1]).map(([g, t]) => `<li>${esc(g)} ${n0(t)}t <small>${X.dom.includes(g) ? '내수(순 고정)' : '수출·가전'}</small></li>`).join('') || '<li>배정 없음</li>'}</ul>`
-        + `<p class="note">${l === '2CCL' ? '2CCL 은 최후 라인 — 가동하려면 사장님 결정(아래 기록).' : `빈 룸 ${n0(room(c))}t — 오른쪽 오더를 당겨 채울지 결정.`}</p>`;
+        + `<p class="note">${l === '2CCL' ? `2CCL 은 최후 라인 — 가동하려면 사장님 결정(아래 기록). 이 중 다른 CCL 도 가능한 몫 ${n0(used(c) - (c.fix || 0))}t · 2CCL 확정·전용 ${n0(c.fix || 0)}t${s < '2027-01' ? ' · 12월까지는 판생 배포 계획' : ''}.` : `빈 룸 ${n0(room(c))}t — 오른쪽 오더를 당겨 채울지 결정.`}</p>`;
       const P = pullFor(l === '2CCL' ? null : l, s), pt = P.reduce((a, r) => a + r.t, 0);
       right = `<h3>당길 수 있는 수출 오더 <small>${l === '2CCL' ? '전 라인' : l} · 납기 ${md(sunEnd(s))} 이후 · ${P.length}건 ${n0(pt)}t</small></h3>`
         + (P.length ? `<div class="op-w"><table class="op-t"><thead><tr><th class="l">납기</th><th class="l">계약</th><th class="l">품명·규격</th><th>남은 t</th><th class="l">소재</th><th class="l">담당</th></tr></thead><tbody>${P.slice(0, 15).map((r) => { const [k, n] = ST(r.st); return `<tr><td class="l">${md(r.due)}</td><td class="l">${esc(r.con)}</td><td class="l">${esc(r.pdt)} ${esc(r.size)}</td><td>${n0(r.t)}</td><td class="l"><span class="st ${k}">${n}</span></td><td class="l">${esc(r.man)}</td></tr>`; }).join('')}</tbody></table></div>${P.length > 15 ? `<p class="note">외 ${P.length - 15}건 — 판매그룹별 탭 담당자별 표</p>` : ''}` : '<p class="q">이 라인에 당길 수 있는 미결 수출 오더 없음 → 다음 달 수주를 받아 와야 함(판매그룹별 탭)</p>');
@@ -120,8 +121,9 @@
   function testCalc() {
     const m = $('tc-m').value, d = +$('tc-d').value; TM = m; TD = d; $('tc-o').textContent = sg(d) + 't';
     const S = [1, 2, 3].map((k) => `${m}-${k}`);
-    const cap1 = S.map((s) => MAIN.reduce((a, l) => a + ((cc(l, s) || {}).cap || 0), 0));
-    const cap2 = S.map((s) => (cc('2CCL', s) || {}).cap || 0);
+    const capOf = (c) => (c ? c.dom + c.exp + (c.free != null ? c.free : Math.max(0, c.cap - c.dom - c.exp)) : 0);   // 능력 = 지금 배정 + 남는 시간(룸판 빈 룸과 같은 기준)
+    const cap1 = S.map((s) => MAIN.reduce((a, l) => a + capOf(cc(l, s)), 0));
+    const cap2 = S.map((s) => capOf(cc('2CCL', s)));
     const D0 = S.map((s) => CCL.reduce((a, l) => a + ((cc(l, s) || {}).dom || 0), 0));
     const X0 = S.map((s) => CCL.reduce((a, l) => a + ((cc(l, s) || {}).exp || 0), 0));
     const u2now = S.reduce((a, s) => a + used(cc('2CCL', s)), 0);
@@ -131,10 +133,12 @@
     // 넘치는 순의 수출·가전은 같은 달 다른 순 빈 룸으로 옮김(가까운 순부터 — 수출은 선적 기한 안에서 움직일 수 있음) → 그래도 넘치면 2CCL(사장님 결정) → 그 뒤 능력 초과
     const rm = S.map((s, i) => Math.max(0, cap1[i] - D1[i] - X0[i])), ov = S.map((s, i) => Math.max(0, D1[i] + X0[i] - cap1[i])), mv = S.map(() => 0);
     S.forEach((s, i) => { [...S.keys()].filter((j) => j !== i).sort((a, b) => Math.abs(a - i) - Math.abs(b - i)).forEach((j) => { const t = Math.min(ov[i], rm[j]); ov[i] -= t; rm[j] -= t; mv[i] -= t; mv[j] += t; }); });
-    const R = S.map((s, i) => { const u2 = Math.min(ov[i], cap2[i]); return { s, d0: D0[i], d1: D1[i], x: X0[i] + mv[i], cap: cap1[i], room: rm[i], u2, beyond: ov[i] - u2, roomNow: roomNow[i], mv: mv[i] }; });
+    const c2 = cap2.slice(), u2a = S.map(() => 0);   // 그래도 넘치면 같은 달 2CCL 가동 가능한 순(가까운 순부터)으로 — 사장님 결정
+    S.forEach((s, i) => { [...S.keys()].sort((a, b) => Math.abs(a - i) - Math.abs(b - i)).forEach((j) => { const t = Math.min(ov[i], c2[j]); ov[i] -= t; c2[j] -= t; u2a[j] += t; }); });
+    const R = S.map((s, i) => { const u2 = u2a[i]; return { s, d0: D0[i], d1: D1[i], x: X0[i] + mv[i], cap: cap1[i], room: rm[i], u2, beyond: ov[i], roomNow: roomNow[i], mv: mv[i] }; });
     const moved = mv.filter((v) => v > 0).reduce((a, v) => a + v, 0);
     const sum = (k) => R.reduce((a, r) => a + r[k], 0);
-    const P = X.pull.rows.filter((r) => r.due >= nextMon(m) + '-01'), pT = P.reduce((a, r) => a + r.t, 0), pOk = P.filter((r) => ST(r.st)[0] === 'ok').reduce((a, r) => a + r.t, 0);
+    const P = PR().filter((r) => r.due >= nextMon(m) + '-01'), pT = P.reduce((a, r) => a + r.t, 0), pOk = P.filter((r) => ST(r.st)[0] === 'ok').reduce((a, r) => a + r.t, 0);
     const mi = Math.max(0, (X.sales.C건재 || []).findIndex((x) => x.m === m)), coef = ((X.selfCoef || {}).C건재 || [0.65])[Math.min(mi, ((X.selfCoef || {}).C건재 || [0.65]).length - 1)] || 0.65;
     const share0 = sum('d0') ? R[0].d0 / sum('d0') * 100 : 0, share1 = sum('d1') ? R[0].d1 / sum('d1') * 100 : 0;
     let low = {}; for (const [al, ser] of Object.entries(X.self || {})) low[al] = Math.min(...ser.filter((r) => r[0].slice(0, 7) >= m).map((r) => r[1]));
@@ -148,7 +152,7 @@
     const tb = `<div class="op-w"><table class="op-t"><thead><tr><th class="l">순</th><th>지금 내수</th><th>순 고정 내수</th><th>수출·가전(옮긴 뒤)</th><th>1·3·4CCL 능력</th><th>빈 룸(당길 오더)</th><th>2CCL 필요</th><th>지금 빈 룸</th></tr></thead><tbody>`
       + R.map((r) => `<tr><td class="l">${sunLab(r.s)}</td><td>${n0(r.d0)}</td><td><b>${n0(r.d1)}</b></td><td>${n0(r.x)}</td><td>${n0(r.cap)}</td><td>${r.room >= 0.5 ? n0(r.room) : '–'}</td><td class="${r.u2 >= 0.5 ? 'bad' : 'z'}">${r.u2 >= 0.5 ? n0(r.u2) : '–'}</td><td class="z">${n0(r.roomNow)}</td></tr>`).join('')
       + `<tr class="tot"><td class="l">합계</td><td>${n0(sum('d0'))}</td><td>${n0(sum('d1'))}</td><td>${n0(sum('x'))}</td><td>${n0(sum('cap'))}</td><td>${n0(roomT)}</td><td>${u2 >= 0.5 ? n0(u2) : '–'}</td><td>${n0(sum('roomNow'))}</td></tr></tbody></table></div>`;
-    $('tc-r').innerHTML = ans + tb + `<p class="note">시험 계산 — 게시 계획은 바꾸지 않음. 능력 = 가용 시간 × 라인 평균 속도(${Object.entries(X.tph).map(([l, v]) => `${l} ${v}t/h`).join(' · ')}). 라인 전용 품목·도료 전환은 반영 안 함(실제 편성은 엔진).</p>`;
+    $('tc-r').innerHTML = ans + tb + `<p class="note">시험 계산 — 게시 계획은 바꾸지 않음. 능력 = 지금 배정 + 남는 가동 시간 × 라인 평균 속도, 2CCL 은 계획상 가동일만(${Object.entries(X.tph).map(([l, v]) => `${l} ${v}t/h`).join(' · ')}). 라인 전용 품목·도료 전환은 반영 안 함(실제 편성은 엔진).</p>`;
   }
 
   /* ---------- 판매그룹별 ---------- */
@@ -158,12 +162,12 @@
     const order = ['컬러수출', '컬러수출(가전내수)', '컬러건재판매', '수요개발'];
     const t1 = `<div class="op-w"><table class="op-t"><thead><tr><th class="l">판매그룹</th>${S.map((s) => `<th>${sunLab(s)}</th>`).join('')}</tr></thead><tbody>${order.filter((g) => G[g]).map((g) => `<tr><td class="l"><b>${g}</b></td>${S.map((s) => `<td>${G[g][s] >= 0.5 ? n0(G[g][s]) : '–'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     const SL = X.sales.C수출 || [], byM = {}; for (const r of X.pull.rows) byM[r.due.slice(0, 7)] = (byM[r.due.slice(0, 7)] || 0) + r.t;
-    const t2 = `<div class="op-w"><table class="op-t"><thead><tr><th class="l">달</th><th>컬러수출 판매계획</th><th>미결 수주(남은 양)</th><th>더 받아야 할 양</th></tr></thead><tbody>${SL.filter((x) => x.m >= X.pull.from.slice(0, 7)).map((x) => { const o = byM[x.m] || 0, g = Math.max(0, x.sales - o); return `<tr><td class="l">${+x.m.slice(5)}월</td><td>${n0(x.sales)}</td><td>${n0(o)}</td><td class="${g >= 0.5 ? 'bad' : ''}">${g >= 0.5 ? n0(g) : '–'}</td></tr>`; }).join('')}</tbody></table></div>`;
-    const MN = {}; for (const r of X.pull.rows) { const k = r.man || '담당 미상', o = (MN[k] = MN[k] || { t: 0, n: 0, ok: 0, due: r.due, lines: new Set() }); o.t += r.t; o.n++; if (ST(r.st)[0] === 'ok') o.ok += r.t; if (r.due < o.due) o.due = r.due; if (r.line) o.lines.add(r.line); }
+    const t2 = `<div class="op-w"><table class="op-t"><thead><tr><th class="l">달</th><th>컬러수출 판매계획</th><th>미결 수주(남은 양, 가전내수 포함)</th><th>더 받아야 할 양</th></tr></thead><tbody>${SL.filter((x) => x.m >= X.pull.from.slice(0, 7)).map((x) => { const o = byM[x.m] || 0, g = Math.max(0, x.sales - o); return `<tr><td class="l">${+x.m.slice(5)}월</td><td>${n0(x.sales)}</td><td>${n0(o)}</td><td class="${g >= 0.5 ? 'bad' : ''}">${g >= 0.5 ? n0(g) : '–'}</td></tr>`; }).join('')}</tbody></table></div>`;
+    const MN = {}; for (const r of PR()) { const k = r.man || '담당 미상', o = (MN[k] = MN[k] || { t: 0, n: 0, ok: 0, due: r.due, lines: new Set() }); o.t += r.t; o.n++; if (ST(r.st)[0] === 'ok') o.ok += r.t; if (r.due < o.due) o.due = r.due; if (r.line) o.lines.add(r.line); }
     const t3 = `<div class="op-w"><table class="op-t"><thead><tr><th class="l">담당</th><th>건수</th><th>남은 t</th><th>그중 소재 확보</th><th class="l">가장 이른 납기</th><th class="l">라인</th></tr></thead><tbody>${Object.entries(MN).sort((a, b) => b[1].t - a[1].t).map(([k, o]) => `<tr><td class="l"><b>${esc(k)}</b></td><td>${o.n}</td><td>${n0(o.t)}</td><td>${o.ok >= 0.5 ? n0(o.ok) : '–'}</td><td class="l">${md(o.due)}</td><td class="l">${[...o.lines].sort().join(' · ')}</td></tr>`).join('')}</tbody></table></div>`;
     return `<section class="card"><h2>판매그룹 × 순 배정 <small>t · 이번 순은 오늘부터</small></h2><p class="q">컬러건재판매·가전내수·수요개발 = 순 단위로 정한 몫 · 컬러수출 = 빈 룸을 채우는 몫</p>${t1}</section>
       <section class="card"><h2>컬러수출 — 내가 언제까지 얼마를 받아 와야 하나 <small>판매계획(통합 계획) vs 미결 수주</small></h2>${t2}<p class="note">미결 수주 = MES 미결 컬러수출그룹 주문의 남은 양(납기 달 기준). 판매계획보다 모자란 만큼이 받아 와야 할 양 — 월초·월중 빈 룸에 넣도록 분산 수주.</p></section>
-      <section class="card"><h2>담당자별 당길 수 있는 수출 오더 <small>납기 ${md(X.pull.from)} 이후 미결 · ${X.pull.rows.length}건</small></h2>${t3}</section>`;
+      <section class="card"><h2>담당자별 당길 수 있는 수출 오더 <small>납기 ${md(X.pull.from)} 이후 미결 수출 · ${PR().length}건</small></h2>${t3}</section>`;
   }
 
   function draw() {

@@ -16,8 +16,8 @@
     const D0 = S.map((s) => CCL.reduce((a, l) => a + ((cc(l, s) || {}).dom || 0), 0)), cap1 = S.map((s) => MAIN.reduce((a, l) => a + ((cc(l, s) || {}).cap || 0), 0));
     const TD = D0.reduce((a, v) => a + v, 0), C1 = cap1.reduce((a, v) => a + v, 0) || 1, D1 = cap1.map((c) => TD * c / C1);
     const SL = (X.sales.C수출 || []).find((x) => x.m === m) || {}, ordM = X.pull.rows.filter((r) => r.due.slice(0, 7) === m).reduce((a, r) => a + r.t, 0);
-    const jan = X.pull.rows.filter((r) => r.due.slice(0, 7) === '2027-01').reduce((a, r) => a + r.t, 0);
-    const noMat = X.pull.rows.filter((r) => /소재 없음/.test(r.st)).reduce((a, r) => a + r.t, 0);
+    const jan = X.pull.rows.filter((r) => r.exp && r.due.slice(0, 7) === '2027-01').reduce((a, r) => a + r.t, 0);
+    const noMat = X.pull.rows.filter((r) => r.exp && /소재 없음/.test(r.st)).reduce((a, r) => a + r.t, 0);
     const selfDec = Object.values(X.cgl).reduce((a, L) => a + S.reduce((b, s) => b + Object.values((L[s] || {}).self || {}).reduce((c, v) => c + v, 0), 0), 0);
     let low = null; for (const [al, ser] of Object.entries(X.self || {})) for (const r of ser) if (!low || r[1] < low[1]) low = [al, r[1], r[0]];
     const u2 = Object.entries(X.color['2CCL'] || {}).filter(([, c]) => c.dom + c.exp >= 0.5);
@@ -28,7 +28,7 @@
       ['컬러건재판매그룹', '내수는 순 단위로 정해 끊음 — 월초에 깔고 월말에 급히 돌리는 일 없음',
         `12월 내수 ${n0(TD)}t: 지금 계획 ${S.map((s, i) => `${lab[i]} ${n0(D0[i])}`).join(' · ')} → 순 고정 <b>${D1.map((v, i) => `${lab[i]} ${n0(v)}`).join(' · ')}</b>. 정한 몫 밖의 급한 추가는 수주 조정(룸판)에서 결정.`],
       ['도금 판매(수주)', '컬러용 자가재 몫은 고정 — 도금 주문이 늘어도 건드리지 않음, 나머지 룸은 수익 중심',
-        `12월 자가재 ${n0(selfDec)}t 고정. 지금 계획 자가재 최저 <b>${low ? `${low[0]} ${n0(low[1])}t(${md(low[2])})` : '–'}</b>${low && low[1] < -0.5 ? ' — 이 몫부터 채워야 함' : ''}.`],
+        `12월 자가재 ${n0(selfDec)}t 고정. 지금 계획 자가재 최저 <b>${low ? `${low[0]} ${low[1] < 0 ? '−' : ''}${n0(Math.abs(low[1]))}t(${md(low[2])})` : '–'}</b>${low && low[1] < -0.5 ? ' — 이 몫부터 채워야 함' : ''}.`],
       ['소재 구매', '수주가 정한 순 배정에 맞춰 발주 — 당긴 오더의 소재가 먼저',
         `당길 후보 수출 오더 중 소재 없음 <b>${n0(noMat)}t</b> — 당기기로 정하면 바로 발주 대상.`],
       ['현장(공정)', '2CCL 은 최후 — 다른 CCL 이 찰 때만, 가동은 사장님 결정',
