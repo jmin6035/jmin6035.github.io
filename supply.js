@@ -569,7 +569,7 @@
   // 11/18 사용자 '기준 1~8일 전 맞음·재고 사용 n일 전 생산분 — 이건 왜 넣는건데': 판정 칩 대신 소재가 컬러에 들어온 날(도금 생산 다음 날)만. 도금이 컬러 생산보다 늦은 경우만 경고
   const selfJudge = (pd, d) => { const i = add(pd, 1); return pd >= d ? ['도금이 늦음', '컬러 생산 뒤', null, 'late'] : [i <= today ? '컬러공장 입고 완료' : '컬러공장 입고 예정', md(i), i, 'due']; };
   // 11/18 사용자 '소재 발주 → 소재 입고 → 도금 생산 → 컬러공장 입고 완료 → 컬러 생산 → 납기': 자가재 앞에 도금 소재(F/H) 발주·입고
-  const fhPre = (pd, a) => (pd ? lotSteps(`G:${/AL/.test(a || '') && !/STS/.test(a || '') ? 'H' : 'F'}`, pd, 'F/H') || [] : []);
+  const fhPre = (pd, a) => (pd ? lotSteps(`G:${/AL/.test(a || '') && !/STS/.test(a || '') ? 'H' : 'F'}`, pd, 'F/H', FAM(a)) || [] : []);
   // 11/18 사용자 '소재가 언제 발주돼서 언제 입고되는지 전부': 재고 굴림(소재 관제와 같은 순서 = 지금 재고 → 발주 입고 예정일 순)에서 그날 쓰는 몫이 어느 발주인지
   const ordDay = (r) => { const m = /(\d{2})\/(\d{2}) 발주/.exec(r.note || ''); return m ? `${+m[1]}/${+m[2]}` : null; };
   function lotOf(k, d) {
@@ -584,13 +584,18 @@
     return { stock, S, L, short: cum < end - 0.5 };
   }
   const rng = (A) => { const u = [...new Set(A.filter(Boolean))]; return u.length ? (u.length > 1 ? `${u[0]}~${u[u.length - 1]}` : u[0]) : null; };
-  function lotSteps(k, d, lb) {   // [칩…] — 지난 날 생산 = 입고 완료
-    if (d < today) return [['소재 입고', '완료', null, 'due']];
+  function lotSteps(k, d, lb, fam) {   // [칩…] — 지난 날 생산 = 입고 완료
+    if (d < today) {   // 이미 생산한 날 = MES 코일 추적(그날 도금 코일의 소재 → 입고일·발주일, procure cgRaw)
+      const cr = Object.entries((MP && MP.P.cgRaw) || {}).filter(([kk]) => kk.startsWith(d + '|') && (!fam || kk.endsWith('|' + fam))).map(([, v]) => v);
+      if (cr.length) { const R2 = (f) => { const A = cr.flatMap((v) => v[f] || []).sort(); return A.length ? rng([md(A[0]), md(A[A.length - 1])]) : null; }, o = R2('ord');
+        return [...(o ? [[cr.every((v) => v.est) ? '소재 발주(역산)' : '소재 발주', o, null, 'due']] : []), ['소재 입고 완료', R2('in') || '-', null, 'due']]; }
+      return [['소재 입고', '완료', null, 'due']];
+    }
     const x = lotOf(k, d); if (!x) return null;
     const out = [];
     const md0 = (v) => (v ? md(v) : null);
     if (x.stock) {
-      if (x.S && x.S.length) { const sd = (f) => rng(x.S.map((z) => z[f]).filter(Boolean).sort().map(md0)), o = sd('ord'); if (o) out.push(['소재 발주', o, null, 'due']); out.push(['소재 입고 완료', sd('in'), null, 'due']); }
+      if (x.S && x.S.length) { const sd = (f) => rng(x.S.map((z) => z[f]).filter(Boolean).sort().map(md0)), o = sd('ord'); if (o) out.push([x.S.every((z) => z.est) ? '소재 발주(역산)' : '소재 발주', o, null, 'due']); out.push(['소재 입고 완료', sd('in'), null, 'due']); }   // 발주일이 MES 에 없으면 입고일 − 리드타임(11/18 사용자)
       else out.push(['소재 입고', '완료', null, 'due']);
       if (!x.L.length && !x.short) return out;
     }
