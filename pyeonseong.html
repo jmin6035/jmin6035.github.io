@@ -6,8 +6,8 @@
 <title>편성</title>
 <meta name="description" content="맨 위 = 컬러·도금 전체 주문진도 · 이번 주 + 다음 주 라인별 편성(지난 날 = 실적) — 칸을 누르면 그날 작업 순서 · 아래 = 작업 순서(보기 전용)">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611182252">
-<link rel="stylesheet" href="ui/ord_prog.css?v=2611182252">
+<link rel="stylesheet" href="ui/theme.css?v=2611182259">
+<link rel="stylesheet" href="ui/ord_prog.css?v=2611182259">
 <style>
 main.wrap { max-width: none; }
 html.v2 #ui-ctl { display: none !important; }   /* 11/12: 공통 관제 알약 줄은 편성과 상관없어 숨김 */
@@ -162,7 +162,8 @@ table.psw td.pst { background: var(--pz-past); }
 table.psw td.pst .tv { color: var(--ink-2); }
 html:root body main #ps-main table.psw td.stopc { padding: 0 !important; vertical-align: middle !important; background: repeating-linear-gradient(135deg, var(--pz-stop1) 0 9px, var(--pz-stop2) 9px 18px); }
 .stopc .sl { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 62px; font-size: 15px; font-weight: 800; color: var(--pz-stopt); }
-.stopc .sl small { font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+.stopc .sl small { font-size: 13.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+.stopc .sl { flex-wrap: wrap; row-gap: 2px; padding: 4px; text-align: center; }   /* 11/19 검수: 390 폭 '정지 12/1~12/29' 칸 넘침 → 기간을 아랫줄로 */
 tr.idle .stopc .sl { min-height: 40px; }
 button.cell.stp { background: transparent !important; } button.cell.stp .off { color: var(--pz-stopt) !important; font-size: 15px; }
 .band { background: var(--pz-ev) !important; color: var(--pz-evt) !important; font-size: 13.5px; flex-basis: 22px; line-height: 22px; letter-spacing: -.2px; }
@@ -175,6 +176,7 @@ button.cell.fl { box-shadow: inset 3px 0 0 var(--bad); }
 /* 11/17 사용자 '이번 주·다음 주 같은 표 두 개라 헷갈림' — 표 위 제목 띠 + 이번 주 = 파랑 머리 · 다음 주 = 회색 머리 + 왼쪽 색 막대 */
 .pz-cap { display: flex; align-items: baseline; gap: 12px; margin: 0 0 8px; padding: 8px 14px; border-radius: 10px; text-align: left; }
 .pz-cap b { font-size: 18px; font-weight: 800; } .pz-cap span { font-size: 15px; font-weight: 700; } .pz-cap em { font-style: normal; font-size: 14px; color: var(--ink-2); margin-left: auto; }
+.pz-cap { flex-wrap: wrap; row-gap: 2px; } .pz-cap b, .pz-cap span { white-space: nowrap; }   /* 11/19: 390 폭 '이번 주'·기간이 낱말 중간에서 갈라지던 것 */
 .pz-cap.cur { background: color-mix(in srgb, var(--pz-brand) 10%, var(--surface)); border-left: 6px solid var(--pz-brand); } .pz-cap.cur b, .pz-cap.cur span { color: var(--pz-brand); }
 .pz-cap.nxt { background: color-mix(in srgb, #7c3aed 8%, var(--surface)); border-left: 6px solid #7c3aed; } .pz-cap.nxt b, .pz-cap.nxt span { color: #6d28d9; }
 :root[data-theme="dark"] .pz-cap.nxt b, :root[data-theme="dark"] .pz-cap.nxt span { color: #c4b5fd; } @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pz-cap.nxt b, :root:not([data-theme="light"]) .pz-cap.nxt span { color: #c4b5fd; } }
@@ -218,12 +220,12 @@ html.v2 body main table.ps-seq tr.pdue td.dl { color: var(--bad) !important; fon
   </div>
 </main>
 <footer class="foot"><div class="wrap"><span>POSCO STEELEON 도금·컬러 가동계획</span></div></footer>
-<script src="ui/shell.js?v=2611182252"></script>
-<script src="engine/crypto.js?v=2611182252"></script>
-<script src="ui/ct.js?v=2611182252"></script>
-<script src="ct_orders.js?v=2611182252"></script>
-<script src="cg_calendar.js?v=2611182252"></script>
-<script src="cc_calendar.js?v=2611182252"></script>
-<script src="pyeonseong.js?v=2611182252"></script>
+<script src="ui/shell.js?v=2611182259"></script>
+<script src="engine/crypto.js?v=2611182259"></script>
+<script src="ui/ct.js?v=2611182259"></script>
+<script src="ct_orders.js?v=2611182259"></script>
+<script src="cg_calendar.js?v=2611182259"></script>
+<script src="cc_calendar.js?v=2611182259"></script>
+<script src="pyeonseong.js?v=2611182259"></script>
 </body>
 </html>

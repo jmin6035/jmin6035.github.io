@@ -238,7 +238,7 @@
         + row('주문', (x.grp && x.grp !== '미상' ? `<span class="cp" title="판매그룹">${esc(gnm(x.grp))}</span>` : '')
           + `${manDst(x)}<span class="ib"><em class="lb">입고</em><span class="cp${x.ent && x.ent > TODAY ? ' wr' : ''}" title="소재 입고일">소재 ${x.ent ? md(x.ent) : '-'}</span></span>`);
     }
-    if (x.dummy) return row('사양', `<span class="cp wr" title="MES 1030 더미 지시 — 시간 = MES 작업시간">더미 0.5 × 1,000</span>`);
+    if (x.dummy) return row('사양', `<span class="cp wr" title="더미 지시 · 시간 = 작업지시 작업시간">더미 0.5 × 1,000</span>`);
     const dtm = (v) => (v ? String(v).slice(5, 16).replace('-', '/').replace(/ 00:00$/, '') : '');   // 시각 00:00 = 날짜만 있는 값   // 11/9: 풀 코드 8자리·담당자-목적지·도료/PF 입고 일시
     const fut = (v) => v && new Date(String(v).replace(' ', 'T')) > new Date();
     const st = (at, s) => (at ? dtm(at) : s === 'F' ? '입고 완료' : s ? '입고 대기(입고일 미정)' : '-');
@@ -253,7 +253,7 @@
     const x = v.x, bad = CK && CK.some((c) => c.id === x.id && c.l === l && c.lv === 'bad');
     const due = plant === 'cg' ? x.dlv : x.due;
     const tag = plant === 'cg' ? (x.issued ? '<span class="cp fx" title="MES 작업지시가 내려간 작업">작업대기</span>' : '')   /* 11/17 검토: 작업대기 = 작업지시 내려감(컬러·편성 캘린더와 같은 뜻) */
-      : (x.fixed ? '<span class="cp kw" title="MES 1030 확정 작업지시 — 작업대기">작업대기</span>' : '<span class="cp kj" title="MES 1020 소재 매치 — 작업지시 확정 전">지시대기</span>');   // 11/12 사용자 '납기 옆에 작업대기/지시대기 구분'   // 11/10 사용자 '1030 #순번 · 1020 미확정 표시 지워라'
+      : (x.fixed ? '<span class="cp kw" title="확정 작업지시">작업대기</span>' : '<span class="cp kj" title="소재 매치 · 작업지시 확정 전">지시대기</span>');   // 11/12 사용자 '납기 옆에 작업대기/지시대기 구분'   // 11/10 사용자 '1030 #순번 · 1020 미확정 표시 지워라'
     const sub = plant === 'cg' ? `${x.n > 1 ? x.n + '코일 · ' : ''}<span class="nw">소재 ${esc(x.raws[0])}${x.n > 1 ? ' 외' : ''}</span>${x.req ? ' · 생산 예정 ' + md(x.req) : ''}` : `<b title="품명(제품 코드 ${esc(x.pdt)})">${esc(x.item || x.pdt)}</b>${x.ready && x.ready > TODAY ? '<div class="wr" title="도료·필름 입고 뒤">' + md(x.ready) + '부터 가능</div>' : ''}`;
     const lsel = plant === 'cc' ? `<select data-a="line" data-i="${v.i}" title="다른 라인으로">${LINES.cc.map((y) => `<option${y === l ? ' selected' : ''}>${y}</option>`).join('')}</select>` : '';
     return `<tr class="j${x.fixed || x.issued ? ' fx' : ''}${hl === x.id ? ' hl' : bad ? ' bad' : ''}" draggable="true" data-i="${v.i}" data-id="${esc(x.id)}">`
