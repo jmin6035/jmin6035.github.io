@@ -211,7 +211,7 @@
     const gs = rows.map((r) => { const ss = r.v.map((_, i) => st(r, i)), ahead = ['bad', 'warn'].find((k) => ss.slice(wi + 1).includes(k)); return { r, now: ss[wi], ahead, wk: ahead ? ss.slice(wi + 1).indexOf(ahead) + wi + 1 : -1 }; });
     const chip = (tone, label, L) => (L.length ? `<div class="iv-chip ${tone}"><b>${label}</b>${L.join('<i>·</i>')}</div>` : '');
     const nm = (r) => esc(GN[r.k] || r.k);
-    const PSv = PS && PS.tot ? PS.tot : null;
+    const PSv = PS && PS.tot ? { ...PS.tot, target: 5100 } : null;   // 11/18 사용자 '계획재 목표 5,100t'(planstock.js·cglplan/planstock.py 와 같은 값)
     const psLine = PSv && inS('C') ? `<div class="iv-chip ${PSv.stock > PSv.target * 1.5 ? 'warn' : ''}"><b>계획재</b>${n0(PS.n)}개 사양 ${n0(PSv.stock)}t · 목표 ${n0(PSv.target)}t의 ${Math.round(PSv.stock / PSv.target * 100)}% · ${+String(PS.month).slice(5)}월말 예상 ${n0(PSv.end[0])}t <i>·</i> 결품·안전재고 미만 ${n0((PS.flags.short || 0) + (PS.flags.low || 0))}개 사양 <a href="planstock.html">계획재 상세 →</a></div>` : '';
     const topH = `<div class="iv-top"><div class="scroll"><table class="t iv-t"><thead><tr><th class="l">제품 재고</th><th>실재고</th><th title="'27 판생그룹 월말 최대">목표</th><th>목표 대비</th><th>차이</th><th class="l">초과 근거(같은 판매그룹)</th></tr></thead><tbody>${cats.map(crow).join('') || '<tr><td colspan="6" class="muted">판매생산속보 재고 없음</td></tr>'}</tbody></table></div>
       <p class="iv-at">판매생산속보 ${PT && PT.sr ? esc(md(String(PT.sr.asOf).slice(0, 10))) : ''} 기준</p>
