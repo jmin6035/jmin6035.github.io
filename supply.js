@@ -574,7 +574,7 @@
     B.reverse(); let c0 = Math.max(0, acc - t0); const U = [];   // 재고보다 많이 모였으면 가장 오래된 몫부터 뺌
     let pos = -c0; for (const z of B) { const a0 = pos; pos += z.t; if (pos > lo + 0.01 && a0 < hi - 0.01) U.push(z); }
     if (!U.length) return null;
-    const R = (f) => { const A = U.map((z) => z[f]).filter(Boolean).sort(); return A.length ? (A[0] === A[A.length - 1] ? md(A[0]) : `${md(A[0])}~${md(A[A.length - 1])}`) : null; };
+    const R = (f) => { const A = U.map((z) => z[f]).filter(Boolean).sort(); return A.length ? md(A[A.length - 1]) : null; };
     const o = R('o'), i = R('i'), p = R('p'), c = R('c');
     return [...(o ? [['소재 발주', o, null, 'due']] : []), ...(i ? [['소재 입고 완료', i, null, 'due']] : []), ...(p ? [['도금 생산', p, null, 'due']] : []), ...(c ? [['컬러공장 입고 완료', c, null, 'due']] : [])];
   }
@@ -596,11 +596,11 @@
     for (const r of R) { const a0 = cum; cum += r.t; if (a0 >= end - 0.5) break; if (cum > before + 0.5) L.push(r); }
     return { stock, S, L, short: cum < end - 0.5 };
   }
-  const rng = (A) => { const u = [...new Set(A.filter(Boolean))]; return u.length ? (u.length > 1 ? `${u[0]}~${u[u.length - 1]}` : u[0]) : null; };
+  const rng = (A) => { const u = [...new Set(A.filter(Boolean))]; return u.length ? u[u.length - 1] : null; };   // 11/18 사용자 '왜 날짜가 기간으로 나오냐 — 딱 박혀 있잖아': 날짜 하나 = 그 몫이 다 갖춰진 날(마지막)
   function lotSteps(k, d, lb, fam) {   // [칩…] — 지난 날 생산 = 입고 완료
     if (d < today) {   // 이미 생산한 날 = MES 코일 추적(그날 도금 코일의 소재 → 입고일·발주일, procure cgRaw)
       const cr = Object.entries((MP && MP.P.cgRaw) || {}).filter(([kk]) => kk.startsWith(d + '|') && (!fam || kk.endsWith('|' + fam))).map(([, v]) => v);
-      if (cr.length) { const R2 = (f) => { const A = cr.flatMap((v) => v[f] || []).sort(); return A.length ? rng([md(A[0]), md(A[A.length - 1])]) : null; }, o = R2('ord');
+      if (cr.length) { const R2 = (f) => { const A = cr.flatMap((v) => v[f] || []).sort(); return A.length ? md(A[A.length - 1]) : null; }, o = R2('ord');
         return [...(o ? [['소재 발주', o, null, 'due']] : []), ['소재 입고 완료', R2('in') || '-', null, 'due']]; }
       return [['소재 입고', '완료', null, 'due']];
     }
@@ -629,7 +629,7 @@
         const near = !last && !f2 && !(D.V.self && D.V.self[FAM(a)] && D.self[`${FAM(a)}|${d}`]) ? D.flow.filter((x) => FAM(x.a) === FAM(a)).flatMap((x) => x.made).filter((m) => m[0] <= add(d, -1)).sort((x, y) => (x[0] < y[0] ? 1 : -1))[0] : null;   // 재고 자료(12/31) 너머: 그 강종 직전 도금 자가재 생산
         const fs = !last && !f2 ? selfSrc(a, d) : null;
         const st = !last ? ['warn', '도금 재고 사용'] : gap >= TL ? ['ok', `여유 (도금 ${gap}일 전)`] : gap >= 1 ? ['warn', `빠듯 (도금 ${gap}일 전, 기준 ${TL}일)`] : ['warn', '재고 선사용 — 도금 생산이 더 늦음'];
-        out.push({ kind: '자가재', nm: a, sh: w, what: `${a} <b>${n0(r[5] * w)}t</b> <small class="muted">${Math.round(w * 100)}%</small>`, src: last ? `도금 ${span(f.made)}` : '-', inb: last ? md(add(last, 1)) + ' 컬러 입고' : '-', ord: '-', st, f, steps: last ? [...fhPre(made[0], a), ['도금 생산', span(f.made), made[0]], [add(last, 1) <= today ? '컬러공장 입고 완료' : '컬러공장 입고 예정', md(add(last, 1)), add(last, 1)]] : f2 ? [...fhPre(m2[0], a), ['도금 생산', span(f2.made), m2[0]], selfJudge(m2[m2.length - 1], d)] : fs && fs.d0 ? [...fhPre(fs.d0, a), ['도금 생산', `${md(fs.d0)}${fs.d1 && fs.d1 !== fs.d0 ? `~${md(fs.d1)}` : ''}${fs.lines.length ? ' · ' + fs.lines.join('·') : ''}`, fs.d1 || fs.d0], selfJudge(fs.d1 || fs.d0, d)] : fs && fs.stock0 ? (selfStockSteps(a, fs) || [['자가재 재고', `${md((fs.S || {}).d0 || '')} 이전 생산분`, null]]) : fs && fs.short ? [['도금 생산', `재고 부족 — ${md(add(d, -TL))}~${md(add(d, -1))}에 필요`, null, 'late']] : near ? [...fhPre(near[0], a), ['도금 생산', `${md(near[0])} · ${near[1]}`, near[0]], selfJudge(near[0], d)] : [['도금 생산', `계획 없음 — ${md(add(d, -TL))}~${md(add(d, -1))}에 필요`, null, 'late']] });
+        out.push({ kind: '자가재', nm: a, sh: w, what: `${a} <b>${n0(r[5] * w)}t</b> <small class="muted">${Math.round(w * 100)}%</small>`, src: last ? `도금 ${span(f.made)}` : '-', inb: last ? md(add(last, 1)) + ' 컬러 입고' : '-', ord: '-', st, f, steps: last ? [...fhPre(made[0], a), ['도금 생산', span(f.made), made[0]], [add(last, 1) <= today ? '컬러공장 입고 완료' : '컬러공장 입고 예정', md(add(last, 1)), add(last, 1)]] : f2 ? [...fhPre(m2[0], a), ['도금 생산', md(m2[m2.length - 1]), m2[m2.length - 1]], selfJudge(m2[m2.length - 1], d)] : fs && fs.d0 ? [...fhPre(fs.d0, a), ['도금 생산', `${md(fs.d1 || fs.d0)}${fs.lines.length ? ' · ' + fs.lines.join('·') : ''}`, fs.d1 || fs.d0], selfJudge(fs.d1 || fs.d0, d)] : fs && fs.stock0 ? (selfStockSteps(a, fs) || [['자가재 재고', `${md((fs.S || {}).d0 || '')} 이전 생산분`, null]]) : fs && fs.short ? [['도금 생산', `재고 부족 — ${md(add(d, -TL))}~${md(add(d, -1))}에 필요`, null, 'late']] : near ? [...fhPre(near[0], a), ['도금 생산', `${md(near[0])} · ${near[1]}`, near[0]], selfJudge(near[0], d)] : [['도금 생산', `계획 없음 — ${md(add(d, -TL))}~${md(add(d, -1))}에 필요`, null, 'late']] });
       }
     }
     if (1 - sh > 0.02) {
