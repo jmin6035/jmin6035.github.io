@@ -75,6 +75,8 @@
     if (GP.isBlackout(P, l, d)) return false;
     const sl = O && O.slots;                                 // 11/13 2CGL AL-STS 칸(replan.js GP.macRule): 규칙 시작일부터는 칸 날짜에만
     if (sl && b.alloy === sl.alloy && l === sl.line && d >= sl.from && !(d in sl.day)) return false;
+    const sb = O && O.stsBan;                                // 11/18 MAC→AL 복귀 뒤 2일 AL-STS 금지(cglplan/model.py 와 같게)
+    if (sb && b.alloy === sb.alloy && l === sb.line && sb.days.includes(d)) return false;
     if (b.rel && d < b.rel) return false;                    // 주문 소재 입고 + 투입 전에는 못 만듦(tools/order_demand, 10/30)
     if (d > b.due) return !!(O && O.allowLate) && GP.diffDays(d, b.due) <= (b.maxLate || O.maxLate || 14);
     if (P.releaseExempt.includes(b.cls) || (O && O.freezeUntil && d <= O.freezeUntil)) return true;   // 동결 기간(기준 계획 그대로)은 상한 창 검사 안 함
