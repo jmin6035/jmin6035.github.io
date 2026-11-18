@@ -615,6 +615,15 @@
     if (x.L.length) { const o = rng(x.L.map(ordDay)); if (o) out.push(['소재 발주', o, null, 'due']); out.push(['소재 입고 예정', rng(x.L.map((r) => md(r.date))), x.L[0].date, 'due']); }
     return x.short ? out.concat([['미발주', '입고 필요', null, 'late']]) : out;
   }
+  // 11/18 사용자 '진행해'(주문별 실제 코일 날짜): 계획 행(품목·목적지·납기)과 같은 컬러 계약 중 MES 소재 매치 코일이 붙은 것 → 그 코일의 날짜(procure ordChain)
+  function ordOf(r, d) {
+    const L = ((MP && MP.P.ordChain) || []).filter((z) => z.pn === r[1] && (r[3] ? z.dst === r[3] : true));   // 목적지가 있으면 같은 목적지만
+    if (!L.length) return null;
+    const ref = r[9] || d, dd = (z) => Math.abs((new Date(z.due || ref) - new Date(ref)) / 864e5);
+    return L.reduce((a_, b_) => (dd(b_) < dd(a_) ? b_ : a_));
+  }
+  const ordSteps = (z) => [...(z.o ? [['소재 발주', md(z.o), z.o, 'due']] : []), ['소재 입고 완료', md(z.i), z.i, 'due'],
+    ...(z.p ? [['도금 생산', md(z.p), z.p, 'due']] : []), ...(z.c ? [['컬러공장 입고 완료', md(z.c), z.c, 'due']] : [])];
   function matLine(r, d, l) {
     const M = D.W.mat || {}, IN = (M.inLead || {}).C || 7, TL = M.selfLeadTeam || 8, out = [];
     const sh = r[11] || 0, base = r[10] || r[1];
@@ -654,6 +663,7 @@
         out.push({ kind: '구매', nm: esc(nm), sh: (1 - sh) * w, what: `${esc(nm)} <b>${n0(r[5] * (1 - sh) * w)}t</b> <small class="muted">${Math.round((1 - sh) * w * 100)}%</small>`, src, inb: `${md(arr)} 입고 예정`, ord: ordTxt, st, steps: (() => { const ls = lotSteps(`C:${code}`, d, '소재'); return ls && ls.length ? (ls.some((z) => z[0] === '미발주') ? ls.filter((z) => z[0] !== '미발주').concat([['발주 마감', ordTxt, first, 'due']]) : ls) : [['발주 마감', ordTxt, first, 'due'], [arr <= today ? '소재 입고 완료' : '소재 입고 예정', md(arr), arr]]; })() });
       }
     }
+    const z = ordOf(r, d); if (z) out.forEach((m) => { if ((m.kind === '자가재') === !!z.p) m.steps = ordSteps(z); });   // 소재 종류(자가재·구매)가 같을 때만
     return out;
   }
 
