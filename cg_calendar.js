@@ -745,7 +745,7 @@
       + A.map((a) => `<tr><td class="nw">${mdw(a.week)}~</td><td class="sub nw">${esc(a.who)} ${esc(String(a.at).slice(5, 16).replace('T', ' '))}</td><td class="num">${n0(a.confT)}</td><td class="num">${n0(a.doneT)}</td>`
         + `<td class="num"><b>${a.rate == null ? '-' : Math.round(a.rate * 100) + '%'}</b></td><td class="nw">${Object.entries(a.lines || {}).map(([l, v]) => `${l} ${v.confT ? Math.round(100 * v.doneT / v.confT) : '-'}%`).join(' · ')}</td></tr>`).join('') + '</tbody></table>'
       : '<p class="msg">확정한 주 없음</p>';
-    return `<section class="card" id="cg-conf"><h2>다음 주 생산 확정 <small>매주 수요일 오전 · ${mdw(nw[0])} ~ ${mdw(nw[6])}</small></h2>`
+    return `<section class="card" id="cg-conf"><h2>다음 주 생산 확정 <small>매주 수요일 오전 · ${mdw(nw[0])}~${mdw(nw[6])}</small></h2>`
       + '<p class="msg" style="margin:0 0 10px">다음 생산주(수~화, 파란 머리 칸)를 저장 = 공정출하·마케팅과 약속한 주간 편성 · 저장 뒤에도 고쳐서 「수정 저장」 · 지난 주 준수율은 아래</p>'
       + `<div class="cf"><span class="nw">다음 주 생산 1CGL <b>${n0(tot('1CGL'))}t</b> · 2CGL <b>${n0(tot('2CGL'))}t</b></span>`
       + `<button type="button" class="go" id="cc-save">${btn}</button><span class="msg" id="cc-smsg">${stat}</span>`

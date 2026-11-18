@@ -277,7 +277,7 @@
     const useTxt = (j) => j.use.slice().sort((a, b) => b[3] - a[3]).slice(0, 4).map((r) => `${/^(도금|컬러)$/.test(r[0]) ? '' : esc(r[0]) + ' '}${esc(r[1])} ${esc(r[2])} ${n0(r[3])}t`).join(' · ');   // 11/17 검토 '도금 도금수출' — 공장 이름은 빼고 판매그룹부터
     const rows = L.sort((a, b) => b.t - a.t).map((e) => {
       if (e.kind === 'use') { const j = e.j; return `<tr><td class="l"><b>${esc(MP.codeNm(j.code))}</b></td><td class="l">${esc(MP.supNm(e.s))} <small class="muted">배정 ${Math.round((e.s.share || 0) * 100)}%</small></td><td>${n0(e.t)}</td><td>-</td><td>생산 투입</td><td>-</td><td>-</td><td class="l small wfor">${useTxt(j)}</td></tr>`; }
-      if (e.kind === 'act') { const a = e.a; return `<tr><td class="l"><b>${esc(MP.codeNm(a.code))}</b></td><td class="l">${esc((MP.P.supNames || {})[a.sup] || a.sup || '-')}</td><td>${n0(e.t)}</td><td>${k === 'ord' ? `<span class="muted">${md(e.d)} 발주함</span>` : '-'}</td><td>${k === 'ord' ? ((o) => { const pos = (FHP && FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) || [], neg = R.plant === 'G' && a.code === 'N' ? null : negDay(`${R.plant}:${a.code}`); if (!pos.length) return '<b>발주 완료</b> <small class="muted">MES</small>'; if (o.t < 0.5) return '<b>발주 완료</b> · 전량 입고 <small class="muted">MES</small>'; return `<b>발주 완료</b> · ${e.t - o.t >= 0.5 ? `${n0(e.t - o.t)}t 입고 · ` : ''}${n0(o.t)}t 입고 예정${neg && o.d0 && neg < o.d0 ? ` · <span class="neg">입고 늦음 — ${md(neg)}부터 부족</span>` : ''}`; })(openPO((FHP && FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) || [])) : '<b>입고 완료</b> <small class="muted">MES</small>'}</td><td>${k === 'ord' ? etaPO((FHP && FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) || []) : md(e.d)}</td><td>${k === 'ord' ? (() => { const ns = ((FHP && FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) || []).map((p_) => FHP.po[p_] && FHP.po[p_][6]).filter((d) => /^20[23]\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(d || '')).sort(); return ns.length ? md(ns[0]) + (ns.length > 1 && ns[ns.length - 1] !== ns[0] ? `~${md(ns[ns.length - 1])}` : '') : '<span class="muted">미정</span>'; })() : '<span class="muted">–</span>'}</td><td class="l small wfor">${k === 'ord' && FHP ? forWhom(FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) : ''}</td></tr>`; }
+      if (e.kind === 'act') { const a = e.a; return `<tr><td class="l"><b>${esc(MP.codeNm(a.code))}</b></td><td class="l">${esc((MP.P.supNames || {})[a.sup] || a.sup || '-')}</td><td>${n0(e.t)}</td><td>${k === 'ord' ? `<span class="muted">${md(e.d)} 발주함</span>` : '-'}</td><td>${k === 'ord' ? ((o) => { const pos = (FHP && FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) || [], neg = R.plant === 'G' && a.code === 'N' ? null : negDay(`${R.plant}:${a.code}`); if (!pos.length) return '<b>발주 완료</b> <small class="muted">MES</small>'; if (o.t < 0.5) return '<b>발주 완료</b> · 전량 입고 <small class="muted">MES</small>'; return `<b>발주 완료</b> · ${e.t - o.t >= 0.5 ? `${n0(e.t - o.t)}t 입고 · ` : ''}${n0(o.t)}t 입고 예정${neg && o.d0 && neg < o.d0 ? ` · <span class="neg">입고 지연 — ${md(neg)}부터 부족</span>` : ''}`; })(openPO((FHP && FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) || [])) : '<b>입고 완료</b> <small class="muted">MES</small>'}</td><td>${k === 'ord' ? etaPO((FHP && FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) || []) : md(e.d)}</td><td>${k === 'ord' ? (() => { const ns = ((FHP && FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) || []).map((p_) => FHP.po[p_] && FHP.po[p_][6]).filter((d) => /^20[23]\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(d || '')).sort(); return ns.length ? md(ns[0]) + (ns.length > 1 && ns[ns.length - 1] !== ns[0] ? `~${md(ns[ns.length - 1])}` : '') : '<span class="muted">미정</span>'; })() : '<span class="muted">–</span>'}</td><td class="l small wfor">${k === 'ord' && FHP ? forWhom(FHP.ord[`${R.plant}|${a.code}|${a.sup}|${e.d}`]) : ''}</td></tr>`; }
       if (e.kind === 'mlate') {   // 11/17 사용자 '17일에 발주해야 되는 거 아냐? 왜 9/20이 나와': 원래 마감이 지났으면 할 일 = 오늘 발주 → 발주 마감 칸 = 오늘, 예상 입고일 = 오늘 + (필요일 − 원래 마감), 사양마다 한 줄
         const m = e.m, dd = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / 864e5);
         const nz = (v) => String(v || '').replace(/[-\s]/g, ''), SL = MP && MP.P ? MP.P.suppliers.filter((x) => x.plant === m.plant && x.code === String(m.key).split(':')[1] && (x.share || 0) > 0) : [];   // 예상 입고일 = 오늘 + 업체 리드타임(27년 배정 업체 — 사양 업체 이름이 맞으면 그 업체, 아니면 배정 비중 큰 업체)
@@ -297,11 +297,11 @@
           const gap = own && z.need ? dd(own.eta, z.need) : 0, plan = m.by === 'spec';   // spec = 컬러 계획재(재고 보충) 사양 — 납기 없음
           const tip = opts.map((o) => `${o.c}: ${md(o.od)} 발주 → ${md(o.eta)} 입고`).join(' · ') + (z.dl ? ` · 원래 발주 마감 ${md(z.dl)}` : '') + (plan ? ' · 컬러 계획재(재고 보충) 생산용' : '');
           const later = plan ? `계획재 생산을 ${md(own && own.eta)} 뒤로` : '생산 날짜 조정';
-          const note = !own ? '-' : gap <= 0 ? '필요일 안에 입고' : `<span class="neg">${gap}일 늦음</span> → ${alt ? `${esc(alt.c)}로 바꾸면 <b class="dt">${md(alt.eta)}</b> 입고 · 아니면 ${later}` : later}`;
+          const note = !own ? '-' : gap <= 0 ? '필요일 안에 입고' : `<span class="neg">${gap}일 지연</span> → ${alt ? `${esc(alt.c)}로 바꾸면 <b class="dt">${md(alt.eta)}</b> 입고 · 아니면 ${later}` : later}`;
           return `<tr title="${esc(tip)}"><td class="l">${i ? '' : `<b>${esc(m.name)}</b>${plan ? ' <small class="muted">계획재</small>' : ''}`}</td><td class="l">${esc(own ? own.c : asg)} ${esc(size)}</td><td>${n0(z.t)}</td><td><b class="neg">${own ? `${md(own.od)}${own.od === today ? '(오늘)' : ''}` : '-'}</b></td><td><span class="neg">발주 필요</span></td><td>${own ? `<span class="${gap > 0 ? 'neg' : ''}">${md(own.eta)}</span>` : '-'}</td><td>${z.need ? `<b class="dt">${md(z.need)}</b>` : '-'}</td><td class="small wfor" style="min-width:250px">${note}</td></tr>`;
         }).join('');
       }
-      if (e.kind === 'arr') { const a = e.a; return `<tr><td class="l"><b>${esc(MP.codeNm(a.code))}</b></td><td class="l">${esc((MP.P.supNames || {})[a.sup] || a.sup || '-')}</td><td>${n0(e.t)}</td><td title="${esc(a.po || '')}">${a.ord ? md(a.ord) : ordDay(a) || '-'}</td><td>${((neg) => (neg && neg < e.d && !(a.plant === 'G' && a.code === 'N') ? `<span class="neg" title="이 입고 전에 재고가 부족해짐(추가 발주 없음 가정)">입고 늦음 — ${md(neg)}부터 부족</span>` : '<span class="pos">입고 예정(발주 완료)</span>'))(negDay(`${a.plant}:${a.code}`))}</td><td>${md(e.d)}</td><td>-</td><td class="l small wfor">${forWhom([a.po]) || esc(a.note || '')}</td></tr>`; }
+      if (e.kind === 'arr') { const a = e.a; return `<tr><td class="l"><b>${esc(MP.codeNm(a.code))}</b></td><td class="l">${esc((MP.P.supNames || {})[a.sup] || a.sup || '-')}</td><td>${n0(e.t)}</td><td title="${esc(a.po || '')}">${a.ord ? md(a.ord) : ordDay(a) || '-'}</td><td>${((neg) => (neg && neg < e.d && !(a.plant === 'G' && a.code === 'N') ? `<span class="neg" title="이 입고 전에 재고가 부족해짐(추가 발주 없음 가정)">입고 지연 — ${md(neg)}부터 부족</span>` : '<span class="pos">입고 예정(발주 완료)</span>'))(negDay(`${a.plant}:${a.code}`))}</td><td>${md(e.d)}</td><td>-</td><td class="l small wfor">${forWhom([a.po]) || esc(a.note || '')}</td></tr>`; }
       const j = e.j, x = e.x;
       // 11/17 검토: 상태 칸 = 할 일(발주 마감 칸과 같은 날짜 반복 안 함) · 마감이 지났으면 01 소재 발주 상세(mlate)와 같게 '발주 필요' + 마감 칸 = 오늘
       const lateO = !!(x.dl && x.dl < today), dl0 = lateO ? today : x.dl;
@@ -319,7 +319,7 @@
   const kf = (v) => (Math.abs(v) >= 1000 ? `${+(v / 1000).toFixed(Math.abs(v) >= 10000 ? 0 : 1)}k` : String(Math.round(v)));   // 천 단위 줄임 = 소문자 k(UI.tick 과 같게)
   // 세로 막대: cats = [{ name, a(진한 칸), b(옅은 칸), plan(높이 기준 — 모자라는 몫은 회색 트랙), cap(위 숫자 HTML), sub(아래 작은 글), neg(sub 빨강), tip }]
   // 세로 막대(사용자 10/21: 막대 위 숫자 두 줄이 아마추어 같음) — 막대 위엔 달성률 하나, 계획은 가로 표시선, 숫자는 막대 아래 정렬된 표(행 = labels)
-  function colChart(cats, vh = 180, labels = ['실적', '계획', '잔여']) {
+  function colChart(cats, vh = 180, labels = ['실적', '계획', '남은 계획']) {
     const mx = Math.max(1, ...cats.map((c) => Math.max(c.plan || 0, (c.a || 0) + (c.b || 0)))), sc = UI.scale(mx * 1.15, 0), P = (v) => (v / sc.hi * 100).toFixed(2);
     const y = sc.ticks.map((t) => `<span style="bottom:${P(t)}%">${kf(t)}</span>`).join(''), gl = sc.ticks.filter((t) => t > 0).map((t) => `<i class="gl" style="bottom:${P(t)}%"></i>`).join('');
     const col = (c) => { const a = c.a || 0, b = c.b || 0, top = a + b, pl = c.plan || 0;
@@ -665,7 +665,7 @@
         const m2 = f2 ? f2.made.map((m) => m[0]).sort() : [];
         const near = !last && !f2 && !(D.V.self && D.V.self[FAM(a)] && D.self[`${FAM(a)}|${d}`]) ? D.flow.filter((x) => FAM(x.a) === FAM(a)).flatMap((x) => x.made).filter((m) => m[0] <= add(d, -1)).sort((x, y) => (x[0] < y[0] ? 1 : -1))[0] : null;   // 재고 자료(12/31) 너머: 그 강종 직전 도금 자가재 생산
         const fs = !last && !f2 ? selfSrc(a, d) : null;
-        const st = !last ? ['warn', '도금 재고 사용'] : gap >= TL ? ['ok', `여유 (도금 ${gap}일 전)`] : gap >= 1 ? ['warn', `빠듯 (도금 ${gap}일 전, 기준 ${TL}일)`] : ['warn', '재고 선사용 — 도금 생산이 더 늦음'];
+        const st = !last ? ['warn', '도금 재고 사용'] : gap >= TL ? ['ok', `여유 (도금 ${gap}일 전)`] : gap >= 1 ? ['warn', `여유 적음 (도금 ${gap}일 전, 기준 ${TL}일)`] : ['warn', '재고 선사용 · 도금 생산이 더 뒤'];
         out.push({ kind: '자가재', nm: a, sh: w, what: `${a} <b>${n0(r[5] * w)}t</b> <small class="muted">${Math.round(w * 100)}%</small>`, src: last ? `도금 ${span(f.made)}` : '-', inb: last ? md(add(last, 1)) + ' 컬러 입고' : '-', ord: '-', st, f, steps: last ? [...fhPre(made[0], a), ['도금 생산', span(f.made), made[0]], [add(last, 1) <= today ? '컬러공장 입고 완료' : '컬러공장 입고 예정', md(add(last, 1)), add(last, 1)]] : f2 ? [...fhPre(m2[0], a), ['도금 생산', md(m2[m2.length - 1]), m2[m2.length - 1]], selfJudge(m2[m2.length - 1], d)] : fs && fs.d0 ? [...fhPre(fs.d0, a), ['도금 생산', `${md(fs.d1 || fs.d0)}${fs.lines.length ? ' · ' + fs.lines.join('·') : ''}`, fs.d1 || fs.d0], selfJudge(fs.d1 || fs.d0, d)] : fs && fs.stock0 ? (selfStockSteps(a, fs) || [['자가재 재고', `${md((fs.S || {}).d0 || '')} 이전 생산분`, null]]) : fs && fs.short ? [['도금 생산', `재고 부족 — ${md(add(d, -TL))}~${md(add(d, -1))}에 필요`, null, 'late']] : near ? [...fhPre(near[0], a), ['도금 생산', `${md(near[0])} · ${near[1]}`, near[0]], selfJudge(near[0], d)] : [['도금 생산', `계획 없음 — ${md(add(d, -TL))}~${md(add(d, -1))}에 필요`, null, 'late']] });
       }
     }
@@ -698,7 +698,7 @@
   // 11/17 사용자: 날짜 상세의 한 품목 = 소재 하나(자가재면 도금 생산, 구매면 구매) — matLine 중 비중이 가장 큰 소재만 보임
   // ---------- 일정 흐름(칩 → 칩): 지난 날짜 = 완료(회색 ✓), 오늘 생산 = 강조 ----------
   const dueChip = (du, txt, d) => (!du && (!txt || txt === '-') ? ['납기', '당월 내 출고', null, 'due'] : du && du < d ?   // 11/17 사용자 '납기 - 이건 뭔데': 주문이 아직 없는 월 판매계획 물량 = '주문 전'
-    [`납기 · ${Math.round((new Date(d) - new Date(du)) / 864e5)}일 늦음`, txt, du, 'warn'] : ['납기', txt, du || null, 'due']);   // 납기가 생산보다 앞서면 빨강
+    [`납기 · ${Math.round((new Date(d) - new Date(du)) / 864e5)}일 지연`, txt, du, 'warn'] : ['납기', txt, du || null, 'due']);   // 납기가 생산보다 앞서면 빨강
   // 칩 하나 = '›' + 칩(한 덩어리로 줄바꿈 — '›'만 혼자 남지 않게) · 지난 날짜 단계(발주 마감 포함) = 모두 완료(흐림 + ✓), 11/17 검토
   const flowHtml = (steps0) => { const steps = steps0.filter(Boolean); return `<div class="flw">${steps.map(([lb, v, dt, cl], i) => `<span class="fu">${i ? '<i>›</i>' : ''}<span class="fs ${cl || ''} ${dt && dt < today && (!cl || cl === 'due') ? 'done' : ''}"><small>${esc(lb)}</small><b>${v}</b></span></span>`).join('')}</div>`; };
   // 도금 소재(F/H): 강종 → 소재 코드, 입고 필요 = 생산일 − 투입 여유(팀 리드타임 표 1일 — 11/9 회의, 예전 5일), 발주 마감 = 입고 필요 − 업체 유형별 리드타임(27년 배정 업체)
@@ -754,7 +754,7 @@
       const self = r[ix.kind] === '자가재', due = r[ix.due], late = due && due < d ? diff(d, due) : 0;
       const steps = [[self ? '도금 생산' : '소재 입고', r[ix.in0] ? rng(r[ix.in0], r[ix.in1]) : r[ix.kind] && entFrom ? `${md(entFrom)} 이전` : '-', r[ix.in1] || null],
         [`${G ? '도금' : '컬러'} 생산(실적)`, md(d), d, 'now']];
-      if (due || !r[ix.ship]) steps.push([late ? `납기 · ${late}일 늦음` : '납기', due ? md(due) : '없음', due || null, late ? 'done late' : '']);
+      if (due || !r[ix.ship]) steps.push([late ? `납기 · ${late}일 지연` : '납기', due ? md(due) : '없음', due || null, late ? 'done late' : '']);
       if (r[ix.ship]) steps.push(['출항', md(r[ix.ship]), r[ix.ship]]);
       const mat = r[ix.kind] ? `<small class="kd2 ${self ? 'self' : 'buy'}">${r[ix.kind]}</small> ${esc(self ? (G ? '' : '도금 코일') : r[ix.sup])}` : '<span class="muted">미확인</span>';
       return `<tr><td><b>${esc(r[ix.name])}</b> <small>${esc(r[ix.grp] || '-')}</small></td><td>${esc([r[ix.cus], r[ix.dst]].filter(Boolean).join(' · ') || '-')}<small class="spec">${esc(r[ix.spec] || '')}</small></td><td class="r">${n0(r[ix.t])}</td><td>${mat}</td><td>${flowHtml(steps)}</td></tr>`;
@@ -1007,7 +1007,7 @@
       if (kind === 'cur' && k === 'prod') { const e = a + b, df = e - p, big5 = p && Math.abs(df) > p * 0.05;
         l2 = `월말 전망(현 계획) <b>${n0(e)}</b>t`; l3 = `<span class="pk-d ${big5 ? (df > 0 ? 'warn' : 'neg') : ''}">${sg(df, 't')} ${big5 ? (df > 0 ? '초과 예상' : '미달 예상') : '· 계획 수준'}</span>`; }
       else if (kind === 'cur') { const du = keys(pl, k).reduce((s, g) => s + due(g), 0), bp = p ? Math.round(du / p * 100) : null, dp = pc != null && bp != null ? pc - bp : null;
-        l2 = `잔여 <b>${n0(b)}</b>t`; l3 = dp == null ? '' : `<span class="pk-d ${dp < -5 ? 'neg' : ''}" title="${esc(`출하 기준선 ${n0(du)}t(${bp}%) — 그룹 출하 실적 패턴(최근 완결 월 평균)`)}">출하 예정 대비 ${sg(dp, '%p')}</span>`; }
+        l2 = `남은 계획 <b>${n0(b)}</b>t`; l3 = dp == null ? '' : `<span class="pk-d ${dp < -5 ? 'neg' : ''}" title="${esc(`출하 기준선 ${n0(du)}t(${bp}%) — 그룹 출하 실적 패턴(최근 완결 월 평균)`)}">출하 예정 대비 ${sg(dp, '%p')}</span>`; }
       else if (kind === 'past') { const df = a - p, big5 = p && Math.abs(df) > p * 0.05;
         l3 = `<span class="pk-d ${big5 ? (df > 0 ? 'warn' : 'neg') : ''}">${sg(df, 't')} ${big5 ? (df > 0 ? '초과' : '미달') : '· 계획 수준'}</span>`; }
       return `<div class="pk" data-dom="${pl}"><div class="pk-h">${pl === 'G' ? '도금' : '컬러'} ${W(k)}</div><div class="pk-v">${n0(big)}<small>t</small>${kind !== 'fut' && pc != null ? `<em>${pc}%</em>` : ''}</div>`
@@ -1033,15 +1033,15 @@
     }
     D.shipSum = { m, kind, pace, aTo, end, v: Object.fromEntries(['G', 'C'].flatMap((pl) => keys(pl, 'ship')).map((g) => [g, val(g, 'ship')])),
       due: Object.fromEntries(['G', 'C'].flatMap((pl) => keys(pl, 'ship')).map((g) => [g, kind === 'fut' ? null : due(g)])) };
-    const LB = kind === 'past' ? ['실적', '월 계획', '차이'] : kind === 'cur' ? ['실적', '월 계획', '잔여'] : ['계획', '월 계획'];
+    const LB = kind === 'past' ? ['실적', '월 계획', '차이'] : kind === 'cur' ? ['실적', '월 계획', '남은 계획'] : ['계획', '월 계획'];
     const chart = (pl, k) => { const ks = keys(pl, k); if (!ks.length) return '';
       return `<div class="pgv" data-dom="${pl}"><h3>${pl === 'G' ? '도금' : '컬러'} ${W(k)}</h3>` + colChart(ks.map((g) => { const [a, b, p] = val(g, k);
         return { name: GNM[g].replace(/^(도금|컬러)(?=수출|국내|건재)/, '').replace('자동차강판', '자동차'), a, b, plan: p, pc: kind === 'fut' ? null : (p ? Math.round(a / p * 100) : null), neg: kind === 'past' && a < p - 0.5, lag: !!lagG[`${g}|${k}`],
           vals: kind === 'past' ? [a, p, a - p] : kind === 'cur' ? [a, p, b] : [b, p],
           cap: k === 'prod' && !p && a + b > 0 ? '계획 0' : '',
-          tip: `${GNM[g]} ${+m.slice(5)}월 ${W(k)}: 실적 ${n0(a)}t · ${kind === 'cur' ? `잔여 계획 ${n0(b)}t · ` : ''}월 계획 ${n0(p)}t${k === 'prod' && ((kind === 'cur' && GR[g] && GR[g].prod && GR[g].prod.note) || (MPn[g] || {}).prodNote) ? ` · ${(kind === 'cur' && GR[g] && GR[g].prod && GR[g].prod.note) || (MPn[g] || {}).prodNote}` : ''}` }; }), 110, LB) + '</div>'; };
+          tip: `${GNM[g]} ${+m.slice(5)}월 ${W(k)}: 실적 ${n0(a)}t · ${kind === 'cur' ? `남은 계획 ${n0(b)}t · ` : ''}월 계획 ${n0(p)}t${k === 'prod' && ((kind === 'cur' && GR[g] && GR[g].prod && GR[g].prod.note) || (MPn[g] || {}).prodNote) ? ` · ${(kind === 'cur' && GR[g] && GR[g].prod && GR[g].prod.note) || (MPn[g] || {}).prodNote}` : ''}` }; }), 110, LB) + '</div>'; };
     const sub = kind === 'past' ? `${md(end)} 월말 기준` : kind === 'cur' ? `${md(today)} 현재` : '실적 없음 · 계획만';
-    const L = kind === 'past' ? [['a', '실적'], ['p', '월 계획']] : kind === 'cur' ? [['a', '실적'], ['b', '잔여 계획'], ['p', '월 계획']] : [['b', '계획'], ['p', '월 계획']];
+    const L = kind === 'past' ? [['a', '실적'], ['p', '월 계획']] : kind === 'cur' ? [['a', '실적'], ['b', '남은 계획'], ['p', '월 계획']] : [['b', '계획'], ['p', '월 계획']];
     if (V2()) {   // 새 양식: 공장·지표별 표 + 그룹별 표(같은 숫자 한 번), 그래프는 접기
       const ms = D.days.filter((d) => d.slice(0, 7) === m), dash = '<td class="n mu">-</td>';
       const shipE = (pl) => keys(pl, 'ship').reduce((s, g) => s + ms.reduce((a, d) => a + gshipF(g, d).t, 0), 0);   // 실적 + 남은 날 계획 출고 = 아래 출하 캘린더 '계'

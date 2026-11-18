@@ -231,7 +231,7 @@
     const R = CTX.D.LP || {}, made = (R.rows || []).filter((r) => r[3] === '자가재' && r[5] === due);   // 11/10 새 수요: 자가재 마감 = 컬러 사용일 − 1일
     return `<ol class="rl-why"><li>${line} ${md(d)} 생산 중 자가재(도금 소재) 필요: ${ks.map((k) => `<b>${esc(k)} ${n0(need[k])}t</b>`).join(' · ')} (품명별 소재 비중 × 생산 톤)</li>`
       + `<li>도금 생산 창 = ${md(d)} − ${LT.selfLead}일 ~ − ${LT.selfLeadMin}일 = <b>${md(from)} ~ ${md(due)}</b> · 마감 <b>${md(due)}</b></li>`
-      + `<li>도금 재계획에서 마감 ${md(due)} 자가재를 만드는 날: ${made.length ? ks.map((k) => { const mk = made.filter((r) => r[2] === k || (k === 'AL' && /^AL/.test(r[2]))); return `${esc(k)} — ${mk.length ? mk.slice(0, 6).map((r) => `${esc(r[1])} ${md(r[0])} ${n0(r[4])}t${r[0] > due ? ' <b class="rl-late">늦음</b>' : ''}`).join(' · ') : '배정 없음(재고·앞 생산분으로 채움)'}`; }).join(' / ') : '배정 없음 — 재고·앞 생산분으로 채움'}</li></ol>`;
+      + `<li>도금 재계획에서 마감 ${md(due)} 자가재를 만드는 날: ${made.length ? ks.map((k) => { const mk = made.filter((r) => r[2] === k || (k === 'AL' && /^AL/.test(r[2]))); return `${esc(k)} — ${mk.length ? mk.slice(0, 6).map((r) => `${esc(r[1])} ${md(r[0])} ${n0(r[4])}t${r[0] > due ? ' <b class="rl-late">지연</b>' : ''}`).join(' · ') : '배정 없음(재고·앞 생산분으로 채움)'}`; }).join(' / ') : '배정 없음 — 재고·앞 생산분으로 채움'}</li></ol>`;
   }
   function matWhy(key) {
     const M = (((CTX.D.MO || {}).groups || {}).mats || []).find((m) => m.key === key);

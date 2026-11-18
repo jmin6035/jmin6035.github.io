@@ -56,7 +56,7 @@
     const mm = {}; days.forEach((d) => { const k = `${d.getFullYear()}-${d.getMonth()}`; mm[k] = mm[k] || monthMap(d.getFullYear(), d.getMonth()); });
     const head = days.map((d) => `<div class="wh${iso(d) === today ? ' on' : ''}">${DOW[wd(d)]} <b>${d.getMonth() + 1}/${d.getDate()}</b></div>`).join('');
     const row = (h) => `<div class="wl">${HALF[h]}</div>` + days.map((d) => { const L = itemsOf(d, h, mm[`${d.getFullYear()}-${d.getMonth()}`]).sort(byTime); return `<div class="wc${iso(d) === today ? ' on' : ''}">${L.map((t) => card(t)).join('') || '<span class="none">-</span>'}</div>`; }).join('');
-    return { title: `${mon0.getMonth() + 1}/${mon0.getDate()} ~ ${days[4].getMonth() + 1}/${days[4].getDate()} 주`, html: `<div class="wk"><div class="wl"></div>${head}${row('am')}${row('pm')}</div>` };
+    return { title: `${mon0.getMonth() + 1}/${mon0.getDate()}~${days[4].getMonth() + 1}/${days[4].getDate()} 주`, html: `<div class="wk"><div class="wl"></div>${head}${row('am')}${row('pm')}</div>` };
   }
   function monthGrid() {
     const first = new Date(Y, M, 1), start = new Date(Y, M, 1 - wd(first)), mon = monthMap(Y, M), today = iso(new Date());

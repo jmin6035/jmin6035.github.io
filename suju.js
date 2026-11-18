@@ -123,7 +123,7 @@
     const spec = fold('fd', `<h3>신호등 기준</h3>` + tbl(['지표', '산식', '정상', '주의', '경고'], D.cfg.signals.map((s) => `<tr><td class="nm">${esc(s.name)}</td><td class="wrap">${esc(s.calc)}</td><td class="pos">${esc(s.ok)}</td><td class="wrn">${esc(s.warn)}</td><td class="neg">${esc(s.bad)}</td></tr>`))
       + `<h3>용어·산식</h3>` + defs([['기준선', `오늘까지 주문이 확정돼 있어야 할 양 = 이달 1일 ~ ${md(D.cut)}(지난 수요일 마감으로 확정되는 다음 생산주의 끝) 일별가동계획 편성량`],
         ['확정 주문', `이달 생산 실적 + ${md(D.cut)}까지 만들 잔량 중 소재 매치(도금 = 소재 입고·생산 중) · 숫자에 마우스 = 소재 매치 전 포함 등록 주문`],
-        ['생산 계획·실적', `생산 기준(출하 아님) · 계획 = 이달 초 게시 계획의 1일~${md(D.asOf)} 합 · 그룹별 판생 계획이 없어 엔진 계획 대비(위 KPI·생산 화면은 판생 일정 누계 기준)`],
+        ['생산 계획·실적', `생산 기준(출하 아님) · 계획 = 이달 초 게시 계획의 1일부터 ${md(D.asOf)}까지 합 · 그룹별 판생 계획이 없어 엔진 계획 대비(위 KPI·생산 화면은 판생 일정 누계 기준)`],
         ['합으로 판정', '컬러수출 3그룹(수주·생산)·컬러건재 주문재+계획재(생산)는 계획판·실적·주문의 세부 분류가 서로 달라 묶음 합으로 판정 — 표에서 한 칸으로 합쳐 표시'],
         ['재고', `${md(D.asOf)} 실재고 + 남은 편성 − 남은 판매(재고 화면과 같은 값) · 안전재고 밑 = 부족 · 상한 초과 = 과다`],
         ['창고 상한', `'27 판생 월말 최대(계획 규칙) — 컬러 ${kt(D.wh.C.cap)} · 도금 ${kt(D.wh.G.cap)}(도금 자가재는 상한 항목이 없어 제외)`],
@@ -206,7 +206,7 @@
         Q += past && r.a != null && r.a > 0.5 ? `<td class="${r.a + 0.5 < r.p ? 'lo' : ''}">${nf(r.a)}</td>` : '<td></td>'; }
       // 11/13 사용자 '모든 화면 같은 값': 계획 줄 계 = 월 계획(지난 날 실적 + 앞날 계획 = 01 계·02 현황과 같은 값)
       const mp = R.reduce((s_, r) => s_ + ((r.d <= D.asOf ? r.a : r.p) || 0), 0), cp = R.reduce((s_, r) => s_ + (r.d <= D.asOf ? r.p || 0 : 0), 0), ca = R.reduce((s_, r) => s_ + (r.a || 0), 0);
-      const tt = ` title="${sub ? esc(sub) + ' · ' : ''}월 계획 ${n0(mp)}t · 1일~${md(D.asOf)} 계획 ${n0(cp)}t → 실적 ${n0(ca)}t"`;
+      const tt = ` title="${sub ? esc(sub) + ' · ' : ''}월 계획 ${n0(mp)}t · 1일부터 ${md(D.asOf)}까지 계획 ${n0(cp)}t → 실적 ${n0(ca)}t"`;
       const c0 = kind === 'sum' ? 'c0' : kind === 'ln' ? `c0 ${/CGL$/.test(ln) ? 'lnG' : 'lnC'} le` : 'c0 le';
       return `<tr class="${kind === 'sum' ? 'sum s1' : ''}"><th class="${c0}" rowspan="2"${tt.replace('title="', `title="${esc(nm)} · `)}>${esc(OPT.short(nm))}</th><th class="c1">계획</th>${P}<td class="tot">${n0(mp)}</td></tr>`
         + `<tr class="${kind === 'sum' ? 'sum s2' : 'le'}"><th class="c1">실적</th>${Q}<td class="tot${ca + 0.5 < cp ? ' lo' : ''}"${tt}>${n0(ca)}</td></tr>`; };
@@ -263,7 +263,7 @@
     const PMx = UI.prodMon(D, ['1CGL', '2CGL', '1CCL', '2CCL', '3CCL', '4CCL'].filter((l) => inPl(/CGL/.test(l) ? 'G' : 'C')));
     const p0 = PMx && PMx.pct0 != null ? Math.round(PMx.pct0) : null;
     const k2 = kc('#prod', '생산 달성', PMx ? UI.rate(p0) : '', PMx ? pctK(PMx.pct) : '–', PMx ? `실적 ${T(PMx.act)} / 월 계획 ${T(PMx.mon)}t · ${md(D.asOf)}까지 월차 대비 ${p0 == null ? '–' : p0 + '%'}` : '',
-      `큰 숫자 = 1일~${md(D.asOf)} 실적 ÷ 월 계획(지금 계획의 이달 합계 = 지난 날 실적 + 앞날 계획) · 작은 글씨·색 = ${md(D.asOf)}까지 월차(이달 첫 계획) ${PMx ? T(PMx.due0) : '–'}t 대비 · 판생속보 일정 누계 ${T(lsch)}t 대비 ${pct(ach)}(참고)`);
+      `큰 숫자 = 1일부터 ${md(D.asOf)}까지 실적 ÷ 월 계획(지금 계획의 이달 합계 = 지난 날 실적 + 앞날 계획) · 작은 글씨·색 = ${md(D.asOf)}까지 월차(이달 첫 계획) ${PMx ? T(PMx.due0) : '–'}t 대비 · 판생속보 일정 누계 ${T(lsch)}t 대비 ${pct(ach)}(참고)`);
     const rl = []; if (D.mats) for (const x of D.mats.filter((y) => inPl(y.plant) && y.st === '경고')) rl.push(CT.matNm(x.name));
     for (const it of ((D.matLate || {}).items || [])) { if (!inPl(it.plant)) continue; const f = it.first || (it.sizes || []).map((z) => z[3]).filter(Boolean).sort()[0]; if (f && f.slice(0, 7) === D.month) rl.push(it.name); }
     const k3 = kc('#mat', '소재 결품 위험', rl.length ? 'bad' : 'ok', `${rl.length}<small>건</small>`, rl.length ? `${esc(rl.slice(0, 2).join(' · '))}${rl.length > 2 ? ` 외 ${rl.length - 2}건` : ''}` : '결품 위험 소재 없음',
@@ -564,7 +564,7 @@
     for (const p of ['G', 'C']) { const Y = X.filter((x) => x.l.pl === p); if (Y.length) lb += secR(`${PN(p)}공장`, 13) + Y.map(rw).join(''); }
     const c1 = card(1, '라인별 가동 — 누계와 남은 기간', `월 계획 = 지금 계획의 이달 합계 · 누계 = 월차(이달 첫 계획) · 실적 ${md(D.asOf)}까지`,
       `<div class="sj-clg"><span><i style="background:var(--good)"></i>실적 누계(월 계획 대비 길이)</span><span><i class="bl"></i>오늘까지 월차 누계</span><span>필요 일평균 빨강 = 남은 날 계획대로 해도 월 계획 미달</span></div>`
-      + `<div class="ct-wrap"><table class="ct-t sj-cbt sj-ln"><thead><tr><th>라인</th><th>진행</th><th class="r" title="1일~${md(D.asOf)} 월차(이달 첫 계획) 합">월차 누계</th><th class="r">실적 누계</th><th class="r">차이</th><th title="실적 누계 ÷ 월차 누계">월차 대비</th><th class="r" title="지금 계획의 이달 합계(지난 날 실적 + 앞날 계획)">월 계획</th><th class="r">남은 양</th><th class="r" title="현재 계획에서 생산이 잡힌 날">남은 가동일</th><th class="r">필요 일평균</th><th class="r" title="현재 통합 계획의 남은 날 평균">계획 일평균</th><th class="r" title="판생속보 작업률 누계(작업 시간 ÷ 달력 시간)">작업률</th><th>다음 정지</th></tr></thead><tbody>${lb}</tbody></table></div>`, '', true);
+      + `<div class="ct-wrap"><table class="ct-t sj-cbt sj-ln"><thead><tr><th>라인</th><th>진행</th><th class="r" title="1일부터 ${md(D.asOf)}까지 월차(이달 첫 계획) 합">월차 누계</th><th class="r">실적 누계</th><th class="r">차이</th><th title="실적 누계 ÷ 월차 누계">월차 대비</th><th class="r" title="지금 계획의 이달 합계(지난 날 실적 + 앞날 계획)">월 계획</th><th class="r">남은 양</th><th class="r" title="현재 계획에서 생산이 잡힌 날">남은 가동일</th><th class="r">필요 일평균</th><th class="r" title="현재 통합 계획의 남은 날 평균">계획 일평균</th><th class="r" title="판생속보 작업률 누계(작업 시간 ÷ 달력 시간)">작업률</th><th>다음 정지</th></tr></thead><tbody>${lb}</tbody></table></div>`, '', true);
     const ls = L.map((l) => l.line), sel = ls.includes(lineSel) ? lineSel : ls[0];
     const cd = card(3, `일별 계획 vs 실적 — ${sel}`, '연한 막대 = 계획 · 진한 막대 = 실적(파랑 95%↑ · 빨강 미만) · 빗금 = 휴지', `<div class="seg ct-seg">${ls.map((l) => `<button type="button" data-line="${l}" aria-pressed="${l === sel}">${l}</button>`).join('')}</div>` + dayChart(sel));
     // 1주 작업 편성(11/11 사용자 '더 직관적으로 구분 잘 되게') — 공장 → 라인 줄, 날짜 칸, 그룹 = 색, 품명·강종 굵게
