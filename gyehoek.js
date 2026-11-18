@@ -262,30 +262,35 @@
       body += row(`${PN[pl]} 소재 합계`, T, true) + L.map((a) => row(a.g, a)).join('');
     }
     const M_ = +mon.slice(5);
-    if (!cur) {   // 11/18 사용자 '12월·1월 그룹 표 너무 대충': 다음 달 = 그 달 소재 필요(생산 계획) · 확보(재고 + 발주 완료) · 추가 발주 · 발주 마감 — 01 소재 발주 계산(SupMat.MP.J 주별)과 같은 값
-      const GU = (g0) => { const g = String(g0 || '').replace(/\s/g, ''); return /^자동차/.test(g) ? '자동차' : /수요개발/.test(g) ? '수요개발' : /가전|건재수출|컬러수출/.test(g) ? '컬러수출(가전 포함)' : /건재|계획재|주문재/.test(g) ? '컬러건재' : gname(g); };   // 소재 계획의 그룹 표기 → 02 현황과 같은 판매그룹
-      const B = {}, gb = (pl, g) => (B[`${pl}|${g}`] = B[`${pl}|${g}`] || { pl, g, need: 0, sh: 0, late: 0, dl: '' });
+    if (!cur) {   // 11/18 사용자 '위엔 실입고 0인데 그룹별로 하면 확보율이 나오냐': 다음 달 그룹 표 = 위 '소재 현황'과 같은 기준
+      // 그 달 입고 계획 = 입고 예정(발주 완료분, 그 달 입고일) + 미발주(그 달에 들어와야 하는 부족분 = 소재 현황 'new' 와 같은 j.split·needBy) · 확보율 = 입고 예정 ÷ 입고 계획(지금 재고는 넣지 않음)
+      const GU = (g0) => { const g = String(g0 || '').replace(/\s/g, ''); return /^자동차/.test(g) ? '자동차' : /수요개발/.test(g) ? '수요개발' : /가전|건재수출|컬러수출/.test(g) ? '컬러수출(가전 포함)' : /건재|계획재|주문재/.test(g) ? '컬러건재' : gname(g); };
+      const B = {}, gb = (pl, g) => (B[`${pl}|${g}`] = B[`${pl}|${g}`] || { pl, g, ord: 0, nw: 0, late: 0, dl: '' });
+      const inM = (d) => d >= mon + '-01' && d <= mEnd;
       for (const j of S.MP.J || []) {
-        if (j.kind === 'pos' || !j.wk || j.wk.slice(0, 7) !== mon || !UI.inScope(j.plant)) continue;
-        const U = (j.use || []).filter((u) => u[3] > 0), ut = U.reduce((x, u) => x + u[3], 0) || 1;
-        for (const u of U) { const f = u[3] / ut, b = gb(j.plant, GU(u[1])); b.need += j.t * f; const sh = Math.max(0, j.short || 0) * f; b.sh += sh;
-          if (sh >= 0.5) { if (j.deadline && j.deadline < today) b.late += sh; else if (j.deadline && (!b.dl || j.deadline < b.dl)) b.dl = j.deadline; } }
+        if (j.kind === 'pos' || j.short < 1 || !UI.inScope(j.plant)) continue;
+        const ib = j.needBy < today ? today : j.needBy; if (!inM(ib)) continue;
+        const t = (j.split || []).filter((x) => x.t >= 1).reduce((a_, x) => a_ + x.t, 0); if (t < 0.5) continue;
+        const U = (j.use || []).filter((u) => u[3] > 0), ut = U.reduce((x, u) => x + u[3], 0);
+        const parts = ut ? U.map((u) => [GU(u[1]), t * u[3] / ut]) : [['판매그룹 미상', t]];
+        for (const [g, v] of parts) { const b = gb(j.plant, g); b.nw += v; if (j.deadline && j.deadline < today) b.late += v; else if (j.deadline && (!b.dl || j.deadline < b.dl)) b.dl = j.deadline; }
       }
+      for (const x of P.known || []) { if (/예정일 지남/.test(x.note || '') || !inM(x.date) || !UI.inScope(x.plant)) continue; gb((info[nz(x.po)] || {}).pl || x.plant, GU(grpOf[nz(x.po)] || '')).ord += x.t || 0; }
       const zz = (v, c) => (v >= 0.5 ? `<td class="${c || ''}">${n0(v)}</td>` : '<td class="z">–</td>');
-      const fr = (lab, c, tot) => { const ok = c.need - c.sh, pc = c.need >= 0.5 ? Math.round(ok / c.need * 100) : null;
-        return `<tr class="${tot ? 'tot' : ''}"><th>${esc(lab)}</th>${zz(c.need, 'b')}<td class="b">${n0(ok)}${pc != null ? ` <small class="${pc < 100 ? 'warn' : ''}">(${pc}%)</small>` : ''}</td>${zz(c.sh, c.late >= 0.5 ? 'bad' : '')}${c.late >= 0.5 ? `<td class="bad"><b>발주 지연</b>${c.sh - c.late >= 0.5 ? ` ${n0(c.late)}${c.dl ? ` · 나머지 <b class="dt">${md(c.dl)}</b>` : ''}` : ''}</td>` : c.dl ? `<td><b class="dt">${md(c.dl)}</b>${c.dl === today ? '(오늘)' : ''}</td>` : '<td class="z">–</td>'}</tr>`; };
+      const fr = (lab, c, tot) => { const need = c.ord + c.nw, pc = need >= 0.5 ? Math.min(Math.round(c.ord / need * 100), c.nw >= 0.5 ? 99 : 100) : null;
+        return `<tr class="${tot ? 'tot' : ''}"><th>${esc(lab)}</th>${zz(need, 'b')}<td class="z">–</td>${zz(c.ord)}${zz(c.nw, 'bad')}<td class="b${pc != null && pc < 100 ? ' bad' : ''}">${pc != null ? pc + '%' : '–'}</td>${c.late >= 0.5 ? `<td class="bad"><b>발주 지연</b> ${n0(c.late)}</td>` : c.dl ? `<td><b class="dt">${md(c.dl)}</b></td>` : '<td class="z">–</td>'}</tr>`; };
       let bd = '';
       for (const [pl, gs] of PL0) {
         if (!UI.inScope(pl)) continue;
-        const L = Object.values(B).filter((b) => b.pl === pl && b.need >= 0.5).sort((x, y) => ix(gs, x.g) - ix(gs, y.g));
+        const L = Object.values(B).filter((b) => b.pl === pl && b.g !== '판매그룹 미상' && b.ord + b.nw >= 0.5).sort((x, y) => ix(gs, x.g) - ix(gs, y.g));   // 판매그룹에 안 이어진 몫은 뺌(합계 = 보이는 줄 합, 11/17 사용자)
         if (!L.length) continue;
-        const T = L.reduce((t, b) => ({ need: t.need + b.need, sh: t.sh + b.sh, late: t.late + b.late, dl: !t.dl || (b.dl && b.dl < t.dl) ? b.dl || t.dl : t.dl }), { need: 0, sh: 0, late: 0, dl: '' });
+        const T = L.reduce((t, b) => ({ ord: t.ord + b.ord, nw: t.nw + b.nw, late: t.late + b.late, dl: !t.dl || (b.dl && b.dl < t.dl) ? b.dl || t.dl : t.dl }), { ord: 0, nw: 0, late: 0, dl: '' });
         bd += fr(`${PN[pl]} 소재 합계`, T, true) + L.map((b) => fr(b.g, b)).join('');
       }
       el.innerHTML = `<h2 class="m4-h">${M_}월 그룹별 소재 <small>톤</small></h2>
-<div class="m4-sc"><table class="m4-gd"><colgroup><col style="width:190px"><col><col><col><col style="width:26%"></colgroup>
-<thead><tr><th>판매그룹</th><th title="${M_}월 생산 계획에 드는 소재">${M_}월 필요</th><th title="지금 재고 + 발주 완료분(입고 예정)으로 채워지는 양">확보</th><th title="재고·발주 완료분으로 못 채우는 양 — 아래 소재 현황 미발주와 같은 값">미발주</th><th>발주 마감</th></tr></thead>
-<tbody>${bd || `<tr><td colspan="5" class="z">${M_}월 소재 계획 없음</td></tr>`}</tbody></table></div>`;
+<div class="m4-sc"><table class="m4-gd"><colgroup><col style="width:190px"><col><col><col><col><col><col style="width:18%"></colgroup>
+<thead><tr><th>판매그룹</th><th>${M_}월 입고 계획</th><th>${M_}월 실입고</th><th>입고 예정</th><th>미발주</th><th>확보율</th><th>발주 마감</th></tr></thead>
+<tbody>${bd || `<tr><td colspan="7" class="z">${M_}월 입고 계획 없음</td></tr>`}</tbody></table></div>`;
       return;
     }
     el.innerHTML = `<h2 class="m4-h">${M_}월 그룹별 소재 발주 · 입고 <small>톤</small></h2>

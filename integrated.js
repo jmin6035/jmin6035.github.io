@@ -420,7 +420,7 @@
     return `<h3 class="ref-h">재고 기준</h3><ul class="iv-ul">
       <li><b>목표(점선)</b> = TF 목표 일수 × 다음 달 하루 판매 · <b>정상 범위</b> = 목표의 90%~상한 · <b>상한 초과</b> = 상한 일수를 넘는 재고 · <b>안전재고(붉은 점선)</b> 아래 = 부족 위험</li>
       <li><b>제품 재고 목표</b> = '27 판생그룹 월말 최대(${Object.entries(MX).map(([k, v]) => `${esc(k)} ${n0(v)}t`).join(' · ')})</li>
-      <li><b>제품 재고</b> = 매일 갱신 — 어제 말 실제 재고(판매생산속보 원천 표) + 아침 재계획 생산 − 계획 출고(가동 캘린더 재고와 같은 값). 실제(초록 선) = 판매생산속보 원천 표 부서별 날짜별 합계</li>
+      <li><b>제품 재고</b> = 매일 갱신 — 전일 말 실제 재고(판매생산속보 원천 표) + 아침 재계획 생산 − 계획 출고(가동 캘린더 재고와 같은 값). 실제(초록 선) = 판매생산속보 원천 표 부서별 날짜별 합계</li>
       <li><b>자가재</b> = 기초재고(재고현황 월말) + 도금 입고 − 컬러 출고(생산일 8일 전) · 목표 없음(부족해지지 않게) · 속보에 강종별 값이 없어 실제 선은 합계만</li>
       <li>구매 소재(F/H · 컬러 소재) 재고·입고·발주 = <a href="matcal.html">소재 관제</a> · <a href="procure.html">발주</a></li></ul>
       ${ks.length ? `<div class="scroll"><table class="t ref-t"><thead><tr><th class="l">판매그룹·구분</th><th>상한 일수</th><th>목표 일수</th></tr></thead><tbody>${ks.map((k) => `<tr><td class="l">${esc(GN[k] || k)}</td><td>${n0(D[k])}</td><td>${T[k] != null ? n0(T[k]) : '<span class="muted">상한과 같음</span>'}</td></tr>`).join('')}</tbody></table></div>

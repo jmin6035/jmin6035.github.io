@@ -62,7 +62,11 @@ ${PS.includes('C') ? `<div><div class="l">부자재 준비(컬러)</div><div cla
       addc(TT, LT);
       return `<tr class="lnh ${pl}"><th><b>${esc(l)}</b><small>${esc(lnInfo(l))}</small></th>${cells(LT, pl)}</tr>${gs.map((x) => `<tr class="gr"><th>${esc(x.g)}</th>${cells(x.byLn[l], pl)}</tr>`).join('')}`;
     }).join('');
-    const none_ = GS.filter((x) => !x.p).map((x) => { const lt = Object.entries(K.left || {}).filter(([g]) => (GMAP[g] || g) === x.g).reduce((a_, [, v]) => a_ + v, 0); return `<tr class="gr"><th>${esc(x.g)}</th><td colspan="${PS.includes('C') ? 13 : 11}" class="na">${x.pl === 'G' ? '이 주 판매재 계획 없음' : `이 주 계획 없음${lt >= 50 ? ` · 미계획 주문 ${n0(lt)}t` : ''}`}</td></tr>`; }).join('');
+    // 11/18 사용자 '이 주 판매재 계획 없음 — 무슨 말이야': 도금 라인이 그 주에 무엇을 하는지(정지·자가재)를 같이 적음
+    const gWhy = () => { const L = (w.lines || []).filter((y) => /CGL/.test(y.line));
+      const t = L.map((y) => (!y.runD ? `${y.line} 정지` : `${y.line} ${(y.fams || []).join('·')}${(y.fams || []).some((f) => /AZ/.test(f)) ? '(컬러 소재용)' : ''}`)).join(' · ');
+      return GS.some((y) => y.pl === 'G' && y.p) || !t ? '이 주 생산 계획 없음' : `이 주 생산 계획 없음 — ${t}`; };   // 도금 판매재가 그 주에 하나도 없을 때만 라인 사정
+    const none_ = GS.filter((x) => !x.p).map((x) => { const lt = Object.entries(K.left || {}).filter(([g]) => (GMAP[g] || g) === x.g).reduce((a_, [, v]) => a_ + v, 0); return `<tr class="gr"><th>${esc(x.g)}</th><td colspan="${PS.includes('C') ? 13 : 11}" class="na">${x.pl === 'G' ? gWhy() : `이 주 계획 없음${lt >= 50 ? ` · 미계획 주문 ${n0(lt)}t` : ''}`}</td></tr>`; }).join('');
     const dtab = `<div class="k-card"><h2><b class="dt">${md(w.from)}~${md(w.to)}</b> 라인별 생산 계획(톤)</h2><div class="k-dscroll"><table class="k-d k-dl">
 <thead><tr class="grp"><th></th><th class="gs">생산</th><th colspan="2" class="gs">주문</th><th colspan="7" class="gs">소재</th>${PS.includes('C') ? '<th colspan="2" class="gs">부자재(컬러)</th>' : ''}<th class="gs">납기</th></tr>
 <tr><th></th><th>계획</th><th>주문</th><th>주문 부족</th><th class="sep">소재 확보율</th><th>확보</th><th>입고 예정</th><th>입고 지연</th><th>입고일 미정<small>발주함</small></th><th>소재 배정 전<small>자가재·입고분</small></th><th>미발주</th>${PS.includes('C') ? '<th class="sep">준비</th><th>대기</th>' : ''}<th>납기 지연(신규)</th></tr></thead>
