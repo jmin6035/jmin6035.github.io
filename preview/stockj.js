@@ -23,7 +23,7 @@
       <div class="bad"><span>갈 곳 미정(재고 판매)</span><b>${n0(sell)}<small>t</small></b><em>그중 90일 넘음 ${n0(sell90)}t — 악성 후보</em></div>
       <div class="ok"><span>출하 예정(수출·고객 주문)</span><b>${n0(ship)}<small>t</small></b><em>늘어도 어차피 나가는 재고</em></div>
       <div><span>자가재(컬러 소재)</span><b>${n0(self)}<small>t</small></b><em>컬러 룸용 고정 몫</em></div>
-      <div><span>제품 재고 합계</span><b>${n0(all)}<small>t</small></b><em>${+S.month.slice(4)}월 말 MES · 판매가 확실하면 총량은 유연</em></div></div>`;
+      <div><span>제품 재고 합계</span><b>${n0(all)}<small>t</small></b><em>${S.now ? md(S.now) + ' 지금' : +S.month.slice(4) + '월 말'} · 판매가 확실하면 총량은 유연</em></div></div>`;
     // 표 1: 공정 → 판매그룹 × 판정
     const grp = {}; for (const r of R) { const k = `${r.pl}|${r.g}`, o = (grp[k] = grp[k] || { pl: r.pl, g: r.g, c: {} }); const kk = r.kind.startsWith('재고 판매') ? `S|${r.age}` : r.kind; o.c[kk] = (o.c[kk] || 0) + r.t; }
     const cols = [['출하 예정(수출 계약)', '수출 계약'], ['출하 예정(고객 주문)', '고객 주문'], ['출하 예정(임가공)', '임가공'], ['S|30일 이하', '재고 판매 30일↓'], ['S|31~90일', '31~90일'], ['S|90일 넘음', '90일 넘음'], ['자가재', '자가재']];
@@ -52,13 +52,13 @@
     const d0 = ((Object.values(SD)[0] || {}).rows || [])[0], dz = ((Object.values(SD)[0] || {}).rows || []).filter((r) => r[3] === 'a').slice(-1)[0];
     const t3 = t3rows ? `<div class="op-w"><table class="op-t"><thead><tr><th class="l">판매그룹</th><th>${d0 ? md(d0[0]) : ''}</th><th>${dz ? md(dz[0]) : ''}</th><th>증감</th><th>재고일수</th><th class="l">판단</th></tr></thead><tbody>${t3rows}</tbody></table></div>` : '<p class="q">추이 자료 없음</p>';
     $('ct-main').innerHTML = `${kpi}
-      <section class="card"><h2>그룹별 재고 판정 <small>${ym} 말 MES 제품 재고 · t</small></h2><p class="q">수출·고객 주문 재고는 일시적으로 늘어도 됨 · 문제는 갈 곳 미정 재고(특히 컬러건재)가 줄지 않는 것</p>${t1}
-        <p class="note">판정 = 계약번호 기준(수출 = 수출 계약, 내수 계약 6번째 자리 C = 재고기반(계획재 등), 그 밖 내수 = 고객 주문). 실제 출하 지시와 아직 잇지 않음 — 다음 단계: 미결 주문·출하 예정일 연결.</p></section>
+      <section class="card"><h2>그룹별 재고 판정 <small>${S.now ? md(S.now) + ' 지금 재고' : ym + ' 말'} · t</small></h2><p class="q">수출·고객 주문 재고는 일시적으로 늘어도 됨 · 문제는 갈 곳 미정 재고(특히 컬러건재)가 줄지 않는 것</p>${t1}
+        <p class="note">지금 재고 = 그룹별 지금 총량(수주 관제 그룹 재고·판생속보 자가재) × ${ym} 말 MES 재고의 계약 구성 · 재고일수 = 월말 재고일수 + 지난 날 · 판정: 수출 계약 / 고객 주문 = 출하 예정, 내수 재고기반 계약(계획재 등) = 재고 판매.</p></section>
       <section class="card"><h2>악성 후보 — 90일 넘은 재고 판매 <small>용도별 상위 12 · 조치 정함 ${nAct}/${U.length}</small></h2>${t2}</section>
       <section class="card"><h2>지금 재고 추이 <small>판매그룹별 · 수주 관제와 같은 값</small></h2>${t3}</section>`;
     document.querySelectorAll('[data-sk]').forEach((btn) => btn.addEventListener('click', () => form(btn.dataset.sk, +btn.dataset.t, act(btn.dataset.sk))));
     document.querySelectorAll('[data-sref]').forEach((btn) => btn.addEventListener('click', () => push({ t: 'stockActSt', ref: btn.dataset.sref, st: btn.dataset.st })));
-    if (window.UI && UI.sub) UI.sub(`${ym} 말 MES 재고 · 추이 ${dz ? md(dz[0]) : ''}까지 · 11/18 사장님 회의 '그룹·용도별로, 악성인지 나갈 것인지'`);
+    if (window.UI && UI.sub) UI.sub(`${S.now ? md(S.now) + ' 지금 재고' : ym + ' 말 재고'} · 추이 ${dz ? md(dz[0]) : ''}까지 · 11/18 사장님 회의 '그룹·용도별로, 악성인지 나갈 것인지'`);
   }
   let EV = [], DD = null;
   async function push(ev) { try { await CT.store.push(ev); EV = await CT.store.events(); render(DD); } catch (e) { alert(e.message); } }

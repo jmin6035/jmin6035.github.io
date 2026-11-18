@@ -20,12 +20,12 @@ table.op-t tr.sec td { background: color-mix(in srgb, var(--ink) 5%, var(--surfa
 table.op-t tr.tot td { font-weight: 800; border-top: 2px solid var(--line); }
 table.op-t td.bad { color: var(--bad); font-weight: 700; } table.op-t td.z { color: var(--ink-3); }
 /* 룸판 */
-table.rb { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1060px; table-layout: fixed; font-variant-numeric: tabular-nums; }
+table.rb { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 960px; table-layout: fixed; font-variant-numeric: tabular-nums; }
 table.rb th, table.rb td { border-right: 1px solid var(--grid, var(--line)); border-bottom: 1px solid var(--grid, var(--line)); text-align: center; padding: 0; font-size: 14px; }
 table.rb thead th { font-size: 13.5px; font-weight: 700; color: var(--ink-2); padding: 6px 4px; background: color-mix(in srgb, var(--ink) 4%, var(--surface)); }
 table.rb thead th.mb { border-left: 2px solid var(--ink-3); }
 table.rb td.mb { border-left: 2px solid var(--ink-3); }
-table.rb tbody th { width: 92px; text-align: left; padding: 8px 10px; font-size: 14px; font-weight: 800; border-left: 1px solid var(--grid, var(--line)); }
+table.rb tbody th { width: 78px; text-align: left; padding: 8px 10px; font-size: 14px; font-weight: 800; border-left: 1px solid var(--grid, var(--line)); }
 table.rb tbody th small { display: block; font-size: 13.5px; font-weight: 500; color: var(--ink-2); }
 table.rb tr.pl td { background: color-mix(in srgb, var(--ink) 5%, var(--surface)); font-weight: 800; text-align: left; padding: 6px 10px; }
 .rc { all: unset; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px; width: 100%; min-height: 76px; padding: 8px 4px; cursor: pointer; text-align: center; }
