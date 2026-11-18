@@ -55,7 +55,7 @@
       + `<td>${matCell(x)}</td>`
       + `<td class="num">${x.sche ? `<div>예정 <b>${md(x.sche)}</b></div>` : '<span class="sub">-</span>'}${x.can ? (x.can <= O.asOf ? `<div class="sub" title="가동가능일(도료·PF·잉크·라미 입고 중 가장 늦은 날) ${md(x.can)} — 경과">가동 가능</div>` : `<div class="${x.lateCan ? 'rem' : 'sub'}" title="가동가능일 = 도료·PF·잉크·라미 입고 중 가장 늦은 날">가능 ${md(x.can)}${x.canBy ? ` · ${esc(String(x.canBy).replace('입고예정일', '').replace('생산일', ''))}` : ''}</div>`) : ''}</td></tr>`;
   }
-  const COLS = '<colgroup>' + [8, 14, 13, 8.5, 11, 9, 21.5, 15].map((w) => `<col style="width:${w}%">`).join('') + '</colgroup>';
+  const COLS = '<colgroup>' + [8, 14, 15, 8.5, 11, 9, 19.5, 15].map((w) => `<col style="width:${w}%">`).join('') + '</colgroup>';
   const HEAD = '<thead><tr><th>상태</th><th>계약번호-행번</th><th>두께×폭 · 색</th><th>납기</th><th class="num" title="미생산 = 주문량 − 생산량">미생산 · 주문 · 생산</th><th class="num">매치 · 지시</th><th>소재 연결</th><th class="num">작업 예정 · 가동가능</th></tr></thead>';
   const sumOf = (L) => ({ n: L.length, rem: L.reduce((s, x) => s + x.remT, 0), late: L.filter((x) => x.lateDue).length, none: L.filter((x) => x.st === '소재 없음').length, nomch: L.filter((x) => x.st !== '매치 완료').length });
   /* 11/11 회의 '누르면 그것만 나올 줄 알았는데 전부 나온다 — 컬러도 똑같다': 묶음 머리 칩 = 그 묶음 안 거르기('N건' = 전체) */

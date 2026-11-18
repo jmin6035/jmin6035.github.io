@@ -66,7 +66,7 @@ table.cg tbody th small.hs { margin-top: 4px; font-weight: 600; } table.cg tbody
 .lt { font-size: 13.5px; font-weight: 700; color: var(--warn); margin-top: 2px; white-space: normal; word-break: keep-all; line-height: 1.35; }
 table.cg td.jg { vertical-align: top; padding: 7px 10px; font-size: 13.5px; font-variant-numeric: tabular-nums; line-height: 1.5; background: var(--surface); }
 td.jg b { font-size: 15px; } td.jg .bad { color: var(--bad); font-weight: 800; } td.jg .good { color: var(--good); font-weight: 700; }
-td.jg .jr { display: flex; justify-content: space-between; gap: 6px; } td.jg .jr span { color: var(--ink-2); } td.jg .jr.bad span, td.jg .jr.good span { color: inherit; } td.jg .jr.bad b { color: var(--bad); } td.jg .jr.good b { color: var(--good); }
+td.jg .jr { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 6px; } td.jg .jr b { margin-left: auto; white-space: nowrap; }   /* 11/19: 좁은 칸에서 숫자가 칸 밖으로 → 아랫줄 오른쪽 */ td.jg .jr span { color: var(--ink-2); } td.jg .jr.bad span, td.jg .jr.good span { color: inherit; } td.jg .jr.bad b { color: var(--bad); } td.jg .jr.good b { color: var(--good); }
 td.jg .mk { display: inline-block; font-size: 13.5px; background: var(--tint-2); border-radius: 4px; padding: 0 5px; margin-top: 2px; white-space: nowrap; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 0 0 12px; flex-wrap: wrap; }
 .seg button { font: inherit; border: 0; background: var(--surface); color: inherit; padding: 6px 14px; cursor: pointer; white-space: nowrap; }
@@ -244,7 +244,7 @@ i.sk0 { background: #a6a6a6; } i.sk1 { background: #2e7d32; } i.sk2 { background
 i.sst { background: #ffff00; box-shadow: inset 0 0 0 1px #1f3864; } i.spa { background: repeating-linear-gradient(135deg, #bfbfbf 0 2px, #f2f2f2 2px 5px); } i.sgap { background: #fff; box-shadow: inset 0 0 0 1px #bfbfbf; }
 .sc-h { font-size: 13.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; line-height: 1.5; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px 6px; }
 .sc-h b { color: var(--ink); font-size: 14.5px; }
-.sc-st i { font-style: normal; white-space: nowrap; display: inline-block; }   /* 칩 안 '정지 이름'·'시간' 은 각각 안 끊김 */
+.sc-st i { font-style: normal; white-space: nowrap; display: inline-block; } .sc-st i:first-child { white-space: normal; word-break: keep-all; max-width: 100%; }   /* 11/19: 긴 정지 이름(S/D 재가동(MAC→AL))은 낱말 사이에서만 줄바꿈 */   /* 칩 안 '정지 이름'·'시간' 은 각각 안 끊김 */
 .sc-st { display: inline-block; background: #ffff00; color: #1f3864; font-weight: 800; border-radius: 4px; padding: 0 5px; box-shadow: inset 0 0 0 1px #1f3864; white-space: normal; word-break: keep-all; max-width: 100%; box-sizing: border-box; text-align: center; line-height: 1.35; }   /* M/C(AL→AZ) 10.2시간 처럼 긴 정지 칩이 칸 밖으로 넘치지 않게 줄바꿈(11/17) */
 button.cell.sc .gl { margin-top: 4px; border-top: 1px dashed #d9d9d9; padding-top: 3px; } button.cell.sc .gl:empty { display: none; }
 button.cell.sc .sh, button.cell.sc .fg, button.cell.sc .lt, button.cell.sc .mvc { text-align: center; }

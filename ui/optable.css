@@ -72,3 +72,6 @@ table.gk td.sel { outline: 3px solid #0070c0; outline-offset: -3px; }
 }
 /* 11/17 검토: 표 머리를 따라 내려오게 할 때(공통 shell stickyHeads — thead 를 옮김) 머리가 고정 칸·정지 글자(z 5~6)보다 위 */
 html:root body main table.gk.stk-js thead { z-index: 9; }
+/* 11/19 수정 방: 소재 캘린더(table.gk.tcal)는 첫 칸이 소재 이름('외부FH(STS)')이라 64px 에 안 들어감 → 이 표만 첫 칸 100px */
+table.gk.tcal col.c0 { width: 100px; } html:root body main table.gk.gk.tcal th.c1 { left: 100px; }
+table.gk.sjc col.c0 { width: 84px; } html:root body main table.gk.gk.sjc th.c1 { left: 84px; }   /* 수주 관제 '건재 주문재' 잘림 */

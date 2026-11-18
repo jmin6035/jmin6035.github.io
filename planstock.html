@@ -43,6 +43,8 @@ html body main #ps-spec table.t thead th { white-space: normal !important; word-
 html body main #ps-spec table.t tbody td:is(:nth-child(2), :last-child) { white-space: normal !important; word-break: keep-all; min-width: 110px; }
 html body main #ps-spec table.t small.ps-b { display: block; font-size: 13.5px; }
 html body main #ps-spec table.t :is(th, td) { padding-left: 7px !important; padding-right: 7px !important; }
+/* 11/19 수정 방: 표 칸 가운데 정렬 통일(docs/16 규칙 13, 검수 어긋남 '04 정렬 섞임') */
+html body main table :is(td, th, #al-c) { text-align: center !important; }   /* #al-c = 우선순위 올림(칸마다 붙은 왼쪽·오른쪽 규칙보다 앞서게) */
 </style>
 </head>
 <body>

@@ -204,6 +204,8 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
 html body main table.oj-t.oj-mx thead th { white-space: normal !important; word-break: keep-all; }
 html body main table.oj-t.oj-mx tr.oj-gst td { white-space: normal !important; } html body main table.oj-t.oj-mx tr.oj-gst .oj-dot { white-space: normal; word-break: keep-all; display: inline-block; line-height: 1.25; }
 html body main table.oj-t.oj-mx td.nw .oj-nx { white-space: normal !important; }
+/* 11/19 수정 방: 표 칸 가운데 정렬 통일(docs/16 규칙 13, 검수 어긋남 '04 정렬 섞임') */
+html body main table :is(td, th, #al-c) { text-align: center !important; }   /* #al-c = 우선순위 올림(칸마다 붙은 왼쪽·오른쪽 규칙보다 앞서게) */
 </style>
 </head>
 <body>

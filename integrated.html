@@ -96,6 +96,8 @@ table.t.iv-t { width: 100%; } html body table.t.iv-t :is(td, th) { text-align: c
 .iv-rule h2 { font-size: 15px; margin: 16px 0 6px; } .iv-rule h2 .n { display: none; }
 #g-main > details.fold { margin-top: 16px; }
 html.v2 body main table.ref-t :is(td, th) { text-align: center !important; }
+/* 11/19 수정 방: 표 칸 가운데 정렬 통일(docs/16 규칙 13, 검수 어긋남 '04 정렬 섞임') */
+html body main table :is(td, th, #al-c) { text-align: center !important; }   /* #al-c = 우선순위 올림(칸마다 붙은 왼쪽·오른쪽 규칙보다 앞서게) */
 </style>
 </head>
 <body>

@@ -54,6 +54,8 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
 @media (max-width: 900px) { .pc-k { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .pc-k .k .v { font-size: 20px; } .pc-mc { grid-template-columns: 1fr; } }
 b.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 11/17 용어 기준: 날짜 = 굵은 진한 파랑 */
+/* 11/19 수정 방: 표 칸 가운데 정렬 통일(docs/16 규칙 13, 검수 어긋남 '04 정렬 섞임') */
+html body main table :is(td, th, #al-c) { text-align: center !important; }   /* #al-c = 우선순위 올림(칸마다 붙은 왼쪽·오른쪽 규칙보다 앞서게) */
 </style>
 </head>
 <body>

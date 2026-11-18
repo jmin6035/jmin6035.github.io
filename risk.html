@@ -102,6 +102,8 @@ html.v2 body main.rk tr.rk2-sub > td, html.v2 body main.rk tr.rk-d > td { text-a
 html.v2 body main.rk table.v2t:not(.rk2-o) { max-width: none; }
 @media (max-width: 1500px) { html.v2 .rk .rk2-dg { grid-template-columns: 1fr; } }
 @media (max-width: 900px) { html.v2 .rk table.rk2-g { min-width: 900px; } html.v2 .rk table.rk2-m { min-width: 860px; } html.v2 .rk table.rk2-o { min-width: 600px; } }
+/* 11/19 수정 방: 표 칸 가운데 정렬 통일(docs/16 규칙 13, 검수 어긋남 '04 정렬 섞임') */
+html body main table :is(td, th, #al-c) { text-align: center !important; }   /* #al-c = 우선순위 올림(칸마다 붙은 왼쪽·오른쪽 규칙보다 앞서게) */
 </style>
 </head>
 <body>
