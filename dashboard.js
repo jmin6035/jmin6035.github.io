@@ -167,7 +167,7 @@
         + tr('<th class="k">차이</th>', (d) => A_(d) - P(d), 'df', `<td class="n s ${ca - cp < -0.5 ? 'neg' : ca - cp > 0.5 ? 'pos' : ''}">${sg(ca - cp)}</td>`);
     }).join('');
     el.innerHTML = `<h2>계획 대비 실적 <small class="muted">최근 ${days.length}일 · 계획 = 그날 아침 재계획이 잡은 생산 · 단위 톤 · 차이 = 실적 − 계획(빨강 = 미달)</small></h2>
-      <div class="scroll"><table class="vs3"><colgroup><col style="width:72px"><col style="width:68px">${days.map(() => '<col>').join('')}<col style="width:11%"><col style="width:9%"></colgroup><thead><tr><th colspan="2">라인</th>${days.map((d) => `<th>${GP.md(d)}</th>`).join('')}<th>${days.length}일 합</th><th>달성</th></tr></thead><tbody>${body}</tbody></table></div>`;
+      <div class="scroll"><table class="vs3"><colgroup><col style="width:72px"><col style="width:68px">${days.map(() => '<col>').join('')}<col style="width:11%"><col style="width:11%"></colgroup><thead><tr><th colspan="2">라인</th>${days.map((d) => `<th>${GP.md(d)}</th>`).join('')}<th>${days.length}일 합</th><th>달성</th></tr></thead><tbody>${body}</tbody></table></div>`;
   }
   // ---------------- 일별 차트 (라인별 작은 배수, 같은 y축) ----------------
   function renderDaily() {
