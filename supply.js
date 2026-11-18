@@ -588,14 +588,14 @@
     if (d < today) {   // 이미 생산한 날 = MES 코일 추적(그날 도금 코일의 소재 → 입고일·발주일, procure cgRaw)
       const cr = Object.entries((MP && MP.P.cgRaw) || {}).filter(([kk]) => kk.startsWith(d + '|') && (!fam || kk.endsWith('|' + fam))).map(([, v]) => v);
       if (cr.length) { const R2 = (f) => { const A = cr.flatMap((v) => v[f] || []).sort(); return A.length ? rng([md(A[0]), md(A[A.length - 1])]) : null; }, o = R2('ord');
-        return [...(o ? [[cr.every((v) => v.est) ? '소재 발주(역산)' : '소재 발주', o, null, 'due']] : []), ['소재 입고 완료', R2('in') || '-', null, 'due']]; }
+        return [...(o ? [['소재 발주', o, null, 'due']] : []), ['소재 입고 완료', R2('in') || '-', null, 'due']]; }
       return [['소재 입고', '완료', null, 'due']];
     }
     const x = lotOf(k, d); if (!x) return null;
     const out = [];
     const md0 = (v) => (v ? md(v) : null);
     if (x.stock) {
-      if (x.S && x.S.length) { const sd = (f) => rng(x.S.map((z) => z[f]).filter(Boolean).sort().map(md0)), o = sd('ord'); if (o) out.push([x.S.every((z) => z.est) ? '소재 발주(역산)' : '소재 발주', o, null, 'due']); out.push(['소재 입고 완료', sd('in'), null, 'due']); }   // 발주일이 MES 에 없으면 입고일 − 리드타임(11/18 사용자)
+      if (x.S && x.S.length) { const sd = (f) => rng(x.S.map((z) => z[f]).filter(Boolean).sort().map(md0)), o = sd('ord'); if (o) out.push(['소재 발주', o, null, 'due']); out.push(['소재 입고 완료', sd('in'), null, 'due']); }   // 발주일이 MES 에 없으면 입고일 − 리드타임(11/18 사용자)
       else out.push(['소재 입고', '완료', null, 'due']);
       if (!x.L.length && !x.short) return out;
     }
