@@ -138,6 +138,12 @@
         for (const d of Object.keys(use)) if (d <= lastP) delete use[d];
         for (const [kk, x] of Object.entries(D.sts)) { const d = kk.split('|')[1]; if (d >= t0 && !x.act && x.t >= 0.5) use[d] = (use[d] || 0) + x.t; }
       }
+      if ((k === 'G:H' || k === 'G:F') && D.pl) {                       // 11/18: 도금 F/H 소요 = 지금 계획의 강종별 생산(AL → F/H AL용, AZ·MAC → F/H GI/GL용) — 옛 소요표(units)는 11월 AL 을 11,575t 로 잡아 소재가 실제보다 일찍 떨어지게 보였음
+        const pds = Object.keys(D.pl).map((kk) => kk.split('|')[1]).sort(), lastP = pds[pds.length - 1];
+        for (const d of Object.keys(use)) if (d <= lastP) delete use[d];
+        for (const [kk, x] of Object.entries(D.pl)) { const d = kk.split('|')[1]; if (d < t0) continue;
+          for (const [a, t] of Object.entries(x.al || {})) { const c = /STS/.test(a) ? null : /^AL/.test(a) ? 'H' : 'F'; if (c && `G:${c}` === k && t > 0) use[d] = (use[d] || 0) + t; } }
+      }
       let past = 0;                                                     // 오늘 이전 날짜의 발주 완료분 = 이미 들어온 것 → 오늘 재고에 더함(FH 재고는 입고 자료가 없어서)
       for (const a of P.known || []) if (`${a.plant}:${a.code}` === k) { if (a.date < t0) past += a.t; else arr[a.date] = (arr[a.date] || 0) + a.t; }
       const s0 = (P.stock[k] || 0) + past;
