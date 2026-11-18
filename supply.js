@@ -660,7 +660,7 @@
         const st = !TT.length ? ['warn', '팀 리드타임 표에 없는 소재'] : first >= today ? ['ok', `발주 예정 ${md(first)}~`] : last >= today ? ['warn', '일부 업체 발주 지남'] : ['info', '발주 완료분 사용'];
         const arr = TT.length ? TT.map((t) => t.arrive).sort()[0] : need;
         const src = TT.length ? TT.map((t) => `${esc(t.c)} ${Math.round(t.sh * 100)}%${t.n.length ? ` (${esc(t.n.slice(0, 3).join('·'))}${t.n.length > 3 ? ` 외 ${t.n.length - 3}` : ''})` : ''}`).join(' · ') : '-';
-        out.push({ kind: '구매', nm: esc(nm), sh: (1 - sh) * w, what: `${esc(nm)} <b>${n0(r[5] * (1 - sh) * w)}t</b> <small class="muted">${Math.round((1 - sh) * w * 100)}%</small>`, src, inb: `${md(arr)} 입고 예정`, ord: ordTxt, st, steps: (() => { const ls = lotSteps(`C:${code}`, d, '소재'); return ls && ls.length ? (ls.some((z) => z[0] === '미발주') ? ls.filter((z) => z[0] !== '미발주').concat([['발주 마감', ordTxt, first, 'due']]) : ls) : [['발주 마감', ordTxt, first, 'due'], [arr <= today ? '소재 입고 완료' : '소재 입고 예정', md(arr), arr]]; })() });
+        out.push({ kind: '구매', nm: esc(nm), sh: (1 - sh) * w, what: `${esc(nm)} <b>${n0(r[5] * (1 - sh) * w)}t</b> <small class="muted">${Math.round((1 - sh) * w * 100)}%</small>`, src, inb: `${md(arr)} 입고 예정`, ord: ordTxt, st, steps: (() => { const ls = lotSteps(`C:${code}`, d, '소재'); const NO = [['소재 발주', '미발주', null, 'late'], ['소재 입고', '미정', null, 'late']]; return ls && ls.length ? (ls.some((z) => z[0] === '미발주') ? ls.filter((z) => z[0] !== '미발주').concat(ls.some((z) => z[0] === '소재 발주') ? [] : NO) : ls) : NO; })() });
       }
     }
     const z = ordOf(r, d); if (z) out.forEach((m) => { if ((m.kind === '자가재') === !!z.p) m.steps = ordSteps(z); });   // 소재 종류(자가재·구매)가 같을 때만
@@ -690,9 +690,11 @@
     const ok_ = j && j.short < 1;   // 그 주 확보면 마감이 지났어도 경고 아님
     const dlc = ok_ ? ['F/H', '확보됨', null, 'due'] : dl ? (dl < today ? ['발주 마감', `${md(dl)} 지남`, null, 'late'] : dl === today ? ['발주 마감', '오늘', null, 'late'] : ['발주 마감', `${md(dl)}까지`, null, 'due']) : ['발주 마감', ords, null, 'due'];
     if (code === 'N') return { what: nm, steps: [['소재', '지급재(발주 당일 입고)', null, 'due']], st: ['info', '지급재 — 발주 마감·부족 판정 안 함'] };   // 11/17 검토: MES 상 도금 SUS 는 발주일에 입고(P2…Y·Y…) — 리드타임 판정은 오경보
+    // 11/18 사용자 '이런 것도 아직 있잖아': 발주 안 된 몫 = '소재 발주 미발주 › 소재 입고 미정' 두 칩만(마감 지남·그 주 n t 발주 필요 같은 긴 칩 뺌)
+    const NO = [['소재 발주', '미발주', null, 'late'], ['소재 입고', '미정', null, 'late']];
     const ls = lotSteps(`G:${code}`, d, 'F/H');
-    if (ls && ls.length) return { what: nm, steps: ls.some((z) => z[0] === '미발주') ? ls.filter((z) => z[0] !== '미발주').concat([dlc, ...(stc ? [stc] : [])]) : ls, st };
-    return { what: nm, steps: ok_ ? [['소재 입고', '완료', null, 'due']] : [dlc, [need <= today ? '소재 입고 완료' : '소재 입고 예정', md(need), need], ...(stc ? [stc] : [])], st };
+    if (ls && ls.length) return { what: nm, steps: ls.some((z) => z[0] === '미발주') ? ls.filter((z) => z[0] !== '미발주').concat(ls.some((z) => z[0] === '소재 발주') ? [] : NO) : ls, st };
+    return { what: nm, steps: ok_ ? [['소재 입고', '완료', null, 'due']] : NO, st };
   }
 
   // 날짜 상세 카드(라인별 품목·소재·일정) — 가동 캘린더 상세와 계획 화면(gyehoek.js, window.supDet)이 같이 씀. ls = 보일 라인(없으면 전부)
