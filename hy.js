@@ -115,7 +115,7 @@ ${lines.filter(Boolean).map((l) => `<div class="hy-ms">${l}</div>`).join('')}${s
     ] : [
       ['주문', '생산 실적 + 확정 주문', null, (p) => bar(p, H[p].sales, H[p].sales.note ? `판매계획(${H[p].sales.note})` : '판매계획', null, { grp: H[p].sales.grp })],
       ['생산', '판생 계획 대비 실적', 'gyehoek.html', (p) => prod(p, H[p].prod, td)],
-      ['소재', `입고 실적 / ${mo}월 입고 계획`, 'gyehoek.html#mat', (p) => bar(p, H[p].mat, `${mo}월 입고 계획`, td)],
+      ['소재', `입고 실적 / ${mo}월 입고 계획`, 'gyehoek.html#mat', (p) => bar(p, NW && NW[p] ? Object.assign({}, H[p].mat, { act: Math.round(NW[p].act), plan: Math.round(NW[p].plan) }) : H[p].mat, `${mo}월 입고 계획`, td)],   // 11/19 검수 틀림 1: 입고 계획 = 01 소재와 같은 값(입고 완료·예정 + 미발주, ui/proccalc 같은 계산)
       ['출하', '계획 대비 출하', null, (p) => bar(p, H[p].ship, '판매계획', td, { grp: H[p].ship.grp })],
       ['소재 재고', '현재 → 월말', null, (p) => stock(H[p].stockMat)],
       ['제품 재고', '현재 → 월말', 'integrated.html', (p) => stock(H[p].stockPdt)],
@@ -133,9 +133,23 @@ ${R.map(([a, b, u, f]) => `${sec(a, b, u)}${PS.map((p) => cell(p, a, f(p))).join
   }
   let LD = null, SUB = false;
   // 11/18 결정(검수 결정전달 기준 2): '작업 가능 주문 n일치' = 03 주간 편성 라인별 작업가능일(ct_orders.js CTORD.lineDays) 그대로
-  let WD = null;
+  let WD = null, NW = null;
+  /* 이달 소재 입고 실적·입고 계획 = 01 소재와 같은 함수·같은 입력(11/19 검수 틀림 1 — Python 묶음은 기준 시점·수동 입고 입력이 달라 계속 어긋남):
+     실입고 = 포털 matAct.inb(오늘 전) · 입고 예정·지연 = ProcCalc.autoArr + 이 브라우저 입고 입력(S.arr) · 미발주 = ProcCalc 부족분(입고 필요일이 이달) */
+  const nwLoad = async () => { if (NW || !window.ProcCalc || !window.GP || !LD || !LD.suju) return; try {
+    let pw = null; try { pw = localStorage.getItem('cgl-analysis-pw'); } catch (x) { /* 무시 */ } if (!pw) return;
+    const [eP, eO] = await Promise.all([GP.latest('procure.enc.json'), GP.latest('portal.enc.json')]); if (!eP || !eO) return;
+    const [P, PO] = await Promise.all([GP.decryptJSON(eP, pw), GP.decryptJSON(eO, pw)]);
+    const td = UI.today(), mon = String(LD.suju.hy.asOf).slice(0, 7), inM = (d) => String(d || '').slice(0, 7) === mon;
+    let S = null; const C = ProcCalc.make(() => ({ D: P, S })); S = C.load();
+    const out = { G: { act: 0, plan: 0 }, C: { act: 0, plan: 0 } }, add = (pl, k, t) => { if (out[pl]) out[pl][k] += t; };
+    for (const [key, t] of Object.entries((PO.matAct || {}).inb || {})) { const [pl, , , d] = key.split('|'); if (d < td && t >= 0.05 && inM(d)) { add(pl, 'act', t); add(pl, 'plan', t); } }
+    for (const a of [...C.autoArr(), ...(S.arr || []).map((x) => ({ ...x, plant: ProcCalc.plantOf(x.code), t: +x.t || 0 }))]) if (inM(a.date)) add(a.plant, 'plan', a.t || 0);
+    for (const j of C.judge()) { if (j.kind === 'pos' || j.short < 1) continue; const d = j.needBy < td ? td : j.needBy; if (!inM(d)) continue; for (const x of j.split || []) if (x.t >= 1) add(j.plant, 'plan', x.t); }
+    NW = out; render(LD);
+  } catch (x) { console.warn('소재 입고', x); } };
   const wdLoad = async () => { if (WD || !window.CTORD || !window.GP) return; try { let pw = null; try { pw = localStorage.getItem('cgl-analysis-pw'); } catch (x) { /* 무시 */ } const E = await Promise.all(CTORD.FILES.map((f) => GP.latest(f).catch(() => null))), X = {};
     for (let k = 0; k < E.length; k++) X[CTORD.FILES[k].replace(/\.enc\.json$/, '')] = E[k] ? await GP.decryptJSON(E[k], pw).catch(() => null) : null;
     WD = CTORD.lineDays(X); if (LD) render(LD); } catch (e) { console.warn('작업 가능 일수', e); } };
-  CT.boot(['suju.enc.json'], (D) => { LD = D; render(D); wdLoad(); if (!SUB && window.UI && UI.onScope) { SUB = true; UI.onScope(() => render(LD)); } });
+  CT.boot(['suju.enc.json'], (D) => { LD = D; render(D); wdLoad(); nwLoad(); if (!SUB && window.UI && UI.onScope) { SUB = true; UI.onScope(() => render(LD)); } });
 })();

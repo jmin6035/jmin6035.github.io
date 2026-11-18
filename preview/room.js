@@ -79,10 +79,12 @@
     const byM = {}; for (const r of X.pull.rows) byM[r.due.slice(0, 7)] = (byM[r.due.slice(0, 7)] || 0) + r.t;
     // 수주 부족 경보 = 다음 달만(그 뒤 달은 아직 받을 시기가 아님 — 판매그룹별 탭 표에서 봄)
     for (const x of X.sales.C수출 || []) { if (x.m < X.pull.from.slice(0, 7) || x.m > X.pull.from.slice(0, 7)) continue; const g = x.sales - (byM[x.m] || 0); if (g >= 500) L.push({ key: `grp|${x.m}`, s: `${x.m}-1`, kind: 'order', lv: 'warn', t: g, text: `${+x.m.slice(5)}월 컬러수출 수주 ${n0(g)}t 모자람(판매계획 ${n0(x.sales)}t)` }); }
+    for (const m of ((X.matLate || {}).items || [])) if ((m.t || 0) >= 300) L.push({ key: `mat|${m.key}`, s: sun(m.first || X.today), kind: 'mat', lv: 'bad', t: m.t, text: `${m.name} ${n0(m.t)}t 발주 마감 지남(${md(m.deadline)}) — 첫 사용 ${md(m.first)} · 지금 발주 / 생산 미룸 / 대체 소재` });
     for (const x of L) { const d = decOf(x.key); x.d = d; x.done = x.lv === 'info' || (d && DONE(d.st)); }
     return L;
   }
-  const chip = (d) => (d ? `<span class="chip ${DONE(d.st) ? 'ok' : d.st === '보류' ? 'na' : d.st === '사장님 결정 요청' ? 'bad' : 'warn'}">${esc(d.st)}</span>` : '<span class="chip">미결정</span>');
+  const appl = (d) => d && (X.applied || []).includes(DID(d));
+  const chip = (d) => (d ? `${appl(d) ? '<span class="chip ok">계획 반영</span> ' : ''}<span class="chip ${DONE(d.st) ? 'ok' : d.st === '보류' ? 'na' : d.st === '사장님 결정 요청' ? 'bad' : 'warn'}">${esc(d.st)}</span>` : '<span class="chip">미결정</span>');
 
   /* ---------- 룸판 ---------- */
   let FIL = 'open';
@@ -93,7 +95,7 @@
     let low = null; for (const [al, ser] of Object.entries(X.self || {})) for (const r of ser) if (r[0] >= X.today && (!low || r[1] < low[1])) low = [al, r[1], r[0]];
     let lowA = null; for (const [al, ser] of Object.entries(selfAdj())) for (const r of ser) if (r[0] >= X.today && (!lowA || r[1] < lowA[1])) lowA = [al, r[1], r[0]];
     const kpi = `<div class="op-k">
-      <div class="${open.length ? 'bad' : 'ok'}"><span>결정할 일(미결정·제안)</span><b>${open.length}<small>건</small></b><em>${['2ccl', 'self', 'skew', 'order'].map((k) => [k, open.filter((x) => x.kind === k).length]).filter(([, n]) => n).map(([k, n]) => `${{ '2ccl': '2CCL', self: '자가재', skew: '내수 편중', order: '수주 부족' }[k]} ${n}`).join(' · ') || '없음'}</em></div>
+      <div class="${open.length ? 'bad' : 'ok'}"><span>결정할 일(미결정·제안)</span><b>${open.length}<small>건</small></b><em>${['2ccl', 'self', 'mat', 'skew', 'order'].map((k) => [k, open.filter((x) => x.kind === k).length]).filter(([, n]) => n).map(([k, n]) => `${{ '2ccl': '2CCL', self: '자가재', skew: '내수 편중', order: '수주 부족', mat: '소재 발주' }[k]} ${n}`).join(' · ') || '없음'}</em></div>
       <div class="${req ? 'bad' : ''}"><span>사장님 결정 요청</span><b>${req}<small>건</small></b><em>2CCL 가동 등 원칙을 바꾸는 결정</em></div>
       <div class="${low && low[1] < -0.5 ? 'bad' : 'ok'}"><span>컬러용 자가재 최저</span><b>${low ? sg(low[1]) : '–'}<small>t</small></b><em>${low ? `${low[0]} ${md(low[2])}` : ''}${lowA && low && Math.round(lowA[1]) !== Math.round(low[1]) ? ` · 결정 반영 후 <b>${sg(lowA[1])}t</b>` : ''}</em></div>
       <div><span>당길 수 있는 수출 오더</span><b>${n0(pT - pDone)}<small>t</small></b><em>소재 확보 ${n0(pOk)}t${pDone ? ` · 당김 결정 ${n0(pDone)}t` : ''}</em></div></div>`;
@@ -105,7 +107,7 @@
     const mbOf = (i) => (i === 0 || S[i].slice(0, 7) !== S[i - 1].slice(0, 7) ? 'mb' : '');
     const tk = {}; for (const x of T) (tk[x.key] = tk[x.key] || []).push(x);
     const cls = (key) => { const L = tk[key] || []; if (!L.length) return ''; if (L.every((x) => x.done)) return ' ok'; return L.some((x) => x.lv === 'bad' && !x.done) ? ' bad' : L.some((x) => !x.done && x.lv === 'warn') ? ' warn' : ''; };
-    const dTag = (key) => { const d = decOf(key); return d ? `<span class="tag ${DONE(d.st) ? 'ok' : d.st === '보류' ? 'na' : 'warn'}">${esc(d.st)}</span>` : ''; };
+    const dTag = (key) => { const d = decOf(key); return d ? `<span class="tag ${DONE(d.st) ? 'ok' : d.st === '보류' ? 'na' : 'warn'}">${appl(d) ? '계획 반영' : esc(d.st)}</span>` : ''; };
     const cellC = (l, s, i) => {
       const c = cc(l, s), key = `${l}|${s}`, on = SEL === key ? ' on' : '';
       if (!c || c.cap < 1) return `<td class="${mbOf(i)}"><div class="rc off"><span class="s">휴지</span></div></td>`;
@@ -134,8 +136,8 @@
       <div id="rb-pd"></div></section>
       <section class="card"><h2>결정 기록 <small>수주가 결정하고 책임 · ${log.length}건 — 상태를 여기서 바꿈</small></h2>${logList(log)}</section>`;
   }
-  const keyLab = (k) => (k ? k.replace('|', ' ').replace(/(\d{4}-\d{2}-\d)$/, (m) => sunLab(m)).replace(/^grp (\d{4})-(\d{2})$/, (m, y, mo) => `컬러수출 ${+mo}월 수주`) : '');
-  const what = (e) => (e.kind === 'adj' ? `내수 ${e.dom != null ? n0(e.dom) + 't' : '그대로'}${(e.pulls || []).length ? ` · 수출 ${e.pulls.length}건 ${n0(e.pulls.reduce((a, x) => a + x[1], 0))}t 당김` : ''}${e.mv ? ` · 수출 ${n0(e.mv[1])}t → ${sunLab(e.mv[0])}` : ''}` : e.kind === '2ccl' ? (e.choice === 'stop' ? `2CCL 세움 · ${n0(e.move || 0)}t 다른 CCL 로` : '2CCL 가동') : e.kind === 'self' ? `판매재 → 자가재 ${n0(e.conv || 0)}t` : e.kind === 'order' ? `수주 목표 ${n0(e.goal || 0)}t · ${esc(e.who || '')}` : '');
+  const keyLab = (k) => (k ? k.replace('|', ' ').replace(/(\d{4}-\d{2}-\d)$/, (m) => sunLab(m)).replace(/^grp (\d{4})-(\d{2})$/, (m, y, mo) => `컬러수출 ${+mo}월 수주`).replace(/^mat /, '소재 ') : '');
+  const what = (e) => (e.kind === 'adj' ? `내수 ${e.dom != null ? n0(e.dom) + 't' : '그대로'}${(e.pulls || []).length ? ` · 수출 ${e.pulls.length}건 ${n0(e.pulls.reduce((a, x) => a + x[1], 0))}t 당김` : ''}${e.mv ? ` · 수출 ${n0(e.mv[1])}t → ${sunLab(e.mv[0])}` : ''}` : e.kind === '2ccl' ? (e.choice === 'stop' ? `2CCL 세움 · ${n0(e.move || 0)}t 다른 CCL 로` : '2CCL 가동') : e.kind === 'self' ? `판매재 → 자가재 ${n0(e.conv || 0)}t` : e.kind === 'order' ? `수주 목표 ${n0(e.goal || 0)}t · ${esc(e.who || '')}` : e.kind === 'mat' ? `${esc(e.act || '')} ${n0(e.qty || 0)}t · ${esc(e.who || '')}` : '');
   const logList = (L) => (L.length ? `<ul class="dlog">${L.slice().reverse().map((e) => { const st = stOf(e), id = DID(e); return `<li><div><small>${esc(String(e.at || '').slice(5, 16).replace('T', ' '))}</small><small>${esc(e.by || '')}</small><b>${esc(keyLab(e.key))}</b> ${chip({ st })} ${what(e)}${e.text ? ` — ${esc(e.text)}` : ''}</div><div class="sts">${['확정', '사장님 승인', '보류'].filter((x) => x !== st).map((x) => `<button type="button" class="btn sub sm" data-ref="${id}" data-st="${x}">${x}</button>`).join('')}</div></li>`; }).join('')}</ul>` : '<p class="q">아직 없음 — 칸을 눌러 조정하고 저장합니다.</p>');
 
   async function save(ev, msgEl) {
@@ -192,6 +194,13 @@
         <p class="note">세우면 옮길 양만큼 1·3·4CCL 에 룸이 있어야 함 — 시험 계산 탭에서 그 달 결과 확인.</p></div></div>`;
       el.innerHTML = `<form class="pd" id="w-f" novalidate>${html}${foot(d0 ? d0.st : ps ? '확정' : '사장님 결정 요청')}</form>`;
       $('w-f').addEventListener('submit', (e) => { e.preventDefault(); const ch = el.querySelector('input[name=w-c]:checked').value; save({ t: 'room', key, line: l, sun: s, kind: '2ccl', choice: ch, move: ch === 'stop' ? +$('w-mv').value : null, st: $('w-st').value, text: $('w-tx').value.trim() }, $('dec-m')); });
+    } else if (l === 'mat') {
+      const m = ((X.matLate || {}).items || []).find((y) => y.key === s) || {};
+      el.innerHTML = `<form class="pd" id="w-f" novalidate><div class="wb"><div><h3>${esc(m.name || s)} <small>발주 마감 지남 ${md(m.deadline)} · 첫 사용 ${md(m.first)}</small></h3><p class="q">${n0(m.t)}t 이 마감 안에 발주되지 않음 — 지금 발주해도 첫 사용일에 못 들어올 수 있음.</p></div>
+        <div><label class="fld">조치 <select id="w-act">${['지금 발주(긴급)', '그 생산을 뒤로 미룸', '대체 소재로', '판생 계획 조정 요청'].map((x) => `<option${d0 && d0.act === x ? ' selected' : ''}>${x}</option>`).join('')}</select></label>
+        <label class="fld">양(t) <input type="number" id="w-mt" step="any" value="${Math.round(d0 && d0.qty != null ? d0.qty : m.t || 0)}"></label><label class="fld">담당·기한 <input id="w-who" value="${esc(d0 && d0.who || '소재 구매')}"></label></div></div>${foot(d0 ? d0.st : '제안')}</form>`;
+      $('w-f').addEventListener('submit', (e) => { e.preventDefault(); save({ t: 'room', key, kind: 'mat', act: $('w-act').value, qty: +$('w-mt').value, who: $('w-who').value.trim(), st: $('w-st').value, text: $('w-tx').value.trim() }, $('dec-m')); });
+      return;
     } else if (l === 'grp') {
       const m = s, x = (X.sales.C수출 || []).find((y) => y.m === m) || {}, o = X.pull.rows.filter((r) => r.due.slice(0, 7) === m).reduce((a, r) => a + r.t, 0);
       el.innerHTML = `<form class="pd" id="w-f" novalidate><div class="wb"><div><h3>${+m.slice(5)}월 컬러수출 수주 <small>판매계획 ${n0(x.sales)}t · 미결 수주 ${n0(o)}t</small></h3><p class="q">모자란 ${n0((x.sales || 0) - o)}t 을 언제까지 누가 받아 올지 정함 — 월초·월중 빈 룸에 넣을 수 있게.</p></div>
@@ -224,21 +233,30 @@
   function testCalc() {
     const m = $('tc-m').value, d = +$('tc-d').value; TM = m; TD = d; $('tc-o').textContent = sg(d) + 't';
     const S = [1, 2, 3].map((k) => `${m}-${k}`);
-    const capOf = (c) => (c ? c.dom + c.exp + (c.free != null ? c.free : Math.max(0, c.cap - c.dom - c.exp)) : 0);   // 능력 = 지금 배정 + 남는 시간(룸판 빈 룸과 같은 기준)
-    const cap1 = S.map((s) => MAIN.reduce((a, l) => a + capOf(cc(l, s)), 0));
-    const cap2 = S.map((s) => capOf(cc('2CCL', s)));
-    const D0 = S.map((s) => CCL.reduce((a, l) => a + ((cc(l, s) || {}).dom || 0), 0));
-    const X0 = S.map((s) => CCL.reduce((a, l) => a + ((cc(l, s) || {}).exp || 0), 0));
+    // 분 단위: 능력 = 가동 분(계획상 가동일), 내수·수출 분 = 그 순 품목의 실제 t/분으로 환산(라인 평균이 아님)
+    const sumL = (s, Ls, k) => Ls.reduce((a, l) => a + ((cc(l, s) || {})[k] || 0), 0);
+    const capM = S.map((s) => sumL(s, MAIN, 'availMin')), cap2M = S.map((s) => sumL(s, ['2CCL'], 'availMin'));
+    const D0 = S.map((s) => sumL(s, CCL, 'dom')), X0 = S.map((s) => sumL(s, CCL, 'exp'));
+    const dR = S.map((s) => { const m = sumL(s, MAIN, 'domMin'); return m > 1 ? sumL(s, MAIN, 'dom') / m : 0.2; }), xR = S.map((s) => { const m = sumL(s, MAIN, 'expMin'); return m > 1 ? sumL(s, MAIN, 'exp') / m : 0.2; });   // 1·3·4CCL 에서 실제로 나오는 t/분
     const u2now = S.reduce((a, s) => a + used(cc('2CCL', s)), 0);
     const roomNow = S.map((s) => MAIN.reduce((a, l) => a + room(cc(l, s)), 0));
-    const TDsum = Math.max(0, D0.reduce((a, v) => a + v, 0) + d), C1 = cap1.reduce((a, v) => a + v, 0) || 1;
-    const D1 = cap1.map((c) => TDsum * c / C1);
-    // 넘치는 순의 수출·가전은 같은 달 다른 순 빈 룸으로 옮김(가까운 순부터 — 수출은 선적 기한 안에서 움직일 수 있음) → 그래도 넘치면 2CCL(사장님 결정) → 그 뒤 능력 초과
-    const rm = S.map((s, i) => Math.max(0, cap1[i] - D1[i] - X0[i])), ov = S.map((s, i) => Math.max(0, D1[i] + X0[i] - cap1[i])), mv = S.map(() => 0);
-    S.forEach((s, i) => { [...S.keys()].filter((j) => j !== i).sort((a, b) => Math.abs(a - i) - Math.abs(b - i)).forEach((j) => { const t = Math.min(ov[i], rm[j]); ov[i] -= t; rm[j] -= t; mv[i] -= t; mv[j] += t; }); });
-    const c2 = cap2.slice(), u2a = S.map(() => 0);   // 그래도 넘치면 같은 달 2CCL 가동 가능한 순(가까운 순부터)으로 — 사장님 결정
-    S.forEach((s, i) => { [...S.keys()].sort((a, b) => Math.abs(a - i) - Math.abs(b - i)).forEach((j) => { const t = Math.min(ov[i], c2[j]); ov[i] -= t; c2[j] -= t; u2a[j] += t; }); });
-    const R = S.map((s, i) => { const u2 = u2a[i]; return { s, d0: D0[i], d1: D1[i], x: X0[i] + mv[i], cap: cap1[i], room: rm[i], u2, beyond: ov[i], roomNow: roomNow[i], mv: mv[i] }; });
+    const calc = (dd) => {
+    const TDsum = Math.max(0, D0.reduce((a, v) => a + v, 0) + dd), C1 = capM.reduce((a, v) => a + v, 0) || 1;
+    const D1 = capM.map((c) => TDsum * c / C1), needM = S.map((s, i) => D1[i] / dR[i] + X0[i] / xR[i]);
+    const cap1 = S.map((s, i) => capM[i] * xR[i]);   // 표시용 t(수출 속도 환산)
+    // 넘치는 순의 수출은 같은 달 다른 순 빈 시간으로(가까운 순부터) → 그래도 넘치면 2CCL(사장님 결정) → 그 뒤 능력 초과
+    const rmM = S.map((s, i) => Math.max(0, capM[i] - needM[i])), ovM = S.map((s, i) => Math.max(0, needM[i] - capM[i])), mvM = S.map(() => 0);
+    S.forEach((s, i) => { [...S.keys()].filter((j) => j !== i).sort((a, b) => Math.abs(a - i) - Math.abs(b - i)).forEach((j) => { const t = Math.min(ovM[i], rmM[j]); ovM[i] -= t; rmM[j] -= t; mvM[i] -= t; mvM[j] += t; }); });
+    // 2CCL 능력 = 2CCL 가동 분 × 2CCL 자체 속도(t) — 넘친 톤을 2CCL 로(가까운 순부터)
+    const r2 = S.map((s) => { const c = cc('2CCL', s) || {}, m = (c.domMin || 0) + (c.expMin || 0); return m > 1 ? used(c) / m : ((X.tph || {})['2CCL'] || 14) / 60; });
+    const ovT = ovM.map((v, i) => v * xR[i]), c2 = cap2M.map((v, i) => v * r2[i]), u2T = S.map(() => 0);
+    S.forEach((s, i) => { [...S.keys()].sort((a, b) => Math.abs(a - i) - Math.abs(b - i)).forEach((j) => { const t = Math.min(ovT[i], c2[j]); ovT[i] -= t; c2[j] -= t; u2T[j] += t; }); });
+    const R = S.map((s, i) => ({ s, d0: D0[i], d1: D1[i], x: X0[i] + mvM[i] * xR[i], cap: cap1[i], room: rmM[i] * xR[i], u2: u2T[i], beyond: ovT[i], roomNow: roomNow[i], mv: mvM[i] * xR[i] }));
+      return R;
+    };
+    const R = calc(d), B0 = calc(0);   // 변동 0 결과(= 지금 계획의 2CCL·넘침)를 기준으로 맞춤 — 모델 오차가 결과에 섞이지 않게
+    R.forEach((r, i) => { r.beyond = Math.max(0, r.beyond - B0[i].beyond); });
+    const mv = R.map((r) => r.mv);
     const moved = mv.filter((v) => v > 0).reduce((a, v) => a + v, 0);
     const sum = (k) => R.reduce((a, r) => a + r[k], 0);
     const P = PR().filter((r) => r.due >= nextMon(m) + '-01'), pT = P.reduce((a, r) => a + r.t, 0), pOk = P.filter((r) => ST(r.st)[0] === 'ok').reduce((a, r) => a + r.t, 0);
@@ -252,10 +270,10 @@
       <div>③ ${u2 >= 0.5 ? `<b>2CCL ${n0(u2)}t 가동 필요 → 사장님 결정</b>` : '2CCL 세움(나머지 CCL 로 소화)'}${bey >= 0.5 ? ` · <b>능력 초과 ${n0(bey)}t → 다음 달로</b>` : ''}. 지금 계획의 2CCL 가동 ${n0(u2now)}t.</div>
       <div>④ 도금 영향: 자가재 소요 ${sg(d * coef)}t(내수 1t 당 ${coef.toFixed(2)}t) — 자가재 몫을 고정하면 도금 판매재 룸은 그대로, 차이는 자가재 재고로 흡수. 지금 계획 자가재 최저 ${Object.entries(low).map(([a, v]) => `${a} ${sg(v)}t`).join(' · ')}.</div>
       <div>⑤ 상순 내수 비중: 지금 계획 ${share0.toFixed(0)}% → 순 고정 ${share1.toFixed(0)}%.</div></div>`;
-    const tb = `<div class="op-w"><table class="op-t"><thead><tr><th class="l">순</th><th>지금 내수</th><th>순 고정 내수</th><th>수출·가전(옮긴 뒤)</th><th>1·3·4CCL 능력</th><th>빈 룸(당길 오더)</th><th>2CCL 필요</th><th>지금 빈 룸</th></tr></thead><tbody>`
+    const tb = `<div class="op-w"><table class="op-t"><thead><tr><th class="l">순</th><th>지금 내수</th><th>순 고정 내수</th><th>수출·가전(옮긴 뒤)</th><th>1·3·4CCL 능력(t)</th><th>빈 룸(당길 오더)</th><th>2CCL 필요</th><th>지금 빈 룸</th></tr></thead><tbody>`
       + R.map((r) => `<tr><td class="l">${sunLab(r.s)}</td><td>${n0(r.d0)}</td><td><b>${n0(r.d1)}</b></td><td>${n0(r.x)}</td><td>${n0(r.cap)}</td><td>${r.room >= 0.5 ? n0(r.room) : '–'}</td><td class="${r.u2 >= 0.5 ? 'bad' : 'z'}">${r.u2 >= 0.5 ? n0(r.u2) : '–'}</td><td class="z">${n0(r.roomNow)}</td></tr>`).join('')
       + `<tr class="tot"><td class="l">합계</td><td>${n0(sum('d0'))}</td><td>${n0(sum('d1'))}</td><td>${n0(sum('x'))}</td><td>${n0(sum('cap'))}</td><td>${n0(roomT)}</td><td>${u2 >= 0.5 ? n0(u2) : '–'}</td><td>${n0(sum('roomNow'))}</td></tr></tbody></table></div>`;
-    $('tc-r').innerHTML = ans + tb + `<p class="note">시험 계산 — 게시 계획은 바꾸지 않음. 능력 = 지금 배정 + 남는 가동 시간 × 라인 평균 속도, 2CCL 은 계획상 가동일만(${Object.entries(X.tph).map(([l, v]) => `${l} ${v}t/h`).join(' · ')}). 라인 전용 품목·도료 전환은 반영 안 함(실제 편성은 엔진).</p>`;
+    $('tc-r').innerHTML = ans + tb + `<p class="note">능력 = 계획상 가동 분(2CCL 은 가동일만) · 속도 = 그 순에 배정된 품목의 실제 t/분(내수 ${R.map((r, i) => (dR[i] * 60).toFixed(1)).join('·')} · 수출 ${R.map((r, i) => (xR[i] * 60).toFixed(1)).join('·')} t/h, 순별) · 2CCL 전용·작업지시 확정분은 2CCL 에 남김. 칸을 확정하면 다음 계산에 반영.</p>`;
   }
 
   /* ---------- 판매그룹별 ---------- */

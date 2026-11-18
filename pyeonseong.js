@@ -256,7 +256,7 @@
     const S = SEL[p], selD = S && S.all ? S.d : null;
     const dh = (d) => (kind(d) === 'pad' ? `<th class="pad" aria-hidden="true"></th>`
       : `<th class="${kind(d) === 'pst' ? 'pst dk' : tdc(d, 'dk')}${d === selD ? ' on' : ''}${(() => { const w = new Date(d + 'T00:00:00Z').getUTCDay(); return w === 0 || HOL.has(d) ? ' we sun' : w === 6 ? ' we sat' : ''; })()}" data-d="${d}" tabindex="0" role="button" aria-expanded="${d === selD}">${mdw(d)}${kind(d) === 'pst' ? '<small>실적</small>' : d === today ? '<small>오늘</small>' : ''}</th>`);
-    const planT = (ln, d) => (p === 'cg' ? (() => { const c = R.cell(ln, d); return (c.cap || 0) < 1 ? 0 : c.conf + c.plan + c.fcst; })() : FL[ln][d].t);
+    const planT = (ln, d) => (p === 'cg' ? (() => { const c = R.cell(ln, d); return (c.cap || 0) < 1 ? 0 : PLT ? PLT[`${ln}|${d}`] || 0 : c.conf + c.plan + c.fcst; })() : FL[ln][d].t);   // 11/19 검수 틀림 2: 합계 = 칸과 같은 01 계획 톤(PLT)
     const pastT = (ln, d) => { const a = R.act(ln, d); return a ? a.t || 0 : null; };
     const dayT = (ln, d) => (kind(d) === 'pst' ? pastT(ln, d) || 0 : kind(d) === 'pl' ? planT(ln, d) : 0);
     const wT = (ln, W) => W.reduce((s, d) => s + dayT(ln, d), 0);
