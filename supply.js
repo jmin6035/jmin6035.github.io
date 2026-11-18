@@ -578,16 +578,22 @@
     const end = before + (m.use[d] || 0), R = (MP.P.known || []).filter((a) => `${a.plant}:${a.code}` === k && a.date >= today).sort((x, y) => (x.date < y.date ? -1 : 1));
     let cum = m.stock0;
     const L = [], stock = before < cum - 0.5;
+    const S = [];   // 지금 재고 중 그날 쓰는 입고분(발주일·입고일) — procure stockLots(먼저 들어온 것 먼저)
+    if (stock) { let c0 = 0; for (const z of ((MP.P.stockLots || {})[k] || [])) { const a0 = c0; c0 += z.t; if (a0 >= end - 0.5) break; if (c0 > before + 0.5) S.push(z); } }
     for (const r of R) { const a0 = cum; cum += r.t; if (a0 >= end - 0.5) break; if (cum > before + 0.5) L.push(r); }
-    return { stock, L, short: cum < end - 0.5 };
+    return { stock, S, L, short: cum < end - 0.5 };
   }
   const rng = (A) => { const u = [...new Set(A.filter(Boolean))]; return u.length ? (u.length > 1 ? `${u[0]}~${u[u.length - 1]}` : u[0]) : null; };
   function lotSteps(k, d, lb) {   // [칩…] — 지난 날 생산 = 입고 완료
     if (d < today) return [['소재 입고', '완료', null, 'due']];
     const x = lotOf(k, d); if (!x) return null;
     const out = [];
-    if (x.stock && !x.L.length && !x.short) return [['소재 입고', '완료', null, 'due']];
-    if (x.stock) out.push(['소재 입고', '일부 완료', null, 'due']);
+    const md0 = (v) => (v ? md(v) : null);
+    if (x.stock) {
+      if (x.S && x.S.length) { const sd = (f) => rng(x.S.map((z) => z[f]).filter(Boolean).sort().map(md0)), o = sd('ord'); if (o) out.push(['소재 발주', o, null, 'due']); out.push(['소재 입고 완료', sd('in'), null, 'due']); }
+      else out.push(['소재 입고', '완료', null, 'due']);
+      if (!x.L.length && !x.short) return out;
+    }
     if (x.L.length) { const o = rng(x.L.map(ordDay)); if (o) out.push(['소재 발주', o, null, 'due']); out.push(['소재 입고 예정', rng(x.L.map((r) => md(r.date))), x.L[0].date, 'due']); }
     return x.short ? out.concat([['미발주', '입고 필요', null, 'late']]) : out;
   }
