@@ -14,7 +14,7 @@
   const r100 = (x, f = Math.round) => n0(f(x / 100) * 100);   // 범위는 바깥으로(하한 내림 · 상한 올림 — 11/17 검토: 하한 43,300 이 01 현재 계획 43,254 보다 크던 것)
 
   const sg = (x) => (x > 0 ? '+' : x < 0 ? '−' : '±') + n0(Math.abs(x));
-  let PV = '어제';
+  let PV = '전일';
   const d1 = (v) => (v && v.d1 != null && v.d1 !== 0 ? `<span class="d1">${PV} ${sg(v.d1)}</span>` : '');
   // 그룹별(판매 = 판매 그룹 · 생산 = 라인 · 출하 = 출하 그룹) — 늘 펼쳐 보임(11/17 사용자 '이 화면에 적용')
   function sub(p, L, td) {
@@ -46,18 +46,18 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
   function matStock(p, v, sm) {
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
     const L = v.by.filter((z) => z[3] > 0.5), cap = sm && sm.cap, bg = sm ? sm.beg : v.beg, en = sm ? sm.end : v.endT, su = sm && sm.sus;
-    return `<div class="hy-row"><div class="hy-num sk">${su ? '<span class="hlb">F/H</span>' : ''}<span class="kv"><span class="hlb">월초</span><b>${n0(bg)}<small>톤</small></b></span><span class="ar">→</span><span class="kv"><span class="hlb">월말</span><b class="${(cap && en > cap) || (en < 0.5 && bg > 0.5) ? 'bad' : ''}">${n0(en)}<small>톤</small>${en < 0.5 && bg > 0.5 ? ' (재고 없음)' : cap ? `<small> · 상한의</small> ${pct(en, cap)}%` : ''}</b></span></div>
-<div class="hy-mn">${(v.shortBy || []).filter((z) => z[6] && (p !== 'G' || z[0] !== 'SUS')).map((z) => `<b class="bad">${esc(SN(z[0]))} <b class="dt">${mdd(z[6])}</b>부터 부족</b> · `).join('')}${su ? 'SUS(지급재) 제외 · ' : ''}월말 = 추가 발주 없을 때${cap ? ` · 상한 ${n0(cap)}톤` : ''}</div>
+    return `<div class="hy-row"><div class="hy-num sk"><span class="kv"><span class="hlb">월초</span><b>${n0(bg)}<small>톤</small></b></span><span class="ar">→</span><span class="kv"><span class="hlb">월말</span><b class="${(cap && en > cap) || (en < 0.5 && bg > 0.5) ? 'bad' : ''}">${n0(en)}<small>톤</small>${en < 0.5 && bg > 0.5 ? ' (재고 없음)' : cap ? `<small> · 상한의</small> ${pct(en, cap)}%` : ''}</b></span></div>
+<div class="hy-mn">${(v.shortBy || []).filter((z) => z[6] && (p !== 'G' || z[0] !== 'SUS')).map((z) => `<b class="bad">${esc(SN(z[0]))} <b class="dt">${mdd(z[6])}</b>부터 부족</b> · `).join('')}월말 = 추가 발주 없을 때${cap ? ` · 상한 ${n0(cap)}톤` : ''}</div>
 <div class="hy-sub">${L.filter(([n, , , u]) => u >= 0.5 && !(p === 'G' && n === 'SUS')).map(([n, b, , u]) => `<div class="sr"><span class="sn">${esc(SN(n))}</span><div class="hy-trk sm ${p}"><i class="fl" style="width:${W(Math.min(100, b / u * 100))}"></i></div><span class="sv">월초 재고로 ${b >= u ? '<b>충분</b>' : `<b>${pct(b, u)}%</b>`}</span></div>`).join('')}</div></div>`;   // 11/17 검토: 100% 넘으면 '충분'(1151% 같은 값 안 보임)
   }
   function matPo(p, v) {
     if (!v || !v.by) return '<div class="hy-na">자료 없음</div>';
     const SB = Object.fromEntries((v.shortBy || []).map((z) => [z[0], z]));
-    const L = v.by.filter((z) => z[3] > 0.5 || z[2] > 0.5 || (v.shortBy || []).some((y) => y[0] === z[0] || y[0].startsWith(z[0] + '(')));   // 부족 판정이 있는 소재는 사용·입고 없어도 보임
+    const L = v.by.filter((z) => !(p === 'G' && z[0] === 'SUS')).filter((z) => z[3] > 0.5 || z[2] > 0.5 || (v.shortBy || []).some((y) => y[0] === z[0] || y[0].startsWith(z[0] + '(')));   // 부족 판정이 있는 소재는 사용·입고 없어도 보임
     const one_ = (z, lb) => [z[1] > 0.5 ? `<b class="bad">${lb}발주 지연 ${n0(z[1])}톤</b>` : '', z[2] > 0.5 ? `<b class="warn">${lb}추가 발주 ${n0(z[2])}톤 · 마감 <b class="dt">${z[3] === z[4] ? mdd(z[3]) : `${mdd(z[3])}~${mdd(z[4])}`}</b></b>` : ''].filter(Boolean).join(' · ');
     const stat = (n) => { if (p === 'G' && n === 'SUS') return '<span class="ok">지급재</span>'; const zs = (v.shortBy || []).filter((z) => z[0] === n || z[0].startsWith(n + '(')); if (!zs.length) return '<span class="ok">확보</span>'; return zs.map((z) => one_(z, z[0] === n ? '' : `${esc(z[0].slice(n.length).replace(/[()]/g, ''))} `)).join('<br>'); };   // 11/17 검토: F/H 는 코드별(AL용·GI/GL용) 판정
     const sl = v.staleBy ? v.staleBy.map(([n_, t_]) => [n_, 0, 0, 0, 0, t_]) : (v.shortBy || []).filter((z) => z[5] > 0.5);
-    return `<div class="hy-row"><div class="hy-num"><b>${n0(v.arr)}</b><small>톤</small><span class="d1">입고 예정</span></div>
+    return `<div class="hy-row"><div class="hy-num"><b>${n0(v.arr - (p === 'G' ? ((v.by.find((z) => z[0] === 'SUS') || [])[2] || 0) : 0))}</b><small>톤</small><span class="d1">입고 예정</span></div>
 <div class="hy-po">${L.map(([n, , a]) => `<div class="pr"><span class="sn">${esc(SN(n))}</span><span class="pa">입고 ${n0(a)}</span><span class="ps">${stat(n)}</span></div>`).join('')}</div>
 ${v.stale > 0.5 ? `<div class="hy-mn"${sl.length ? ` title="${sl.map((z) => `${esc(z[0])} ${n0(z[5])}톤`).join(' · ')}"` : ''}>입고 확인 필요 ${n0(v.stale)}톤(예정일 30일 경과)</div>` : ''}</div>`;
   }
@@ -102,7 +102,7 @@ ${lines.filter(Boolean).map((l) => `<div class="hy-ms">${l}</div>`).join('')}${s
     const sc = window.UI && UI.scope ? UI.scope() : 'all', PS = sc === 'G' ? ['G'] : sc === 'C' ? ['C'] : ['G', 'C'];
     const MS = H.months || [], td = H.day / H.nDays, mo = +H.asOf.slice(5, 7), dd = `${mo}/${+H.asOf.slice(8)}`;
     if (MI > MS.length) MI = 0;
-    { const y = new Date(H.asOf); y.setDate(y.getDate() - 1); const ys = y.toISOString().slice(0, 10); PV = !H.prevAsOf || H.prevAsOf === ys ? '어제' : `${+H.prevAsOf.slice(5, 7)}/${+H.prevAsOf.slice(8)} 대비`; }
+    { const y = new Date(H.asOf); y.setDate(y.getDate() - 1); const ys = y.toISOString().slice(0, 10); PV = !H.prevAsOf || H.prevAsOf === ys ? '전일' : `${+H.prevAsOf.slice(5, 7)}/${+H.prevAsOf.slice(8)} 대비`; }
     const tabs = [`${mo}월`, ...MS.map((x) => `${+x.ym.slice(5)}월`)];
     const M = MI ? MS[MI - 1] : null, mm = M ? +M.ym.slice(5) : mo;
     const R = M ? [

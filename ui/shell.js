@@ -4,7 +4,9 @@
   'use strict';
   /* 11/12 사용자 '전부 진행해서 가상의 사이트를 만들어 봐 — 내가 먼저 보게': 새 양식 미리보기. 주소에 ?ui=v2 → 이 브라우저에서 계속 새 양식(ui/v2.css), ?ui=old → 원래대로. 기본은 원래 양식 */
   // 11/12 사용자 '본 사이트에 적용' — 새 양식이 기본. ?ui=old = 이전 양식(기억), ?ui=v2 = 새 양식으로 되돌림
-  const V2 = (() => { const q = new URLSearchParams(location.search).get('ui'); try { if (q === 'old') localStorage.setItem('ui-old', '1'); if (q === 'v2') localStorage.removeItem('ui-old'); return localStorage.getItem('ui-old') !== '1'; } catch (e) { return q !== 'old'; } })();
+  /* 11/18 사용자 '추천해준 안으로 예시 사이트 만들어봐': preview/ 예시(통합안)에서만 메뉴를 바꿈(preview/pv.js 가 PV_MENU 를 줌). 본 화면은 PV 없음 = 그대로 */
+  const PV = window.PV_MENU || null;
+  const V2 = PV ? true : (() => { const q = new URLSearchParams(location.search).get('ui'); try { if (q === 'old') localStorage.setItem('ui-old', '1'); if (q === 'v2') localStorage.removeItem('ui-old'); return localStorage.getItem('ui-old') !== '1'; } catch (e) { return q !== 'old'; } })();
   if (V2) { document.documentElement.classList.add('v2'); const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'ui/v2.css?v=' + Date.now().toString(36).slice(0, -4); document.head.appendChild(l); }
   /* 암호 매번 입력(11/2 사용자 '매번 암호 치고 들어가게'): 브라우저에 암호를 남기지 않음 — 화면을 열 때마다 암호 칸이 뜸.
      shell.js 가 화면 스크립트보다 먼저 실행되므로 여기서 암호 키(…-pw) 저장·읽기를 막고, 예전에 저장된 암호도 지움. 되돌리기 = NO_PW_SAVE = false */
@@ -22,7 +24,7 @@
      메뉴에서 뺀 화면은 지우지 않고 '관리'에 둠 — 모든 화면이 메뉴로 닿음. 화면 제목(h1) = 메뉴 이름 */
   /* 11/10 사용자 '관리 탭에 왜 전부 몰아놨냐 — 각 탭 성격에 맞게': 관리에 모았던 화면을 성격에 맞는 묶음으로 되돌림.
      표시 'd' = 세부 화면 — 화면 위 탭에는 늘 보이고, 왼쪽 메뉴에는 그 묶음에 들어가 있을 때만 펼침(메뉴가 길어지지 않게) */
-  const MENU = [
+  const MENU = PV ? [] : [
     ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '주문 확보율'], ['suju', 'suju.html#prod', '생산'], ['suju', 'suju.html#mat', '소재'], ['suju', 'suju.html#stock', '재고'], ['suju', 'suju.html#close', '월 실적 마감']]],
     ['ct1', '통합 관제', 'home', [['home', 'index.html', '통합 관제', 't'],
       ['board', 'board.html', '판매그룹 관제판', 'd'], ['issues', 'ct_issue.html#now', '이슈 현황', 'd'], ['issues', 'ct_issue.html#req', '조정 요청', 'd']]],
@@ -36,13 +38,13 @@
       ['status', 'status.html', '도금 가동 현황', 'd'], ['colorstat', 'color_status.html', '컬러 가동 현황', 'd'], ['prodsum', 'ct_prod.html#perf', '생산 실적', 'd'], ['prodsum', 'ct_prod.html#run', '가동·휴지', 'd'], ['perf', 'ct_perf.html#cause', '미달 원인', 'd']]],
     ['ct6', '계획 기준', 'rules', [['rules', 'rules.html', '계획 규칙'], ['plancalc', 'plan_calc.html', '계획 계산'], ['analysis', 'analysis.html', '조건 분석'], ['rolling', 'rolling.html', '도금 다시 계산', 'd'], ['colorcalc', 'color_calc.html', '컬러 다시 계산', 'd']]],
   ];
-  const ADMIN = [['health', 'health.html', '자료 상태'], ['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['docs', 'docs.html', '문서']];
+  const ADMIN = PV ? PV.admin : [['health', 'health.html', '자료 상태'], ['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['docs', 'docs.html', '문서']];
   const ADMN = '관리';
   /* 11/12 회의: 메뉴 순서 = 보고 순서 ① 계획 → ② 관제 → ③ 편성(docs/16 ★2). 새 양식 미리보기(V2)에서만 맨 위, 기존 메뉴는 '기타'(접힘) 아래 — 기본 화면 메뉴는 그대로 */
-  const MV2 = V2 ? [['v1', '계획', 'supply', [['gyehoek', 'gyehoek.html', '일별 가동계획'], ['gyehoek', 'gyehoek.html#mat', '소재']]]   /* 11/17 사용자: 계획 규칙은 메뉴에서 빼고 일별 가동계획 맨 아래 '일일 가동 계획 규칙' 단추로 */,
+  const MV2 = PV ? PV.menu : V2 ? [['v1', '계획', 'supply', [['gyehoek', 'gyehoek.html', '일별 가동계획'], ['gyehoek', 'gyehoek.html#mat', '소재']]]   /* 11/17 사용자: 계획 규칙은 메뉴에서 빼고 일별 가동계획 맨 아래 '일일 가동 계획 규칙' 단추로 */,
     ['v2', '현황', 'home', [['hy', 'hy.html', '현황']]],
     ['v3', '생산 편성', 'weekseq', [['wk', 'wk.html', '주간 관제'], ['pyeonseong', 'pyeonseong.html', '주간 편성'], ['weekseq', 'week_seq.html', '작업 순서'], ['seqview', 'seq_view.html', '작업 순서 조회']]]] : [];   // 11/17 사용자 '01 계획 · 02 현황 · 03 생산 편성, 작업은 편성 하위로 · 수주 화면은 현황(hy)으로 대체'
-  const ETC = '기타', MENUS = [...MV2, ...MENU];
+  const ETC = PV ? '관리' : '기타', MENUS = [...MV2, ...MENU];
   const ALL = [...MENUS.flatMap((m) => m[3]), ...ADMIN];
   const DEFV = { home: 'day', suju: 'dash', orders: 'status', prodsum: 'perf', perf: 'ops', issues: 'now' };   // 주소에 #이 없을 때 화면이 여는 하위 화면
   const NAV = [...ALL.filter((t, k, A) => A.findIndex((u) => u[1].split('#')[0] === t[1].split('#')[0]) === k).map((t) => [t[0], t[1].split('#')[0], t[2]])];
@@ -50,7 +52,7 @@
      되돌리려면 SHOW = null. 목록에 없는 화면을 직접 열면 가동 캘린더로 보내고, 남긴 화면 안의 다른 화면 링크는 글자만 남김 */
   const SHOW = null;   // 11/2 회의 뒤 사용자 '다시 전부 다 보여줘' — 3화면만 남기려면 ['supply', 'matcal', 'integrated']
   const SHOWF = SHOW && NAV.filter((x) => typeof x !== 'string' && SHOW.includes(x[0])).map((x) => x[1]);
-  const HOME = SHOWF ? SHOWF[0] : 'hy.html';   // 11/17 사용자: 로고·홈 = 02 현황
+  const HOME = PV ? PV.home : SHOWF ? SHOWF[0] : 'hy.html';   // 11/17 사용자: 로고·홈 = 02 현황
   if (SHOWF) {
     const file = (location.pathname.split('/').pop() || 'index.html');
     if (!SHOWF.includes(file)) { document.documentElement.style.visibility = 'hidden'; location.replace(HOME); return; }
@@ -168,7 +170,7 @@
     const eOpen = (curM && MENU.includes(curM)) || inAdm;   // 11/17 사용자: 04 기타는 접어 둠(지금 화면이 그 안일 때만 펼침)   // V2 '기타': 지금 화면이 그 안이거나 펼쳐 둔 경우만 열림
     const nav = V2 ? MV2.map((m, i) => mlink(m, i) + subs(m)).join('')
       + `<div class="nv-sec${eOpen ? ' open' : ''}" data-g="${ETC}"><button type="button" class="nv-grp nv-tg" aria-expanded="${eOpen}"><small class="nv-no">${String(MV2.length + 1).padStart(2, '0')}</small>${ETC}<svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">`
-      + MENU.map((m) => (mOK(m) ? mlink(m, null) + subs(m) : '')).join('') + (adm.length ? `<div class="nv-grp">${ADMN}</div>${adm.map(link).join('')}` : '') + '</div></div>'
+      + MENU.map((m) => (mOK(m) ? mlink(m, null) + subs(m) : '')).join('') + (adm.length ? `${PV ? '' : `<div class="nv-grp">${ADMN}</div>`}${adm.map(link).join('')}` : '') + '</div></div>'
       : MENU.map((m, i) => (mOK(m) ? mlink(m, i) + subs(m) : '')).join('')
       + (adm.length ? `<div class="nv-sec${aOpen ? ' open' : ''}" data-g="${ADMN}"><button type="button" class="nv-grp nv-tg" aria-expanded="${aOpen}"><small class="nv-no">${String(MENU.length + 1).padStart(2, '0')}</small>${ADMN}<span class="nv-n">${adm.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${adm.map(link).join('')}</div></div>` : '');
     // 화면 위 탭: 메뉴 묶음의 칸들. 관리 화면은 같은 파일의 하위 화면이 여럿일 때만(예: 생산 실적 · 가동·휴지 · 제품 재고 · 출하)

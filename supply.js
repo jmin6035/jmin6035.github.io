@@ -941,7 +941,7 @@
       const shp = (pl) => { const gs = groups.filter((g) => g[0] === pl); if (!SD || !(SD.asOf >= yd)) return ''; return `<span class="cc-i"><i>${pl === 'G' ? '도금' : '컬러'} 출하</i><b>${n0(gs.reduce((a, g) => a + ((SDg[g] || {})[yd] || 0), 0))}</b>t</span>`; };
       const body = ['G', 'C'].filter((pl) => UI.inScope(pl)).map((pl) => part(pl, pl === 'G' ? D.pl : D.co, pl === 'G' ? ['1CGL', '2CGL'] : ['1CCL', '2CCL', '3CCL', '4CCL'])).join('')
         + ['G', 'C'].filter((pl) => UI.inScope(pl)).map(shp).join('');
-      if (body) yLine = `<div class="cc-r"><span class="cc-h">어제 실적<small>${md(yd)}(${WD[wd(yd)]})</small></span>${body}</div>`;
+      if (body) yLine = `<div class="cc-r"><span class="cc-h">전일 실적<small>${md(yd)}(${WD[wd(yd)]})</small></span>${body}</div>`;
     }
     D.shipSum = { m, kind, pace, aTo, end, v: Object.fromEntries(['G', 'C'].flatMap((pl) => keys(pl, 'ship')).map((g) => [g, val(g, 'ship')])),
       due: Object.fromEntries(['G', 'C'].flatMap((pl) => keys(pl, 'ship')).map((g) => [g, kind === 'fut' ? null : due(g)])) };

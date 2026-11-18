@@ -143,7 +143,7 @@
       RKT ? { label: '납기 위험', v: n0(RKT.will + RKT.past), unit: 't', sub: `미결 ${n0(RKT.t)}t 중 ${RKT.t ? Math.round((RKT.will + RKT.past) / RKT.t * 100) : 0}% · 납기 지남 ${n0(RKT.past)} · 지연 예상 ${n0(RKT.will)}`, tone: RKT.will + RKT.past >= 0.5 ? 'bad' : 'ok', href: 'risk.html' }
         : { label: '납기 지연 예상', v: n0(risk.length), unit: '건', sub: `${n0(T(risk))}t · 점검 ${warn.length}건 · 이미 지난 ${n0(overdue.length)}건 별도`, tone: risk.length ? 'bad' : 'ok', href: 'risk.html' },
       { label: '소재 부족', v: n0(lateSum), unit: 't', sub: lateM.length ? `발주 지연 ${lateM.length}종(${lateM.slice().sort((x, y) => (y.lateT || 0) - (x.lateT || 0)).slice(0, 3).map((m) => esc(m.name)).join('·')})` : '발주 지연 없음', tone: lateSum >= 0.5 ? 'bad' : mats.length ? 'warn' : 'ok', href: 'matcal.html#mt-orders' },   // 11/10 점검(F13): 소재 부족 = 마감 지난 부족(lateT)만 — 월간 55,518t(3달 합)·금일 0t(기간 안 시작만)이던 것 → 모든 소재 화면 공통값
-      { label: view === 'day' ? '어제 생산 진도' : '생산 진도율', v: pr == null ? '-' : pr, unit: pr == null ? '' : '%', sub: prSub + (lag.length ? ` · 월차 대비 미달 ${lag.map((x) => `${x.line} −${n0(x.gap)}t`).join(' · ')}` : ''), tone: prTone, href: 'ct_prod.html#perf' },   // 11/11: '생산 미달' 카드를 여기 합침(같은 실적·계획)
+      { label: view === 'day' ? '전일 생산 진도' : '생산 진도율', v: pr == null ? '-' : pr, unit: pr == null ? '' : '%', sub: prSub + (lag.length ? ` · 월차 대비 미달 ${lag.map((x) => `${x.line} −${n0(x.gap)}t`).join(' · ')}` : ''), tone: prTone, href: 'ct_prod.html#perf' },   // 11/11: '생산 미달' 카드를 여기 합침(같은 실적·계획)
       { label: '출하 미달', v: n0(shipGap), unit: 't', sub: shipSub, tone: shipGap > 500 ? 'bad' : shipGap > 0.5 ? 'warn' : 'ok', href: 'ct_prod.html#ship' },
       { label: '자료 확인 필요', v: n0(nd.length), unit: '건', sub: `출하 실적 없음 ${noShip.length}건 별도`, tone: nd.length ? 'warn' : 'ok', href: 'ct_orders.html#risk' },
     ];
@@ -413,7 +413,7 @@
       const C = [
         [K[0], [['지연 예상 + 납기 지남', K[0]]], RKT ? `미결 ${n0(RKT.t)}t 중 ${RKT.t ? Math.round((RKT.will + RKT.past) / RKT.t * 100) : 0}%` : `${n0(T(risk))}t`],
         [K[1], [['발주 지연', K[1]]], top3.length ? `${top3.length}종 · ${top3[0].name}${top3.length > 1 ? ' 외' : ''}` : '없음'],
-        [K[2], [['어제', Dd.K[2]], ['이번 주', Dw.K[2]], [`${+asOf.slice(5, 7)}월`, K[2]]], PMv ? `월 계획 ${n0(plan)}t 중 ${n0(act)}t · 월차 대비 ${pr0 == null ? '–' : pr0 + '%'}` : `월간 ${n0(act)} / ${n0(plan)}t`],
+        [K[2], [['전일', Dd.K[2]], ['이번 주', Dw.K[2]], [`${+asOf.slice(5, 7)}월`, K[2]]], PMv ? `월 계획 ${n0(plan)}t 중 ${n0(act)}t · 월차 대비 ${pr0 == null ? '–' : pr0 + '%'}` : `월간 ${n0(act)} / ${n0(plan)}t`],
         [K[3], [[`그룹별 미달 합${shDue ? ` ${md(shDue)}까지` : ''}`, K[3]]], `미달 그룹만 더함 · 초과 ${n0(Math.max(0, shA - shP + shipGap))}t 별도`],   // 11/13 검토: 두 숫자 차(5,083)와 카드(6,109)가 다른 이유 = 그룹별 미달만 더함
         [K[4], [['판정 불가 주문', K[4]]], `출하 실적 없음 ${noShip.length}건 별도`],
       ];
@@ -421,7 +421,7 @@
     };
     const kHtml = V2 ? kpiV2() : null;
     [2].forEach((i) => {   // 납기 위험·소재 부족·출하·자료 확인은 기간과 무관(같은 값) → 한 값만
-      const ks = [['어제', Dd.K[i]], ['이번 주', Dw.K[i]], [`${+asOf.slice(5, 7)}월`, K[i]]];
+      const ks = [['전일', Dd.K[i]], ['이번 주', Dw.K[i]], [`${+asOf.slice(5, 7)}월`, K[i]]];
       if (!K[i] || ks.some(([, k]) => !k)) return;
       K[i] = Object.assign({}, K[i], { label: i === 2 ? '생산 진도' : K[i].label, unit: '', v: `<span class="kp3">${ks.map(([t, k]) => `<span class="${k.tone || ''}"><i>${t}</i><em><b>${k.v}</b><u>${esc(k.v === '-' ? '' : k.unit || '')}</u></em></span>`).join('')}</span>` }); });
     const main = document.getElementById('ct-main');
@@ -431,7 +431,7 @@
     const defs = `<ul class="ct-ul">`
       + `<li><b>납기 위험</b> = 지연 예상 + 납기 지남(미결 주문, 납기 60일 넘게 지난 미종결 제외) — 납기 위험 화면과 같은 판정${RK ? `(${md(RK.asOf)})` : ''}. ${V2 ? '위험 숫자 색' : '그룹 색'}: 위험 ÷ 미결 30% 이상 빨강 · 15% 이상 주황</li>`
       + `<li><b>주요 원인</b> = ${V2 ? '위험 톤이 가장 큰 원인(나머지는 줄을 눌러 펼침), 언제 풀리나 = 그 원인 중 가장 큰 몫의 다음 생산일·입고 예정일' : '위험 톤이 큰 원인 2개, 옆 = 언제 풀리나(다음 생산일·입고 예정일)'}${RK ? `<ul>${Object.entries(RK.causeNm || {}).map(([k, v]) => `<li><b>${esc(v)}</b>${(RK.causeDef || {})[k] ? ` = ${esc(RK.causeDef[k])}` : ''} → ${esc((RK.dept || {})[k] || '')}</li>`).join('')}</ul>` : ''}</li>`
-      + `<li><b>생산 진도</b> = ${PMv ? `이달 = 실적 ÷ 월 계획(지금 계획의 ${+asOf.slice(5, 7)}월 합계 = 지난 날 실적 + 앞날 계획, 6라인) · 어제·이번 주·색 = 실적 ÷ 같은 날들의 월차(그 달 첫 계획) 계획 — 02 현황과 같은 값` : '라인 실적 ÷ 일정 누계'} · 월차 대비 98% 이상 정상 · 90% 이상 주의</li>`
+      + `<li><b>생산 진도</b> = ${PMv ? `이달 = 실적 ÷ 월 계획(지금 계획의 ${+asOf.slice(5, 7)}월 합계 = 지난 날 실적 + 앞날 계획, 6라인) · 전일·이번 주·색 = 실적 ÷ 같은 날들의 월차(그 달 첫 계획) 계획 — 02 현황과 같은 값` : '라인 실적 ÷ 일정 누계'} · 월차 대비 98% 이상 정상 · 90% 이상 주의</li>`
       + `<li><b>출하 미달</b> = 판매그룹 출하 실적 ÷ 오늘까지 기준(월 계획 × 그룹 월중 출하 실적 패턴) — 판매그룹 관제판과 같은 값</li>`
       + `<li><b>소재 부족</b> = 발주 마감이 지난 부족(소재 화면과 같은 값)</li></ul>`;
     const conFold = (Dd.conSec || '') && Dd.conSec.replace(/^<section class="card"><h2>오늘·내일 라인별 생산 계약 <small>/, '<details class="fold ct-f"><summary>오늘·내일 라인별 생산 계약 <small>').replace(/<\/small><\/h2>/, '</small></summary>').replace(/<\/section>$/, '</details>');
