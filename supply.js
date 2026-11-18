@@ -567,7 +567,9 @@
   }
   // 자가재 판정 칩(11/10 규칙: 컬러 생산 1~8일 전에 도금 생산) — '도금 생산 날짜·라인' 다음에 한 칩만
   // 11/18 사용자 '기준 1~8일 전 맞음·재고 사용 n일 전 생산분 — 이건 왜 넣는건데': 판정 칩 대신 소재가 컬러에 들어온 날(도금 생산 다음 날)만. 도금이 컬러 생산보다 늦은 경우만 경고
-  const selfJudge = (pd, d) => { const i = add(pd, 1); return pd >= d ? ['도금이 늦음', '컬러 생산 뒤', null, 'late'] : [i <= today ? '입고 완료' : '입고 예정', md(i), i, 'due']; };
+  const selfJudge = (pd, d) => { const i = add(pd, 1); return pd >= d ? ['도금이 늦음', '컬러 생산 뒤', null, 'late'] : [i <= today ? '컬러공장 입고 완료' : '컬러공장 입고 예정', md(i), i, 'due']; };
+  // 11/18 사용자 '소재 발주 → 소재 입고 → 도금 생산 → 컬러공장 입고 완료 → 컬러 생산 → 납기': 자가재 앞에 도금 소재(F/H) 발주·입고
+  const fhPre = (pd, a) => (pd ? lotSteps(`G:${/AL/.test(a || '') && !/STS/.test(a || '') ? 'H' : 'F'}`, pd, 'F/H') || [] : []);
   // 11/18 사용자 '소재가 언제 발주돼서 언제 입고되는지 전부': 재고 굴림(소재 관제와 같은 순서 = 지금 재고 → 발주 입고 예정일 순)에서 그날 쓰는 몫이 어느 발주인지
   const ordDay = (r) => { const m = /(\d{2})\/(\d{2}) 발주/.exec(r.note || ''); return m ? `${+m[1]}/${+m[2]}` : null; };
   function lotOf(k, d) {
@@ -581,12 +583,12 @@
   }
   const rng = (A) => { const u = [...new Set(A.filter(Boolean))]; return u.length ? (u.length > 1 ? `${u[0]}~${u[u.length - 1]}` : u[0]) : null; };
   function lotSteps(k, d, lb) {   // [칩…] — 지난 날 생산 = 입고 완료
-    if (d < today) return [[lb, '입고 완료', null, 'due']];
+    if (d < today) return [['소재 입고', '완료', null, 'due']];
     const x = lotOf(k, d); if (!x) return null;
     const out = [];
-    if (x.stock && !x.L.length && !x.short) return [[lb, '입고 완료', null, 'due']];
-    if (x.stock) out.push([lb, '일부 입고 완료', null, 'due']);
-    if (x.L.length) { const o = rng(x.L.map(ordDay)); if (o) out.push(['발주', o, null, 'due']); out.push(['입고 예정', rng(x.L.map((r) => md(r.date))), x.L[0].date, 'due']); }
+    if (x.stock && !x.L.length && !x.short) return [['소재 입고', '완료', null, 'due']];
+    if (x.stock) out.push(['소재 입고', '일부 완료', null, 'due']);
+    if (x.L.length) { const o = rng(x.L.map(ordDay)); if (o) out.push(['소재 발주', o, null, 'due']); out.push(['소재 입고 예정', rng(x.L.map((r) => md(r.date))), x.L[0].date, 'due']); }
     return x.short ? out.concat([['미발주', '입고 필요', null, 'late']]) : out;
   }
   function matLine(r, d, l) {
@@ -603,14 +605,14 @@
         const near = !last && !f2 && !(D.V.self && D.V.self[FAM(a)] && D.self[`${FAM(a)}|${d}`]) ? D.flow.filter((x) => FAM(x.a) === FAM(a)).flatMap((x) => x.made).filter((m) => m[0] <= add(d, -1)).sort((x, y) => (x[0] < y[0] ? 1 : -1))[0] : null;   // 재고 자료(12/31) 너머: 그 강종 직전 도금 자가재 생산
         const fs = !last && !f2 ? selfSrc(a, d) : null;
         const st = !last ? ['warn', '도금 재고 사용'] : gap >= TL ? ['ok', `여유 (도금 ${gap}일 전)`] : gap >= 1 ? ['warn', `빠듯 (도금 ${gap}일 전, 기준 ${TL}일)`] : ['warn', '재고 선사용 — 도금 생산이 더 늦음'];
-        out.push({ kind: '자가재', nm: a, sh: w, what: `${a} <b>${n0(r[5] * w)}t</b> <small class="muted">${Math.round(w * 100)}%</small>`, src: last ? `도금 ${span(f.made)}` : '-', inb: last ? md(add(last, 1)) + ' 컬러 입고' : '-', ord: '-', st, f, steps: last ? [['도금 생산', span(f.made), made[0]], [add(last, 1) <= today ? '입고 완료' : '입고 예정', md(add(last, 1)), add(last, 1)]] : f2 ? [['도금 생산', span(f2.made), m2[0]], selfJudge(m2[m2.length - 1], d)] : fs && fs.d0 ? [['도금 생산', `${md(fs.d0)}${fs.d1 && fs.d1 !== fs.d0 ? `~${md(fs.d1)}` : ''}${fs.lines.length ? ' · ' + fs.lines.join('·') : ''}`, fs.d1 || fs.d0], selfJudge(fs.d1 || fs.d0, d)] : fs && fs.stock0 ? [['자가재 재고', '10/1 이전 생산분', null]] : fs && fs.short ? [['도금 생산', `재고 부족 — ${md(add(d, -TL))}~${md(add(d, -1))}에 필요`, null, 'late']] : near ? [['도금 생산', `${md(near[0])} · ${near[1]}`, near[0]], selfJudge(near[0], d)] : [['도금 생산', `계획 없음 — ${md(add(d, -TL))}~${md(add(d, -1))}에 필요`, null, 'late']] });
+        out.push({ kind: '자가재', nm: a, sh: w, what: `${a} <b>${n0(r[5] * w)}t</b> <small class="muted">${Math.round(w * 100)}%</small>`, src: last ? `도금 ${span(f.made)}` : '-', inb: last ? md(add(last, 1)) + ' 컬러 입고' : '-', ord: '-', st, f, steps: last ? [...fhPre(made[0], a), ['도금 생산', span(f.made), made[0]], [add(last, 1) <= today ? '컬러공장 입고 완료' : '컬러공장 입고 예정', md(add(last, 1)), add(last, 1)]] : f2 ? [...fhPre(m2[0], a), ['도금 생산', span(f2.made), m2[0]], selfJudge(m2[m2.length - 1], d)] : fs && fs.d0 ? [...fhPre(fs.d0, a), ['도금 생산', `${md(fs.d0)}${fs.d1 && fs.d1 !== fs.d0 ? `~${md(fs.d1)}` : ''}${fs.lines.length ? ' · ' + fs.lines.join('·') : ''}`, fs.d1 || fs.d0], selfJudge(fs.d1 || fs.d0, d)] : fs && fs.stock0 ? [['자가재 재고', '10/1 이전 생산분', null]] : fs && fs.short ? [['도금 생산', `재고 부족 — ${md(add(d, -TL))}~${md(add(d, -1))}에 필요`, null, 'late']] : near ? [...fhPre(near[0], a), ['도금 생산', `${md(near[0])} · ${near[1]}`, near[0]], selfJudge(near[0], d)] : [['도금 생산', `계획 없음 — ${md(add(d, -TL))}~${md(add(d, -1))}에 필요`, null, 'late']] });
       }
     }
     if (1 - sh > 0.02) {
       const mix = (M.codeMix || {})[base] || (M.codeMix || {})[String(base).slice(0, 3)] || null;
       const codes = mix ? Object.entries(mix).sort((x, y) => y[1] - x[1]) : [];
       const need = add(d, -IN);
-      if (!codes.length) out.push({ kind: '구매', nm: '소재 미확인', sh: 1 - sh, what: `<b>${n0(r[5] * (1 - sh))}t</b> <small class="muted">${Math.round((1 - sh) * 100)}%</small> (소재 미확인)`, src: '-', inb: `${md(need)}까지`, ord: '-', st: ['warn', '품명 → 소재 연결 없음'], steps: [[need <= today ? '입고 완료' : '입고 필요', md(need), need]] });
+      if (!codes.length) out.push({ kind: '구매', nm: '소재 미확인', sh: 1 - sh, what: `<b>${n0(r[5] * (1 - sh))}t</b> <small class="muted">${Math.round((1 - sh) * 100)}%</small> (소재 미확인)`, src: '-', inb: `${md(need)}까지`, ord: '-', st: ['warn', '품명 → 소재 연결 없음'], steps: [[need <= today ? '소재 입고 완료' : '소재 입고 필요', md(need), need]] });
       for (const [code, w] of codes.slice(0, 2)) {
         const nm = (M.matCode || {})[code] || code;
         // 업체 유형별(27년 배정 업체 — P-GI·서림GI·수입GI 등) 발주일: 달력형(동종AZ·P-MAC)은 팀 규칙, 나머지는 입고 필요 − 리드타임
@@ -625,7 +627,7 @@
         const st = !TT.length ? ['warn', '팀 리드타임 표에 없는 소재'] : first >= today ? ['ok', `발주 예정 ${md(first)}~`] : last >= today ? ['warn', '일부 업체 발주 지남'] : ['info', '발주 완료분 사용'];
         const arr = TT.length ? TT.map((t) => t.arrive).sort()[0] : need;
         const src = TT.length ? TT.map((t) => `${esc(t.c)} ${Math.round(t.sh * 100)}%${t.n.length ? ` (${esc(t.n.slice(0, 3).join('·'))}${t.n.length > 3 ? ` 외 ${t.n.length - 3}` : ''})` : ''}`).join(' · ') : '-';
-        out.push({ kind: '구매', nm: esc(nm), sh: (1 - sh) * w, what: `${esc(nm)} <b>${n0(r[5] * (1 - sh) * w)}t</b> <small class="muted">${Math.round((1 - sh) * w * 100)}%</small>`, src, inb: `${md(arr)} 입고 예정`, ord: ordTxt, st, steps: (() => { const ls = lotSteps(`C:${code}`, d, '소재'); return ls && ls.length ? (ls.some((z) => z[0] === '미발주') ? ls.filter((z) => z[0] !== '미발주').concat([['발주 마감', ordTxt, first, 'due']]) : ls) : [['발주 마감', ordTxt, first, 'due'], [arr <= today ? '입고 완료' : '입고 예정', md(arr), arr]]; })() });
+        out.push({ kind: '구매', nm: esc(nm), sh: (1 - sh) * w, what: `${esc(nm)} <b>${n0(r[5] * (1 - sh) * w)}t</b> <small class="muted">${Math.round((1 - sh) * w * 100)}%</small>`, src, inb: `${md(arr)} 입고 예정`, ord: ordTxt, st, steps: (() => { const ls = lotSteps(`C:${code}`, d, '소재'); return ls && ls.length ? (ls.some((z) => z[0] === '미발주') ? ls.filter((z) => z[0] !== '미발주').concat([['발주 마감', ordTxt, first, 'due']]) : ls) : [['발주 마감', ordTxt, first, 'due'], [arr <= today ? '소재 입고 완료' : '소재 입고 예정', md(arr), arr]]; })() });
       }
     }
     return out;
@@ -656,7 +658,7 @@
     if (code === 'N') return { what: nm, steps: [['소재', '지급재(발주 당일 입고)', null, 'due']], st: ['info', '지급재 — 발주 마감·부족 판정 안 함'] };   // 11/17 검토: MES 상 도금 SUS 는 발주일에 입고(P2…Y·Y…) — 리드타임 판정은 오경보
     const ls = lotSteps(`G:${code}`, d, 'F/H');
     if (ls && ls.length) return { what: nm, steps: ls.some((z) => z[0] === '미발주') ? ls.filter((z) => z[0] !== '미발주').concat([dlc, ...(stc ? [stc] : [])]) : ls, st };
-    return { what: nm, steps: ok_ ? [['F/H', '입고 완료', null, 'due']] : [dlc, [need <= today ? '입고 완료' : '입고 예정', md(need), need], ...(stc ? [stc] : [])], st };
+    return { what: nm, steps: ok_ ? [['소재 입고', '완료', null, 'due']] : [dlc, [need <= today ? '소재 입고 완료' : '소재 입고 예정', md(need), need], ...(stc ? [stc] : [])], st };
   }
 
   // 날짜 상세 카드(라인별 품목·소재·일정) — 가동 캘린더 상세와 계획 화면(gyehoek.js, window.supDet)이 같이 씀. ls = 보일 라인(없으면 전부)
