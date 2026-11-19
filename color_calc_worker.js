@@ -6,7 +6,7 @@ let ready = null;
 
 async function init() {
   const t0 = Date.now();
-  post('step', { msg: '계산 엔진 불러오는 중(처음 한 번 10~20초)' });
+  post('step', { msg: '계산 엔진 준비 시작(처음 한 번 10~20초)' });
   const highs = await Module({ locateFile: (f) => 'vendor/' + f, print: () => {}, printErr: () => {} });
   self.cglHighsSolve = (lp) => JSON.stringify(highs.solve(lp));
   const py = await loadPyodide({ indexURL: 'vendor/pyodide/', stdout: (s) => (s.startsWith('@@') ? post('step', { msg: s.slice(2) }) : post('log', { msg: s })), stderr: (s) => post('log', { msg: s, err: true }) });

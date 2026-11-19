@@ -416,18 +416,18 @@ html .bar-cell i { top: auto; bottom: 5px; height: 4px; transform: none; opacity
   .scope-seg button { font-size: 14px; padding: 6px 13px; }
   .card { padding: 16px 14px; }
   .card > h2 { font-size: 18.5px; }
-  .card > h2 small { font-size: 13px; }
+  .card > h2 small { font-size: 13.5px; }
   .kpis { grid-template-columns: 1fr 1fr; gap: 8px; }
   .kpi { padding: 11px 11px 10px; min-width: 0; }
-  .kpi .l { font-size: 13px; } .kpi .b { font-size: 12.5px; }
+  .kpi .l { font-size: 13.5px; } .kpi .b { font-size: 13.5px; }
   .kpi .v { font-size: 25px; overflow-wrap: anywhere; }
   .form { grid-template-columns: 1fr !important; } .form > * { min-width: 0; } .field { min-width: 0 !important; max-width: 100% !important; } .kpi .v small { font-size: 13px; }
   table.t { font-size: 14px; } table.t th { font-size: 13.5px; padding: 9px 8px; } table.t td { padding: 9px 8px; }
   .tabs button, .seg button { font-size: 14px; padding: 7px 11px; }
   .tabs.big button { font-size: 14.5px; padding: 11px 13px; }
   .btn { font-size: 14.5px; padding: 8px 12px; }
-  .small, .hint { font-size: 13px; } .lead { font-size: 15px; }
-  .chart svg text, svg text { font-size: 12px; }
+  .small, .hint { font-size: 13.5px; } .lead { font-size: 15px; }
+  .chart svg text, svg text { font-size: 13.5px; }   /* 11/19 수정 방: 휴대폰 폭 13.5px 미만 금지(docs/16 보조 13.5) */
   html label { font-size: 14.5px; }
   html .gtable th.line { font-size: 15px; }
   /* 차트: 화면 폭으로 줄이면 글자가 안 보임 → 최소 폭 유지하고 옆으로 밀어 보기 */

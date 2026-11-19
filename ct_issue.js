@@ -84,6 +84,8 @@
     const m = document.getElementById('ct-main'), v = CT.view('now', VIEWS), B = build(DD);
     const err = EV == null ? '<p class="is-err">조치 상태 불러오는 중…</p>' : evErr ? `<p class="is-err bad">⚠ 조치 상태 읽기 실패(${esc(evErr)}) — 후보만 표시, 상태 변경 불가</p>` : '';
     m.innerHTML = CT.basis([{ name: '주문 납기', at: B.asOf, kind: '실적+재계획' }, { name: '소재 관제', at: DD.mat_order && DD.mat_order.today, kind: '재계획' }, { name: '화면 예외', at: DD.portal && DD.portal.built, kind: '자동 점검' }]) + err + (v === 'req' ? req(B) : now(B));
+    /* 11/19 수정 방: 게시 자료 문구의 금지어를 화면 글자에서만 바꿈(docs/32 — 늦음 → 지연, 기발주 → 발주 완료) */
+    { const tw = document.createTreeWalker(m, NodeFilter.SHOW_TEXT); let nd; while ((nd = tw.nextNode())) { const s = nd.nodeValue, t = s.replace(/지금 발주하면 늦음/g, '지금 발주해도 지연').replace(/늦음/g, '지연').replace(/기발주/g, '발주 완료'); if (t !== s) nd.nodeValue = t; } }
     m.querySelectorAll('#is-fil button').forEach((b) => b.onclick = () => { fil = b.dataset.k; draw(); });
     m.querySelectorAll('[data-i]').forEach((t) => t.onclick = (e) => { if (e.target.closest('a')) return; openIssue(B.list.find((x) => x.id === t.dataset.i), B.asOf); });
     CT.keyRows(m);

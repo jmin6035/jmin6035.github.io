@@ -284,6 +284,8 @@
 
     if (N.ops && N.ops.length) h += `<section class="card ops"><h2><span class="n">참고</span>운영 메모</h2>${notes(N.ops)}</section>`;
     $('r-main').innerHTML = h;
+    /* 11/19 수정 방: 보고 자료 문구 표기만 화면에서 맞춤(docs/32 — 'h' → 시간, '~n/n' → 'n/n까지', 늦음 → 지연) */
+    { const tw = document.createTreeWalker($('r-main'), NodeFilter.SHOW_TEXT); let nd; while ((nd = tw.nextNode())) { if (nd.parentElement && nd.parentElement.closest('svg')) continue; const s = nd.nodeValue, t = s.replace(/(\d(?:\.\d+)?)\s?h\b/g, '$1시간').replace(/(^|[^0-9/])~\s?(\d{1,2}\/\d{1,2})/g, '$1$2까지').replace(/늦음/g, '지연'); if (t !== s) nd.nodeValue = t; } }
     UI.reveal($('r-main'));
 
     // ---------- 그래프 ----------
