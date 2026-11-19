@@ -1,0 +1,15 @@
+/* 판생 화면 공통 색(계획 화면과 같은 톤) — 기준값 화면의 토큰을 덮어씀 */
+:root {
+  --color-paper: #1b2338; --color-paper-2: #1b2338; --color-paper-3: #151c2e;
+  --color-floor-ink: #f1f4fb; --color-floor-mute: #c9d3e8;
+  --color-plate: #242e4a; --color-plate-2: #2b3656; --color-plate-3: #344064; --color-plate-hi: rgb(255 255 255 / .06);
+  --color-plate-ink: #f1f4fb; --color-ink: #f1f4fb; --color-ink-2: #c9d3e8; --color-muted: #a3b0cc; --color-rule: #3d4b76;
+  --color-gun: #151c2e; --color-gun-2: #101626; --color-gun-hi: #556699;
+  --color-accent: #8b98ff; --color-accent-ink: #0b1020; --color-accent-deep: #a3adff; --color-focus: #9fd0ff;
+  --color-edit: #2b3656; --color-edit-2: #344064; --color-edit-ink: #ffd98a; --color-edit-rule: #8b98ff;
+  --lift-plate: 0 1px 0 rgb(255 255 255 / .04) inset, 0 12px 32px rgb(0 0 0 / .3); --lift-key: 0 1px 0 rgb(255 255 255 / .06) inset, 0 2px 6px rgb(0 0 0 / .3);
+  --press-well: inset 0 1px 3px rgb(0 0 0 / .35); --press-deep: inset 0 2px 6px rgb(0 0 0 / .5); --shadow-card: 0 12px 32px rgb(0 0 0 / .3); --glint: none; --texture-opacity: 0;
+}
+body.xlb { background: #1b2338; color: #f1f4fb; }
+.counts b { color: #f1f4fb; } .counts .on b { color: #a3adff; }
+.xlb small { font-size: 13.5px; }

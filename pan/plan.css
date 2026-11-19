@@ -328,3 +328,11 @@ select.de.dg { width: 96px; height: 36px; font-size: var(--fs); margin: 2px; } i
 .t.gt tr.off td { color: var(--tx3); text-decoration: line-through; } .blk input.de { width: 110px; } .dw.wide .act { display: flex; justify-content: center; gap: var(--space-sm); }
 @media print { .has-wdw .L3, .has-wdw .top { display: none !important; } .dw.wide { position: static !important; width: auto !important; box-shadow: none !important; border: 0 !important; background: #fff !important; overflow: visible !important; } .dw.wide .act, .dw.wide #dw-x { display: none !important; } .dw.wide .t thead th { position: static !important; background: #fff !important; } }
 @media (max-width: 100rem) { .L3 .btm > .pn, .L3 .lft > .pn { overflow-x: auto; } }
+/* 배경과 면 색: 바탕보다 카드가 한 단계 밝게 */
+:root { --bg: #1b2338; --color-paper: #1b2338; --card: #242e4a; --c2: #2b3656; --c3: #344064; --bd: #3d4b76; --bd2: #556699; --tx3: #a3b0cc; --nav: #151c2e; --nav2: #2b3656; --band: #151c2e; --band2: #1b2338; --danger-t: #47222c; --warn-t: #473a1c; --brand-t: #2e3a78; }
+body.xlb { background: var(--bg); } body.xlb::after { display: none; } .dw { background: var(--card); } .dw.wide .t thead th, .rgt .dw .t thead th { background: var(--card); } .cd.wk { background: #202a44; } .top .seg button.on { color: #0b1020; }
+.t.gt td[data-fc], .t.gt td[data-ms] { cursor: pointer; } .t.gt td[data-fc]:hover, .t.gt td[data-ms]:hover { background: rgb(255 255 255 / .06); } .t.gt td.sel { box-shadow: inset 0 0 0 2px var(--brand); } .blk.flt b { padding: 2px 10px; border-radius: 999px; background: color-mix(in srgb, var(--brand) 26%, transparent); color: var(--tx); }
+.cal0 .cl .ln0 { color: var(--tx2); } .xl-hd b { color: #f1f4fb; }
+.cal0 .cl.ev .ln0 { color: #3a4666; }
+.salp .ordw { max-height: 420px; overflow: auto; } .salp .t td small { display: block; font-size: var(--fs); color: var(--tx3); } .salp { grid-column: 1 / -1; } .t.ot td.warn { color: var(--warn); }
+.t.gt td small.bad { color: var(--danger); } .t.gt th small { display: block; font-size: var(--fs); color: var(--tx3); font-weight: 500; } .pn > p.hint { text-align: center; font-size: var(--fs); color: var(--tx2); margin: var(--space-xs) 0 0; }
