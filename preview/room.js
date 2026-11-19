@@ -10,6 +10,7 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const n0 = (v) => Math.round(v || 0).toLocaleString('ko-KR');
+  const n1 = (v) => (+v || 0).toLocaleString('ko-KR', { maximumFractionDigits: 1 });
   const sg = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + n0(Math.abs(v));
   const md = (d) => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}` : '');
   const SN = ['상순', '중순', '하순'];
@@ -78,89 +79,58 @@
     const out = []; for (const [al, ser] of Object.entries(X.self || {})) { if (selfLine(al) !== l) continue; let mn = null; for (const r of ser) if (r[0] >= sunStart(s) && (mn == null || r[1] < mn[1])) mn = r; if (mn && mn[1] < -0.5) out.push([al, mn[1], mn[0]]); }
     return out;
   }
-  /* 할 일(주 단위 — 11/19 사용자 '주 단위로, 들어가자마자 뭘 할지'): 소재 발주 마감·수주 부족(지금) · 2CCL(우리 계획 1월~) · 자가재 부족 · 빈 룸 · 내수 몰림(라인·달마다 한 줄) */
   const ourPlan = (s) => sunEnd(s) >= '2027-01-01';   // 1월~ = 우리 계획(12월까지 = 판생 배포 그대로)
-  function todo() {
-    const W = weeks(), now = wkOf(X.today), L = [], skew = {};
-    for (const s of W) {
-      const c = cc('2CCL', s), u = used(c);
-      const own = sunStart(s) >= '2027-01-01' ? u : (c || {}).own || 0;
-      if (own >= 0.5 && ourPlan(s)) L.push({ key: `2CCL|${s}`, s, kind: '2ccl', lv: 'bad', t: own, what: `2CCL ${own < u - 0.5 ? '1월분 ' : ''}${n0(own)}t 가동 결정(사장님)`, btn: '2CCL 가동 결정' });
-      for (const l of MAIN) {
-        const c1 = cc(l, s); if (!c1) continue;
-        const a = after(l, s), r = a.cap - a.dom - a.exp;
-        if (r >= 100) L.push({ key: `${l}|${s}`, s, kind: 'room', lv: 'warn', t: r, what: `${l} 여유 ${n0(r)}t, 다음 달 수출 오더 당기기`, btn: `${l} 오더 당기기`, short: `${l} 빈 룸 ${n0(r)}t` });
-        const g = c1.dom - sugg(l, s), mk = `${l}|${addD(s.slice(1), 3).slice(0, 7)}`;
-        if (Math.abs(g) >= 500 && (!skew[mk] || Math.abs(g) > skew[mk].g)) skew[mk] = { l, s, g, dom: c1.dom, f: sugg(l, s) };
-      }
-    }
-    for (const x of Object.values(skew)) L.push({ key: `${x.l}|${x.s}`, s: x.s, kind: 'skew', lv: 'warn', t: Math.abs(x.g), what: `${x.l} ${wkLab(x.s).split(' ')[0]} 내수 ${x.g > 0 ? '많음' : '적음'}, 주별로 고르게`, btn: `${x.l} 내수 고르게` });
-    for (const [al, ser] of Object.entries(X.self || {})) {
-      const neg = ser.filter((r) => r[0] >= X.today && r[1] < -0.5); if (!neg.length) continue;
-      const lo = neg.reduce((a, r) => (r[1] < a[1] ? r : a));
-      L.push({ key: `${selfLine(al)}|${wkOf(neg[0][0])}`, s: wkOf(neg[0][0]), kind: 'self', lv: 'bad', t: -lo[1], what: `${al} 자가재 부족(${md(lo[0])} ${sg(lo[1])}t), ${selfLine(al)} 판매재를 자가재로`, btn: `${al} 자가재 전환`, short: `${al} 자가재 ${sg(lo[1])}t` });
-    }
-    const byM = {}; for (const r of X.pull.rows) byM[r.due.slice(0, 7)] = (byM[r.due.slice(0, 7)] || 0) + r.t;
-    for (const x of X.sales.C수출 || []) { if (x.m !== X.pull.from.slice(0, 7)) continue; const g = x.sales - (byM[x.m] || 0); if (g >= 500) L.push({ key: `grp|${x.m}`, s: now, kind: 'order', lv: 'warn', t: g, what: `${+x.m.slice(5)}월 컬러수출 주문 부족 ${n0(g)}t, 더 받을 양과 담당 정하기`, btn: `${+x.m.slice(5)}월 주문 더 받기`, short: `${+x.m.slice(5)}월 주문 부족 ${n0(g)}t` }); }
-    for (const m of ((X.matLate || {}).items || [])) if ((m.t || 0) >= 300) L.push({ key: `mat|${m.key}`, s: now, kind: 'mat', lv: 'bad', t: m.t, what: `${m.name} ${n0(m.t)}t 발주 마감 지남(첫 사용 ${md(m.first)})`, btn: `${m.name} 발주`, short: `${m.name} 발주 마감 지남` });
-    for (const x of L) { const d = decOf(x.key); x.d = d; x.done = !!(d && DONE(d.st)); }
-    return L.sort((a, b) => (a.s < b.s ? -1 : a.s > b.s ? 1 : 0) || ((b.lv === 'bad') - (a.lv === 'bad')) || b.t - a.t);
-  }
   const appl = (d) => d && (X.applied || []).includes(DID(d));
   const chip = (d) => (d ? `${appl(d) ? '<span class="chip ok">계획 반영</span> ' : ''}<span class="chip ${DONE(d.st) ? 'ok' : d.st === '보류' ? 'na' : d.st === '사장님 결정 요청' ? 'bad' : 'warn'}">${esc(d.st)}</span>` : '<span class="chip">미결정</span>');
 
-  /* ---------- 주별 결정(11/19 사용자 '주 단위 · 들어가자마자 뭘 할지 · 규칙대로') — 설계 gadong-plan docs/design/수주조정_주별_설계.md
-     맨 위 = 조정 4단계(순서 = 조정 방법, 숫자 = 할 일) → 주별 결정(행 = 주: 라인 칸 5개 + 그 주 할 일) → 결정 기록 ---------- */
-  let STEP = 0, OPEN = null;
-  const STEPS = [[1, '내수 고르게', ['skew']], [2, '수출 주문 받기', ['order', 'room']], [3, '2CCL 가동', ['2ccl']], [4, '자가재와 소재', ['self', 'mat']]];
-  const stepOf = (x) => STEPS.find((p) => p[2].includes(x.kind))[0];
-  const CIR = ['', '①', '②', '③', '④'];
-  function stepSub(n, L) {
-    if (!L.length) return '할 일 없음';
-    if (n === 1) { const m = {}; for (const x of L) { const l = x.key.split('|')[0]; (m[l] = m[l] || []).push(+addD(x.s.slice(1), 3).slice(5, 7)); } return Object.entries(m).map(([l, v]) => `${l} ${v.join(', ')}월`).join(' / '); }
-    if (n === 3) return `${L.length}주 ${n0(L.reduce((a, x) => a + x.t, 0))}t, 사장님 결정`;
-    return L.slice(0, 2).map((x) => x.short).join(', ') + (L.length > 2 ? ` 외 ${L.length - 2}건` : '');
+  /* ---------- 주별 가동표(11/19 사용자 '처음부터 다시' → 고른 모양 '라인×주 가동표': 칸마다 계획 톤과 그중 주문 확보 톤, 주문이 모자란 칸만 색)
+     자료 ordW(gadong-plan tools/preview_build.py ord_week): 주문을 납기 7일 전 주에 놓고 납기 순으로 그 주 계획(계획재 제외)까지 채움 ---------- */
+  let OPEN = null;
+  const OW = () => X.ordW || { lines: {}, rows: [] };
+  const pulls = () => { const m = new Map(); for (const e of EV) if (e.t === 'room' && e.pulls && stOf(e) !== '보류') for (const [con, t] of e.pulls) m.set(con, { to: e.key.split('|')[1], t }); return m; };
+  function ordCell(l, s) {   // 결정(당김) 반영: 당겨 온 주는 +, 원래 놓였던 주는 −
+    const o = (OW().lines[l] || {})[s]; if (!o) return null; const P = pulls(); let add = 0;
+    for (const r of OW().rows) { if (r.line !== l) continue; const p = P.get(r.con); if (!p) continue; if (p.to === s && r.w !== s) add += p.t; else if (r.w === s && p.to !== s) add -= p.t; }
+    return { cap: o.cap, ord: Math.max(0, o.ord + add), plt: o.plt };
   }
-  function weekDetail(s, T) {
-    const on = (k) => (OPEN && OPEN.key === k ? ' class="on"' : '');
-    const rc = [...MAIN, '2CCL'].map((l) => {
-      const c = cc(l, s), a = after(l, s), k = `${l}|${s}`;
-      if (!c || c.cap < 1) return `<tr><th>${l}</th><td colspan="5">휴지</td></tr>`;
-      const r = a.cap - a.dom - a.exp;
-      return `<tr${on(k)}><th>${l}</th><td>${c.days}일</td><td>${n0(a.dom)}${l === '2CCL' ? '' : `<small> / ${n0(sugg(l, s))}</small>`}</td><td>${n0(a.exp)}</td><td>${r >= 50 ? `여유 ${n0(r)}` : r <= -50 ? `<b class="bad">초과 ${n0(-r)}</b>` : '여유 없음'}</td><td><button type="button" class="btn sub sm" data-k="${k}">조정</button></td></tr>`;
-    }).join('');
-    const rg = CGL.map((l) => { const c = cg(l, s), k = `${l}|${s}`; if (!c) return ''; const st = Object.values(c.self).reduce((a, v) => a + v, 0); return `<tr${on(k)}><th>${l}</th><td>도금</td><td colspan="3">자가재 ${n0(st)}t · 판매재 ${n0(c.sale)}t</td><td><button type="button" class="btn sub sm" data-k="${k}">조정</button></td></tr>`; }).join('');
-    const tb = T.length ? `<div class="wd-go">${T.map((x) => `<button type="button" class="btn${OPEN && OPEN.key === x.key ? '' : ' sub'} sm" data-k="${x.key}">${CIR[stepOf(x)]} ${esc(x.btn)}</button>`).join('')}</div>` : '';
-    return `<div class="wd">${tb}<table class="op-t wdt"><thead><tr><th>라인</th><th>가동</th><th>내수 / 주 평균(t)</th><th>수출·가전(t)</th><th>여유</th><th></th></tr></thead><tbody>${rc}${rg}</tbody></table><div id="rb-pd"></div></div>`;
+  const shortOf = (c) => (c ? c.cap - c.ord : 0);
+  const isShort = (c) => c && shortOf(c) >= Math.max(100, c.cap * 0.1);
+  function orderDetail(l, s) {
+    const c = ordCell(l, s) || { cap: 0, ord: 0 }, P = pulls(), key = `${l}|${s}`, d0 = decOf(key);
+    const R = OW().rows.filter((r) => r.line === l);
+    const inW = R.filter((r) => (P.get(r.con) ? P.get(r.con).to === s : r.w === s));
+    const can = R.filter((r) => r.grp === '컬러수출그룹' && !inW.includes(r) && (!r.w || r.w > s)).sort((a, b) => (a.due < b.due ? -1 : 1));
+    const pre = new Set(d0 && d0.pulls ? d0.pulls.map((x) => x[0]) : []);
+    const tr = (r, ck) => `<tr>${ck ? `<td><input type="checkbox" class="w-p" data-con="${esc(r.con)}" data-t="${r.t}"${pre.has(r.con) ? ' checked' : ''}></td>` : ''}<td>${esc(r.con)}</td><td>${esc(r.cus || '-')}</td><td>${esc(r.pdt)}</td><td>${esc(r.size)}</td><td>${n1(r.t)}</td><td>${md(r.due)}</td><td>${esc(r.man || '-')}</td><td>${esc(ST(r.st)[1])}</td></tr>`;
+    const hd = (ck) => `<thead><tr>${ck ? '<th></th>' : ''}<th>계약</th><th>고객사</th><th>품명</th><th>두께×폭</th><th>t</th><th>납기</th><th>담당</th><th>소재</th></tr></thead>`;
+    const sh = shortOf(c);
+    return `<form class="od" id="w-f" novalidate><h3>${l} ${wkLab(s)} <b class="dt">${wkRng(s)}</b> <span>계획 ${n0(c.cap)}t · 주문 ${n0(c.ord)}t${sh >= 50 ? ` · <b class="warn">부족 ${n0(sh)}t</b>` : ''}</span></h3>
+      <div class="od-g"><div><h4>이 주 주문 ${inW.length}건</h4><div class="od-t"><table class="op-t">${hd(false)}<tbody>${inW.map((r) => tr(r, false)).join('') || '<tr><td colspan="8">없음</td></tr>'}</tbody></table></div></div>
+      <div><h4>당길 수 있는 수출 주문 ${can.length}건</h4><div class="od-t"><table class="op-t">${hd(true)}<tbody>${can.map((r) => tr(r, true)).join('') || '<tr><td colspan="9">없음, 주문 더 받기 필요</td></tr>'}</tbody></table></div></div></div>
+      <div class="row od-f"><span id="w-sel"></span><label>상태 <select id="w-st">${['제안', '확정'].map((x) => `<option${d0 && d0.st === x ? ' selected' : ''}>${x}</option>`).join('')}</select></label><input id="dec-by" placeholder="이름" value="${esc(CT.me())}"><input id="w-tx" placeholder="메모" value="${esc(d0 && d0.text || '')}"><button class="btn" type="submit">당김 저장</button><span class="note" id="dec-m"></span></div></form>`;
   }
   function board() {
-    const W = weeks(), T = todo(), open = T.filter((x) => !x.done), now = wkOf(X.today);
-    const strip = `<section class="card rs-steps"><h2>조정 순서</h2><div class="rs">${STEPS.map(([n, nm, ks]) => { const L = open.filter((x) => ks.includes(x.kind)), lv = L.some((x) => x.lv === 'bad') ? 'bad' : L.length ? 'warn' : 'ok'; return `<button type="button" class="rs-c ${lv}" data-step="${n}" aria-pressed="${STEP === n}"><span class="rs-n">${CIR[n]} ${nm}</span><b>${L.length}<small>건</small></b><span class="rs-s">${esc(stepSub(n, L))}</span></button>`; }).join('')}</div></section>`;
-    const want = (x) => !STEP || stepOf(x) === STEP;
-    const cell = (l, s) => {
-      const c = cc(l, s);
-      if (!c || c.cap < 1) return '<span class="c mute"><b>휴지</b></span>';
-      if (l === '2CCL') { const u = used(c), own = ourPlan(s) ? (sunStart(s) >= '2027-01-01' ? u : c.own || 0) : 0; return u < 0.5 ? '<span class="c mute"><b>세움</b></span>' : own >= 0.5 ? `<span class="c bad"><b>${n0(u)}</b><em>${own < u - 0.5 ? `1월 ${n0(own)} 결정` : '결정 필요'}</em></span>` : `<span class="c mute"><b>${n0(u)}</b><em>판생 확정</em></span>`; }
-      const a = after(l, s), f = sugg(l, s), g = a.dom - f;
-      return Math.abs(g) >= 500 ? `<span class="c warn"><b>${n0(a.dom)}</b><em>평균 대비 ${sg(g)}</em></span>` : `<span class="c mute"><b>${n0(a.dom)}</b><em>평균 ${n0(f)}</em></span>`;
-    };
-    const selfCell = (s) => { const neg = selfMin(s, true); return neg.length ? `<span class="c bad">${neg.map((x) => `<b>${x[0]} ${sg(x[1])}</b>`).join('')}</span>` : '<span class="c mute"><b>–</b></span>'; };
+    const W = weeks().filter((w) => w >= wkOf(X.today)), now = wkOf(X.today);
     let mPrev = '';
-    const rows = W.map((s) => {
-      const wt = T.filter((x) => x.s === s && want(x)), live = wt.filter((x) => !x.done);
-      if (STEP && !wt.length) return '';
-      const m = addD(s.slice(1), 3).slice(0, 7), mb = m !== mPrev && mPrev !== ''; mPrev = m;
-      const isOn = OPEN && OPEN.w === s;
-      const items = wt.length ? wt.map((x) => `<span class="it ${x.done ? 'ok' : x.lv}"><i>${CIR[stepOf(x)]}</i>${esc(x.what)}${x.d ? ` ${chip(x.d)}` : ''}</span>`).join('') : '<span class="it none">할 일 없음</span>';
-      return `<div class="wr${mb ? ' mb' : ''}${live.length ? '' : ' quiet'}${isOn ? ' on' : ''}"><button type="button" class="wr-h" data-w="${s}" aria-expanded="${!!isOn}">
-        <span class="wn"><b>${s === now ? '이번 주' : wkLab(s)}</b><b class="dt">${wkRng(s)}</b></span>
-        ${[...MAIN, '2CCL'].map((l) => cell(l, s).replace('<span class="c', `<span data-l="${l}" class="c`)).join('')}${selfCell(s).replace('<span class="c', '<span data-l="자가재" class="c')}
-        <span class="td">${items}</span></button>${isOn ? weekDetail(s, wt) : ''}</div>`;
-    }).join('');
+    const mb = W.map((s) => { const m = addD(s.slice(1), 3).slice(0, 7), b = mPrev && m !== mPrev; mPrev = m; return b ? ' mb' : ''; });
+    const on = (k) => (OPEN === k ? ' on' : '');
+    const head = `<tr><th class="ln">라인</th><th class="kd">구분</th>${W.map((s, i) => `<th class="${mb[i]}">${s === now ? '이번 주' : wkLab(s)}<b class="dt">${wkRng(s).replace('~', '~<wbr>')}</b></th>`).join('')}</tr>`;
+    const lineRows = (l) => {
+      const plan = W.map((s, i) => { const c = cc(l, s); if (!c || c.cap < 1) return `<td class="${mb[i]} off">휴지</td>`; const o = ordCell(l, s) || { cap: 0 }; const own = l === '2CCL' && ourPlan(s) ? (sunStart(s) >= '2027-01-01' ? used(c) : c.own || 0) : 0; return `<td class="${mb[i]}${own >= 0.5 ? ' bad' : ''}"><button type="button" class="cl${on(`${l}|${s}`)}" data-k="${l}|${s}">${n0(o.cap)}${own >= 0.5 ? '<em>결정 필요</em>' : ''}</button></td>`; }).join('');
+      const ord = W.map((s, i) => { const c = cc(l, s); if (!c || c.cap < 1) return `<td class="${mb[i]} off"></td>`; const o = ordCell(l, s); return `<td class="${mb[i]}${isShort(o) ? ' warn' : ''}"><button type="button" class="cl${on(`${l}|${s}`)}" data-k="${l}|${s}"${isShort(o) ? ` title="부족 ${n0(shortOf(o))}t"` : ''}>${n0(o ? o.ord : 0)}</button></td>`; }).join('');
+      return `<tr class="p"><th class="ln" rowspan="2">${l}</th><th class="kd">계획</th>${plan}</tr><tr class="o"><th class="kd">주문</th>${ord}</tr>`;
+    };
+    const pltRow = `<tr class="s"><th class="ln">계획재</th><th class="kd">1~4CCL</th>${W.map((s, i) => { const t = [...MAIN, '2CCL'].reduce((a, l) => a + ((ordCell(l, s) || {}).plt || 0), 0); return `<td class="${mb[i]}">${t >= 0.5 ? n0(t) : ''}</td>`; }).join('')}</tr>`;
+    const selfRow = `<tr class="s"><th class="ln">자가재</th><th class="kd">부족</th>${W.map((s, i) => { const neg = selfMin(s, true); if (!neg.length) return `<td class="${mb[i]}"></td>`; const al = neg.slice().sort((a, b) => a[1] - b[1])[0][0]; return `<td class="${mb[i]} bad"><button type="button" class="cl${on(`${selfLine(al)}|${s}`)}" data-k="${selfLine(al)}|${s}">${neg.map((x) => `${x[0]} <b>${sg(x[1])}</b>`).join('<br>')}</button></td>`; }).join('')}</tr>`;
+    const tot = (f) => W.map((s, i) => `<td class="${mb[i]}">${n0([...MAIN, '2CCL'].reduce((a, l) => a + (((ordCell(l, s) || {})[f]) || 0), 0))}</td>`).join('');
+    const sumRows = `<tr class="t p"><th class="ln" rowspan="2">합계</th><th class="kd">계획</th>${tot('cap')}</tr><tr class="t o"><th class="kd">주문</th>${tot('ord')}</tr>`;
+    const mats = ((X.matLate || {}).items || []).filter((m) => (m.t || 0) >= 300);
+    const matH = mats.length ? `<p class="od-mat">소재 발주 마감 지남 ${mats.map((m) => `<button type="button" class="lnk" data-k="mat|${esc(m.key)}">${esc(m.name)} ${n0(m.t)}t</button>`).join(' ')}</p>` : '';
     const log = decs().filter((e) => e.kind);
-    return `${strip}<section class="card" id="wk-card"><h2>주별 결정 <small>${STEP ? `${CIR[STEP]} ${STEPS[STEP - 1][1]}만 <button type="button" class="lnk" data-step="${STEP}">전체 보기</button>` : '주를 누르면 결정 칸'}</small></h2>
-      <div class="wr-hd"><span>주</span><span>1CCL 내수</span><span>3CCL 내수</span><span>4CCL 내수</span><span>2CCL</span><span>자가재 부족</span><span>할 일</span></div>
-      <div class="wrs">${rows}</div></section>
+    return `<section class="card" id="wk-card"><h2>주별 가동표 <small>${md(X.today)}부터 · 칸을 누르면 그 주 주문</small></h2>
+      <p class="wk-lg"><span><i class="lg w"></i>주문이 계획보다 모자람</span><span><i class="lg b"></i>사장님 결정·자가재 부족</span></p>
+      <div class="gt-w"><table class="gt"><thead>${head}</thead><tbody>${MAIN.map(lineRows).join('')}${lineRows('2CCL')}${sumRows}${pltRow}${selfRow}</tbody></table></div>
+      ${matH}<div id="rb-pd"></div></section>
       <section class="card"><h2>결정 기록 <small>${log.length}건</small></h2>${logList(log)}</section>`;
   }
   const keyLab = (k) => (k ? k.replace('|', ' ').replace(/W(\d{4}-\d{2}-\d{2})$/, (m) => sunLab(m)).replace(/(\d{4}-\d{2}-\d)$/, (m) => sunLab(m)).replace(/^grp (\d{4})-(\d{2})$/, (m, y, mo) => `컬러수출 ${+mo}월 수주`).replace(/^mat /, '소재 ') : '');
@@ -322,12 +292,10 @@
     const v = CT.view('board', ['board', 'test', 'grp']), main = $('ct-main');
     main.innerHTML = v === 'test' ? testView() : v === 'grp' ? grpView() : board();
     if (v === 'board') {
-      const go = (o) => { OPEN = o; draw(); const p = main.querySelector('.wr.on'); if (p) p.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-      main.querySelectorAll('.wr-h[data-w]').forEach((b) => b.addEventListener('click', () => { const w = b.dataset.w; if (OPEN && OPEN.w === w) { OPEN = null; draw(); return; } const t = todo().find((x) => x.s === w && !x.done && (!STEP || stepOf(x) === STEP)); go({ w, key: t ? t.key : null }); }));
-      main.querySelectorAll('.wd [data-k]').forEach((b) => b.addEventListener('click', () => go({ w: OPEN.w, key: b.dataset.k })));
-      main.querySelectorAll('[data-step]').forEach((b) => b.addEventListener('click', () => { const n = +b.dataset.step; STEP = STEP === n ? 0 : n; OPEN = null; draw(); }));
+      const show = (k) => { if (!k) return; const [l, w] = k.split('|'); if (MAIN.includes(l)) { const el = $('rb-pd'); el.innerHTML = orderDetail(l, w); const f = $('w-f'), cnt = () => { const c = [...el.querySelectorAll('.w-p:checked')]; $('w-sel').textContent = c.length ? `${c.length}건 ${n0(c.reduce((a, x) => a + +x.dataset.t, 0))}t 선택` : ''; }; f.addEventListener('change', cnt); cnt(); f.addEventListener('submit', (e) => { e.preventDefault(); save({ t: 'room', key: k, line: l, sun: w, kind: 'adj', dom: null, pulls: [...el.querySelectorAll('.w-p:checked')].map((x) => [x.dataset.con, +x.dataset.t]), st: $('w-st').value, text: $('w-tx').value.trim() }, $('dec-m')); }); } else detail(k); };
+      main.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => { OPEN = OPEN === b.dataset.k ? null : b.dataset.k; draw(); const p = $('rb-pd'); if (p && OPEN) p.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
       main.querySelectorAll('[data-ref]').forEach((b) => b.addEventListener('click', () => save({ t: 'roomSt', ref: b.dataset.ref, st: b.dataset.st }, null)));
-      if (OPEN && OPEN.key) detail(OPEN.key);
+      show(OPEN);
     }
     if (v === 'test') { ['tc-m', 'tc-d'].forEach((id) => $(id).addEventListener('input', testCalc)); testCalc(); }
     if (window.UI && UI.sub) UI.sub(`기준 ${md(X.today)} · 자료 ${String(X.built).slice(5, 16).replace('T', ' ')} · 11/18 사장님 회의 원칙`);
