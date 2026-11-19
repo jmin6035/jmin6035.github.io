@@ -83,7 +83,7 @@
   function live(D) {
     const G = D.cg_order_progress, I = D.integrated, A = D.plating_actual;
     if (G && G.rows) {
-      B.orders = G.rows.filter((o) => ((o.ordT || 0) - (o.prodT || 0)) >= 1 && !o.prdEnd && ['AZ', 'AL', 'MAC'].includes(o.fam)).map((o) => [o.con, o.line || o.pline || '', o.fam, String(o.grp || '').replace('그룹', ''), Math.round(((o.ordT || 0) - (o.prodT || 0)) * 10) / 10, Math.round((o.tph || 0) * 10) / 10, o.due || '', o.st || '', o.man || '', o.dst || o.cus || '', o.pdt || '', `${o.thk}×${o.wdt}`, o.eta || o.entSche || '', o.needIn || '', o.needSrc || '', o.shp || '', o.arr || '', o.dept || '', o.cus || '', o.etaSrc || '']);
+      B.orders = G.rows.filter((o) => ((o.ordT || 0) - (o.prodT || 0)) >= 1 && !o.prdEnd && ['AZ', 'AL', 'MAC'].includes(o.fam)).map((o) => [o.con, o.line || o.pline || '', o.fam, String(o.grp || '').replace('그룹', ''), Math.round(((o.ordT || 0) - (o.prodT || 0)) * 10) / 10, Math.round((o.tph || 0) * 10) / 10, o.due || '', o.st || '', o.man || '', o.dst || o.cus || '', o.pdt || '', `${o.thk}×${o.wdt}`, o.eta || o.entSche || '', o.needIn || '', o.needSrc || '', o.shp || '', o.arr || '', o.dept || '', o.cus || '', o.etaSrc || '', o.thk || 0, o.wdt || 0, o.cot || '', o.aft || '', o.grade || o.specGr || '']);
       B.ordersAsOf = G.asOf;
     }
     if (I && I.color) {
@@ -94,6 +94,8 @@
       B.color = col; B.colorEv = ev; B.colorAsOf = I.asOf;
     }
     if (I && I.shipProfile) B.shipProfile = I.shipProfile;
+    B.opf = { '1CGL': 0.95, '2CGL': 0.95 };   // 하루 실가동 비율(MES 일별 가동 분 ÷ 1440, 최근) — 사양 톤파워(가동 분당 톤)에 곱함
+    if (A && A.dayMin) for (const l of ['1CGL', '2CGL']) { const v = Object.values(A.dayMin).map((x) => x[l]).filter((x) => x != null); if (v.length >= 14) B.opf[l] = Math.round(v.reduce((a, b) => a + b, 0) / v.length / 1440 * 1000) / 1000; }
     if (A && A.daily) { B.actual = {}; for (const r of A.daily) B.actual[r.d] = { '1CGL': r['1CGL'] || 0, '2CGL': r['2CGL'] || 0 }; B.actualAsOf = A.asOf; }
     else B.actual = B.actual || {};
   }
@@ -169,7 +171,11 @@
   PS.LINES = { '1CGL': ['AZ', 'AL'], '2CGL': ['MAC', 'AL'] };
   PS.isDown = (l, d) => { const k = `P|${d.slice(0, 7)}|${l}|${d}|down`; const o = ov(); return k in o ? !!o[k] : B.down.includes(`${l}|${d}`); };
   const noGo = (l, g, d) => B.nogo.includes(`${l}|${g}|${d}`);
-  PS.rate = (m, l, g) => PS.get(`P|${m}|${l}|${g}|rate`, (B.plating[m] || {}).rate ? B.plating[m].rate[`${l}|${g}`] : 900);
+  /* 하루 톤: 고친 값 > 사양 믹스(그 달 일감의 두께·폭 × MES 톤파워) > 판생 제원. PS.rateMode = 'seed' 면 판생 제원(판생 엑셀 재현 시험용) */
+  let MIXR = null; PS.rateMode = 'mix';
+  PS.seedRate = (m, l, g) => ((B.plating[m] || {}).rate ? B.plating[m].rate[`${l}|${g}`] : 900);
+  PS.rateSrc = (m, l, g) => (PS.isSet(`P|${m}|${l}|${g}|rate`) ? '고친 값' : PS.rateMode === 'mix' && MIXR && MIXR[`${m}|${l}|${g}`] ? '사양 믹스' : '판생 제원');
+  PS.rate = (m, l, g) => PS.get(`P|${m}|${l}|${g}|rate`, (PS.rateMode === 'mix' && MIXR && MIXR[`${m}|${l}|${g}`]) || PS.seedRate(m, l, g));
   function autoSw(l, m, T, carry) {
     const must = MUST[l], days = PS.days(m).filter((d) => !PS.isDown(l, d));
     if (!days.length) return { order: ['AL'], sw: [] };
@@ -182,7 +188,7 @@
     return { order: ['AL', must, 'AL'], sw: [days[i], days[i + nm]] };
   }
   /* STS(AL-STS 임가공, 2CGL AL 기간 안): 목표 = 회의 33·35행. 시작일 입력(P|월|2CGL|stsA), 없으면 2CGL AL 연속 구간 가운데에 붙여 놓음 */
-  PS.stsRate = (m) => PS.get(`P|${m}|2CGL|STS|rate`, 850);   // 기본 850t/일 = MES 2CGL GAS·AL-STS 10~11월 35.7t/h × 24
+  PS.stsRate = (m) => PS.get(`P|${m}|2CGL|STS|rate`, (PS.rateMode === 'mix' && MIXR && MIXR[`${m}|2CGL|STS`]) || 850);   // 기본 850t/일 = MES 2CGL GAS·AL-STS 10~11월 35.7t/h × 24
   function placeSts(m, days, T) {
     const need = Math.ceil((T.STS || 0) / PS.stsRate(m)); if (!need) return { a: null, need: 0, n: 0 };
     const al = days.filter((x) => x.g === 'AL' && !x.ev).map((x) => x.d);
@@ -207,6 +213,7 @@
   }
   PS.plating = (L) => {   // 모든 달(기준판 첫 달은 판생 손 계획 = 이어받기용)
     const l = L || PS.ledger(), ms = B.months, res = {}, carry = {};
+    MIXR = PS.rateMode === 'mix' && B.rateTab ? PS.mixRates(PS.items(l)) : null;
     const r0 = B.plating[ms[0]].ref;
     for (const ln of Object.keys(PS.LINES)) { const z = (r0[ln] || []).filter((r) => r[1] && r[2]); carry[ln] = z.length ? z[z.length - 1][1] : null; }
     for (const m of ms.slice(1)) {
@@ -254,51 +261,85 @@
   const PROFK = { 도금수출: 'G수출', 도금국내: 'G국내', 자동차: 'G자동차' };
   const BAN = [[1, 5], [6, 10], [11, 15], [16, 20], [21, 25], [26, 31]];
   PS.banLab = (d) => `${+d.slice(5, 7)}월 ${BAN.findIndex(([a, b]) => +d.slice(8) >= a && +d.slice(8) <= b) + 1}반순`;
-  PS.assign = (P) => {
-    const pl = P || PS.plating(), DP = PS.dayPlan(pl), asOf = String(B.actualAsOf || B.ordersAsOf || '').slice(0, 10) || B.months[0] + '-01';
-    const L = PS.ledger(), R = B.ledger.rows, need = (o) => o[13] || (o[6] ? PS.addD(o[6], -3) : asOf), m0 = asOf.slice(0, 7);
-    const cut = PS.prevM(m0) + '-01', stale = [];   // 지난달 1일 전에 필요했던 미생산 = 보류·취소 확인 대상
-    const ms = B.months.filter((m) => m >= m0), famOf = (x) => { const sec = R.find((y) => y.r === x.sec); return sec && ['MAC', 'AZ', 'AL'].includes(sec.name) ? (/STS/.test(x.lab) ? 'STS' : sec.name) : null; };
-    // 1. 달 × 그룹 × 강종 생산량(원장 = 생산 결정). 이번 달은 남은 날 계획 비율만큼
-    const quota = {};
-    for (const m of ms) {
-      const share = {}; if (m === m0) for (const f of ['AZ', 'MAC', 'AL', 'STS']) { let a = 0, z = 0; for (const k in DP) { const [, d] = k.split('|'); if (d.slice(0, 7) !== m || DP[k].g !== f) continue; a += DP[k].t; if (d > asOf) z += DP[k].t; } share[f] = a ? z / a : 0; }
-      for (const x of R) { if (!L[m] || !L[m][x.r] || !L[m][x.r].in) continue; const f = famOf(x); if (!f) continue; const k = `${m}|${LGRP(x.lab)}|${f}`; quota[k] = (quota[k] || 0) + L[m][x.r].p * (m === m0 ? share[f] : 1); }
-    }
-    // 2. 일감: 주문(생산 필요일이 든 달 — 지난 납기는 이번 달) + 그 달 생산량 중 주문이 없는 양(과거 출고 반순 분포)
-    const items = [];
+  /* ---- 사양 톤파워(MES 26.1~ 코일 실적표, tools/cg_rate_learn 과 같은 찾기: 라인|강종|두께칸|폭칸 → 넓혀 가며) ---- */
+  const bis = (arr, v) => { let i = 0; while (i < arr.length && v >= arr[i]) i++; return i; };
+  PS.tph = (l, fam, thk, wdt) => {
+    const T = B.rateTab; if (!T) return null; const f = fam === 'STS' ? 'AL' : fam, R = T.rate;
+    if (!thk) return (T.avg || {})[l] * 60 * ((B.opf || {})[l] || 0.95);
+    const t = bis(T.thk, +thk), ks = [...(wdt ? [`${l}|${f}|${t}|${bis(T.wdt, +wdt)}`] : []), `${l}|${f}|${t}`, `${l}|${t}`, l];
+    const f0 = (B.opf || {})[l] || 0.95;
+    for (const k of ks) if (R[k]) return R[k] * 60 * f0;
+    return (T.avg || {})[l] * 60 * f0;
+  };
+  PS.band = (t) => (t < 0.4 ? '극박' : t < 0.6 ? '박물' : t < 1.0 ? '중물' : '후물');
+  PS.BANDS = ['극박', '박물', '중물', '후물'];
+  /* ---- 일감: 주문(결정 D|월|계약 = in·next·stock·d:날짜 반영) + 그룹 생산량 중 주문 없는 양(같은 그룹·강종 주문의 사양 믹스, 과거 출고 반순) ---- */
+  const famOfRow = (x) => { const sec = B.ledger.rows.find((y) => y.r === x.sec); return sec && ['MAC', 'AZ', 'AL'].includes(sec.name) ? (/STS/.test(x.lab) ? 'STS' : sec.name) : null; };
+  PS.famOfRow = famOfRow; PS.grpOfRow = (x) => LGRP(x.lab);
+  PS.items = (L) => {
+    const l0 = L || PS.ledger(), R = B.ledger.rows, asOf = String(B.actualAsOf || B.ordersAsOf || '').slice(0, 10) || B.months[0] + '-01', m0 = asOf.slice(0, 7), cut = PS.prevM(m0) + '-01';
+    const ms = B.months.filter((m) => m >= m0), need = (o) => o[13] || (o[6] ? PS.addD(o[6], -3) : asOf), nextM = (m) => { const i = B.months.indexOf(m); return B.months[i + 1] || m; };
+    const quota = {}; for (const m of ms) for (const x of R) { if (!l0[m] || !l0[m][x.r] || !l0[m][x.r].in) continue; const f = famOfRow(x); if (!f) continue; const k = `${m}|${LGRP(x.lab)}|${f}`; quota[k] = (quota[k] || 0) + l0[m][x.r].p; }
+    const items = [], stale = [], stockUse = {}, mixSrc = {};
     for (const o of B.orders) {
       const nd = need(o); if (nd < cut) { stale.push(o); continue; }
       const g = GRPN(o[3]), f = o[10] === 'GAS' ? 'STS' : o[2], exp = o[14] === '출항', port = (String(o[15] || '').split('_')[1] || o[9] || '').replace(/\s+/g, ' ').trim();
-      items.push({ k: 'o', m: nd.slice(0, 7) < m0 ? m0 : nd.slice(0, 7), con: o[0], line: o[1] === '1CGL' || o[1] === '2CGL' ? o[1] : '', fam: f, grp: g, t: o[4], left: o[4], need: nd, ready: o[12] && o[12] > asOf ? o[12] : '',
-        who: exp ? port.replace(/\s*\d순$/, '') : g === '자가재' ? '컬러 투입' : (o[18] || o[9] || ''), why: exp ? `${port} 배${o[16] ? ` 입항 ${PS.md(o[16])}(${PS.banLab(o[16])})` : ''}${o[17] ? ` · 출항 ${PS.md(o[17])}` : ''}` : g === '자가재' ? `컬러 라인 투입 ${o[6] ? PS.md(o[6]) : ''}` : `납기 ${o[6] ? PS.md(o[6]) : '없음'}` });
+      let m = nd.slice(0, 7) < m0 ? m0 : nd.slice(0, 7); const dec = PS.get(`D|${o[0]}`, null); let pin = '', must = false;
+      if (dec === 'stock') { const k = `${m}|${g}|${f}`; stockUse[k] = (stockUse[k] || 0) + o[4]; continue; }
+      if (dec === 'next') m = nextM(m); else if (dec === 'in') must = true; else if (dec && dec.startsWith('d:')) { pin = dec.slice(2); m = pin.slice(0, 7); must = true; }
+      const thk = +o[20] || 0, wdt = +o[21] || 0;
+      const it = { k: 'o', m, con: o[0], line: o[1] === '1CGL' || o[1] === '2CGL' ? o[1] : '', fam: f, grp: g, t: o[4], left: o[4], need: nd, ready: o[12] && o[12] > asOf ? o[12] : '', eta: o[12] || '', readyNote: o[19] || '', thk, wdt, cot: o[22] || '', aft: o[23] || '', gr: o[24] || '', dec, pin, must,
+        cus: o[18] || o[9] || '', dst: o[9] || '', man: o[8] || '', due: o[6] || '',
+        who: exp ? port.replace(/\s*\d순$/, '') : g === '자가재' ? '컬러 투입' : (o[18] || o[9] || ''), why: exp ? `${port} 배${o[16] ? ` 입항 ${PS.md(o[16])}(${PS.banLab(o[16])})` : ''}${o[17] ? ` · 출항 ${PS.md(o[17])}` : ''}` : g === '자가재' ? `컬러 라인 투입 ${o[6] ? PS.md(o[6]) : ''}` : `납기 ${o[6] ? PS.md(o[6]) : '없음'}` };
+      items.push(it);
+      if (thk) { const mk = `${g}|${f}`, b = PS.band(thk); ((mixSrc[mk] = mixSrc[mk] || {})[b] = mixSrc[mk][b] || { t: 0, tk: 0, w: {} }); const z = mixSrc[mk][b]; z.t += o[4]; z.tk += thk * o[4]; z.w[wdt] = (z.w[wdt] || 0) + o[4]; }
     }
     const om = {}; for (const it of items) { const k = `${it.m}|${it.grp}|${it.fam}`; om[k] = (om[k] || 0) + it.t; }
     for (const [k, q] of Object.entries(quota)) {
-      const [m, g, fam] = k.split('|'), rest = q - (om[k] || 0); if (rest < 20) continue;
+      const [m, g, fam] = k.split('|'), rest = q - (om[k] || 0) - (stockUse[k] || 0); if (rest < 20) continue;
       const prof = (B.shipProfile || {})[PROFK[g]], D = PS.days(m).filter((d) => m !== m0 || d > asOf), lead = g === '도금수출' ? 7 : g === '자가재' ? 2 : 3;
       const bw = BAN.map(([a, b]) => D.filter((d) => +d.slice(8) >= a && +d.slice(8) <= b).reduce((s, d) => s + (prof ? prof[+d.slice(8)] || 0 : 1), 0)), ws = bw.reduce((a, b) => a + b, 0) || 1;
       const top = BAN.map((_, i) => [i, bw[i] / ws]).sort((a, b) => b[1] - a[1]).slice(0, 2);
-      BAN.forEach(([a, b], i) => { const t = Math.round(rest * bw[i] / ws); if (t < 5) return; const end = `${m}-${String(Math.min(b, PS.days(m).length)).padStart(2, '0')}`;
-        items.push({ k: 'p', m, grp: g, fam, line: '', t, left: t, need: PS.addD(end, -lead), ready: '', who: '판매계획', why: `${PS.mLab(m)} ${i + 1}반순 출고분(아직 주문 없음)${prof ? ` · ${g} 과거 출고 ${top.map(([j, r]) => `${j + 1}반순 ${Math.round(r * 100)}%`).join('·')}` : ''}` }); });
+      const mix = mixSrc[`${g}|${fam}`] || mixSrc[Object.keys(mixSrc).find((z) => z.endsWith('|' + fam))] || {}, mt = Object.values(mix).reduce((a, z) => a + z.t, 0);
+      const parts = mt ? PS.BANDS.filter((b) => mix[b]).map((b) => ({ b, r: mix[b].t / mt, thk: Math.round(mix[b].tk / mix[b].t * 100) / 100, wdt: +Object.entries(mix[b].w).sort((x, y) => y[1] - x[1])[0][0] })) : [{ b: '', r: 1, thk: 0, wdt: 0 }];
+      BAN.forEach(([a, b], i) => { const tb = rest * bw[i] / ws; if (tb < 5) return; const end = `${m}-${String(Math.min(b, PS.days(m).length)).padStart(2, '0')}`;
+        for (const p of parts) { const t = Math.round(tb * p.r); if (t < 3) continue;
+          items.push({ k: 'p', m, grp: g, fam, line: '', t, left: t, need: PS.addD(end, -lead), ready: '', thk: p.thk, wdt: p.wdt, band: p.b, who: '판매계획', why: `${PS.mLab(m)} ${i + 1}반순 출고분(아직 주문 없음, ${p.b ? `${p.b} ${p.thk}×${p.wdt} 추정` : '사양 모름'})${prof ? ` · ${g} 과거 출고 ${top.map(([j, r]) => `${j + 1}반순 ${Math.round(r * 100)}%`).join('·')}` : ''}` }); } });
     }
-    items.sort((a, b) => (a.need < b.need ? -1 : a.need > b.need ? 1 : a.k === 'o' ? -1 : 1));
-    // 3. 날마다: 그 강종·라인 일감을 생산 필요일 이른 순으로, 그 달 그룹 생산량 안에서
+    items.sort((a, b) => (a.must !== b.must ? (a.must ? -1 : 1) : a.need < b.need ? -1 : a.need > b.need ? 1 : a.k === 'o' ? -1 : 1));
+    return { items, quota, om, stockUse, stale, asOf, m0, cut, mixSrc };
+  };
+  /* 사양 믹스로 낸 하루 톤 = 24 × Σ톤 ÷ Σ(톤 ÷ 그 사양 시간당 톤) — 그 달 그 라인에 들어갈 수 있는 일감 전부로 */
+  PS.mixRates = (IT) => {
+    const out = {};
+    for (const it of IT.items) for (const l of Object.keys(PS.LINES)) {
+      if (it.line && it.line !== l) continue; const g = it.fam; if (!(PS.LINES[l].includes(g) || (g === 'STS' && l === '2CGL'))) continue;
+      const tp = PS.tph(l, g, it.thk, it.wdt); if (!tp) continue; const k = `${it.m}|${l}|${g}`; (out[k] = out[k] || { t: 0, h: 0 }); out[k].t += it.t; out[k].h += it.t / tp;
+    }
+    const r = {}; for (const [k, v] of Object.entries(out)) if (v.h > 0) r[k] = Math.round(24 * v.t / v.h); return r;
+  };
+  PS.assign = (P, IT0) => {
+    const pl = P || PS.plating(), IT = IT0 || PS.items(), DP = PS.dayPlan(pl), { asOf, m0 } = IT, items = IT.items.map((x) => ({ ...x, left: x.t }));
+    const quota = Object.assign({}, IT.quota);
+    for (const k of Object.keys(quota)) if (k.startsWith(m0 + '|')) { const f = k.split('|')[2]; let a = 0, z = 0; for (const kk in DP) { const [, d] = kk.split('|'); if (d.slice(0, 7) !== m0 || DP[kk].g !== f) continue; a += DP[kk].t; if (d > asOf) z += DP[kk].t; } quota[k] *= a ? z / a : 0; }
     const qLeft = Object.assign({}, quota), out = {};
     const days = [...new Set(Object.keys(DP).map((k) => k.split('|')[1]))].filter((d) => d > asOf).sort();
     for (const d of days) for (const l of Object.keys(PS.LINES)) {
       const x = DP[`${l}|${d}`]; if (!x || !x.t || !x.g) continue;
-      const m = d.slice(0, 7); let cap = x.t; const got = [];
-      for (const it of items) {
-        if (cap <= 0) break;
+      const m = d.slice(0, 7), r0 = PS.rate(m, l, x.g === 'STS' ? 'AL' : x.g), capH = x.t / (x.g === 'STS' ? PS.stsRate(m) : r0) * 24; let h = capH; const got = [];
+      for (const pass of [0, 1]) for (const it of items) {
+        if (h <= 0.01) break;
         if (it.left <= 0 || it.m !== m || it.fam !== x.g || (it.line && it.line !== l) || (it.ready && it.ready > d)) continue;
-        const qk = `${m}|${it.grp}|${it.fam}`, ql = qLeft[qk] || 0; if (ql <= 0) continue;
-        const t = Math.min(cap, it.left, ql); it.left -= t; cap -= t; qLeft[qk] = ql - t; got.push({ it, t, late: it.k === 'o' && it.need < d ? Math.round((new Date(d) - new Date(it.need)) / 864e5) : 0 });
+        if (pass === 0 ? !(it.pin === d) : (it.pin && it.pin !== d)) continue;
+        const qk = `${m}|${it.grp}|${it.fam}`, ql = it.must ? Infinity : qLeft[qk] || 0; if (ql <= 0) continue;
+        const tp = PS.tph(l, it.fam, it.thk, it.wdt) || r0 / 24, t = Math.min(h * tp, it.left, ql); if (t < 0.5) continue;
+        it.left -= t; h -= t / tp; if (!it.must) qLeft[qk] = ql - t; got.push({ it, t, h: t / tp, tp, late: it.k === 'o' && it.need < d ? Math.round((new Date(d) - new Date(it.need)) / 864e5) : 0 });
       }
-      out[`${l}|${d}`] = { g: x.g, t: x.t, got, stock: Math.round(cap) };
+      got.sort((a, b) => (b.it.wdt || 0) - (a.it.wdt || 0) || (a.it.thk || 0) - (b.it.thk || 0));   // 그 날 안: 폭 넓은 것부터, 같은 폭은 얇은 것부터(작업 순서 규칙의 기본 방향)
+      out[`${l}|${d}`] = { g: x.g, plan: x.t, capH, got, tons: Math.round(got.reduce((a, y) => a + y.t, 0)), freeH: Math.max(0, h), ev: x.ev };
     }
     const over = {}; for (const it of items) if (it.k === 'o' && it.left > 1) { const k = `${it.m}|${it.grp}|${it.fam}`; over[k] = (over[k] || 0) + it.left; }
-    return { out, items, over, quota, qLeft, om, asOf, stale, cut };
+    return { out, items, over, quota, qLeft, om: IT.om, stockUse: IT.stockUse, asOf, stale: IT.stale, cut: IT.cut };
   };
   PS.monday = (d) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() - ((x.getUTCDay() + 6) % 7)); return x.toISOString().slice(0, 10); };
   PS.addD = (d, n) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };

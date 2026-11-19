@@ -91,6 +91,50 @@
   }
   const B0 = () => PS.base();
 
+  /* ---------- 주문 맞추기(docs/43 M1·M2) — 그룹×강종: 생산(원장) vs 이 달 생산 필요 주문, 주문마다 사양·가동시간·소재·같은 사양 재고, 사람이 이번 달/재고/다음 달 결정 ---------- */
+  function fit(B) {
+    const L = PS.ledger(), IT = PS.items(L), ms = B.months.filter((x) => x >= IT.m0); if (!ms.includes(st.m)) st.m = ms[1] || ms[0];
+    const m = st.m, R = B.ledger.rows, FN = (f) => (f === 'STS' ? 'AL-STS' : f);
+    const lineOf = (it) => it.line || (it.fam === 'AZ' ? '1CGL' : '2CGL');
+    const lots = ((B.stockLots || {}).rows) || [];
+    const stockFor = (it) => { let ex = 0, nr = 0; for (const [g, f, th, wd, , , t] of lots) { if (g !== it.grp || f !== it.fam || !it.thk) continue; const dt = Math.abs(th - it.thk), dw = Math.abs(wd - it.wdt); if (dt <= 0.005 && dw <= 5) ex += t; else if (dt <= 0.05 && dw <= 50) nr += t; } return { ex, nr }; };
+    // 그룹×강종 묶음
+    const G = {};
+    for (const [k, q] of Object.entries(IT.quota)) if (k.startsWith(m + '|')) { const [, g, f] = k.split('|'); (G[`${g}|${f}`] = G[`${g}|${f}`] || { g, f, q: 0, its: [], stock: 0 }).q += q; }
+    for (const it of IT.items) if (it.m === m && it.k === 'o') { const k = `${it.grp}|${it.fam}`; (G[k] = G[k] || { g: it.grp, f: it.fam, q: 0, its: [], stock: 0 }).its.push(it); }
+    for (const [k, v] of Object.entries(IT.stockUse)) if (k.startsWith(m + '|')) { const [, g, f] = k.split('|'); if (G[`${g}|${f}`]) G[`${g}|${f}`].stock += v; }
+    // 다음 달로 넘긴 것(이 달 생산 필요였는데 'next')
+    const pushed = {}; for (const o of B.orders) { const d = PS.get(`D|${o[0]}`, null); if (d !== 'next') continue; const it = IT.items.find((x) => x.con === o[0]); if (it && PS.prevM(it.m) === m) { const k = `${it.grp}|${it.fam}`; pushed[k] = (pushed[k] || 0) + it.t; } }
+    for (const v of Object.values(G)) { v.its.sort((a, b) => (a.must !== b.must ? (a.must ? -1 : 1) : a.need < b.need ? -1 : 1)); let c = 0; for (const it of v.its) { if (it.must) { it.auto = '이번 달(결정)'; c += it.t; continue; } c += it.t; it.auto = c <= v.q + 0.5 ? '이번 달' : '넘침'; } v.ord = v.its.reduce((a, it) => a + it.t, 0); v.over = Math.max(0, v.ord - v.q); v.gap = Math.max(0, v.q - v.ord); }
+    const keys = Object.keys(G).filter((k) => G[k].q > 0 || G[k].ord > 0).sort((a, b) => (G[b].over - G[a].over) || (G[b].gap - G[a].gap));
+    if (!keys.includes(st.fk)) st.fk = keys[0];
+    const sumRows = keys.map((k) => { const v = G[k]; return `<tr class="${k === st.fk ? 'on' : ''}" data-fk="${esc(k)}"><td><b>${esc(v.g)}</b></td><td><span class="sq ${v.f.toLowerCase()}">${FN(v.f)}</span></td><td>${n0(v.q)}</td><td>${n0(v.ord)}</td><td class="${v.over > 30 ? 'dn' : ''}">${v.over > 30 ? '+' + n0(v.over) : ''}</td><td class="${v.gap > 30 ? 'warn' : ''}">${v.gap > 30 ? n0(v.gap) : ''}</td><td>${v.stock ? n0(v.stock) : ''}</td><td>${pushed[k] ? n0(pushed[k]) : ''}</td><td>${v.over > 30 ? '<b class="dn">뺄 것 고르기</b>' : v.gap > 30 ? '<b class="warn">주문 받아야</b>' : '맞음'}</td></tr>`; }).join('');
+    const v = G[st.fk] || { its: [], q: 0, ord: 0, g: '', f: 'AL' };
+    const bandSum = (its, pick) => { const b = {}; for (const it of its.filter(pick)) { const k = it.thk ? PS.band(it.thk) : '사양 모름', tp = PS.tph(lineOf(it), it.fam, it.thk, it.wdt) || 30; (b[k] = b[k] || { t: 0, h: 0 }); b[k].t += it.t; b[k].h += it.t / tp; } return [...PS.BANDS, '사양 모름'].filter((k) => b[k]).map((k) => `${k} ${n0(b[k].t)}t(${(b[k].h / 24).toFixed(1)}일)`).join(' · '); };
+    const rows = v.its.map((it, i) => { const sk = stockFor(it), tp = PS.tph(lineOf(it), it.fam, it.thk, it.wdt) || 30;
+      return `<tr class="${it.auto === '넘침' && !it.dec ? 'over' : ''}"><td>${i + 1}</td><td>${esc(it.con)}</td><td>${esc(it.who === '컬러 투입' ? it.cus : it.who)}</td><td>${it.thk ? `${it.thk}×${it.wdt}` : ''}<br><small>${it.thk ? PS.band(it.thk) : ''}</small></td><td>${esc([it.cot, it.aft].filter(Boolean).join(' · '))}</td><td>${n0(it.t)}</td><td>${(it.t / tp).toFixed(1)}h<br><small>${Math.round(tp)}t/h</small></td><td class="wrap">${md(it.need)}까지 · ${esc(it.why)}</td><td>${it.ready ? `입고 예정 ${md(it.ready)}` : it.eta ? `입고 ${md(it.eta)}` : '<span class="ps-note">정보 없음</span>'}</td><td>${sk.ex ? `<b>같은 사양 ${n0(sk.ex)}t</b>` : ''}${sk.nr ? `${sk.ex ? '<br>' : ''}비슷(두께±0.05·폭±50) ${n0(sk.nr)}t` : ''}</td><td><b class="${it.auto === '넘침' ? 'dn' : ''}">${it.auto}</b></td>
+        <td><select class="decs" data-con="${esc(it.con)}">${[['', '자동'], ['in', '이번 달 꼭'], ['stock', '재고로 충당'], ['next', '다음 달로']].map(([x, t]) => `<option value="${x}"${(it.dec || '') === x ? ' selected' : ''}>${t}</option>`).join('')}</select></td></tr>`; }).join('');
+    const ph = IT.items.filter((it) => it.k === 'p' && it.m === m && `${it.grp}|${it.fam}` === st.fk);
+    const phTxt = ph.length ? (() => { const bb = {}; for (const it of ph) { const k = it.why.match(/(\d)반순/)[1]; (bb[k] = bb[k] || { t: 0, need: it.need, sp: [] }).t += it.t; if (it.band) bb[k].sp.push(`${it.band} ${it.thk}×${it.wdt}`); } return Object.entries(bb).map(([k, z]) => `<li>${k}반순 ${n0(z.t)}t · 보통 사양 ${[...new Set(z.sp)].slice(0, 2).join(', ')} · 생산 필요 ${md(z.need)} → <b>주문 마감(소재 리드 약 35일) ${md(PS.addD(z.need, -35))}</b></li>`).join(''); })() : '';
+    const leaf = R.filter((x) => L[m] && L[m][x.r] && L[m][x.r].in && PS.famOfRow(x) === v.f && PS.grpOfRow(x) === v.g).sort((a, b) => L[m][b.r].p - L[m][a.r].p)[0];
+    const decT = (d) => v.its.filter((it) => it.dec === d).reduce((a, it) => a + it.t, 0);
+    $('ct-main').innerHTML = `${PSG.bar()}
+      <section class="card"><h2>${mL(m)} 주문 맞추기 <small>그룹×강종: 생산(생산 결정) vs 생산 필요일이 이 달인 미생산 주문(${esc(B.ordersAsOf)}, 밀린 것 포함). 넘치면 무엇을 뺄지, 비면 무엇을 받을지</small>
+        <span class="seg">${ms.map((x) => `<button type="button" data-m="${x}" aria-pressed="${x === m}">${mL(x)}</button>`).join('')}</span></h2>
+        <div class="psg-w"><table class="psg fitS"><thead><tr><th>그룹</th><th>강종</th><th>생산</th><th>주문</th><th>넘침</th><th>빈 양</th><th>재고로</th><th>다음 달로</th><th>할 일</th></tr></thead><tbody>${sumRows}</tbody></table></div></section>
+      <section class="card"><h2>${esc(v.g)} ${FN(v.f)} · 생산 ${n0(v.q)}t · 주문 ${n0(v.ord)}t ${v.over > 30 ? `<b class="dn">넘침 ${n0(v.over)}t</b>` : v.gap > 30 ? `<b class="warn">빈 양 ${n0(v.gap)}t</b>` : ''}</h2>
+        <ul class="ps-chk"><li>주문 사양: ${bandSum(v.its, () => true) || '없음'}</li><li>이 중 자동 이번 달: ${bandSum(v.its, (it) => it.auto !== '넘침') || '없음'}</li>
+          ${v.over > 30 ? `<li class="bad">넘친 ${n0(v.over)}t: ① 같은 사양 재고가 있는 주문은 '재고로 충당' ② 필요일이 늦거나 소재가 월말 입고인 주문은 '다음 달로' ③ 꼭 이번 달이면 '이번 달 꼭' 후 아래 [생산량 맞춤] (그만큼 다른 그룹·강종을 줄여야 하는지는 생산 결정 화면 위 카드)</li>` : ''}</ul>
+        <div class="ps-ctl">${leaf && v.over > 30 ? `<button type="button" class="btn" id="fit-up">생산량을 주문에 맞춤: ${esc(leaf.lab)} 생산 +${n0(v.over)}t</button>` : ''}${leaf && decT('stock') ? `<button type="button" class="btn sub" id="fit-st">재고로 충당 ${n0(decT('stock'))}t → ${esc(leaf.lab)} 재고 출하에 반영(생산 −${n0(decT('stock'))}t)</button>` : ''}</div>
+        <div class="psg-w"><table class="psg why fit"><thead><tr><th>순서</th><th>계약번호</th><th>고객·목적지</th><th>사이즈</th><th>도금량·후처리</th><th>톤</th><th>가동</th><th>생산 필요일 · 이유</th><th>소재</th><th>같은 사양 재고<br><small>${esc((B.stockLots || {}).month || '')} 말</small></th><th>자동 판정</th><th>결정</th></tr></thead><tbody>${rows || '<tr><td colspan="12">이 달 생산 필요 주문 없음</td></tr>'}</tbody></table></div>
+        ${phTxt ? `<h3 class="fh">아직 주문이 없는 생산량(빈 양) — 그룹에 요청할 것</h3><ul class="ps-chk">${phTxt}</ul>` : ''}</section>`;
+    document.querySelectorAll('[data-m]').forEach((b) => b.addEventListener('click', () => { st.m = b.dataset.m; keep(); draw(); }));
+    document.querySelectorAll('tr[data-fk]').forEach((r) => r.addEventListener('click', () => { st.fk = r.dataset.fk; keep(); draw(); }));
+    document.querySelectorAll('select.decs').forEach((b) => b.addEventListener('change', () => PS.set(`D|${b.dataset.con}`, b.value || null, `주문 결정: ${b.selectedOptions[0].textContent}`)));
+    if ($('fit-up')) $('fit-up').onclick = () => PS.set(`L|${leaf.r}|${m}|p`, L[m][leaf.r].p + Math.round(v.over), `주문 맞추기: ${v.g} ${FN(v.f)} 생산을 주문에 맞춤`);
+    if ($('fit-st')) $('fit-st').onclick = () => PS.set(`L|${leaf.r}|${m}|p`, L[m][leaf.r].p - Math.round(decT('stock')), `주문 맞추기: ${v.g} ${FN(v.f)} 재고 충당분만큼 생산 줄임`);
+  }
+
   /* ---------- 원장 ---------- */
   function ledger(B) {
     const ms = B.months, i0 = Math.max(0, ms.indexOf(st.m0 || ms[1])), M = ms.slice(i0, i0 + 4), L = PS.ledger();
@@ -160,19 +204,33 @@
     const top = (got, n) => { const g = {}; for (const y of got) { const k = `${y.it.grp}|${y.it.who}`; (g[k] = g[k] || { grp: y.it.grp, who: y.it.who, t: 0, why: y.it.why, need: y.it.need, late: 0, plan: y.it.k === 'p' }); g[k].t += y.t; g[k].late = Math.max(g[k].late, y.late); if (y.it.need < g[k].need) { g[k].need = y.it.need; g[k].why = y.it.why; } }
       return Object.values(g).sort((a, b) => b.t - a.t).slice(0, n); };
     const ent = (e) => `<div class="wy${e.late ? ' late' : ''}${e.plan ? ' pl' : ''}"><b>${esc(e.grp)} ${esc(e.who === '판매계획' ? '판매계획(주문 전)' : e.who)} ${n0(e.t)}t</b> <span>${esc(e.why)} · ${md(e.need)}까지 생산${e.late ? ` · <em>${e.late}일 늦음</em>` : ''}</span></div>`;
+    const bandTxt = (got) => { const b = {}; for (const y of got) { const k = y.it.thk ? PS.band(y.it.thk) : '사양 모름'; b[k] = (b[k] || 0) + y.t; } return [...PS.BANDS, '사양 모름'].filter((k) => b[k] > 1).map((k) => `${k} ${n0(b[k])}`).join(' · '); };
     const runRows = [];
     for (const l of Object.keys(PS.LINES)) {
       let cur = null; const rs = [];
-      for (const x of Pm[l].days) { const g = x.sts ? 'STS' : x.g; if (!g || !x.t) { cur = null; continue; } if (!cur || cur.g !== g) { cur = { l, g, a: x.d, b: x.d, got: [], t: 0, stock: 0 }; rs.push(cur); } cur.b = x.d; const A = AS.out[`${l}|${x.d}`]; if (A) { cur.got.push(...A.got); cur.stock += A.stock; } cur.t += x.t; }
+      for (const x of Pm[l].days) { const g = x.sts ? 'STS' : x.g; if (!g || !x.t) { cur = null; continue; } if (!cur || cur.g !== g) { cur = { l, g, a: x.d, b: x.d, got: [], t: 0, free: 0, tons: 0 }; rs.push(cur); } cur.b = x.d; const A = AS.out[`${l}|${x.d}`]; if (A) { cur.got.push(...A.got); cur.free += A.freeH; cur.tons += A.tons; } cur.t += x.t; }
       runRows.push(...rs);
     }
     const whyRun = runRows.map((r) => { const T = top(r.got, 4), late = r.got.reduce((a, y) => a + (y.late ? y.t : 0), 0), urgent = r.got.filter((y) => y.it.k === 'o').sort((a, b) => (a.it.need < b.it.need ? -1 : 1))[0];
-      return `<tr><td><b>${r.l}</b></td><td><span class="sq ${r.g.toLowerCase()}">${r.g === 'STS' ? 'AL-STS' : r.g}</span></td><td>${md(r.a)}~${md(r.b)}</td><td>${n0(r.t)}</td>
+      return `<tr><td><b>${r.l}</b></td><td><span class="sq ${r.g.toLowerCase()}">${r.g === 'STS' ? 'AL-STS' : r.g}</span></td><td>${md(r.a)}~${md(r.b)}</td><td>${n0(r.tons || r.t)}${r.tons && Math.abs(r.tons - r.t) > 30 ? `<br><small>하루 톤 기준 ${n0(r.t)}</small>` : ''}<br><small>${bandTxt(r.got)}</small></td>
         <td class="wrap">${T.map(ent).join('') || '<span class="ps-note">이 기간 넣을 주문·판매계획 없음</span>'}</td>
-        <td class="wrap">${urgent ? `가장 급한 것: ${esc(urgent.it.grp)} ${urgent.it.who === '컬러 투입' || /배 입항/.test(urgent.it.why) ? '' : esc(urgent.it.who) + ' '}${esc(urgent.it.why)}, ${md(urgent.it.need)}까지 생산` : ''}${late ? `<br><em class="dn">늦게 만드는 양 ${n0(late)}t</em>` : ''}${r.stock > 1 ? `<br>주문·판매계획 없이 재고로 ${n0(r.stock)}t` : ''}</td></tr>`; }).join('');
-    const dayRows = D.map((d) => `<tr${[0, 6].includes(wk(d)) ? ' class="we"' : ''}><td><b>${dl(d)}</b></td>${Object.keys(PS.LINES).map((l) => { const x = Pm[l].days.find((y) => y.d === d), A = AS.out[`${l}|${d}`];
-      if (!x || !x.t) return `<td>${x && x.ev ? esc(x.ev) : '휴지'}</td><td></td>`;
-      return `<td><span class="sq ${(x.sts ? 'sts' : x.g.toLowerCase())}">${x.sts ? 'AL-STS' : x.g}</span> ${n0(x.t)}t${x.ev ? ` <b class="sw">${x.ev}</b>` : ''}</td><td class="wrap">${A ? top(A.got, 3).map(ent).join('') + (A.stock > 1 ? `<div class="wy pl">재고로 ${n0(A.stock)}t</div>` : '') : '<span class="ps-note">지난 날(실적)</span>'}</td>`; }).join('')}</tr>`).join('');
+        <td class="wrap">${urgent ? `가장 급한 것: ${esc(urgent.it.grp)} ${urgent.it.who === '컬러 투입' || /배 입항/.test(urgent.it.why) ? '' : esc(urgent.it.who) + ' '}${esc(urgent.it.why)}, ${md(urgent.it.need)}까지 생산` : ''}${late ? `<br><em class="dn">늦게 만드는 양 ${n0(late)}t</em>` : ''}${r.free > 0.5 ? `<br>남는 시간 ${r.free.toFixed(1)}시간(넣을 주문·판매계획 없음 → 박물을 넣거나 재고 생산)` : ''}</td></tr>`; }).join('');
+    const sel = st.day && st.day.startsWith(m) ? st.day : (D.find((d) => d > AS.asOf) || D[0]);
+    const short = (it) => (it.k === 'p' ? `${it.grp} 계획분` : `${it.grp === '도금수출' ? '수출' : it.grp === '도금국내' ? '국내' : it.grp} ${it.who}`);
+    const cellLine = (l, d) => { const x = Pm[l].days.find((y) => y.d === d), A = AS.out[`${l}|${d}`];
+      if (!x || !x.t) return `<div class="cl off">${l.slice(0, 1)} ${x && x.ev ? esc(x.ev) : '휴지'}</div>`;
+      const g = x.sts ? 'STS' : x.g, T = A && A.got.length ? A.got.slice().sort((a, b) => b.t - a.t)[0] : null, late = A ? A.got.some((y) => y.late) : false;
+      return `<div class="cl"><span class="sq ${g.toLowerCase()}">${l.slice(0, 1)} ${g}</span> <b>${n0(A ? A.tons : x.t)}</b>${x.ev ? ` <i>${x.ev}</i>` : ''}${late ? ' <em>늦음</em>' : ''}<br><span>${T ? esc(short(T.it)) : A ? '' : '실적'}</span></div>`; };
+    const lead0 = (new Date(D[0] + 'T00:00:00Z').getUTCDay() + 6) % 7, cells = [...Array(lead0).fill(''), ...D]; while (cells.length % 7) cells.push('');
+    const calHtml = `<div class="ps-cal">${'월화수목금토일'.split('').map((w, i) => `<div class="hd${i > 4 ? ' we' : ''}">${w}</div>`).join('')}${cells.map((d) => (d ? `<button type="button" class="cd${d === sel ? ' on' : ''}${[0, 6].includes(wk(d)) ? ' we' : ''}${d <= AS.asOf ? ' past' : ''}" data-day="${d}"><div class="dn">${+d.slice(8)}</div>${Object.keys(PS.LINES).map((l) => cellLine(l, d)).join('')}</button>` : '<div class="cd empty"></div>')).join('')}</div>`;
+    const decBtn = (it) => (it.k !== 'o' ? '<span class="ps-note">주문 전</span>' : `<select class="decs" data-con="${esc(it.con)}">${[['', '자동(필요일 순)'], ['in', '이번 달 꼭'], ['stock', '재고로 충당'], ['next', '다음 달로'], [`d:${sel}`, `${md(sel)} 고정`]].map(([v, t]) => `<option value="${v}"${(it.dec || '') === v || (v.startsWith('d:') && (it.dec || '').startsWith('d:')) ? ' selected' : ''}>${t}</option>`).join('')}</select>`);
+    const panel = Object.keys(PS.LINES).map((l) => { const x = Pm[l].days.find((y) => y.d === sel), A = AS.out[`${l}|${sel}`];
+      if (!x || !x.t) return `<h3>${l} · ${x && x.ev ? esc(x.ev) : '휴지'}</h3>`;
+      if (!A) return `<h3>${l} · ${x.sts ? 'AL-STS' : x.g} ${n0(x.t)}t</h3><p class="ps-note">지난 날 = 실적(MES)</p>`;
+      return `<h3>${l} · <span class="sq ${x.sts ? 'sts' : x.g.toLowerCase()}">${x.sts ? 'AL-STS' : x.g}</span> ${n0(A.tons)}t · ${A.got.length}건 · 가동 ${(A.capH - A.freeH).toFixed(1)}/${A.capH.toFixed(1)}시간${x.ev ? ` · ${x.ev}` : ''}${A.freeH > 0.5 ? ` · <em>남는 ${A.freeH.toFixed(1)}시간</em>` : ''}</h3>
+        <div class="psg-w"><table class="psg why day"><thead><tr><th>순서</th><th>계약번호</th><th>그룹 · 고객·목적지</th><th>사이즈</th><th>도금량·후처리</th><th>톤</th><th>시간</th><th>이유 · 생산 필요일</th><th>결정</th></tr></thead><tbody>
+        ${A.got.map((y, i) => `<tr${y.late ? ' class="late"' : ''}><td>${i + 1}</td><td>${y.it.k === 'o' ? esc(y.it.con) : '판매계획'}</td><td><b>${esc(y.it.grp)}</b> ${esc(y.it.k === 'o' ? (y.it.who === '컬러 투입' ? y.it.cus : y.it.who) : '')}</td><td>${y.it.thk ? `${y.it.thk}×${y.it.wdt}` : ''}<br><small>${y.it.thk ? PS.band(y.it.thk) : ''}</small></td><td>${esc([y.it.cot, y.it.aft].filter(Boolean).join(' · '))}</td><td>${n0(y.t)}</td><td>${y.h.toFixed(1)}<br><small>${Math.round(y.tp)}t/h</small></td><td class="wrap">${esc(y.it.why)} · ${md(y.it.need)}까지${y.late ? ` · <em>${y.late}일 늦음</em>` : ''}</td><td>${decBtn(y.it)}</td></tr>`).join('')}</tbody></table></div>`; }).join('');
+
     const staleT = AS.stale.reduce((a, o) => a + o[4], 0), ovm = Object.entries(AS.over).filter(([k, v]) => k.startsWith(m) && v > 30).sort((a, b) => b[1] - a[1]);
     $('ct-main').innerHTML = `${PSG.bar()}
       <section class="card"><h2>${mL(m)} 도금 월차 <small>목표 = 원장(생산 결정) · 전환 날짜·하루 톤은 고칠 수 있음</small>
@@ -187,12 +245,15 @@
         <div class="psg-w"><table class="psg why"><thead><tr><th>라인</th><th>강종</th><th>기간</th><th>톤</th><th>주로 만드는 것 · 이유</th><th>판단</th></tr></thead><tbody>${whyRun}</tbody></table></div>
         ${ovm.length ? `<ul class="ps-chk"><li class="bad">${mL(m)} 생산 계획(그룹별)보다 주문이 많아 못 넣은 것: ${ovm.map(([k, v]) => `${k.split('|')[1]} ${k.split('|')[2] === 'STS' ? 'AL-STS' : k.split('|')[2]} ${n0(v)}t`).join(' · ')}. 생산 결정에서 그 그룹 재고 출하를 늘리거나 생산을 늘릴 것</li></ul>` : ''}
         ${staleT ? `<p class="ps-note">${md(AS.cut)} 전에 필요했는데 아직 안 만든 주문 ${AS.stale.length}건 ${n0(staleT)}t 은 보류·취소일 수 있어 배정에서 뺌(수주 확인)</p>` : ''}</section>
-      <section class="card"><h2>${mL(m)} 날짜별로 무엇을 왜 <small>그 날 그 라인이 만드는 주문 상위 3개</small></h2>
-        <div class="psg-w"><table class="psg why day"><thead><tr><th>날짜</th>${Object.keys(PS.LINES).map((l) => `<th>${l}</th><th>${l} 만드는 것 · 이유</th>`).join('')}</tr></thead><tbody>${dayRows}</tbody></table></div></section>
+      <section class="card" id="ps-calcard"><h2>${mL(m)} 달력 <small>칸 = 라인별 강종·배정 톤·주된 그룹 · 누르면 아래에 그 날 주문(계약번호·사이즈·순서·이유). 순서 = 폭 넓은 것부터. 결정 버튼을 누르면 달력·생산량이 바로 다시 계산</small></h2>
+        ${calHtml}
+        <div class="ps-day" id="ps-day"><h2 class="dh">${dl(sel)} 생산</h2>${panel}</div></section>
       <section class="card"><h2>하루 톤 <small>판생 제원 작업일수(주문별 MES 톤파워)에서 낸 값 · 고치면 월차 다시 계산</small></h2>${PSG.table({ id: 'tr', head: [[...Object.entries(PS.LINES).flatMap(([l, gs]) => gs.map((g) => ({ v: `${l} ${g}` }))), { v: '2CGL AL-STS' }]], rows: rateRows })}</section>
       <section class="card"><h2>일별 가동계획 <small>판생 도금가동 양식 · 설비 정지가 생기면 전환·휴지 줄 그 날 칸을 두 번 눌러 휴지</small></h2>${PSG.table({ id: 'tp', cls: 'pl', head, rows })}</section>`;
     document.querySelectorAll('[data-m]').forEach((b) => b.addEventListener('click', () => { st.m = b.dataset.m; keep(); draw(); }));
     document.querySelectorAll('.ps-seq input[type=date]').forEach((inp) => inp.addEventListener('change', () => { const l = inp.dataset.l, cur = Pm[l].sw.slice(); cur[+inp.dataset.i] = inp.value; cur.sort(); PS.set(`P|${m}|${l}|sw`, cur.join(','), '전환 날짜'); }));
+    document.querySelectorAll('.ps-cal [data-day]').forEach((b) => b.addEventListener('click', () => { st.day = b.dataset.day; keep(); draw(); const p = $('ps-day'); if (p) p.scrollIntoView({ block: 'start', behavior: 'smooth' }); }));
+    document.querySelectorAll('select.decs').forEach((b) => b.addEventListener('change', () => PS.set(`D|${b.dataset.con}`, b.value || null, `주문 결정: ${b.selectedOptions[0].textContent}`)));
     if ($('ps-sts')) $('ps-sts').onchange = (e) => PS.set(`P|${m}|2CGL|stsA`, e.target.value || null, 'STS 시작일');
     if ($('ps-sts-auto')) $('ps-sts-auto').onclick = () => PS.set(`P|${m}|2CGL|stsA`, null, 'STS 자동으로');
     document.querySelectorAll('[data-auto]').forEach((b) => b.addEventListener('click', () => PS.set(`P|${m}|${b.dataset.auto}|sw`, null, '자동 전환으로')));
@@ -202,11 +263,11 @@
   /* ---------- 생산 가능(CAPA) ---------- */
   function capa(B) {
     const L = PS.ledger(), P = PS.plating(L), C = PS.capa(P), ms = Object.keys(P).sort();
-    const head = [[{ v: '라인' }, { v: '강종' }, { v: '주문 건수' }, { v: '미생산(t)' }, { v: '필요 일수' }, ...ms.flatMap((m) => [{ v: `${mL(m)} 가용일`, cls: 'mb' }, { v: `${mL(m)}까지` }]), { v: '주문으로 차는 곳' }, { v: '많은 판매그룹' }]];
+    const head = [[{ v: '라인' }, { v: '강종' }, { v: '주문 건수' }, { v: '미생산(t)' }, { v: '필요 일수' }, ...ms.flatMap((m) => [{ v: `${mL(m)} 가용일`, cls: 'mb' }, { v: `${mL(m)}까지` }]), { v: '주문으로 차는 곳' }, { v: '판매그룹별 미생산(전부)' }]];
     const rows = C.map((a) => ({ cells: [{ v: a.ln, t: 'lab' }, { v: a.fam, t: 'lab' }, { v: a.n }, { v: a.t }, { v: a.need, f: 'd1' },
       ...a.by.flatMap((x) => [{ v: x.av, f: 'd1', cls: 'mb' }, { v: x.cum, f: 'd1', cls: x.cum <= a.need ? 'up' : 'dn' }]),
       { v: a.ln === '공용' ? '1·2CGL 공용' : !a.by.some((x) => x.av) ? '월차에 이 강종 없음' : a.until ? `${mL(a.until)} 안` : '그 뒤까지' },
-      { v: Object.entries(a.grp).sort((x, y) => y[1] - x[1]).slice(0, 2).map(([g, t]) => `${g} ${n0(t)}`).join(' · ') }] }));
+      { v: Object.entries(a.grp).sort((x, y) => y[1] - x[1]).map(([g, t]) => `${g} ${n0(t)}`).join(' · '), cls: 'wrap' }] }));
     const tg = ms.map((m) => { const T = P[m].T; return { cells: [{ v: mL(m), t: 'lab' }, ...['AZ', 'MAC', 'AL'].flatMap((g) => { const l = g === 'AZ' ? ['1CGL'] : g === 'MAC' ? ['2CGL'] : ['1CGL', '2CGL']; const av = l.reduce((a, x) => a + PS.daysG(P[m][x].days, g), 0), made = l.reduce((a, x) => a + PS.sumG(P[m][x].days, g), 0); return [{ v: T[g], cls: 'mb' }, { v: av, f: 'd1' }, { v: made - T[g], f: 'sg', cls: made - T[g] < -1 ? 'dn' : '' }]; })] }; });
     $('ct-main').innerHTML = `${PSG.bar()}
       <section class="card"><h2>주문으로 어디까지 차 있나 <small>미생산 주문(${esc(B.ordersAsOf)}) × 주문별 MES 톤파워로 낸 필요 일수와 도금 월차 강종 가용일(누적) 비교 · 판생 '종합' 시트 방식</small></h2>
@@ -367,7 +428,7 @@
     $('ps-rs').onclick = async () => { const n = $('ps-rn').value.trim(); if (!n) { PSG.toast('회차 이름을 넣어 주세요'); return; } try { await PS.saveRev(n); PSG.toast('회차 저장함'); } catch (e) { PSG.toast('저장 실패 ' + e.message); } };
   }
 
-  const VIEWS = { psdecide: decide, psledger: ledger, psplating: plating, pscapa: capa, psmat: mat, pscolor: color, pslog: log, psweek: week, psflow: flow };
+  const VIEWS = { psfit: fit, psdecide: decide, psledger: ledger, psplating: plating, pscapa: capa, psmat: mat, pscolor: color, pslog: log, psweek: week, psflow: flow };
   function draw() {
     const B = PS.base(); if (!B) return;
     if (PAGE === 'psdecide') { PSG.onSet = (k, v, why) => decideSet([[k, v]], why); PSG.onSetMany = (pairs, why) => decideSet(pairs, why); PSG.valueOf = (k) => { if (k.startsWith('X|')) { const [, r, m] = k.split('|'), c = PS.ledger()[m][r]; return c.s - c.p; } return PS.inputValue(k); }; }
