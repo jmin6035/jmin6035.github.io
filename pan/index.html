@@ -4,25 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base href="../">
-<title>판생 작업장 · 오늘 할 일</title>
-<meta name="description" content="판생 작업장 · 오늘 할 일">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><rect width='40' height='40' rx='11' fill='%231f6f43'/></svg>">
-<link rel="stylesheet" href="ui/theme.css?v=2611190722">
-<link rel="stylesheet" href="preview/ps/ps.css?v=2611190722">
-<link rel="stylesheet" href="pan/pan.css?v=2611190722">
+<title>판생 관제실</title>
+<meta name="description" content="판생 관제실 · 바뀐 주문과 대안">
+<meta name="theme-color" content="#0b0f14">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><rect width='40' height='40' rx='11' fill='%230b0f14'/><circle cx='20' cy='20' r='8' fill='%23f5a524'/></svg>">
+<link rel="stylesheet" href="pan/room_font.css?v=2611191900">
+<link rel="stylesheet" href="pan/room.css?v=2611191900">
 </head>
-<body class="pan">
-<header class="pan-top"><b class="pan-t">판생 작업장</b><span class="pan-s" id="pan-s"></span><a class="pan-portal" href="index.html">가동포털</a></header>
-<div id="fx" class="pan-fx"><span class="fx-n">칸을 고르면</span><span class="fx-v"></span><span class="fx-f">값과 계산식이 여기에</span></div>
-<div id="shell" data-page="pstoday" hidden></div>
-<main class="pan-main"><div id="ct-main"></div></main>
-<nav class="pan-tabs"><a href="pan/index.html" class="on">오늘 할 일</a><a href="pan/orders.html" class="">주문 전체</a><a href="pan/decide.html" class="">생산 결정</a><a href="pan/fit.html" class="">주문 맞추기</a><a href="pan/plating.html" class="">도금 월차</a><a href="pan/mat.html" class="">소재</a><details class="pan-more"><summary>더보기</summary><div><a href="pan/week.html" class="">주간 조정</a><a href="pan/color.html" class="">컬러 월차</a><a href="pan/ledger.html" class="">판생 계획표</a><a href="pan/log.html" class="">이력·회차</a><a href="pan/flow.html" class="">일하는 순서</a></div></details></nav>
-<script src="engine/crypto.js?v=2611190722"></script>
-<script src="ui/ct.js?v=2611190722"></script>
-<script src="preview/ps/core.js?v=2611190722"></script>
-<script src="preview/ps/grid.js?v=2611190722"></script>
-<script src="preview/ps/xlsx.js?v=2611190722"></script>
-<script src="preview/ps/io.js?v=2611190722"></script>
-<script src="preview/ps/pages.js?v=2611190722"></script>
+<body class="room" data-theme="dark">
+<header class="rm-top"><b class="rm-t"><i aria-hidden="true"></i>판생 관제실</b><span id="r-at" class="rm-at"></span><div id="r-sum" class="rm-sum"></div>
+  <button type="button" class="rm-find" id="r-find">찾기 <kbd>Ctrl K</kbd></button>
+  <details class="rm-sh"><summary>시트</summary><div><a href="pan/orders.html">주문 전체</a><a href="pan/decide.html">생산 결정</a><a href="pan/fit.html">주문 맞추기</a><a href="pan/plating.html">도금 월차</a><a href="pan/mat.html">소재</a><a href="pan/week.html">주간 조정</a><a href="pan/color.html">컬러 월차</a><a href="pan/ledger.html">판생 계획표</a><a href="pan/log.html">이력·회차</a><a href="pan/flow.html">일하는 순서</a><a href="index.html">가동포털</a></div></details>
+  <button type="button" class="rm-th" id="r-th">밝게</button></header>
+<main id="ct-main"></main>
+<script src="engine/crypto.js?v=2611191900"></script>
+<script src="ui/ct.js?v=2611191900"></script>
+<script src="preview/ps/core.js?v=2611191900"></script>
+<script src="pan/lib/world.js?v=2611191900"></script>
+<script src="pan/lib/ports.js?v=2611191900"></script>
+<script src="pan/room.js?v=2611191900"></script>
 </body>
 </html>
