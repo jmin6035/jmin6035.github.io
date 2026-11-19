@@ -31,6 +31,7 @@
   PS.baseOver = () => OV;   // 시험 전 지금 판(비교용)
   PS.get = (k, dflt) => { const o = ov(); return k in o ? o[k] : dflt; };
   PS.isSet = (k) => k in ov();
+  PS.kv = (k, d) => { const o = ov(), key = `K|${k}`; return key in o ? o[key] : d; };   /* 기준값: 고친 값(K|…) > 기본값 */
   PS.set = (k, v, why) => PS.setMany([[k, v]], why);
   PS.setMany = (pairs, why) => {
     if (SIM) { for (const [k, v] of pairs) { if (v == null && !(k in OV)) delete SIM[k]; else if (k in OV && v === OV[k]) delete SIM[k]; else SIM[k] = v; } EFF = null; fire(); return; }
@@ -182,7 +183,7 @@
     const must = MUST[l], days = PS.days(m).filter((d) => !PS.isDown(l, d));
     if (!days.length) return { order: ['AL'], sw: [] };
     if (PS.isDown(l, `${m}-01`)) carry = l === '1CGL' ? 'AZ' : 'AL';
-    const nm = Math.ceil(Math.max(0, T[must] - B.swT) / PS.rate(m, l, must)) + 1;
+    const nm = Math.ceil(Math.max(0, T[must] - PS.kv('rule|swT', B.swT)) / PS.rate(m, l, must)) + 1;
     const ok = days.filter((d) => !noGo(l, must, d));
     if (carry === must && ok[0] === days[0]) { const a = Math.round(nm * 0.6), b = nm - a; return { order: [must, 'AL', must], sw: [days[Math.min(a, days.length - 1)], days[Math.max(a + 1, days.length - b)]] }; }
     const i = Math.max(Math.round((days.length - nm) / 2), ok.length ? days.indexOf(ok[0]) : 0);
@@ -207,9 +208,9 @@
       if (PS.isDown(l, d)) { out.push({ d, g: '', t: 0, ev: '휴지', h: 0 }); first = true; continue; }
       let ev = '';
       if (k + 1 < a.order.length && k < sw.length && d >= sw[k]) { k += 1; cur = a.order[k]; first = true; ev = l === '1CGL' && cur === 'AZ' ? 'S/D' : 'M/C'; }
-      let t = first ? B.swT : PS.rate(m, l, cur);
+      let t = first ? PS.kv('rule|swT', B.swT) : PS.rate(m, l, cur);
       if (cur === must) { t = first ? Math.min(t, Math.max(0, T[must] - made)) : Math.min(t, Math.max(0, T[must] - made) / Math.max(1, left(d))); t = Math.round(t); made += t; }
-      out.push({ d, g: cur, t: Math.round(t), ev, h: ev ? 15 : 24 }); first = false;
+      out.push({ d, g: cur, t: Math.round(t), ev, h: ev ? PS.kv('rule|swH', 15) : 24 }); first = false;
     }
     return { days: out, auto: a.sw, sw, order: a.order, manual: !!ovs };
   }
@@ -267,10 +268,10 @@
   const bis = (arr, v) => { let i = 0; while (i < arr.length && v >= arr[i]) i++; return i; };
   PS.tph = (l, fam, thk, wdt) => {
     const T = B.rateTab; if (!T) return null; const f = fam === 'STS' ? 'AL' : fam, R = T.rate;
-    if (!thk) return (T.avg || {})[l] * 60 * ((B.opf || {})[l] || 0.95);
+    if (!thk) return (T.avg || {})[l] * 60 * PS.kv(`rule|opf|${l}`, (B.opf || {})[l] || 0.95);
     const t = bis(T.thk, +thk), ks = [...(wdt ? [`${l}|${f}|${t}|${bis(T.wdt, +wdt)}`] : []), `${l}|${f}|${t}`, `${l}|${t}`, l];
-    const f0 = (B.opf || {})[l] || 0.95;
-    for (const k of ks) if (R[k]) return R[k] * 60 * f0;
+    const f0 = PS.kv(`rule|opf|${l}`, (B.opf || {})[l] || 0.95);
+    for (const k of ks) { const fx = PS.kv(`rate|${k}`, null); if (fx != null) return fx * f0; if (R[k]) return R[k] * 60 * f0; }   /* K|rate|키 = 고친 시간당 톤(가동 중) */
     return (T.avg || {})[l] * 60 * f0;
   };
   PS.band = (t) => (t < 0.4 ? '극박' : t < 0.6 ? '박물' : t < 1.0 ? '중물' : '후물');
@@ -310,7 +311,7 @@
         : om_ ? (() => { const mt = Object.values(om_).reduce((a, z) => a + z.t, 0); return PS.BANDS.filter((b) => om_[b]).map((b) => ({ b, r: om_[b].t / mt, thk: Math.round(om_[b].tk / om_[b].t * 100) / 100, wdt: +Object.entries(om_[b].w).sort((x, y) => y[1] - x[1])[0][0] })); })() : [{ b: '', r: 1, thk: 0, wdt: 0 }];
       const rsum = parts.reduce((a, p) => a + p.r, 0) || 1; for (const p of parts) p.r /= rsum;
       /* 도금수출: 배선일정 엑셀(목적지별 출항 반순·월평균) 기준 — 목적지마다 (평균 비중 × 그룹 생산) − 이미 들어온 주문 = 남는 양을 그 목적지 출항 −1일에 — 출항 기간 안(11/19 사용자 '입항일 기준 엑셀 적용 · −1일이 아니라 기간') */
-      const SS = g === '도금수출' && ((B.shipSched || {})[`${g}|${fam}`] || []);
+      const SS = g === '도금수출' && ((B.shipSched || {})[`${g}|${fam}`] || []).map((x) => [x[0], PS.kv(`ship|${g}|${fam}|${x[0]}|t`, x[1]), PS.kv(`ship|${g}|${fam}|${x[0]}|a`, x[2]), PS.kv(`ship|${g}|${fam}|${x[0]}|b`, x[3])]);
       if (SS && SS.length) {
         const tot = SS.reduce((a, x) => a + x[1], 0) || 1, ordD = {};
         for (const it of items) if (it.k === 'o' && it.m === m && it.grp === g && it.fam === fam) { const w = String(it.who || '').toUpperCase(); const x = SS.find((y) => w.includes(y[0].toUpperCase()) || y[0].toUpperCase().includes(w.split(' ')[0])); if (x) ordD[x[0]] = (ordD[x[0]] || 0) + it.t; }
