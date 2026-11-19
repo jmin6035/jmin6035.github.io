@@ -12,6 +12,14 @@
   const dow = ['일', '월', '화', '수', '목', '금', '토'];
   const wd = (s) => dow[new Date(s + 'T00:00:00Z').getUTCDay()];
   const open = (o) => CT.panel(CT.orderDetail(o), o.id);
+  const XL = {};   // 펼친 목록 키 → 내려받을 주문(엑셀)
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('[data-xl]'); if (!b) return; e.stopPropagation();
+    const x = XL[b.dataset.xl]; if (!x || !x.rows.length) return;
+    const H = Object.keys(x.rows[0]).filter((h) => x.rows.some((r) => r[h] !== '' && r[h] != null)), q = (v) => { const t = String(v == null ? '' : v).replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>'); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+    const csv = [H.map(q).join(','), ...x.rows.map((r) => H.map((h) => q(r[h])).join(','))].join('\r\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })); a.download = `주문진도_${x.name.replace(/[\\/:*?"<>|\s]+/g, '_')}_${String(ccAsOf() || new Date().toISOString()).slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }, true);
 
   /* 출하 근거 한 줄 — 출하가 나오는 곳마다 */
   function shipNote() {
@@ -156,7 +164,13 @@
       const line = (r) => C ? `<tr><td class="id">${esc(r.con)}</td><td>${esc(r.line)}</td><td class="nw">${esc(r.man || '-')}</td><td class="tl">${esc(r.cus || '-')}</td><td>${esc(r.pdt || r.spec || '')}</td><td class="nw">${r.thk ? `${r.thk}×${r.wdt}` : ''}</td><td class="r">${n1(r.remT)}</td>${k === KW ? `<td class="r">${r.s1030 ? r.s1030.n : (r.cfmN || '')}</td><td class="r">${n1(r.s1030 ? r.s1030.t : (r.cfmT || 0))}</td>` : MATCHED.includes(k) || k === KP ? `<td class="r">${r.subT != null ? n1(r.subT) : '–'}</td>` : ''}<td class="r">${r.tph ? n1(r.tph) : '–'}</td><td class="r">${n1(hrsOf(r, catC(r)))}</td><td>${md(r.due) || '-'}</td><td class="nw">${k === K0 ? esc(msub(r)) : k === KW ? '' : esc({ '부자재 대기': '입고 대기', '불량': '불량', '작업 대기': '공란' }[catC(r)] || '')}</td><td class="tl">${matTxtC(r)}</td></tr>`
         : `<tr><td class="id">${esc(r.id)}</td><td>${esc(r.line || '')}</td><td class="nw">${esc(r.man || '-')}</td><td class="tl">${esc(r.dst || r.cus || '-')}</td><td>${esc(r.item || '')}</td><td class="r">${n1(r.remT)}</td><td class="r">${r.src && r.src.tph ? n1(r.src.tph) : '–'}</td><td class="r">${n1(hrsOf(r, k))}</td><td>${md(r.due) || '-'}</td><td>${esc(gsub(r) && r.matSt === '확보' ? '입고 완료' : gsub(r))}</td><td class="tl">${matTxtG(r)}</td></tr>`;
       const cut = 400;
-      return `<div class="ps-exp"><div class="ps-exh"><b>${esc(lab(d.pl, k))}</b> ${n0(rs.length)}건 · ${n0(sumT(rs))}t · ${n0(hSum(rs, k))}시간 <button type="button" class="ps-x" data-ex="${esc(PS.open)}">닫기</button></div>`
+      XL[PS.open] = { name: `${C ? '컬러' : '도금'}_${lab(d.pl, k)}`, rows: rs.map((r) => C ? {   // 11/19 사용자 '누르면 주문서 정보 엑셀로' — 펼친 목록의 주문 전부(화면 400건 제한 없이)
+        계약번호: r.con, 라인: r.line, 판매그룹: gName(String(r.grp || '').replace(/그룹$|판매그룹$/, '')), 담당: r.man || '', 고객사: r.cus || '', 품명: r.pdtNm || r.pdt || '', 규격: r.spec || '', 두께: r.thk || '', 폭: r.wdt || '', 앞면색: r.top || '', 뒷면색: r.back || '', 수출: r.exp ? '수출' : '내수',
+        '주문량(t)': +(+r.ordT || 0).toFixed(1), '생산량(t)': +(+r.prodT || 0).toFixed(1), '미생산(t)': +(+r.remT || 0).toFixed(1), '편성 지시(t)': r.subT != null ? +(+r.subT).toFixed(1) : '', '매치(t)': +(+r.mchT || 0).toFixed(1), 't/시간': r.tph ? +(+r.tph).toFixed(1) : '', 작업시간: +hrsOf(r, catC(r)).toFixed(1),
+        납기: r.due || '', 상태: lab('C', catC(r)), 소재: k === K0 ? msub(r) : '', '소재 상황': matTxtC(r) } : {
+        주문번호: r.id, 라인: r.line || '', 판매그룹: gName(String(r.grp || '').replace(/그룹$|판매그룹$/, '')), 담당: r.man || '', 목적지: r.dst || '', 고객사: r.cus || '', 품목: r.item || '', '주문량(t)': +(+r.ordT || 0).toFixed(1), '미생산(t)': +(+r.remT || 0).toFixed(1), 't/시간': r.src && r.src.tph ? +(+r.src.tph).toFixed(1) : '', 작업시간: +hrsOf(r, k).toFixed(1),
+        납기: r.due || '', 상태: lab('G', k), 소재: r.matSt === '확보' ? '입고 완료' : gsub(r), '소재 상황': matTxtG(r) }) };
+      return `<div class="ps-exp"><div class="ps-exh"><b>${esc(lab(d.pl, k))}</b> ${n0(rs.length)}건 · ${n0(sumT(rs))}t · ${n0(hSum(rs, k))}시간 <button type="button" class="ps-x ps-xl" data-xl="${esc(PS.open)}">⤓ 엑셀</button><button type="button" class="ps-x" data-ex="${esc(PS.open)}">닫기</button></div>`
         + `<div class="ps-gs">${grps.map((g) => { const G = rs.filter((r) => r.grp === g); return `<span><b>${esc(gName(g))}</b> ${n0(G.length)}건 · ${n0(sumT(G))}t · ${n0(hSum(G, k))}시간</span>`; }).join('')}</div>`
         + `<div class="ct-wrap ps-et"><table class="ct-t"><thead><tr>${head.map((h, i) => `<th${/\(|t\/시간|작업시간/.test(h) ? ' class="r"' : ''}${XK[h] ? ` data-xs="${XK[h]}" aria-sort="${PS.sk === XK[h] ? (PS.dir > 0 ? 'ascending' : 'descending') : 'none'}"` : ''}>${XK[h] ? `<button type="button">${h}<i>${PS.sk === XK[h] ? (PS.dir > 0 ? '▲' : '▼') : ''}</i></button>` : h}</th>`).join('')}</tr></thead><tbody>`
         + grps.map((g) => { const G = rs.filter((r) => r.grp === g); return `<tr class="gh"><td colspan="${head.length}"><b>${esc(gName(g))}</b> ${n0(G.length)}건 · ${n0(sumT(G))}t · ${n0(hSum(G, k))}시간</td></tr>` + G.slice(0, cut).map(line).join(''); }).join('')
