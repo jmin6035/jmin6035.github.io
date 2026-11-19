@@ -13,7 +13,7 @@
     const h = (spec.head || []).map((tr) => `<tr>${tr.map((c) => `<th${c.cs ? ` colspan="${c.cs}"` : ''}${c.rs ? ` rowspan="${c.rs}"` : ''} class="${c.cls || ''}">${c.v == null ? '' : c.raw ? c.v : esc(c.v)}</th>`).join('')}</tr>`).join('');
     const b = spec.rows.map((tr, ri) => `<tr class="${tr.cls || ''}">${tr.cells.map((c, ci) => {
       const t = c.t || 'calc', set = c.k && PS.isSet(c.k);
-      return `<td data-r="${ri}" data-c="${ci}" class="t-${t}${set ? ' set' : ''} ${c.cls || ''}"${c.k ? ` data-k="${esc(c.k)}"` : ''}${c.cs ? ` colspan="${c.cs}"` : ''}${c.rs ? ` rowspan="${c.rs}"` : ''}${c.title || set ? ` title="${esc(c.title || '')}${set ? (c.title ? ' · ' : '') + '고친 칸(오른쪽 클릭 = 이력)' : ''}"` : ''}>${c.raw ? c.v : fmt(c.v, c.f)}</td>`;
+      return `<td data-r="${ri}" data-c="${ci}" class="t-${t}${set ? ' set' : ''} ${c.cls || ''}"${c.k ? ` data-k="${esc(c.k)}"` : ''}${c.fx ? ` data-fx="${esc(c.fx)}"` : ''}${c.cs ? ` colspan="${c.cs}"` : ''}${c.rs ? ` rowspan="${c.rs}"` : ''}${c.title || set ? ` title="${esc(c.title || '')}${set ? (c.title ? ' · ' : '') + '고친 칸(오른쪽 클릭 = 이력)' : ''}"` : ''}>${c.raw ? c.v : fmt(c.v, c.f)}</td>`;
     }).join('')}</tr>`).join('');
     return `<div class="psg-w"><table class="psg ${spec.cls || ''}" id="${spec.id}"><thead>${h}</thead><tbody>${b}</tbody></table></div>`;
   };
@@ -23,7 +23,22 @@
     document.querySelectorAll('.psg td.sel').forEach((x) => x.classList.remove('sel'));
     if (!td) { SEL = null; return; }
     td.classList.add('sel'); SEL = { tbl: td.closest('table').id, r: +td.dataset.r, c: +td.dataset.c };
+    G.fx(td);
   }
+  /* 수식 줄(엑셀처럼): 고른 칸의 이름(줄 · 열) · 값 · 계산식 */
+  function headAt(tbl, td) {   // 그 칸 열의 머리 글자(합친 칸 고려)
+    const H = [...tbl.tHead.rows], grid = [];
+    H.forEach((tr, ri) => { let c = 0; for (const th of tr.cells) { while (grid[ri] && grid[ri][c]) c++; const cs = th.colSpan || 1, rs = th.rowSpan || 1; for (let i = 0; i < rs; i++) for (let j = 0; j < cs; j++) { (grid[ri + i] = grid[ri + i] || [])[c + j] = th.textContent.trim(); } c += cs; } });
+    let ci = 0; for (const x of td.parentElement.cells) { if (x === td) break; ci += x.colSpan || 1; }
+    return [...new Set(grid.map((r) => r && r[ci]).filter(Boolean))].join(' ');
+  }
+  G.fx = (td) => {
+    const box = document.getElementById('fx'); if (!box || !td) return;
+    const tbl = td.closest('table'), row = [...td.parentElement.cells].filter((x) => x.classList.contains('t-lab')).map((x) => x.textContent.trim()).filter(Boolean).join(' ');
+    const name = [row, headAt(tbl, td)].filter(Boolean).join(' · ');
+    const f = td.dataset.fx || (td.classList.contains('t-in') ? '입력 칸: 고치면 관련 숫자가 바로 다시 계산됨' : '');
+    box.innerHTML = `<span class="fx-n">${esc(name || '칸')}</span><span class="fx-v">${esc(td.textContent.trim())}</span><span class="fx-f">${f ? 'ƒ ' + esc(f) : ''}</span>`;
+  };
   function move(dr, dc) {
     if (!SEL) return; const tbl = document.getElementById(SEL.tbl); if (!tbl) return;
     let r = SEL.r + dr, c = SEL.c + dc;

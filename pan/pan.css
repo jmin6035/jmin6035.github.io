@@ -1,0 +1,83 @@
+/* 판생 작업장 디자인(11/19 사용자 '아예 새롭게, 색·UI/UX 전부, 3D') — design-taste-frontend 배합 'steel-orange'(돌 바닥·강철 글자·쇳물 주황 강조) + Pretendard.
+   입체감 = 바닥(돌) · 판(흰 카드, 겹 그림자 + 위쪽 빛줄) · 떠 있는 것(수식 줄·시트 탭·팝업) 세 층. 표와 숫자는 평평하게(기울임·회전 없음 — 읽기용).
+   위 = 수식 줄(엑셀처럼 고른 칸의 이름·값·계산식), 아래 = 시트 탭, 왼쪽 메뉴 없음. */
+body.pan {
+  color-scheme: light;
+  --stone: #eeeeeb; --stone-2: #e1e1dd; --paper: #ffffff; --steel: #1c1d1f; --steel-2: #2a3138; --steel-3: #3a434c;
+  --ink: #1c1d1f; --ink-2: #4b5058; --ink-3: #7c828b; --line: #d6d6d1; --grid: #e6e6e2;
+  --accent: #c2501b; --accent-2: #e2672a; --accent-soft: #fbe9df; --cell-in: #fff4e6;
+  --ok: #1f7a4d; --bad: #c4261d; --warn: #a15c07;
+  --brand: var(--steel-2); --brand-2: var(--accent); --surface: var(--paper); --surface-2: #f6f6f3; --bg: var(--stone);
+  --e1: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 1px 2px rgba(28, 29, 31, .06), 0 4px 12px rgba(28, 29, 31, .06);
+  --e2: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 2px 4px rgba(28, 29, 31, .08), 0 12px 28px rgba(28, 29, 31, .10);
+  --e3: 0 8px 24px rgba(28, 29, 31, .16), 0 24px 56px rgba(28, 29, 31, .14);
+  margin: 0; background: var(--stone); color: var(--ink); padding-bottom: 62px;
+  font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif; font-feature-settings: "tnum";
+}
+/* 머리 — 강철판 */
+.pan-top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 16px; padding: 10px 22px; color: #fff;
+  background: linear-gradient(180deg, var(--steel-3) 0%, var(--steel-2) 55%, var(--steel) 100%); box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 2px 0 var(--accent), 0 6px 16px rgba(0,0,0,.18); }
+.pan-t { font-size: 19px; font-weight: 800; letter-spacing: -.02em; display: inline-flex; align-items: center; gap: 10px; }
+.pan-t::before { content: ''; width: 14px; height: 14px; border-radius: 4px; background: linear-gradient(135deg, var(--accent-2), var(--accent)); box-shadow: 0 0 0 3px rgba(226,103,42,.25); }
+.pan-s { font-size: 14px; color: #d5d9de; }
+.pan-portal { margin-left: auto; color: #fff; font-size: 14px; text-decoration: none; padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25); transition: background .15s, transform .15s; }
+.pan-portal:hover { background: rgba(255,255,255,.1); transform: translateY(-1px); }
+/* 수식 줄 — 떠 있는 판 */
+.pan-fx { position: sticky; top: 46px; z-index: 29; display: flex; gap: 0; align-items: stretch; margin: 10px 22px 0; background: var(--paper); border-radius: 12px; box-shadow: var(--e2); font-size: 15px; min-height: 40px; overflow: hidden; }
+.pan-fx span { display: flex; align-items: center; padding: 8px 14px; }
+.pan-fx .fx-n { min-width: 300px; font-weight: 800; color: var(--steel-2); background: #f6f6f3; border-right: 1px solid var(--line); }
+.pan-fx .fx-v { min-width: 110px; font-weight: 800; font-size: 17px; justify-content: center; border-right: 1px solid var(--line); }
+.pan-fx .fx-f { color: var(--accent); font-weight: 700; }
+.pan-main { padding: 14px 22px 20px; }
+/* 판(카드) */
+.pan .card { background: var(--paper); border: 1px solid rgba(28,29,31,.06); border-radius: 14px; box-shadow: var(--e1); margin-bottom: 14px; padding: 16px 18px; }
+.pan .card > h2 { font-size: 19px; font-weight: 800; letter-spacing: -.02em; color: var(--ink); border-bottom: 1px solid var(--grid); padding-bottom: 10px; margin: 0 0 12px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.pan .card > h2 small { font-size: 13.5px; font-weight: 500; color: var(--ink-3); }
+/* 큰 숫자 판 — 살짝 솟은 타일 */
+.pan .ps-k > div { background: linear-gradient(180deg, #fff 0%, #f8f8f6 100%); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--e1); transition: transform .15s, box-shadow .15s; }
+.pan .ps-k > div:hover { transform: translateY(-2px); box-shadow: var(--e2); }
+.pan .ps-k span { color: var(--ink-2); } .pan .ps-k b { font-size: 30px; letter-spacing: -.02em; }
+.pan .ps-k .bad { border-top: 3px solid var(--bad); } .pan .ps-k .ok { border-top: 3px solid var(--ok); } .pan .ps-k .warn { border-top: 3px solid var(--warn); }
+/* 버튼 — 한 쌍(채움 주황 · 테두리) */
+.pan .btn { background: linear-gradient(180deg, var(--accent-2), var(--accent)); color: #fff; border: 0; border-radius: 9px; font-weight: 700; padding: 8px 16px; box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 2px 6px rgba(194,80,27,.3); cursor: pointer; transition: transform .12s, box-shadow .12s; }
+.pan .btn:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 6px 14px rgba(194,80,27,.35); }
+.pan .btn:active { transform: translateY(1px); box-shadow: 0 1px 2px rgba(194,80,27,.3); }
+.pan .btn.sub { background: var(--paper); color: var(--steel-2); border: 1px solid var(--line); box-shadow: var(--e1); }
+.pan .btn.sub:hover { border-color: var(--accent); color: var(--accent); }
+/* 위 상태 줄 */
+.pan .ps-bar { background: var(--paper); border: 1px solid rgba(28,29,31,.06); border-radius: 12px; box-shadow: var(--e1); }
+/* 표 — 엑셀처럼 평평하게, 입력 칸은 따뜻한 연주황 */
+.pan table.psg { border-spacing: 0; }
+.pan table.psg thead th { background: #f1f1ee; color: var(--steel-2); border-bottom: 2px solid var(--line); }
+.pan table.psg td.t-in { background: var(--cell-in); }
+.pan table.psg td.t-in:hover { box-shadow: inset 0 0 0 2px rgba(194,80,27,.35); }
+.pan table.psg td.sel { outline: 2px solid var(--accent); outline-offset: -2px; }
+.pan table.psg tbody tr:hover td:not(.t-in):not(.az):not(.al):not(.mac):not(.sts):not(.ev) { background: #fafaf7; }
+.pan table.psg tr.sec td { background: #f4f4f1; }
+.pan table.psg td.t-in.set::after { border-top-color: var(--accent); } .pan table.psg td.t-in.set { color: var(--accent); }
+/* 할 일 카드 — 떠 있다가 가리키면 2px 솟음 */
+.pan .tc { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--e1); transition: transform .15s, box-shadow .15s; }
+.pan .tc:hover { transform: translateY(-2px); box-shadow: var(--e2); }
+.pan .tc.risk { border-left: 6px solid var(--bad); } .pan .tc.warn { border-left: 6px solid #e0a106; }
+.pan .tc .op.rec { background: var(--accent-soft); border: 1px solid #f1c3a8; }
+.pan .seg button[aria-pressed="true"] { background: var(--steel-2); color: #fff; }
+.pan .dt { color: var(--accent); }
+/* 아래 시트 탭 — 엑셀처럼 */
+.pan-tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: 3px; overflow-x: auto; padding: 8px 14px 0;
+  background: linear-gradient(180deg, var(--steel-2), var(--steel)); box-shadow: 0 -6px 18px rgba(0,0,0,.18); }
+.pan-tabs a { flex: none; padding: 10px 18px; border-radius: 10px 10px 0 0; background: var(--steel-3); color: #d5d9de; text-decoration: none; font-size: 15px; font-weight: 700;
+  box-shadow: 0 1px 0 rgba(255,255,255,.08) inset; transition: background .15s, color .15s, transform .15s; }
+.pan-tabs a:hover { background: #4a545e; color: #fff; transform: translateY(-2px); }
+.pan-tabs a.on { background: var(--stone); color: var(--steel); box-shadow: inset 0 3px 0 var(--accent); }
+@media (max-width: 760px) {
+  .pan-fx { margin: 8px; flex-wrap: wrap; top: 44px; } .pan-fx .fx-n { min-width: 0; flex: 1 1 100%; border-right: 0; border-bottom: 1px solid var(--line); } .pan-main { padding: 8px; }
+  .pan-s { display: none; } .pan-tabs a { padding: 10px 12px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .pan * { transition: none !important; } }
+.pan-more { flex: none; position: relative; }
+.pan-more summary { list-style: none; cursor: pointer; padding: 10px 18px; border-radius: 10px 10px 0 0; background: var(--steel-3); color: #d5d9de; font-size: 15px; font-weight: 700; }
+.pan-more summary::-webkit-details-marker { display: none; }
+.pan-more.on summary { background: var(--stone); color: var(--steel); box-shadow: inset 0 3px 0 var(--accent); }
+.pan-more[open] > div { position: fixed; bottom: 52px; right: 14px; display: grid; gap: 4px; padding: 8px; background: var(--paper); border-radius: 12px; box-shadow: var(--e3); min-width: 180px; }
+.pan-more[open] > div a { padding: 10px 14px; border-radius: 8px; color: var(--ink); text-decoration: none; font-weight: 700; background: transparent; box-shadow: none; }
+.pan-more[open] > div a:hover, .pan-more[open] > div a.on { background: var(--accent-soft); color: var(--accent); transform: none; }
