@@ -13,3 +13,7 @@
 body.xlb { background: #1b2338; color: #f1f4fb; }
 .counts b { color: #f1f4fb; } .counts .on b { color: #a3adff; }
 .xlb small { font-size: 13.5px; }
+/* 바탕만 밝게(판과 표 색은 그대로) */
+body.xlb { background: #e8edf6; }
+.xl-top > h1 { color: #131a2e; } .xl-top > .lead { color: #46526e; }
+section.xl { background: #242e4a; } .x-act, .x-toast { background-color: #242e4a; }

@@ -336,3 +336,7 @@ body.xlb { background: var(--bg); } body.xlb::after { display: none; } .dw { bac
 .cal0 .cl.ev .ln0 { color: #3a4666; }
 .salp .ordw { max-height: 420px; overflow: auto; } .salp .t td small { display: block; font-size: var(--fs); color: var(--tx3); } .salp { grid-column: 1 / -1; } .t.ot td.warn { color: var(--warn); }
 .t.gt td small.bad { color: var(--danger); } .t.gt th small { display: block; font-size: var(--fs); color: var(--tx3); font-weight: 500; } .pn > p.hint { text-align: center; font-size: var(--fs); color: var(--tx2); margin: var(--space-xs) 0 0; }
+/* 바탕만 밝게(카드와 표 색은 그대로). 바탕 위에 바로 놓인 글자는 어두운 색으로 */
+:root { --bg: #e8edf6; --color-paper: #e8edf6; } body.xlb { background: #e8edf6; }
+.top h1, .top .pt h1 { color: #131a2e; } .top .pt p, .top .u { color: #46526e; } .top .lks .lk, .top .lk { color: #2f3f8f; } .top .stp b, .top .stp li b { color: #131a2e; } .top .stp span, .top .stp li span { color: #46526e; } .top .stp em { color: #2f3f8f; }
+.top .stp li.now b, .top .stp li.now em, .top .stp .now b, .top .stp .now em { color: #2f3f8f; } .top .stp li.now span { color: #46526e; } .pn header .u, .cal0 header .u, .fc .u { color: var(--tx3); } .L3 .rgt { background: transparent; }
