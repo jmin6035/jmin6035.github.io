@@ -94,13 +94,14 @@
       B.color = col; B.colorEv = ev; B.colorAsOf = I.asOf;
     }
     if (I && I.shipProfile) B.shipProfile = I.shipProfile;
+    if (D.mat_order) B.matOrder = D.mat_order;
     B.opf = { '1CGL': 0.95, '2CGL': 0.95 };   // 하루 실가동 비율(MES 일별 가동 분 ÷ 1440, 최근) — 사양 톤파워(가동 분당 톤)에 곱함
     if (A && A.dayMin) for (const l of ['1CGL', '2CGL']) { const v = Object.values(A.dayMin).map((x) => x[l]).filter((x) => x != null); if (v.length >= 14) B.opf[l] = Math.round(v.reduce((a, b) => a + b, 0) / v.length / 1440 * 1000) / 1000; }
     if (A && A.daily) { B.actual = {}; for (const r of A.daily) B.actual[r.d] = { '1CGL': r['1CGL'] || 0, '2CGL': r['2CGL'] || 0 }; B.actualAsOf = A.asOf; }
     else B.actual = B.actual || {};
   }
   PS.boot = (render) => {
-    CT.boot(['ps_base.enc.json', 'cg_order_progress.enc.json', 'integrated.enc.json', 'plating_actual.enc.json'], async (D) => {
+    CT.boot(['ps_base.enc.json', 'cg_order_progress.enc.json', 'integrated.enc.json', 'plating_actual.enc.json', 'mat_order.enc.json'], async (D) => {
       if (B && D.ps_base) { render(B); return; }   // 범위 바꿈 때 다시 부름
       B = D.ps_base; if (!B) { render(null); return; }
       live(D);
@@ -300,11 +301,15 @@
       const prof = (B.shipProfile || {})[PROFK[g]], D = PS.days(m).filter((d) => m !== m0 || d > asOf), lead = g === '도금수출' ? 7 : g === '자가재' ? 2 : 3;
       const bw = BAN.map(([a, b]) => D.filter((d) => +d.slice(8) >= a && +d.slice(8) <= b).reduce((s, d) => s + (prof ? prof[+d.slice(8)] || 0 : 1), 0)), ws = bw.reduce((a, b) => a + b, 0) || 1;
       const top = BAN.map((_, i) => [i, bw[i] / ws]).sort((a, b) => b[1] - a[1]).slice(0, 2);
-      const mix = mixSrc[`${g}|${fam}`] || mixSrc[Object.keys(mixSrc).find((z) => z.endsWith('|' + fam))] || {}, mt = Object.values(mix).reduce((a, z) => a + z.t, 0);
-      const parts = mt ? PS.BANDS.filter((b) => mix[b]).map((b) => ({ b, r: mix[b].t / mt, thk: Math.round(mix[b].tk / mix[b].t * 100) / 100, wdt: +Object.entries(mix[b].w).sort((x, y) => y[1] - x[1])[0][0] })) : [{ b: '', r: 1, thk: 0, wdt: 0 }];
+      // 사양 추정: 지난 3개월 그 그룹·강종 생산 실적(MES 코일) > 지금 들어온 주문 구성
+      const hm = ((B.histMix || {}).mix || {})[`${g}|${fam}`], om_ = mixSrc[`${g}|${fam}`];
+      const src = hm ? '지난 3개월 실적' : om_ ? '들어온 주문 구성' : '';
+      const parts = hm ? (() => { const tt = Object.values(hm).reduce((a, z) => a + z.t, 0); return PS.BANDS.filter((b) => hm[b] && hm[b].t / tt > 0.02).map((b) => ({ b, r: hm[b].t / tt, thk: hm[b].thk, wdt: hm[b].wdt })); })()
+        : om_ ? (() => { const mt = Object.values(om_).reduce((a, z) => a + z.t, 0); return PS.BANDS.filter((b) => om_[b]).map((b) => ({ b, r: om_[b].t / mt, thk: Math.round(om_[b].tk / om_[b].t * 100) / 100, wdt: +Object.entries(om_[b].w).sort((x, y) => y[1] - x[1])[0][0] })); })() : [{ b: '', r: 1, thk: 0, wdt: 0 }];
+      const rsum = parts.reduce((a, p) => a + p.r, 0) || 1; for (const p of parts) p.r /= rsum;
       BAN.forEach(([a, b], i) => { const tb = rest * bw[i] / ws; if (tb < 5) return; const end = `${m}-${String(Math.min(b, PS.days(m).length)).padStart(2, '0')}`;
         for (const p of parts) { const t = Math.round(tb * p.r); if (t < 3) continue;
-          items.push({ k: 'p', m, grp: g, fam, line: '', t, left: t, need: PS.addD(end, -lead), ready: '', thk: p.thk, wdt: p.wdt, band: p.b, who: '판매계획', why: `${PS.mLab(m)} ${i + 1}반순 출고분(아직 주문 없음, ${p.b ? `${p.b} ${p.thk}×${p.wdt} 추정` : '사양 모름'})${prof ? ` · ${g} 과거 출고 ${top.map(([j, r]) => `${j + 1}반순 ${Math.round(r * 100)}%`).join('·')}` : ''}` }); } });
+          items.push({ k: 'p', m, grp: g, fam, line: '', t, left: t, need: PS.addD(end, -lead), ready: '', thk: p.thk, wdt: p.wdt, band: p.b, who: '판매계획', why: `${PS.mLab(m)} ${i + 1}반순 출고분(아직 주문 없음, ${p.b ? `${p.b} ${p.thk}×${p.wdt}, ${src} 기준 추정` : '사양 미정'})${prof ? ` · ${g} 과거 출고 ${top.map(([j, r]) => `${j + 1}반순 ${Math.round(r * 100)}%`).join('·')}` : ''}` }); } });
     }
     items.sort((a, b) => (a.must !== b.must ? (a.must ? -1 : 1) : a.need < b.need ? -1 : a.need > b.need ? 1 : a.k === 'o' ? -1 : 1));
     return { items, quota, om, stockUse, stale, asOf, m0, cut, mixSrc };
@@ -335,7 +340,10 @@
         const tp = PS.tph(l, it.fam, it.thk, it.wdt) || r0 / 24, t = Math.min(h * tp, it.left, ql); if (t < 0.5) continue;
         it.left -= t; h -= t / tp; if (!it.must) qLeft[qk] = ql - t; got.push({ it, t, h: t / tp, tp, late: it.k === 'o' && it.need < d ? Math.round((new Date(d) - new Date(it.need)) / 864e5) : 0 });
       }
-      got.sort((a, b) => (b.it.wdt || 0) - (a.it.wdt || 0) || (a.it.thk || 0) - (b.it.thk || 0));   // 그 날 안: 폭 넓은 것부터, 같은 폭은 얇은 것부터(작업 순서 규칙의 기본 방향)
+      // 그 날 안 순서: 도금량·후처리가 같은 것끼리 묶고(톤 큰 묶음 먼저), 묶음 안에서는 폭 넓은 것부터, 같은 폭은 얇은 것부터(03 작업 순서 규칙의 기본 방향)
+      const gk = (y) => `${y.it.cot || ''}|${y.it.aft || ''}`, gt = {}; for (const y of got) gt[gk(y)] = (gt[gk(y)] || 0) + y.t;
+      got.sort((a, b) => (gk(a) === gk(b) ? 0 : gt[gk(b)] - gt[gk(a)] || (gk(a) < gk(b) ? -1 : 1)) || (b.it.wdt || 0) - (a.it.wdt || 0) || (a.it.thk || 0) - (b.it.thk || 0));
+      for (let i = 1; i < got.length; i++) { const a = got[i - 1].it, b = got[i].it; if (!a.thk || !b.thk) continue; got[i].dw = (b.wdt || 0) - (a.wdt || 0); got[i].rt = Math.max(a.thk, b.thk) / Math.min(a.thk, b.thk); got[i].cc = gk(got[i - 1]) !== gk(got[i]); }
       out[`${l}|${d}`] = { g: x.g, plan: x.t, capH, got, tons: Math.round(got.reduce((a, y) => a + y.t, 0)), freeH: Math.max(0, h), ev: x.ev };
     }
     const over = {}; for (const it of items) if (it.k === 'o' && it.left > 1) { const k = `${it.m}|${it.grp}|${it.fam}`; over[k] = (over[k] || 0) + it.left; }

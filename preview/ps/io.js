@@ -1,5 +1,5 @@
 /* 판생 작업판 ↔ 엑셀(docs/40 7단계): 내보내기 = 지금 판 전체(입력 칸 연노랑), 가져오기 = 연노랑 칸만 읽어 지금 판과 다른 것만 보여 주고 확인 뒤 반영
-   시트: 안내 · 원장 · 월차 설정 · 도금 n월(보기) · 도금 소재 · 컬러 가동시간 · 주 롤링 결정. 같은 양식이면 시트 순서·서식이 바뀌어도 머리 글자로 찾음 */
+   시트: 안내 · 판생 계획표 · 월차 설정 · 도금 n월(보기) · 도금 소재 · 컬러 가동시간 · 주간 조정 결정. 같은 양식이면 시트 순서·서식이 바뀌어도 머리 글자로 찾음 */
 (function () {
   'use strict';
   const IO = (window.PSIO = {});
@@ -17,7 +17,7 @@
       ['흰 칸(합계·재고·월차 일별)은 계산 결과라 가져올 때 읽지 않음. 줄 번호(A열)·머리 글자는 지우거나 바꾸지 말 것.'],
       ['월차 설정: 전환 날짜는 2026-12-11 처럼, 두 번 이상이면 쉼표로(2026-12-11,2026-12-26). 비우면 자동 전환.'],
     ] });
-    // 원장
+    // 판생 계획표
     const hd = [H('줄'), H('강종'), H('구분'), ...ms.flatMap((m) => [H(`${mNo(m)}월 생산`), H(`${mNo(m)}월 판매`), H(`${mNo(m)}월 재고 전망`)])];
     const rows = [hd];
     for (const x of B.ledger.rows) {
@@ -25,7 +25,7 @@
       rows.push([x.r, x.kind === 'sec' ? x.name : x.kind === 'sum' ? '합계' : '', { v: x.lab, s: x.kind === 'sec' || x.kind === 'mkt' ? 'b' : '' },
         ...ms.flatMap((m) => { const c = L[m][x.r]; return [isIn ? IN(c.p) : c.p, isIn ? IN(c.s) : c.s, Math.round(c.sf)]; })]);
     }
-    S.push({ name: '원장', rows, cols: [5, 7, 22, ...ms.flatMap(() => [9, 9, 10])], freeze: [1, 3] });
+    S.push({ name: '판생 계획표', rows, cols: [5, 7, 22, ...ms.flatMap(() => [9, 9, 10])], freeze: [1, 3] });
     // 월차 설정
     const set = [[H('달'), H('라인'), H('전환 날짜'), H('AZ·MAC 하루 톤'), H('AL 하루 톤'), H('STS 시작'), H('STS 하루 톤'), H('자동 전환(참고)')]];
     for (const m of pms) for (const l of Object.keys(PS.LINES)) {
@@ -55,11 +55,11 @@
     const cr = [[H('달'), H('라인'), ...Array.from({ length: 31 }, (_, i) => H(i + 1))]];
     for (const m of cm) { const C = PS.color(m); for (const l of PS.CLINES) cr.push([`${mNo(m)}월`, l, ...C[l].map((x) => IN(x.h))]); }
     S.push({ name: '컬러 가동시간', rows: cr, cols: [6, 7, ...Array(31).fill(5)] });
-    // 주 롤링 결정
+    // 주간 조정 결정
     const wr = [[H('주(월요일)'), H('라인'), H('강종'), H('수주 결정 톤(+더 받기 −빼기)'), H('메모')]];
     const W = {}; for (const e of PS.logs()) for (const [k] of e.cells) if (k.startsWith('W|')) W[k.split('|').slice(0, 4).join('|')] = 1;
     for (const k of Object.keys(W).sort()) { const [, w, l, g] = k.split('|'); wr.push([w, l, g, IN(PS.get(`${k}|pull`, 0)), IN(PS.get(`${k}|note`, ''))]); }
-    S.push({ name: '주 롤링 결정', rows: wr, cols: [12, 7, 7, 24, 50] });
+    S.push({ name: '주간 조정 결정', rows: wr, cols: [12, 7, 7, 24, 50] });
     XL.save(XL.write(S), `판생작업판_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
@@ -68,13 +68,13 @@
     const B = PS.base(), L = PS.ledger(), P = PS.plating(L), out = [], num = (v) => (v == null || v === '' ? null : typeof v === 'number' ? v : Number(String(v).replace(/,/g, '')));
     const push = (k, nv, cur, lab) => { if (nv == null || Number.isNaN(nv)) return; if (typeof nv === 'number' && typeof cur === 'number' && Math.abs(nv - cur) < 0.001) return; if (nv === cur) return; out.push([k, nv, cur, lab]); };
     const sd = (v) => { if (v == null || v === '') return ''; if (typeof v === 'number') { const d = new Date(Date.UTC(1899, 11, 30) + v * 864e5); return d.toISOString().slice(0, 10); } return String(v).trim().replace(/\s+/g, '').replace(/\./g, '-'); };
-    const R = WB['원장'];
+    const R = WB['판생 계획표'];
     if (R) {
       const hd = R[0] || [], cols = [];
       hd.forEach((h, i) => { const m = /^(\d+)월 (생산|판매)$/.exec(String(h || '').trim()); if (m && byNo(m[1])) cols.push([i, byNo(m[1]), m[2] === '생산' ? 'p' : 's']); });
       for (const row of R.slice(1)) {
         const r = row[0], x = B.ledger.rows.find((y) => String(y.r) === String(r)); if (!x) continue;
-        for (const [i, m, k] of cols) { const c = L[m][x.r]; if (!c || !c.in) continue; push(`L|${x.r}|${m}|${k}`, num(row[i]), c[k], `원장 ${x.lab} ${mNo(m)}월 ${k === 'p' ? '생산' : '판매'}`); }
+        for (const [i, m, k] of cols) { const c = L[m][x.r]; if (!c || !c.in) continue; push(`L|${x.r}|${m}|${k}`, num(row[i]), c[k], `판생 계획표 ${x.lab} ${mNo(m)}월 ${k === 'p' ? '생산' : '판매'}`); }
       }
     }
     const M = WB['도금 소재'];
@@ -101,7 +101,7 @@
       const m = byNo(String(row[0] || '').replace('월', '')), l = String(row[1] || '').trim(); if (!m || !B.color[m] || !PS.CLINES.includes(l)) continue;
       const X = PS.color(m)[l]; X.forEach((x, i) => push(`C|${m}|${l}|${x.d}|h`, num(row[i + 2]), x.h, `컬러 ${l} ${PS.md(x.d)} 가동시간`));
     }
-    const W = WB['주 롤링 결정'];
+    const W = WB['주간 조정 결정'];
     if (W) for (const row of W.slice(1)) {
       const w = sd(row[0]), l = String(row[1] || '').trim(), g = String(row[2] || '').trim(); if (!/^\d{4}-\d{2}-\d{2}$/.test(w) || !l || !g) continue;
       push(`W|${w}|${l}|${g}|pull`, num(row[3]), PS.get(`W|${w}|${l}|${g}|pull`, 0), `주 ${PS.md(w)} ${l} ${g} 수주 결정`);
