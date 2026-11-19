@@ -130,3 +130,11 @@ h3.fh { text-align: center; font-size: 16px; margin: 14px 0 6px; }
 .wf-b ul { list-style: none; margin: 0; padding: 0; font-size: 15px; line-height: 1.45; }
 .wf-b ul li { padding: 5px 0; border-top: 1px dashed var(--line); }
 .wf-end { border-color: #475467; } .wf-end .wf-n { color: #475467; } .wf-end .wf-q { font-size: 16px; font-weight: 700; }
+.tc { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 8px 0; text-align: center; }
+.tc.risk { border-left: 5px solid var(--bad); } .tc.warn { border-left: 5px solid #f0b400; }
+.tc .th { font-size: 16px; font-weight: 700; } .tc .th .st { margin-left: 8px; color: var(--bad); } .tc p { margin: 6px 0; font-size: 15px; }
+.tc .op { margin: 6px auto; padding: 8px 10px; border-radius: 8px; background: #f2f4f7; font-size: 15px; max-width: 1200px; }
+.tc .op.rec { background: #eef5ff; border: 1px solid #b6d0f5; }
+.tc .op .btn { margin-left: 8px; } .tc .lk { color: #8a6d00; font-weight: 700; font-size: 13.5px; }
+.tc details { font-size: 14px; margin-top: 4px; } .tc .ln { padding: 2px 0; }
+.dt { font-weight: 800; color: var(--brand-2, #1f5fae); }

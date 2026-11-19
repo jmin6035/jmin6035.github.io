@@ -41,7 +41,7 @@
   window.PV_MENU = {
     home: P('room.html'),
     menu: [
-      ['vp', '판생', 'supply', [['psflow', P('ps_flow.html'), '일하는 순서'], ['psdecide', P('ps_decide.html'), '생산 결정'], ['psfit', P('ps_fit.html'), '주문 맞추기'], ['psplating', P('ps_plating.html'), '도금 월차'], ['psledger', P('ps_ledger.html'), '판생 계획표'], ['pscolor', P('ps_color.html'), '컬러 월차'], ['psweek', P('ps_week.html'), '주간 조정'], ['pscapa', P('ps_capa.html'), '생산 가능'], ['psmat', P('ps_mat.html'), '도금 소재'], ['pslog', P('ps_log.html'), '이력·회차']]],   // 11/19 사용자 'D — 포털 안 판생 작업판'(docs/39~41)
+      ['vp', '판생', 'supply', [['pstoday', P('ps_today.html'), '오늘 할 일'], ['psflow', P('ps_flow.html'), '일하는 순서'], ['psdecide', P('ps_decide.html'), '생산 결정'], ['psfit', P('ps_fit.html'), '주문 맞추기'], ['psplating', P('ps_plating.html'), '도금 월차'], ['psledger', P('ps_ledger.html'), '판생 계획표'], ['pscolor', P('ps_color.html'), '컬러 월차'], ['psweek', P('ps_week.html'), '주간 조정'], ['pscapa', P('ps_capa.html'), '생산 가능'], ['psmat', P('ps_mat.html'), '도금 소재'], ['pslog', P('ps_log.html'), '이력·회차']]],   // 11/19 사용자 'D — 포털 안 판생 작업판'(docs/39~41)
       ['v0', '수주 조정', 'plan7', [['room', P('room.html#test'), '시험 계산'], ['room', P('room.html#grp'), '판매그룹별']]],   // 11/18 사장님 회의: 조정·결정은 수주
       ['v1', '계획', 'supply', [['gyehoek', P('gyehoek.html'), '일별 가동계획'], ['gyehoek', P('gyehoek.html#mat'), '소재'], ['plan7', P('ct_plan.html#cmp'), '조정'], ['status', P('status.html'), '강종 전환']]],
       ['v2', '현황', 'home', [['hy', P('hy.html'), '현황'], ['suju', P('suju.html#dash'), '그룹별'], ['suju', P('suju.html#order'), '수출 선적'], ['board', P('board.html'), '4분기 전망']]],

@@ -4,6 +4,7 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const PAGE = (document.getElementById('shell') || {}).dataset.page;
+  const GRPN = (g) => { g = String(g || ''); return /수출/.test(g) && !/컬러/.test(g) ? '도금수출' : /자동차/.test(g) ? '자동차' : /도금판매/.test(g) ? '도금국내' : /컬러|자가/.test(g) ? '자가재' : /수요/.test(g) ? '수요개발' : g || '기타'; };
   const LB = (x) => String(x == null ? '' : x).replace(/자동차강판판매|자동차강판/g, '자동차').replace(/도금판매/g, '도금국내');   // 용어 기준(docs/32): 그룹 이름
   const n0 = PS.n0, sg = PS.sg, md = PS.md, mL = PS.mLab;
   let st = { m0: null, cmp: 0, m: null, src: 'ledger' };
@@ -95,6 +96,99 @@
     PS.setMany(out, why);
   }
   const B0 = () => PS.base();
+
+  /* ---------- 오늘 할 일(판생 대응, docs/44) — 주문 변경 → 영향 → 대안 → 채택 → 알림 문안 ---------- */
+  const KN = { arr: '배 입항', dept: '배 출항', need: '생산 필요일', due: '납기', eta: '소재 입고 예정', qty: '주문 톤', new: '새 주문', gone: '목록에서 빠짐' };
+  function today(B) {
+    PS.pastMode = st.past === 'in' ? 'in' : 'out';   // 기본 = 빼고 봄(맨 위에 지난 납기 미생산 톤을 늘 보여 줌)
+    const pastAll = (() => { const m = PS.pastMode; PS.pastMode = 'in'; const I = PS.items(); PS.pastMode = m; const r = {}; for (const it of I.items) if (it.k === 'o' && it.need < I.asOf) { const f = it.fam === 'STS' ? 'AL' : it.fam; r[f] = (r[f] || 0) + it.t; } return r; })();
+    const C = PS.ctx(), CH = B.changes || { events: [], runs: [] }, E = CH.events || [];
+    const lastRun = (CH.runs || []).slice(-1)[0], win = st.win || '3', since = win === 'run' && lastRun ? lastRun[0] : PS.addD(C.today, -(+win || 3)) + 'T00:00';
+    const ev = E.filter((e) => e[0] >= since);
+    // 주문마다 가장 최근 바뀜만(같은 판에서 입항·출항·필요일이 같이 바뀌면 입항을 이유로)
+    const byCon = {}; for (const e of ev) { const [at, con, k] = e; const z = (byCon[con] = byCon[con] || {}); if (!z[k] || z[k][0] <= at) z[k] = e; }
+    const cards = {};
+    for (const [con, z] of Object.entries(byCon)) {
+      const it = C.itemOf[con]; const main = z.arr || z.due || z.need || z.dept || z.new || z.eta || z.qty || z.gone; if (!main) continue;
+      const [at, , k, fr, to, t, grp, fam, dst, man, shp] = main;
+      if (k === 'gone') { (cards.gone = cards.gone || { k: 'gone', cons: [], t: 0 }); cards.gone.cons.push(con); cards.gone.t += t; continue; }
+      if (!it) continue;
+      if (k === 'eta') { const pd = (C.at[con] || [])[0]; if (!pd || to.slice(0, 10) <= pd.d) continue; }
+      const key = k === 'new' ? `new|${grp}|${dst}|${it.fam}` : `${k}|${shp || dst}|${fr}|${to}|${it.fam}`;
+      const cd = (cards[key] = cards[key] || { k, at, fr, to, grp: GRPN(grp), fam: it.fam, place: shp || dst, cons: [], t: 0, man: new Set() });
+      cd.cons.push(con); cd.t += it.t; if (man) cd.man.add(man); if (at > cd.at) cd.at = at;
+    }
+    const list = Object.values(cards).filter((c) => c.k !== 'gone').map((c) => {
+      const its = c.cons.map((x) => C.itemOf[x]), need = its.map((x) => x.need).sort()[0], cur = its.map((x) => (C.at[x.con] || []).slice(-1)[0]).filter(Boolean), last = cur.map((x) => x.d).sort().pop();
+      const later = (c.k === 'arr' || c.k === 'dept' || c.k === 'need' || c.k === 'due') && c.to > c.fr;
+      c.need = need; c.last = last; c.lateD = last ? Math.round((new Date(last) - new Date(need)) / 864e5) : null; c.later = later;
+      const st0 = its.reduce((a, x) => a + (C.A.stockUsed[x.con] || 0), 0); c.fromStock = st0;
+      c.state = st0 >= c.t * 0.95 ? '재고에서 출하' : !last ? '배정 없음' : c.lateD > 0 ? '지연 위험' : later && c.lateD < -7 ? '미뤄도 됨' : '맞음';
+      c.rank = c.state === '지연 위험' ? 0 : c.state === '배정 없음' ? 1 : c.state === '미뤄도 됨' ? 2 : 3;
+      return c; }).sort((a, b) => a.rank - b.rank || b.t - a.t);
+    const nRisk = list.filter((c) => c.rank <= 1), tRisk = nRisk.reduce((a, c) => a + c.t, 0);
+    const shown = list.filter((c) => st.only !== 'risk' || c.rank <= 2).slice(0, st.more ? 200 : 25);
+    const card = (c, i) => {
+      const title = c.k === 'new' ? `${esc(c.grp)} 새 주문 · ${esc(c.place)}` : `${esc(c.grp)} · ${esc(c.place)} ${KN[c.k]} <b class="dt">${md(c.fr.slice(0, 10))}</b>에서 <b class="dt">${md(c.to.slice(0, 10))}</b>로 ${c.to > c.fr ? '늦춰짐' : '당겨짐'}`;
+      let body = c.state === '재고에서 출하' ? `<p>같은 사양 재고(${esc((B.stockLots || {}).month || '')})로 나감 · ${n0(c.fromStock)}t · 새로 만들 것 없음</p>` : `<p>${c.fromStock ? `같은 사양 재고 ${n0(c.fromStock)}t 는 재고로 · ` : ''}지금 순서: ${c.last ? `<b class="dt">${md(c.last)}</b>까지 생산` : '<b class="dn">생산 계획에 없음</b>'} · 생산 필요일 <b class="dt">${md(c.need)}</b>${c.lateD > 0 ? ` · <em class="dn">${c.lateD}일 지연</em>` : c.lateD != null && c.lateD < 0 ? ` · ${-c.lateD}일 여유` : ''}</p>`;
+      let opts = [];
+      if (c.state === '지연 위험' || c.state === '배정 없음') { const O = PS.options(C, c.cons, c.need); opts = O.opts; }
+      else if (c.state === '미뤄도 됨') { const F = PS.fillers(C, c.cons, c.last), fam = c.fam, ln = linesForP(c);
+        const late = Object.keys(C.A.out).filter((k) => ln.includes(k.split('|')[0]) && C.A.out[k].g === fam && k.split('|')[1] <= c.need && k.split('|')[1] > c.last).map((k) => k.split('|')[1]).sort().pop();
+        if (late) opts.push({ kind: '미루기', txt: `${md(late)}로 미룸(새 필요일 ${md(c.need)})${F.length ? `, 빈 자리에 ${F.map((f) => `${f.it.grp} ${f.it.who === '컬러 투입' ? f.it.cus : f.it.who} ${n0(f.it.t)}t(${f.late > 0 ? f.late + '일 지연 중' : '필요 ' + md(f.it.need)})`).join(' · ')} 당겨옴` : ''}`,
+          pins: c.cons.map((x) => [x, late]).concat(F.map((f) => [f.it.con, c.last])), moved: F.map((f) => ({ con: f.it.con, from: f.pd ? f.pd.d : '', to: c.last, slack: null, grp: f.it.grp, who: f.it.who === '컬러 투입' ? f.it.cus : f.it.who, man: f.it.man, t: f.it.t })), lock: c.last <= C.lockEnd }); }
+      const optHtml = opts.map((o, j) => `<div class="op${j ? '' : ' rec'}"><b>${j ? '다른 안' : '추천'} · ${o.kind}</b> ${esc(o.txt)}${o.lock ? ' <span class="lk">이번 주 작업지시 구간이라 작업지시 담당 확인</span>' : ''}
+        ${o.pins.length ? `<button type="button" class="btn sm" data-acc="${i}|${j}">채택</button>` : ''}</div>`).join('');
+      return `<div class="tc ${c.rank === 0 ? 'risk' : c.rank === 1 ? 'warn' : ''}"><div class="th">${title} <span class="ps-note">${c.cons.length}건 ${n0(c.t)}t · ${c.fam === 'STS' ? 'AL-STS' : c.fam} · 담당 ${esc([...c.man].join(', ') || '미정')} · ${esc(String(c.at).slice(5, 16).replace('T', ' '))} 자료</span> <b class="st">${c.state}</b></div>${body}${optHtml}
+        <details><summary>주문 ${c.cons.length}건</summary>${c.cons.map((x) => { const it = C.itemOf[x], pd = (C.at[x] || []).slice(-1)[0]; return `<div class="ln">${esc(x)} · ${it.thk ? it.thk + '×' + it.wdt : ''} · ${n0(it.t)}t · 필요 ${md(it.need)} · 지금 ${pd ? `${pd.l} ${md(pd.d)}` : '없음'}</div>`; }).join('')}</details></div>`;
+    };
+    st._opts = shown.map((c) => (c.state === '미뤄도 됨' ? null : c));
+    $('ct-main').innerHTML = `${PSG.bar()}
+      <section class="card"><h2>오늘 할 일 <small>주문 자료가 2시간마다 들어올 때 바로 전 자료와 비교해 바뀐 것을 찾고, 지금 생산 순서에서의 영향과 대안을 계산</small></h2>
+        <div class="ps-k"><div class="${nRisk.length ? 'bad' : 'ok'}"><span>지연 위험·배정 없음</span><b>${nRisk.length}건</b><em>${n0(tRisk)}t</em></div><div><span>바뀐 주문</span><b>${Object.keys(byCon).length}</b><em>${list.length}묶음</em></div><div><span>미뤄도 되는 묶음</span><b>${list.filter((c) => c.rank === 2).length}</b><em>빈 자리에 다른 주문</em></div><div><span>이번 주 잠금</span><b>${md(C.lockEnd)}</b><em>작업지시 확정 구간</em></div></div>
+        <ul class="ps-chk"><li class="warn">출발점 확인: 필요일이 지났는데 아직 안 만든 주문(${md(PS.prevM(C.today.slice(0, 7)) + '-01')} 이후 필요분) AZ ${n0(pastAll.AZ || 0)}t · MAC ${n0(pastAll.MAC || 0)}t · AL ${n0(pastAll.AL || 0)}t. 이걸 다 새로 만들어야 하면 앞으로 순서가 밀림. 재고로 나간 것·보류는 빼야 정확</li></ul>
+        <div class="ps-ctl"><label>지난 납기 미생산 <select id="ps-past"><option value="in"${PS.pastMode === 'in' ? ' selected' : ''}>생산할 것으로 넣음</option><option value="out"${PS.pastMode === 'out' ? ' selected' : ''}>빼고 봄(결정한 주문만 넣음)</option></select></label>
+          <label>기간 <select id="ps-win">${[['run', '마지막 갱신'], ['1', '어제부터'], ['3', '3일'], ['7', '7일'], ['14', '14일']].map(([v, t]) => `<option value="${v}"${win === v ? ' selected' : ''}>${t}</option>`).join('')}</select></label>
+          <label>보기 <select id="ps-only"><option value="">전부</option><option value="risk"${st.only === 'risk' ? ' selected' : ''}>할 일만</option></select></label></div></section>
+      <section class="card"><h2>직접 묻기 <small>계약번호·목적지·배 이름 일부와 원하는 생산 완료일을 넣으면 가능한지와 방법</small></h2>
+        <div class="ps-ctl"><input id="ask-q" placeholder="예: MUMBAI 또는 PGXXKM26A019" value="${esc(st.askQ || '')}" style="min-width:280px"><input type="date" id="ask-d" value="${esc(st.askD || '')}"><button type="button" class="btn" id="ask-go">묻기</button></div>
+        <div id="ask-out"></div></section>
+      <section class="card"><h2>바뀐 것과 대안 <small>지연 위험 먼저 · 추천 순서: 지연 없음, 밀리는 주문의 여유 큰 것(주문 없는 판매계획분 먼저), 이번 주 작업지시 구간은 가급적 안 건드림</small></h2>
+        ${shown.map(card).join('') || '<p class="ps-chk">이 기간 바뀐 것 없음</p>'}
+        ${list.length > shown.length ? `<div class="ps-ctl"><button type="button" class="btn sub" id="ps-more">나머지 ${list.length - shown.length}묶음 보기</button></div>` : ''}
+        ${cards.gone ? `<p class="ps-note">목록에서 빠진 주문 ${cards.gone.cons.length}건 ${n0(cards.gone.t)}t(생산 끝·취소·변경)</p>` : ''}</section>
+      <section class="card" id="ps-note-card"${st.note ? '' : ' hidden'}><h2>알림 문안 <small>채택한 내용 · 그룹·담당자에게 복사해서 보내기</small></h2><textarea id="ps-note" rows="8" style="width:100%;font:inherit;font-size:15px">${esc(st.note || '')}</textarea><div class="ps-ctl"><button type="button" class="btn sub" id="ps-note-x">지우기</button></div></section>`;
+    if ($('ps-note-x')) $('ps-note-x').onclick = () => { st.note = ''; keep(); draw(); };
+    if (st.note && st.noteJump) { st.noteJump = 0; setTimeout(() => $('ps-note-card').scrollIntoView({ block: 'center' }), 50); }
+    $('ps-win').onchange = (e) => { st.win = e.target.value; keep(); draw(); };
+    $('ps-past').onchange = (e) => { st.past = e.target.value; keep(); draw(); };
+    $('ps-only').onchange = (e) => { st.only = e.target.value; keep(); draw(); };
+    if ($('ps-more')) $('ps-more').onclick = () => { st.more = 1; draw(); };
+    const accept = (c, o) => { const note = () => 0; PS.setMany(o.pins.map(([con, d]) => [`D|${con}`, `d:${d}`]), `판생 대응: ${c.k === 'new' ? '새 주문' : KN[c.k] + ' 바뀜'} ${c.place || ''} ${o.kind}`);
+      const lines = [`[판생] ${c.grp} ${c.place || ''} ${c.k === 'new' ? '새 주문' : `${KN[c.k]} ${md(c.fr.slice(0, 10))}에서 ${md(c.to.slice(0, 10))}로 바뀜`} ${c.cons.length}건 ${n0(c.t)}t`, `조치(${o.kind}): ${o.txt}`,
+        ...o.moved.map((m) => `· ${m.grp} ${m.who} ${m.con} ${n0(m.t)}t: ${m.from ? md(m.from) : '미정'}에서 ${md(m.to)}로 생산 변경${m.slack != null && m.slack < 999 ? `(납기 여유 ${m.slack}일)` : ''}, 담당 ${m.man || '미정'}`)];
+      st.note = (st.note ? st.note + '\n\n' : '') + lines.join('\n'); st.noteJump = 1; keep(); draw(); };
+    document.querySelectorAll('[data-acc]').forEach((b) => b.addEventListener('click', () => { const [i, j] = b.dataset.acc.split('|').map(Number), c = shown[i]; let o;
+      if (c.state === '미뤄도 됨') { o = null; } const os = c.state === '지연 위험' || c.state === '배정 없음' ? PS.options(C, c.cons, c.need).opts : null; o = os ? os[j] : null;
+      if (!o) { const F = PS.fillers(C, c.cons, c.last), ln = linesForP(c), late = Object.keys(C.A.out).filter((k) => ln.includes(k.split('|')[0]) && C.A.out[k].g === c.fam && k.split('|')[1] <= c.need && k.split('|')[1] > c.last).map((k) => k.split('|')[1]).sort().pop();
+        o = { kind: '미루기', txt: `${md(late)}로 미룸`, pins: c.cons.map((x) => [x, late]).concat(F.map((f) => [f.it.con, c.last])), moved: F.map((f) => ({ con: f.it.con, from: f.pd ? f.pd.d : '', to: c.last, grp: f.it.grp, who: f.it.who === '컬러 투입' ? f.it.cus : f.it.who, man: f.it.man, t: f.it.t })) }; }
+      accept(c, o); }));
+    $('ask-go').onclick = () => { st.askQ = $('ask-q').value.trim(); st.askD = $('ask-d').value; keep(); ask(C); };
+    if (st.askQ && st.askD) ask(C);
+  }
+  const linesForP = (c) => (c.fam === 'AZ' ? ['1CGL'] : c.fam === 'MAC' || c.fam === 'STS' ? ['2CGL'] : ['1CGL', '2CGL']);
+  function ask(C) {
+    const q = (st.askQ || '').toUpperCase(), d = st.askD, o = $('ask-out'); if (!q || !d) { o.innerHTML = '<p class="ps-note">무엇을(계약번호·목적지·배 이름)과 날짜를 넣어 주세요</p>'; return; }
+    const hit = Object.values(C.itemOf).filter((it) => [it.con, it.who, it.dst, it.cus, it.why].some((x) => String(x || '').toUpperCase().includes(q)));
+    if (!hit.length) { o.innerHTML = '<p class="ps-note">맞는 미생산 주문 없음</p>'; return; }
+    const byF = {}; for (const it of hit) (byF[it.fam] = byF[it.fam] || []).push(it.con);
+    o.innerHTML = Object.entries(byF).map(([f, cons]) => { const R = PS.options(C, cons, d), t = cons.reduce((a, c) => a + C.itemOf[c].t, 0);
+      const head = `<b>${f === 'STS' ? 'AL-STS' : f} ${cons.length}건 ${n0(t)}t</b> · 가동 ${R.hrs ? R.hrs.toFixed(1) : '-'}시간 · 지금 순서 ${R.last ? `${md(R.last)}까지` : '계획 없음'}`;
+      const ans = R.state === 'ok' ? '<b class="up">가능: 지금 순서로 맞음</b>' : R.opts.length && !R.opts[0].needSw ? '<b class="warn">조건부 가능</b>' : '<b class="dn">지금 자리로는 어려움</b>';
+      return `<div class="tc"><div class="th">${ans} · ${head} · ${md(d)}까지</div>${R.opts.map((x, j) => `<div class="op${j ? '' : ' rec'}"><b>${j ? '다른 안' : '추천'} · ${x.kind}</b> ${esc(x.txt)}${x.lock ? ' <span class="lk">이번 주 작업지시 구간이라 작업지시 담당 확인</span>' : ''}${x.pins.length ? ` <button type="button" class="btn sm" data-ask="${f}|${j}">채택</button>` : ''}</div>`).join('')}</div>`; }).join('');
+    o.querySelectorAll('[data-ask]').forEach((b) => b.addEventListener('click', () => { const [f, j] = b.dataset.ask.split('|'); const R = PS.options(C, byF[f], d), x = R.opts[+j]; PS.setMany(x.pins.map(([con, dd]) => [`D|${con}`, `d:${dd}`]), `판생 대응: 직접 묻기 ${st.askQ} ${md(d)}까지 ${x.kind}`);
+      st.noteJump = 1; st.note = (st.note ? st.note + '\n\n' : '') + [`[판생] ${st.askQ} ${f} ${n0(R.t)}t ${md(d)}까지 생산 요청`, `조치(${x.kind}): ${x.txt}`, ...x.moved.map((m) => `· ${m.grp} ${m.who} ${m.con} ${n0(m.t)}t: ${md(m.from)}에서 ${md(m.to)}로 생산 변경(납기 여유 ${m.slack}일), 담당 ${m.man || '미정'}`)].join('\n'); keep(); draw(); }));
+  }
 
   /* ---------- 주문 맞추기(docs/43 M1·M2) — 그룹×강종: 생산(판생 계획표) vs 이 달 생산 필요 주문, 주문마다 사양·가동시간·소재·같은 사양 재고, 사람이 이번 달/재고/다음 달 결정 ---------- */
   function fit(B) {
@@ -491,7 +585,7 @@
     $('ps-rs').onclick = async () => { const n = $('ps-rn').value.trim(); if (!n) { PSG.toast('회차 이름을 넣어 주세요'); return; } try { await PS.saveRev(n); PSG.toast('회차 저장함'); } catch (e) { PSG.toast('저장 실패 ' + e.message); } };
   }
 
-  const VIEWS = { psfit: fit, psdecide: decide, psledger: ledger, psplating: plating, pscapa: capa, psmat: mat, pscolor: color, pslog: log, psweek: week, psflow: flow };
+  const VIEWS = { pstoday: today, psfit: fit, psdecide: decide, psledger: ledger, psplating: plating, pscapa: capa, psmat: mat, pscolor: color, pslog: log, psweek: week, psflow: flow };
   function draw() {
     const B = PS.base(); if (!B) return;
     if (PAGE === 'psdecide') { PSG.onSet = (k, v, why) => decideSet([[k, v]], why); PSG.onSetMany = (pairs, why) => decideSet(pairs, why); PSG.valueOf = (k) => { if (k.startsWith('X|')) { const [, r, m] = k.split('|'), c = PS.ledger()[m][r]; return c.s - c.p; } return PS.inputValue(k); }; }
