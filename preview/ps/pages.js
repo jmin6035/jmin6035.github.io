@@ -408,7 +408,7 @@
   }
 
   /* ---------- 업무 순서 ---------- */
-  const LINK = { psledger: ['ps_ledger.html', '판생 계획표'], psplating: ['ps_plating.html', '도금 월차'], pscolor: ['ps_color.html', '컬러 월차'], psweek: ['ps_week.html', '주간 조정'], pscapa: ['ps_capa.html', '생산 가능'], psmat: ['ps_mat.html', '도금 소재'], pslog: ['ps_log.html', '이력·회차'], wseq: ['pyeonseong.html', '주간 편성'] };
+  const LINK = { psdecide: ['ps_decide.html', '생산 결정'], psfit: ['ps_fit.html', '주문 맞추기'], psledger: ['ps_ledger.html', '판생 계획표'], psplating: ['ps_plating.html', '도금 월차'], pscolor: ['ps_color.html', '컬러 월차'], psweek: ['ps_week.html', '주간 조정'], pscapa: ['ps_capa.html', '생산 가능'], psmat: ['ps_mat.html', '도금 소재'], pslog: ['ps_log.html', '이력·회차'], wseq: ['pyeonseong.html', '주간 편성'] };
   const FLOW = {
     day: { t: '매일', when: '평일 아침', rows: [
       ['07:35', '자동 갱신', '', 'MES 주문·생산·휴지·재고를 올림. 주문·컬러 배정·도금 실적 칸이 저절로 바뀜', '위 줄 \'실적 ○/○까지\'가 어제 날짜'],
@@ -448,19 +448,34 @@
     ['psmat', '도금 소재(F/H)가 달마다 모자라지 않나', 'P사·수입·외부 구매량', '월말 재고(지금 판). 사용량 기준을 판생 계획표/월차로 바꿔 볼 수 있음. 마지막 줄 = 판생 엑셀과 차이'],
     ['pslog', '누가 언제 무엇을 바꿨나, 확정 판은 무엇인가', '회차 이름', '회차 = 그 시점 판을 얼림. 판생 계획표 비교 기준으로 고를 수 있음'],
   ];
+  /* ---------- 업무 순서(11/19 사용자 '이미지로, 이해하기 쉽게, 매일·수요일 표 말고 전체 그림') ---------- */
+  const STEPS = [
+    { n: '①', p: 'psdecide', t: '생산 결정', q: '그룹마다 이번 달 얼마 만드나', see: ['그룹·강종별 월초 재고 · 판매 계획 · 들어온 주문'], dec: ['판매 계획과 재고 출하를 넣으면 생산 = 판매 − 재고 출하', '위 카드: 강종별 남음·부족(사양 톤파워로 계산)', '부족하면 재고 출하 늘리기 · AZ·MAC 날 줄이기 · 판매 조정', '[시험해 보기]로 맞춰 본 뒤 반영'] },
+    { n: '②', p: 'psfit', t: '주문 맞추기', q: '그 생산량에 어떤 주문을 넣나', see: ['그룹×강종 생산 vs 주문, 주문마다 사이즈·사양·소재·같은 사양 재고'], dec: ['주문이 넘치면 주문마다 이번 달 · 재고에서 출하 · 다음 달', '주문이 모자라면 그룹에 주문 요청(반순·사양·주문 마감일)', '꼭 넣어야 하면 생산량 맞춤(①로)'] },
+    { n: '③', p: 'psplating', t: '도금 월차', q: '며칠에 무엇을, 왜 만드나', see: ['강종 구간·M/C·S/D 날짜, 날짜 칸 = 강종·톤·주된 그룹'], dec: ['날짜를 누르면 계약번호·사이즈·순서·이유(배 입항·납기·컬러 투입)', '박물·후물 배치: 주문을 그 날 고정 · 다음 달로', '전환 날짜를 옮기면 지연 주문이 바로 바뀜'] },
+    { n: '④', p: 'psmat', t: '도금 소재', q: '소재가 제때 들어오나', see: ['소재 종류별 3달 필요 vs 재고·입고 예정'], dec: ['첫 부족일 · 발주 마감 · 다음 발주 확인', '늦으면 발주 요청, 못 맞추면 그 주문을 다음 달로(②)'] },
+    { n: '⑤', p: 'psweek', t: '주간 조정', q: '계획대로 가고 있나', see: ['이번 달 실적 vs 계획 · 월말 전망', '강종별 누적 여유(계획 − 납기 주문)'], dec: ['− 칸을 누르면 원인 주문과 조치(당기기 · 전환 당김 · 납기 협의)', '남는 능력은 그룹별 수주 배분'] },
+  ];
   function flow(B) {
-    const td = (CT.today && CT.today()) || new Date().toISOString().slice(0, 10), dow = new Date(td + 'T00:00:00Z').getUTCDay(), dd = +td.slice(8);
-    const today = ['day', ...(dow === 3 ? ['wed'] : []), ...(dd >= 9 && dd <= 16 ? ['mon'] : [])];
-    const lk = (p) => (p && LINK[p] ? `<a class="btn sub sm" href="preview/${LINK[p][0]}">${LINK[p][1]}</a>` : '');
-    const tbl = (key) => { const F = FLOW[key]; return `<section class="card${today.includes(key) ? ' today' : ''}" id="f-${key}"><h2>${F.t} <small>${F.when}${today.includes(key) ? ' · 오늘 할 일' : ''}</small></h2>
-      <div class="psg-w"><table class="psg flow"><thead><tr><th>순서</th><th>언제</th><th>누가</th><th>화면</th><th>할 일</th><th>끝 기준</th></tr></thead><tbody>${F.rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r[0])}</td><td><b>${esc(r[1])}</b></td><td>${lk(r[2])}</td><td class="wrap">${esc(r[3])}</td><td class="wrap">${esc(r[4])}</td></tr>`).join('')}</tbody></table></div></section>`; };
-    $('ct-main').innerHTML = `${PSG.bar()}
-      <section class="card"><h2>오늘(${md(td)} ${'일월화수목금토'[dow]}) 할 일</h2><div class="ps-today">${today.map((k) => `<a href="#f-${k}">${FLOW[k].t} ${FLOW[k].rows.length}가지</a>`).join('')}</div>
-        <p class="ps-rule">입력은 연노랑 칸만 · 고친 칸은 파란 삼각형, 오른쪽 클릭 = 누가 언제 고쳤나 · 화면 위 줄 [엑셀로 내보내기]·[엑셀 가져오기]로 엑셀에서 일해도 같음</p></section>
-      ${['day', 'wed', 'mon', 'start'].map(tbl).join('')}
-      <section class="card" id="f-guide"><h2>화면 안내 <small>화면마다 답하는 질문 · 입력 칸 · 보는 법</small></h2>
-      <div class="psg-w"><table class="psg flow"><thead><tr><th>화면</th><th>답하는 질문</th><th>입력 칸(연노랑)</th><th>보는 법</th></tr></thead><tbody>${GUIDE.map((r) => `<tr><td>${lk(r[0])}</td><td class="wrap"><b>${esc(r[1])}</b></td><td class="wrap">${esc(r[2])}</td><td class="wrap">${esc(r[3])}</td></tr>`).join('')}</tbody></table></div></section>`;
+    const W = 1540, H = 930, bx = (i) => 40 + i * 300, by = 200, bw = 260, bh = 390;
+    const box = (s, i) => `<a class="wf-b" href="preview/${(LINK[s.p] || [])[0] || ''}" style="left:${bx(i)}px;top:${by}px;width:${bw}px;height:${bh}px"><div class="wf-n">${s.n} ${s.t}</div><div class="wf-q">${s.q}</div><div class="wf-s">${s.see.map((x) => `<p>${x}</p>`).join('')}</div><ul>${s.dec.map((x) => `<li>${x}</li>`).join('')}</ul></a>`;
+    const arrows = STEPS.slice(0, -1).map((_, i) => `<line x1="${bx(i) + bw + 2}" y1="${by + 70}" x2="${bx(i + 1) - 6}" y2="${by + 70}" class="ar"/>`).join('')
+      + STEPS.map((_, i) => `<line x1="${bx(i) + bw / 2}" y1="132" x2="${bx(i) + bw / 2}" y2="${by - 6}" class="ad"/>`).join('');
+    const yA = by + bh + 45, yB = by + bh + 95;
+    const loops = `<path d="M${bx(3) + bw / 2} ${by + bh + 4} V${yA} H${bx(1) + bw / 2} V${by + bh + 10}" class="lp"/><text x="${bx(1) + bw / 2 + 150}" y="${yA - 10}" class="lt">소재가 모자라면 주문을 다음 달로</text>
+      <path d="M${bx(4) + bw / 2} ${by + bh + 4} V${yB} H${bx(0) + bw / 2} V${by + bh + 10}" class="lp"/><text x="${bx(3) + bw / 2}" y="${yB - 10}" class="lt">판매·주문·실적이 바뀌면 ①부터 다시 (시험해 보기로 먼저 맞춰 봄)</text>
+      <path d="M${bx(2) + bw / 2} ${by + bh + 4} V${yB + 60}" class="ad2"/>`;
+    const html = `<div class="wf-wrap"><div class="wf" style="width:${W}px;height:${H}px">
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1f5fae"/></marker><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b45309"/></marker><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#98a2b3"/></marker></defs>${arrows}${loops}</svg>
+      <div class="wf-top" style="left:40px;top:20px;width:${W - 80}px"><b>자동으로 들어오는 자료(2시간마다 MES)</b><span>미생산 주문(사이즈·사양·배 일정·납기)</span><span>그룹·강종·사양별 재고(코일)</span><span>라인 생산 실적</span><span>소재 재고·발주·입고</span><span>판생 엑셀 기준판(11/17)</span></div>
+      ${STEPS.map(box).join('')}
+      <a class="wf-b wf-end" href="preview/ps_log.html" style="left:${bx(1) + 30}px;top:${yB + 70}px;width:${bx(3) - bx(1) + bw - 60}px;height:140px"><div class="wf-n">⑥ 확정·공유</div><div class="wf-q">판생 회의 뒤 '○월 판생 확정'으로 회차 저장 · 판생 계획표(판생 엑셀 양식)로 회의 · 엑셀로 내보내기</div><ul><li>칸을 고칠 때마다 누가·언제·이전 값이 남음 · 시험해 보기 중에는 저장 안 됨</li></ul></a>
+    </div></div>`;
+    $('ct-main').innerHTML = `${PSG.bar()}<section class="card"><h2>판생 일하는 순서 <small>위 자료가 자동으로 들어오고, ①에서 ⑤로 결정. 상자를 누르면 그 화면으로</small></h2>${html}</section>`;
+    const fit = () => { const w = document.querySelector('.wf-wrap'), f = document.querySelector('.wf'); if (!w || !f) return; const k = Math.min(1, w.clientWidth / W); f.style.transform = `scale(${k})`; w.style.height = `${H * k}px`; };
+    fit(); addEventListener('resize', fit);
   }
+
 
   /* ---------- 이력·회차 ---------- */
   function log(B) {
