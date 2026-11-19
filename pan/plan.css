@@ -275,3 +275,10 @@ input.de { width: 92px; height: 40px; border-radius: 8px; border: 1px solid var(
 .cal0 .cl:not(.ev):not(.dn)::after { content: ""; position: absolute; top: 0; bottom: 0; left: calc(var(--o, 0) * 100%); width: calc((var(--p, 0) - var(--o, 0)) * 100%); background: repeating-linear-gradient(135deg, var(--gc) 0 3px, transparent 3px 7px); pointer-events: none; }
 .cal0 .cl > * { position: relative; z-index: 1; } .cal0 .cl > .am { position: absolute; }
 @media (min-width: 100rem) { .has-dw .cal0 .cl { padding-inline: 3px; gap: 1px; } .has-dw .cal0 .cl .ln0 { width: 9px; } .has-dw .cal0 .cl b { letter-spacing: -.02em; } }
+/* 주 합계, 1차와 2차 경계, 표시 정리 */
+.cal .ws { display: none; } .cl.df, .cl.ev.df { box-shadow: none; }
+@media (min-width: 100rem) { .cal0 .cal .wh, .cal0 .cal .cg { grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(0, .82fr); } .cal .wh .ws { display: block; } .cal .cg .ws { display: grid; align-content: center; gap: 4px; padding: var(--space-xs); border-radius: var(--r); background: rgb(255 255 255 / .03); border: 1px solid var(--bd); }
+  .cal .cg .ws span { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: var(--fs); color: var(--tx2); } .cal .cg .ws b { font-size: var(--fb); color: var(--tx); font-variant-numeric: tabular-nums; } .cal .cg .ws .wo { margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--bd); }
+  .has-dw .cal0 .cal .wh, .has-dw .cal0 .cal .cg { grid-template-columns: repeat(7, minmax(0, 1fr)); } .has-dw .cal .ws { display: none !important; } }
+.cal0 .cd.c2s { box-shadow: -3px 0 0 var(--brand); } .cal0 .cd .dn0 small { padding: 1px 8px; border-radius: 999px; background: color-mix(in srgb, var(--brand) 22%, transparent); color: var(--tx); font-size: 13.5px; font-weight: 700; }
+.cal0 .cl .am.g { right: auto; left: 3px; top: 3px; }
