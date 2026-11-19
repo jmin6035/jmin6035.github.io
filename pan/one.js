@@ -96,11 +96,11 @@
       <div class="o-mid">
         <section class="o-c"><header><h2><em>1</em>그룹별 판매 · 재고 출하 · 생산</h2><span>노란 칸에 넣으면 전부 다시 계산 · 생산 = 판매 − 재고 출하</span></header>
           <div class="o-lw"><table class="o-t led"><thead><tr><th>그룹 · 강종</th><th>월초 재고</th><th>판매</th><th>재고 출하</th><th>생산</th><th>주문 확보</th><th>주문 − 생산</th><th>월말 재고</th></tr></thead><tbody>${led}</tbody></table></div></section>
-        <div class="o-r"><section class="o-c"><header><h2><em>2</em>강종별 생산 필요 · 라인 월차</h2></header><div class="fit">${fit}</div></section>
-        <section class="o-c"><header><h2><em>3</em>${PS.mLab(m)} 도금 캘린더</h2><span>칸 = 강종 · 그날 톤 · 아래 막대 = 그룹 비중 · 빨간 숫자 = 필요일 지난 주문 · 날을 누르면 그룹별·소재</span></header>
+        <div class="o-r"><section class="o-c"><header><h2><em>2</em>강종별 생산 필요 · 라인 월차</h2></header><div class="fit">${fit}</div></section></div></div>
+        <section class="o-c calw"><header><h2><em>3</em>${PS.mLab(m)} 도금 캘린더</h2><span>칸 = 강종 · 그날 톤 · 아래 막대 = 그룹 비중 · 빨간 숫자 = 필요일 지난 주문 · 날을 누르면 그룹별·소재</span></header>
           <div class="cal" style="--n:${D.length}"><div></div><div class="cr">${hd}</div><b>1CGL</b><div class="cr">${Pm['1CGL'].days.map((x) => cell('1CGL', x)).join('')}</div><b>2CGL</b><div class="cr">${Pm['2CGL'].days.map((x) => cell('2CGL', x)).join('')}</div></div>
           <div class="lg">${['AZ', 'MAC', 'AL', 'STS'].map((f) => `<span><i class="sw ${FC[f]}"></i>${FN(f)}</span>`).join('')}<span class="sep"></span>${GR.map((g) => `<span><i class="gd ${GC[g]}"></i>${g}</span>`).join('')}</div>
-          <div id="o-day" class="day"></div></section></div></div>
+          <div id="o-day" class="day"></div></section>
       <section class="o-c"><header><h2><em>4</em>주문 · 그룹별 목적지</h2><span>${PS.mLab(m)}에 만들거나 필요일이 ${PS.mLab(m)}인 미생산 주문 ${n0(rows.length)}건 · 생산 필요일(입항·납기 바뀜)을 고치면 바로 다시 배정</span></header>
         <div class="o-ctl"><input id="o-q" placeholder="계약번호·목적지·고객·담당" value="${esc(st.q || '')}">
           <select id="o-only"><option value="">전부</option><option value="bad"${st.only === 'bad' ? ' selected' : ''}>지연·배정 없음·방금 움직인 것</option><option value="chg"${st.only === 'chg' ? ' selected' : ''}>바뀐 주문(입항·필요일·납기)</option></select>
