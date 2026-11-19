@@ -310,3 +310,8 @@ input.de { width: 92px; height: 40px; border-radius: 8px; border: 1px solid var(
 @media (min-width: 100rem) { .L3 { grid-template-columns: 370px minmax(0, 1fr) 470px; } } .nl.has-sim .L3 { padding-bottom: 90px; }
 @media (max-width: 100rem) { .L3 .rgt, .L3 .lft, .L3 .mid > .pn { overflow-x: auto; } .L3 .rgt { order: -1; } }
 .L3 .rgt > * { box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; } .L3 .rgt .cgd .cgw { overflow-x: auto; } .L3 .rgt .dw header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; } .L3 .rgt .cgd .cn0 { word-break: break-all; }
+/* 틀 고정, 후보 줄바꿈, 배경 밝게 */
+:root { --bg: #232d4b; --color-paper: #232d4b; } body.xlb { background: var(--bg); }
+.dw .t thead th, .cgd .t thead th, .alm .t thead th, .t.ot thead th, .t.sq thead th { position: sticky; top: 0; z-index: 3; background: var(--card); box-shadow: 0 1px 0 var(--bd); } .dw.wide .t thead th, .rgt .dw .t thead th { background: #0b1122; }
+.cdl { display: grid; justify-items: center; gap: 4px; padding: 6px 0; } .cdl + .cdl { border-top: 1px dashed var(--bd); } .cdl .cn0 { display: block; } .cdl small { display: block; }
+.L3 .rgt { scrollbar-gutter: stable; }
