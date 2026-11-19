@@ -1,19 +1,16 @@
-/* 판생 화면 공통 색(계획 화면과 같은 톤) — 기준값 화면의 토큰을 덮어씀 */
+/* 판생 화면 공통 색(밝은 톤) — 기준값 화면: 바닥을 밝게, 판은 원래의 밝은 판 그대로, 강조색만 계획 화면과 같게 */
 :root {
-  --color-paper: #1b2338; --color-paper-2: #1b2338; --color-paper-3: #151c2e;
-  --color-floor-ink: #f1f4fb; --color-floor-mute: #c9d3e8;
-  --color-plate: #242e4a; --color-plate-2: #2b3656; --color-plate-3: #344064; --color-plate-hi: rgb(255 255 255 / .06);
-  --color-plate-ink: #f1f4fb; --color-ink: #f1f4fb; --color-ink-2: #c9d3e8; --color-muted: #a3b0cc; --color-rule: #3d4b76;
-  --color-gun: #151c2e; --color-gun-2: #101626; --color-gun-hi: #556699;
-  --color-accent: #8b98ff; --color-accent-ink: #0b1020; --color-accent-deep: #a3adff; --color-focus: #9fd0ff;
-  --color-edit: #2b3656; --color-edit-2: #344064; --color-edit-ink: #ffd98a; --color-edit-rule: #8b98ff;
-  --lift-plate: 0 1px 0 rgb(255 255 255 / .04) inset, 0 12px 32px rgb(0 0 0 / .3); --lift-key: 0 1px 0 rgb(255 255 255 / .06) inset, 0 2px 6px rgb(0 0 0 / .3);
-  --press-well: inset 0 1px 3px rgb(0 0 0 / .35); --press-deep: inset 0 2px 6px rgb(0 0 0 / .5); --shadow-card: 0 12px 32px rgb(0 0 0 / .3); --glint: none; --texture-opacity: 0;
+  --color-paper: #eef1f6; --color-paper-2: #eef1f6; --color-paper-3: #e3e8f0;
+  --color-floor-ink: #1a2233; --color-floor-mute: #46526e;
+  --color-plate: #ffffff; --color-plate-2: #f6f8fb; --color-plate-3: #e9edf3; --color-plate-hi: #ffffff;
+  --color-ink: #1a2233; --color-ink-2: #46526e; --color-muted: #5f6c85; --color-rule: #dfe4ec;
+  --color-gun: #2f3a56; --color-gun-2: #263048; --color-gun-hi: #55617f; --color-plate-ink: #f4f6fb;
+  --color-accent: #4a5bd6; --color-accent-ink: #ffffff; --color-accent-deep: #3445b8; --color-focus: #3445b8;
+  --lift-plate: 0 1px 2px rgb(16 24 40 / .06), 0 8px 24px rgb(16 24 40 / .08); --lift-key: 0 1px 2px rgb(16 24 40 / .12);
+  --press-well: inset 0 1px 2px rgb(16 24 40 / .12); --press-deep: inset 0 1px 3px rgb(16 24 40 / .18); --shadow-card: 0 1px 2px rgb(16 24 40 / .06), 0 8px 24px rgb(16 24 40 / .08);
+  --shade-beam: none; --glint: none; --texture-opacity: 0;
 }
-body.xlb { background: #1b2338; color: #f1f4fb; }
-.counts b { color: #f1f4fb; } .counts .on b { color: #a3adff; }
+body.xlb { background: #eef1f6; color: #1a2233; }
 .xlb small { font-size: 13.5px; }
-/* 바탕만 밝게(판과 표 색은 그대로) */
-body.xlb { background: #e8edf6; }
-.xl-top > h1 { color: #131a2e; } .xl-top > .lead { color: #46526e; }
-section.xl { background: #242e4a; } .x-act, .x-toast { background-color: #242e4a; }
+.counts { background: #ffffff; box-shadow: var(--shadow-card); } .counts > div { background: #f6f8fb; box-shadow: none; border: 1px solid #dfe4ec; } .counts span { color: #5f6c85; } .counts b { color: #1a2233; } .counts .on b { color: #3445b8; }
+.xl-hd { background: #ffffff; border-bottom: 1px solid #dfe4ec; box-shadow: 0 1px 2px rgb(16 24 40 / .05); } .xl-hd b, .xl-hd a { color: #1a2233; } .xl-hd a.on { background: #e6e9fb; color: #3445b8; }
