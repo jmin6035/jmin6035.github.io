@@ -311,19 +311,22 @@
         : om_ ? (() => { const mt = Object.values(om_).reduce((a, z) => a + z.t, 0); return PS.BANDS.filter((b) => om_[b]).map((b) => ({ b, r: om_[b].t / mt, thk: Math.round(om_[b].tk / om_[b].t * 100) / 100, wdt: +Object.entries(om_[b].w).sort((x, y) => y[1] - x[1])[0][0] })); })() : [{ b: '', r: 1, thk: 0, wdt: 0 }];
       const rsum = parts.reduce((a, p) => a + p.r, 0) || 1; for (const p of parts) p.r /= rsum;
       /* 도금수출: 배선일정 엑셀(목적지별 출항 반순·월평균) 기준 — 목적지마다 (평균 비중 × 그룹 생산) − 이미 들어온 주문 = 남는 양을 그 목적지 출항 −1일에 — 출항 기간 안(11/19 사용자 '입항일 기준 엑셀 적용 · −1일이 아니라 기간') */
-      const SS = g === '도금수출' && ((B.shipSched || {})[`${g}|${fam}`] || []).map((x) => [x[0], PS.kv(`ship|${g}|${fam}|${x[0]}|t`, x[1]), PS.kv(`ship|${g}|${fam}|${x[0]}|a`, x[2]), PS.kv(`ship|${g}|${fam}|${x[0]}|b`, x[3])]);
+      const SS = g === '도금수출' && ((B.shipSched || {})[`${g}|${fam}`] || []).map((x) => [x[0], PS.kv(`ship|${g}|${fam}|${x[0]}|t`, x[1]), PS.kv(`ship|${g}|${fam}|${x[0]}|a`, x[2]), PS.kv(`ship|${g}|${fam}|${x[0]}|b`, x[3]), x[7]]);
       if (SS && SS.length) {
         const tot = SS.reduce((a, x) => a + x[1], 0) || 1, ordD = {};
         for (const it of items) if (it.k === 'o' && it.m === m && it.grp === g && it.fam === fam) { const w = String(it.who || '').toUpperCase(); const x = SS.find((y) => w.includes(y[0].toUpperCase()) || y[0].toUpperCase().includes(w.split(' ')[0])); if (x) ordD[x[0]] = (ordD[x[0]] || 0) + it.t; }
         let gaps = SS.map((x) => [x, Math.max(0, x[1] / tot * q - (ordD[x[0]] || 0))]); const gs = gaps.reduce((a, y) => a + y[1], 0);
         if (gs < 1) gaps = SS.map((x) => [x, x[1] / tot]); const gsum = gaps.reduce((a, y) => a + y[1], 0) || 1;
-        const last = PS.days(m).length, spec = (p) => (p.b ? `${p.b} ${p.thk}×${p.wdt}, ${src} 기준 추정` : '사양 미정');
+        const last = PS.days(m).length;
         for (const [x, gp] of gaps) { const tD = rest * gp / gsum; if (tD < 5) continue; const a = Math.min(x[2], last), b = Math.min(x[3], last);
+          /* 사양: 그 목적지의 실적 구성(배선일정 엑셀 정리_판매데이터)이 있으면 그것, 없으면 그룹 구성 */
+          const bd = x[4] && x[4].bands, bt = bd ? Object.values(bd).reduce((q0, v) => q0 + v[0], 0) : 0;
+          const partsD = bt > 0 ? PS.BANDS.filter((k) => bd[k] && bd[k][0] / bt > 0.02).map((k) => ({ b: k, r: bd[k][0] / bt, thk: bd[k][1], wdt: bd[k][2] })) : parts, specSrc = bt > 0 ? '그 목적지 실적' : src;
           const dd = (n) => `${m}-${String(n).padStart(2, '0')}`;   /* 출항 기간 안에서 생산: 시작일 전엔 안 넣고(ready) 끝날까지(need). 기간이 열흘 넘으면 반순으로 나눔 */
           const pieces = b - a >= 10 ? BAN.filter(([s0, e0]) => e0 >= a && s0 <= b).map(([s0, e0]) => [Math.max(s0, a), Math.min(e0, b, last)]) : [[a, b]];
           for (const [p0, p1] of pieces) { let nd = dd(p1); if (nd <= asOf) nd = PS.addD(asOf, 1); const rd = dd(p0) > asOf ? dd(p0) : '';
-            for (const p of parts) { const t = Math.round(tD / pieces.length * p.r); if (t < 3) continue;
-              items.push({ k: 'p', m, grp: g, fam, line: '', t, left: t, need: nd, ready: rd, thk: p.thk, wdt: p.wdt, band: p.b, who: x[0], dst: x[0], why: `${x[0]} 출항 ${x[2]}~${x[3]}일(배선일정 엑셀)에 맞춰 ${+p0}~${+p1}일 생산 · 아직 주문 없음 · ${spec(p)}` }); } } }
+            for (const p of partsD) { const t = Math.round(tD / pieces.length * p.r); if (t < 3) continue;
+              items.push({ k: 'p', m, grp: g, fam, line: '', t, left: t, need: nd, ready: rd, thk: p.thk, wdt: p.wdt, band: p.b, who: x[0], dst: x[0], why: `${x[0]} 출항 ${x[2]}~${x[3]}일(배선일정 엑셀)에 맞춰 ${+p0}~${+p1}일 생산 · 아직 주문 없음 · ${p.b ? `${p.b} ${p.thk}×${p.wdt}, ${specSrc} 기준 추정` : '사양 미정'}` }); } } }
         continue;
       }
       BAN.forEach(([a, b], i) => { const tb = rest * bw[i] / ws; if (tb < 5) return; const end = `${m}-${String(Math.min(b, PS.days(m).length)).padStart(2, '0')}`;

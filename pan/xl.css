@@ -23,3 +23,31 @@ table.x { border-collapse: collapse; margin: 0 auto; width: 100%; } table.x.w60 
 .xlb .card.lock { max-width: 420px; margin: 16vh auto; padding: 28px; text-align: center; background: #fff; border: 1px solid #c9c9c4; } .xlb .card.lock .ic { display: none; }
 .xlb .unlock { display: flex; gap: 8px; } .xlb .unlock input { flex: 1; padding: 10px; border: 1px solid #999; } .xlb .unlock button { padding: 10px 18px; border: 0; background: #1f6f43; color: #fff; font-weight: 800; } .xlb .hint { color: #c62828; }
 @media (max-width: 900px) { #ct-main { padding: 10px 10px 110px; } .rts { grid-template-columns: 1fr; } .xl { overflow-x: auto; } .x-act { white-space: normal; width: calc(100% - 20px); flex-wrap: wrap; justify-content: center; } .xl-hd { padding: 10px 12px; gap: 8px; } }
+/* 목적지·시간당 톤 표(11/19 사용자 '목적지별로 더 디테일하게 · 그룹으로 나누고 이름순 · 입항일·T/Hr 동일 · 더 고급지게') */
+.tiles { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 12px 0 2px; }
+.tiles > div { min-width: 150px; padding: 8px 16px; background: #fff; border: 1px solid #c9c9c4; border-top: 3px solid #1f6f43; display: grid; justify-items: center; }
+.tiles span { font-size: 13.5px; color: #555; } .tiles b { font-size: 21px; letter-spacing: -.01em; } .tiles .on { border-top-color: #b45309; } .tiles .on b { color: #b45309; }
+.tb { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; padding: 8px 4px 12px; font-size: 15px; }
+.tb label { display: inline-flex; align-items: center; gap: 6px; } .tb input[type="search"], .tb select { padding: 6px 10px; border: 1px solid #999; background: #fff; font-size: 15px; } .tb input[type="search"] { min-width: 230px; }
+.tb .ck input { width: 16px; height: 16px; } .tb .cnt { color: #555; font-size: 13.5px; } .tb .lgd { display: inline-flex; align-items: center; gap: 5px; color: #555; font-size: 13.5px; }
+.tb .lgd i, .bb i { display: inline-block; width: 12px; height: 10px; } .b0 { background: #c7e5c7; } .b1 { background: #8fcf8f; } .b2 { background: #4aa06a; } .b3 { background: #1f6f43; }
+.xw { overflow-x: auto; }
+.x.ship td { padding: 5px 8px; } .x.ship td.nm { text-align: center; } .x.ship td.nm b { font-size: 16px; }
+.x td small { display: block; font-size: 13.5px; color: #666; } .x td.up small { color: #1f6f43; font-weight: 700; } .x td.dn small { color: #b45309; font-weight: 700; }
+.fm { display: inline-block; min-width: 54px; padding: 1px 8px; border-radius: 999px; font-size: 13.5px; font-weight: 700; border: 1px solid; }
+.fm.AL { color: #1d4ed8; border-color: #9cb6ef; background: #eef3fe; } .fm.AZ { color: #9a3412; border-color: #e7b48f; background: #fdf2ea; }
+.fm.MAC { color: #7c2d6a; border-color: #d7a6cd; background: #fbeef8; } .fm.STS { color: #0f5c52; border-color: #8ec9c0; background: #eafaf7; }
+.bb { display: flex; height: 10px; width: 140px; margin: 0 auto 2px; border: 1px solid #c9c9c4; } .bb i { height: 100%; width: auto; }
+.bc .bt { font-size: 13.5px; color: #555; } .mu { color: #777; font-size: 13.5px; }
+.sp { text-align: left; } .sp span { display: inline-block; margin: 0 8px 2px 0; font-size: 13.5px; } .sp b { font-weight: 700; }
+.x td.none { padding: 18px; color: #555; }
+.tabs { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.tab { padding: 8px 18px; border: 1px solid #9bbf9b; background: #fff; cursor: pointer; font-size: 15px; display: inline-flex; align-items: center; gap: 6px; }
+.tab b { font-weight: 800; } .tab i { font-style: normal; font-size: 13.5px; color: #b45309; } .tab:hover { background: #f0fbf0; } .tab.on { background: #1f6f43; color: #fff; border-color: #1f6f43; } .tab.on i { color: #ffe9a8; }
+.x.rate td.nm { background: #f3f8f3; } .x.rate td.in { min-width: 110px; }
+.x-toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 20px; z-index: 30; background: #1f3b2d; color: #fff; padding: 10px 22px; border-radius: 8px; font-size: 15px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); }
+@media (max-width: 900px) { .x.ship .sp, .x.ship td.bc { display: none; } .tb input[type="search"] { min-width: 0; flex: 1; } }
+.x.ship td, .x.rate td { height: 46px; } .x.ship td.bn { white-space: nowrap; } .x.ship td.bn small { white-space: normal; }
+.x.ship td.nm { min-width: 150px; } .x.rate td.in small { color: #8a6a1a; }
+.x tr.grp td { text-align: left; } .x tr.grp td span { position: sticky; left: 10px; display: inline-block; }
+@media (max-width: 900px) { .x.ship td.nm { min-width: 0; } .tiles > div { min-width: 0; flex: 1 1 44%; } }
