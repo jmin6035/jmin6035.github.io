@@ -20,10 +20,20 @@
   const fire = () => { for (const f of subs) try { f(); } catch (e) { console.error(e); } };
 
   /* ---------- 입력 값 ---------- */
-  PS.get = (k, dflt) => (k in OV ? OV[k] : dflt);
-  PS.isSet = (k) => k in OV;
+  /* 시험(시뮬레이션): 켜면 고친 칸이 공유 저장소로 가지 않고 SIM 에만 — 지금 판 위에 겹쳐 계산, [반영]하면 그때 기록 */
+  let SIM = null, EFF = null;
+  const ov = () => { if (!SIM) return OV; if (!EFF) { EFF = Object.assign({}, OV); for (const k in SIM) { if (SIM[k] == null) delete EFF[k]; else EFF[k] = SIM[k]; } } return EFF; };
+  PS.simOn = () => !!SIM;
+  PS.simStart = () => { SIM = {}; EFF = null; fire(); };
+  PS.simChanges = () => (SIM ? Object.entries(SIM).map(([k, v]) => [k, v, k in OV ? OV[k] : null]) : []);
+  PS.simDrop = () => { SIM = null; EFF = null; fire(); };
+  PS.simCommit = (why) => { const pairs = Object.entries(SIM || {}); SIM = null; EFF = null; if (pairs.length) PS.setMany(pairs, why || '시험 반영'); else fire(); return pairs.length; };
+  PS.baseOver = () => OV;   // 시험 전 지금 판(비교용)
+  PS.get = (k, dflt) => { const o = ov(); return k in o ? o[k] : dflt; };
+  PS.isSet = (k) => k in ov();
   PS.set = (k, v, why) => PS.setMany([[k, v]], why);
   PS.setMany = (pairs, why) => {
+    if (SIM) { for (const [k, v] of pairs) { if (v == null && !(k in OV)) delete SIM[k]; else if (k in OV && v === OV[k]) delete SIM[k]; else SIM[k] = v; } EFF = null; fire(); return; }
     const cells = [];
     for (const [k, v] of pairs) { const prev = k in OV ? OV[k] : null; if (v === prev) continue; if (v == null) delete OV[k]; else OV[k] = v; cells.push([k, v, prev]); }
     if (!cells.length) return;
@@ -37,7 +47,7 @@
     return false;
   };
   PS.inputValue = (k) => {   // 입력 칸의 지금 값(고친 값 or 기준판)
-    if (k in OV) return OV[k];
+    { const o = ov(); if (k in o) return o[k]; }
     const p = k.split('|');
     if (p[0] === 'L') return ((((B.ledger.v[p[2]] || {}).cells || {})[p[1]] || {})[p[3]]) || 0;
     if (p[0] === 'M') { const x = B.mat.rows.find((y) => String(y.r) === p[1]); return x ? x.v[p[2]] || 0 : 0; }
@@ -73,7 +83,7 @@
   function live(D) {
     const G = D.cg_order_progress, I = D.integrated, A = D.plating_actual;
     if (G && G.rows) {
-      B.orders = G.rows.filter((o) => ((o.ordT || 0) - (o.prodT || 0)) >= 1 && !o.prdEnd && ['AZ', 'AL', 'MAC'].includes(o.fam)).map((o) => [o.con, o.line || o.pline || '', o.fam, String(o.grp || '').replace('그룹', ''), Math.round(((o.ordT || 0) - (o.prodT || 0)) * 10) / 10, Math.round((o.tph || 0) * 10) / 10, o.due || '', o.st || '', o.man || '', o.dst || o.cus || '', o.pdt || '', `${o.thk}×${o.wdt}`, o.eta || o.entSche || '']);
+      B.orders = G.rows.filter((o) => ((o.ordT || 0) - (o.prodT || 0)) >= 1 && !o.prdEnd && ['AZ', 'AL', 'MAC'].includes(o.fam)).map((o) => [o.con, o.line || o.pline || '', o.fam, String(o.grp || '').replace('그룹', ''), Math.round(((o.ordT || 0) - (o.prodT || 0)) * 10) / 10, Math.round((o.tph || 0) * 10) / 10, o.due || '', o.st || '', o.man || '', o.dst || o.cus || '', o.pdt || '', `${o.thk}×${o.wdt}`, o.eta || o.entSche || '', o.needIn || '', o.needSrc || '', o.shp || '', o.arr || '', o.dept || '', o.cus || '', o.etaSrc || '']);
       B.ordersAsOf = G.asOf;
     }
     if (I && I.color) {
@@ -83,6 +93,7 @@
       for (const [d, l, k, mins] of I.colorDown || []) (ev[`${l}|${d}`] = ev[`${l}|${d}`] || []).push([k, Math.round(mins)]);
       B.color = col; B.colorEv = ev; B.colorAsOf = I.asOf;
     }
+    if (I && I.shipProfile) B.shipProfile = I.shipProfile;
     if (A && A.daily) { B.actual = {}; for (const r of A.daily) B.actual[r.d] = { '1CGL': r['1CGL'] || 0, '2CGL': r['2CGL'] || 0 }; B.actualAsOf = A.asOf; }
     else B.actual = B.actual || {};
   }
@@ -111,7 +122,7 @@
   /* ================= 계산 모델 ================= */
   /* 원장: 줄 값 = 입력(dept·자식 없는 mkt) 또는 합(mkt = Σ dept, sec = Σ mkt, 도금 계 = MAC+AZ+AL, 내수·수출·자가 합) */
   PS.ledger = (over) => {
-    const o = over || OV, R = B.ledger.rows, V = B.ledger.v, ms = B.months, out = {};
+    const o = over || ov(), R = B.ledger.rows, V = B.ledger.v, ms = B.months, out = {};
     const kids = (r, kind) => R.filter((y) => (kind === 'dept' ? y.mkt === r : y.sec === r && y.kind === 'mkt'));
     for (const m of ms) {
       const C = (V[m] || {}).cells || {}, res = {};
@@ -156,7 +167,7 @@
   /* 도금 월차: 판생 도금가동 방식(docs/38) — 꼭 맞출 강종(1CGL AZ · 2CGL MAC) 날 수 먼저, 남는 날 AL, 지난달 끝 강종 이어받기, 전환 첫날 500t·15시간 */
   const MUST = { '1CGL': 'AZ', '2CGL': 'MAC' };
   PS.LINES = { '1CGL': ['AZ', 'AL'], '2CGL': ['MAC', 'AL'] };
-  PS.isDown = (l, d) => { const k = `P|${d.slice(0, 7)}|${l}|${d}|down`; return k in OV ? !!OV[k] : B.down.includes(`${l}|${d}`); };
+  PS.isDown = (l, d) => { const k = `P|${d.slice(0, 7)}|${l}|${d}|down`; const o = ov(); return k in o ? !!o[k] : B.down.includes(`${l}|${d}`); };
   const noGo = (l, g, d) => B.nogo.includes(`${l}|${g}|${d}`);
   PS.rate = (m, l, g) => PS.get(`P|${m}|${l}|${g}|rate`, (B.plating[m] || {}).rate ? B.plating[m].rate[`${l}|${g}`] : 900);
   function autoSw(l, m, T, carry) {
@@ -220,8 +231,8 @@
     for (const l of PS.CLINES) {
       const X = Object.fromEntries(((B.color[m] || {})[l] || []).map((r) => [r[0], r])), rs = Object.values(X).filter((r) => r[1] > 0);
       const avg = rs.reduce((a, r) => a + r[2], 0) / Math.max(1, rs.reduce((a, r) => a + r[1], 0));
-      out[l] = PS.days(m).map((d) => { const r = X[d], k = `C|${m}|${l}|${d}|h`, h0 = r ? r[1] : 0, h = k in OV ? OV[k] : h0, tph = r && r[1] > 0 ? r[2] / r[1] : avg;
-        return { d, h, h0, t: Math.round(h === h0 && r ? r[2] : tph * h), ev: (B.colorEv[`${l}|${d}`] || []), set: k in OV }; });
+      out[l] = PS.days(m).map((d) => { const r = X[d], k = `C|${m}|${l}|${d}|h`, h0 = r ? r[1] : 0, h = k in ov() ? ov()[k] : h0, tph = r && r[1] > 0 ? r[2] / r[1] : avg;
+        return { d, h, h0, t: Math.round(h === h0 && r ? r[2] : tph * h), ev: (B.colorEv[`${l}|${d}`] || []), set: k in ov() }; });
     }
     return out;
   };
@@ -234,6 +245,60 @@
       else for (const [d, g, t, e] of ((B.plating[m] || {}).ref || {})[ln] || []) out[`${ln}|${d}`] = { g: g || '', t: t || 0, ev: e || '' };
     }
     return out;
+  };
+  /* 날짜별 무엇을 왜(11/19 사용자 '며칠에 무슨 그룹 어떤 게 생산돼야 한다, 이유는 입항일이 4반순이라서 — 이렇게 알려줘야'):
+     도금 계획의 날마다 그 강종·라인에 맞는 일감을 '생산 필요일'이 이른 것부터 채움. 일감 = 미생산 주문(수출 = 배 출항 전 생산 필요일, 국내 = 납기, 소재 입고 전엔 못 넣음)
+     + 판매계획 중 아직 주문이 없는 양(그 그룹 과거 출고 날짜 분포대로 반순에 나눔). 남는 생산 = 재고로 */
+  const GRPN = (g) => { g = String(g || ''); return /수출/.test(g) && !/컬러/.test(g) ? '도금수출' : /자동차/.test(g) ? '자동차' : /도금판매/.test(g) ? '도금국내' : /컬러|자가/.test(g) ? '자가재' : /수요/.test(g) ? '수요개발' : g || '기타'; };
+  const LGRP = (lab) => { lab = String(lab).replace(/\s/g, ''); return /도금수출/.test(lab) ? '도금수출' : /자동차/.test(lab) ? '자동차' : /도금판매|RM/.test(lab) ? '도금국내' : /자가/.test(lab) ? '자가재' : /수요/.test(lab) ? '수요개발' : lab; };
+  const PROFK = { 도금수출: 'G수출', 도금국내: 'G국내', 자동차: 'G자동차' };
+  const BAN = [[1, 5], [6, 10], [11, 15], [16, 20], [21, 25], [26, 31]];
+  PS.banLab = (d) => `${+d.slice(5, 7)}월 ${BAN.findIndex(([a, b]) => +d.slice(8) >= a && +d.slice(8) <= b) + 1}반순`;
+  PS.assign = (P) => {
+    const pl = P || PS.plating(), DP = PS.dayPlan(pl), asOf = String(B.actualAsOf || B.ordersAsOf || '').slice(0, 10) || B.months[0] + '-01';
+    const L = PS.ledger(), R = B.ledger.rows, need = (o) => o[13] || (o[6] ? PS.addD(o[6], -3) : asOf), m0 = asOf.slice(0, 7);
+    const cut = PS.prevM(m0) + '-01', stale = [];   // 지난달 1일 전에 필요했던 미생산 = 보류·취소 확인 대상
+    const ms = B.months.filter((m) => m >= m0), famOf = (x) => { const sec = R.find((y) => y.r === x.sec); return sec && ['MAC', 'AZ', 'AL'].includes(sec.name) ? (/STS/.test(x.lab) ? 'STS' : sec.name) : null; };
+    // 1. 달 × 그룹 × 강종 생산량(원장 = 생산 결정). 이번 달은 남은 날 계획 비율만큼
+    const quota = {};
+    for (const m of ms) {
+      const share = {}; if (m === m0) for (const f of ['AZ', 'MAC', 'AL', 'STS']) { let a = 0, z = 0; for (const k in DP) { const [, d] = k.split('|'); if (d.slice(0, 7) !== m || DP[k].g !== f) continue; a += DP[k].t; if (d > asOf) z += DP[k].t; } share[f] = a ? z / a : 0; }
+      for (const x of R) { if (!L[m] || !L[m][x.r] || !L[m][x.r].in) continue; const f = famOf(x); if (!f) continue; const k = `${m}|${LGRP(x.lab)}|${f}`; quota[k] = (quota[k] || 0) + L[m][x.r].p * (m === m0 ? share[f] : 1); }
+    }
+    // 2. 일감: 주문(생산 필요일이 든 달 — 지난 납기는 이번 달) + 그 달 생산량 중 주문이 없는 양(과거 출고 반순 분포)
+    const items = [];
+    for (const o of B.orders) {
+      const nd = need(o); if (nd < cut) { stale.push(o); continue; }
+      const g = GRPN(o[3]), f = o[10] === 'GAS' ? 'STS' : o[2], exp = o[14] === '출항', port = (String(o[15] || '').split('_')[1] || o[9] || '').replace(/\s+/g, ' ').trim();
+      items.push({ k: 'o', m: nd.slice(0, 7) < m0 ? m0 : nd.slice(0, 7), con: o[0], line: o[1] === '1CGL' || o[1] === '2CGL' ? o[1] : '', fam: f, grp: g, t: o[4], left: o[4], need: nd, ready: o[12] && o[12] > asOf ? o[12] : '',
+        who: exp ? port.replace(/\s*\d순$/, '') : g === '자가재' ? '컬러 투입' : (o[18] || o[9] || ''), why: exp ? `${port} 배${o[16] ? ` 입항 ${PS.md(o[16])}(${PS.banLab(o[16])})` : ''}${o[17] ? ` · 출항 ${PS.md(o[17])}` : ''}` : g === '자가재' ? `컬러 라인 투입 ${o[6] ? PS.md(o[6]) : ''}` : `납기 ${o[6] ? PS.md(o[6]) : '없음'}` });
+    }
+    const om = {}; for (const it of items) { const k = `${it.m}|${it.grp}|${it.fam}`; om[k] = (om[k] || 0) + it.t; }
+    for (const [k, q] of Object.entries(quota)) {
+      const [m, g, fam] = k.split('|'), rest = q - (om[k] || 0); if (rest < 20) continue;
+      const prof = (B.shipProfile || {})[PROFK[g]], D = PS.days(m).filter((d) => m !== m0 || d > asOf), lead = g === '도금수출' ? 7 : g === '자가재' ? 2 : 3;
+      const bw = BAN.map(([a, b]) => D.filter((d) => +d.slice(8) >= a && +d.slice(8) <= b).reduce((s, d) => s + (prof ? prof[+d.slice(8)] || 0 : 1), 0)), ws = bw.reduce((a, b) => a + b, 0) || 1;
+      const top = BAN.map((_, i) => [i, bw[i] / ws]).sort((a, b) => b[1] - a[1]).slice(0, 2);
+      BAN.forEach(([a, b], i) => { const t = Math.round(rest * bw[i] / ws); if (t < 5) return; const end = `${m}-${String(Math.min(b, PS.days(m).length)).padStart(2, '0')}`;
+        items.push({ k: 'p', m, grp: g, fam, line: '', t, left: t, need: PS.addD(end, -lead), ready: '', who: '판매계획', why: `${PS.mLab(m)} ${i + 1}반순 출고분(아직 주문 없음)${prof ? ` · ${g} 과거 출고 ${top.map(([j, r]) => `${j + 1}반순 ${Math.round(r * 100)}%`).join('·')}` : ''}` }); });
+    }
+    items.sort((a, b) => (a.need < b.need ? -1 : a.need > b.need ? 1 : a.k === 'o' ? -1 : 1));
+    // 3. 날마다: 그 강종·라인 일감을 생산 필요일 이른 순으로, 그 달 그룹 생산량 안에서
+    const qLeft = Object.assign({}, quota), out = {};
+    const days = [...new Set(Object.keys(DP).map((k) => k.split('|')[1]))].filter((d) => d > asOf).sort();
+    for (const d of days) for (const l of Object.keys(PS.LINES)) {
+      const x = DP[`${l}|${d}`]; if (!x || !x.t || !x.g) continue;
+      const m = d.slice(0, 7); let cap = x.t; const got = [];
+      for (const it of items) {
+        if (cap <= 0) break;
+        if (it.left <= 0 || it.m !== m || it.fam !== x.g || (it.line && it.line !== l) || (it.ready && it.ready > d)) continue;
+        const qk = `${m}|${it.grp}|${it.fam}`, ql = qLeft[qk] || 0; if (ql <= 0) continue;
+        const t = Math.min(cap, it.left, ql); it.left -= t; cap -= t; qLeft[qk] = ql - t; got.push({ it, t, late: it.k === 'o' && it.need < d ? Math.round((new Date(d) - new Date(it.need)) / 864e5) : 0 });
+      }
+      out[`${l}|${d}`] = { g: x.g, t: x.t, got, stock: Math.round(cap) };
+    }
+    const over = {}; for (const it of items) if (it.k === 'o' && it.left > 1) { const k = `${it.m}|${it.grp}|${it.fam}`; over[k] = (over[k] || 0) + it.left; }
+    return { out, items, over, quota, qLeft, om, asOf, stale, cut };
   };
   PS.monday = (d) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() - ((x.getUTCDay() + 6) % 7)); return x.toISOString().slice(0, 10); };
   PS.addD = (d, n) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
@@ -263,7 +328,7 @@
     let st = null;
     for (const m of ms) {
       let buy = row('구매량 계(임가공제외)').v[m] || 0;
-      for (const lab of PS.MAT_IN) { const x = row(lab), key = `M|${x.r}|${m}`; if (key in OV) buy += OV[key] - (x.v[m] || 0); }
+      for (const lab of PS.MAT_IN) { const x = row(lab), key = `M|${x.r}|${m}`; const o = ov(); if (key in o) buy += o[key] - (x.v[m] || 0); }
       const imp = row('임가공').v[m] || 0;
       if (st == null) { st = row('월말 소재 재고').v[m] || 0; out[m] = { buy, use: null, st, ref: st, imp }; continue; }
       const prod = useWolcha && P && P[m] ? ['1CGL', '2CGL'].reduce((a, ln) => a + P[m][ln].days.reduce((b, x) => b + x.t, 0), 0) : (l[m] ? l[m][PS.secRow('도금').r].p : 0);

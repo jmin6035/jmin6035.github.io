@@ -71,3 +71,18 @@ section.card.today { border: 2px solid #f0b400; }
 .ps-today { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 4px 0 8px; }
 .ps-today a { padding: 8px 16px; border-radius: 8px; background: #fff3b0; font-weight: 800; font-size: 16px; color: var(--ink); text-decoration: none; }
 .ps-rule { text-align: center; font-size: 13.5px; color: var(--ink-2); margin: 6px 0 0; }
+table.psg.why td { vertical-align: middle; }
+table.psg.why .wy { line-height: 1.45; padding: 2px 0; font-size: 14px; }
+table.psg.why .wy b { font-weight: 800; }
+table.psg.why .wy span { color: var(--ink-2); }
+table.psg.why .wy em, table.psg.why em.dn { color: var(--bad); font-style: normal; font-weight: 800; }
+table.psg.why .wy.pl b { color: #6b4fa0; }
+table.psg.why .sq { display: inline-block; padding: 2px 8px; border-radius: 6px; font-weight: 800; }
+table.psg.why .sq.az { background: #fbd5b5; } table.psg.why .sq.al { background: #b4c6e7; } table.psg.why .sq.mac { background: #d9b8ef; } table.psg.why .sq.sts { background: #9fd3c7; }
+table.psg.why.day td:nth-child(3), table.psg.why.day td:nth-child(5) { min-width: 420px; }
+table.psg.why tr.we td:first-child { color: #c00000; }
+table.psg.why .sw { color: #8a6d00; }
+.ps-sim { border: 2px solid #f0b400; border-radius: 10px; padding: 10px 14px; margin: 6px 0 12px; text-align: center; background: #fffbe8; }
+.ps-sim .btn { margin-left: 8px; }
+.ps-sim table.simc { margin: 10px auto 0; width: auto; }
+table.psg td.pv { font-weight: 800; color: var(--brand-2); }
