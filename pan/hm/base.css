@@ -1,6 +1,6 @@
-/* Hallmark · shape: app screen · genre: editorial · theme: Formwork (deal 2/3, seed prompt-da39·a7773aba·2026-11-19·r0) · redesign: full
- * nav: kept (판생 shell) · signature: the base-value sheet · states: loading, empty, saved, changed · formwork: drawing
- * axes: mid/display-condensed/warm · posture: restrained · contrast: pass · v2.0.0 */
+/* Hallmark · shape: app screen · genre: editorial · theme: custom (압연 강판 · rolled steel) · redesign: full
+ * nav: kept (판생 shell) · signature: zinc plates lifted off a blued-steel floor · states: loading, empty, saved, changed
+ * axes: dark-mid/sans/warm · posture: tactile · contrast: pass · v2.0.0 */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { overflow-x: clip; }
 html { scrollbar-color: var(--color-muted) var(--color-paper); scroll-padding-top: var(--space-3xl); }
