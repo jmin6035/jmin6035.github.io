@@ -24,19 +24,21 @@
     main.innerHTML = '<section class="card lock"><div><div class="ic" aria-hidden="true">🔒</div><h2>불러오는 중…</h2>'
       + '<form class="unlock" id="ct-form" hidden><input type="password" id="ct-pw" placeholder="분석 암호" autocomplete="current-password" aria-label="분석 암호"><button type="submit">열기</button></form><p class="hint" id="ct-msg"></p></div></section>';
     const envs = Promise.all([...files.map((f) => GP.latest(f).catch(() => null)), window.UI && UI.ready ? UI.ready() : null]).then((E) => E.slice(0, files.length));   // 기준일(status) 받은 뒤 그림
+    /* 11/19 수정 방: 암호 칸이 뜨면 제목도 '암호 입력'으로(제목이 '불러오는 중…'에 머물러 끝없는 로딩처럼 보이던 것) */
+    const askPw = () => { document.getElementById('ct-form').hidden = false; const h = main.querySelector('.lock h2'); if (h) h.textContent = '분석 암호를 넣고 열기'; };
     async function unlock(pw) {
       const E = await envs, D = {};
       if (!E.some(Boolean)) { document.getElementById('ct-msg').textContent = '게시된 자료가 없습니다.'; return; }
       try {
         for (let i = 0; i < files.length; i++) D[files[i].replace(/\.enc\.json$/, '')] = E[i] ? await GP.decryptJSON(E[i], pw) : null;
         try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ }
-      } catch (e) { document.getElementById('ct-form').hidden = false; document.getElementById('ct-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
+      } catch (e) { askPw(); document.getElementById('ct-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
       CT.D = D;
       const go = () => { try { render(D); } catch (e) { console.error(e); main.innerHTML = `<section class="card"><h2>화면 계산 오류</h2><p class="small">${esc(e.message)}</p></section>`; } if (window.UI && UI.reveal) UI.reveal(main); };
       go(); if (window.UI && UI.onScope) UI.onScope(go);
     }
     document.getElementById('ct-form').addEventListener('submit', (e) => { e.preventDefault(); unlock(document.getElementById('ct-pw').value); });
-    envs.then(() => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (s) unlock(s); else document.getElementById('ct-form').hidden = false; });
+    envs.then(() => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (s) unlock(s); else askPw(); });
   };
   CT.scope = () => (window.UI && UI.scope ? UI.scope() : 'all');
   CT.inScope = (pl) => { const s = CT.scope(); return s === 'all' || s === pl; };
