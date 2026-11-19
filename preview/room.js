@@ -1,7 +1,5 @@
 /* 예시(통합안) 수주 조정 — 11/18 사장님 회의 원칙(gadong-plan docs/36)을 화면으로.
-   #board 주별 할 일(11/19 사용자 '주 단위로 · 들어가자마자 뭘 할지'): 할 일 목록(차례대로) → 주별 판(주 × 1·3·4CCL 가동 막대·2CCL·자가재) → 줄을 누르면 라인별·결정 칸
-          (옛 순 단위 룸판: 라인 × 순(10일) — 컬러 = 내수(순 고정) · 수출·가전(빈 룸 채움) · 빈 룸 / 2CCL = 최후(가동 시 사장님 결정) / 도금 = 자가재(고정 몫) · 판매재
-          칸을 누르면 그 칸 배정·당길 수 있는 수출 오더·결정 기록(공유 저장소, 수주가 결정·책임)
+   (주별 가동표 탭은 11/19 사용자 '쓸모없어, 삭제' — 월차는 preview/wolcha.html)
    #test  시험 계산: 내수(건재 등)를 순 단위로 고르게 고정하고 ±물량을 바꿔 보면 → 수출·가전 그대로, 빈 룸 = 당길 오더, 넘치면 2CCL(사장님 결정), 도금 자가재 영향
    #grp   판매그룹별: 그룹 × 순 배정 · 컬러수출 수주 확보 · 담당자별 당길 수 있는 오더
    자료 = published/preview_ops.enc.json(gadong-plan tools/preview_build.py) */
@@ -83,139 +81,6 @@
   const appl = (d) => d && (X.applied || []).includes(DID(d));
   const chip = (d) => (d ? `${appl(d) ? '<span class="chip ok">계획 반영</span> ' : ''}<span class="chip ${DONE(d.st) ? 'ok' : d.st === '보류' ? 'na' : d.st === '사장님 결정 요청' ? 'bad' : 'warn'}">${esc(d.st)}</span>` : '<span class="chip">미결정</span>');
 
-  /* ---------- 주별 가동표(11/19 사용자 '처음부터 다시' → 고른 모양 '라인×주 가동표': 칸마다 계획 톤과 그중 주문 확보 톤, 주문이 모자란 칸만 색)
-     자료 ordW(gadong-plan tools/preview_build.py ord_week): 주문을 납기 7일 전 주에 놓고 납기 순으로 그 주 계획(계획재 제외)까지 채움 ---------- */
-  let OPEN = null;
-  const OW = () => X.ordW || { lines: {}, rows: [] };
-  const pulls = () => { const m = new Map(); for (const e of EV) if (e.t === 'room' && e.pulls && stOf(e) !== '보류') for (const [con, t] of e.pulls) m.set(con, { to: e.key.split('|')[1], t }); return m; };
-  function ordCell(l, s) {   // 결정(당김) 반영: 당겨 온 주는 +, 원래 놓였던 주는 −
-    const o = (OW().lines[l] || {})[s]; if (!o) return null; const P = pulls(); let add = 0;
-    for (const r of OW().rows) { if (r.line !== l) continue; const p = P.get(r.con); if (!p) continue; if (p.to === s && r.w !== s) add += p.t; else if (r.w === s && p.to !== s) add -= p.t; }
-    return { cap: o.cap, ord: Math.max(0, o.ord + add), plt: o.plt };
-  }
-  const shortOf = (c) => (c ? c.cap - c.ord : 0);
-  const isShort = (c) => c && shortOf(c) >= Math.max(100, c.cap * 0.1);
-  function orderDetail(l, s) {
-    const c = ordCell(l, s) || { cap: 0, ord: 0 }, P = pulls(), key = `${l}|${s}`, d0 = decOf(key);
-    const R = OW().rows.filter((r) => r.line === l);
-    const inW = R.filter((r) => (P.get(r.con) ? P.get(r.con).to === s : r.w === s));
-    const can = R.filter((r) => r.grp === '컬러수출그룹' && !inW.includes(r) && (!r.w || r.w > s)).sort((a, b) => (a.due < b.due ? -1 : 1));
-    const pre = new Set(d0 && d0.pulls ? d0.pulls.map((x) => x[0]) : []);
-    const tr = (r, ck) => `<tr>${ck ? `<td><input type="checkbox" class="w-p" data-con="${esc(r.con)}" data-t="${r.t}"${pre.has(r.con) ? ' checked' : ''}></td>` : ''}<td>${esc(r.con)}</td><td>${esc(r.cus || '-')}</td><td>${esc(r.pdt)}</td><td>${esc(r.size)}</td><td>${n1(r.t)}</td><td>${md(r.due)}</td><td>${esc(r.man || '-')}</td><td>${esc(ST(r.st)[1])}</td></tr>`;
-    const hd = (ck) => `<thead><tr>${ck ? '<th></th>' : ''}<th>계약</th><th>고객사</th><th>품명</th><th>두께×폭</th><th>t</th><th>납기</th><th>담당</th><th>소재</th></tr></thead>`;
-    const sh = shortOf(c);
-    return `<form class="od" id="w-f" novalidate><h3>${l} ${wkLab(s)} <b class="dt">${wkRng(s)}</b> <span>계획 ${n0(c.cap)}t · 주문 ${n0(c.ord)}t${sh >= 50 ? ` · <b class="warn">부족 ${n0(sh)}t</b>` : ''}</span></h3>
-      <div class="od-g"><div><h4>이 주 주문 ${inW.length}건</h4><div class="od-t"><table class="op-t">${hd(false)}<tbody>${inW.map((r) => tr(r, false)).join('') || '<tr><td colspan="8">없음</td></tr>'}</tbody></table></div></div>
-      <div><h4>당길 수 있는 수출 주문 ${can.length}건</h4><div class="od-t"><table class="op-t">${hd(true)}<tbody>${can.map((r) => tr(r, true)).join('') || '<tr><td colspan="9">없음, 주문 더 받기 필요</td></tr>'}</tbody></table></div></div></div>
-      <div class="row od-f"><span id="w-sel"></span><label>상태 <select id="w-st">${['제안', '확정'].map((x) => `<option${d0 && d0.st === x ? ' selected' : ''}>${x}</option>`).join('')}</select></label><input id="dec-by" placeholder="이름" value="${esc(CT.me())}"><input id="w-tx" placeholder="메모" value="${esc(d0 && d0.text || '')}"><button class="btn" type="submit">당김 저장</button><span class="note" id="dec-m"></span></div></form>`;
-  }
-  function board() {
-    const W = weeks().filter((w) => w >= wkOf(X.today)), now = wkOf(X.today);
-    let mPrev = '';
-    const mb = W.map((s) => { const m = addD(s.slice(1), 3).slice(0, 7), b = mPrev && m !== mPrev; mPrev = m; return b ? ' mb' : ''; });
-    const on = (k) => (OPEN === k ? ' on' : '');
-    const head = `<tr><th class="ln">라인</th><th class="kd">구분</th>${W.map((s, i) => `<th class="${mb[i]}">${s === now ? '이번 주' : wkLab(s)}<b class="dt">${wkRng(s).replace('~', '~<wbr>')}</b></th>`).join('')}</tr>`;
-    const lineRows = (l) => {
-      const plan = W.map((s, i) => { const c = cc(l, s); if (!c || c.cap < 1) return `<td class="${mb[i]} off">휴지</td>`; const o = ordCell(l, s) || { cap: 0 }; const own = l === '2CCL' && ourPlan(s) ? (sunStart(s) >= '2027-01-01' ? used(c) : c.own || 0) : 0; return `<td class="${mb[i]}${own >= 0.5 ? ' bad' : ''}"><button type="button" class="cl${on(`${l}|${s}`)}" data-k="${l}|${s}">${n0(o.cap)}${own >= 0.5 ? '<em>결정 필요</em>' : ''}</button></td>`; }).join('');
-      const ord = W.map((s, i) => { const c = cc(l, s); if (!c || c.cap < 1) return `<td class="${mb[i]} off"></td>`; const o = ordCell(l, s); return `<td class="${mb[i]}${isShort(o) ? ' warn' : ''}"><button type="button" class="cl${on(`${l}|${s}`)}" data-k="${l}|${s}"${isShort(o) ? ` title="부족 ${n0(shortOf(o))}t"` : ''}>${n0(o ? o.ord : 0)}</button></td>`; }).join('');
-      return `<tr class="p"><th class="ln" rowspan="2">${l}</th><th class="kd">계획</th>${plan}</tr><tr class="o"><th class="kd">주문</th>${ord}</tr>`;
-    };
-    const pltRow = `<tr class="s"><th class="ln">계획재</th><th class="kd">1~4CCL</th>${W.map((s, i) => { const t = [...MAIN, '2CCL'].reduce((a, l) => a + ((ordCell(l, s) || {}).plt || 0), 0); return `<td class="${mb[i]}">${t >= 0.5 ? n0(t) : ''}</td>`; }).join('')}</tr>`;
-    const selfRow = `<tr class="s"><th class="ln">자가재</th><th class="kd">부족</th>${W.map((s, i) => { const neg = selfMin(s, true); if (!neg.length) return `<td class="${mb[i]}"></td>`; const al = neg.slice().sort((a, b) => a[1] - b[1])[0][0]; return `<td class="${mb[i]} bad"><button type="button" class="cl${on(`${selfLine(al)}|${s}`)}" data-k="${selfLine(al)}|${s}">${neg.map((x) => `${x[0]} <b>${sg(x[1])}</b>`).join('<br>')}</button></td>`; }).join('')}</tr>`;
-    const tot = (f) => W.map((s, i) => `<td class="${mb[i]}">${n0([...MAIN, '2CCL'].reduce((a, l) => a + (((ordCell(l, s) || {})[f]) || 0), 0))}</td>`).join('');
-    const sumRows = `<tr class="t p"><th class="ln" rowspan="2">합계</th><th class="kd">계획</th>${tot('cap')}</tr><tr class="t o"><th class="kd">주문</th>${tot('ord')}</tr>`;
-    const mats = ((X.matLate || {}).items || []).filter((m) => (m.t || 0) >= 300);
-    const matH = mats.length ? `<p class="od-mat">소재 발주 마감 지남 ${mats.map((m) => `<button type="button" class="lnk" data-k="mat|${esc(m.key)}">${esc(m.name)} ${n0(m.t)}t</button>`).join(' ')}</p>` : '';
-    const log = decs().filter((e) => e.kind);
-    return `<section class="card" id="wk-card"><h2>주별 가동표 <small>${md(X.today)}부터 · 칸을 누르면 그 주 주문</small></h2>
-      <p class="wk-lg"><span><i class="lg w"></i>주문이 계획보다 모자람</span><span><i class="lg b"></i>사장님 결정·자가재 부족</span></p>
-      <div class="gt-w"><table class="gt"><thead>${head}</thead><tbody>${MAIN.map(lineRows).join('')}${lineRows('2CCL')}${sumRows}${pltRow}${selfRow}</tbody></table></div>
-      ${matH}<div id="rb-pd"></div></section>
-      <section class="card"><h2>결정 기록 <small>${log.length}건</small></h2>${logList(log)}</section>`;
-  }
-  const keyLab = (k) => (k ? k.replace('|', ' ').replace(/W(\d{4}-\d{2}-\d{2})$/, (m) => sunLab(m)).replace(/(\d{4}-\d{2}-\d)$/, (m) => sunLab(m)).replace(/^grp (\d{4})-(\d{2})$/, (m, y, mo) => `컬러수출 ${+mo}월 수주`).replace(/^mat /, '소재 ') : '');
-  const what = (e) => (e.kind === 'adj' ? `내수 ${e.dom != null ? n0(e.dom) + 't' : '그대로'}${(e.pulls || []).length ? ` · 수출 ${e.pulls.length}건 ${n0(e.pulls.reduce((a, x) => a + x[1], 0))}t 당김` : ''}${e.mv ? ` · 수출 ${n0(e.mv[1])}t → ${sunLab(e.mv[0])}` : ''}` : e.kind === '2ccl' ? (e.choice === 'stop' ? `2CCL 세움 · ${n0(e.move || 0)}t 다른 CCL 로` : '2CCL 가동') : e.kind === 'self' ? `판매재 → 자가재 ${n0(e.conv || 0)}t` : e.kind === 'order' ? `수주 목표 ${n0(e.goal || 0)}t · ${esc(e.who || '')}` : e.kind === 'mat' ? `${esc(e.act || '')} ${n0(e.qty || 0)}t · ${esc(e.who || '')}` : '');
-  const logList = (L) => (L.length ? `<ul class="dlog">${L.slice().reverse().map((e) => { const st = stOf(e), id = DID(e); return `<li><div><small>${esc(String(e.at || '').slice(5, 16).replace('T', ' '))}</small><small>${esc(e.by || '')}</small><b>${esc(keyLab(e.key))}</b> ${chip({ st })} ${what(e)}${e.text ? ` (${esc(e.text)})` : ''}</div><div class="sts">${['확정', '사장님 승인', '보류'].filter((x) => x !== st).map((x) => `<button type="button" class="btn sub sm" data-ref="${id}" data-st="${x}">${x}</button>`).join('')}</div></li>`; }).join('')}</ul>` : '<p class="q">아직 없음</p>');
-
-  async function save(ev, msgEl) {
-    try { localStorage.setItem('cgl-me', ($('dec-by') || {}).value || CT.me()); } catch (x) { /* 무시 */ }
-    if (msgEl) msgEl.textContent = '저장 중…';
-    try { await CT.store.push(ev); EV = await CT.store.events(); draw(); } catch (x) { if (msgEl) msgEl.textContent = '⚠ ' + x.message; else alert(x.message); }
-  }
-
-  /* 칸 작업대: 숫자를 바꿔 보면 바로 결과 → 상태(제안·확정·사장님 결정 요청)와 함께 저장 */
-  function detail(key) {
-    const [l, s] = key.split('|'), el = $('rb-pd'); if (!el) return;
-    const d0 = decOf(key), PS = pulledSet();
-    const stSel = (def) => `<label>상태 <select id="w-st">${['제안', '확정', '사장님 결정 요청'].map((x) => `<option${x === def ? ' selected' : ''}>${x}</option>`).join('')}</select></label>`;
-    const foot = (def) => `<div class="row">${stSel(def)}<input id="dec-by" placeholder="이름" value="${esc(CT.me())}"><input id="w-tx" placeholder="메모(근거·담당 확인 등)" style="flex:1;min-width:200px"><button class="btn" type="submit">저장</button><span class="note" id="dec-m"></span></div>`;
-    let html = '';
-    if (MAIN.includes(l)) {
-      const c = cc(l, s) || { g: {}, cap: 0, dom: 0, exp: 0, days: 0 }, sg0 = sugg(l, s), cap = capOf(c);
-      const P = pullFor(l, s), pre = new Set(d0 && d0.kind === 'adj' ? (d0.pulls || []).map((x) => x[0]) : []);
-      html = `<div class="wb"><div><h3>${l} ${sunLab(s)} <small>${c.days}일 · 능력 ${n0(cap)}t</small></h3>
-        <ul>${Object.entries(c.g).sort((a, b) => b[1] - a[1]).map(([g, t]) => `<li>${esc(g)} ${n0(t)}t <small>${X.dom.includes(g) ? '내수' : '수출·가전'}</small></li>`).join('') || '<li>배정 없음</li>'}</ul>
-        <label class="fld">내수(t) <input type="number" id="w-dom" step="any" value="${Math.round(d0 && d0.kind === 'adj' && d0.dom != null ? d0.dom : c.dom)}"></label>
-        <div class="row"><button type="button" class="btn sub sm" id="w-fair">주 평균 ${n0(sg0)}t</button><button type="button" class="btn sub sm" id="w-cur">지금 계획 ${n0(c.dom)}t</button></div>
-        <div class="row"><button type="button" class="btn sm" id="w-mon">${l} ${isW(s) ? wkLab(s).split(' ')[0] + ' 모든 주' : +s.slice(5, 7) + '월 세 순 모두'} 주 평균으로</button></div><p class="note" id="w-mon-t">${mSibs(s).map((x) => { const cx = cc(l, x); return cx ? `${isW(x) ? wkLab(x).split(' ')[1] : SN[+x.slice(8) - 1]} ${n0(cx.dom)}→${n0(sugg(l, x))}` : ''; }).filter(Boolean).join(' · ')}</p>
-        <label class="fld">수출 옮기기 <input type="number" id="w-mvt" step="any" value="${Math.round(d0 && d0.mv ? d0.mv[1] : 0)}">t → <select id="w-mvs">${sibs(s).filter((x) => x !== s && cc(l, x)).map((x) => `<option value="${x}"${d0 && d0.mv && d0.mv[0] === x ? ' selected' : ''}>${sunLab(x)}</option>`).join('')}</select></label>
-        <div class="pv" id="w-pv"></div></div>
-        <div><h3>당길 수출 오더 <small>${l} · 납기 ${md(sunEnd(s))} 이후 · 골라서 넣기</small></h3>
-        <div class="row"><label><input type="checkbox" id="w-ok"> 소재 확보만</label><span class="note" id="w-sel"></span></div>
-        <div class="pick">${P.length ? `<table class="op-t"><thead><tr><th></th><th class="l">납기</th><th class="l">계약</th><th class="l">품명·규격</th><th>t</th><th class="l">소재</th><th class="l">담당</th></tr></thead><tbody>${P.map((r) => { const [k, n] = ST(r.st), other = PS.get(r.con), dis = other && other !== key; return `<tr data-ok="${k === 'ok'}"${dis ? ' class="z"' : ''}><td><input type="checkbox" class="w-p" data-con="${esc(r.con)}" data-t="${r.t}"${pre.has(r.con) ? ' checked' : ''}${dis ? ' disabled title="다른 칸으로 당김 결정됨"' : ''}></td><td class="l">${md(r.due)}</td><td class="l">${esc(r.con)}</td><td class="l">${esc(r.pdt)} ${esc(r.size)}</td><td>${n0(r.t)}</td><td class="l"><span class="st ${k}">${n}</span></td><td class="l">${esc(r.man)}${dis ? ` <small>(${esc(keyLab(other))})</small>` : ''}</td></tr>`; }).join('')}</tbody></table>` : '<p class="q">당길 수출 오더 없음</p>'}</div></div></div>`;
-      el.innerHTML = `<form class="pd" id="w-f" novalidate>${html}${foot(d0 ? d0.st : '제안')}</form>`;
-      const pv = () => {
-        const dm = +$('w-dom').value || 0, sel = [...el.querySelectorAll('.w-p:checked')], pt = sel.reduce((a, x) => a + +x.dataset.t, 0), mo = ($('w-mvs') && $('w-mvs').value) ? +$('w-mvt').value || 0 : 0, ex = c.exp - mo + mvIn(l, s), r = cap - dm - ex - pt, g = dm - sg0;
-        const tg = mo && $('w-mvs').value ? (() => { const a2 = after(l, $('w-mvs').value); return a2 ? a2.cap - a2.dom - a2.exp - mo : null; })() : null;
-        $('w-sel').textContent = sel.length ? `${sel.length}건 ${n0(pt)}t 선택` : '';
-        $('w-pv').innerHTML = `<div class="ans"><div>배정 = 내수 ${n0(dm)} + 수출 ${n0(ex)} + 당김 ${n0(pt)} = <b>${n0(dm + ex + pt)}t</b> / 능력 ${n0(cap)}t</div>${tg != null ? `<div>옮겨 받는 ${sunLab($('w-mvs').value)}: ${tg >= 50 ? `빈 ${n0(tg)}t 남음` : tg <= -50 ? `<b class="bad">넘침 ${n0(-tg)}t</b>` : '꽉 참'}</div>` : ''}`
-          + `<div>${r >= 50 ? `여유 <b>${n0(r)}t</b>, 오더를 당기거나 주문을 더 받음` : r <= -50 ? `<b class="bad">초과 ${n0(-r)}t</b>, 다른 주로 옮기거나 2CCL(사장님 결정)` : '<b>여유 없음</b>, 확정 가능'}</div>`
-          + `<div>주 평균 ${n0(sg0)}t 대비 내수 ${sg(g)}t · 도금 자가재 소요 ${sg((dm - c.dom) * 0.65)}t</div></div>`;
-      };
-      $('w-fair').onclick = () => { $('w-dom').value = Math.round(sg0); pv(); };
-      $('w-mon').onclick = async () => {   // 그 달 세 순을 한 번에(한 결정 묶음) — 같은 상태·메모
-        const st = $('w-st').value, tx = $('w-tx').value.trim() || `${l} ${+s.slice(5, 7)}월 내수 순 고정`; $('dec-m').textContent = '저장 중…';
-        try { localStorage.setItem('cgl-me', $('dec-by').value || CT.me()); } catch (x) { /* 무시 */ }
-        try { for (const x of mSibs(s)) { const cx = cc(l, x); if (!cx) continue; const dx = decOf(`${l}|${x}`); await CT.store.push({ t: 'room', key: `${l}|${x}`, line: l, sun: x, kind: 'adj', dom: Math.round(sugg(l, x)), pulls: dx && dx.kind === 'adj' ? dx.pulls || [] : [], st, text: tx }); } EV = await CT.store.events(); draw(); } catch (x) { $('dec-m').textContent = '⚠ ' + x.message; }
-      };
-      $('w-cur').onclick = () => { $('w-dom').value = Math.round(c.dom); pv(); };
-      $('w-ok').onchange = () => el.querySelectorAll('.pick tbody tr').forEach((tr) => { tr.hidden = $('w-ok').checked && tr.dataset.ok !== 'true'; });
-      $('w-f').addEventListener('input', pv); pv();
-      $('w-f').addEventListener('submit', (e) => { e.preventDefault(); const dm = +$('w-dom').value; save({ t: 'room', key, line: l, sun: s, kind: 'adj', dom: dm === Math.round(c.dom) ? null : dm, pulls: [...el.querySelectorAll('.w-p:checked')].map((x) => [x.dataset.con, +x.dataset.t]), mv: $('w-mvs') && +$('w-mvt').value ? [$('w-mvs').value, +$('w-mvt').value] : null, st: $('w-st').value, text: $('w-tx').value.trim() }, $('dec-m')); });
-    } else if (l === '2CCL') {
-      const c = cc(l, s) || {}, u = used(c), mv = u - (c.fix || 0), ps = !ourPlan(s);
-      html = `<div class="wb"><div><h3>2CCL ${sunLab(s)} <small>${n0(u)}t 가동 계획${ps ? ' · 판생 배포 계획(확정)' : ''}</small></h3><ul>${Object.entries(c.g || {}).map(([g, t]) => `<li>${esc(g)} ${n0(t)}t</li>`).join('')}</ul>
-        <p class="note">다른 CCL 가능 ${n0(mv)}t, 2CCL 전용 ${n0(c.fix || 0)}t</p></div>
-        <div><h3>결정</h3><label class="fld"><input type="radio" name="w-c" value="run"${!d0 || d0.choice !== 'stop' ? ' checked' : ''}> 가동(사장님 결정 요청)</label>
-        <label class="fld"><input type="radio" name="w-c" value="stop"${d0 && d0.choice === 'stop' ? ' checked' : ''}> 세움, <input type="number" id="w-mv" step="any" value="${Math.round(d0 && d0.move != null ? d0.move : mv)}" style="width:110px">t 를 다른 CCL(같은 달)로</label>
-        <p class="note">세우면 1·3·4CCL 에 옮길 여유가 있어야 함(시험 계산 탭)</p></div></div>`;
-      el.innerHTML = `<form class="pd" id="w-f" novalidate>${html}${foot(d0 ? d0.st : ps ? '확정' : '사장님 결정 요청')}</form>`;
-      $('w-f').addEventListener('submit', (e) => { e.preventDefault(); const ch = el.querySelector('input[name=w-c]:checked').value; save({ t: 'room', key, line: l, sun: s, kind: '2ccl', choice: ch, move: ch === 'stop' ? +$('w-mv').value : null, st: $('w-st').value, text: $('w-tx').value.trim() }, $('dec-m')); });
-    } else if (l === 'mat') {
-      const m = ((X.matLate || {}).items || []).find((y) => y.key === s) || {};
-      el.innerHTML = `<form class="pd" id="w-f" novalidate><div class="wb"><div><h3>${esc(m.name || s)} <small>발주 마감 ${md(m.deadline)}, 첫 사용 ${md(m.first)}</small></h3><p class="q">${n0(m.t)}t 미발주. 지금 발주해도 첫 사용일에 못 들어올 수 있음</p></div>
-        <div><label class="fld">조치 <select id="w-act">${['지금 발주(긴급)', '그 생산을 뒤로 미룸', '대체 소재로', '판생 계획 조정 요청'].map((x) => `<option${d0 && d0.act === x ? ' selected' : ''}>${x}</option>`).join('')}</select></label>
-        <label class="fld">양(t) <input type="number" id="w-mt" step="any" value="${Math.round(d0 && d0.qty != null ? d0.qty : m.t || 0)}"></label><label class="fld">담당·기한 <input id="w-who" value="${esc(d0 && d0.who || '소재 구매')}"></label></div></div>${foot(d0 ? d0.st : '제안')}</form>`;
-      $('w-f').addEventListener('submit', (e) => { e.preventDefault(); save({ t: 'room', key, kind: 'mat', act: $('w-act').value, qty: +$('w-mt').value, who: $('w-who').value.trim(), st: $('w-st').value, text: $('w-tx').value.trim() }, $('dec-m')); });
-      return;
-    } else if (l === 'grp') {
-      const m = s, x = (X.sales.C수출 || []).find((y) => y.m === m) || {}, o = X.pull.rows.filter((r) => r.due.slice(0, 7) === m).reduce((a, r) => a + r.t, 0);
-      el.innerHTML = `<form class="pd" id="w-f" novalidate><div class="wb"><div><h3>${+m.slice(5)}월 컬러수출 수주 <small>판매계획 ${n0(x.sales)}t · 미결 수주 ${n0(o)}t</small></h3><p class="q">부족 ${n0((x.sales || 0) - o)}t 을 누가 언제까지 받아 올지</p></div>
-        <div><label class="fld">받아 올 목표(t) <input type="number" id="w-goal" step="any" value="${Math.round(d0 && d0.goal != null ? d0.goal : Math.max(0, (x.sales || 0) - o))}"></label><label class="fld">담당·기한 <input id="w-who" value="${esc(d0 && d0.who || '')}" placeholder="예: 수출1섹션 · 11/28까지"></label></div></div>${foot(d0 ? d0.st : '제안')}</form>`;
-      $('w-f').addEventListener('submit', (e) => { e.preventDefault(); save({ t: 'room', key: `grp|${m}`, kind: 'order', goal: +$('w-goal').value, who: $('w-who').value.trim(), st: $('w-st').value, text: $('w-tx').value.trim() }, $('dec-m')); });
-      return;
-    } else {
-      const c = cg(l, s) || { self: {}, sale: 0 }, neg = (isW(s) ? selfFrom(s, l) : selfMin(s).filter((x) => selfLine(x[0]) === l)), need = neg.reduce((a, x) => a + Math.ceil(-x[1] / 10) * 10, 0);
-      html = `<div class="wb"><div><h3>${l} ${sunLab(s)} <small>컬러용 자가재</small></h3><ul>${Object.entries(c.self).map(([a, t]) => `<li>자가재 ${esc(a)} ${n0(t)}t</li>`).join('') || '<li>자가재 없음</li>'}<li>판매재 ${n0(c.sale)}t</li></ul>
-        ${neg.length ? `<p class="bad">${neg.map((x) => `${x[0]} 자가재 ${sg(x[1])}t(${md(x[2])} 최저)`).join(' · ')}</p>` : '<p class="q">이 순 자가재 부족 없음</p>'}</div>
-        <div><h3>조정</h3><label class="fld">판매재 → 자가재 전환(t) <input type="number" id="w-cv" step="any" value="${Math.round(d0 && d0.conv != null ? d0.conv : need)}"></label><div class="pv" id="w-pv"></div></div></div>`;
-      el.innerHTML = `<form class="pd" id="w-f" novalidate>${html}${foot(d0 ? d0.st : '제안')}</form>`;
-      const pv = () => { const v = +$('w-cv').value || 0, lo = neg.length ? Math.min(...neg.map((x) => x[1])) : null; $('w-pv').innerHTML = `<div class="ans"><div>자가재 ${n0(Object.values(c.self).reduce((a, x) => a + x, 0) + v)}t · 판매재 ${n0(c.sale - v)}t</div>${lo != null ? `<div>최저 ${sg(lo)} → <b>${sg(lo + v)}t</b>${lo + v >= 0 ? ', 부족 풀림' : ', 아직 부족'}</div>` : ''}<div>판매재 ${n0(v)}t 는 ${isW(s) ? '다른 주' : '다른 순'}으로 미룸</div></div>`; };
-      $('w-f').addEventListener('input', pv); pv();
-      $('w-f').addEventListener('submit', (e) => { e.preventDefault(); save({ t: 'room', key, line: l, sun: s, kind: 'self', al: neg.length ? neg.slice().sort((x, y) => x[1] - y[1])[0][0] : (l === '1CGL' ? 'AZ' : 'MAC'), conv: +$('w-cv').value, st: $('w-st').value, text: $('w-tx').value.trim() }, $('dec-m')); });
-    }
-  }
-
   /* ---------- 시험 계산 ---------- */
   function testView() {
     const M = [...new Set(suns().map((s) => s.slice(0, 7)))].filter((m) => [1, 2, 3].every((k) => MAIN.some((l) => cc(l, `${m}-${k}`))));
@@ -289,14 +154,8 @@
   }
 
   function draw() {
-    const v = CT.view('board', ['board', 'test', 'grp']), main = $('ct-main');
-    main.innerHTML = v === 'test' ? testView() : v === 'grp' ? grpView() : board();
-    if (v === 'board') {
-      const show = (k) => { if (!k) return; const [l, w] = k.split('|'); if (MAIN.includes(l)) { const el = $('rb-pd'); el.innerHTML = orderDetail(l, w); const f = $('w-f'), cnt = () => { const c = [...el.querySelectorAll('.w-p:checked')]; $('w-sel').textContent = c.length ? `${c.length}건 ${n0(c.reduce((a, x) => a + +x.dataset.t, 0))}t 선택` : ''; }; f.addEventListener('change', cnt); cnt(); f.addEventListener('submit', (e) => { e.preventDefault(); save({ t: 'room', key: k, line: l, sun: w, kind: 'adj', dom: null, pulls: [...el.querySelectorAll('.w-p:checked')].map((x) => [x.dataset.con, +x.dataset.t]), st: $('w-st').value, text: $('w-tx').value.trim() }, $('dec-m')); }); } else detail(k); };
-      main.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => { OPEN = OPEN === b.dataset.k ? null : b.dataset.k; draw(); const p = $('rb-pd'); if (p && OPEN) p.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
-      main.querySelectorAll('[data-ref]').forEach((b) => b.addEventListener('click', () => save({ t: 'roomSt', ref: b.dataset.ref, st: b.dataset.st }, null)));
-      show(OPEN);
-    }
+    const v = CT.view('test', ['test', 'grp']), main = $('ct-main');
+    main.innerHTML = v === 'grp' ? grpView() : testView();
     if (v === 'test') { ['tc-m', 'tc-d'].forEach((id) => $(id).addEventListener('input', testCalc)); testCalc(); }
     if (window.UI && UI.sub) UI.sub(`기준 ${md(X.today)} · 자료 ${String(X.built).slice(5, 16).replace('T', ' ')} · 11/18 사장님 회의 원칙`);
   }

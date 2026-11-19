@@ -41,8 +41,8 @@
   window.PV_MENU = {
     home: P('room.html'),
     menu: [
-      ['v0', '수주 조정', 'plan7', [['room', P('room.html'), '주별 가동표'], ['room', P('room.html#test'), '시험 계산'], ['room', P('room.html#grp'), '판매그룹별']]],   // 11/18 사장님 회의: 조정·결정은 수주
-      ['v1', '계획', 'supply', [['gyehoek', P('gyehoek.html'), '일별 가동계획'], ['gyehoek', P('gyehoek.html#mat'), '소재'], ['plan7', P('ct_plan.html#cmp'), '조정'], ['status', P('status.html'), '강종 전환']]],
+      ['v0', '수주 조정', 'plan7', [['room', P('room.html#test'), '시험 계산'], ['room', P('room.html#grp'), '판매그룹별']]],   // 11/18 사장님 회의: 조정·결정은 수주
+      ['v1', '계획', 'supply', [['wolcha', P('wolcha.html'), '월차 계획'], ['gyehoek', P('gyehoek.html'), '일별 가동계획'], ['gyehoek', P('gyehoek.html#mat'), '소재'], ['plan7', P('ct_plan.html#cmp'), '조정'], ['status', P('status.html'), '강종 전환']]],
       ['v2', '현황', 'home', [['hy', P('hy.html'), '현황'], ['suju', P('suju.html#dash'), '그룹별'], ['suju', P('suju.html#order'), '수출 선적'], ['board', P('board.html'), '4분기 전망']]],
       ['v3', '생산 편성', 'weekseq', [['wk', P('wk.html'), '주간 관제'], ['pyeonseong', P('pyeonseong.html'), '주간 편성'], ['weekseq', P('week_seq.html'), '작업 순서'], ['seqview', P('seq_view.html'), '작업 순서 조회'], ['plan7', P('ct_plan.html?pv=ins#cg'), '미편성 넣기', 'd']]],
       ['v4', '주문·납기', 'cgorder', [['risk', P('risk.html'), '납기 위험'], ['cgorder', P('cg_order.html'), '도금 주문진도'], ['ccorder', P('cc_order.html'), '컬러 주문진도'], ['orders', P('ct_orders.html#cal'), '납기 캘린더']]],

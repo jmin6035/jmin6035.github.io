@@ -105,52 +105,5 @@ ul.todo .when { font-weight: 800; white-space: nowrap; } ul.todo .what { line-he
 .dlog li { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center; }
 .dlog .sts { display: flex; gap: 6px; }
 p.bad, li.bad { color: var(--bad); }
-/* 수주 조정 주별 가동표(11/19 사용자 '라인×주 가동표') · 본문 16 · 머리 15 · 보조 13.5 · 가운데 정렬 */
-.wk-lg { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; color: var(--ink-2); margin: 0 0 10px; }
-.wk-lg span { display: inline-flex; align-items: center; gap: 6px; }
-.lg.w, .lg.b { display: inline-block; width: 16px; height: 12px; border-radius: 3px; }
-.lg.w { background: color-mix(in srgb, var(--warn, #b45309) 22%, var(--surface)); }
-.lg.b { background: color-mix(in srgb, var(--bad) 16%, var(--surface)); }
-.gt-w { overflow-x: auto; }
-table.gt { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1200px; table-layout: fixed; font-variant-numeric: tabular-nums; text-align: center; }
-table.gt th, table.gt td { border-bottom: 1px solid var(--grid, var(--line)); padding: 0; text-align: center; }
-table.gt thead th { font-size: 15px; font-weight: 700; padding: 8px 2px; background: color-mix(in srgb, var(--ink) 4%, var(--surface)); word-break: keep-all; }
-table.gt thead th b.dt { display: block; font-size: 13.5px; color: var(--brand-2, #1f5fae); }
-table.gt .ln { width: 82px; font-size: 16px; font-weight: 800; }
-table.gt .kd { width: 64px; font-size: 15px; font-weight: 600; color: var(--ink-2); }
-table.gt th.mb, table.gt td.mb { border-left: 2px solid var(--ink-3); }
-table.gt tr.p td { font-size: 16px; font-weight: 700; }
-table.gt tr.o td { font-size: 16px; border-bottom: 2px solid var(--line); }
-table.gt tr.o th.kd { border-bottom: 2px solid var(--line); }
-table.gt tr.t td { font-weight: 800; background: color-mix(in srgb, var(--ink) 3%, var(--surface)); }
-table.gt tr.s td { font-size: 16px; color: var(--ink-2); padding: 8px 2px; }
-table.gt td.off { color: var(--ink-3, #8a94a3); font-size: 15px; font-weight: 500; }
-table.gt td.warn { background: color-mix(in srgb, var(--warn, #b45309) 22%, var(--surface)); color: var(--warn, #8a4b08); font-weight: 800; }
-table.gt td.bad { background: color-mix(in srgb, var(--bad) 14%, var(--surface)); color: var(--bad); font-weight: 800; }
-.gt .cl { all: unset; box-sizing: border-box; display: block; width: 100%; padding: 8px 2px; cursor: pointer; line-height: 1.3; transition: box-shadow .15s ease; }
-.gt .cl em { display: block; font-style: normal; font-size: 13.5px; font-weight: 600; }
-.gt .cl:hover { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--brand-2) 45%, transparent); }
-.gt .cl:focus-visible, .gt .cl.on { box-shadow: inset 0 0 0 3px var(--brand-2); }
-.od-mat { font-size: 16px; font-weight: 700; color: var(--bad); text-align: center; margin: 14px 0 0; }
-.od-mat .lnk { margin-left: 10px; color: var(--bad); }
-.od { margin-top: 16px; padding-top: 14px; border-top: 2px solid var(--brand-2); text-align: center; }
-.od h3 { font-size: 17px; margin: 0 0 10px; }
-.od h3 span { font-size: 16px; font-weight: 600; margin-left: 10px; }
-.od h3 .warn { color: var(--warn, #b45309); }
-.od h4 { font-size: 15px; margin: 0 0 6px; }
-.od-g { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.od-t { max-height: 420px; overflow: auto; }
-.od-t table { width: 100%; font-size: 15px; }
-.od-t th, .od-t td { text-align: center; }
-.od-f { justify-content: center; margin-top: 10px; }
 .wd ul { list-style: none; padding: 0; }
 .lnk { all: unset; cursor: pointer; color: var(--brand-2); font-weight: 700; text-decoration: underline; }
-@media (max-width: 900px) { .od-g { grid-template-columns: 1fr; } }
-.od-f input, .od-f select, .od-f label { font-size: 15px; } .od-f input, .od-f select { min-height: 36px; padding: 4px 8px; }
-table.gt { min-width: 1440px; }
-table.gt .ln, table.gt .kd { position: sticky; background: var(--surface); z-index: 1; }
-table.gt .ln { left: 0; } table.gt .kd { left: 82px; }
-table.gt thead th.ln, table.gt thead th.kd, table.gt tr.t th { background: color-mix(in srgb, var(--ink) 4%, var(--surface)); }
-table.gt tbody th { padding: 8px 2px; }
-table.gt tr.s td .cl, table.gt tr.s td { font-size: 15px; }
-table.gt tr.s td.bad .cl { font-size: 14px; font-weight: 600; } table.gt tr.s td.bad .cl b { font-size: 15px; }

@@ -1,0 +1,38 @@
+/* 예시 월차 계획 — 판생 '도금가동' 양식(라인 × 날짜, 강종 색: AZ 연주황 · AL 연남색 · MAC 보라 · M/C·S/D 노랑, 토·일 노랑 머리) */
+.wc-top h2 .seg, .card h2 .seg { margin-left: auto; }
+.wc-k { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 6px 0 14px; text-align: center; }
+.wc-k > div { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface); }
+.wc-k span { display: block; font-size: 15px; font-weight: 700; color: var(--ink-2); }
+.wc-k b { display: block; font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.wc-k b small { font-size: 15px; color: var(--ink-2); margin-left: 2px; }
+.wc-k em { display: block; font-style: normal; font-size: 13.5px; color: var(--ink-2); }
+.wc-k .ok b { color: var(--ok, #2e7d32); } .wc-k .bad b { color: var(--bad); }
+.wc-seq { display: grid; gap: 8px; text-align: center; font-size: 16px; }
+.wc-seq .ln { font-size: 16px; margin-right: 8px; }
+.wc-seq .sq { display: inline-block; padding: 3px 10px; border-radius: 6px; font-weight: 700; margin: 2px 0; }
+.wc-seq .sw { color: #8a6d00; }
+.sq.az, td.az, .lg.az { background: #fbd5b5; } .sq.al, td.al, .lg.al { background: #b4c6e7; } .sq.mac, td.mac, .lg.mac { background: #d9b8ef; }
+.sq.off { background: color-mix(in srgb, var(--ink) 10%, transparent); color: var(--ink-2); }
+td.evc, .lg.evc { background: #ffef5c; font-weight: 800; }
+.lg.az, .lg.al, .lg.mac, .lg.evc { display: inline-block; width: 16px; height: 12px; border-radius: 3px; }
+.wk-lg { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; color: var(--ink-2); margin: 0 0 10px; }
+.wk-lg span { display: inline-flex; align-items: center; gap: 6px; }
+.se { display: inline-flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; font-size: 15px; }
+.se input { font: inherit; font-size: 15px; min-height: 34px; padding: 2px 6px; margin-left: 4px; }
+.wc-w { overflow-x: auto; }
+table.wc { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 1560px; table-layout: fixed; font-variant-numeric: tabular-nums; text-align: center; font-size: 13.5px; letter-spacing: -0.2px; }
+table.wc th, table.wc td { border-right: 1px solid var(--grid, var(--line)); border-bottom: 1px solid var(--grid, var(--line)); padding: 5px 1px; text-align: center; white-space: nowrap; }
+table.wc thead th { font-size: 15px; background: color-mix(in srgb, var(--ink) 4%, var(--surface)); }
+table.wc thead th.we { background: #fff4a8; color: #c00000; }
+table.wc thead th.dw { font-size: 13.5px; font-weight: 600; }
+table.wc .ln { width: 58px; font-size: 16px; font-weight: 800; position: sticky; left: 0; background: var(--surface); z-index: 1; }
+table.wc .kd { width: 68px; font-size: 14px; font-weight: 700; position: sticky; left: 58px; background: var(--surface); z-index: 1; }
+table.wc thead th:nth-last-child(-n+4) { width: 58px; }
+table.wc tbody.lb { border-top: 2px solid var(--ink-3); }
+table.wc tbody.lb tr:first-child th, table.wc tbody.lb tr:first-child td { border-top: 2px solid var(--ink-3); }
+table.wc tr.ev td { font-size: 13.5px; height: 22px; }
+table.wc tr.h td { color: var(--ink-2); font-size: 13.5px; }
+table.wc tr.lt td { font-weight: 800; background: color-mix(in srgb, var(--ink) 3%, var(--surface)); }
+table.wc td.sm { font-weight: 800; }
+table.wc td.df { color: var(--bad); font-weight: 800; }
+@media (max-width: 760px) { .wc-k { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
