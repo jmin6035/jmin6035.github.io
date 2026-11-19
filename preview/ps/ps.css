@@ -1,0 +1,56 @@
+/* 판생 작업판 — 판생 엑셀 배치·색(입력 연노랑 · 계산 흰색 · 자동 연회색), 글자 본문 16 · 머리 15 · 보조 13.5, 가운데 정렬(docs/16) */
+.ps-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; font-size: 15px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); margin-bottom: 14px; }
+.ps-bar .ok { color: var(--ok, #2e7d32); font-weight: 700; } .ps-bar .warn { color: var(--warn, #b45309); font-weight: 700; } .ps-bar .bad { color: var(--bad); font-weight: 700; }
+.ps-bar .hint { font-size: 13.5px; color: var(--ink-2); margin-left: auto; }
+.lnk { all: unset; cursor: pointer; color: var(--brand-2); font-weight: 700; text-decoration: underline; }
+.ps-k { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 4px 0 14px; text-align: center; }
+.ps-k > div { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--surface); }
+.ps-k span { display: block; font-size: 15px; font-weight: 700; color: var(--ink-2); }
+.ps-k b { display: block; font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ps-k em { display: block; font-style: normal; font-size: 13.5px; color: var(--ink-2); }
+.ps-k .bad b { color: var(--bad); } .ps-k .ok b { color: var(--ok, #2e7d32); } .ps-k .warn b { color: var(--warn, #b45309); }
+.ps-ctl { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: center; font-size: 15px; margin: 4px 0 12px; }
+.ps-ctl select, .ps-ctl input { font: inherit; font-size: 15px; min-height: 34px; padding: 2px 8px; }
+.psg-w { overflow-x: auto; }
+table.psg { border-collapse: separate; border-spacing: 0; width: 100%; font-variant-numeric: tabular-nums; text-align: center; font-size: 15px; }
+table.psg th, table.psg td { border-right: 1px solid var(--grid, var(--line)); border-bottom: 1px solid var(--grid, var(--line)); padding: 5px 4px; text-align: center; white-space: nowrap; }
+table.psg thead th { font-size: 15px; background: color-mix(in srgb, var(--ink) 5%, var(--surface)); position: sticky; top: 0; z-index: 2; }
+table.psg thead th.mb, table.psg td.mb { border-left: 2px solid var(--ink-3); }
+table.psg td.t-in { background: #fffbe0; cursor: cell; }
+table.psg td.t-auto { background: color-mix(in srgb, var(--ink) 6%, var(--surface)); }
+table.psg td.t-lab { font-weight: 700; background: var(--surface); position: sticky; left: 0; z-index: 1; }
+table.psg td.t-in.set { position: relative; font-weight: 800; color: #0b4f9c; }
+table.psg td.t-in.set::after { content: ''; position: absolute; top: 0; right: 0; border-top: 7px solid #0b4f9c; border-left: 7px solid transparent; }
+table.psg td.sel { outline: 2px solid var(--brand-2); outline-offset: -2px; }
+table.psg tr.sec td { font-weight: 800; background: color-mix(in srgb, var(--brand-2) 7%, var(--surface)); }
+table.psg tr.sec td.t-lab { background: color-mix(in srgb, var(--brand-2) 10%, var(--surface)); }
+table.psg tr.mkt td { font-weight: 700; }
+table.psg tr.hid td.t-lab { color: var(--ink-2); font-weight: 500; }
+table.psg td.up { color: #0b6b2e; } table.psg td.dn { color: var(--bad); }
+table.psg td.neg { background: #fbdcdc; color: var(--bad); font-weight: 800; }
+.psg-in { width: 100%; min-width: 60px; box-sizing: border-box; font: inherit; font-size: 15px; text-align: center; border: 0; outline: 2px solid var(--brand-2); background: #fff; }
+#psg-pop { position: absolute; z-index: 50; width: 360px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.15); padding: 12px; font-size: 14px; }
+#psg-pop ul { margin: 8px 0; padding-left: 16px; max-height: 260px; overflow: auto; } #psg-pop li span { color: var(--ink-2); font-size: 13.5px; }
+#ps-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #1b3f5f; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 15px; z-index: 60; }
+/* 도금 월차 */
+table.psg.pl { table-layout: fixed; min-width: 1560px; font-size: 13.5px; }
+table.psg.pl td, table.psg.pl th { padding: 5px 1px; }
+table.psg.pl thead th:nth-child(1) { width: 58px; } table.psg.pl thead th:nth-child(2) { width: 82px; }
+table.psg#tp thead th:nth-last-child(-n+4) { width: 62px; } table.psg#tk thead th:last-child { width: 62px; }
+table.psg#tr { width: auto; margin: 0 auto; } table.psg#tr th, table.psg#tr td { min-width: 110px; }
+table.psg.pl thead th.we { background: #fff4a8; color: #c00000; }
+table.psg.pl td.az { background: #fbd5b5; } table.psg.pl td.al { background: #b4c6e7; } table.psg.pl td.mac { background: #d9b8ef; }
+table.psg.pl td.ev { background: #ffef5c; font-weight: 800; } table.psg.pl td.off { background: #e3e3e3; color: var(--ink-2); }
+table.psg.pl td.evc { cursor: pointer; }
+.ps-seq { display: grid; gap: 8px; text-align: center; font-size: 16px; margin-bottom: 8px; }
+.ps-seq .sq { display: inline-block; padding: 3px 10px; border-radius: 6px; font-weight: 700; margin: 2px 0; }
+.ps-seq .az { background: #fbd5b5; } .ps-seq .al { background: #b4c6e7; } .ps-seq .mac { background: #d9b8ef; } .ps-seq .off { background: #e3e3e3; }
+.ps-seq .sw { color: #8a6d00; }
+.ps-seq input { font: inherit; font-size: 15px; min-height: 32px; margin-left: 4px; }
+.ps-chk { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 16px; text-align: center; }
+.ps-chk li.bad { color: var(--bad); font-weight: 700; } .ps-chk li.ok { color: var(--ok, #2e7d32); }
+.ps-log { width: 100%; }
+@media (max-width: 760px) { .ps-bar .hint { margin-left: 0; } }
+table.psg#tc td:last-child { white-space: normal; min-width: 180px; font-size: 13.5px; }
+table.psg.pl td.kev { white-space: nowrap; font-size: 13.5px; line-height: 1.2; }
+@media (max-width: 760px) { .ps-k { grid-template-columns: 1fr 1fr; gap: 8px; } .ps-k b { font-size: 22px; } .ps-k > div { padding: 8px; } }
