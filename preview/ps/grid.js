@@ -6,7 +6,7 @@
   const G = (window.PSG = {});
   let SEL = null;   // {tbl, r, c}
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const fmt = (v, f) => (v == null || v === '' ? '' : typeof v === 'number' ? (f === 'd1' ? v.toFixed(1) : f === 'sg' ? PS.sg(v) : PS.n0(v)) : esc(v));
+  const fmt = (v, f) => (v == null || v === '' ? '' : typeof v === 'number' ? (f === 'd1' ? v.toFixed(1) : f === 'h' ? String(Math.round(v * 10) / 10) : f === 'sg' ? PS.sg(v) : PS.n0(v)) : esc(v));
 
   /* spec = {id, cls, head: [[{v, cs, rs, cls}]], rows: [{cls, cells: [{v, t: 'in'|'calc'|'auto'|'lab', k, f, cls, title, cs, rs}]}]} */
   G.table = (spec) => {
@@ -104,10 +104,13 @@
       <span class="${p ? 'warn' : 'ok'}">${PS.saving() ? '저장 중…' : p ? `저장 대기 ${p}건` : '모두 저장됨'}</span>${PS.err ? `<span class="bad">${esc(PS.err)}</span>` : ''}
       <span>입력자 <button type="button" class="lnk" id="ps-me">${esc(CT.me() || '이름 넣기')}</button></span>
       <button type="button" class="btn sub sm" id="ps-undo">되돌리기(Ctrl+Z)</button>
+      <button type="button" class="btn sub sm" id="ps-xo">엑셀로 내보내기</button><label class="btn sub sm" id="ps-xi-l">엑셀 가져오기<input type="file" id="ps-xi" accept=".xlsx" hidden></label>
       <span class="hint">칸을 고르고 숫자 입력 · +300 은 더하기 · 엑셀에서 복사해 붙여넣기 · 오른쪽 클릭 = 이력</span></div>`;
   };
   G.bindBar = () => {
     const me = document.getElementById('ps-me'); if (me) me.onclick = () => { const n = prompt('입력하는 사람 이름', CT.me() || ''); if (n != null) { try { localStorage.setItem('cgl-me', n.trim()); } catch (e) { /* 무시 */ } document.dispatchEvent(new Event('ps-redraw')); } };
+    const xo = document.getElementById('ps-xo'); if (xo) xo.onclick = () => { try { PSIO.export(); } catch (e) { G.toast('내보내기 실패: ' + e.message); } };
+    const xi = document.getElementById('ps-xi'); if (xi) xi.onchange = () => { const f = xi.files[0]; xi.value = ''; if (f) PSIO.import(f); };
     const u = document.getElementById('ps-undo'); if (u) u.onclick = () => { if (!PS.undo()) G.toast && G.toast('되돌릴 내 입력이 없음'); };
   };
   G.toast = (msg) => { let t = document.getElementById('ps-toast'); if (!t) { t = document.createElement('div'); t.id = 'ps-toast'; document.body.appendChild(t); } t.textContent = msg; t.hidden = false; clearTimeout(G._tt); G._tt = setTimeout(() => { t.hidden = true; }, 3500); };

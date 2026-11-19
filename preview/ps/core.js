@@ -2,7 +2,8 @@
    기준판(published/ps_base.enc.json = 판생 엑셀 11/17 을 한 번 옮겨 심은 것) + 공유 저장소 입력 기록 {t:'ps', cells:[[칸, 값, 이전값]], why}
    → 지금 판. 칸을 고치면 바로 다시 계산(모델 함수), 1.2초 모아 암호화 저장, 끊기면 브라우저에 쌓았다가 다시 올림.
    칸 이름: L|줄|월|p·s(원장 생산·판매) · P|월|라인|sw(전환일 'YYYY-MM-DD,…') · P|월|라인|강종|rate(하루 톤) · P|월|라인|날짜|down(휴지 1/0)
-           M|줄|월(소재 구매) · 값 null = 기준판으로 되돌림 */
+           M|줄|월(소재 구매) · P|월|2CGL|stsA(STS 시작일) · C|월|라인|날짜|h(컬러 가동시간) · W|주월요일|라인|강종|pull·note(주 롤링 수주 결정)
+           값 null = 기준판으로 되돌림. 주문·컬러 배정·도금 실적은 2시간 갱신 게시 파일을 바로 읽음(기준판의 것은 예비) */
 (function () {
   'use strict';
   const PS = (window.PS = {});
@@ -40,7 +41,9 @@
     const p = k.split('|');
     if (p[0] === 'L') return ((((B.ledger.v[p[2]] || {}).cells || {})[p[1]] || {})[p[3]]) || 0;
     if (p[0] === 'M') { const x = B.mat.rows.find((y) => String(y.r) === p[1]); return x ? x.v[p[2]] || 0 : 0; }
-    if (p[0] === 'P' && p[4] === 'rate') return ((B.plating[p[1]] || {}).rate || {})[`${p[2]}|${p[3]}`] || 0;
+    if (p[0] === 'P' && p[4] === 'rate') return p[3] === 'STS' ? PS.stsRate(p[1]) : ((B.plating[p[1]] || {}).rate || {})[`${p[2]}|${p[3]}`] || 0;
+    if (p[0] === 'C' && p[5] === 'h') { const r = ((B.color[p[1]] || {})[p[2]] || []).find((x) => x[0] === p[4]); return r ? r[1] : 0; }
+    if (p[0] === 'W') return p[5] === 'note' ? '' : 0;
     return null;
   };
   PS.history = (k) => LOG.filter((e) => e.cells.some((c) => c[0] === k)).map((e) => ({ at: e.at, by: e.by, why: e.why, v: e.cells.find((c) => c[0] === k)[1], p: e.cells.find((c) => c[0] === k)[2] }));
@@ -66,9 +69,28 @@
   PS.overAt = (at) => { const o = {}; for (const e of LOG) { if (e.at > at) break; for (const [k, v] of e.cells) { if (v == null) delete o[k]; else o[k] = v; } } return o; };
 
   /* ---------- 불러오기 ---------- */
+  /* 2시간 갱신 파일에서 미생산 주문·컬러 일별 배정·도금 일별 실적을 바로 만듦(ps_seed.py 와 같은 규칙) */
+  function live(D) {
+    const G = D.cg_order_progress, I = D.integrated, A = D.plating_actual;
+    if (G && G.rows) {
+      B.orders = G.rows.filter((o) => ((o.ordT || 0) - (o.prodT || 0)) >= 1 && !o.prdEnd && ['AZ', 'AL', 'MAC'].includes(o.fam)).map((o) => [o.con, o.line || o.pline || '', o.fam, String(o.grp || '').replace('그룹', ''), Math.round(((o.ordT || 0) - (o.prodT || 0)) * 10) / 10, Math.round((o.tph || 0) * 10) / 10, o.due || '', o.st || '', o.man || '', o.dst || o.cus || '', o.pdt || '', `${o.thk}×${o.wdt}`, o.eta || o.entSche || '']);
+      B.ordersAsOf = G.asOf;
+    }
+    if (I && I.color) {
+      const col = {}, ev = {};
+      for (const r of I.color) { const g = r.g || {}, top = Object.keys(g).sort((a, b) => g[b] - g[a])[0] || ''; ((col[r.d.slice(0, 7)] = col[r.d.slice(0, 7)] || {})[r.l] = col[r.d.slice(0, 7)][r.l] || []).push([r.d, Math.round((r.min || 0) / 6) / 10, Math.round((r.rows || []).reduce((a, x) => a + (x[5] || 0), 0)), top]); }
+      for (const m in col) for (const l in col[m]) col[m][l].sort((a, b) => (a[0] < b[0] ? -1 : 1));
+      for (const [d, l, k, mins] of I.colorDown || []) (ev[`${l}|${d}`] = ev[`${l}|${d}`] || []).push([k, Math.round(mins)]);
+      B.color = col; B.colorEv = ev; B.colorAsOf = I.asOf;
+    }
+    if (A && A.daily) { B.actual = {}; for (const r of A.daily) B.actual[r.d] = { '1CGL': r['1CGL'] || 0, '2CGL': r['2CGL'] || 0 }; B.actualAsOf = A.asOf; }
+    else B.actual = B.actual || {};
+  }
   PS.boot = (render) => {
-    CT.boot(['ps_base.enc.json'], async (D) => {
+    CT.boot(['ps_base.enc.json', 'cg_order_progress.enc.json', 'integrated.enc.json', 'plating_actual.enc.json'], async (D) => {
+      if (B && D.ps_base) { render(B); return; }   // 범위 바꿈 때 다시 부름
       B = D.ps_base; if (!B) { render(null); return; }
+      live(D);
       render(B);
       try {
         const ev = await CT.store.events();
@@ -128,7 +150,8 @@
     return out;
   };
   PS.secRow = (nm) => B.ledger.rows.find((x) => x.kind === 'sec' && x.name === nm);
-  PS.target = (m, L) => { const l = L || PS.ledger(); const g = (nm) => l[m][PS.secRow(nm).r].p; return { AZ: g('AZ'), MAC: g('MAC'), AL: g('AL'), total: g('도금'), color: g('컬러') }; };
+  PS.target = (m, L) => { const l = L || PS.ledger(); const g = (nm) => l[m][PS.secRow(nm).r].p; const st = B.ledger.rows.filter((x) => /STS/.test(x.lab) && x.kind === 'dept' && x.sec === PS.secRow('AL').r && (B.ledger.rows.find((y) => y.r === x.mkt) || {}).lab.replace(/\s/g, '') === '내수').reduce((a, x) => a + l[m][x.r].p, 0);
+    return { AZ: g('AZ'), MAC: g('MAC'), AL: g('AL'), total: g('도금'), color: g('컬러'), STS: st || (B.plating[m] || {}).sts || 0 }; };
 
   /* 도금 월차: 판생 도금가동 방식(docs/38) — 꼭 맞출 강종(1CGL AZ · 2CGL MAC) 날 수 먼저, 남는 날 AL, 지난달 끝 강종 이어받기, 전환 첫날 500t·15시간 */
   const MUST = { '1CGL': 'AZ', '2CGL': 'MAC' };
@@ -146,6 +169,16 @@
     const i = Math.max(Math.round((days.length - nm) / 2), ok.length ? days.indexOf(ok[0]) : 0);
     if (i + nm >= days.length) return { order: ['AL', must], sw: [days[Math.min(i, days.length - 1)]] };
     return { order: ['AL', must, 'AL'], sw: [days[i], days[i + nm]] };
+  }
+  /* STS(AL-STS 임가공, 2CGL AL 기간 안): 목표 = 회의 33·35행. 시작일 입력(P|월|2CGL|stsA), 없으면 2CGL AL 연속 구간 가운데에 붙여 놓음 */
+  PS.stsRate = (m) => PS.get(`P|${m}|2CGL|STS|rate`, 850);   // 기본 850t/일 = MES 2CGL GAS·AL-STS 10~11월 35.7t/h × 24
+  function placeSts(m, days, T) {
+    const need = Math.ceil((T.STS || 0) / PS.stsRate(m)); if (!need) return { a: null, need: 0, n: 0 };
+    const al = days.filter((x) => x.g === 'AL' && !x.ev).map((x) => x.d);
+    let a = PS.get(`P|${m}|2CGL|stsA`, null);
+    if (!a) { let best = [], cur = []; for (const d of al) { if (cur.length && (new Date(d) - new Date(cur[cur.length - 1])) / 864e5 !== 1) { if (cur.length > best.length) best = cur; cur = []; } cur.push(d); } if (cur.length > best.length) best = cur; a = best[Math.max(0, Math.floor((best.length - need) / 2))] || null; }
+    let n = 0; if (a) for (const x of days) { if (n >= need) break; if (x.d >= a && x.g === 'AL' && !x.ev) { x.sts = true; x.t = Math.round(PS.stsRate(m)); n++; } }
+    return { a, need, n, manual: PS.isSet(`P|${m}|2CGL|stsA`) };
   }
   function genLine(l, m, T, carry) {
     const must = MUST[l], a = autoSw(l, m, T, carry), ovs = PS.get(`P|${m}|${l}|sw`, null), sw = ovs ? ovs.split(',') : a.sw, D = PS.days(m), out = [];
@@ -169,6 +202,7 @@
       const T = PS.target(m, l); res[m] = {};
       for (const ln of Object.keys(PS.LINES)) {
         res[m][ln] = genLine(ln, m, T, carry[ln]);
+        if (ln === '2CGL') res[m][ln].sts = placeSts(m, res[m][ln].days, T);
         const rf = ((B.plating[m] || {}).ref || {})[ln] || [], zr = rf.filter((r) => r[1] && r[2]), z = res[m][ln].days.filter((x) => x.g);
         carry[ln] = zr.length ? zr[zr.length - 1][1] : z.length ? z[z.length - 1].g : carry[ln];   // 판생이 손으로 짠 달은 그 끝 강종을 이어받음
       }
@@ -178,6 +212,31 @@
   };
   PS.sumG = (days, g) => days.reduce((a, x) => a + (x.g === g ? x.t : 0), 0);
   PS.daysG = (days, g) => days.reduce((a, x) => a + (x.g === g ? (x.ev && x.ev !== '휴지' ? 0.5 : 1) : 0), 0);
+
+  /* 컬러 월차: 엔진 일별 배정(시간·톤) + 가동시간 입력(C|월|라인|날짜|h) → 톤 = 그 날 엔진 시간당 톤(없으면 그 달 라인 평균) × 시간 */
+  PS.CLINES = ['1CCL', '2CCL', '3CCL', '4CCL'];
+  PS.color = (m) => {
+    const out = {};
+    for (const l of PS.CLINES) {
+      const X = Object.fromEntries(((B.color[m] || {})[l] || []).map((r) => [r[0], r])), rs = Object.values(X).filter((r) => r[1] > 0);
+      const avg = rs.reduce((a, r) => a + r[2], 0) / Math.max(1, rs.reduce((a, r) => a + r[1], 0));
+      out[l] = PS.days(m).map((d) => { const r = X[d], k = `C|${m}|${l}|${d}|h`, h0 = r ? r[1] : 0, h = k in OV ? OV[k] : h0, tph = r && r[1] > 0 ? r[2] / r[1] : avg;
+        return { d, h, h0, t: Math.round(h === h0 && r ? r[2] : tph * h), ev: (B.colorEv[`${l}|${d}`] || []), set: k in OV }; });
+    }
+    return out;
+  };
+
+  /* 날짜별 도금 계획(라인): 기준판 첫 달 = 판생 손 계획, 그 뒤 = 월차 */
+  PS.dayPlan = (P) => {
+    const pl = P || PS.plating(), out = {};
+    for (const m of B.months) for (const ln of Object.keys(PS.LINES)) {
+      if (pl[m]) for (const x of pl[m][ln].days) out[`${ln}|${x.d}`] = { g: x.sts ? 'STS' : x.g, t: x.t, ev: x.ev };
+      else for (const [d, g, t, e] of ((B.plating[m] || {}).ref || {})[ln] || []) out[`${ln}|${d}`] = { g: g || '', t: t || 0, ev: e || '' };
+    }
+    return out;
+  };
+  PS.monday = (d) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() - ((x.getUTCDay() + 6) % 7)); return x.toISOString().slice(0, 10); };
+  PS.addD = (d, n) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
 
   /* 생산 가능(CAPA): 미생산 주문 × 주문별 톤파워(MES T/Hr) → 필요 가동일 vs 월차 강종 가용일(누적) */
   PS.capa = (P) => {

@@ -54,3 +54,20 @@ table.psg.pl td.evc { cursor: pointer; }
 table.psg#tc td:last-child { white-space: normal; min-width: 180px; font-size: 13.5px; }
 table.psg.pl td.kev { white-space: nowrap; font-size: 13.5px; line-height: 1.2; }
 @media (max-width: 760px) { .ps-k { grid-template-columns: 1fr 1fr; gap: 8px; } .ps-k b { font-size: 22px; } .ps-k > div { padding: 8px; } }
+#ps-xi-l { cursor: pointer; }
+#ps-imp { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; max-width: 760px; width: 92vw; }
+#ps-imp h3 { margin: 0 0 10px; font-size: 17px; } #ps-imp .ps-impl { max-height: 56vh; overflow: auto; margin-bottom: 12px; }
+#ps-imp::backdrop { background: rgba(0,0,0,.3); }
+table.psg.pl td.sts, .ps-seq .sts { background: #9fd3c7; }
+.ps-note { font-size: 13.5px; color: var(--ink-2); }
+table.psg tr.now td { background: color-mix(in srgb, #ffd54f 22%, var(--surface)); }
+table.psg tr.now td.t-in { background: #fff3b0; }
+table.psg tr.old td { color: var(--ink-2); }
+table.psg td.rtx { font-size: 13.5px; white-space: normal; min-width: 150px; }
+table.psg td.memo { cursor: pointer; color: var(--brand-2); font-weight: 700; }
+table.psg.flow td { white-space: normal; vertical-align: top; padding: 8px 8px; }
+table.psg.flow td.tl { text-align: left; } table.psg.flow td:nth-child(5) { min-width: 380px; } table.psg.flow td:nth-child(6) { min-width: 260px; }
+section.card.today { border: 2px solid #f0b400; }
+.ps-today { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 4px 0 8px; }
+.ps-today a { padding: 8px 16px; border-radius: 8px; background: #fff3b0; font-weight: 800; font-size: 16px; color: var(--ink); text-decoration: none; }
+.ps-rule { text-align: center; font-size: 13.5px; color: var(--ink-2); margin: 6px 0 0; }
