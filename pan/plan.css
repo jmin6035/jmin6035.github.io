@@ -264,3 +264,14 @@ input.de { width: 92px; height: 40px; border-radius: 8px; border: 1px solid var(
 @media (min-width: 100rem) { .has-dw .g1 .cal0 { max-width: none; justify-self: stretch; } }
 .calbar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-sm); margin: var(--space-xs) 0 var(--space-sm); } .calbar .cs { height: 40px; }
 @media (min-width: 100rem) { .side { grid-template-columns: minmax(0, 1.15fr) minmax(0, .9fr) minmax(0, 1.35fr); } .has-dw .side { grid-template-columns: minmax(0, 1fr); } }
+/* 달력 칸: 줄 자체가 막대(강종 색 채움 = 주문, 빗금 = 주문 전 계획, 빈 곳 = 빈 가동) */
+.cal0 .cl::before { display: none; } .cal0 .cl .ln0 { flex: none; font-style: normal; font-size: 13.5px; font-weight: 700; color: var(--tx3); width: 12px; text-align: center; }
+.cal0 .cl:not(.ev):not(.dn) { --gc: color-mix(in srgb, var(--c) 42%, transparent); border: 1px solid color-mix(in srgb, var(--c) 55%, transparent); padding-bottom: var(--space-2xs); background: linear-gradient(var(--gc), var(--gc)) 0 0 / calc(var(--o, 0) * 100%) 100% no-repeat, repeating-linear-gradient(135deg, var(--gc) 0 3px, transparent 3px 7px) 0 0 / calc(var(--p, 0) * 100%) 100% no-repeat, rgb(255 255 255 / .02); outline: 0; }
+.cal0 .cl:not(.ev):not(.dn) b { color: var(--tx); } .cal0 .cl.dn { border: 1px dashed var(--bd); background: none; } .cal0 .cl.dn b { color: var(--tx3); font-weight: 500; }
+.cal0 .cl .am.g { top: -4px; left: auto; right: -4px; } .opk.oo { background: color-mix(in srgb, var(--fam-al) 55%, transparent); } .opk.pp { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--fam-al) 55%, transparent) 0 3px, transparent 3px 7px); outline: 1px solid color-mix(in srgb, var(--fam-al) 55%, transparent); outline-offset: -1px; } .opk { height: 12px; }
+.cal0 .cl .am.g { top: 3px; right: 3px; width: 7px; height: 7px; }
+@media (max-width: 60rem) { .cal0 .cl .ln0 { display: none; } }
+.cal0 .cl:not(.ev):not(.dn) { background: linear-gradient(var(--gc), var(--gc)) 0 0 / calc(var(--o, 0) * 100%) 100% no-repeat, rgb(255 255 255 / .02); overflow: hidden; }
+.cal0 .cl:not(.ev):not(.dn)::after { content: ""; position: absolute; top: 0; bottom: 0; left: calc(var(--o, 0) * 100%); width: calc((var(--p, 0) - var(--o, 0)) * 100%); background: repeating-linear-gradient(135deg, var(--gc) 0 3px, transparent 3px 7px); pointer-events: none; }
+.cal0 .cl > * { position: relative; z-index: 1; } .cal0 .cl > .am { position: absolute; }
+@media (min-width: 100rem) { .has-dw .cal0 .cl { padding-inline: 3px; gap: 1px; } .has-dw .cal0 .cl .ln0 { width: 9px; } .has-dw .cal0 .cl b { letter-spacing: -.02em; } }
