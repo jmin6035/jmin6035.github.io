@@ -398,9 +398,9 @@
 
     /* 전환: 처음 열릴 때 차례로, 오른쪽 칸은 고른 것이 바뀔 때만, 숫자는 같은 달·같은 그룹에서 값이 바뀐 칸만 한 번 */
     { const TX = window.__tx = window.__tx || {}, root = $('ct-main'), dk = st.ord ? `o${st.ord}` : st.day ? `d${st.day}` : '', sig = `${cm}|${st.grp || ''}|${st.src || ''}|${st.bt || ''}|${st.of || ''}`, SEL = ['.lft .t.gt td', '.cal0 .cl em', '.cal .cg .ws b', '.btm .t td'], snap = SEL.map((s) => [...root.querySelectorAll(s)]);
-      root.classList.toggle('intro', !TX.done); root.classList.toggle('dw-in', !!dk && dk !== TX.dk);
+      root.classList.toggle('intro', !TX.done); root.classList.toggle('dw-in', !!dk && dk !== TX.dk); root.classList.toggle('tab-in', !!TX.done && (st.bt || '') !== (TX.bt || '')); window.__when = { a: WHEN, b: WHEN2 };
       if (TX.done && TX.sig === sig) snap.forEach((els, i) => { const old = TX.v[i]; if (old && old.length === els.length) els.forEach((el, n) => { if (old[n] !== el.textContent) el.classList.add('fl'); }); });
-      TX.v = snap.map((els) => els.map((el) => el.textContent)); TX.sig = sig; TX.dk = dk; TX.done = 1; }
+      TX.v = snap.map((els) => els.map((el) => el.textContent)); TX.sig = sig; TX.dk = dk; TX.bt = st.bt || ''; const first = !TX.done; TX.done = 1; if (first && window.__fxIntro) window.__fxIntro(); }
     const q = (s, fn) => document.querySelectorAll(s).forEach(fn);
     q('[data-bt]', (x) => { x.onclick = () => { st.bt = x.dataset.bt; draw(); const n = document.querySelector('.btn'); if (n) n.scrollIntoView({ block: 'nearest' }); }; });
     fx(!FX.n); FX.n++;
@@ -507,4 +507,21 @@
       XO = (x && x.ord) || {}; XS = (x && x.sum) || null; XM = (x && x.meet) || null; XL = {}; for (const k in XO) if (XO[k].c.length) XL[k] = XO[k].c;
       portal(lp, sj, cal); load(); draw(); let once = false; PS.on(() => { if (once) return; once = true; if (load()) draw(); });
       window.PAN = { xlCheck, st, portal: () => ({ PT, SJ, CAL, NOORD }) }; }); });
+})();
+
+/* 손맛: 포인터를 따라 기우는 달력 칸과 카드 빛, 주문 줄에 올리면 달력의 생산일 비추기, 처음 열 때 숫자 올라가기, 단축키(Esc 닫기, / 계약번호 찾기, 좌우 화살표로 날 옮기기) */
+(() => { const root = document.getElementById('ct-main'); if (!root) return; const fine = matchMedia('(hover: hover) and (pointer: fine)').matches, calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let raf = 0, ev = null, tilt = null; const flat = (c) => { if (c) { c.style.removeProperty('--rx'); c.style.removeProperty('--ry'); } };
+  if (fine && !calm) { root.addEventListener('pointermove', (e) => { ev = e; if (raf) return; raf = requestAnimationFrame(() => { raf = 0; const cd = ev.target.closest('.cd'); if (tilt && tilt !== cd) flat(tilt); tilt = cd;
+        if (cd) { const r = cd.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width, y = (ev.clientY - r.top) / r.height; cd.style.setProperty('--rx', `${((0.5 - y) * 8).toFixed(2)}deg`); cd.style.setProperty('--ry', `${((x - 0.5) * 8).toFixed(2)}deg`); cd.style.setProperty('--mx', `${(x * 100).toFixed(1)}%`); cd.style.setProperty('--my', `${(y * 100).toFixed(1)}%`); }
+        const pn = ev.target.closest('.pn, .cal0, .rgt.ovl .dw, details.jh'); if (pn) { const r = pn.getBoundingClientRect(); pn.style.setProperty('--gx', `${Math.round(ev.clientX - r.left)}px`); pn.style.setProperty('--gy', `${Math.round(ev.clientY - r.top)}px`); } }); }, { passive: true });
+    root.addEventListener('pointerleave', () => { flat(tilt); tilt = null; }); }
+  const clear = () => { if (!root.classList.contains('hl-on')) return; root.classList.remove('hl-on'); root.querySelectorAll('.cd.hl').forEach((c) => c.classList.remove('hl')); };
+  if (fine) { root.addEventListener('mouseover', (e) => { const r = e.target.closest('tr[data-or]'); if (!r) { clear(); return; } const W = window.__when || {}, a = (W.a || {})[r.dataset.or], b = (W.b || {})[r.dataset.or] || a; clear(); if (!a) return; let n = 0; root.querySelectorAll('.cd[data-day]').forEach((c) => { const d = c.dataset.day; if (d >= a && d <= b) { c.classList.add('hl'); n++; } }); if (n) root.classList.add('hl-on'); }); root.addEventListener('mouseleave', clear); }
+  document.addEventListener('keydown', (e) => { const inField = /INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '');
+    if (e.key === 'Escape') { const x = document.getElementById('dw-x'); if (x) { x.click(); e.preventDefault(); } else if (inField) document.activeElement.blur(); }
+    else if (e.key === '/' && !inField) { const c = document.getElementById('cs'); if (c) { c.focus(); e.preventDefault(); } }
+    else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !inField) { const all = [...root.querySelectorAll('.cd[data-day]')], i = all.findIndex((c) => c.classList.contains('sel')); if (i >= 0 && all[i + (e.key === 'ArrowRight' ? 1 : -1)]) { all[i + (e.key === 'ArrowRight' ? 1 : -1)].click(); e.preventDefault(); } } });
+  addEventListener('scroll', () => document.body.classList.toggle('scr', scrollY > 8), { passive: true });
+  window.__fxIntro = () => { if (calm) return; root.querySelectorAll('.lft .t.gt td, .cal .cg .ws b').forEach((el) => { const n = [...el.childNodes].find((c) => c.nodeType === 3 && /\d/.test(c.textContent)); if (!n) return; const txt = n.textContent, m = txt.match(/[\d,]+/); if (!m) return; const v = +m[0].replace(/,/g, ''); if (!(v > 0)) return; const t0 = performance.now(); const step = (now) => { const k = Math.min(1, (now - t0) / 700), e2 = 1 - Math.pow(1 - k, 3); if (!n.isConnected) return; n.textContent = k < 1 ? txt.replace(m[0], Math.round(v * e2).toLocaleString('ko-KR')) : txt; if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }); };
 })();
