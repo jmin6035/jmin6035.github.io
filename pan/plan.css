@@ -572,3 +572,13 @@ body.scwin .xl-hd { box-shadow: inset 0 3px 0 #f7b955 !important; }
 .pgp .t.gt tr.sum th, .pgp .t.gt tr.sum td { font-weight: 700; border-top: 1px solid rgb(255 255 255 / .22); }
 .dw .mqt tbody tr { cursor: pointer; } .dw .mqt tbody tr:hover td, .dw .mqt tbody tr:focus-visible td { background: rgb(143 153 255 / .14); } .dw .mqt td { font-size: var(--fs); } .dw .mqt td.cn0 { font-size: 15px; }
 .calbar .cs { width: 250px; }
+/* 가볍게: 흐림 효과, 배경 움직임, 포인터 따라가는 패널 빛 끔 */
+html::before { animation: none !important; } .pn::before, .pn::after, .cal0::before, .cal0::after, details.jh::before, details.jh::after { display: none !important; }
+.xl-hd, body.scr .xl-hd, .pn, .dw, .cal0, details.jh, .simb, .L3 .rgt.ovl { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; } body.scr .xl-hd { background: rgb(10 14 42 / .97) !important; }
+.ordp .ordw { content-visibility: auto; }
+/* 급한 주문 전체, 작업순서 표, 주문 검색 */
+.urgp .urgw { max-height: 460px; overflow-y: auto; overscroll-behavior: contain; border-radius: 10px; } .urgp .urgw thead th { position: sticky; top: 0; z-index: 1; background: #1b2150; }
+.dw table.t.sq { width: 100%; table-layout: auto; } .dw table.t.sq td, .dw table.t.sq th { padding-inline: 6px; } .dw table.t.sq td small { display: block; white-space: nowrap; } .dw table.t.sq td .x0 { padding-inline: 10px; white-space: nowrap; }
+.blk .why.oq { width: 420px; max-width: 100%; }
+/* 계획은 있는데 깔린 주문이 없는 날: 범례의 빈 가동과 같은 점선 */
+.cal0 .cl.e0 { border: 1.5px dashed rgb(255 255 255 / .55) !important; background: none !important; } .cal0 .cl.e0 b, .cal0 .cl.e0 em { color: #c9d0e6; }
