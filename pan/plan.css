@@ -561,3 +561,14 @@ td.db { background-image: linear-gradient(90deg, rgb(120 132 255 / .26), rgb(120
 .cd.chg::before { content: ""; position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: #f7b955; box-shadow: 0 0 0 3px rgb(247 185 85 / .28), 0 0 12px 2px rgb(247 185 85 / .7); z-index: 3; } .cd.chg { border-color: rgb(247 185 85 / .7); }
 .sc-only .cd:not(.chg) { opacity: .28; filter: saturate(.5); }
 body.scwin .xl-hd { box-shadow: inset 0 3px 0 #f7b955 !important; }
+/* 소재 조회, 진도 */
+.dw .mq { margin-top: 14px; padding: 14px; border: 1px solid rgb(255 255 255 / .1); border-radius: 14px; background: rgb(255 255 255 / .04); text-align: center; }
+.dw .mq > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 12px; margin-bottom: 8px; }
+.dw .mq > header h3 { margin: 0; font-size: 18px; font-weight: 700; }
+.dw .mq > header span { font-size: var(--fs); color: #dfe4f3; }
+.dw .mq > header b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.dw .mq0 { margin: 14px 0 0; text-align: center; font-size: 16px; color: #dfe4f3; }
+.pgp { grid-column: 1 / -1; }
+.pgp .t.gt tr.sum th, .pgp .t.gt tr.sum td { font-weight: 700; border-top: 1px solid rgb(255 255 255 / .22); }
+.dw .mqt tbody tr { cursor: pointer; } .dw .mqt tbody tr:hover td, .dw .mqt tbody tr:focus-visible td { background: rgb(143 153 255 / .14); } .dw .mqt td { font-size: var(--fs); } .dw .mqt td.cn0 { font-size: 15px; }
+.calbar .cs { width: 250px; }
