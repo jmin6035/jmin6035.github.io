@@ -587,3 +587,9 @@ html::before { animation: none !important; } .pn::before, .pn::after, .cal0::bef
 input.why.lf { display: block; width: 100%; max-width: 420px; height: 40px; margin: 0 auto 10px; text-align: center; border-radius: 10px; border: 1px solid rgb(255 255 255 / .16); background: rgb(8 11 34 / .7); color: #fff; font-size: var(--fs); }
 .blk.oqd { gap: 6px; } .blk.oqd .x0 { font-variant-numeric: tabular-nums; }
 .cal0 .cd.qd { outline: 2px solid #ffd166; outline-offset: -2px; }
+/* 훑어서 나온 잘림: 급한 주문 생산 예정 열, 상태 단추 줄, 좁은 칸의 넓은 표, 목적지 말줄임 */
+.urgp .urgw { overflow-x: hidden; } .urgp .urgw table { table-layout: fixed; width: 100%; } .urgp .urgw th:nth-child(1), .urgp .urgw td:nth-child(1) { width: 20%; } .urgp .urgw th:nth-child(3), .urgp .urgw td:nth-child(3) { width: 22%; } .urgp .t.gt td, .urgp .t.gt th { padding-inline: 2px; } .urgp .t.gt td.cn0 { font-size: 13.5px; white-space: normal; overflow-wrap: anywhere; } .urgp .t.gt td small { white-space: normal; overflow-wrap: anywhere; }
+.ofs { flex-wrap: wrap; overflow-x: visible; justify-content: center; }
+.L3 .btm > .pn:has(.xw) { grid-column: 1 / -1; }
+.L3 .ordc .t.ot td:nth-child(2) { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; word-break: keep-all; }
+.dw.wide table.t { width: 100%; } .dw.wide table.t td:first-child, .dw.wide table.t td:first-child small { white-space: normal; overflow-wrap: anywhere; word-break: keep-all; } .dw.wide table.t td:first-child { max-width: 300px; }
