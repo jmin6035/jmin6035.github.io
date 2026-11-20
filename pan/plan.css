@@ -453,3 +453,23 @@ input.de, select.de, .why, .cs, .xpt, input.dm0 { background: rgb(8 10 34 / .6);
 .t thead th, .ofs button, .x0, .lkb, .ug0, .pri, .tg, .sg, .crumb span, .fz, .t.ot td, .t.gt tbody th { white-space: nowrap; } .t.ot td small { white-space: nowrap; }
 .ofs { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: thin; } .ofs button { flex: none; }
 .dw.wide > header { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; } .dw.wide > header > div { flex: 1; } .dw.wide > header .x0 { flex: none; width: auto; }
+/* 배치 '나': 왼쪽 그룹, 가운데 달력, 오른쪽 주문 표. 상세는 오른쪽 위에 뜸. 아래 표는 탭 */
+.L3 .ordc { display: grid; gap: var(--space-md); min-width: 0; align-content: start; }
+@media (min-width: 100rem) { .L3 { grid-template-columns: 340px minmax(0, 1fr) 660px; } .L3 .ordc { position: sticky; top: calc(var(--hd-h) + var(--space-sm)); } .L3 .ordc .ordp .ordw { max-height: calc(100vh - var(--hd-h) - 300px); }
+  .L3 .ordc .t.ot th:nth-child(1), .L3 .ordc .t.ot td:nth-child(1), .L3 .ordc .t.ot th:nth-child(5), .L3 .ordc .t.ot td:nth-child(5), .L3 .ordc .t.ot th:nth-child(9), .L3 .ordc .t.ot td:nth-child(9) { display: none; } }
+@media (max-width: 100rem) { .L3 .ordc { overflow-x: auto; } }
+.L3 .rgt.ovl { position: fixed; right: 16px; top: calc(var(--hd-h) + 8px); width: 500px; max-width: calc(100vw - 32px); max-height: calc(100vh - var(--hd-h) - 24px); overflow-y: auto; z-index: 60; order: 0; display: block; border-radius: 18px; box-shadow: 0 30px 70px -20px rgb(0 0 0 / .85); }
+.L3 .rgt.ovl .dw { background: #10143a; border: 1px solid rgb(255 255 255 / .16); } .dw-in .L3 .rgt.ovl .dw { animation: rise .22s cubic-bezier(.2, .7, .2, 1) both; }
+.btn { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: var(--space-sm); } .btn button { padding: 10px 18px; font-size: 16px; }
+.mid > .cgd { margin: 0; }
+@media (min-width: 100rem) { .L3 { grid-template-columns: 330px minmax(0, 1fr) 700px; } .L3 .ordc .t.ot th, .L3 .ordc .t.ot td { padding: 8px 4px; } .L3 .ordc .t.ot td:nth-child(2) { max-width: 150px; overflow: hidden; text-overflow: ellipsis; } .cal0 .cl em { font-size: 15px; } .cal0 .cl b { font-size: 13.5px; } .cal0 .cl { gap: 2px; padding-inline: 4px; } }
+.lft .t.gt td small { white-space: nowrap; }
+@media (min-width: 100rem) { .L3 { grid-template-columns: 300px minmax(0, 1fr) 610px; } .L3 .ordc .t.ot th:nth-child(7), .L3 .ordc .t.ot td:nth-child(7) { display: none; } .L3 .ordc .t.ot td:nth-child(2) { max-width: 112px; } .L3 .ordc .t.ot th, .L3 .ordc .t.ot td { padding: 8px 3px; } .L3 .ordc .t.ot .cn0 { font-size: 15px; }
+  .cal0 .cl em { font-size: 15px; letter-spacing: -.02em; } .cal0 .cl b { font-size: 13.5px; letter-spacing: 0; } .cal0 .cl .ln0 { padding-left: 2px; } .cal0 .cl { gap: 1px; padding-inline: 3px; } .lft .t.gt tbody td { font-size: 16px; } .lft .t.gt th, .lft .t.gt td { padding-inline: 2px; } }
+@media (min-width: 100rem) { .L3 { grid-template-columns: 296px minmax(0, 1fr) 640px; } .L3 .ordc .t.ot td:nth-child(2) { max-width: 100px; } .L3 .ordc .ordp { padding-inline: 12px; } }
+@media (min-width: 100rem) { .cal0 .cl em { font-size: 14.5px; } }
+/* 1600~1820px: 그룹, 과부족, 알림을 위 한 줄로 올리고 달력과 주문 표 두 단 */
+@media (min-width: 100rem) and (max-width: 1820px) { .L3 { grid-template-columns: minmax(0, 1fr) 580px; } .L3 .lft { grid-column: 1 / -1; grid-template-columns: repeat(3, minmax(0, 1fr)); position: static; max-height: none; overflow: visible; } .L3 .ordc .t.ot td:nth-child(2) { max-width: 72px; } }
+@media (min-width: 1821px) { .L3 { grid-template-columns: 280px minmax(0, 1fr) 630px; } .L3 .ordc .t.ot td:nth-child(2) { max-width: 90px; } .L3 .ordc .ordp { padding-inline: 10px; } }
+@media (min-width: 100rem) and (max-width: 1820px) { .L3 .ordc .t.ot td:nth-child(2) { max-width: 60px; } .L3 .ordc .ordp { padding-inline: 10px; } }
+@media (min-width: 1821px) { .lft .t.gt tbody td { font-size: 15px; } .lft .t.gt tbody th { font-size: 15px; } .lft .pn { padding-inline: 10px; } }
