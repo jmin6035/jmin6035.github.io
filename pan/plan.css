@@ -414,3 +414,5 @@ input.de, select.de, .why, .cs, .xpt, input.dm0 { background: #ffffff; color: #1
 @media (max-width: 700px) { .cal0 .cl em { font-size: 13.5px; } .cal0 .cl .ln0 { display: none; } }
 .cal .cg .ws b { font-size: 16px; font-weight: 400; } .cal .cg .ws .wo b { font-weight: 700; }
 @media (max-width: 1500px) { .cal0 .cl em { font-size: 14px; } .cal0 .cl b, .cal0 .cl .ln0 { letter-spacing: 0; } .cal .cg .ws b { font-size: 14px; } .cal0 .cl:not(.ev):not(.dn) .ln0 { padding-left: 2px; } }
+/* 카드 윗줄만 따로 긋던 것 없앰: 사방 같은 가는 놋쇠 테두리, 고른 그림자 */
+.pn, .L3 .rgt .dw, details.jh, .dw, .cal0 { background: linear-gradient(180deg, #fffdf8, #fbf5e8); border: 1px solid rgb(176 141 87 / .5); box-shadow: 0 1px 2px rgb(60 40 10 / .06), 0 8px 20px -12px rgb(60 40 10 / .22); } .cal0 { outline: 0; } .dw.wide { background: #fffcf5; box-shadow: 0 0 0 1px rgb(176 141 87 / .5), -14px 0 40px -10px rgb(60 40 10 / .35); }

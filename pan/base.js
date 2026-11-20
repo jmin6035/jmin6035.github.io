@@ -1,6 +1,6 @@
 /* 판생 기준값(11/19 사용자 '소재 리드타임·입항일·T/Hr 같은 숫자는 전부 한곳에 모아 두고 우리가 수정할 수 있어야') —
-   배선일정(목적지별 출항 기간) · 시간당 톤(라인·강종·두께·폭) · 소재 리드타임 · 전환 규칙값. 노란 칸을 고치고 [저장] → 공유 저장소(K|표|키) → 모든 계산이 이 값을 씀.
-   칸을 비우고 저장하면 기본값으로 돌아감. 고친 칸은 굵게 + 아래 작은 글씨로 기본값. */
+   배선일정(목적지별 출항 기간) · 시간당 톤(라인·강종·두께·폭) · 소재 리드타임 · 전환 규칙값. 노란 입력란을 고치고 [저장] → 공유 저장소(K|표|키) → 모든 계산이 이 값을 씀.
+   칸을 비우고 저장하면 기본값으로 돌아감. 수정한 값은 굵게 + 아래 작은 글씨로 기본값. */
 (() => {
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -40,7 +40,7 @@
     const RK = [['1CGL', 'AZ'], ['1CGL', 'AL'], ['2CGL', 'MAC'], ['2CGL', 'AL']].sort((p0, r) => (st.asc ? 1 : -1) * `${p0[0]} ${p0[1]}`.localeCompare(`${r[0]} ${r[1]}`, 'ko'));
     if (!RK.some(([l, f]) => `${l}|${f}` === st.rk)) st.rk = `${RK[0][0]}|${RK[0][1]}`;
     const nFix = (l, f) => T.thk.concat([0]).reduce((n, _, ti) => n + T.wdt.concat([0]).filter((__, wi) => PS.isSet(`K|rate|${l}|${f}|${ti}|${wi}`)).length, 0);
-    const tabs = RK.map(([l, f]) => { const n = nFix(l, f); return `<button type="button" class="tab ${st.rk === `${l}|${f}` ? 'on' : ''}" data-rk="${l}|${f}" aria-pressed="${st.rk === `${l}|${f}`}">${l} <b>${FNM[f]}</b>${n ? `<i>${n}칸 고침</i>` : ''}</button>`; }).join('');
+    const tabs = RK.map(([l, f]) => { const n = nFix(l, f); return `<button type="button" class="tab ${st.rk === `${l}|${f}` ? 'on' : ''}" data-rk="${l}|${f}" aria-pressed="${st.rk === `${l}|${f}`}">${l} <b>${FNM[f]}</b>${n ? `<i>${n}건 수정</i>` : ''}</button>`; }).join('');
     const [RL, RF] = st.rk.split('|');
     const rate = `<table class="x rate"><thead><tr><th>두께, 폭</th>${T.wdt.concat([0]).map((_, wi) => `<th>${wb(wi)}</th>`).join('')}</tr></thead><tbody>
       ${T.thk.concat([0]).map((_, ti) => `<tr><td class="nm">${tb(ti)}</td>${T.wdt.concat([0]).map((__, wi) => { const k = `${RL}|${RF}|${ti}|${wi}`, r = T.rate[k], fb = T.rate[`${RL}|${RF}|${ti}`] || T.rate[`${RL}|${ti}`] || T.rate[RL];
@@ -60,10 +60,10 @@
       return `전환 규칙값 ${p0.slice(1).join(' ')}`; };
     const chg = fixed.length ? fixed.map((k) => { const h = PS.history(k).slice(-1)[0] || {};
       return `<div class="row"><b>${esc(NMK(k))}</b><span class="v">${f1(O[k])}</span><span class="who">${esc(String(h.at || '').slice(5, 16).replace('T', ' '))} ${esc(h.by || '')}</span><button type="button" class="b3" data-rst="${esc(k)}">기본값으로</button></div>`; }).join('')
-      : '<p class="none">고쳐 쓴 칸이 없습니다. 표의 노란 칸에 숫자를 넣고 저장하면 여기에 모입니다</p>';
+      : '<p class="none">수정한 값이 없습니다. 표의 노란 입력란에 숫자를 넣고 저장하면 여기에 모입니다</p>';
     $('ct-main').innerHTML = `
-      <div class="xl-top"><h1>판생 기준값</h1><p class="lead">계산에 쓰는 숫자를 한곳에 모았습니다. 노란 칸을 고쳐 저장하면 모든 계산이 그 값을 쓰고, 칸을 비우면 기본값으로 돌아갑니다.</p>
-        <div class="counts"><div><span>배선일정 목적지</span><b>${nAll}줄</b></div><div><span>시간당 톤 칸</span><b>${Object.keys(T.rate).filter((k) => k.split('|').length === 4).length}칸</b></div><div><span>소재 리드타임</span><b>${LD.length}줄</b></div><div class="${fixed.length ? 'on' : ''}"><span>고쳐 쓴 칸</span><b>${fixed.length}개</b></div></div>
+      <div class="xl-top"><h1>판생 기준값</h1><p class="lead">계산에 쓰는 숫자를 한곳에 모았습니다. 노란 입력란을 고쳐 저장하면 모든 계산이 그 값을 쓰고, 입력란을 비우면 기본값으로 돌아갑니다.</p>
+        <div class="counts"><div><span>배선일정 목적지</span><b>${nAll}줄</b></div><div><span>시간당 톤 기준</span><b>${Object.keys(T.rate).filter((k) => k.split('|').length === 4).length}건</b></div><div><span>소재 리드타임</span><b>${LD.length}줄</b></div><div class="${fixed.length ? 'on' : ''}"><span>수정한 값</span><b>${fixed.length}건</b></div></div>
         <nav><a href="pan/base.html#s1">배선일정</a><a href="pan/base.html#s2">시간당 톤</a><a href="pan/base.html#s3">소재 리드타임</a><a href="pan/base.html#s4">전환 규칙값</a><a href="pan/base.html#s5">고친 값</a></nav></div>
       <section class="xl" id="s1"><div class="hd"><span class="no">1</span><h2>배선일정, 목적지별 출항 기간</h2></div>
         <p class="sub">배선일정 엑셀(정리_배선일정, 정리_판매데이터)에서 왔습니다. 주문이 아직 없는 수출 판매계획분을 이 기간 안에, 그 목적지의 두께 구성으로 생산합니다.</p>
@@ -74,7 +74,7 @@
           <span class="cnt">${nShown} / ${nAll}줄</span></div>
         <div class="xw"><table class="x ship"><thead><tr><th>목적지</th><th>강종</th><th>권역, 국가</th><th>월평균 물량<small>톤</small></th><th>출항 시작일</th><th>출항 끝일</th><th>생산 반순</th><th>최근 3달 월평균<small>톤</small></th><th class="bc-h">두께 구성</th><th class="sp-h">주력 사양과 비고</th></tr></thead><tbody>${ship}</tbody></table></div></section>
       <section class="xl" id="s2"><div class="hd"><span class="no">2</span><h2>시간당 톤, 가동 중</h2></div>
-        <p class="sub">MES 코일 실적 ${ym(T.from)}부터 ${ym(T.to)}까지 ${f1(T.coils || 0)}코일에서 왔습니다. 옅은 숫자는 그 칸 실적이 없어 같은 두께 평균을 쓴 값이고, AL-STS는 2CGL AL 값을 씁니다.</p>
+        <p class="sub">MES 코일 실적 ${ym(T.from)}부터 ${ym(T.to)}까지 ${f1(T.coils || 0)}코일에서 왔습니다. 옅은 숫자는 그 구간 실적이 없어 같은 두께 평균을 쓴 값이고, AL-STS는 2CGL AL 값을 씁니다.</p>
         <div class="tabs" role="group" aria-label="라인과 강종">${tabs}</div>
         <div class="xw">${rate}</div></section>
       <section class="xl" id="s3"><div class="hd"><span class="no">3</span><h2>소재 리드타임</h2></div><p class="sub">소재 유형별 리드타임(팀 제공), 판생 엑셀 주문 시트, 11월 19일 회의에서 왔습니다. 단위는 일입니다.</p>
@@ -82,7 +82,7 @@
       <section class="xl" id="s4"><div class="hd"><span class="no">4</span><h2>전환 규칙값</h2></div>
         <div class="xw"><table class="x"><thead><tr><th>항목</th><th>값</th><th>단위</th></tr></thead><tbody>${rule}
           <tr><td class="nm">M/C와 S/D 요일</td><td>평일만</td><td>주말 금지</td></tr></tbody></table></div></section>
-      <section class="xl" id="s5"><div class="hd"><span class="no">5</span><h2>고친 값</h2></div><p class="sub">기본값과 다르게 쓰고 있는 칸입니다. 누가 언제 고쳤는지와 함께 보이고, 한 줄씩 기본값으로 되돌릴 수 있습니다.</p>
+      <section class="xl" id="s5"><div class="hd"><span class="no">5</span><h2>고친 값</h2></div><p class="sub">기본값과 다르게 쓰고 있는 값입니다. 누가 언제 고쳤는지와 함께 보이고, 한 줄씩 기본값으로 되돌릴 수 있습니다.</p>
         <div class="chg">${chg}</div></section>
       <div id="x-act" class="x-act" hidden></div><div id="x-toast" class="x-toast" role="status" hidden></div>`;
     document.querySelectorAll('input[data-k]').forEach((i) => {
@@ -101,10 +101,10 @@
       clearTimeout(toastT); toastT = setTimeout(() => { const t2 = $('x-toast'); if (t2) t2.hidden = true; canUndo = false; }, 6000); }
   }
   function bar() { const b = $('x-act'), n = Object.keys(pend).length; b.hidden = !n; if (!n) return;
-    b.innerHTML = `<span>고친 칸 <b>${n}개</b></span><button type="button" class="b1" id="x-save">저장</button><button type="button" class="b2" id="x-clr">지우기</button><span class="hint">Enter 저장, Esc 지우기</span>`;
+    b.innerHTML = `<span>수정한 값 <b>${n}건</b></span><button type="button" class="b1" id="x-save">저장</button><button type="button" class="b2" id="x-clr">지우기</button><span class="hint">Enter 저장, Esc 지우기</span>`;
     $('x-save').onclick = save; $('x-clr').onclick = () => { pend = {}; draw(); }; }
   let toastMsg = '', toastT = null, canUndo = false;
-  function save() { const pairs = Object.entries(pend); if (!pairs.length) return; pend = {}; toastMsg = `${pairs.length}칸 저장했습니다. 계산에 바로 반영됩니다`; canUndo = true; PS.setMany(pairs, `기준값 ${pairs.length}칸 고침: ${pairs.slice(0, 3).map(([k, v]) => `${k.slice(2)} = ${v == null ? '기본값' : v}`).join(' · ')}`); }
+  function save() { const pairs = Object.entries(pend); if (!pairs.length) return; pend = {}; toastMsg = `${pairs.length}건 저장했습니다. 계산에 바로 반영됩니다`; canUndo = true; PS.setMany(pairs, `기준값 ${pairs.length}건 수정: ${pairs.slice(0, 3).map(([k, v]) => `${k.slice(2)} = ${v == null ? '기본값' : v}`).join(' · ')}`); }
   PS.on(() => { if (B) draw(); });
   PS.boot((b) => { if (!b) { $('ct-main').innerHTML = '<p>자료 없음</p>'; return; } B = b; draw(); if (location.hash) { const t = document.querySelector(location.hash); if (t) t.scrollIntoView(); } });
 })();

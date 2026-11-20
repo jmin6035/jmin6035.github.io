@@ -21,3 +21,5 @@ section.xl, .counts > div { background: linear-gradient(90deg, #8f6b2e, #e6cd94 
 .tab.on { translate: none; background: linear-gradient(135deg, #8c2331, #5e141f); color: #fff6e6; box-shadow: 0 10px 22px -12px rgb(94 20 31 / .85); } .tab.on::before { content: none; }
 .x-toast { background: linear-gradient(135deg, #2a251f, #14110e); color: #f6eedc; box-shadow: 0 0 0 1px #b08d57, 0 22px 44px -18px rgb(20 14 6 / .7); } .x-toast button { color: #f6eedc; }
 .b1, .xlb .unlock button { background: linear-gradient(135deg, #8c2331, #5e141f); color: #fff6e6; box-shadow: 0 10px 22px -12px rgb(94 20 31 / .85); }
+/* 카드 윗줄만 따로 긋던 것 없앰: 사방 같은 가는 놋쇠 테두리, 고른 그림자 */
+section.xl, .counts > div { background: linear-gradient(180deg, #fffdf8, #fbf5e8); border: 1px solid rgb(176 141 87 / .5); border-radius: 6px; box-shadow: 0 1px 2px rgb(60 40 10 / .06), 0 8px 20px -12px rgb(60 40 10 / .22); }
