@@ -24,7 +24,7 @@
         && (!st.only || ['t', 'a', 'b'].some((z) => PS.isSet(`K|${r.kk}|${z}`) || `K|${r.kk}|${z}` in pend)));
       rows.sort((p0, r) => (st.asc ? 1 : -1) * p0.x[0].localeCompare(r.x[0], 'ko') || ['AL', 'AZ', 'MAC', 'STS'].indexOf(p0.f) - ['AL', 'AZ', 'MAC', 'STS'].indexOf(r.f));
       if (!rows.length) continue; nShown += rows.length;
-      ship += `<tr class="grp"><td colspan="10"><span>${esc(g)}<i>목적지 ${new Set(rows.map((r) => r.x[0])).size}곳</i><i>${rows.length}줄</i><i>월평균 ${f1(rows.reduce((t0, r) => t0 + PS.kv(`${r.kk}|t`, r.x[1]), 0))}t</i></span></td></tr>`;
+      ship += `<tr class="grp"><td colspan="10"><span>${esc(g)}<i>목적지 ${new Set(rows.map((r) => r.x[0])).size}곳</i><i>${rows.length}건</i><i>월평균 ${f1(rows.reduce((t0, r) => t0 + PS.kv(`${r.kk}|t`, r.x[1]), 0))}t</i></span></td></tr>`;
       for (const { f, x, kk } of rows) { const a0 = PS.kv(`${kk}|a`, x[2]), b0 = PS.kv(`${kk}|b`, x[3]), d = x[7];
         const bt = d ? BN.reduce((s0, k) => s0 + ((d.bands[k] || [0])[0]), 0) : 0;
         const bar0 = bt > 0 ? `<div class="bb" role="img" aria-label="두께 구성">${BN.map((k, i) => (d.bands[k] ? `<i class="tk${i}" style="flex:${(d.bands[k][0] / bt).toFixed(3)}"></i>` : '')).join('')}</div><span class="bt">${BN.filter((k) => d.bands[k] && d.bands[k][0] / bt >= 0.1).map((k) => `${k} ${Math.round(d.bands[k][0] / bt * 100)}%`).join(', ')}</span>` : '<span class="mu">실적 없음</span>';
@@ -33,7 +33,7 @@
           <td class="bn">${b0 - a0 >= 10 ? '한 달 내내<small>반순으로 나눔</small>' : `${Math.ceil(a0 / 5)}반순<small>${a0}일에서 ${b0}일</small>`}</td>
           <td class="num ${tr}">${d ? `${f1(d.r3)}<small>이전 ${f1(d.p3)}${tr === 'up' ? ', 늘어남' : tr === 'dn' ? ', 줄어듦' : ''}</small>` : '<span class="mu">실적 없음</span>'}</td>
           <td class="bc">${bar0}</td><td class="sp">${d && d.top.length ? d.top.slice(0, 3).map((t) => `<span>${t[0]}×${t[1]} ${esc(t[2])} <b>${f1(t[3])}t</b></span>`).join('') : ''}${x[6] ? `<small>${esc(x[6])}</small>` : ''}</td></tr>`; } }
-    if (!nShown) ship = '<tr><td colspan="10" class="none">맞는 목적지가 없습니다. 찾는 말을 줄이거나 고친 줄만 보기를 풀어 보세요</td></tr>';
+    if (!nShown) ship = '<tr><td colspan="10" class="none">맞는 목적지가 없습니다. 찾는 말을 줄이거나 수정한 것만 보기를 풀어 보세요</td></tr>';
     /* 2. 시간당 톤 — 라인·강종 묶음 */
     const tb = (i) => (i === 0 ? `${T.thk[0]} 미만` : i === T.thk.length ? `${T.thk[i - 1]} 이상` : `${T.thk[i - 1]}에서 ${T.thk[i]}`);
     const wb = (i) => (i === 0 ? `${T.wdt[0]} 미만` : i === T.wdt.length ? `${T.wdt[i - 1]} 이상` : `${T.wdt[i - 1]}에서 ${T.wdt[i]}`);
@@ -63,15 +63,15 @@
       : '<p class="none">수정한 값이 없습니다. 표의 노란 입력란에 숫자를 넣고 저장하면 여기에 모입니다</p>';
     $('ct-main').innerHTML = `
       <div class="xl-top"><h1>판생 기준값</h1><p class="lead">계산에 쓰는 숫자를 한곳에 모았습니다. 노란 입력란을 고쳐 저장하면 모든 계산이 그 값을 쓰고, 입력란을 비우면 기본값으로 돌아갑니다.</p>
-        <div class="counts"><div><span>배선일정 목적지</span><b>${nAll}줄</b></div><div><span>시간당 톤 기준</span><b>${Object.keys(T.rate).filter((k) => k.split('|').length === 4).length}건</b></div><div><span>소재 리드타임</span><b>${LD.length}줄</b></div><div class="${fixed.length ? 'on' : ''}"><span>수정한 값</span><b>${fixed.length}건</b></div></div>
+        <div class="counts"><div><span>배선일정 목적지</span><b>${nAll}건</b></div><div><span>시간당 톤 기준</span><b>${Object.keys(T.rate).filter((k) => k.split('|').length === 4).length}건</b></div><div><span>소재 리드타임</span><b>${LD.length}건</b></div><div class="${fixed.length ? 'on' : ''}"><span>수정한 값</span><b>${fixed.length}건</b></div></div>
         <nav><a href="pan/base.html#s1">배선일정</a><a href="pan/base.html#s2">시간당 톤</a><a href="pan/base.html#s3">소재 리드타임</a><a href="pan/base.html#s4">전환 규칙값</a><a href="pan/base.html#s5">고친 값</a></nav></div>
       <section class="xl" id="s1"><div class="hd"><span class="no">1</span><h2>배선일정, 목적지별 출항 기간</h2></div>
         <p class="sub">배선일정 엑셀(정리_배선일정, 정리_판매데이터)에서 왔습니다. 주문이 아직 없는 수출 판매계획분을 이 기간 안에, 그 목적지의 두께 구성으로 생산합니다.</p>
         <div class="tb"><label>목적지 찾기<input id="b-q" type="search" placeholder="목적지, 국가, 권역, 강종" value="${esc(st.q || '')}"></label>
           <label>이름 순서<select id="b-ord"><option value="">내림차순</option><option value="1"${st.asc ? ' selected' : ''}>오름차순</option></select></label>
-          <label class="ck"><input type="checkbox" id="b-only"${st.only ? ' checked' : ''}>고친 줄만</label>
+          <label class="ck"><input type="checkbox" id="b-only"${st.only ? ' checked' : ''}>수정한 것만</label>
           <span class="lgd">두께 구성<i class="tk0"></i>극박<i class="tk1"></i>박물<i class="tk2"></i>중물<i class="tk3"></i>후물</span>
-          <span class="cnt">${nShown} / ${nAll}줄</span></div>
+          <span class="cnt">${nShown} / ${nAll}건</span></div>
         <div class="xw"><table class="x ship"><thead><tr><th>목적지</th><th>강종</th><th>권역, 국가</th><th>월평균 물량<small>톤</small></th><th>출항 시작일</th><th>출항 끝일</th><th>생산 반순</th><th>최근 3달 월평균<small>톤</small></th><th class="bc-h">두께 구성</th><th class="sp-h">주력 사양과 비고</th></tr></thead><tbody>${ship}</tbody></table></div></section>
       <section class="xl" id="s2"><div class="hd"><span class="no">2</span><h2>시간당 톤, 가동 중</h2></div>
         <p class="sub">MES 코일 실적 ${ym(T.from)}부터 ${ym(T.to)}까지 ${f1(T.coils || 0)}코일에서 왔습니다. 옅은 숫자는 그 구간 실적이 없어 같은 두께 평균을 쓴 값이고, AL-STS는 2CGL AL 값을 씁니다.</p>
@@ -82,7 +82,7 @@
       <section class="xl" id="s4"><div class="hd"><span class="no">4</span><h2>전환 규칙값</h2></div>
         <div class="xw"><table class="x"><thead><tr><th>항목</th><th>값</th><th>단위</th></tr></thead><tbody>${rule}
           <tr><td class="nm">M/C와 S/D 요일</td><td>평일만</td><td>주말 금지</td></tr></tbody></table></div></section>
-      <section class="xl" id="s5"><div class="hd"><span class="no">5</span><h2>고친 값</h2></div><p class="sub">기본값과 다르게 쓰고 있는 값입니다. 누가 언제 고쳤는지와 함께 보이고, 한 줄씩 기본값으로 되돌릴 수 있습니다.</p>
+      <section class="xl" id="s5"><div class="hd"><span class="no">5</span><h2>고친 값</h2></div><p class="sub">기본값과 다르게 쓰고 있는 값입니다. 누가 언제 고쳤는지와 함께 보이고, 하나씩 기본값으로 되돌릴 수 있습니다.</p>
         <div class="chg">${chg}</div></section>
       <div id="x-act" class="x-act" hidden></div><div id="x-toast" class="x-toast" role="status" hidden></div>`;
     document.querySelectorAll('input[data-k]').forEach((i) => {
