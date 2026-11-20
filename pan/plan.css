@@ -473,3 +473,8 @@ input.de, select.de, .why, .cs, .xpt, input.dm0 { background: rgb(8 10 34 / .6);
 @media (min-width: 1821px) { .L3 { grid-template-columns: 280px minmax(0, 1fr) 630px; } .L3 .ordc .t.ot td:nth-child(2) { max-width: 90px; } .L3 .ordc .ordp { padding-inline: 10px; } }
 @media (min-width: 100rem) and (max-width: 1820px) { .L3 .ordc .t.ot td:nth-child(2) { max-width: 60px; } .L3 .ordc .ordp { padding-inline: 10px; } }
 @media (min-width: 1821px) { .lft .t.gt tbody td { font-size: 15px; } .lft .t.gt tbody th { font-size: 15px; } .lft .pn { padding-inline: 10px; } }
+/* 그룹 표 확보율 막대, 급한 주문 */
+.gbar { display: block; height: 5px; margin: 4px auto 2px; width: 72px; border-radius: 99px; background: rgb(255 255 255 / .12); overflow: hidden; } .gbar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #5a66f5, #8f99ff); } .gbar.lo i { background: linear-gradient(90deg, #f7b955, #ff8a5c); }
+.urgp .t.gt td { padding-block: 7px; } .urgp .t.gt td.cn0 { font-size: 14.5px; white-space: nowrap; } .urgp .t.gt td small { display: block; white-space: nowrap; font-weight: 400; color: #a3acc4; -webkit-text-fill-color: #a3acc4; } .urgp .t.gt tbody tr:hover td { background: rgb(255 255 255 / .07); cursor: pointer; }
+.fcp { grid-column: 1 / -1; }
+.gbl { display: flex; align-items: center; justify-content: center; gap: 5px; } .gbl .gbar { width: 44px; margin: 0; flex: none; } .lft .t.gt td .gbl small { display: inline; } .lft .t.gt tbody td, .lft .t.gt tbody th { padding-block: 8px; } .lft .pn header .u { white-space: nowrap; }
