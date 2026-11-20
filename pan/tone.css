@@ -28,3 +28,5 @@ section.xl, .counts > div { background: linear-gradient(180deg, rgb(28 34 78 / .
 .x-toast { background: #ffffff; color: #10143a; box-shadow: 0 24px 48px -16px rgb(0 0 0 / .8); } .x-toast button { color: #10143a; border-color: rgb(16 20 58 / .3); }
 .b1, .xlb .unlock button { background: linear-gradient(135deg, #5a66f5, #3540c8); color: #ffffff; box-shadow: 0 10px 24px -10px rgb(70 80 240 / .9); } .x-act { background: #10143a; box-shadow: 0 0 0 1px rgb(255 255 255 / .12), 0 24px 48px -16px rgb(0 0 0 / .8); }
 .x td.bn, .x td.bn small { white-space: nowrap; } .x td.bn small { display: block; }
+.x th, .tab, .xl-top nav a, .counts span, .x td.sp span { white-space: nowrap; }
+.x .bt { white-space: nowrap; }
