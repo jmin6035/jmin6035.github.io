@@ -582,3 +582,8 @@ html::before { animation: none !important; } .pn::before, .pn::after, .cal0::bef
 .blk .why.oq { width: 420px; max-width: 100%; }
 /* 계획은 있는데 깔린 주문이 없는 날: 범례의 빈 가동과 같은 점선 */
 .cal0 .cl.e0 { border: 1.5px dashed rgb(255 255 255 / .55) !important; background: none !important; } .cal0 .cl.e0 b, .cal0 .cl.e0 em { color: #c9d0e6; }
+/* 그룹별 표, 목록 검색, 검색한 주문의 생산일 */
+.t.gpt tr.gh th, .t.gpt tr.gh td { font-weight: 700; border-top: 1px solid rgb(255 255 255 / .2); } .t.gpt tr.sum th, .t.gpt tr.sum td { font-weight: 700; border-top: 2px solid rgb(255 255 255 / .3); } .t.gpt th[rowspan] { vertical-align: middle; }
+input.why.lf { display: block; width: 100%; max-width: 420px; height: 40px; margin: 0 auto 10px; text-align: center; border-radius: 10px; border: 1px solid rgb(255 255 255 / .16); background: rgb(8 11 34 / .7); color: #fff; font-size: var(--fs); }
+.blk.oqd { gap: 6px; } .blk.oqd .x0 { font-variant-numeric: tabular-nums; }
+.cal0 .cd.qd { outline: 2px solid #ffd166; outline-offset: -2px; }
