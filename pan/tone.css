@@ -1,25 +1,26 @@
-/* 기준값 화면: 계획 화면과 같은 종이, 먹, 놋쇠 톤. 넣는 칸만 노랑 */
-:root { --color-paper: #f4eee2; --color-paper-2: #f4eee2; --color-paper-3: #faf5ea; --color-floor-ink: #1d1a16; --color-floor-mute: #4a443b;
-  --color-plate: #fffcf5; --color-plate-2: #faf5ea; --color-plate-3: #efe7d6; --color-plate-hi: #fffefb; --color-plate-ink: #1d1a16;
-  --color-ink: #1d1a16; --color-ink-2: #4a443b; --color-muted: #665e52; --color-rule: rgb(29 26 22 / .12);
-  --color-gun: #f6efe0; --color-gun-2: #ece2cd; --color-gun-hi: #fffefb;
-  --color-accent: #7b1e2b; --color-accent-ink: #fff6e6; --color-accent-deep: #5e141f; --color-focus: #7b1e2b;
+/* 기준값 화면: 계획 화면과 같은 백자, 청화 톤. 넣는 칸만 노랑 */
+:root { --color-paper: #eef2f7; --color-paper-2: #eef2f7; --color-paper-3: #f5f8fc; --color-floor-ink: #131a2b; --color-floor-mute: #3b4760;
+  --color-plate: #ffffff; --color-plate-2: #f5f8fc; --color-plate-3: #e6ecf5; --color-plate-hi: #ffffff; --color-plate-ink: #131a2b;
+  --color-ink: #131a2b; --color-ink-2: #3b4760; --color-muted: #56627a; --color-rule: rgb(19 26 43 / .12);
+  --color-gun: #f1f5fb; --color-gun-2: #e1e8f3; --color-gun-hi: #ffffff;
+  --color-accent: #1f3fa8; --color-accent-ink: #ffffff; --color-accent-deep: #162c7a; --color-focus: #1f3fa8;
   --color-edit: #fdf3c8; --color-edit-2: #fae9a0; --color-edit-ink: #6b4a00; --color-edit-rule: #e2c66a;
   --radius-card: 6px; --radius-key: 4px; --radius-well: 4px; --tracking-display: -0.01em; --display-weight: 800;
-  --lift-plate: inset 0 1px 0 #ffffff, 0 18px 40px -28px rgb(60 40 10 / .5); --lift-key: inset 0 1px 0 #ffffff, 0 0 0 1px rgb(29 26 22 / .22), 0 4px 10px -8px rgb(60 40 10 / .5);
-  --press-well: inset 0 1px 2px rgb(60 40 10 / .14), inset 0 0 0 1px rgb(29 26 22 / .12); --press-deep: none; --shadow-card: inset 0 1px 0 #ffffff, 0 18px 40px -28px rgb(60 40 10 / .5);
-  --shade-beam: 0 10px 26px -20px rgb(60 40 10 / .5); --shade-dot: none; --glint: none; --shade-key: 0 4px 10px -8px rgb(60 40 10 / .5); --texture-opacity: 0; }
-body.xlb { color: #1d1a16; background: #f4eee2; }
-body.xlb .xl-hd { color: #1d1a16; } body.xlb .xl-hd b { background: linear-gradient(90deg, #1d1a16, #7b1e2b); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: .06em; } body.xlb .xl-hd b::before { display: none; }
-body.xlb .xl-hd a { color: #4a443b; opacity: 1; } body.xlb .xl-hd a:hover { background: rgb(176 141 87 / .14); } body.xlb .xl-hd a.on { background: none; color: #7b1e2b; box-shadow: inset 0 -2px 0 #7b1e2b; border-radius: 0; font-weight: 700; }
-.xl-top h1 { text-shadow: none; background: linear-gradient(90deg, #1d1a16, #7b1e2b); -webkit-background-clip: text; background-clip: text; color: transparent; display: inline-block; }
-section.xl, .counts > div { background: linear-gradient(90deg, #8f6b2e, #e6cd94 45%, #f3e3b4 55%, #b08d57) top / 100% 2px no-repeat, linear-gradient(180deg, #fffdf8, #fbf5e8); border-radius: 6px; box-shadow: var(--shadow-card), 0 0 0 1px rgb(29 26 22 / .08); }
-.counts { background: none; box-shadow: none; padding: 0; } .counts span { color: #4a443b; } .counts b { color: #1d1a16; font-weight: 300; font-size: 34px; }
-.x th { text-shadow: none; color: #4a443b; font-weight: 600; letter-spacing: .03em; box-shadow: inset 0 -1px 0 #b08d57; } .x th:last-child { box-shadow: inset 0 -1px 0 #b08d57; } .x th small { color: #665e52; font-size: 13.5px; }
-.xl .no { background: linear-gradient(135deg, #8c2331, #5e141f); color: #fff6e6; box-shadow: none; }
-.x tr.grp td, .x tr.grp:hover td { background: #f1e8d4; color: #1d1a16; box-shadow: none; } .x tr.grp td span::before { background: #7b1e2b; box-shadow: none; } .x tr.grp td i { color: #4a443b; }
-.tab.on { translate: none; background: linear-gradient(135deg, #8c2331, #5e141f); color: #fff6e6; box-shadow: 0 10px 22px -12px rgb(94 20 31 / .85); } .tab.on::before { content: none; }
-.x-toast { background: linear-gradient(135deg, #2a251f, #14110e); color: #f6eedc; box-shadow: 0 0 0 1px #b08d57, 0 22px 44px -18px rgb(20 14 6 / .7); } .x-toast button { color: #f6eedc; }
-.b1, .xlb .unlock button { background: linear-gradient(135deg, #8c2331, #5e141f); color: #fff6e6; box-shadow: 0 10px 22px -12px rgb(94 20 31 / .85); }
+  --lift-plate: inset 0 1px 0 #ffffff, 0 18px 40px -28px rgb(20 35 70 / .5); --lift-key: inset 0 1px 0 #ffffff, 0 0 0 1px rgb(19 26 43 / .22), 0 4px 10px -8px rgb(20 35 70 / .5);
+  --press-well: inset 0 1px 2px rgb(20 35 70 / .14), inset 0 0 0 1px rgb(19 26 43 / .12); --press-deep: none; --shadow-card: inset 0 1px 0 #ffffff, 0 18px 40px -28px rgb(20 35 70 / .5);
+  --shade-beam: 0 10px 26px -20px rgb(20 35 70 / .5); --shade-dot: none; --glint: none; --shade-key: 0 4px 10px -8px rgb(20 35 70 / .5); --texture-opacity: 0; }
+body.xlb { color: #131a2b; background: #eef2f7; }
+body.xlb .xl-hd { color: #131a2b; } body.xlb .xl-hd b { background: linear-gradient(90deg, #131a2b, #1f3fa8); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: .06em; } body.xlb .xl-hd b::before { display: none; }
+body.xlb .xl-hd a { color: #3b4760; opacity: 1; } body.xlb .xl-hd a:hover { background: rgb(128 148 186 / .14); } body.xlb .xl-hd a.on { background: none; color: #1f3fa8; box-shadow: inset 0 -2px 0 #1f3fa8; border-radius: 0; font-weight: 700; }
+.xl-top h1 { text-shadow: none; background: linear-gradient(90deg, #131a2b, #1f3fa8); -webkit-background-clip: text; background-clip: text; color: transparent; display: inline-block; }
+section.xl, .counts > div { background: linear-gradient(90deg, #7f90b0, #d5deee 45%, #f2f5fb 55%, #9aa9c4) top / 100% 2px no-repeat, linear-gradient(180deg, #ffffff, #f5f8fc); border-radius: 6px; box-shadow: var(--shadow-card), 0 0 0 1px rgb(19 26 43 / .08); }
+.counts { background: none; box-shadow: none; padding: 0; } .counts span { color: #3b4760; } .counts b { color: #131a2b; font-weight: 300; font-size: 34px; }
+.x th { text-shadow: none; color: #3b4760; font-weight: 600; letter-spacing: .03em; box-shadow: inset 0 -1px 0 #9aa9c4; } .x th:last-child { box-shadow: inset 0 -1px 0 #9aa9c4; } .x th small { color: #56627a; font-size: 13.5px; }
+.xl .no { background: linear-gradient(135deg, #2a50c8, #162c7a); color: #ffffff; box-shadow: none; }
+.x tr.grp td, .x tr.grp:hover td { background: #e6ecf5; color: #131a2b; box-shadow: none; } .x tr.grp td span::before { background: #1f3fa8; box-shadow: none; } .x tr.grp td i { color: #3b4760; }
+.tab.on { translate: none; background: linear-gradient(135deg, #2a50c8, #162c7a); color: #ffffff; box-shadow: 0 10px 22px -12px rgb(22 44 122 / .85); } .tab.on::before { content: none; }
+.x-toast { background: linear-gradient(135deg, #1b2540, #0d1424); color: #eef2f8; box-shadow: 0 0 0 1px #9aa9c4, 0 22px 44px -18px rgb(8 14 30 / .7); } .x-toast button { color: #eef2f8; }
+.b1, .xlb .unlock button { background: linear-gradient(135deg, #2a50c8, #162c7a); color: #ffffff; box-shadow: 0 10px 22px -12px rgb(22 44 122 / .85); }
 /* 카드 윗줄만 따로 긋던 것 없앰: 사방 같은 가는 놋쇠 테두리, 고른 그림자 */
-section.xl, .counts > div { background: linear-gradient(180deg, #fffdf8, #fbf5e8); border: 1px solid rgb(176 141 87 / .5); border-radius: 6px; box-shadow: 0 1px 2px rgb(60 40 10 / .06), 0 8px 20px -12px rgb(60 40 10 / .22); }
+section.xl, .counts > div { background: linear-gradient(180deg, #ffffff, #f5f8fc); border: 1px solid rgb(128 148 186 / .5); border-radius: 6px; box-shadow: 0 1px 2px rgb(20 35 70 / .06), 0 8px 20px -12px rgb(20 35 70 / .22); }
+.x td.bn, .x td.bn small { white-space: nowrap; } .x td.bn small { display: block; }

@@ -29,9 +29,9 @@
         const bt = d ? BN.reduce((s0, k) => s0 + ((d.bands[k] || [0])[0]), 0) : 0;
         const bar0 = bt > 0 ? `<div class="bb" role="img" aria-label="두께 구성">${BN.map((k, i) => (d.bands[k] ? `<i class="tk${i}" style="flex:${(d.bands[k][0] / bt).toFixed(3)}"></i>` : '')).join('')}</div><span class="bt">${BN.filter((k) => d.bands[k] && d.bands[k][0] / bt >= 0.1).map((k) => `${k} ${Math.round(d.bands[k][0] / bt * 100)}%`).join(', ')}</span>` : '<span class="mu">실적 없음</span>';
         const tr = d ? (d.r3 > d.p3 * 1.15 ? 'up' : d.r3 < d.p3 * 0.85 ? 'dn' : '') : '';
-        ship += `<tr><td class="nm">${esc(x[0])}</td><td>${FNM[f]}</td><td>${esc(String(x[4]).replace(/_/g, ' '))}<small>${esc(x[5])}</small></td>${cell(`${kk}|t`, x[1])}${cell(`${kk}|a`, x[2], String)}${cell(`${kk}|b`, x[3], String)}
+        ship += `<tr><td class="nm">${esc(x[0])}</td><td>${FNM[f]}</td><td>${esc(String(x[4]).replace(/_/g, ' '))}</td>${cell(`${kk}|t`, x[1])}${cell(`${kk}|a`, x[2], String)}${cell(`${kk}|b`, x[3], String)}
           <td class="bn">${b0 - a0 >= 10 ? '한 달 내내<small>반순으로 나눔</small>' : `${Math.ceil(a0 / 5)}반순<small>${a0}일에서 ${b0}일</small>`}</td>
-          <td class="num ${tr}">${d ? `${f1(d.r3)}<small>이전 ${f1(d.p3)}${tr === 'up' ? ', 늘어남' : tr === 'dn' ? ', 줄어듦' : ''}</small>` : '<span class="mu">실적 없음</span>'}</td>
+          <td class="num ${tr}">${d ? `${f1(d.r3)}<small>이전 ${f1(d.p3)}${tr === 'up' ? ', 증가' : tr === 'dn' ? ', 감소' : ''}</small>` : '<span class="mu">실적 없음</span>'}</td>
           <td class="bc">${bar0}</td><td class="sp">${d && d.top.length ? d.top.slice(0, 3).map((t) => `<span>${t[0]}×${t[1]} ${esc(t[2])} <b>${f1(t[3])}t</b></span>`).join('') : ''}${x[6] ? `<small>${esc(x[6])}</small>` : ''}</td></tr>`; } }
     if (!nShown) ship = '<tr><td colspan="10" class="none">맞는 목적지가 없습니다. 찾는 말을 줄이거나 수정한 것만 보기를 풀어 보세요</td></tr>';
     /* 2. 시간당 톤 — 라인·강종 묶음 */
@@ -48,32 +48,32 @@
     /* 3·4 */
     const lead = LD.map((x) => `<tr><td class="nm">${esc(x.name)}</td>${cell(`lead|${x.id}`, x.days, String)}<td>${esc(x.note)}</td></tr>`).join('');
     const rule = [['rule|swT', '전환(M/C·S/D) 첫날 생산 톤', B.swT, 't', String], ['rule|swH', '전환일 가동시간', 15, '시간', String],
-      ['rule|opf|1CGL', '1CGL 하루 가동률', (B.opf || {})['1CGL'] || 0.95, '0에서 1 사이, 시간당 톤에 곱함', (v) => String(v)],
-      ['rule|opf|2CGL', '2CGL 하루 가동률', (B.opf || {})['2CGL'] || 0.95, '0에서 1 사이, 시간당 톤에 곱함', (v) => String(v)]]
+      ['rule|opf|1CGL', '1CGL 하루 가동률', (B.opf || {})['1CGL'] || 0.95, '0에서 1 사이, T/Hr에 곱함', (v) => String(v)],
+      ['rule|opf|2CGL', '2CGL 하루 가동률', (B.opf || {})['2CGL'] || 0.95, '0에서 1 사이, T/Hr에 곱함', (v) => String(v)]]
       .map(([k, nm, d, u, fm]) => `<tr><td class="nm">${nm}</td>${cell(k, d, fm)}<td>${u}</td></tr>`).join('');
     /* 5. 고친 값 목록 */
     const O = PS.baseOver(), fixed = Object.keys(O).filter((k) => k.startsWith('K|')).sort();
     const NMK = (k) => { const p0 = k.slice(2).split('|');
       if (p0[0] === 'ship') return `배선일정 ${p0[1]} ${FNM[p0[2]] || p0[2]} ${p0[3]} ${{ t: '월평균 물량', a: '출항 시작일', b: '출항 끝일' }[p0[4]] || p0[4]}`;
-      if (p0[0] === 'rate') return `시간당 톤 ${p0[1]} ${FNM[p0[2]] || p0[2]} 두께 ${tb(+p0[3])} 폭 ${wb(+p0[4])}`;
+      if (p0[0] === 'rate') return `T/Hr ${p0[1]} ${FNM[p0[2]] || p0[2]} 두께 ${tb(+p0[3])} 폭 ${wb(+p0[4])}`;
       if (p0[0] === 'lead') return `소재 리드타임 ${(LD.find((x) => x.id === p0[1]) || {}).name || p0[1]}`;
       return `전환 규칙값 ${p0.slice(1).join(' ')}`; };
     const chg = fixed.length ? fixed.map((k) => { const h = PS.history(k).slice(-1)[0] || {};
       return `<div class="row"><b>${esc(NMK(k))}</b><span class="v">${f1(O[k])}</span><span class="who">${esc(String(h.at || '').slice(5, 16).replace('T', ' '))} ${esc(h.by || '')}</span><button type="button" class="b3" data-rst="${esc(k)}">기본값으로</button></div>`; }).join('')
       : '<p class="none">수정한 값이 없습니다. 표의 노란 입력란에 숫자를 넣고 저장하면 여기에 모입니다</p>';
     $('ct-main').innerHTML = `
-      <div class="xl-top"><h1>판생 기준값</h1><p class="lead">계산에 쓰는 숫자를 한곳에 모았습니다. 노란 입력란을 고쳐 저장하면 모든 계산이 그 값을 쓰고, 입력란을 비우면 기본값으로 돌아갑니다.</p>
-        <div class="counts"><div><span>배선일정 목적지</span><b>${nAll}건</b></div><div><span>시간당 톤 기준</span><b>${Object.keys(T.rate).filter((k) => k.split('|').length === 4).length}건</b></div><div><span>소재 리드타임</span><b>${LD.length}건</b></div><div class="${fixed.length ? 'on' : ''}"><span>수정한 값</span><b>${fixed.length}건</b></div></div>
-        <nav><a href="pan/base.html#s1">배선일정</a><a href="pan/base.html#s2">시간당 톤</a><a href="pan/base.html#s3">소재 리드타임</a><a href="pan/base.html#s4">전환 규칙값</a><a href="pan/base.html#s5">고친 값</a></nav></div>
+      <div class="xl-top"><h1>기준값</h1><p class="lead">계산에 쓰는 숫자를 한곳에 모았습니다. 노란 입력란을 고쳐 저장하면 모든 계산이 그 값을 쓰고, 입력란을 비우면 기본값으로 돌아갑니다.</p>
+        <div class="counts"><div><span>배선일정 목적지</span><b>${nAll}건</b></div><div><span>T/Hr</span><b>${Object.keys(T.rate).filter((k) => k.split('|').length === 4).length}건</b></div><div><span>소재 리드타임</span><b>${LD.length}건</b></div><div class="${fixed.length ? 'on' : ''}"><span>수정한 값</span><b>${fixed.length}건</b></div></div>
+        <nav><a href="pan/base.html#s1">배선일정</a><a href="pan/base.html#s2">T/Hr</a><a href="pan/base.html#s3">소재 리드타임</a><a href="pan/base.html#s4">전환 규칙값</a><a href="pan/base.html#s5">고친 값</a></nav></div>
       <section class="xl" id="s1"><div class="hd"><span class="no">1</span><h2>배선일정, 목적지별 출항 기간</h2></div>
         <p class="sub">배선일정 엑셀(정리_배선일정, 정리_판매데이터)에서 왔습니다. 주문이 아직 없는 수출 판매계획분을 이 기간 안에, 그 목적지의 두께 구성으로 생산합니다.</p>
-        <div class="tb"><label>목적지 찾기<input id="b-q" type="search" placeholder="목적지, 국가, 권역, 강종" value="${esc(st.q || '')}"></label>
+        <div class="tb"><label>목적지 찾기<input id="b-q" type="search" placeholder="목적지, 국가, 강종" value="${esc(st.q || '')}"></label>
           <label>이름 순서<select id="b-ord"><option value="">내림차순</option><option value="1"${st.asc ? ' selected' : ''}>오름차순</option></select></label>
           <label class="ck"><input type="checkbox" id="b-only"${st.only ? ' checked' : ''}>수정한 것만</label>
           <span class="lgd">두께 구성<i class="tk0"></i>극박<i class="tk1"></i>박물<i class="tk2"></i>중물<i class="tk3"></i>후물</span>
           <span class="cnt">${nShown} / ${nAll}건</span></div>
-        <div class="xw"><table class="x ship"><thead><tr><th>목적지</th><th>강종</th><th>권역, 국가</th><th>월평균 물량<small>톤</small></th><th>출항 시작일</th><th>출항 끝일</th><th>생산 반순</th><th>최근 3달 월평균<small>톤</small></th><th class="bc-h">두께 구성</th><th class="sp-h">주력 사양과 비고</th></tr></thead><tbody>${ship}</tbody></table></div></section>
-      <section class="xl" id="s2"><div class="hd"><span class="no">2</span><h2>시간당 톤, 가동 중</h2></div>
+        <div class="xw"><table class="x ship"><thead><tr><th>목적지</th><th>강종</th><th>국가</th><th>월평균 물량(톤)</th><th>출항 시작일</th><th>출항 끝일</th><th>생산 반순</th><th>최근 3개월 월평균(톤)</th><th class="bc-h">두께 구성</th><th class="sp-h">주요 규격, 비고</th></tr></thead><tbody>${ship}</tbody></table></div></section>
+      <section class="xl" id="s2"><div class="hd"><span class="no">2</span><h2>T/Hr, 가동 중</h2></div>
         <p class="sub">MES 코일 실적 ${ym(T.from)}부터 ${ym(T.to)}까지 ${f1(T.coils || 0)}코일에서 왔습니다. 옅은 숫자는 그 구간 실적이 없어 같은 두께 평균을 쓴 값이고, AL-STS는 2CGL AL 값을 씁니다.</p>
         <div class="tabs" role="group" aria-label="라인과 강종">${tabs}</div>
         <div class="xw">${rate}</div></section>
