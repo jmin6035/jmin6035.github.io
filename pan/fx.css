@@ -1,5 +1,6 @@
-/* 공용 바탕: 백자색 바탕, 흐르는 먹 선, 푸른 빛 번짐 */
-body.xlb { background: #eef2f7; }
-body.xlb::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%231c2230' stroke-width='1'%3E%3Cpath d='M-50 620 C 300 420 520 760 860 560 S 1380 300 1660 470' opacity='.55'/%3E%3Cpath d='M-50 660 C 320 470 540 800 880 600 S 1400 350 1660 520' opacity='.38'/%3E%3Cpath d='M-50 700 C 340 520 560 840 900 640 S 1420 400 1660 570' opacity='.26'/%3E%3Cpath d='M-50 740 C 360 570 580 880 920 680 S 1440 450 1660 620' opacity='.16'/%3E%3Cpath d='M-50 140 C 260 40 520 240 820 120 S 1340 20 1660 150' opacity='.3'/%3E%3Cpath d='M-50 175 C 280 80 540 275 840 155 S 1360 55 1660 185' opacity='.18'/%3E%3C/g%3E%3C/svg%3E") center / 100% 100% no-repeat, radial-gradient(ellipse 70% 60% at 8% 0%, #ffffff, transparent 70%), radial-gradient(ellipse 60% 70% at 100% 100%, #c9d8f6, transparent 70%), radial-gradient(ellipse 50% 50% at 90% 10%, #dbe4fb, transparent 70%), #eef2f7; }
-body.xlb::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .04; mix-blend-mode: multiply; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E"); }
-body.xlb .xl-hd { background: linear-gradient(90deg, #7f90b0, #d5deee 45%, #f2f5fb 55%, #9aa9c4) bottom / 100% 1px no-repeat, linear-gradient(180deg, #ffffff, #f3f6fb); box-shadow: 0 10px 26px -20px rgb(20 35 70 / .5); }
+/* 공용 바탕: 남색 위에 인디고와 자주 빛이 번지는 미드나잇 */
+html { background: radial-gradient(ellipse 55% 75% at 8% 0%, rgb(70 76 230 / .75), transparent 70%), radial-gradient(ellipse 45% 65% at 96% 4%, rgb(170 50 140 / .6), transparent 70%), radial-gradient(ellipse 80% 50% at 50% 115%, rgb(40 60 190 / .5), transparent 70%), #070a1f; background-attachment: fixed; min-height: 100%; }
+body.xlb { background: transparent; }
+body.xlb::before, body.xlb::after { content: none; }
+body.xlb .xl-hd { background: transparent; box-shadow: none; }
+@media print { html { background: #ffffff; } }
