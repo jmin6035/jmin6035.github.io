@@ -452,3 +452,4 @@ input.de, select.de, .why, .cs, .xpt, input.dm0 { background: rgb(8 10 34 / .6);
 /* 머리글과 단추, 칩은 한 줄로. 표 안 숫자와 날짜도 꺾이지 않게 */
 .t thead th, .ofs button, .x0, .lkb, .ug0, .pri, .tg, .sg, .crumb span, .fz, .t.ot td, .t.gt tbody th { white-space: nowrap; } .t.ot td small { white-space: nowrap; }
 .ofs { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: thin; } .ofs button { flex: none; }
+.dw.wide > header { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; } .dw.wide > header > div { flex: 1; } .dw.wide > header .x0 { flex: none; width: auto; }
