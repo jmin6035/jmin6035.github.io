@@ -593,3 +593,4 @@ input.why.lf { display: block; width: 100%; max-width: 420px; height: 40px; marg
 .L3 .btm > .pn:has(.xw) { grid-column: 1 / -1; }
 .L3 .ordc .t.ot td:nth-child(2) { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; word-break: keep-all; }
 .dw.wide table.t { width: 100%; } .dw.wide table.t td:first-child, .dw.wide table.t td:first-child small { white-space: normal; overflow-wrap: anywhere; word-break: keep-all; } .dw.wide table.t td:first-child { max-width: 300px; }
+.t.gt tr.sub td { font-size: var(--fs); color: #a3acc4; padding-top: 0; border-top: 0; }
