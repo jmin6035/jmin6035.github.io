@@ -79,7 +79,7 @@
     $('sv-st').className = 'sv-st ' + (cf ? 'cf' : 'dr');
     $('sv-st').textContent = cf ? `확정 ${tm(Math.round(Date.parse(cf.at) / 6e4) + 540)}` : '초안(확정 전)';
     $('sv-st').title = cf ? `${cf.who} 확정(v${cf.v})` : '03 생산 편성 · 작업 순서에서 아직 확정하지 않음 — 지금 초안 순서';
-    $('sv-wk').innerHTML = `<b class="dt">${dnm(D.w0.slice(0, 10))} 07시 ~ ${dnm(D.w1.slice(0, 10))} 07시</b> · 자료 ${mmdd(D.now.slice(0, 10))} ${D.now.slice(11, 16)}`;
+    $('sv-wk').innerHTML = `<b class="dt">${dnm(D.w0.slice(0, 10))} 07:00~${dnm(D.w1.slice(0, 10))} 07:00</b> · 자료 ${mmdd(D.now.slice(0, 10))} ${D.now.slice(11, 16)}`;
     $('sv-plant').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.p === plant)));
     const R = {}; Ls.forEach((l) => { R[l] = rowsOf(l); });
     if (!line || !Ls.includes(line)) line = Ls.find((l) => R[l].some((r) => r.k === 'j')) || Ls[0];

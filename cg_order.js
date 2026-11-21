@@ -186,7 +186,7 @@ const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr
       + `<td class="n">${n1(x.ordT || x.purT)}</td>`
       + `<td>${md(x.due) || '-'}${x.dept ? s2(`출항 ${md(x.dept)}`) : x.arr ? s2(`입항 ${md(x.arr)}`) : ''}</td>`
       + `<td class="n">${!(x.purT || x.entT) ? '<span class="mu">미발주</span>' : (x.entT || 0) < 0.05 ? `<span class="mu">미입고</span> ${n1(x.remIn)}` : n1(x.entT) + (needOn ? s2(`미입고 ${n1(x.remIn)}`) : '')}</td>`
-      + `<td class="n">${prod === '-' && x.prodT ? `<span class="mu">${n1(x.prodT)}t 생산</span>` : prod + (x.st !== '생산 완료' && x.prodT ? s2(`${n1(x.prodT)}t 생산`) : '')}</td>`
+      + `<td class="n">${prod === '-' && x.prodT ? `<span class="mu">${n1(x.prodT)}t 생산</span>` : `<span class="nw">${prod}</span>` + (x.st !== '생산 완료' && x.prodT ? '<br>' + s2(`${n1(x.prodT)}t 생산`) : '')   /* 11/19 검수: 기간·톤이 160px 칸을 넘던 것 → 톤은 아랫줄 */}</td>`
       + `<td class="n">${need}</td></tr>`
       + `<tr class="dt ${fc}" hidden><td colspan="9">${detailV2(x)}</td></tr>`;
   }

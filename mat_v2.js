@@ -42,6 +42,8 @@
         for (const [t, nd] of parts) if (nd && nd.slice(0, 7) === mon && t >= 0.5) { o.lateNw += t; if (!o.mlDay || nd < o.mlDay) o.mlDay = nd; }
       }
       for (const k of ['use', 'inb']) for (const L of Object.values(R[k])) for (const e of L) { const cd = codeOf(e); if (cd) o.codes.add(`${R.plant}:${cd}`); }
+      /* 11/21 수정 방(검수 다듬기): 예정일 지난 미입고는 자료에서 '내일 입고'로 잡혀 오늘 다음 칸에 그려졌음 → 화면에서는 오늘 칸에 '입고 지연'으로(톤·합계는 그대로) */
+      { const tm = addD(today, 1), v = o.ibO[tm]; if (v >= 0.5 && ds.includes(today)) { o.ibO[today] = (o.ibO[today] || 0) + v; delete o.ibO[tm]; o.ib[today] = (o.ib[today] || 0) + v; o.ib[tm] = (o.ib[tm] || 0) - v; if (!(o.ib[tm] >= 0.5)) delete o.ib[tm]; } }
       o.need = o.rec + o.ord + o.nw + o.ovr;
       o.cal = Object.keys(o.od).length + Object.keys(o.ib).length + Object.keys(o.ibN).length > 0;
       return o;
@@ -159,7 +161,7 @@
     const LT_ = S.late || {}, PD = (LT_.planDefer || (LT_.items || []).filter((x) => x.by === 'spec')).filter((x) => inScope(x.plant)).flatMap((x) => (x.sizes || []).map((z) => ({ mat: z[0], size: z[1], t: +z[2] || 0, need: z[3] }))).filter((z) => z.t >= 0.5 && z.need && z.need < '2027-01-01');
     const pdT = PD.reduce((a, z) => a + z.t, 0), pdM = [...new Set(PD.map((z) => +z.need.slice(5, 7)))].sort((a, b) => a - b);
     const pdBy = Object.entries(PD.reduce((o, z) => { o[z.mat] = (o[z.mat] || 0) + z.t; return o; }, {})).sort((a, b) => b[1] - a[1]);
-    const warn = pdT >= 0.5 ? `<div class="m4-pdw" title="${esc(PD.sort((a, b) => a.need.localeCompare(b.need)).map((z) => `${z.mat} ${z.size} ${n0(z.t)}t — 필요 ${md(z.need)}`).join('\n'))}"><b>${pdM.map((m) => m + '월').join('·')} 판생 계획재 소재 부족 ${n0(pdT)}t</b><span>지금 발주해도 생산일 전에 못 들어옴 — 판생 조정 필요</span><span class="by">${pdBy.map(([m, t]) => `${esc(m)} ${n0(t)}t`).join(' · ')}</span></div>` : '';
+    const warn = pdT >= 0.5 ? `<div class="m4-pdw" title="${esc(PD.sort((a, b) => a.need.localeCompare(b.need)).map((z) => `${z.mat} ${z.size} ${n0(z.t)}t — 필요 ${md(z.need)}`).join('\n'))}"><b>${pdM.map((m) => m + '월').join('·')} 판생 계획재 소재 부족 ${n0(pdT)}t</b><span>지금 발주해도 생산일 전에 못 들어옴, 판생 조정 필요</span><span class="by">${pdBy.map(([m, t]) => `${esc(m)} ${n0(t)}t`).join(' · ')}</span></div>` : '';
     return `<h2 class="m4-h">발주 · 입고 캘린더</h2>${warn}${wk}<div class="m4-q" title="소재마다 위 줄 = 발주, 아래 줄 = 입고 · 발주 줄: 지난 날 = 실제 낸 발주, 오늘부터 = 해야 할 발주(생산 계획 기준) · 입고 줄: 지난 날 = 실입고, 앞날 = 입고 예정 · 숫자를 누르면 업체·양 상세">톤 · 흐린 칸 = 실적 · <b style="color:var(--bad)">빨강</b> = 발주·입고 지연</div>`
       + `<div class="m4-sc"><table class="m4-cl v2-grid" style="min-width:${210 + ds.length * 66}px"><colgroup><col style="width:104px"><col style="width:60px">${ds.map(() => '<col>').join('')}<col style="width:66px"></colgroup>`
       + `<thead><tr><th>소재</th><th></th>${hd}<th>계</th></tr></thead><tbody>${b}</tbody></table></div>`;

@@ -31,7 +31,7 @@
   const ST = { past: ['발주 기간 지남 — 발주 여부 확인', 'bad'], soon: ['2주 내 마감', 'warn'], later: ['예정', ''] };
   function orderRow(o, mode) {
     const left = Math.max(0, o.t - (o.ordered || 0));
-    return `<tr><td><b>${esc(o.kind)}</b></td><td>${esc(o.sup)}</td><td>${o.o0 === o.o1 ? md(o.o1) : `${md(o.o0)} ~ ${md(o.o1)}`}</td><td>${md(o.arr)}</td><td>${md(o.prodFrom)} ~ ${md(o.prodTo)}</td>`
+    return `<tr><td><b>${esc(o.kind)}</b></td><td>${esc(o.sup)}</td><td>${o.o0 === o.o1 ? md(o.o1) : `${md(o.o0)}~${md(o.o1)}`}</td><td>${md(o.arr)}</td><td>${md(o.prodFrom)}~${md(o.prodTo)}</td>`
       + `<td><b>${n0(o.t)}</b></td><td>${o.ordered != null ? n0(o.ordered) : '-'}</td><td class="${left > 0.5 && o.state !== 'later' ? 'bad' : ''}"><b>${n0(left)}</b></td><td><span class="tag ${ST[o.state][1]}">${ST[o.state][0]}</span></td></tr>`
       + (mode === 'full' ? `<tr class="why-row"><td colspan="9" class="para">규칙: ${esc(o.rule)} · 사양(두께×폭) ${o.items.map((x) => `${x[0]} ${n0(x[1])}t`).join(', ')}</td></tr>` : '');
   }

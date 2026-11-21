@@ -368,7 +368,7 @@
     const jgMin = Math.min(...O.jg.map((j) => j.cumSched - j.cumPlan));
     /* 결론(11/11 생산 화면 통합 — 생산 일정 화면 맨 위 PS.sum): 확정 여부 · 필요일 경과 · 강종 불일치 · 자가재 진도 + 이번 주(오늘부터 7일) 라인별 편성·부하·넘침 */
     const kst = (t) => { const x = new Date(new Date(t).getTime() + 9 * 36e5).toISOString(); return `${+x.slice(5, 7)}/${+x.slice(8, 10)} ${x.slice(11, 16)}`; };
-    const nw = nextWeek(), st = CONF ? `<span class="ct-b ok" title="다음 주 ${mdw(nw[0])}~${mdw(nw[6])} 확정본">다음 주 확정됨 ${kst(CONF.at)}${dirty() ? ' · 미저장 수정 있음' : ''}</span>` : `<button type="button" class="ct-b warn ps-go" data-go="cg-conf" title="매주 수요일 오전 · ${mdw(nw[0])}~${mdw(nw[6])} — 누르면 확정 칸으로">다음 주 미확정</button>`;
+    const nw = nextWeek(), st = CONF ? `<span class="ct-b ok" title="다음 주 ${md(nw[0])}~${md(nw[6])}(수~화) 확정본">다음 주 확정됨 ${kst(CONF.at)}${dirty() ? ' · 미저장 수정 있음' : ''}</span>` : `<button type="button" class="ct-b warn ps-go" data-go="cg-conf" title="매주 수요일 오전 · ${md(nw[0])}~${md(nw[6])}(수~화) — 누르면 확정 칸으로">다음 주 미확정</button>`;
     const d7 = O.days.slice(0, 7), I = (d) => O.days.indexOf(d);
     const rows = LINES.map((ln) => {
       const X = d7.map((d) => O.lines[ln][I(d)]), f = X.reduce((s, c) => s + c.conf + c.plan + c.fcst, 0), cp = X.reduce((s, c) => s + c.cap, 0);
@@ -445,7 +445,7 @@
     const pJg = pds.map((d) => { const has = LINES.some((l) => av(l, d)), v = LINES.reduce((q, l) => q + (((av(l, d) || {}).grp || {}).자가재 || 0), 0); return `<td class="jg pst" title="${mdw(d)} 도금에서 만든 자가재(MES 실적)">${has ? `<div class="jr"><span>도금 실적</span><b>${n0(v)}</b></div>` : '–'}</td>`; }).join('');
     const we = (() => { const x = dt(w0); x.setDate(x.getDate() + 6); return iso(x); })();
     const wl = nw.includes(days[0]) ? ['다음 주', '확정 대상', 'nx'] : days[0] < nw[0] ? ['이번 주', '진행 중', ''] : ['계획', '확정 전', 'pl'];
-    const corner = `<th class="wl ${wl[2]}" title="생산주 ${mdw(w0)} ~ ${mdw(we)} · ${wl[0] === '다음 주' ? '이번 수요일에 확정해 저장할 주' : wl[0] === '이번 주' ? '지금 작업 중인 생산주(지난 수요일 확정 대상)' : '아직 확정 전 — 재계획대로 깐 계획'}">${wl[0]}<small>${md(w0)}~${md(we)}</small><small>${wl[1]}</small></th>`;
+    const corner = `<th class="wl ${wl[2]}" title="생산주 ${md(w0)}~${md(we)} · ${wl[0] === '다음 주' ? '이번 수요일에 확정해 저장할 주' : wl[0] === '이번 주' ? '지금 작업 중인 생산주(지난 수요일 확정 대상)' : '아직 확정 전 — 재계획대로 깐 계획'}">${wl[0]}<small>${md(w0)}~${md(we)}</small><small>${wl[1]}</small></th>`;
     const hrsOf = (ln) => {                                   // 2주 전체를 24시간 이어서 돌렸을 때 마지막 날 뒤로 넘어가는 양(T/Hr 시간 기준) — 하루·한 주 넘침은 다음 날로 이어져 생산되므로 안 보여 줌
       if (idx(days[days.length - 1]) !== O.days.length - 1) return null;
       const C = O.lines[ln], h = C.reduce((s, c) => s + (c.hrs || 0), 0), a = C.reduce((s, c) => s + (c.hAvail || 0), 0), t = C.reduce((s, c) => s + c.conf + c.plan + c.fcst, 0);
@@ -745,7 +745,7 @@
       + A.map((a) => `<tr><td class="nw">${mdw(a.week)}~</td><td class="sub nw">${esc(a.who)} ${esc(String(a.at).slice(5, 16).replace('T', ' '))}</td><td class="num">${n0(a.confT)}</td><td class="num">${n0(a.doneT)}</td>`
         + `<td class="num"><b>${a.rate == null ? '-' : Math.round(a.rate * 100) + '%'}</b></td><td class="nw">${Object.entries(a.lines || {}).map(([l, v]) => `${l} ${v.confT ? Math.round(100 * v.doneT / v.confT) : '-'}%`).join(' · ')}</td></tr>`).join('') + '</tbody></table>'
       : '<p class="msg">확정한 주 없음</p>';
-    return `<section class="card" id="cg-conf"><h2>다음 주 생산 확정 <small>매주 수요일 오전 · ${mdw(nw[0])}~${mdw(nw[6])}</small></h2>`
+    return `<section class="card" id="cg-conf"><h2>다음 주 생산 확정 <small>매주 수요일 오전 · ${md(nw[0])}~${md(nw[6])}(수~화)</small></h2>`
       + '<p class="msg" style="margin:0 0 10px">다음 생산주(수~화, 파란 머리 칸)를 저장 = 공정출하·마케팅과 약속한 주간 편성 · 저장 뒤에도 고쳐서 「수정 저장」 · 지난 주 준수율은 아래</p>'
       + `<div class="cf"><span class="nw">다음 주 생산 1CGL <b>${n0(tot('1CGL'))}t</b> · 2CGL <b>${n0(tot('2CGL'))}t</b></span>`
       + `<button type="button" class="go" id="cc-save">${btn}</button><span class="msg" id="cc-smsg">${stat}</span>`

@@ -38,6 +38,8 @@
       go(); if (window.UI && UI.onScope) UI.onScope(go);
     }
     document.getElementById('ct-form').addEventListener('submit', (e) => { e.preventDefault(); unlock(document.getElementById('ct-pw').value); });
+    /* 11/21 수정 방: 저장된 암호가 없으면 자료를 받는 동안 암호 칸을 바로 띄움(자료 다 받은 뒤에 뜨면 늦게 열려 '끝없는 로딩'처럼 보이던 것) — 풀기는 자료를 받은 뒤 */
+    { let s0 = null; try { s0 = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (!s0) askPw(); }
     envs.then(() => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (s) unlock(s); else askPw(); });
   };
   CT.scope = () => (window.UI && UI.scope ? UI.scope() : 'all');

@@ -62,10 +62,13 @@
     return got.filter(Boolean).sort((a, b) => (stamp(a) < stamp(b) ? 1 : -1))[0] || null;
   };
   // 화면 자료: 사내 PC 자동 실행기(Supabase)와 GitHub 게시본 중 더 최근 것. 같은 화면에서 같은 파일을 여러 곳이 찾으면(화면·관제 띠) 한 번만 받음(20초)
+  /* 11/21 수정 방(검수 다듬기 'Supabase 400 콘솔 오류'): 사내 PC 가 원격(Supabase)에 올리는 파일만 원격에 물음 — 목록 = cglplan/auto.py(latest.plan·analysis·mesdata·extradata)·pages.py(게시 화면 자료 7종) + color_calc_mes.
+     사내 PC 가 새 파일을 원격에 올리게 되면 이 목록에 이름을 더할 것(없으면 사이트 게시본만 읽음) */
+  GP.REMOTE = new Set(['latest.plan.enc.json', 'analysis.enc.json', 'mesdata.enc.json', 'extradata.enc.json', 'color_actual.enc.json', 'plating_actual.enc.json', 'procure.enc.json', 'portal.enc.json', 'planstock.enc.json', 'color_cond.enc.json', 'act_detail.enc.json', 'color_calc_mes.enc.json']);
   const LATEST = new Map();
   GP.latest = (name) => {
     const c = LATEST.get(name); if (c && Date.now() - c.t < 20000) return c.p;
-    const p = GP.fetchPublished([GP.SUPABASE_URL + '/storage/v1/object/public/published/' + name, 'published/' + name]);
+    const p = GP.fetchPublished(GP.REMOTE.has(name.replace(/^test\./, '')) ? [GP.SUPABASE_URL + '/storage/v1/object/public/published/' + name, 'published/' + name] : ['published/' + name]);
     LATEST.set(name, { t: Date.now(), p }); return p;
   };
   GP.PUBLISH_REPO = { owner: 'jmin6035', repo: 'jmin6035.github.io', branch: 'main' };
