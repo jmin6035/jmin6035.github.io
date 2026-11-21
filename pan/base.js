@@ -48,8 +48,8 @@
     /* 3·4 */
     const lead = LD.map((x) => `<tr><td class="nm">${esc(x.name)}</td>${cell(`lead|${x.id}`, x.days, String)}<td>${esc(x.note)}</td></tr>`).join('');
     const rule = [['rule|swT', '전환(M/C·S/D) 첫날 생산 톤', B.swT, 't', String], ['rule|swH', '전환일 가동시간', 15, '시간', String],
-      ['rule|opf|1CGL', '1CGL 하루 가동률', (B.opf || {})['1CGL'] || 0.95, '0에서 1 사이, T/Hr에 곱함', (v) => String(v)],
-      ['rule|opf|2CGL', '2CGL 하루 가동률', (B.opf || {})['2CGL'] || 0.95, '0에서 1 사이, T/Hr에 곱함', (v) => String(v)]]
+      ['rule|opf|1CGL', '1CGL 하루 가동률', (B.opf || {})['1CGL'] || 0.95, '', (v) => String(v)],
+      ['rule|opf|2CGL', '2CGL 하루 가동률', (B.opf || {})['2CGL'] || 0.95, '', (v) => String(v)]]
       .map(([k, nm, d, u, fm]) => `<tr><td class="nm">${nm}</td>${cell(k, d, fm)}<td>${u}</td></tr>`).join('');
     /* 5. 고친 값 목록 */
     const O = PS.baseOver(), fixed = Object.keys(O).filter((k) => k.startsWith('K|')).sort();
@@ -62,7 +62,7 @@
       return `<div class="row"><b>${esc(NMK(k))}</b><span class="v">${f1(O[k])}</span><span class="who">${esc(String(h.at || '').slice(5, 16).replace('T', ' '))} ${esc(h.by || '')}</span><button type="button" class="b3" data-rst="${esc(k)}">기본값 복원</button></div>`; }).join('')
       : '<p class="none">수정한 값 없음</p>';
     $('ct-main').innerHTML = `
-      <div class="xl-top"><h1>기준값</h1><p class="lead">노란 입력란 수정 후 저장, 비우면 기본값</p>
+      <div class="xl-top"><h1>기준값</h1><p class="lead">노란 입력란 수정 후 저장</p>
         <div class="counts"><div><span>배선일정 목적지</span><b>${nAll}건</b></div><div><span>T/Hr</span><b>${Object.keys(T.rate).filter((k) => k.split('|').length === 4).length}건</b></div><div><span>소재 리드타임</span><b>${LD.length}건</b></div><div class="${fixed.length ? 'on' : ''}"><span>수정한 값</span><b>${fixed.length}건</b></div></div>
         <nav><a href="pan/base.html#s1">배선일정</a><a href="pan/base.html#s2">T/Hr</a><a href="pan/base.html#s3">소재 리드타임</a><a href="pan/base.html#s4">전환 규칙값</a><a href="pan/base.html#s5">수정 내역</a></nav></div>
       <section class="xl" id="s1"><div class="hd"><span class="no">1</span><h2>배선일정, 목적지별 출항 기간</h2></div>
@@ -82,7 +82,7 @@
       <section class="xl" id="s4"><div class="hd"><span class="no">4</span><h2>전환 규칙값</h2></div>
         <div class="xw"><table class="x"><thead><tr><th>항목</th><th>값</th><th>단위</th></tr></thead><tbody>${rule}
           <tr><td class="nm">M/C와 S/D 요일</td><td>평일만</td><td>주말 금지</td></tr></tbody></table></div></section>
-      <section class="xl" id="s5"><div class="hd"><span class="no">5</span><h2>수정 내역</h2></div><p class="sub">기본값과 다른 값, 개별 복원 가능</p>
+      <section class="xl" id="s5"><div class="hd"><span class="no">5</span><h2>수정 내역</h2></div><p class="sub">기본값과 다른 값</p>
         <div class="chg">${chg}</div></section>
       <div id="x-act" class="x-act" hidden></div><div id="x-toast" class="x-toast" role="status" hidden></div>`;
     document.querySelectorAll('input[data-k]').forEach((i) => {
@@ -90,14 +90,14 @@
         if (v === cur || (v == null && !PS.isSet(k)) || (v != null && !isFinite(v))) delete pend[k]; else pend[k] = v;
         i.parentElement.classList.toggle('pend', k in pend); bar(); });
       i.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } if (e.key === 'Escape') { pend = {}; draw(); } }); });
-    document.querySelectorAll('[data-rst]').forEach((b0) => b0.addEventListener('click', () => { const k = b0.dataset.rst; PS.set(k, null, `기준값 되돌림: ${NMK(k)}`); toastMsg = '기본값으로 되돌렸습니다'; }));
+    document.querySelectorAll('[data-rst]').forEach((b0) => b0.addEventListener('click', () => { const k = b0.dataset.rst; PS.set(k, null, `기준값 되돌림: ${NMK(k)}`); toastMsg = '기본값 복원'; }));
     document.querySelectorAll('[data-rk]').forEach((b0) => b0.addEventListener('click', () => { st.rk = b0.dataset.rk; draw(); }));
     let tm; $('b-q').oninput = (e) => { clearTimeout(tm); tm = setTimeout(() => { st.q = e.target.value; draw(); const x = $('b-q'); x.focus(); x.setSelectionRange(x.value.length, x.value.length); }, 300); };
     $('b-ord').onchange = (e) => { st.asc = !!e.target.value; draw(); };
     $('b-only').onchange = (e) => { st.only = e.target.checked; draw(); };
     bar();
     if (toastMsg) { const t = $('x-toast'); t.innerHTML = `<span>${esc(toastMsg)}</span>${canUndo ? '<button type="button" id="x-undo">되돌리기</button>' : ''}`; t.hidden = false; toastMsg = '';
-      if ($('x-undo')) $('x-undo').onclick = () => { if (PS.undo()) { toastMsg = '되돌렸습니다'; canUndo = false; } };
+      if ($('x-undo')) $('x-undo').onclick = () => { if (PS.undo()) { toastMsg = '되돌림'; canUndo = false; } };
       clearTimeout(toastT); toastT = setTimeout(() => { const t2 = $('x-toast'); if (t2) t2.hidden = true; canUndo = false; }, 6000); }
   }
   function bar() { const b = $('x-act'), n = Object.keys(pend).length; b.hidden = !n; if (!n) return;
