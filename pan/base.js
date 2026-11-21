@@ -82,7 +82,7 @@
       <section class="xl" id="s4"><div class="hd"><span class="no">4</span><h2>전환 규칙값</h2></div>
         <div class="xw"><table class="x"><thead><tr><th>항목</th><th>값</th><th>단위</th></tr></thead><tbody>${rule}
           <tr><td class="nm">M/C와 S/D 요일</td><td>평일만</td><td>주말 금지</td></tr></tbody></table></div></section>
-      <section class="xl" id="s5"><div class="hd"><span class="no">5</span><h2>수정 내역</h2></div><p class="sub">기본값과 다른 값</p>
+      <section class="xl" id="s5"><div class="hd"><span class="no">5</span><h2>수정 내역</h2></div><p class="sub">기본값과 다른 값, 가동포털 엔진 반영은 승인 뒤</p>
         <div class="chg">${chg}</div></section>
       <div id="x-act" class="x-act" hidden></div><div id="x-toast" class="x-toast" role="status" hidden></div>`;
     document.querySelectorAll('input[data-k]').forEach((i) => {
