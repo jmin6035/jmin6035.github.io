@@ -575,7 +575,7 @@ body.scwin .xl-hd { box-shadow: inset 0 3px 0 #f7b955 !important; }
 /* 가볍게: 흐림 효과, 배경 움직임, 포인터 따라가는 패널 빛 끔 */
 html::before { animation: none !important; } .pn::before, .pn::after, .cal0::before, .cal0::after, details.jh::before, details.jh::after { display: none !important; }
 .xl-hd, body.scr .xl-hd, .pn, .dw, .cal0, details.jh, .simb, .L3 .rgt.ovl { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; } body.scr .xl-hd { background: rgb(10 14 42 / .97) !important; }
-.ordp .ordw { content-visibility: auto; }
+
 /* 급한 주문 전체, 작업순서 표, 주문 검색 */
 .urgp .urgw { max-height: 460px; overflow-y: auto; overscroll-behavior: contain; border-radius: 10px; } .urgp .urgw thead th { position: sticky; top: 0; z-index: 1; background: #1b2150; }
 .dw table.t.sq { width: 100%; table-layout: auto; } .dw table.t.sq td, .dw table.t.sq th { padding-inline: 6px; } .dw table.t.sq td small { display: block; white-space: nowrap; } .dw table.t.sq td .x0 { padding-inline: 10px; white-space: nowrap; }
@@ -600,3 +600,14 @@ input.why.lf { display: block; width: 100%; max-width: 420px; height: 40px; marg
 #ml-v table.t { width: 100%; table-layout: fixed; } #ml-v td.cn0 { white-space: nowrap; font-size: 14px; } #ml-v th:nth-child(1) { width: 170px; } #ml-v th:nth-child(2) { width: 110px; } #ml-v th:nth-child(3) { width: 60px; } #ml-v th:nth-child(4) { width: 90px; } #ml-v th:nth-child(5) { width: 175px; } #ml-v th:nth-child(7) { width: 70px; } #ml-v td small { white-space: normal; overflow-wrap: anywhere; } #ml-v input.de[type="date"] { width: 160px; }
 #pl-t { min-height: 80px; height: 80px; }
 .dw table.t.sq.woq { width: 100%; } .dw .woq td, .dw .woq th { padding-inline: 3px; } .dw .woq td.cn0 { font-size: 14px; } .dw .woq td small { white-space: normal; } .dw .woq td .x0 { padding-inline: 8px; }
+/* 11/21 배치 점검: 메일 붙여넣기 단추, 알림 아이콘, 목적지 한 줄, 1200~1599 폭 두 칸 배치 */
+.ugs { display: inline-flex; gap: 8px; flex-wrap: wrap; justify-content: center; } .ug0.ml0 { background: rgb(255 255 255 / .08); border: 1px solid rgb(255 255 255 / .28); box-shadow: none; }
+.ug0.ml0::before { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Cpath d='m3 7 9 6 9-6'/%3E%3C/svg%3E"); }
+.lft tr[data-td="pull"] th::before, .lft tr[data-td="imp"] th::before { content: ""; display: inline-block; width: 16px; height: 16px; margin-right: 6px; vertical-align: -2px; background: currentColor; -webkit-mask: var(--ic) center / contain no-repeat; mask: var(--ic) center / contain no-repeat; --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14M5 12l7-7 7 7'/%3E%3C/svg%3E"); }
+.lft tr[data-td="imp"] th::before { --ic: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 20h20M4 16l3-9 4 4 3-6 3 5 3-2'/%3E%3C/svg%3E"); }
+.lft tr[data-td] td small { display: inline; margin-left: 4px; }
+.L3 .ordc .t.ot td:nth-child(2) { white-space: nowrap; overflow-wrap: normal; word-break: normal; font-size: 14px; }
+@media (min-width: 75rem) and (max-width: 99.99rem) {
+  .top .ph { grid-template-columns: auto auto minmax(0, 1fr) auto; justify-items: stretch; gap: var(--space-md); } .top .ph > * { justify-self: auto !important; } .top .ph > .pt { grid-column: 1 !important; } .top .ph > :nth-child(2) { grid-column: 2 !important; } .top .ph > :nth-child(3) { grid-column: 3 !important; } .top .ph > :nth-child(4) { grid-column: 4 !important; }
+  .L3 { grid-template-columns: 320px minmax(0, 1fr); align-items: start; justify-content: stretch; max-width: none; } .L3 .mid, .L3 .mid > .pn, .L3 .cal0 { max-width: none; width: 100%; justify-self: stretch; margin-inline: 0; } .L3 .lft .t.gt th, .L3 .lft .t.gt td { padding-inline: 4px; } .L3 .lft { grid-column: 1; grid-row: 1; position: sticky; top: calc(var(--hd-h) + 8px); max-height: calc(100vh - var(--hd-h) - 16px); overflow-y: auto; } .L3 .mid { grid-column: 2; grid-row: 1; } .L3 .ordc { grid-column: 1 / -1; grid-row: 2; }
+}
