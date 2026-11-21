@@ -270,7 +270,7 @@
   }
   function draw() {
     const W0 = tms(D.w0), W1 = tms(D.w1), days = Array.from({ length: Math.max(1, Math.round((W1 - W0) / 1440)) }, (_, i) => dayOf(W0 + i * 1440));   // 11/10 사용자 '수요일로 자르지 마' — 오늘부터 1030 확정이 끝날 때까지
-    $('ws-wk').textContent = `오늘부터 ${dnm(days[0])} ~ ${dnm(days[days.length - 1])}`;
+    $('ws-wk').textContent = `오늘부터 ${md(days[0])}~${md(days[days.length - 1])}`;
     $('ws-wk').title = `${iso(W0)} ~ ${iso(W1)} (하루 = 07시 ~ 다음날 07시)`;
     const v = $('ws-ver'); v.title = '';
     if (dirty) { v.className = 'ws-ver ed'; v.textContent = '수정 · 저장 전'; }
