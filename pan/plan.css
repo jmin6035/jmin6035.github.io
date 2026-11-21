@@ -599,3 +599,4 @@ input.why.lf { display: block; width: 100%; max-width: 420px; height: 40px; marg
 .dw input.de[type="date"] { width: 180px; }
 #ml-v table.t { width: 100%; table-layout: fixed; } #ml-v td.cn0 { white-space: nowrap; font-size: 14px; } #ml-v th:nth-child(1) { width: 170px; } #ml-v th:nth-child(2) { width: 110px; } #ml-v th:nth-child(3) { width: 60px; } #ml-v th:nth-child(4) { width: 90px; } #ml-v th:nth-child(5) { width: 175px; } #ml-v th:nth-child(7) { width: 70px; } #ml-v td small { white-space: normal; overflow-wrap: anywhere; } #ml-v input.de[type="date"] { width: 160px; }
 #pl-t { min-height: 80px; height: 80px; }
+.dw table.t.sq.woq { width: 100%; } .dw .woq td, .dw .woq th { padding-inline: 3px; } .dw .woq td.cn0 { font-size: 14px; } .dw .woq td small { white-space: normal; } .dw .woq td .x0 { padding-inline: 8px; }
