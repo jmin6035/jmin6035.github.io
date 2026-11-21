@@ -133,9 +133,9 @@ html body #ws-main.cmp table.ws tr.dh td { position: static; flex: 1 1 100%; }
 #ws-main.cmp table.ws tr.j.hl { background: var(--warn-bg); } #ws-main.cmp table.ws tr.j.bad { background: color-mix(in srgb, var(--bad-bg) 60%, var(--surface)); }
 html body #ws-main.cmp table.ws tr.j td.no { order: 1; min-width: 20px; line-height: 1.5; } #ws-main.cmp table.ws tr.j td.tm { order: 2; width: auto; }
 #ws-main.cmp table.ws tr.j td.c-con { order: 4; flex: 1 1 100%; } html body #ws-main.cmp table.ws td.ac { order: 3; margin-left: auto; line-height: 1; }
-html body #ws-main.cmp table.ws td .cn { overflow: visible; text-overflow: clip; } html body #ws-main.cmp table.ws td.c-con { text-align: left !important; } #ws-main.cmp table.ws td.c-con .sub { text-align: left; }   /* 11/17 검토 390: 계약번호 말줄임 금지 — 시각·⋯ 아래 줄 전체 폭 */
+html body #ws-main.cmp table.ws td .cn { overflow: visible; text-overflow: clip; } html body #ws-main.cmp table.ws td.c-con { text-align: center !important; } #ws-main.cmp table.ws td.c-con .sub { text-align: center; }   /* 11/17 검토 390: 계약번호 말줄임 금지 — 시각·⋯ 아래 줄 전체 폭 */
 #ws-main.cmp table.ws tr.j td.c-sp { order: 5; flex: 1 1 100%; }
-html body #ws-main.cmp table.ws tr.j td.nm { order: 6; flex: 1 1 100%; text-align: left !important; display: flex; flex-wrap: wrap; gap: 0 10px; align-items: baseline; }
+html body #ws-main.cmp table.ws tr.j td.nm { order: 6; flex: 1 1 100%; text-align: center !important; justify-content: center; display: flex; flex-wrap: wrap; gap: 0 10px; align-items: baseline; }
 #ws-main.cmp table.ws tr.ch { padding: 5px 10px 5px 38px; font-size: 13.5px; color: var(--warn); border-bottom: 1px dashed var(--line); background: color-mix(in srgb, var(--warn-bg) 35%, var(--surface)); }
 #ws-main.cmp table.ws tr.ch.may { color: var(--ink-2); background: var(--surface); }
 #ws-main.cmp table.ws tr.ev { background: var(--tint-2); } #ws-main.cmp table.ws tr.ev.w { background: var(--bad-bg); } #ws-main.cmp table.ws tr.ev.g { background: var(--warn-bg); }
@@ -287,6 +287,7 @@ table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px 
 .cp.kw { background: #2a6fc9; color: #fff; border-color: #2a6fc9; font-weight: 800; } .cp.kj { background: #fff; color: #2a6fc9; border: 1.5px solid #2a6fc9; font-weight: 800; }   /* 작업대기(1030 확정) 채움 · 지시대기(1020) 테두리 */
 @media (max-width: 640px) { .ws-k .kc { white-space: normal; overflow: visible; } .ws-kpis { grid-template-columns: minmax(0, 1fr); } .ws-k { min-width: 0; max-width: 100%; padding: 10px 12px; } .ws-k .v2 { font-size: 22px; column-gap: 10px; } .ws-k .kb, .ws-k .kr, .ws-k .b { min-width: 0; max-width: 100%; overflow-wrap: anywhere; } }
 .dt { font-weight: 800; color: var(--brand-2, #1f5fae); }   /* 11/17 용어 기준: 날짜·기간 = 굵은 진한 파랑 */
+@media (max-width: 640px) { .ws-k .kb { flex-wrap: wrap; row-gap: 6px; } .ws-k .kr { border-left: 0; padding-left: 0; text-align: center; } .ws-k .kr .b { white-space: normal; } }   /* 11/21 수정 방: 390 폭 '27시간 44분' 가로 넘침 · 휴대폰 카드 칸 가운데 */
 </style>
 </head>
 <body>

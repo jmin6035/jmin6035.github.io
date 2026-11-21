@@ -59,6 +59,8 @@
     const H = head();
     m.innerHTML = v === 'dash' ? H.top + (UI.v2 ? dashV2(H) : dash(H))
       : H.top + H.dl + `<div class="sj-h"><h2>${esc(TITLE[v][0])}</h2><p>${esc(TITLE[v][1])}</p></div>` + ({ order, prod, mat, stock, close }[v])();
+    /* 11/21 수정 방: 게시 자료 문구 '(1일~11/20)' → '(1일부터 11/20까지)'(docs/32 '~' 로 까지 금지) */
+    { const tw = document.createTreeWalker(m, NodeFilter.SHOW_TEXT); let nd; while ((nd = tw.nextNode())) { const s0 = nd.nodeValue, t = s0.replace(/1일~(\d{1,2}\/\d{1,2})/g, '1일부터 $1까지'); if (t !== s0) nd.nodeValue = t; } }
     m.querySelectorAll('details[data-k]').forEach((d) => (d.ontoggle = () => { OP[d.dataset.k] = d.open; }));
     if (window.OPT) OPT.snap();                                          // 일별 캘린더: 오늘 틀·지난 날 덮개 · 좁은 화면이면 오늘 칸이 보이게(ui/optable.js)
     m.querySelector('#sj-grp') && (m.querySelector('#sj-grp').onchange = (e) => { grpSel = e.target.value; draw(); });
