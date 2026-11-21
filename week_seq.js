@@ -64,9 +64,9 @@
     if (a.dummy || b.dummy) return { m: 0, parts: [] };
     if (R.topSame && R.topSame[l] != null && catOf(a, b) === '상도' && a.thk === b.thk && a.wdt === b.wdt) {   // 11/16 사용자: 1·2CCL 두께·폭 같고 상도만 — 앞 작업 40분 이상 0분(표시 없음), 미만 실적 평균
       if (runMin(a, l) >= 40) return { m: 0, parts: [] };
-      return { m: R.topSame[l], parts: [{ c: '상도 바뀜(앞 작업 40분 미만) — 실적 평균', m: R.topSame[l] }] }; }
+      return { m: R.topSame[l], parts: [{ c: '상도 바뀜(앞 작업 40분 미만) · 실적 평균', m: R.topSame[l] }] }; }
     if (R.trans && R.trans[l]) { const k = catOf(a, b), m = R.trans[l][k];
-      if (m != null) return { m, parts: [{ c: `${k === '사양 같음' ? '새 주문(사양 같음)' : kNm(k) + ' 바뀜'} — 1년 실적 평균`, m }] }; }
+      if (m != null) return { m, parts: [{ c: `${k === '사양 같음' ? '새 주문(사양 같음)' : kNm(k) + ' 바뀜'} · 1년 평균`, m }] }; }
     if (a.block !== b.block) { const lb = R.block[`${l}|${a.block}>${b.block}`]; if (lb) return { m: lb, parts: [{ c: `블록 전환 ${R.blockNm[a.block]}→${R.blockNm[b.block]}`, m: lb }] }; }
     const ta = a.top || a.color, tb = b.top || b.color, ct = ta && tb ? sk(ta) !== sk(tb) : true;
     const cb = !!(a.back && b.back && sk(a.back) !== sk(b.back)), cpr = !!(a.primer && b.primer && a.primer !== b.primer);
@@ -381,10 +381,10 @@
       const out = [];
       if (x.ready && x.ready >= dayOf(W1)) out.push(`<b class="wr">부자재 대기</b> 도료·필름 ${md(x.ready)} 입고`);
       else if (x.allow && !x.allow.includes(line)) out.push(`<b class="wr">라인 규칙</b> ${x.allow.join('·')}만 가능(MES 는 ${line} 배정)`);
-      else out.push(`<b>시간 부족</b> — ${stopD[line] ? line + ' ' + stopD[line] + ' 정지 → ' : ''}기간 내 ${line} 능력 소진`);
+      else out.push(`<b>시간 부족</b>: ${stopD[line] ? line + ' ' + stopD[line] + ' 정지 → ' : ''}기간 내 ${line} 능력 소진`);
       const alt = (x.allow || LINES.cc).filter((l) => l !== line && left[l] > runMin(x, l) + 60);
       if (alt.length) out.push(`→ ${alt.map((l) => `${l}(남는 ${hrs(left[l])})`).join(' · ')} 에 넣을 수 있음`);
-      else if (x.allow && x.allow.length === 1) out.push(`→ ${x.allow[0]} 전용${/^PP[GKHF]/.test(x.item) ? '(프린트)' : ''} — 다른 라인 불가${x.allow[0] !== line && stopD[x.allow[0]] ? `, ${x.allow[0]} ${stopD[x.allow[0]]} 정지` : ''}`);
+      else if (x.allow && x.allow.length === 1) out.push(`→ ${x.allow[0]} 전용${/^PP[GKHF]/.test(x.item) ? '(프린트)' : ''}, 다른 라인 불가${x.allow[0] !== line && stopD[x.allow[0]] ? `, ${x.allow[0]} ${stopD[x.allow[0]]} 정지` : ''}`);
       if (x.due && x.due < TODAY) out.push(`<b class="wr">납기 ${md(x.due)} 경과</b>`); else if (x.due && x.due < dayOf(W1)) out.push(`<b class="wr">납기 ${md(x.due)}</b> 기간 내 미생산 시 지연`);
       return `<div class="why">${out.join(' · ')}</div>`;
     };
