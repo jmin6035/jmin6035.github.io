@@ -251,7 +251,7 @@
   PS.dayPlan = (P) => {
     const pl = P || PS.plating(), out = {};
     for (const m of B.months) for (const ln of Object.keys(PS.LINES)) {
-      if (pl[m]) for (const x of pl[m][ln].days) out[`${ln}|${x.d}`] = { g: x.sts ? 'STS' : x.g, t: x.t, ev: x.ev, mx: x.al && Object.keys(x.al).length > 1 ? x.al : null };   // mx = 한 날 두 강종(가동포털 2CGL AL + AL-STS 같은 날, 11/22)
+      if (pl[m]) for (const x of pl[m][ln].days) out[`${ln}|${x.d}`] = { g: x.sts ? 'STS' : x.g, t: x.t, ev: x.ev, mx: x.al && Object.keys(x.al).length > 1 ? x.al : null, only: x.only ? new Map(x.only) : null };   // only = 03 작업 순서로 고정한 날(그 주문만, 시간 제한 없음)   // mx = 한 날 두 강종(가동포털 2CGL AL + AL-STS 같은 날, 11/22)
       else for (const [d, g, t, e] of ((B.plating[m] || {}).ref || {})[ln] || []) out[`${ln}|${d}`] = { g: g || '', t: t || 0, ev: e || '' };
     }
     return out;
@@ -359,20 +359,21 @@
           if (it.dec !== 'in') for (const L of pool) { if (it.left <= 0.5) break; if (L.left <= 0 || L.g !== it.grp || L.f !== it.fam || !it.thk || Math.abs(L.th - it.thk) > 0.02 || Math.abs(L.wd - it.wdt) > 10) continue; const u = Math.min(L.left, it.left); L.left -= u; it.left -= u; it.fromStock = (it.fromStock || 0) + u; stockUsed[it.con] = (stockUsed[it.con] || 0) + u; }
           if (it.left > 0.5) { it.m = curM; it.carried = true; } } }
       const x = DP[`${l}|${d}`]; if (!x || !x.t || !x.g) continue;
-      const m = d.slice(0, 7), r0 = PS.rate(m, l, x.g === 'STS' ? 'AL' : x.g), capH = x.t / (x.g === 'STS' ? PS.stsRate(m) : r0) * 24, MX = x.mx, fu = {}; let h = capH; const got = [];
+      const m = d.slice(0, 7), r0 = PS.rate(m, l, x.g === 'STS' ? 'AL' : x.g), capH = x.only ? 1e6 : x.t / (x.g === 'STS' ? PS.stsRate(m) : r0) * 24, MX = x.only ? null : x.mx, fu = {}; let h = capH; const got = [];
       for (const pass of [0, 1]) for (const it of items) {
         if (h <= 0.01) break;
-        if (it.left <= 0 || it.m !== m || (MX ? !(MX[it.fam] > (fu[it.fam] || 0) + 0.5) : it.fam !== x.g) || (it.line && it.line !== l) || (it.ready && it.ready > d)) continue;
+        if (x.only && !(it.k === 'o' && x.only.has(it.con))) continue;
+        if (it.left <= 0 || it.m !== m || (x.only ? false : MX ? !(MX[it.fam] > (fu[it.fam] || 0) + 0.5) : it.fam !== x.g) || (it.line && it.line !== l) || (it.ready && it.ready > d)) continue;
         if (pass === 0 ? !(it.pin === d) : (it.pin && it.pin !== d)) continue;
         const qk = `${m}|${it.grp}|${it.fam}`, ql = it.must ? Infinity : qLeft[qk] || 0; if (ql <= 0) continue;
-        const tp = PS.tph(l, it.fam, it.thk, it.wdt) || r0 / 24, t = Math.min(h * tp, it.left, ql, MX ? MX[it.fam] - (fu[it.fam] || 0) : Infinity); if (t < 0.5) continue;
-        if (MX) fu[it.fam] = (fu[it.fam] || 0) + t; it.left -= t; h -= t / tp; if (!it.must) qLeft[qk] = ql - t; got.push({ it, t, h: t / tp, tp, late: it.k === 'o' && it.need < d ? Math.round((new Date(d) - new Date(it.need)) / 864e5) : 0 });
+        const tp = PS.tph(l, it.fam, it.thk, it.wdt) || r0 / 24, t = Math.min(h * tp, it.left, ql, MX ? MX[it.fam] - (fu[it.fam] || 0) : Infinity, x.only ? x.only.get(it.con) - (fu[it.con] || 0) : Infinity); if (t < 0.5) continue;
+        if (MX) fu[it.fam] = (fu[it.fam] || 0) + t; if (x.only) fu[it.con] = (fu[it.con] || 0) + t; it.left -= t; h -= t / tp; if (!it.must) qLeft[qk] = ql - t; got.push({ it, t, h: t / tp, tp, late: it.k === 'o' && it.need < d ? Math.round((new Date(d) - new Date(it.need)) / 864e5) : 0 });
       }
       // 그 날 안 순서: 도금량·후처리가 같은 것끼리 묶고(톤 큰 묶음 먼저), 묶음 안에서는 폭 넓은 것부터, 같은 폭은 얇은 것부터(03 작업 순서 규칙의 기본 방향)
       const gk = (y) => `${y.it.cot || ''}|${y.it.aft || ''}`, gt = {}; for (const y of got) gt[gk(y)] = (gt[gk(y)] || 0) + y.t;
-      got.sort((a, b) => (gk(a) === gk(b) ? 0 : gt[gk(b)] - gt[gk(a)] || (gk(a) < gk(b) ? -1 : 1)) || (b.it.wdt || 0) - (a.it.wdt || 0) || (a.it.thk || 0) - (b.it.thk || 0));
+      if (x.only) { const ix = [...x.only.keys()]; got.sort((a, b) => ix.indexOf(a.it.con) - ix.indexOf(b.it.con)); } else got.sort((a, b) => (gk(a) === gk(b) ? 0 : gt[gk(b)] - gt[gk(a)] || (gk(a) < gk(b) ? -1 : 1)) || (b.it.wdt || 0) - (a.it.wdt || 0) || (a.it.thk || 0) - (b.it.thk || 0));
       for (let i = 1; i < got.length; i++) { const a = got[i - 1].it, b = got[i].it; if (!a.thk || !b.thk) continue; got[i].dw = (b.wdt || 0) - (a.wdt || 0); got[i].rt = Math.max(a.thk, b.thk) / Math.min(a.thk, b.thk); got[i].cc = gk(got[i - 1]) !== gk(got[i]); }
-      out[`${l}|${d}`] = { g: x.g, plan: x.t, capH, got, tons: Math.round(got.reduce((a, y) => a + y.t, 0)), freeH: Math.max(0, h), ev: x.ev };
+      out[`${l}|${d}`] = { g: x.g, plan: x.t, capH: x.only ? capH - h : capH, got, tons: Math.round(got.reduce((a, y) => a + y.t, 0)), freeH: x.only ? 0 : Math.max(0, h), ev: x.ev, mx: MX, only: !!x.only };
     }
     const over = {}; for (const it of items) if (it.k === 'o' && it.left > 1) { const k = `${it.m}|${it.grp}|${it.fam}`; over[k] = (over[k] || 0) + it.left; }
     return { out, items, over, quota, qLeft, om: IT.om, stockUse: IT.stockUse, stockUsed, asOf, stale: IT.stale, past: IT.past, cut: IT.cut };
