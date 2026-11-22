@@ -289,7 +289,7 @@
           : `<td class="${kind(d) === 'pst' ? 'pst' : tdc(d)}"><div class="tv">${n0(sumT(d))}<small>t</small></div></td>`)).join('') + '</tr>';
       const cur = nm === '이번 주';
       const cap = `<div class="pz-cap ${cur ? 'cur' : 'nxt'}"><b>${nm}</b><span>${md(W[0])}~${md(W[6])}(수~화)</span><em>${cur ? '생산 중 · 지난 날 = 실적' : '편성 계획 · 수요일 주문 마감 뒤 확정'}</em></div>`;
-      return cap + `<table class="psw v2-grid ${cur ? 'cur' : 'nxt'}"><thead><tr class="wh"><th class="cn">${nm}<small>${md(W[0])}~${md(W[6])}</small></th>${W.map(dh).join('')}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
+      return cap + `<table class="psw v2-grid ${cur ? 'cur' : 'nxt'}"><thead><tr class="wh"><th class="cn">${nm}</th>${W.map(dh).join('')}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
     };
     const W1 = D14.slice(0, 7), W2 = D14.slice(7);
     WKT[p] = { cur: LN.reduce((s, l) => s + wT(l, W1), 0), nxt: LN.reduce((s, l) => s + wT(l, W2), 0) };
