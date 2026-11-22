@@ -251,7 +251,7 @@
   PS.dayPlan = (P) => {
     const pl = P || PS.plating(), out = {};
     for (const m of B.months) for (const ln of Object.keys(PS.LINES)) {
-      if (pl[m]) for (const x of pl[m][ln].days) out[`${ln}|${x.d}`] = { g: x.sts ? 'STS' : x.g, t: x.t, ev: x.ev };
+      if (pl[m]) for (const x of pl[m][ln].days) out[`${ln}|${x.d}`] = { g: x.sts ? 'STS' : x.g, t: x.t, ev: x.ev, mx: x.al && Object.keys(x.al).length > 1 ? x.al : null };   // mx = 한 날 두 강종(가동포털 2CGL AL + AL-STS 같은 날, 11/22)
       else for (const [d, g, t, e] of ((B.plating[m] || {}).ref || {})[ln] || []) out[`${ln}|${d}`] = { g: g || '', t: t || 0, ev: e || '' };
     }
     return out;
@@ -285,7 +285,7 @@
     const quota = {}; for (const m of ms) for (const x of R) { if (!l0[m] || !l0[m][x.r] || !l0[m][x.r].in) continue; const f = famOfRow(x); if (!f) continue; const k = `${m}|${LGRP(x.lab)}|${f}`; quota[k] = (quota[k] || 0) + l0[m][x.r].p; }
     const items = [], stale = [], past = [], stockUse = {}, mixSrc = {};
     for (const o of B.orders) {
-      const nd = need(o); if (nd < cut) { stale.push(o); continue; }
+      const nd = need(o); if (nd < cut && !(PS.keep && PS.keep.has(o[0]))) { stale.push(o); continue; }   // PS.keep = 이번 주 03 작업 순서에 잡힌 주문(11/22, 오래된 주문이라도 뺌 안 함)
       if (PS.pastMode === 'out' && nd < asOf && !PS.get(`D|${o[0]}`, null)) { past.push(o); continue; }   // 지난 납기 미생산을 계산에서 뺌(사람이 결정한 주문은 넣음)
       const g = GRPN(o[3]), f = o[10] === 'GAS' ? 'STS' : o[2], exp = o[14] === '출항', port = (String(o[15] || '').split('_')[1] || o[9] || '').replace(/\s+/g, ' ').trim();
       let m = nd.slice(0, 7) < m0 ? m0 : nd.slice(0, 7); const dec = PS.get(`D|${o[0]}`, null); let pin = '', must = false;
@@ -359,14 +359,14 @@
           if (it.dec !== 'in') for (const L of pool) { if (it.left <= 0.5) break; if (L.left <= 0 || L.g !== it.grp || L.f !== it.fam || !it.thk || Math.abs(L.th - it.thk) > 0.02 || Math.abs(L.wd - it.wdt) > 10) continue; const u = Math.min(L.left, it.left); L.left -= u; it.left -= u; it.fromStock = (it.fromStock || 0) + u; stockUsed[it.con] = (stockUsed[it.con] || 0) + u; }
           if (it.left > 0.5) { it.m = curM; it.carried = true; } } }
       const x = DP[`${l}|${d}`]; if (!x || !x.t || !x.g) continue;
-      const m = d.slice(0, 7), r0 = PS.rate(m, l, x.g === 'STS' ? 'AL' : x.g), capH = x.t / (x.g === 'STS' ? PS.stsRate(m) : r0) * 24; let h = capH; const got = [];
+      const m = d.slice(0, 7), r0 = PS.rate(m, l, x.g === 'STS' ? 'AL' : x.g), capH = x.t / (x.g === 'STS' ? PS.stsRate(m) : r0) * 24, MX = x.mx, fu = {}; let h = capH; const got = [];
       for (const pass of [0, 1]) for (const it of items) {
         if (h <= 0.01) break;
-        if (it.left <= 0 || it.m !== m || it.fam !== x.g || (it.line && it.line !== l) || (it.ready && it.ready > d)) continue;
+        if (it.left <= 0 || it.m !== m || (MX ? !(MX[it.fam] > (fu[it.fam] || 0) + 0.5) : it.fam !== x.g) || (it.line && it.line !== l) || (it.ready && it.ready > d)) continue;
         if (pass === 0 ? !(it.pin === d) : (it.pin && it.pin !== d)) continue;
         const qk = `${m}|${it.grp}|${it.fam}`, ql = it.must ? Infinity : qLeft[qk] || 0; if (ql <= 0) continue;
-        const tp = PS.tph(l, it.fam, it.thk, it.wdt) || r0 / 24, t = Math.min(h * tp, it.left, ql); if (t < 0.5) continue;
-        it.left -= t; h -= t / tp; if (!it.must) qLeft[qk] = ql - t; got.push({ it, t, h: t / tp, tp, late: it.k === 'o' && it.need < d ? Math.round((new Date(d) - new Date(it.need)) / 864e5) : 0 });
+        const tp = PS.tph(l, it.fam, it.thk, it.wdt) || r0 / 24, t = Math.min(h * tp, it.left, ql, MX ? MX[it.fam] - (fu[it.fam] || 0) : Infinity); if (t < 0.5) continue;
+        if (MX) fu[it.fam] = (fu[it.fam] || 0) + t; it.left -= t; h -= t / tp; if (!it.must) qLeft[qk] = ql - t; got.push({ it, t, h: t / tp, tp, late: it.k === 'o' && it.need < d ? Math.round((new Date(d) - new Date(it.need)) / 864e5) : 0 });
       }
       // 그 날 안 순서: 도금량·후처리가 같은 것끼리 묶고(톤 큰 묶음 먼저), 묶음 안에서는 폭 넓은 것부터, 같은 폭은 얇은 것부터(03 작업 순서 규칙의 기본 방향)
       const gk = (y) => `${y.it.cot || ''}|${y.it.aft || ''}`, gt = {}; for (const y of got) gt[gk(y)] = (gt[gk(y)] || 0) + y.t;
