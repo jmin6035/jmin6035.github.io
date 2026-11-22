@@ -295,7 +295,7 @@
     }
     el.innerHTML = `<h2 class="m4-h">${M_}월 그룹별 소재 발주 · 입고 <small>톤</small></h2>
 <div class="m4-sc"><table class="m4-gd"><colgroup><col style="width:190px">${cur ? '<col>' : ''}${hasO ? '<col><col>' : ''}<col></colgroup>
-<thead><tr><th>판매그룹</th>${cur ? `<th${Object.keys(stl).length ? ` title="${esc(`예정일 30일 넘게 지난 미입고(계획에서 뺌, 입고 확인 필요): ${Object.entries(stl).filter(([p_]) => UI.inScope(p_)).map(([p_, t_]) => `${PN[p_]} ${n0(t_)}t`).join(' · ')}`)}"` : ''}>입고 지연</th>` : ''}${hasO ? `<th>${M_}월 발주</th><th>${M_}월 발주 중 미입고</th>` : ''}<th>${M_}월 입고 예정<small>(${cur ? `<b class="dt">${md(today)}~${md(mEnd)}</b>, ` : ''}지난달 발주 포함)</small></th></tr></thead><tbody>${body || `<tr><td colspan="${1 + (cur ? 1 : 0) + (hasO ? 2 : 0) + 1}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>`;
+<thead><tr><th>판매그룹</th>${cur ? `<th${Object.keys(stl).length ? ` title="${esc(`예정일 30일 넘게 지난 미입고(계획에서 뺌, 입고 확인 필요): ${Object.entries(stl).filter(([p_]) => UI.inScope(p_)).map(([p_, t_]) => `${PN[p_]} ${n0(t_)}t`).join(' · ')}`)}"` : ''}>입고 지연</th>` : ''}${hasO ? `<th>${M_}월 발주</th><th>${M_}월 발주 중 미입고</th>` : ''}<th title="지난달 발주 포함">${cur ? `<b class="dt">${md(today)}~${md(mEnd)}</b> 입고 예정` : `${M_}월 입고 예정`}</th></tr></thead><tbody>${body || `<tr><td colspan="${1 + (cur ? 1 : 0) + (hasO ? 2 : 0) + 1}" class="z">이 달 발주·입고 예정 없음</td></tr>`}</tbody></table></div>`;
   }
   function matSync() {
     matDash();

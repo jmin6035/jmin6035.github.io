@@ -398,7 +398,7 @@ html body main .m4-mx thead th { white-space: normal !important; line-height: 1.
 .m4-pw { display: flex; align-items: center; gap: 12px; padding: 0 14px; } .m4-pw .m4-sb { flex: 1; } .m4-pw b { width: 46px; text-align: right; }
 .m4-sb { display: flex; height: 12px; border-radius: 6px; background: var(--surface-2); overflow: hidden; gap: 2px; } .m4-sb i { display: block; height: 100%; }
 :is(.m4-sb, .m4-lg) i.in { background: var(--m4-in); } :is(.m4-sb, .m4-lg) i.po { background: var(--m4-po); } :is(.m4-sb, .m4-lg) i.no { background: var(--m4-no); }
-.m4-jd { display: inline-block; font-weight: 800; border-radius: 12px; padding: 4px 12px; font-size: 14.5px; white-space: nowrap; }
+.m4-jd { display: inline-block; vertical-align: middle; line-height: 1.4; font-weight: 800; border-radius: 12px; padding: 2px 12px; font-size: 14.5px; white-space: nowrap; }
 .m4-jd.bad { background: var(--bad-bg); color: var(--bad); } .m4-jd.warn { background: var(--warn-bg); color: var(--warn); } .m4-jd:is(.ok, .na) { color: var(--ink-3); font-weight: 600; }
 .m4-jdn { color: var(--bad); font-weight: 800; }
 .m4-lg { display: flex; justify-content: center; gap: 20px; font-size: 14px; color: var(--ink-2); margin-top: 12px; align-items: center; }
@@ -460,6 +460,7 @@ html body main #m4 table.m4-cl :is(tr.sec th, tr.fold td) > span { position: sti
 html body main #m4 table.m4-cl tr.sec th { text-align: center !important; }
 html body main #m4 table.m4-cl tr.fold td { text-align: center !important; }
 html body main details.card.m4-lt { padding-top: 14px !important; }   /* '리드타임 보기' 위 빈 공간(11/17 검토) */
+.m4-cl td span.ib.io { color: var(--bad); font-weight: 800; } .m4-cl td span.po.lp { color: var(--warn); font-weight: 800; }   /* 11/22 수정 방: '입고 지연·발주 지연' 아래 글자 대신 숫자 색(범례 빨강 = 지연, 자세한 톤은 마우스 올림) — 세 줄 칸·같은 숫자 두 번 없앰 */
 </style>
 </head>
 <body>

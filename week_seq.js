@@ -242,7 +242,7 @@
     const dtm = (v) => (v ? String(v).slice(5, 16).replace('-', '/').replace(/ 00:00$/, '') : '');   // 시각 00:00 = 날짜만 있는 값   // 11/9: 풀 코드 8자리·담당자-목적지·도료/PF 입고 일시
     const fut = (v) => v && new Date(String(v).replace(' ', 'T')) > new Date();
     const st = (at, s) => (at ? dtm(at) : s === 'F' ? '입고 완료' : s ? '입고 대기(입고일 미정)' : '-');
-    return row('사양', (x.code ? `<span class="cp cl" title="상도 풀 코드">${esc(x.code)}</span>` : `<span class="cp cl wr" title="풀 코드 없음(주문 상세 자료 대기) — 도료 종류·색상번호">${esc(x.color)}</span>`)
+    return row('사양', (x.code ? `<span class="cp cl" title="상도 풀 코드">${esc(x.code)}</span>` : `<span class="cp cl wr" title="풀 코드 없음(주문 상세 자료 대기), 도료 종류·색상번호">${esc(x.color)}</span>`)
         + (x.codeBack ? `<span class="cp" title="뒷면 풀 코드">뒷면 ${esc(x.codeBack)}</span>` : '')
         + `<span class="cp sz" title="두께 × 폭 × 잔량 길이">${(+x.thk).toFixed(2)} × ${n0(x.wdt)}${x.len ? ' × ' + n0(x.len) + 'm' : ''}</span>` + (x.block !== 'general' ? `<span class="cp wr">${esc(R.blockNm[x.block])}</span>` : ''))
       + row('주문', `${x.g && x.g !== '미상' ? `<span class="cp" title="판매그룹 ${esc(x.g)}">${esc(gnm(x.g))}</span>` : ''}${manDst(x)}<span class="ib"><em class="lb">입고</em><span class="cp${fut(x.paintAt) ? ' wr' : ''}" title="도료 입고(예정) 일시">도료 ${st(x.paintAt, x.paintSts)}</span>`
@@ -297,7 +297,7 @@
       return `<button type="button" class="ws-k" data-l="${l}" aria-pressed="${l === line}"><div class="ln">${l}</div><div class="kb"><div class="v2"><i>${nA}</i><span>${jA.length}<small>건</small></span><span>${tt(jA)}<small>t</small></span><i>${nB}</i><span>${jB.length}<small>건</small></span><span>${tt(jB)}<small>t</small></span></div>`
         + `<div class="kr"><div class="b">생산 <b>${hrs(run)}</b></div><div class="b">전환 휴지 <b>${hrs(ch)}</b></div><div class="b">계획 휴지 <b>${hrs(pl)}</b>${wt ? ` · 기다림 <b>${hrs(wt)}</b>` : ''}</div>`
         + `<div class="b">${left >= 0 ? `남는 시간 <b>${hrs(left)}</b>` : `<span class="w">기간 초과 ${hrs(-left)}</span>`}</div></div></div>`
-        + `<div class="kc" title="작업 순서가 편성 규칙(납기·소재 입고·라인·강종·후처리 간격 등)을 위반한 작업 수 — 아래 '점검'을 누르면 목록">${nb ? `<span class="w">규칙 위반 ${nb}건</span> — ${bTxt}` : '<span class="ok">규칙 위반 없음</span>'}</div></button>`;
+        + `<div class="kc" title="작업 순서가 편성 규칙(납기·소재 입고·라인·강종·후처리 간격 등)을 위반한 작업 수, 아래 '점검'을 누르면 목록">${nb ? `<span class="w">규칙 위반 ${nb}건</span> — ${bTxt}` : '<span class="ok">규칙 위반 없음</span>'}</div></button>`;
     }).join('');
     $('ws-kpis').querySelectorAll('.ws-k').forEach((b) => (b.onclick = () => { line = b.dataset.l; draw(); }));
     // 순서 표(요일별)

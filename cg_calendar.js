@@ -379,7 +379,7 @@
         + `<td class="r" title="${END()}까지 주문을 t/시간로 24시간 이어서 돌릴 때 ${md(O.days[O.days.length - 1])} 뒤로 넘어가는 양">${ov ? `<b class="bad">${n0(ov.t)}t</b>` : '<span class="sub">0</span>'}</td></tr>`;
     }).join('');
     return `<div class="ps-st">${st}${O.odT > 0 ? `<span class="ct-b bad" title="필요 생산일 지났는데 생산 전${(O.shipMiss || []).length ? ` · 그중 출항 지난 수출 ${O.shipMiss.length}건(배선 확인)` : ''}">필요일 경과 ${n0(O.odT)}t · ${O.nOd}건</span>` : ''}`
-      + `${fl ? `<span class="ct-b bad" title="${esc(misTxt)}">재계획과 현장 강종 다름 ${fl}일</span>` : ''}<span class="ct-b ${jgMin >= 0 ? 'ok' : 'bad'}" title="컬러 계획(투입 일정) 대비 도금 자가재 생산 누계 — 최대 부족일">자가재 진도 ${jgMin >= 0 ? '충분' : `${n0(-jgMin)}t 부족`}</span>`
+      + `${fl ? `<span class="ct-b bad" title="${esc(misTxt)}">재계획과 현장 강종 다름 ${fl}일</span>` : ''}<span class="ct-b ${jgMin >= 0 ? 'ok' : 'bad'}" title="컬러 계획(투입 일정) 대비 도금 자가재 생산 누계, 최대 부족일">자가재 진도 ${jgMin >= 0 ? '충분' : `${n0(-jgMin)}t 부족`}</span>`
       + `<span class="ps-k" title="${END()}까지 재계획 톤(재계획 하루 톤 합 — 라인 부하 화면의 '가용 능력'(속도 × 가용 시간)과 다른 값) = 작업지시 + 소재 있음 + 입고 예정 + 빈칸">${END()}까지 재계획 ${n0(tot('cap'))}t = 작업지시(지시중량) ${n0(tot('conf'))} · 소재 있음 ${n0(tot('plan'))} · 입고 예정 ${n0(tot('fcst'))}${tot('gap') >= 1 ? ` · 빈칸 ${n0(tot('gap'))}` : ''}</span></div>`
       + `<div class="ct-wrap"><table class="ct-t ps-t"><thead><tr><th class="l">라인</th><th class="r" title="편성(작업지시 + 소재 있음 + 입고 예정) / 재계획(재계획 하루 톤 합)">편성 / 재계획</th><th class="r" title="편성 주문을 실적 t/시간 로 돌리는 시간 ÷ 가동 가능 시간(24시간 × 제원치 가동률)">시간 부하</th><th class="r" title="현장 강종 ≠ 재계획 · 재질 순서 등 확인할 날 수">확인 필요 날</th><th class="r" title="그날 생산하면 출항일(수출)·납기(내수)를 넘기는 주문">납기 초과</th><th class="r">${END()}까지 넘침</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
@@ -420,7 +420,7 @@
       + `<div class="gl">${gs}</div>` + stsLn(ln, c.d)
       + (c.flag ? `<div class="fg">⚠ ${esc(c.flagS || c.flag)}</div>` : '')
       + (empty >= 0.5 ? `<div class="sh" title="${esc(c.why || '넣을 주문·소재 없음')}">빈 ${n1(empty)}시간</div>` : '')
-      + (c.late ? `<div class="lt" title="이 날 생산 시 출항일(수출) · 납기(내수) 미준수 주문 — 필요 생산일 = 출항 − 1일 · 납기 − 1일">${[c.lateE ? `출항일 초과 ${c.lateE}건` : '', c.late - c.lateE ? `납기 초과 ${c.late - c.lateE}건` : ''].filter(Boolean).join(' · ')}</div>` : '')
+      + (c.late ? `<div class="lt" title="이 날 생산 시 출항일(수출) · 납기(내수) 미준수 주문, 필요 생산일 = 출항 − 1일 · 납기 − 1일">${[c.lateE ? `출항일 초과 ${c.lateE}건` : '', c.late - c.lateE ? `납기 초과 ${c.late - c.lateE}건` : ''].filter(Boolean).join(' · ')}</div>` : '')
       + (c.mvIn || c.mvOut ? `<div class="mvc">이동${c.mvIn ? ` 전입 ${c.mvIn}` : ''}${c.mvOut ? ` 전출 ${c.mvOut}` : ''}</div>` : '')
       + '</button>';
   }
@@ -457,11 +457,11 @@
     const rows = LINES.map((ln) => { const hr = hrsOf(ln); return `<tr><th>${ln}<small title="${md(wkD[0])}~${md(wkD[wkD.length - 1])} ${ln} 7칸 합(지난 날 = 실적, 오늘부터 = 계획 톤) · 참고: ${md(days[0])}${days[days.length - 1] !== days[0] ? '~' + md(days[days.length - 1]) : ''} 재계획 하루 톤 합 ${n0(days.reduce((s, d) => s + O.lines[ln][idx(d)].cap, 0))}t">주 ${n0(wkL(ln))}t</small>${hr ? `<small class="hs ov" title="${END()}까지 주문을 t/시간(같은 두께·폭 2026년 실적)로 24시간 이어서 돌리면 가동 가능 시간(24시간 × 제원치 가동률)보다 ${n1(hr.h)}시간 초과 → 약 ${n0(hr.t)}t 은 ${md(O.days[O.days.length - 1])} 뒤에 생산">${END()} 뒤 ${n0(hr.t)}t</small>` : ''}</th>${pTd(ln)}${days.map((d) => `<td${d === UI.today() ? ' class="tdy"' : ''}>${cell(O.lines[ln][idx(d)], ln)}</td>`).join('')}${pad}</tr>`; }).join('');
     const jg = pJg + days.map((d) => {
       const j = O.jg[idx(d)], df = j.cumSched - j.cumPlan;
-      return `<td class="jg" title="컬러 계획 = 컬러 라인 투입 일정에 맞추려면 이 날까지 도금에서 만들어 둬야 할 자가재 누계(가동계획 기준) · 도금 생산 = 이 캘린더대로 도금에서 만드는 자가재 누계(${md(O.days[0])}부터)"><div class="jr"><span>컬러 계획</span><b>${n0(j.cumPlan)}</b></div><div class="jr"><span>도금 생산</span><b>${n0(j.cumSched)}</b></div><div class="jr ${df < 0 ? 'bad' : 'good'}"><span>${df < 0 ? '부족' : '여유'}</span><b>${n0(Math.abs(df))}</b></div>${j.mark ? `<div class="mk" title="컬러 투입 순(旬) 마감일 — 이 날까지 도금에서 끝내야 할 자가재 톤">컬러 마감 ${n0(j.mark)}t</div>` : (O.jg.some((x) => x.mark) ? '<div class="mk" style="visibility:hidden">-</div>' : '')}</td>`;
+      return `<td class="jg" title="컬러 계획 = 컬러 라인 투입 일정에 맞추려면 이 날까지 도금에서 만들어 둬야 할 자가재 누계(가동계획 기준) · 도금 생산 = 이 캘린더대로 도금에서 만드는 자가재 누계(${md(O.days[0])}부터)"><div class="jr"><span>컬러 계획</span><b>${n0(j.cumPlan)}</b></div><div class="jr"><span>도금 생산</span><b>${n0(j.cumSched)}</b></div><div class="jr ${df < 0 ? 'bad' : 'good'}"><span>${df < 0 ? '부족' : '여유'}</span><b>${n0(Math.abs(df))}</b></div>${j.mark ? `<div class="mk" title="컬러 투입 순(旬) 마감일, 이 날까지 도금에서 끝내야 할 자가재 톤">컬러 마감 ${n0(j.mark)}t</div>` : (O.jg.some((x) => x.mark) ? '<div class="mk" style="visibility:hidden">-</div>' : '')}</td>`;
     }).join('');
     const sumD = (d) => LINES.reduce((s, l) => s + lv(l, d), 0);
     const tot = `<tr class="dsum"><th title="두 라인 하루 생산 톤 합 · 아래 = 1CGL + 2CGL · 주 = ${md(wkD[0])}~${md(wkD[wkD.length - 1])} 7칸 합(지난 날 = 실적)">하루 합<small>주 ${n0(LINES.reduce((s, l) => s + wkL(l), 0))}t</small></th>${pSum}${days.map((d) => `<td title="${mdw(d)} 1CGL + 2CGL 생산 톤"><b>${n0(sumD(d))}</b><small>t</small><div class="sub">${LINES.map((l) => n0(O.lines[l][idx(d)].conf + O.lines[l][idx(d)].plan + O.lines[l][idx(d)].fcst)).join(' + ')}</div></td>`).join('')}${pad}</tr>`;
-    return `<table class="cg"><thead><tr>${corner}${pTh}${head}${pad.replace(/td/g, 'th')}</tr></thead><tbody>${rows}${tot}<tr><th title="컬러에 보낼 자가재(도금 → 컬러) 누계 — 컬러 계획(필요) vs 도금 생산(이 캘린더)">자가재<small>누계 t</small></th>${jg}${pad}</tr></tbody></table>`;
+    return `<table class="cg"><thead><tr>${corner}${pTh}${head}${pad.replace(/td/g, 'th')}</tr></thead><tbody>${rows}${tot}<tr><th title="컬러에 보낼 자가재(도금 → 컬러) 누계, 컬러 계획(필요) vs 도금 생산(이 캘린더)">자가재<small>누계 t</small></th>${jg}${pad}</tr></tbody></table>`;
   }
 
   function calCard() {
@@ -528,9 +528,9 @@
       const k = i.k;
       const sd = i.dept || i.arr, ea = i.exp && sd, dl = ea ? `${i.dept ? '출항' : '입항'} ${md(sd)}` : `납기 ${md(i.due)}`;
       const need = i.od ? `<span class="bd od" title="필요 생산일(${ea ? '출항' : '납기'} − 1일)이 이미 지남">${dl} 지남</span>` : i.late ? `<span class="bd late" title="이 날 생산 시 ${ea ? '출항일' : '납기'} 미준수">${ea ? '출항일' : '납기'} 초과</span>` : i.need ? `필요 <b>${md(i.need)}</b>` : '';
-      const tags = [i.moved ? `<span class="bd mv">옮김 ← ${md(i.moved.fd)}${i.moved.fl !== ln ? ' ' + i.moved.fl : ''}</span>` : i.shift ? `<span class="bd ${i.shift === '뒤로 순연' ? 'late' : 'mv'}" title="다른 주문을 옮기거나 넣어서 날짜가 바뀜">${i.shift}</span>` : i.locked ? '<span class="bd mv">확정본</span>' : i.matMove ? `<span class="bd mv" title="같은 재질끼리 묶느라 같은 강종 날끼리 맞바꿈 — 필요 생산일 이내">재질 묶기 ← ${md(i.matMove)}</span>` : '',
+      const tags = [i.moved ? `<span class="bd mv">옮김 ← ${md(i.moved.fd)}${i.moved.fl !== ln ? ' ' + i.moved.fl : ''}</span>` : i.shift ? `<span class="bd ${i.shift === '뒤로 순연' ? 'late' : 'mv'}" title="다른 주문을 옮기거나 넣어서 날짜가 바뀜">${i.shift}</span>` : i.locked ? '<span class="bd mv">확정본</span>' : i.matMove ? `<span class="bd mv" title="같은 재질끼리 묶느라 같은 강종 날끼리 맞바꿈, 필요 생산일 이내">재질 묶기 ← ${md(i.matMove)}</span>` : '',
         i.xline ? `<span class="bd mv" title="${i.xline} 예정 주문 — ${i.xline}에 넣을 자리가 없어 이 라인 실적 두께·폭 범위(최근 3개월) 안에서 옮겨 넣음">${i.xline}에서 이동</span>` : '',
-        i.w10 ? `<span class="bd mv" title="1010(소재 들어온 작업 목록)을 「작업지시 순서」 화면이 짠 순서 — 1030 지시 코일 바로 뒤">1010 순서 ${i.w10}번</span>` : '', i.matLate ? `<span class="bd od">소재 ${md(i.avail)}부터</span>` : '', i.shipMiss && !i.od ? '<span class="bd od" title="출항일 경과 · 미생산 — 배선 변경 확인">출항 지남</span>' : ''].filter(Boolean).join(' ');
+        i.w10 ? `<span class="bd mv" title="1010(소재 들어온 작업 목록)을 「작업지시 순서」 화면이 짠 순서, 1030 지시 코일 바로 뒤">1010 순서 ${i.w10}번</span>` : '', i.matLate ? `<span class="bd od">소재 ${md(i.avail)}부터</span>` : '', i.shipMiss && !i.od ? '<span class="bd od" title="출항일 경과 · 미생산, 배선 변경 확인">출항 지남</span>' : ''].filter(Boolean).join(' ');
       const seq = i.kind === '확정' ? (i.seq || k + 1) : ++n;
       return `<tr class="r${i.kind}"><td class="sq"><span class="kd k${i.kind}">${KD[i.kind]}</span> ${seq}</td>`
         + `<td><div class="con">${esc(i.con)}</div><div class="sub one">${who(i)}</div></td>`
@@ -749,7 +749,7 @@
       + '<p class="msg" style="margin:0 0 10px">다음 생산주(수~화, 파란 머리 칸)를 저장 = 공정출하·마케팅과 약속한 주간 편성 · 저장 뒤에도 고쳐서 「수정 저장」 · 지난 주 준수율은 아래</p>'
       + `<div class="cf"><span class="nw">다음 주 생산 1CGL <b>${n0(tot('1CGL'))}t</b> · 2CGL <b>${n0(tot('2CGL'))}t</b></span>`
       + `<button type="button" class="go" id="cc-save">${btn}</button><span class="msg" id="cc-smsg">${stat}</span>`
-      + `<input id="cc-who" placeholder="저장한 사람(선택)" value="${esc(who)}" maxlength="20" aria-label="저장한 사람 이름(선택, 기록용)" title="여러 사람이 저장할 때 누가 했는지 남기는 칸 — 비워도 됨"></div>`
+      + `<input id="cc-who" placeholder="저장한 사람(선택)" value="${esc(who)}" maxlength="20" aria-label="저장한 사람 이름(선택, 기록용)" title="여러 사람이 저장할 때 누가 했는지 남기는 칸, 비워도 됨"></div>`
       + `${adh}</section>`;
   }
 
