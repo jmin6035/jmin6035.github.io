@@ -349,7 +349,7 @@
   // AL-STS(11/13 사용자): 재계획에 그날 AL-STS 가 있으면 청록 칩 + 예약(판매계획 물량 — 주문은 D-3 확정) 톤 한 줄
   const stsOf = (ln, d) => { const x = (O.sts || {})[`${ln}|${d}`]; return x && x.t >= 0.5 ? x : null; };
   const stsCh = (ln, d, fam) => { const x = stsOf(ln, d); return x && fam !== 'AL-STS' ? `<span class="fam fam-STS" title="${esc(`AL-STS ${n0(x.t)}t`)}">AL-STS</span>` : ''; };
-  const stsLn = (ln, d) => { const x = stsOf(ln, d); return x && x.res >= 0.5 ? `<div class="sts"><span>AL-STS 예약 ${n0(Math.min(x.res, x.t))}t</span> <span>(D-3 확정)</span></div>` : ''; };
+  const stsLn = (ln, d) => { const x = stsOf(ln, d); return x && x.res >= 0.5 ? `<div class="sts"><span>AL-STS 예약</span> <span>${n0(Math.min(x.res, x.t))}t</span> <span>(D-3 확정)</span></div>` : ''; };
   const stsTip = (ln, d) => { const x = stsOf(ln, d); if (!x) return ''; const r = Math.min(x.res || 0, x.t); return ` · AL-STS ${n0(x.t)}t${r >= 0.5 ? ` (예약 ${n0(r)}${x.t - r >= 0.5 ? ` · 주문 ${n0(x.t - r)}` : ''} — 주문 D-3 확정)` : ' (주문)'}`; };
 
   function summary() {
