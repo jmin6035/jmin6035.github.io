@@ -35,8 +35,18 @@
     try { data = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(env.iv) }, await key(pw, unb64(env.salt), env.iter), unb64(env.ct))); }
     catch (e) { throw new Error('암호가 틀렸습니다'); }
     if (env.gzip) data = await pipe(data, DecompressionStream, 'gzip');
-    return JSON.parse(new TextDecoder().decode(data));
+    const obj = JSON.parse(new TextDecoder().decode(data));
+    /* 11/23 사용자(메일 '마생산 주문량 확인' 1·2, 판매생산프로세스혁신 TF): 가공 주문서·재고기반 제품 주문은 미생산 주문·소재 매치 전 주문이 아님 → 주문 자료에서 뺌(가동포털·판생 모든 화면이 이 자리를 지나감) */
+    if (obj && env.__nm && GP.ORDER_FILES.has(env.__nm)) {
+      if (Array.isArray(obj.rows)) obj.rows = obj.rows.filter((r) => !GP.notOrder(r && (r.con || r.id)));
+      if (Array.isArray(obj.orders)) obj.orders = obj.orders.filter((r) => !GP.notOrder(Array.isArray(r) ? r[0] : r && (r.con || r.id)));
+    }
+    return obj;
   };
+  /* 주문에서 빼는 계약번호(사용자 11/23 규칙, docs/32): 계약번호 2·3·4번째 = 통과공정 도금·컬러·가공.
+     ① 가공 자리가 K(SKELP)·L(SLIT+SHEET)·S(SHEET) = 가공 주문서 ② 도금·컬러 자리가 둘 다 X = 재고기반 제품 주문(목전·충당) */
+  GP.notOrder = (c) => { const s = String(c || ''); return s.length >= 5 && s[0] === 'P' && ('KLS'.includes(s[3]) || (s[1] === 'X' && s[2] === 'X')); };
+  GP.ORDER_FILES = new Set(['cg_order_progress.enc.json', 'cc_order_progress.enc.json', 'ps_base.enc.json']);
   // 게시 파일 위치(사이트 기준 상대경로). 사내 서버로 옮기면 여기만 바꾸거나 ?src= 로 지정
   GP.PUBLISH_PATH = 'published/latest.plan.enc.json';
   // 게시본 위치: 사내 PC 자동 실행기(Supabase) + 계획 화면 수동 게시(GitHub). 둘 다 읽어 더 최근 것을 보여줌
@@ -68,7 +78,8 @@
   const LATEST = new Map();
   GP.latest = (name) => {
     const c = LATEST.get(name); if (c && Date.now() - c.t < 20000) return c.p;
-    const p = GP.fetchPublished(GP.REMOTE.has(name.replace(/^test\./, '')) ? [GP.SUPABASE_URL + '/storage/v1/object/public/published/' + name, 'published/' + name] : ['published/' + name]);
+    const p0 = GP.fetchPublished(GP.REMOTE.has(name.replace(/^test\./, '')) ? [GP.SUPABASE_URL + '/storage/v1/object/public/published/' + name, 'published/' + name] : ['published/' + name]);
+    const p = p0.then((e) => { if (e && typeof e === 'object') e.__nm = name; return e; });   // 파일 이름 표시(주문 자료 거르기용)
     LATEST.set(name, { t: Date.now(), p }); return p;
   };
   GP.PUBLISH_REPO = { owner: 'jmin6035', repo: 'jmin6035.github.io', branch: 'main' };
