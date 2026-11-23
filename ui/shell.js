@@ -39,7 +39,7 @@
       ['status', 'status.html', '도금 가동 현황', 'd'], ['prodsum', 'ct_prod.html#run', '가동·휴지', 'd'], ['perf', 'ct_perf.html#cause', '미달 원인', 'd']]],
     ['ct6', '계획 기준', 'rules', [['rules', 'rules.html', '계획 규칙']]],
   ];
-  const ADMIN = PV ? PV.admin : [['rr', 'rr.html', '업무분장 협의'], ...(V2 ? [['rules', 'rules.html', '계획 규칙']] : []), ['plancalc', 'plan_calc.html', '계획 계산'], ['analysis', 'analysis.html', '조건 분석'], ['rolling', 'rolling.html', '도금 다시 계산'], ['colorcalc', 'color_calc.html', '컬러 다시 계산'],
+  const ADMIN = PV ? PV.admin : [...(V2 ? [['rules', 'rules.html', '계획 규칙']] : []), ['plancalc', 'plan_calc.html', '계획 계산'], ['analysis', 'analysis.html', '조건 분석'], ['rolling', 'rolling.html', '도금 다시 계산'], ['colorcalc', 'color_calc.html', '컬러 다시 계산'],
     ['colorstat', 'color_status.html', '컬러 가동 현황'], ['leadtime', 'leadtime.html', '리드타임 기준'], ['health', 'health.html', '자료 상태'], ['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'],
     ['docs', 'docs.html', '문서'], ['report', 'report.html', '주간 보고'], ['suju', 'suju.html#close', '월 실적 마감'], ['issues', 'ct_issue.html#now', '이슈 현황']];
   /* 넘김(docs/34 단계 1): 같은 화면·같은 표·빈 화면 → 남는 화면. 화면 파일은 그대로(되돌리기 = 이 표에서 한 줄 지움) */
