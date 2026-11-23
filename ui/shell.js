@@ -49,7 +49,7 @@
     const go = () => { const t = f0 === 'index.html' || f0 === '' ? 'hy.html' : RD[f0 + '#' + ((location.hash || '').slice(1))]; if (t) { if (t.split('#')[0] === f0) { location.replace('#' + (t.split('#')[1] || '')); return false; } document.documentElement.style.visibility = 'hidden'; location.replace(t + location.search.replace(/^\?$/, '')); return true; }   /* 같은 화면 안 넘김은 가리지 않음 */ return false; };
     if (go()) return; addEventListener('hashchange', go, true); }
   /* 11/23 통합 2단계: 합친 탭은 그 탭 몫의 칸만 보임(나머지 칸은 다른 탭에 같은 숫자 — docs/34 §2). 예시 사이트 preview/pv.js KEEP 과 같은 규칙. 칸을 지우지 않고 숨김만 */
-  if (!PV && V2) { const KP = { 'board.html': /4분기 생산·재고 전망/, 'suju.html#mat': /포스코 Room|장납기 월차/, 'suju.html#order': /수출 선적/, 'ct_plan.html?ins': /미편성 주문/, 'status.html': /강종 전환 일정|부서별 월 생산량/ };
+  if (!PV && V2) { const KP = { 'board.html': /4분기 생산·재고 전망/, 'suju.html#mat': /포스코 Room|장납기 월차/, 'suju.html#order': /수출 선적/, 'ct_plan.html?ins': /미편성 주문/ };
     const kOf = () => { const f = location.pathname.split('/').pop() || 'index.html'; if (f === 'ct_plan.html' && /[?&]ins\b/.test(location.search)) return KP['ct_plan.html?ins']; return KP[f] || KP[f + '#' + (location.hash || '').slice(1)] || null; };
     const keep1 = () => { const re = kOf(), m0 = document.getElementById('ct-main'), main = m0 && m0.querySelector('h2') ? m0 : document.querySelector('main') || m0; if (!main) return;
       const C = [...main.querySelectorAll('section, details.card, .sj-h, .ct-kpis, .b-kpi')];
@@ -63,7 +63,7 @@
     document.addEventListener('DOMContentLoaded', () => { keep1(); new MutationObserver(kl).observe(document.body, { childList: true, subtree: true }); }); addEventListener('hashchange', kl); }
   const ADMN = '관리';
   /* 11/12 회의: 메뉴 순서 = 보고 순서 ① 계획 → ② 관제 → ③ 편성(docs/16 ★2). 새 양식 미리보기(V2)에서만 맨 위, 기존 메뉴는 '기타'(접힘) 아래 — 기본 화면 메뉴는 그대로 */
-  const MV2 = PV ? PV.menu : V2 ? [['v1', '계획', 'supply', [['gyehoek', 'gyehoek.html', '일별 가동계획'], ['gyehoek', 'gyehoek.html#mat', '소재'], ['plan7', 'ct_plan.html#cmp', '조정'], ['status', 'status.html', '강종 전환']]]   /* 11/17 사용자: 계획 규칙은 일별 가동계획 맨 아래 단추 · 11/23 통합 2단계: 도금 가동 현황의 강종 전환·부서별 표 */,
+  const MV2 = PV ? PV.menu : V2 ? [['v1', '계획', 'supply', [['gyehoek', 'gyehoek.html', '일별 가동계획'], ['gyehoek', 'gyehoek.html#mat', '소재'], ['plan7', 'ct_plan.html#cmp', '조정'], ['status', 'status.html', '도금 가동 현황']]]   /* 11/17 사용자: 계획 규칙은 일별 가동계획 맨 아래 단추 · 11/23 통합 2단계: 도금 가동 현황(검수 1855: 월별 부하·라인 현황·월별 가동계획·7일 실적 절이 다른 화면에 같은 이름으로 없어 숨기지 않고 전체를 보임) */,
     ['v2', '현황', 'home', [['hy', 'hy.html', '현황'], ['suju', 'suju.html#dash', '그룹별'], ['suju', 'suju.html#order', '수출 선적'], ['board', 'board.html', '4분기 전망']]],
     ['v3', '생산 편성', 'weekseq', [['wk', 'wk.html', '주간 관제'], ['pyeonseong', 'pyeonseong.html', '주간 편성'], ['weekseq', 'week_seq.html', '작업 순서'], ['seqview', 'seq_view.html', '작업 순서 조회'], ['plan7', 'ct_plan.html?ins#cg', '미편성 넣기', 'd']]],
     /* 11/23 04 기타 통합 2단계(docs/34 §3, 예시 사이트 preview/pv.js 와 같은 묶음): 기타 42개 → 주문·납기 4 · 소재·재고 6 · 생산 실적 5 */

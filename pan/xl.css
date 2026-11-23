@@ -199,3 +199,4 @@ table.x { border-collapse: separate; border-spacing: 0; width: 100%; }
   .counts > div { flex-basis: 40%; } .xl-top h1 { font-size: var(--text-2xl); }
   .x-act, .x-toast { left: var(--space-sm); right: var(--space-sm); translate: none; flex-wrap: wrap; justify-content: center; }
 }
+td.nw { white-space: nowrap; }   /* 11/23 검수 1855: AL-STS 강종 칸 */

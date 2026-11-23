@@ -29,7 +29,7 @@
         const bt = d ? BN.reduce((s0, k) => s0 + ((d.bands[k] || [0])[0]), 0) : 0;
         const bar0 = bt > 0 ? `<div class="bb" role="img" aria-label="두께 구성">${BN.map((k, i) => (d.bands[k] ? `<i class="tk${i}" style="flex:${(d.bands[k][0] / bt).toFixed(3)}"></i>` : '')).join('')}</div><span class="bt">${BN.filter((k) => d.bands[k] && d.bands[k][0] / bt >= 0.1).map((k) => `${k} ${Math.round(d.bands[k][0] / bt * 100)}%`).join(', ')}</span>` : '<span class="mu">실적 없음</span>';
         const tr = d ? (d.r3 > d.p3 * 1.15 ? 'up' : d.r3 < d.p3 * 0.85 ? 'dn' : '') : '';
-        ship += `<tr><td class="nm">${esc(x[0])}</td><td>${FNM[f]}</td><td>${esc(String(x[4]).replace(/_/g, ' '))}</td>${cell(`${kk}|t`, x[1])}${cell(`${kk}|a`, x[2], String)}${cell(`${kk}|b`, x[3], String)}
+        ship += `<tr><td class="nm">${esc(x[0])}</td><td class="nw">${FNM[f]}</td><td>${esc(String(x[4]).replace(/_/g, ' '))}</td>${cell(`${kk}|t`, x[1])}${cell(`${kk}|a`, x[2], String)}${cell(`${kk}|b`, x[3], String)}
           <td class="bn">${b0 - a0 >= 10 ? '월 전체<small>반순 배분</small>' : `${Math.ceil(a0 / 5)}반순<small>${a0}일에서 ${b0}일</small>`}</td>
           <td class="num ${tr}">${d ? `${f1(d.r3)}<small>이전 ${f1(d.p3)}${tr === 'up' ? ', 증가' : tr === 'dn' ? ', 감소' : ''}</small>` : '<span class="mu">실적 없음</span>'}</td>
           <td class="bc">${bar0}</td><td class="sp">${d && d.top.length ? d.top.slice(0, 3).map((t) => `<span>${t[0]}×${t[1]} ${esc(t[2])} <b>${f1(t[3])}t</b></span>`).join('') : ''}${x[6] ? `<small>${esc(x[6])}</small>` : ''}</td></tr>`; } }

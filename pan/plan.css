@@ -648,3 +648,4 @@ input.why.lf { display: block; width: 100%; max-width: 420px; height: 40px; marg
 .cal0 .cal .cg .ws { min-width: 0; overflow: hidden; } .cal0 .cal .cg .ws > span { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 4px; min-width: 0; white-space: normal; } .cal0 .cal .cg .ws .wo small { display: block; width: 100%; text-align: center; }
 .L3 .ordc .t.ot tbody td:nth-child(2), .t.ot tbody td:nth-child(2) { white-space: normal !important; word-break: keep-all; overflow-wrap: anywhere; }
 .cal0 .cl.dn { white-space: normal; flex-wrap: wrap; text-align: center; row-gap: 0; }   /* 11/23 추가정지 1,440분 칸 잘림 */
+td.nw { white-space: nowrap; }   /* 11/23 검수 1855: AL-STS 가 칸에서 꺾이던 것(강종 칸만) */
