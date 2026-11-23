@@ -64,7 +64,7 @@
     $('ct-main').innerHTML = `
       <div class="xl-top"><h1>기준값</h1><p class="lead">노란 입력란 수정 후 저장</p>
         <div class="counts"><div><span>배선일정 목적지</span><b>${nAll}건</b></div><div><span>T/Hr</span><b>${Object.keys(T.rate).filter((k) => k.split('|').length === 4).length}건</b></div><div><span>소재 리드타임</span><b>${LD.length}건</b></div><div class="${fixed.length ? 'on' : ''}"><span>수정한 값</span><b>${fixed.length}건</b></div></div>
-        <nav><a href="pan/base.html#s1">배선일정</a><a href="pan/base.html#s2">T/Hr</a><a href="pan/base.html#s3">소재 리드타임</a><a href="pan/base.html#s4">전환 규칙값</a><a href="pan/base.html#s5">수정 내역</a></nav></div>
+        <nav><a href="pan/base.html#s1">배선일정</a><a href="pan/base.html#s2">T/Hr</a><a href="pan/base.html#s3">소재 리드타임</a><a href="pan/base.html#s4">전환 규칙값</a><a href="pan/base.html#s5">상한 일수</a><a href="pan/base.html#s6">수정 내역</a></nav></div>
       <section class="xl" id="s1"><div class="hd"><span class="no">1</span><h2>배선일정, 목적지별 출항 기간</h2></div>
         <p class="sub">출처: 배선일정 엑셀(정리_배선일정, 정리_판매데이터)</p>
         <div class="tb"><label>목적지 검색<input id="b-q" type="search" placeholder="목적지, 국가, 강종" value="${esc(st.q || '')}"></label>
@@ -82,7 +82,10 @@
       <section class="xl" id="s4"><div class="hd"><span class="no">4</span><h2>전환 규칙값</h2></div>
         <div class="xw"><table class="x"><thead><tr><th>항목</th><th>값</th><th>단위</th></tr></thead><tbody>${rule}
           <tr><td class="nm">M/C와 S/D 요일</td><td>평일만</td><td>주말 금지</td></tr></tbody></table></div></section>
-      <section class="xl" id="s5"><div class="hd"><span class="no">5</span><h2>수정 내역</h2></div><p class="sub">기본값과 다른 값, 가동포털 엔진 반영은 승인 뒤</p>
+      <section class="xl" id="s5"><div class="hd"><span class="no">5</span><h2>상한 일수, 강종별</h2></div>
+        <p class="sub">가동포털 계획 규칙(①-2)과 같은 값입니다. 어느 쪽에서 바꿔도 같이 바뀌고, 저장하고 적용하면 가동포털 월간 가동을 다시 계산합니다</p>
+        <div id="g-box">${grBox()}</div></section>
+      <section class="xl" id="s6"><div class="hd"><span class="no">6</span><h2>수정 내역</h2></div><p class="sub">기본값과 다른 값, 가동포털 엔진 반영은 승인 뒤</p>
         <div class="chg">${chg}</div></section>
       <div id="x-act" class="x-act" hidden></div><div id="x-toast" class="x-toast" role="status" hidden></div>`;
     document.querySelectorAll('input[data-k]').forEach((i) => {
@@ -95,6 +98,7 @@
     let tm; $('b-q').oninput = (e) => { clearTimeout(tm); tm = setTimeout(() => { st.q = e.target.value; draw(); const x = $('b-q'); x.focus(); x.setSelectionRange(x.value.length, x.value.length); }, 300); };
     $('b-ord').onchange = (e) => { st.asc = !!e.target.value; draw(); };
     $('b-only').onchange = (e) => { st.only = e.target.checked; draw(); };
+    grBind();
     bar();
     if (toastMsg) { const t = $('x-toast'); t.innerHTML = `<span>${esc(toastMsg)}</span>${canUndo ? '<button type="button" id="x-undo">되돌리기</button>' : ''}`; t.hidden = false; toastMsg = '';
       if ($('x-undo')) $('x-undo').onclick = () => { if (PS.undo()) { toastMsg = '되돌림'; canUndo = false; } };
@@ -105,6 +109,51 @@
     $('x-save').onclick = save; $('x-clr').onclick = () => { pend = {}; draw(); }; }
   let toastMsg = '', toastT = null, canUndo = false;
   function save() { const pairs = Object.entries(pend); if (!pairs.length) return; pend = {}; toastMsg = `${pairs.length}건 저장했습니다. 계산에 바로 반영됩니다`; canUndo = true; PS.setMany(pairs, `기준값 ${pairs.length}건 수정: ${pairs.slice(0, 3).map(([k, v]) => `${k.slice(2)} = ${v == null ? '기본값' : v}`).join(' · ')}`); }
+  /* 5. 상한 일수(강종별) — 공유 저장소 cgl_tf_rules(가동포털 rules.html 과 같은 표·같은 암호화). 11/23 사용자 '어느 한쪽에서 변경하면 반대쪽도 동일하게' */
+  const GRK = [['도금수출 AL', '도금 수출 AL'], ['도금수출 AZ', '도금 수출 AZ'], ['도금수출 MAC', '도금 수출 MAC'], ['도금국내 AL', '도금 국내 AL'], ['도금국내 AZ', '도금 국내 AZ'], ['도금국내 MAC', '도금 국내 MAC'],
+    ['자동차 STS 임가공', '자동차 STS 임가공'], ['임가공 MAC', '임가공 MAC'], ['자동차 STS 직판', '자동차 STS 직판'], ['자동차 AL', '자동차 AL'], ['자동차 MAC', '자동차 MAC']];   // = cglplan/tfrules.py GRADE_KEYS · rules.html GRK
+  const GDEF = { '도금수출 AL': 15, '도금수출 AZ': 8, '도금수출 MAC': 8, '도금국내 AL': 25, '도금국내 AZ': 13, '도금국내 MAC': 13, '자동차 STS 임가공': 3, '임가공 MAC': 1, '자동차 STS 직판': 40, '자동차 AL': 35, '자동차 MAC': 40 };
+  const TR_API = () => GP.SUPABASE_URL + '/rest/v1/cgl_tf_rules', TR_KEY = 'sb_publishable_BlfAhxz_v3yg6iJw_nbRaA_YMFAOS7K', DEF_AT = '2026-11-09T06:00:00+00:00';
+  const TRH = { apikey: TR_KEY, Authorization: 'Bearer ' + TR_KEY, 'Content-Type': 'application/json' };
+  const PWv = () => { try { return localStorage.getItem('cgl-analysis-pw') || ''; } catch (e) { return ''; } };
+  let GR = { st: '불러오는 중', A: null, L: null, msg: '' };
+  async function grLoad() {
+    try {
+      const pw = PWv(); const IG = await GP.decryptJSON(await GP.latest('integrated.enc.json'), pw); GR.A = IG.tfRules || {};
+      const r = await fetch(TR_API() + '?select=id,at,who,apply,payload&order=id.desc&limit=30', { headers: TRH }); if (!r.ok) throw new Error('공유 저장소 읽기 ' + r.status);
+      GR.L = null; for (const x of await r.json()) { try { const o = await GP.decryptJSON(JSON.parse(x.payload), pw); if (o && o.days && o.stockMax) { GR.L = Object.assign({ id: x.id, at: x.at, who: x.who, apply: x.apply }, o); break; } } catch (e) { /* 암호 다른 줄 */ } }
+      GR.st = '';
+    } catch (e) { GR.st = `불러오지 못했습니다(${e.message})`; }
+    const b = $('g-box'); if (b) { b.innerHTML = grBox(); grBind(); }
+  }
+  const grCur = () => { const L = GR.L && String(GR.L.at) > DEF_AT ? GR.L : null; return Object.assign({}, GDEF, (GR.A && GR.A.grade) || {}, (L && L.grade) || {}); };
+  function grBox() {
+    if (GR.st) return `<p class="none">${esc(GR.st)}</p>`;
+    const A = (GR.A && GR.A.grade) || {}, C = grCur(), L = GR.L;
+    const rows = GRK.map(([k, nm]) => `<tr><td class="nm">${esc(nm)}</td><td class="num">${A[k] != null ? `${A[k]}일` : '<span class="mu">그룹 일수</span>'}</td><td class="in"><input inputmode="numeric" data-g="${esc(k)}" value="${C[k]}" aria-label="${esc(nm)} 상한 일수"></td></tr>`).join('');
+    return `<div class="xw"><table class="x"><thead><tr><th>판매 그룹, 강종</th><th>지금 계획</th><th>바꿀 값(일)</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="sub">${L ? `마지막 저장 ${esc(String(L.at).slice(5, 16).replace('T', ' '))} ${esc(L.who || '')}${L.apply ? ', 적용 요청' : ''}` : '저장 기록 없음'}${GR.msg ? ` · <b>${esc(GR.msg)}</b>` : ''}</p>
+      <div class="tb"><button type="button" class="b1" id="g-apply">저장하고 적용</button><a href="rules.html#edit">가동포털 계획 규칙에서 보기</a></div>`;
+  }
+  function grBind() {
+    const b = $('g-apply'); if (!b) return;
+    b.onclick = async () => {
+      const g = {}; let bad = false;
+      document.querySelectorAll('input[data-g]').forEach((i) => { const v = num(i.value); if (v == null || !isFinite(v) || v < 0 || v > 120) bad = true; g[i.dataset.g] = v; });
+      if (bad) { GR.msg = '0~120일 사이로 입력'; $('g-box').innerHTML = grBox(); grBind(); return; }
+      const L = GR.L && String(GR.L.at) > DEF_AT ? GR.L : null, A = GR.A || {};
+      const base = L || { days: A.days, target: A.target, stockMax: A.stockMax, plating: A.plating, replan: A.replan };
+      const o = { days: base.days, target: base.target, stockMax: base.stockMax, plating: base.plating, replan: base.replan, grade: g, memo: '판생 기준값에서 강종별 상한 일수 수정' };
+      if (!o.days || !o.stockMax) { GR.msg = '지금 계획 수치를 못 읽어 저장하지 않았습니다'; $('g-box').innerHTML = grBox(); grBind(); return; }
+      b.disabled = true;
+      try {
+        const env = await GP.encryptJSON(o, PWv(), 'tf_rules');
+        const r = await fetch(TR_API(), { method: 'POST', headers: Object.assign({ Prefer: 'return=minimal' }, TRH), body: JSON.stringify({ who: (CT.me && CT.me()) || '판생', payload: JSON.stringify(env), apply: true }) });
+        if (!r.ok) throw new Error('저장 실패 ' + r.status);
+        GR.msg = '저장했습니다. 다음 정시에 가동포털 월간 가동을 다시 계산합니다'; await grLoad();
+      } catch (e) { GR.msg = e.message; const x = $('g-box'); if (x) { x.innerHTML = grBox(); grBind(); } }
+    };
+  }
   PS.on(() => { if (B) draw(); });
-  PS.boot((b) => { if (!b) { $('ct-main').innerHTML = '<p>자료 없음</p>'; return; } B = b; draw(); if (location.hash) { const t = document.querySelector(location.hash); if (t) t.scrollIntoView(); } });
+  PS.boot((b) => { if (!b) { $('ct-main').innerHTML = '<p>자료 없음</p>'; return; } B = b; draw(); grLoad(); if (location.hash) { const t = document.querySelector(location.hash); if (t) t.scrollIntoView(); } });
 })();

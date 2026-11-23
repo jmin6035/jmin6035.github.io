@@ -612,3 +612,22 @@ input.why.lf { display: block; width: 100%; max-width: 420px; height: 40px; marg
   .L3 { grid-template-columns: 320px minmax(0, 1fr); align-items: start; justify-content: stretch; max-width: none; } .L3 .mid, .L3 .mid > .pn, .L3 .cal0 { max-width: none; width: 100%; justify-self: stretch; margin-inline: 0; } .L3 .lft .t.gt th, .L3 .lft .t.gt td { padding-inline: 4px; } .L3 .lft { grid-column: 1; grid-row: 1; position: sticky; top: calc(var(--hd-h) + 8px); max-height: calc(100vh - var(--hd-h) - 16px); overflow-y: auto; } .L3 .mid { grid-column: 2; grid-row: 1; } .L3 .ordc { grid-column: 1 / -1; grid-row: 2; }
 }
 .cfm .lkd.ok { color: #35c79a; border-color: rgb(53 199 154 / .5); }
+
+/* 11/23 이번 달 진행: 머리 월 진도 3칸, 지난 날 실적 칸 */
+.prg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-md, 12px); justify-self: end; width: min(100%, 720px); }
+.prg > div { display: grid; justify-items: center; gap: 2px; padding: 8px 10px; border: 1px solid var(--bd); border-radius: 10px; background: var(--c2); }
+.prg span { font-size: 13.5px; color: var(--tx3); } .prg b { font-size: 22px; font-weight: 700; color: var(--tx); font-variant-numeric: tabular-nums; } .prg b i { font-style: normal; font-size: 13.5px; color: var(--tx3); margin-left: 2px; }
+.prg small { font-size: 13.5px; color: var(--tx2); } .prg .bad small { color: var(--bad, #f87171); } .prg .ok small { color: var(--ok, #4ade80); }
+.cal0 .cl.ac0 { background: none; border: 1px solid var(--bd2); } .cal0 .cl.ac0 b { color: var(--tx3); font-weight: 500; } .cal0 .cl.ac0 em { color: var(--tx2); }
+/* 11/23 목적지·나라·담당자 → 언제 만드나 */
+.fqs { display: inline-flex; gap: 6px; align-items: center; } .fqs select { font: inherit; font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--bd2); background: var(--c2); color: var(--tx); max-width: 340px; }
+.cal0 .cl.fqoff { opacity: .28; } .cal0 .cl.fqon { box-shadow: 0 0 0 2px var(--tx) inset; } .cal0 .cl.fqon em { color: var(--tx); font-weight: 700; }
+.fql header { display: flex; align-items: center; gap: 12px; } .fql header .x0 { margin-left: auto; } .fql td small { display: block; color: var(--tx3); font-size: 13.5px; } .fql td.bad { color: var(--danger, #ff6b72); font-weight: 600; } .fql .mu { color: var(--tx3); }
+/* 11/23 오늘 할 일 */
+.pn.todo ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; } .pn.todo { margin-bottom: 12px; } .todo li { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; row-gap: 2px; padding: 8px 10px; border-radius: 8px; background: var(--c2); border: 1px solid var(--bd); text-align: left; }
+.todo li[role=button] { cursor: pointer; } .todo li[role=button]:hover { border-color: var(--bd2); } .todo .who { grid-row: span 2; align-self: start; font-size: 13.5px; font-weight: 700; color: var(--tx); background: var(--c3); border-radius: 6px; padding: 2px 6px; }
+.todo b { font-size: 14px; color: var(--tx); font-weight: 600; } .todo small { font-size: 13.5px; color: var(--tx3); line-height: 1.4; } .todo .chg { margin: 0 0 8px; font-size: 13.5px; color: var(--tx2); line-height: 1.5; text-align: left; } .todo .chg b { color: var(--tx); }
+.cdl span { display: block; text-align: left; padding: 2px 0; } .cdl small { display: block; font-size: 13.5px; color: var(--tx3); } .cdl .x0 { margin-top: 2px; } .dws .sub { font-size: 13.5px; color: var(--tx3); margin: 0 0 8px; text-align: left; }
+/* 11/23 회의 한 장 */
+.mtg tr.gsum th, .mtg tr.gsum td { font-weight: 700; background: var(--c3); } .mtg tr.use td:nth-child(5) { font-weight: 700; color: var(--tx); } .mtg td.warn { color: var(--warn, #ffbd5c); font-weight: 600; } .mtg th small { display: block; font-size: 13.5px; color: var(--tx3); font-weight: 400; } .mtg .sub { font-size: 13.5px; color: var(--tx3); margin: 8px 0 0; text-align: left; }
+.fc2 td small, .fc2 th small { display: block; font-size: 13.5px; color: var(--tx3); font-weight: 400; } .fc2 td.warn { color: var(--warn, #ffbd5c); font-weight: 600; } .fc2 .sub { font-size: 13.5px; color: var(--tx3); margin: 8px 0 0; text-align: left; } .fc2 tr.gsum td { font-weight: 700; background: var(--c3); }
