@@ -649,3 +649,17 @@ input.why.lf { display: block; width: 100%; max-width: 420px; height: 40px; marg
 .L3 .ordc .t.ot tbody td:nth-child(2), .t.ot tbody td:nth-child(2) { white-space: normal !important; word-break: keep-all; overflow-wrap: anywhere; }
 .cal0 .cl.dn { white-space: normal; flex-wrap: wrap; text-align: center; row-gap: 0; }   /* 11/23 추가정지 1,440분 칸 잘림 */
 td.nw { white-space: nowrap; }   /* 11/23 검수 1855: AL-STS 가 칸에서 꺾이던 것(강종 칸만) */
+/* 11/23 그룹 진도율(진행 달) */
+.gpr .gpw { overflow-x: auto; } .t.gp { width: 100%; } .t.gp th, .t.gp td { text-align: center; white-space: nowrap; } .t.gp td em { display: block; font-style: normal; font-weight: 700; } .t.gp td em.lo { color: var(--warn); } .t.gp td em.hi { color: var(--brand); }
+.t.gp td small, .t.gp th small { display: block; color: var(--tx2); font-weight: 400; } .t.gp tr.sum th, .t.gp tr.sum td { font-weight: 700; border-top: 1px solid var(--bd2, var(--bd)); } .t.gp td.fu { color: var(--tx3); }
+/* 11/23 조정 영향(그룹별) */
+.gim { border-color: var(--brand); } .t.gp small.up { color: var(--warn); font-weight: 700; } .t.gp small.dn { color: var(--ok, #2f9e6b); font-weight: 700; } .t.gp details summary { cursor: pointer; } .t.gp details p { margin: 2px 0; font-size: 13.5px; white-space: nowrap; }
+.t.sq td.gl span { display: block; white-space: nowrap; font-size: 13.5px; } .t.sq td.gl small.up { color: var(--warn); font-weight: 700; margin-left: 3px; } .t.sq td.gl small.dn { color: var(--ok, #2f9e6b); font-weight: 700; margin-left: 3px; }
+.t.sq td.gl small { display: inline !important; }
+/* 11/23 사용자 '오늘 할 일 줄여라, 메인은 달력': 한두 줄 칩, 설명은 마우스를 올리면(title) */
+.pn.todo { padding: 8px 14px; margin-bottom: 10px; } .pn.todo > header { margin-bottom: 6px; } .pn.todo > header h2 { font-size: 15px; }
+.pn.todo ol { display: flex; flex-wrap: wrap; gap: 6px; } .pn.todo ol li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; min-height: 0; }
+.pn.todo li .who { grid-row: auto; font-size: 13.5px; } .pn.todo li b { font-size: 13.5px; white-space: nowrap; }
+.pn.todo li small { position: absolute; width: 1px; height: 1px; overflow: visible; clip-path: inset(50%); white-space: nowrap; }
+.pn.todo .chg { margin: 0 0 6px; font-size: 13.5px; }
+.pn.todo li i.n { font-style: normal; font-size: 13.5px; font-weight: 700; color: var(--tx); }
