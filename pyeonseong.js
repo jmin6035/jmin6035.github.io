@@ -316,11 +316,14 @@
   const GRN = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E 극저', GREL: 'Gr.E 저탄', GRB: 'Gr.B' };
   const dayItems = (p, l, d) => { const C = CAL[p](); if (p === 'cc') { const R = C.raw(), x = R && ccFlow(R).F[l][d]; return x ? x.items : []; } return C.items(l, d); };
   const ymd = (d) => (!d ? '' : d.slice(0, 4) === UI.today().slice(0, 4) ? md(d) : `${d.slice(2, 4)}/${md(d)}`);   // 올해가 아니면 연도
+  /* 11/23 수정 방(사용자 '색상 아직도 코드로 안 나오네'): 컬러 생산 일정 자료엔 줄인 색(G·KT60)뿐 → 작업 순서 자료(week_seq_cc)의 상도 풀 코드를 계약번호로 붙임(작업 순서 화면과 같은 값) */
+  let CCM = null;
+  const ccCode = (con) => { if (!CCM) { CCM = {}; ((X.cc && X.cc.D && X.cc.D.jobs) || []).forEach((x) => { if (x.code && !CCM[x.con]) CCM[x.con] = { top: x.code, back: x.codeBack || '' }; }); } return CCM[con] || null; };
   function seqTable(p, I, day) {
     const td0 = UI.today();
     const row = (i, k) => {
       const kc = KC[i.kind] || [i.kind, ''], sz = i.thk ? `${(+i.thk).toFixed(2)} × ${n0(i.wdt)}` : '–';
-      const sp = p === 'cg' ? chip(i.fam, 'al') + chip(GRN[i.grade] || i.grade) + chip(i.cot) + chip(i.aft) : chip(i.item) + chip(i.code || i.top || i.color, 'cl');
+      const sp = p === 'cg' ? chip(i.fam, 'al') + chip(GRN[i.grade] || i.grade) + chip(i.cot) + chip(i.aft) : chip(i.item) + (() => { const c = i.code || ccCode(i.con); return c ? `<span class="cp cl" title="상도 풀 코드${c.back ? ` · 뒷면 ${esc(c.back)}` : ''}">${esc(c.top || c)}</span>` : chip(i.top || i.color, 'cl'); })();
       const dd = p === 'cg' ? i.dept || i.arr || i.due : i.ready;
       const dl = p === 'cg' ? (i.dept ? `출항 ${ymd(i.dept)}` : i.arr ? `입항 ${ymd(i.arr)}` : i.due ? `납기 ${ymd(i.due)}` : '–') : (i.ready ? `준비 ${ymd(i.ready)}` : '–');
       /* 11/17 검토: 이미 지난 납기·생산일 뒤 납기 = 빨강(작업 순서 화면과 같은 방식) */
@@ -440,7 +443,7 @@ table.ws tr[draggable], .pl-i { cursor: default !important; }`;
 
   async function unlock(pw) {
     try {
-      PW = pw;
+      PW = pw; CCM = null;
       for (const p of ['cg', 'cc']) {
         const env = await GP.latest(`week_seq_${p}.enc.json`); if (!env) throw new Error('자료 없음');
         const D = await GP.decryptJSON(env, PW), J = {}; D.jobs.forEach((x) => { J[x.id] = x; });

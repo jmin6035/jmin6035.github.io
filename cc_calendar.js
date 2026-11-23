@@ -126,9 +126,9 @@
       if (!I.length) continue;
       if (k === '계획편성') { body += `<div class="fgl kgbg">${nm} ${n0(sum(I, (i) => i.t))}t · ${n1(sum(I, (i) => i.h))}시간(주문 연결 전): ${I.map((i) => `${esc(i.grp)} ${n0(i.t)}t`).join(' · ')}${(c.planItems || []).length ? `<div class="pi">그날 계획 품명: ${c.planItems.map(([p, t]) => `${esc(p)} ${n0(t)}`).join(' · ')}</div>` : ''}</div>`; continue; }
       body += `<h4 class="kh"><i class="${cl}"></i>${nm} <small>${I.length}건 · ${n0(sum(I, (i) => i.t))}t · ${n1(sum(I, (i) => i.h))}시간</small></h4>`
-        + '<table class="it cmp"><colgroup><col style="width:48px"><col style="width:190px"><col><col style="width:96px"><col style="width:104px"><col style="width:96px"><col style="width:72px"><col style="width:64px"><col style="width:96px"></colgroup><thead><tr><th>순서</th><th>계약번호-행번</th><th>품명</th><th>그룹</th><th>두께×폭</th><th>상도 색</th><th class="num">톤</th><th class="num">시간</th><th>부자재 준비</th></tr></thead><tbody>'
+        + '<table class="it cmp"><colgroup><col style="width:48px"><col style="width:190px"><col><col style="width:96px"><col style="width:104px"><col style="width:96px"><col style="width:72px"><col style="width:64px"><col style="width:96px"></colgroup><thead><tr><th>순서</th><th>계약번호-행번</th><th>품명</th><th>그룹</th><th>두께×폭</th><th>상도 코드</th><th class="num">톤</th><th class="num">시간</th><th>부자재 준비</th></tr></thead><tbody>'
         + I.map((i, j) => `<tr><td class="sq">${j + 1}</td><td><div class="con">${esc(i.con)}${i.cont ? ' <small>(앞 날에서 이어서)</small>' : ''}</div>${i.locked ? '<span class="bd mv" title="작업 순서 화면에서 이 라인·날짜로 확정">확정본</span>' : ''}</td><td><b>${esc(i.item || '')}</b></td><td class="nw" title="${esc(i.grp || '')}">${esc(GNM[i.grp] || (i.grp !== '미상' && i.grp) || '')}</td>`
-          + `<td class="sz">${i.thk ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw">${esc(i.color || '')}</td><td class="num"><b>${n1(i.t)}</b></td><td class="num">${n1(i.h)}</td><td class="nw">${k === '부자재 입고대기' ? '<span class="bad">일정 없음</span>' : i.locked && i.ready > d ? `<b style="color:var(--bad)" title="확정한 날이 부자재 입고 전">${md(i.ready)} 입고</b>` : md(i.ready) || '-'}</td></tr>`).join('')
+          + `<td class="sz">${i.thk ? `${(+i.thk).toFixed(2)}×${n0(i.wdt)}` : '-'}</td><td class="nw"${i.code || i.full ? ` title="상도 풀 코드${i.codeBack || i.fullBack ? ` · 뒷면 ${esc(i.codeBack || i.fullBack)}` : ''}"` : ''}>${esc(i.code || i.full || i.color || '')}</td><td class="num"><b>${n1(i.t)}</b></td><td class="num">${n1(i.h)}</td><td class="nw">${k === '부자재 입고대기' ? '<span class="bad">일정 없음</span>' : i.locked && i.ready > d ? `<b style="color:var(--bad)" title="확정한 날이 부자재 입고 전">${md(i.ready)} 입고</b>` : md(i.ready) || '-'}</td></tr>`).join('')
         + '</tbody></table>';
     }
     if (!body) body = '<p class="msg">배정 없음</p>';
@@ -158,6 +158,9 @@
     try { O = await GP.decryptJSON(env, pw); }
     catch (e) { msg('⚠ 암호가 맞지 않습니다'); busy = false; return; }
     O.act = await actReady.then((e) => e && GP.decryptJSON(e, pw)).then((a) => (a && a.byGroup) || {}).catch(() => ({}));
+    /* 11/23 수정 방(사용자 '색상 아직도 코드로 안 나오네'): 이 자료엔 줄인 색(G·KT60)뿐 → 작업 순서 자료(week_seq_cc)의 상도 풀 코드를 계약번호로 붙임(작업 순서 화면과 같은 값). 표시 전용 칸(full)에만 넣음: 전환 비교(code·top·color)는 그대로 */
+    try { const we = await GP.latest('week_seq_cc.enc.json'), W = we && await GP.decryptJSON(we, pw), M = {}; ((W && W.jobs) || []).forEach((x) => { if (x.code && !M[x.con]) M[x.con] = [x.code, x.codeBack || '']; });
+      Object.values(O.lines || {}).forEach((L) => L.forEach((c) => (c && c.items || []).forEach((i) => { const m = M[i.con]; if (m && !i.code) { i.full = m[0]; i.fullBack = m[1]; } }))); } catch (e) { /* 풀 코드 없으면 줄인 색 그대로 */ }
     busy = false; if ($('kc-main')) render();
   }
   const weeks = () => { const W = []; O.days.forEach((d) => { const w = wedOf(d); if (!W.length || W[W.length - 1][0] !== w) W.push([w, []]); W[W.length - 1][1].push(d); }); return W; };
