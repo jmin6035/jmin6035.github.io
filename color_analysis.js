@@ -23,7 +23,7 @@
       <dt>속도</dt><dd>${fmt(x.tph13, 2)} t/시간 <small class="muted">(계획 조건 ${fmt(x.tphPlan, 2)})</small></dd>
       <dt>최근 ${N4}주</dt><dd>${fmt(x.tph4, 2)} t/시간 · 품목 구성 감안 <b>${pc(x.idx4 - 1)}</b></dd>
       <dt>휴지</dt><dd>${fmt(x.stopPerDay, 1)}시간/가동일 <small class="muted">(생산한 날 하루 평균 정지: 속도에 이미 포함)</small></dd>
-      <dt>휴지 구성</dt><dd>${x.stops.map(([c, h]) => `${esc(c)} ${fmt(h, 1)}h`).join(' · ') || '-'}</dd></dl></div>`).join('');
+      <dt>휴지 구성</dt><dd>${x.stops.map(([c, h]) => `${esc(c)} ${fmt(h, 1)}시간`).join(' · ') || '-'}</dd></dl></div>`).join('');
     const warn = Object.entries(a.lines).filter(([, x]) => x.idx4 != null && Math.abs(x.idx4 - 1) >= 0.05).map(([l, x]) => `${l} 최근 ${N4}주 속도가 계획 속도보다 ${pc(x.idx4 - 1)}: 계획 속도 조정 검토${N4 < 4 ? ' (자료 ' + N4 + '주뿐: 더 쌓인 뒤 판단)' : ''}`);
     $('ca-warns').innerHTML = warn.map((m) => `<li class="warn">경고 · ${esc(m)}</li>`).join('');
     { const ln = Object.entries(a.lines).filter(([, x]) => x.idx4 != null && Math.abs(x.idx4 - 1) >= 0.05), ap = (a.cands || []).filter((c) => c.kind !== 'line' && c.apply);   // 11/11 첫 화면 판정
@@ -62,7 +62,7 @@
       return `<div class="cp-row ${x.apply ? 'ap' : x.flag ? '' : 'ok'}"><div class="cp-n"><b>${esc(x.prod)}</b><small>${A.N4}주 ${fmt(x.t)}t</small></div>
         <div class="cp-bar"><span class="mid"></span><span class="band"></span><i class="${x.diff >= 0 ? 'p' : 'n'}" style="${x.diff >= 0 ? 'left:50%' : `left:${50 - w}%`};width:${w}%"></i><em style="${x.diff >= 0 ? `left:calc(${50 + w}% + 6px)` : `right:calc(${50 + w}% + 6px)`}">${x.diff >= 0 ? '+' : ''}${fmt(x.diff * 100, 1)}%</em></div>
         <div class="cp-v">${fmt(x.cur, 2)} → <b>${fmt(x.act, 2)}</b> <small>t/시간</small>${x.v12 != null ? `<small class="muted"> · 앞 ${A.N12}주 ${fmt(x.v12, 2)}</small>` : ''}</div>
-        <div class="cp-h">${x.h != null ? `${x.h > 0 ? '+' : ''}${fmt(x.h, 1)}h` : '-'}</div><div class="cp-s"><span class="tag ${vd[1]}">${vd[0]}</span></div></div>`; };
+        <div class="cp-h">${x.h != null ? `${x.h > 0 ? '+' : ''}${fmt(x.h, 1)}시간` : '-'}</div><div class="cp-s"><span class="tag ${vd[1]}">${vd[0]}</span></div></div>`; };
     const F = [['act', '반영 권장·검토'], ['apply', '반영 권장만'], ['ok', '유지'], ['all', '전체']];
     $('ca-cands').innerHTML = `<div class="cc-lines">${LN.map(lineCard).join('')}</div>
       <div class="cp-bar0"><b>${cl} 품명별 속도</b><div class="seg" id="ca-cf">${F.map(([k, n]) => `<button type="button" data-f="${k}" aria-pressed="${k === cf}">${n}</button>`).join('')}</div></div>

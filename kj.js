@@ -259,7 +259,7 @@
     const tabs = `<div class="kj-tabs" role="tablist" aria-label="달">${months.map((x, i) => `<button type="button" role="tab" data-m="${x}" aria-selected="${x === mSel}">${mLab(x)} <span>${i ? '계획' : '실적'}</span></button>`).join('')}</div>`;
     const noSales = !cur && pls.every((p) => A.plant[p][mSel].sales == null);
     const noStk = !cur && pls.every((p) => A.plant[p][mSel].mat == null && A.plant[p][mSel].stk == null);
-    const basis = cur ? `실적 ~${md(A.S.asOf)} · 재고 ${md(A.S.asOf)} 실재고`
+    const basis = cur ? `실적 ${md(A.S.asOf)}까지 · 재고 ${md(A.S.asOf)} 실재고`
       : `${mLab(mSel)} 납기 주문 · 생산 = 통합 계획 · ${noStk ? `${mLab(mSel)} 재고 계획 없음` : '재고 = 월말 계획'}`;
     const CH = [];
     let h = `<div class="kj-top">${tabs}<p class="kj-basis">${basis}</p>${noSales ? `<p class="kj-why">${esc(salesWhy(mSel))}</p>` : ''}</div>` + sched() + cards(cur);
@@ -316,7 +316,7 @@
     if (cur) { const act = T('pAct'), due = T('pDue'), mon = T('pPlan'), v0 = md(String(A.S.planStartAt || '').slice(0, 10) || `${mSel}-01`);
       // 11/13 사용자 결정: 월 계획 = 우리 계획 '지금' 판의 그 달 합계(지난 날 실적 + 앞날 계획: 매트릭스·캘린더 '계'와 같은 값)
       //  큰 숫자 = 실적 ÷ 월 계획(한 달 중 얼마) · 작은 글씨 = 전일까지 월차(그 달 첫 판) 계획 대비(앞서나 뒤처지나)
-      k2 = kc('suju.html#prod', '생산 달성', '월 계획 대비', shortT(act, due), pc(pctOf(act, mon)), `실적 ${n0(act)} / 월 계획 ${n0(mon)}t<br>~${md(A.S.asOf)} 월차(${v0}) 대비 <b class="${shortT(act, due)}">${pctOf(act, due) == null ? '–' : (+pctOf(act, due)).toFixed(0) + '%'}</b>`, `큰 숫자 = 1일부터 ${md(A.S.asOf)}까지 실적 ÷ 월 계획(지금 계획의 ${mLab(mSel)} 합 = 지난 날 실적 + 앞날 계획) · 작은 글씨 = ${md(A.S.asOf)}까지 월차(${v0} 첫 판) 계획 ${n0(due)}t 대비`); }
+      k2 = kc('suju.html#prod', '생산 달성', '월 계획 대비', shortT(act, due), pc(pctOf(act, mon)), `실적 ${n0(act)} / 월 계획 ${n0(mon)}t<br>${md(A.S.asOf)}까지 월차(${v0}) 대비 <b class="${shortT(act, due)}">${pctOf(act, due) == null ? '–' : (+pctOf(act, due)).toFixed(0) + '%'}</b>`, `큰 숫자 = 1일부터 ${md(A.S.asOf)}까지 실적 ÷ 월 계획(지금 계획의 ${mLab(mSel)} 합 = 지난 날 실적 + 앞날 계획) · 작은 글씨 = ${md(A.S.asOf)}까지 월차(${v0} 첫 판) 계획 ${n0(due)}t 대비`); }
     else { const prod = T('pPlan'); k2 = kc('integrated.html', '생산 계획', '', '', prod == null ? '–' : `${n0(prod)}<small>t</small>`, pls.map((p, i) => `${PN[p]} ${n0(PL[i].pPlan)}`).join(' · '), `${mLab(mSel)} 통합 계획(아래 캘린더 합)`); }
     const rl = riskList(mSel);
     const k3 = kc('suju.html#mat', '소재 결품 위험', '', rl.length ? 'bad' : '', `${rl.length}<small>건</small>`, (rl.length ? esc(rl.slice(0, 2).map((x) => x.name).join(' · ')) + (rl.length > 2 ? ` 외 ${rl.length - 2}건` : '') : `${mLab(mSel)} 결품 위험 소재 없음`) + (soonList(mSel).length ? ` · 마감 앞둔 발주 ${soonList(mSel).length}건` : ''), '아래 소재 구역 결품 위험 목록과 같은 목록');
@@ -538,7 +538,7 @@
       for (const G of Gs) { const x = A.grp[G.k][m]; if (G.self) continue;
         // 11/13 점검: 신호와 글을 같은 분자(소재 ON + OFF = 카드·매트릭스 주문 확보율)로: 기준 = 오늘 기준(1일~주문 마감 생산주 편성량)
         { const oo = x.ord == null ? null : x.ord + (x.off || 0);
-          if (oo != null && x.base != null && oo + 0.5 < x.base) add(oo < x.base * 0.9 ? '경고' : '주의', '수주', `${G.nm} 수주 ${n0(oo)}t(소재 ON+OFF): 오늘 기준 ${n0(x.base)}t(~${md(A.S.cut)} 생산 편성)의 ${P0(pctOf(oo, x.base))} · 판매계획 ${n0(x.sales)}t 대비 ${P0(pctOf(oo, x.sales))}`, x.off >= 1 ? '소재 매치 당김' : '주문 확보 요청', nextDl, A.dept[G.k]); }
+          if (oo != null && x.base != null && oo + 0.5 < x.base) add(oo < x.base * 0.9 ? '경고' : '주의', '수주', `${G.nm} 수주 ${n0(oo)}t(소재 ON+OFF): 오늘 기준 ${n0(x.base)}t(${md(A.S.cut)}까지 생산 편성)의 ${P0(pctOf(oo, x.base))} · 판매계획 ${n0(x.sales)}t 대비 ${P0(pctOf(oo, x.sales))}`, x.off >= 1 ? '소재 매치 당김' : '주문 확보 요청', nextDl, A.dept[G.k]); }
         // 11/12 회의: 미발주(주문은 있는데 소재 발주 확정 안 함) · 미수주(판매계획 − ON − OFF = 아직 안 들어온 주문): 매트릭스와 같은 값
         if (x.offNo >= 1) add('주의', '수주', `${G.nm} 미발주 ${n0(x.offNo)}t: 주문은 등록, 소재 발주 확정 안 됨`, '소재 발주 확정 요청', nextDl, A.dept[G.k]);
         }   // 미수주 조치는 뺌(매트릭스에서 미수주 칸 없앰: 11/12 사용자 '단순하게')
