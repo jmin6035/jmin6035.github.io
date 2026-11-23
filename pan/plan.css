@@ -631,3 +631,6 @@ input.why.lf { display: block; width: 100%; max-width: 420px; height: 40px; marg
 /* 11/23 회의 한 장 */
 .mtg tr.gsum th, .mtg tr.gsum td { font-weight: 700; background: var(--c3); } .mtg tr.use td:nth-child(5) { font-weight: 700; color: var(--tx); } .mtg td.warn { color: var(--warn, #ffbd5c); font-weight: 600; } .mtg th small { display: block; font-size: 13.5px; color: var(--tx3); font-weight: 400; } .mtg .sub { font-size: 13.5px; color: var(--tx3); margin: 8px 0 0; text-align: left; }
 .fc2 td small, .fc2 th small { display: block; font-size: 13.5px; color: var(--tx3); font-weight: 400; } .fc2 td.warn { color: var(--warn, #ffbd5c); font-weight: 600; } .fc2 .sub { font-size: 13.5px; color: var(--tx3); margin: 8px 0 0; text-align: left; } .fc2 tr.gsum td { font-weight: 700; background: var(--c3); }
+.fql tr.acr td { color: var(--tx2); } .fql tr.acr td small { display: block; } .fql header .x0 + .x0 { margin-left: 6px; } .dw tr.fqr td { background: var(--c3); font-weight: 600; } .dw .sqh small { margin-left: 8px; font-size: 13.5px; color: var(--tx3); }
+/* 11/23 주문 표 목적지가 길면 계약번호 칸을 덮던 것(LAZARO CARDENAS): 목적지 칸만 줄바꿈 */
+.t.ot td:nth-child(2) { white-space: normal; overflow-wrap: anywhere; max-width: 130px; line-height: 1.3; }

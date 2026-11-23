@@ -53,7 +53,7 @@
     const t3 = t3rows ? `<div class="op-w"><table class="op-t"><thead><tr><th class="l">판매그룹</th><th>${d0 ? md(d0[0]) : ''}</th><th>${dz ? md(dz[0]) : ''}</th><th>증감</th><th>재고일수</th><th class="l">판단</th></tr></thead><tbody>${t3rows}</tbody></table></div>` : '<p class="q">추이 자료 없음</p>';
     $('ct-main').innerHTML = `${kpi}
       <section class="card"><h2>그룹별 재고 판정 <small>${S.now ? md(S.now) + ' 지금 재고' : ym + ' 말'} · t</small></h2><p class="q">수출·고객 주문 재고는 일시적으로 늘어도 됨 · 문제는 갈 곳 미정 재고(특히 컬러건재)가 줄지 않는 것</p>${t1}
-        <p class="note">지금 재고 = 그룹별 지금 총량(수주 관제 그룹 재고·판생속보 자가재) × ${ym} 말 MES 재고의 계약 구성 · 재고일수 = 월말 재고일수 + 지난 날 · 판정: 수출 계약 / 고객 주문 = 출하 예정, 내수 재고기반 계약(계획재 등) = 재고 판매.</p></section>
+        <p class="note">지금 재고 = 그룹별 지금 총량(수주 관제 그룹 재고·판생속보 자가재) × ${ym} 말 MES 재고의 계약 구성 · 재고일수 = 월말 재고일수 + 지난 날. 수출 계약과 고객 주문은 출하 예정, 내수 재고기반 계약(계획재 등)은 재고 판매로 봅니다.</p></section>
       <section class="card"><h2>악성 후보 — 90일 넘은 재고 판매 <small>용도별 상위 12 · 조치 정함 ${nAct}/${U.length}</small></h2>${t2}</section>
       <section class="card"><h2>지금 재고 추이 <small>판매그룹별 · 수주 관제와 같은 값</small></h2>${t3}</section>`;
     document.querySelectorAll('[data-sk]').forEach((btn) => btn.addEventListener('click', () => form(btn.dataset.sk, +btn.dataset.t, act(btn.dataset.sk))));
