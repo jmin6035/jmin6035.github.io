@@ -811,6 +811,8 @@
       const a = (O.act[`${r[1]}|${r[0]}`] = O.act[`${r[1]}|${r[0]}`] || { t: 0, fam: {}, grp: {}, x: {} }), t = +r[4] || 0, g = GACT[r[3]] || r[3] || '기타';
       a.t += t; a.fam[r[2]] = (a.fam[r[2]] || 0) + t; a.grp[g] = (a.grp[g] || 0) + t; a.x[`${g}|${r[2]}`] = (a.x[`${g}|${r[2]}`] || 0) + t;   // x = 그룹 × 강종(편성 화면 지난 날 펼침)
     }
+    /* 11/23 수정 방: 지난 날 라인 합 = MES 도금 실적(plating_actual.daily — 01 일별 가동계획·홈·수주 관제와 같은 값). 재계획 rows 실적은 수요 배정분이라 수요개발그룹 코일이 빠짐. 강종·그룹 나눔은 rows 비율 */
+    try { const PAe = await GP.latest('plating_actual.enc.json'), PA = PAe && await GP.decryptJSON(PAe, pw); if (PA && Array.isArray(PA.daily)) for (const r of PA.daily) { if (!(r.d <= (PA.asOf || '')) || !(O.planT0 && r.d <= O.planT0)) continue; for (const l of ['1CGL', '2CGL']) { const v = r[l]; if (v == null) continue; const k = `${l}|${r.d}`, a = O.act[k]; if (!a) { if (v >= 0.5) O.act[k] = { t: v, fam: {}, grp: {}, x: {} }; continue; } const f = a.t > 0 ? v / a.t : 1; for (const o of [a.fam, a.grp, a.x]) for (const q of Object.keys(o)) o[q] *= f; a.t = v; } } } catch (e) { /* 실적 자료 없으면 재계획 실적 그대로 */ }
     CONF = await loadConfirm();
     let draft = null; try { draft = localStorage.getItem(MV_KEY()); } catch (e) { /* 무시 */ }
     const same = CONF && CONF.asOf === O.asOf;               // 같은 자료로 저장한 확정본이면 그 수정 내역을 그대로 불러와 이어서 고침(다음 날부터는 계산에 이미 고정돼 들어옴)
