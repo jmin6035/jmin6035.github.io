@@ -207,19 +207,20 @@
         P += `<td class="${e ? 'y' : ''}" title="${md(r.d)}${e ? ' ' + esc(e) : ''} 계획 ${n0(r.p)}t${past ? ` · 실적 ${r.a == null ? '-' : n0(r.a)}t` : ''}">${r.p > 0.5 ? nf(r.p) : ''}</td>`;
         Q += past && r.a != null && r.a > 0.5 ? `<td class="${r.a + 0.5 < r.p ? 'lo' : ''}">${nf(r.a)}</td>` : '<td></td>'; }
       // 11/13 사용자 '모든 화면 같은 값': 계획 줄 계 = 월 계획(지난 날 실적 + 앞날 계획 = 01 계·02 현황과 같은 값)
-      const mp = R.reduce((s_, r) => s_ + ((r.d <= D.asOf ? r.a : r.p) || 0), 0), cp = R.reduce((s_, r) => s_ + (r.d <= D.asOf ? r.p || 0 : 0), 0), ca = R.reduce((s_, r) => s_ + (r.a || 0), 0);
+      const mp = R.reduce((s_, r) => s_ + ((r.d <= D.asOf ? r.a : r.p) || 0), 0), cp = R.reduce((s_, r) => s_ + (r.d <= D.asOf ? r.p0 || 0 : 0), 0), ca = R.reduce((s_, r) => s_ + (r.a || 0), 0);
       const tt = ` title="${sub ? esc(sub) + ' · ' : ''}월 계획 ${n0(mp)}t · 1일부터 ${md(D.asOf)}까지 계획 ${n0(cp)}t → 실적 ${n0(ca)}t"`;
       const c0 = kind === 'sum' ? 'c0' : kind === 'ln' ? `c0 ${/CGL$/.test(ln) ? 'lnG' : 'lnC'} le` : 'c0 le';
       return `<tr class="${kind === 'sum' ? 'sum s1' : ''}"><th class="${c0}" rowspan="2"${tt.replace('title="', `title="${esc(nm)} · `)}>${esc(OPT.short(nm))}</th><th class="c1">계획</th>${P}<td class="tot">${n0(mp)}</td></tr>`
         + `<tr class="${kind === 'sum' ? 'sum s2' : 'le'}"><th class="c1">실적</th>${Q}<td class="tot${ca + 0.5 < cp ? ' lo' : ''}"${tt}>${n0(ca)}</td></tr>`; };
     const RD = (v) => (v == null ? v : Math.round(+v || 0));   // 일별 값 = 정수 반올림 뒤 더함(칸 합 = 계)
-    const lineR = (l) => (D.daily[l] || []).map(([d, p0, p, a]) => ({ d, p: RD(d <= D.asOf ? p0 : p), a: d <= D.asOf ? RD(a) : null }));
-    const sumR = (Ls) => days.map((d, i) => { const xs = Ls.map((R) => R[i]).filter(Boolean); return { d, p: xs.reduce((s_, x) => s_ + (x.p || 0), 0), a: d <= D.asOf && xs.some((x) => x.a != null) ? xs.reduce((s_, x) => s_ + (x.a || 0), 0) : null }; });
+    /* 11/21 사용자 '2번': 지난 날 '계획' 줄 = 그날 아침 계획(r[4] · 그룹 [3], 없으면 빈 칸). 툴팁·실적 비교의 '전일까지 계획'(p0)은 월초 계획 그대로 */
+    const lineR = (l) => (D.daily[l] || []).map(([d, p0, p, a, pm]) => ({ d, p: d <= D.asOf ? RD(pm) : RD(p), p0: RD(d <= D.asOf ? p0 : p), a: d <= D.asOf ? RD(a) : null }));
+    const sumR = (Ls) => days.map((d, i) => { const xs = Ls.map((R) => R[i]).filter(Boolean); return { d, p: xs.some((x) => x.p != null) ? xs.reduce((s_, x) => s_ + (x.p || 0), 0) : null, p0: xs.reduce((s_, x) => s_ + (x.p0 || 0), 0), a: d <= D.asOf && xs.some((x) => x.a != null) ? xs.reduce((s_, x) => s_ + (x.a || 0), 0) : null }; });
     const plantBlock = (pl, nm, lines) => { if (!inPl(pl)) return ''; const Rs = lines.map(lineR); return sec(`${nm} · 라인`) + lines.map((l, i) => rowOf(l, LC[l], Rs[i], 'ln', l)).join('') + rowOf(`${nm} 합계`, '', sumR(Rs), 'sum'); };
     body += plantBlock('G', '도금', ['1CGL', '2CGL']) + plantBlock('C', '컬러', ['1CCL', '2CCL', '3CCL', '4CCL']);
     const GN = Object.fromEntries((D.groups || []).map((g) => [g.key, g.name])), GC = ['건재수출', '가전수출', '가전내수', '주문재', '계획재', '수요개발'], GG = ['도금수출', '도금국내', '자동차', '자가재'];
     const gk = (ks) => ks.filter((g) => (D.gdaily || {})[g] && D.gdaily[g].some((r) => r[1] > 0.5 || r[2] > 0.5));
-    const gR = (g) => D.gdaily[g].map(([d, p, a]) => ({ d, p: RD(p), a: d <= D.asOf ? RD(a == null ? 0 : a) : null }));
+    const gR = (g) => D.gdaily[g].map(([d, p, a, pm]) => ({ d, p: d <= D.asOf ? RD(pm) : RD(p), p0: RD(p), a: d <= D.asOf ? RD(a == null ? 0 : a) : null }));
     if (D.gdaily) {
       if (inPl('G')) body += sec('도금 · 그룹') + gk(GG).map((g) => rowOf(GN[g] || g, '', gR(g))).join('');
       if (inPl('C')) body += sec('컬러 · 그룹') + gk(GC).map((g) => rowOf(GN[g] || g, '', gR(g))).join('');

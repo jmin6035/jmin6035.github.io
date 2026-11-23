@@ -47,7 +47,9 @@
       for (const c of R.cal) ev[`${c.line}|${c.date}`] = c;
       window.OPT_STOPEV = {}; for (const c of R.cal) if (!((+c.cap || 0) >= 1) && c.event) window.OPT_STOPEV[`${c.line}|${c.date}`] = String(c.event).replace(/\s*\(.*\)$/, '');   // 11/18 검수: 달 넘는 정지 기간(ui/optable)
       if (PA && PA.asOf && Array.isArray(PA.daily) && t0) for (const r of PA.daily) {   // 재계획 실적일 뒤에 들어온 MES 실적 = 라인 합계를 실적으로(supply.js 와 같게)
-        if (!(r.d > t0 && r.d <= PA.asOf)) continue;
+        if (!(r.d <= PA.asOf)) continue;
+        /* 11/22 장치 방 넘김: 재계획 실적일(t0) 이전 날도 라인 합 = MES 도금 실적(plating_actual.daily, 홈·수주 관제와 같은 값) — 재계획 rows 는 수요에 배정한 실적이라 수요개발그룹 코일이 빠짐. 강종·그룹 나눔은 rows 비율 */
+        if (r.d <= t0) { for (const l of LINES.G) { const k = `${l}|${r.d}`, x = pl[k], v = r[l]; if (v == null) continue; if (!x) { pl[k] = { t: v, al: {}, sub: {}, gg: {}, aa: {} }; continue; } const f = x.t > 0 ? v / x.t : 1; for (const o of [x.al, x.gg, x.aa]) if (o) for (const q of Object.keys(o)) if (typeof o[q] === 'number') o[q] *= f; x.t = v; } continue; }
         for (const l of LINES.G) { const k = `${l}|${r.d}`; pl[k] = Object.assign(pl[k] || { al: {}, sub: {} }, { t: r[l] || 0 }); }
         if (r.d > actG) actG = r.d;
       }
