@@ -618,7 +618,7 @@ input.why.lf { display: block; width: 100%; max-width: 420px; height: 40px; marg
 .prg > div { display: grid; justify-items: center; gap: 2px; padding: 8px 10px; border: 1px solid var(--bd); border-radius: 10px; background: var(--c2); }
 .prg span { font-size: 13.5px; color: var(--tx3); } .prg b { font-size: 22px; font-weight: 700; color: var(--tx); font-variant-numeric: tabular-nums; } .prg b i { font-style: normal; font-size: 13.5px; color: var(--tx3); margin-left: 2px; }
 .prg small { font-size: 13.5px; color: var(--tx2); } .prg .bad small { color: var(--bad, #f87171); } .prg .ok small { color: var(--ok, #4ade80); }
-.cal0 .cl.act { background: none; border: 1px solid var(--bd2); } .cal0 .cl.act b { color: var(--tx3); font-weight: 500; } .cal0 .cl.act em { color: var(--tx2); }
+.cal0 .cl.ac0 { background: none; border: 1px solid var(--bd2); } .cal0 .cl.ac0 b { color: var(--tx3); font-weight: 500; } .cal0 .cl.ac0 em { color: var(--tx2); }
 /* 11/23 목적지·나라·담당자 → 언제 만드나 */
 .fqs { display: inline-flex; gap: 6px; align-items: center; } .fqs select { font: inherit; font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--bd2); background: var(--c2); color: var(--tx); max-width: 340px; }
 .cal0 .cl.fqoff { opacity: .28; } .cal0 .cl.fqon { box-shadow: 0 0 0 2px var(--tx) inset; } .cal0 .cl.fqon em { color: var(--tx); font-weight: 700; }
