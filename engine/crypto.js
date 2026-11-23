@@ -101,3 +101,17 @@
   };
   if (typeof module !== 'undefined') module.exports = GP;
 })(typeof self !== 'undefined' ? self : globalThis);
+
+/* 11/23 수정 방: 게시 자료(Python 이 만든 글)의 긴 줄표 ' — ' 를 화면 글자에서만 ': ' 로(AI스러운 글 U16, 화면 코드 문구는 원본에서 바꿈).
+   본 화면만(판생 pan/ 은 판생 관문 대상이라 제외). 공통으로 읽히는 파일이 이것뿐이라 여기 둠(ui/shell.js 는 작업 방이 고치는 중) */
+(function () {
+  if (typeof document === 'undefined' || typeof location === 'undefined' || /\/pan\//.test(location.pathname)) return;
+  const DASH = / \u2014 /g, dashFix = (root) => {
+    if (!root) return;
+    const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let nd;
+    while ((nd = tw.nextNode())) { const v = nd.nodeValue; if (v.indexOf(' \u2014 ') >= 0 && !(nd.parentElement && nd.parentElement.closest('script,style,textarea,code,pre'))) nd.nodeValue = v.replace(DASH, ': '); }
+    root.querySelectorAll('[title]').forEach((e) => { if (e.title.indexOf(' \u2014 ') >= 0) e.title = e.title.replace(DASH, ': '); });
+  };
+  let t = null; const go = () => { dashFix(document.body); new MutationObserver(() => { clearTimeout(t); t = setTimeout(() => dashFix(document.body), 120); }).observe(document.body, { childList: true, subtree: true, characterData: true }); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+})();

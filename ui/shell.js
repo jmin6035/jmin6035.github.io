@@ -2,15 +2,15 @@
    페이지: <header id="shell" data-page="procure" data-crumb="소재" data-title="소재 발주 검토" data-sub="..."></header> */
 (function () {
   'use strict';
-  /* 11/12 사용자 '전부 진행해서 가상의 사이트를 만들어 봐: 내가 먼저 보게': 새 양식 미리보기. 주소에 ?ui=v2 → 이 브라우저에서 계속 새 양식(ui/v2.css), ?ui=old → 원래대로. 기본은 원래 양식 */
-  // 11/12 사용자 '본 사이트에 적용': 새 양식이 기본. ?ui=old = 이전 양식(기억), ?ui=v2 = 새 양식으로 되돌림
+  /* 11/12 사용자 '전부 진행해서 가상의 사이트를 만들어 봐 — 내가 먼저 보게': 새 양식 미리보기. 주소에 ?ui=v2 → 이 브라우저에서 계속 새 양식(ui/v2.css), ?ui=old → 원래대로. 기본은 원래 양식 */
+  // 11/12 사용자 '본 사이트에 적용' — 새 양식이 기본. ?ui=old = 이전 양식(기억), ?ui=v2 = 새 양식으로 되돌림
   /* 11/18 사용자 '추천해준 안으로 예시 사이트 만들어봐': preview/ 예시(통합안)에서만 메뉴를 바꿈(preview/pv.js 가 PV_MENU 를 줌). 본 화면은 PV 없음 = 그대로 */
   const PV = window.PV_MENU || null;
   const V2 = PV ? true : (() => { const q = new URLSearchParams(location.search).get('ui'); try { if (q === 'old') localStorage.setItem('ui-old', '1'); if (q === 'v2') localStorage.removeItem('ui-old'); return localStorage.getItem('ui-old') !== '1'; } catch (e) { return q !== 'old'; } })();
   if (V2) { document.documentElement.classList.add('v2'); const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'ui/v2.css?v=' + Date.now().toString(36).slice(0, -4); document.head.appendChild(l); }
-  /* 암호 매번 입력(11/2 사용자 '매번 암호 치고 들어가게'): 브라우저에 암호를 남기지 않음: 화면을 열 때마다 암호 칸이 뜸.
+  /* 암호 매번 입력(11/2 사용자 '매번 암호 치고 들어가게'): 브라우저에 암호를 남기지 않음 — 화면을 열 때마다 암호 칸이 뜸.
      shell.js 가 화면 스크립트보다 먼저 실행되므로 여기서 암호 키(…-pw) 저장·읽기를 막고, 예전에 저장된 암호도 지움. 되돌리기 = NO_PW_SAVE = false */
-  const NO_PW_SAVE = false;   // 11/2 회의 뒤 사용자 '비밀번호 매번 치는거 해제': 다시 켜려면 true
+  const NO_PW_SAVE = false;   // 11/2 회의 뒤 사용자 '비밀번호 매번 치는거 해제' — 다시 켜려면 true
   if (NO_PW_SAVE) {
     const isPw = (k) => /-pw$/.test(String(k)) || String(k) === 'cgl-plan-publish-v1';
     try { Object.keys(localStorage).filter(isPw).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* 무시 */ }
@@ -19,11 +19,11 @@
     Storage.prototype.setItem = function (k, v) { if (!isPw(k)) s.call(this, k, v); };
   }
   /* 11/4 사용자 '전면 개편'(control_tower_redesign PRD): 공장별 25개 메뉴 → 의사결정 목적 7개. 지금 화면은 각 메뉴의 탭으로 묶고, 단계마다 새 화면으로 바꿈(gadong-plan/docs/22) */
-  /* 11/4 2차 진단 3장: 메뉴 탭 = 업무 질문(화면 안에 탭을 또 두지 않음: '#이름'으로 같은 화면의 하위 화면). 4번째 칸 'h' = 탭 막대에는 안 보이는 전문 화면(메뉴에는 속함) */
+  /* 11/4 2차 진단 3장: 메뉴 탭 = 업무 질문(화면 안에 탭을 또 두지 않음 — '#이름'으로 같은 화면의 하위 화면). 4번째 칸 'h' = 탭 막대에는 안 보이는 전문 화면(메뉴에는 속함) */
   /* 11/10 메뉴 정리(보이는 탭 33 → 24): 칸 = [화면 id, 주소, 이름, 표시]. 표시 't' = 화면 위 탭 막대에만(왼쪽 메뉴에는 묶음 이름만).
-     메뉴에서 뺀 화면은 지우지 않고 '관리'에 둠: 모든 화면이 메뉴로 닿음. 화면 제목(h1) = 메뉴 이름 */
-  /* 11/10 사용자 '관리 탭에 왜 전부 몰아놨냐: 각 탭 성격에 맞게': 관리에 모았던 화면을 성격에 맞는 묶음으로 되돌림.
-     표시 'd' = 세부 화면: 화면 위 탭에는 늘 보이고, 왼쪽 메뉴에는 그 묶음에 들어가 있을 때만 펼침(메뉴가 길어지지 않게) */
+     메뉴에서 뺀 화면은 지우지 않고 '관리'에 둠 — 모든 화면이 메뉴로 닿음. 화면 제목(h1) = 메뉴 이름 */
+  /* 11/10 사용자 '관리 탭에 왜 전부 몰아놨냐 — 각 탭 성격에 맞게': 관리에 모았던 화면을 성격에 맞는 묶음으로 되돌림.
+     표시 'd' = 세부 화면 — 화면 위 탭에는 늘 보이고, 왼쪽 메뉴에는 그 묶음에 들어가 있을 때만 펼침(메뉴가 길어지지 않게) */
   const MENU = PV ? [] : [
     ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '주문 확보율'], ['suju', 'suju.html#prod', '생산'], ['suju', 'suju.html#mat', '소재'], ['suju', 'suju.html#stock', '재고'], ['suju', 'suju.html#close', '월 실적 마감']]],
     ['ct1', '통합 관제', 'home', [['home', 'index.html', '통합 관제', 't'],
@@ -40,7 +40,7 @@
   ];
   const ADMIN = PV ? PV.admin : [['health', 'health.html', '자료 상태'], ['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['docs', 'docs.html', '문서']];
   const ADMN = '관리';
-  /* 11/12 회의: 메뉴 순서 = 보고 순서 ① 계획 → ② 관제 → ③ 편성(docs/16 ★2). 새 양식 미리보기(V2)에서만 맨 위, 기존 메뉴는 '기타'(접힘) 아래: 기본 화면 메뉴는 그대로 */
+  /* 11/12 회의: 메뉴 순서 = 보고 순서 ① 계획 → ② 관제 → ③ 편성(docs/16 ★2). 새 양식 미리보기(V2)에서만 맨 위, 기존 메뉴는 '기타'(접힘) 아래 — 기본 화면 메뉴는 그대로 */
   const MV2 = PV ? PV.menu : V2 ? [['v1', '계획', 'supply', [['gyehoek', 'gyehoek.html', '일별 가동계획'], ['gyehoek', 'gyehoek.html#mat', '소재']]]   /* 11/17 사용자: 계획 규칙은 메뉴에서 빼고 일별 가동계획 맨 아래 '일일 가동 계획 규칙' 단추로 */,
     ['v2', '현황', 'home', [['hy', 'hy.html', '현황']]],
     ['v3', '생산 편성', 'weekseq', [['wk', 'wk.html', '주간 관제'], ['pyeonseong', 'pyeonseong.html', '주간 편성'], ['weekseq', 'week_seq.html', '작업 순서'], ['seqview', 'seq_view.html', '작업 순서 조회']]]] : [];   // 11/17 사용자 '01 계획 · 02 현황 · 03 생산 편성, 작업은 편성 하위로 · 수주 화면은 현황(hy)으로 대체'
@@ -50,7 +50,7 @@
   const NAV = [...ALL.filter((t, k, A) => A.findIndex((u) => u[1].split('#')[0] === t[1].split('#')[0]) === k).map((t) => [t[0], t[1].split('#')[0], t[2]])];
   /* 공개 화면 제한(11/2 사용자 'IT 보안 검토 동안 가동 캘린더·소재 캘린더·재고 추이만 남기고 나머지 숨김').
      되돌리려면 SHOW = null. 목록에 없는 화면을 직접 열면 가동 캘린더로 보내고, 남긴 화면 안의 다른 화면 링크는 글자만 남김 */
-  const SHOW = null;   // 11/2 회의 뒤 사용자 '다시 전부 다 보여줘': 3화면만 남기려면 ['supply', 'matcal', 'integrated']
+  const SHOW = null;   // 11/2 회의 뒤 사용자 '다시 전부 다 보여줘' — 3화면만 남기려면 ['supply', 'matcal', 'integrated']
   const SHOWF = SHOW && NAV.filter((x) => typeof x !== 'string' && SHOW.includes(x[0])).map((x) => x[1]);
   const HOME = PV ? PV.home : SHOWF ? SHOWF[0] : 'hy.html';   // 11/17 사용자: 로고·홈 = 02 현황
   if (SHOWF) {
@@ -69,7 +69,7 @@
   const SCN = { all: '전체', G: '도금', C: '컬러' };
   const DOCS = ['conditions', 'guide', 'requests', 'glossary', 'doc'];
   const UI = window.UI = window.UI || {};
-  UI.v2 = V2;   // 새 양식 미리보기 여부: 화면 스크립트가 표를 새 구성으로 그릴 때 씀(기본 화면은 그대로)
+  UI.v2 = V2;   // 새 양식 미리보기 여부 — 화면 스크립트가 표를 새 구성으로 그릴 때 씀(기본 화면은 그대로)
 
   function applyTheme(t) { if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme'); }
   let theme = 'auto'; try { theme = localStorage.getItem(TKEY) || 'auto'; } catch (e) { /* 무시 */ }
@@ -96,7 +96,7 @@
     const show = only && scope !== 'all' && scope !== only;
     if (!show) { if (el) el.remove(); return; }
     if (!el) { el = document.createElement('div'); el.id = 'ui-scope-note'; el.className = 'wrap scope-note'; h.after(el); }
-    el.innerHTML = `<div><b>이 화면은 ${SCN[only]} 자료만 있습니다.</b> 현재 '${SCN[scope]}' 보기라 내용이 없습니다: <button type="button" data-sc="${only}">${SCN[only]} 보기로</button> 또는 <a href="index.html">홈</a>에서 ${SCN[scope]} 화면 선택.</div>`;
+    el.innerHTML = `<div><b>이 화면은 ${SCN[only]} 자료만 있습니다.</b> 현재 '${SCN[scope]}' 보기라 내용이 없습니다 — <button type="button" data-sc="${only}">${SCN[only]} 보기로</button> 또는 <a href="index.html">홈</a>에서 ${SCN[scope]} 화면 선택.</div>`;
     el.querySelector('button').onclick = () => setScope(only);
   }
   /* 메뉴 아이콘(선 아이콘, 24 격자) */
@@ -129,7 +129,7 @@
     docs: 'M5 4h10l4 4v12H5zM9 12h6M9 16h6M9 8h3',
   };
   const icon = (k) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${IC[k] || IC.docs}"/></svg>`;
-  /* 마크: 겹친 강판 띠(도금층·도장층)를 형상화한 자체 도안: 공식 CI 파일을 받으면 여기만 바꾸면 됨 */
+  /* 마크: 겹친 강판 띠(도금층·도장층)를 형상화한 자체 도안 — 공식 CI 파일을 받으면 여기만 바꾸면 됨 */
   const MARK = '<svg class="mk" viewBox="0 0 40 40" aria-hidden="true"><defs><clipPath id="mkc"><rect width="40" height="40" rx="11"/></clipPath></defs><g clip-path="url(#mkc)"><rect width="40" height="40" fill="#1b3f5f"/><path d="M-6 30 30-6h9L3 30z" fill="#3774a1"/><path d="M4 40 40 4v9L13 40z" fill="#6cb1d8"/><path d="M17 40 40 17v8L25 40z" fill="#ffffff" opacity=".92"/></g></svg>';
   const GRPCLR = { 도금: 'var(--gc-g)', 컬러: 'var(--gc-c)', 소재: 'var(--gc-m)', '계획 계산': 'var(--gc-x)' };
   const DOCSP = (pg) => (DOCS.includes(pg) ? 'docs' : pg);
@@ -140,7 +140,7 @@
     if (V2 && !C.length) { const f = location.pathname.split('/').pop(); C = MV2.flatMap((m) => m[3]).filter((x) => x[1].split('#')[0] === f); }   // 새 화면(계획·관제)의 data-page 이름이 달라도 주소로 찾음
     return C.find((x) => (x[1].split('#')[1] || '') === hs) || C.find((x) => !x[1].includes('#')) || C[0] || null;
   }
-  /* 탭 막대 = 한 줄(11/10 서식 기준): 탭이 많거나 화면이 좁으면 줄을 바꾸지 않고 가로로 밀어 봄: 지금 탭이 보이게 옮기고, 더 있는 쪽 끝을 흐리게(.more-l · .more-r) */
+  /* 탭 막대 = 한 줄(11/10 서식 기준): 탭이 많거나 화면이 좁으면 줄을 바꾸지 않고 가로로 밀어 봄 — 지금 탭이 보이게 옮기고, 더 있는 쪽 끝을 흐리게(.more-l · .more-r) */
   function tabsFit(h, keep) {
     const n = h.querySelector('.ct-tabs'); if (!n) return;
     const edge = () => { n.classList.toggle('more-l', n.scrollLeft > 4); n.classList.toggle('more-r', n.scrollLeft + n.clientWidth < n.scrollWidth - 4); };
@@ -164,7 +164,7 @@
       return `<a href="${t0[1]}" class="nv-m"${m === curM ? ' aria-current="page"' : ''}>${icon(m[2])}<span>${i == null ? '' : `<small class="nv-no">${String(i + 1).padStart(2, '0')}</small>`}${m[1]}</span></a>`; };
     const link = (x) => `<a href="${x[1]}" data-tab="${tabKey(x)}"${only(x)}>${icon(x[0])}<span>${x[2]}</span></a>`;
     const adm = SHOWF ? [] : ADMIN, aOpen = inAdm || open0.includes(ADMN);
-    // 메뉴 밑 세부 탭(11/4 사용자 '탭 밑에 세부탭이 뜨게'): 화면에 들어가지 않고 바로 이동
+    // 메뉴 밑 세부 탭(11/4 사용자 '탭 밑에 세부탭이 뜨게') — 화면에 들어가지 않고 바로 이동
     const subs = (m) => { const L = m[3].filter((t) => t[3] !== 't' && (t[3] !== 'd' || m === curM) && okT(t));
       return L.length > 1 ? `<div class="nv-sub">${L.map((t) => `<a href="${t[1]}" data-tab="${tabKey(t)}"${only(t)}>${esc(t[2])}</a>`).join('')}</div>` : ''; };
     const eOpen = (curM && MENU.includes(curM)) || inAdm;   // 11/17 사용자: 04 기타는 접어 둠(지금 화면이 그 안일 때만 펼침)   // V2 '기타': 지금 화면이 그 안이거나 펼쳐 둔 경우만 열림
@@ -215,7 +215,7 @@
     });
     if (built) return; built = true;
     addEventListener('keydown', (e) => { if (e.key === 'Escape') { document.body.classList.remove('nav-open'); const hm = h.querySelector('.hamb'); if (hm) hm.setAttribute('aria-expanded', 'false'); } });
-    /* 주소 # 가 바뀌면 지금 위치 표시를 다시: 묶음이 바뀌거나(계획 변경 ↔ 주간 생산 일정) 제목이 # 마다 다르면 머리를 다시 그림 */
+    /* 주소 # 가 바뀌면 지금 위치 표시를 다시 — 묶음이 바뀌거나(계획 변경 ↔ 주간 생산 일정) 제목이 # 마다 다르면 머리를 다시 그림 */
     addEventListener('hashchange', () => {
       const c2 = curItem(d.page), g2 = MENUS.find((m) => m[3].includes(c2)), k2 = g2 ? g2[0] : ADMIN.includes(c2) ? ADMN : '';
       if (k2 !== curG || d.titleAuto != null) { const nopen = document.body.classList.contains('nav-open'); build(); fresh(); document.body.classList.toggle('nav-open', nopen); return; }
@@ -226,7 +226,7 @@
   }
 
   /* 기준일 하나(11/8 사용자 '날짜를 최신으로 통일'): 모든 화면의 '기준일·오늘' = 마지막 자료를 받은 시각(status.json runAt)이 속한 생산일(07시~).
-     실적은 그 전날까지(하루가 끝난 날만): 표시는 '실적 11/4까지 · 자료 11/5 16:50'. 브라우저 시계·화면 계산 시각(built)은 기준일로 쓰지 않음.
+     실적은 그 전날까지(하루가 끝난 날만) — 표시는 '실적 11/4까지 · 자료 11/5 16:50'. 브라우저 시계·화면 계산 시각(built)은 기준일로 쓰지 않음.
      UI.today(fb) = 기준일(status 를 못 받으면 fb → 그래도 없으면 시계 생산일) · UI.basis() = {day, at, act, txt} · UI.statusP = status 받기(화면 그리기 전에 기다림) */
   const kstIso = (t) => { const v = Date.parse(t); return isNaN(v) ? null : new Date(v + 9 * 36e5).toISOString(); };
   const clockDay = () => new Date(Date.now() + 2 * 36e5).toISOString().slice(0, 10);   // 한국 시각 − 7시간
@@ -246,9 +246,9 @@
   })();
   UI.ready = () => Promise.race([UI.statusP, new Promise((r) => setTimeout(r, 4000))]);   // 화면 스크립트: 그리기 전 await UI.ready()
   /* 소재 '발주 마감 지남' 한 기준(11/8 사용자 '화면마다 87·797·4,430·5,514t'): 앞으로 3달 생산에 필요한데 재고·입고 예정으로 못 채우는 양 중
-     발주 마감(필요일 − 리드타임 − 투입 여유)이 기준일 전인 몫: tools/mat_order_spec.py late_summary 가 계산해 mat_order.late 로 게시. 화면은 이 값만 씀
+     발주 마감(필요일 − 리드타임 − 투입 여유)이 기준일 전인 몫 — tools/mat_order_spec.py late_summary 가 계산해 mat_order.late 로 게시. 화면은 이 값만 씀
      UI.matLate(late) → {t, items, tip} | null(아직 게시 전) */
-  /* 11/17 사용자 '아예 발주를 안 하는 식으로': 계획재(재고 보충, 납기 없음) 사양은 필요일에 못 대면 발주 대상이 아님: 생산을 소재 들어온 뒤로. by = 'spec' 항목 = 계획재 사양 */
+  /* 11/17 사용자 '아예 발주를 안 하는 식으로': 계획재(재고 보충, 납기 없음) 사양은 필요일에 못 대면 발주 대상이 아님 — 생산을 소재 들어온 뒤로. by = 'spec' 항목 = 계획재 사양 */
   UI.lateItems = (L) => ((L && L.items) || []).filter((x) => x.by !== 'spec');
   UI.matLate = (L) => {
     if (!L || !L.items) return null;
@@ -256,10 +256,10 @@
     return { t: items.reduce((a, x) => a + (x.t || 0), 0), items,
       tip: items.map((x) => `${x.name} ${UI.fmtT(x.t)}${x.by === 'spec' && x.sizes ? `(${x.sizes.map((s) => `${s[1]} ${UI.fmtT(s[2])}`).join(', ')})` : ''}`).join(' · ') };
   };
-  /* 11/9: 소재 단위 상태·발주 마감 한 기준: late = UI.matLate 항목만(3달 총 부족 아님, lateT = 그 몫), soon = 발주 마감 2주 안, plan = 그 뒤, ok = 부족 없음.
+  /* 11/9: 소재 단위 상태·발주 마감 한 기준 — late = UI.matLate 항목만(3달 총 부족 아님, lateT = 그 몫), soon = 발주 마감 2주 안, plan = 그 뒤, ok = 부족 없음.
      발주 마감 = mat_order(tools/mat_order_spec.py) 의 정해진 발주일(P-FH 화 · 그 외 월 · 수입 10~20일 등 창구), next = 남은 부족의 다음 발주일
      UI.matView(MO = mat_order) → MO.groups.mats 각각 {…m, st, lateT, deadline, next} */
-  UI.matView = (MO) => {   // 11/10: 마감일 = mat_order 한 곳(정해진 발주일, 11/9 회의 F14): 예전 portal 업체별 마감(nearAll)과 섞어 화면마다 날짜가 달랐음
+  UI.matView = (MO) => {   // 11/10: 마감일 = mat_order 한 곳(정해진 발주일, 11/9 회의 F14) — 예전 portal 업체별 마감(nearAll)과 섞어 화면마다 날짜가 달랐음
     const G = (MO && MO.groups) || {}, LI = MO && MO.late && MO.late.items ? new Map(UI.lateItems(MO.late).map((x) => [x.key, x])) : null, td = (MO && MO.today) || clockDay();
     const soon = new Date(Date.parse(td + 'T00:00:00Z') + 14 * 864e5).toISOString().slice(0, 10);
     return (G.mats || []).map((m) => {
@@ -274,7 +274,7 @@
      UI.fmtDate(v)     → 'M/D'(기준일과 같은 해) · 'YYYY.M.D'(다른 해). v = 'YYYY-MM-DD…' 글자 또는 Date
      UI.fmtDateTime(v) → 'M/D HH:MM'(한국 시각). 시각 없는 날짜만 오면 'M/D'. 그래프 눈금의 천 단위 줄임은 UI.tick('25k', 소문자 k)
      UI.fmtT(v)        → '12,345t'(반올림한 정수 + 천 단위 쉼표 + t). 값이 없으면 '–'
-     UI.rate(pct)      → 달성률(실적 ÷ 계획·일정, %) 판정 한 기준: 홈 · 주간 보고 · 관제 칩이 같은 색:
+     UI.rate(pct)      → 달성률(실적 ÷ 계획·일정, %) 판정 한 기준 — 홈 · 주간 보고 · 관제 칩이 같은 색:
                          98% 이상 = 'ok'(초록, 초과 달성도 ok) · 90% 이상 98% 미만 = 'warn'(주황) · 90% 미만 = 'bad'(빨강) · 값 없음 = ''
                          (재고처럼 '많아도 문제'인 값은 이 함수를 쓰지 않음) */
   const isoOf = (v) => { if (v == null || v === '') return ''; if (v instanceof Date) return isNaN(v) ? '' : new Date(v.getTime() + 9 * 36e5).toISOString(); let t = String(v).trim(); if (/^\d{2}-\d{2}([ T]\d{2}:\d{2})?$/.test(t)) t = `${UI.today().slice(0, 4)}-${t}`;   // 해 없는 '11-10 09:45'
@@ -283,22 +283,22 @@
   UI.fmtDateTime = (v) => { const k = isoOf(v); if (!k) return v == null || v === '' ? '–' : String(v); const md = `${+k.slice(5, 7)}/${+k.slice(8, 10)}`; return /T\d{2}:\d{2}/.test(k) ? `${md} ${k.slice(11, 16)}` : md; };
   UI.fmtT = (v) => (v == null || v === '' || isNaN(+v) ? '–' : `${Math.round(+v).toLocaleString('ko-KR')}t`);
   UI.fmtT1 = (v) => (v == null || v === '' || isNaN(+v) ? '–' : `${(+v).toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}t`);
-  /* 11/10 서식 기준 추가: 화면에서 직접 toFixed·toLocaleString·요일 계산을 하지 말고 아래를 씀
-     UI.fmtDateW(v)    → 'M/D(화)': 요일이 판단에 필요한 곳(마감·회의·입항)만. 그 밖의 날짜는 UI.fmtDate
-     UI.fmtT1(v)       → '16.9t': 소수 1자리는 코일·주문 한 건처럼 100t 안팎의 낱개 값만. 합계·KPI 는 정수(UI.fmtT)
+  /* 11/10 서식 기준 추가 — 화면에서 직접 toFixed·toLocaleString·요일 계산을 하지 말고 아래를 씀
+     UI.fmtDateW(v)    → 'M/D(화)' — 요일이 판단에 필요한 곳(마감·회의·입항)만. 그 밖의 날짜는 UI.fmtDate
+     UI.fmtT1(v)       → '16.9t' — 소수 1자리는 코일·주문 한 건처럼 100t 안팎의 낱개 값만. 합계·KPI 는 정수(UI.fmtT)
      UI.fmtN(v, dec)   → '12,345'(단위 없는 숫자, 표 칸에서 머리글에 단위가 있을 때). 값이 없으면 '–'
      UI.fmtPct(v, dec) → '86.2%'(기본 소수 1자리, 100% 이상도 그대로). 값이 없으면 '–'. 색은 UI.rate
-     UI.empty(why, when) → 빈 자료 문구 한 줄(docs/16 5번: 비어 있는 이유 + 언제 채워지는지): '<p class="empty">…</p>' */
+     UI.empty(why, when) → 빈 자료 문구 한 줄(docs/16 5번: 비어 있는 이유 + 언제 채워지는지) — '<p class="empty">…</p>' */
   const WD = '일월화수목금토';
   UI.fmtDateW = (v) => { const k = isoOf(v); if (!k) return UI.fmtDate(v); return `${UI.fmtDate(v)}(${WD[new Date(k.slice(0, 10) + 'T00:00:00Z').getUTCDay()]})`; };
   UI.fmtN = (v, dec = 0) => (v == null || v === '' || isNaN(+v) ? '–' : (+v).toLocaleString('ko-KR', { minimumFractionDigits: dec, maximumFractionDigits: dec }));
   UI.fmtPct = (v, dec = 1) => (v == null || v === '' || isNaN(+v) ? '–' : `${UI.fmtN(v, dec)}%`);
   UI.empty = (why, when) => `<p class="empty">${String(why || '자료 없음').replace(/</g, '&lt;')}${when ? ` <span>${String(when).replace(/</g, '&lt;')}</span>` : ''}</p>`;
   UI.rate = (pct) => (pct == null || pct === '' || isNaN(+pct) ? '' : +pct >= 98 ? 'ok' : +pct >= 90 ? 'warn' : 'bad');
-  /* 생산 진도 한 기준(11/13 사용자 결정: 모든 화면 같은 식, 원자료 = 수주 관제 자료 suju.json 의 lines·daily):
-     월 계획 = 우리 계획 '지금' 판의 그 달 합계(지난 날 실적 + 앞날 현재 계획 = daily 일별 정수 합 = lines[].planNow): 재계획 때마다 바뀜
+  /* 생산 진도 한 기준(11/13 사용자 결정 — 모든 화면 같은 식, 원자료 = 수주 관제 자료 suju.json 의 lines·daily):
+     월 계획 = 우리 계획 '지금' 판의 그 달 합계(지난 날 실적 + 앞날 현재 계획 = daily 일별 정수 합 = lines[].planNow) — 재계획 때마다 바뀜
      달성 % (큰 숫자) = 그 달 실적 ÷ 월 계획 · 월차 대비 % (작은 글씨) = 실적 ÷ 전일까지 월차(그 달 첫 판) 계획 누계
-     UI.prodMon(S, lines?, d0?, d1?) → { act, mon, due0, mon0, pct, pct0, days:[첫날, 끝날], by:{라인:{…}} }: d0·d1 을 주면 그 기간(전일까지)만(mon = 그 기간 현재 계획) */
+     UI.prodMon(S, lines?, d0?, d1?) → { act, mon, due0, mon0, pct, pct0, days:[첫날, 끝날], by:{라인:{…}} } — d0·d1 을 주면 그 기간(전일까지)만(mon = 그 기간 현재 계획) */
   UI.prodMon = (S, lines, d0, d1) => {
     if (!S || !S.daily) return null;
     const asOf = S.asOf, LS = lines || Object.keys(S.daily), by = {}, o = { act: 0, mon: 0, due0: 0, mon0: 0, days: [] };
@@ -316,7 +316,7 @@
     for (const x of [o, ...Object.values(by)]) { x.pct = pc(x.act, x.mon); x.pct0 = pc(x.act, x.due0); }
     o.days = [...ds].sort(); o.by = by; o.asOf = asOf; return o;
   };
-  /* 판매그룹 생산 진도(같은 정의, suju.json gdaily = [날짜, 계획(지난 날 = 월차, 앞날 = 지금 계획), 실적]): keys = 수주 관제 그룹 키 하나 또는 여럿(합), 일별 값 정수 반올림 뒤 합 */
+  /* 판매그룹 생산 진도(같은 정의, suju.json gdaily = [날짜, 계획(지난 날 = 월차, 앞날 = 지금 계획), 실적]) — keys = 수주 관제 그룹 키 하나 또는 여럿(합), 일별 값 정수 반올림 뒤 합 */
   UI.grpMon = (S, keys) => {
     if (!S || !S.gdaily) return null;
     const o = { act: 0, mon: 0, due0: 0 }, R = (v) => Math.round(+v || 0);
@@ -350,7 +350,7 @@
     status: '도금 1·2CGL 게시 계획(매일 재계획)의 월별 간트·강종 전환·부서별 물량',
     rolling: '판매계획·자가재계획 엑셀로 도금 계획을 새로 계산하거나 실적으로 재계획하고 게시(담당자용). 정기수리를 추가하면 정지 시나리오도 볼 수 있음',
     analysis: '(계획 담당자용) MES 실적으로 도금 속도·M/C 손실·정지, 컬러 라인·품명 t/시간을 다시 계산해 계획 조건과 비교',
-    plancalc: '지금 게시 계획이 어떤 숫자로 계산됐는지: 그룹 월 계획(판매 + 목표 − 기초), 남은 주문, M/C·정기수리, 결품·지연',
+    plancalc: '지금 게시 계획이 어떤 숫자로 계산됐는지 — 그룹 월 계획(판매 + 목표 − 기초), 남은 주문, M/C·정기수리, 결품·지연',
     plan7: '이번 주 라인별 편성·부하 → 생산 캘린더(도금·컬러). 라인 부하·계획 변경은 세부 탭',
     weekseq: '라인별 주간 작업 순서 편집·점검·확정, 작업지시 제안 보기',
     platact: '도금 2라인 이번 달 진도, 일별·주별 생산, 속도, 제품·강종, 휴지, 강종 전환. 컬러 실적과 같은 양식',
@@ -358,9 +358,9 @@
     colorstat: '컬러 1~4CCL 4분기 계획의 월별 간트(지난 날 = 실적), 라인 한도 대비 편성, 그룹별 물량, 미편성 물량. 도금 가동 현황과 같은 역할',
     colorcalc: '(계획 담당자용) 판매계획·계획재 운영안·휴지계획 엑셀을 올려 컬러 4분기 일별 계획을 다시 계산하고, 현재 게시 계획과 비교한 뒤 게시. 서버와 같은 계산식(브라우저 안에서 실행), 도금은 기준 계획 유지',
     planstock: '계획재 운영안(TF) 88개 사양의 재고·생산·판매 진도와 월말 재고 예측. \'조치 필요\'부터 보고 담당자별로 확인',
-    cgcal: '라인별 월말까지 생산 캘린더: 현장 작업지시(확정)·소재 있는 주문(편성)·입고 예정(예상), 수요일 확정·준수율',
-    cccal: '컬러 1~4CCL 라인별 월말까지 생산 캘린더: MES 작업지시 · 컬러 계획 편성 · 소재 현황',
-    cgtasks: '도금 수주 업무 달력: 날짜·오전/오후별 할 일, 누르면 왜·순서·보는 곳·기준·결과물',
+    cgcal: '라인별 월말까지 생산 캘린더 — 현장 작업지시(확정)·소재 있는 주문(편성)·입고 예정(예상), 수요일 확정·준수율',
+    cccal: '컬러 1~4CCL 라인별 월말까지 생산 캘린더 — MES 작업지시 · 컬러 계획 편성 · 소재 현황',
+    cgtasks: '도금 수주 업무 달력 — 날짜·오전/오후별 할 일, 누르면 왜·순서·보는 곳·기준·결과물',
     report: '주 1회 임원 보고 양식. 인쇄/PDF 로 그대로 씀',
     procure: '발주 캘린더로 날짜별 발주 마감·입고 필요를 보고, 판단 목록에서 업체·수량을 정해 구매 요청서를 만듦. 발주 완료분은 입고예정 탭에 넣어야 정확',
     decisions: '회의·보고에서 정한 것과 할 일을 남기고 기한·상태를 추적(공유 설정 후 모두가 같은 기록)',
@@ -372,7 +372,7 @@
   /* 표가 있는 카드마다 '엑셀(CSV)' 내려받기 */
   function csvOf(card) {
     const q = (v) => { v = String(v == null ? '' : v).replace(/\s+/g, ' ').trim(); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
-    // 11/17: 합친 칸(rowspan·colspan)을 칸 번호로 풀어 열이 밀리지 않게(발주·입고 캘린더 등): 합친 칸의 나머지 자리는 빈칸
+    // 11/17: 합친 칸(rowspan·colspan)을 칸 번호로 풀어 열이 밀리지 않게(발주·입고 캘린더 등) — 합친 칸의 나머지 자리는 빈칸
     const grid = (t) => { const G = [], vis = (r) => !r.hidden && getComputedStyle(r).display !== 'none';
       [...t.rows].filter(vis).forEach((r, i) => { G[i] = G[i] || []; let j = 0;
         for (const c of r.cells) { if (getComputedStyle(c).display === 'none') continue; while (G[i][j] !== undefined) j++;
@@ -405,7 +405,7 @@
 
   /* 처음 보이는 카드만 차례로 떠오르게(다시 그려도 반복하지 않음) */
   const seen = new Set();
-  /* 그래프 눈금(전 화면 공통): 1·2·5 × 10^k 간격, 4~6칸: 625·1,875·2.6k 같은 어색한 눈금이 안 나오게 */
+  /* 그래프 눈금(전 화면 공통): 1·2·5 × 10^k 간격, 4~6칸 — 625·1,875·2.6k 같은 어색한 눈금이 안 나오게 */
   /* 판매 그룹 키 → 화면 이름(전 화면 공통): C=컬러, G=도금 */
   const GRP = { G수출: '도금 수출', G국내: '도금 국내', G자동차: '도금 자동차', G자가재: '도금 자가재', C수출: '컬러 수출', C건재: '컬러 건재', C수요: '컬러 수요개발' };
   UI.grp = (k) => GRP[k] || String(k).replace(/^C(?=[가-힣])/, '컬러 ').replace(/^G(?=[가-힣])/, '도금 ');
@@ -431,7 +431,7 @@
   };
 
   /* 화면 아래쪽 카드는 보일 때 움직임 시작: 처음 그릴 때 화면 밖이던 카드(와 그 안의 막대·선·행 애니메이션)를 멈춰 두었다가
-     스크롤해서 들어오면 재생: 전부 한꺼번에 재생되면 아래쪽은 내려가 볼 때 이미 끝나 있어 움직임이 안 보였음 */
+     스크롤해서 들어오면 재생 — 전부 한꺼번에 재생되면 아래쪽은 내려가 볼 때 이미 끝나 있어 움직임이 안 보였음 */
   const io = 'IntersectionObserver' in window ? new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.remove('rv-wait'); io.unobserve(e.target); } }), { threshold: 0, rootMargin: '0px 0px -40px 0px' }) : null;   // threshold 0: 화면보다 훨씬 긴 카드(cg_wo 표 약 2만px)는 6% 가 한 화면에 안 들어와 영영 안 보였음
   const hold = (el) => {
     if (!io || el.dataset.rvq) return;
@@ -445,7 +445,7 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
   }
 
-  /* 숫자 카운트업: <b data-count="1234" data-ck="key">: 같은 key 의 이전 값에서 새 값으로 */
+  /* 숫자 카운트업: <b data-count="1234" data-ck="key"> — 같은 key 의 이전 값에서 새 값으로 */
   const last = {};
   UI.count = (root) => {
     (root || document).querySelectorAll('[data-count]').forEach((el) => {
@@ -466,7 +466,7 @@
     el.textContent = msg; el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 1600);
   };
 
-  /* 관제 띠(11/3 사용자 '관제: 어느 화면에서든 전체가 한눈에'): 홈 관제판과 같은 판매그룹 신호를 모든 화면 머리 아래 한 줄로 */
+  /* 관제 띠(11/3 사용자 '관제 — 어느 화면에서든 전체가 한눈에'): 홈 관제판과 같은 판매그룹 신호를 모든 화면 머리 아래 한 줄로 */
   async function ctlStrip() {
     const h = document.getElementById('shell'); if (!h || h.dataset.page === 'home' || h.dataset.page === 'seqview' || document.getElementById('ui-ctl')) return;   // 작업 순서 조회(다른 부서용 보기 전용)엔 관제 띠 없음
     let pw = null; for (const k of ['cgl-analysis-pw', 'cgl-supply-pw']) { try { pw = pw || localStorage.getItem(k); } catch (e) { /* 무시 */ } }
@@ -481,7 +481,7 @@
       const O = pe ? await GP.decryptJSON(pe, pw) : null; if (!O) return;
       const MO = me ? await GP.decryptJSON(me, pw).catch(() => null) : null;
       const b = document.createElement('div'); b.id = 'ui-ctl'; b.className = 'wrap ctl-strip';
-      /* 11/10: 홈 밖 화면은 한 줄 요약('조치 필요 n건 · 주의 n건')만: 누르면 판매그룹별 값이 펼쳐짐(펼친 상태는 이 탭에서만 기억) */
+      /* 11/10: 홈 밖 화면은 한 줄 요약('조치 필요 n건 · 주의 n건')만 — 누르면 판매그룹별 값이 펼쳐짐(펼친 상태는 이 탭에서만 기억) */
       let op = false; try { op = sessionStorage.getItem('cgl-ctl-open') === '1'; } catch (e) { /* 무시 */ }
       const draw = () => {   // 전체·도금·컬러 바꾸면 그 공정 판매그룹만 다시(11/5 사용자 '도금 선택해도 컬러가 나온다')
         const R = UI.ctlRows(O, MO) || [], html = R.length ? UI.ctlStrip(O, MO) : ''; b.hidden = !html; if (!html) { b.innerHTML = ''; return; }
@@ -495,7 +495,7 @@
       UI.onScope(draw);
     } catch (e) { /* 암호가 다르면 띠 생략 */ }
   }
-  /* 표 정돈(11/5 사용자 '열 맞춰라 · 과도하게 칸이 늘려져 있다'): 모든 화면 공통:
+  /* 표 정돈(11/5 사용자 '열 맞춰라 · 과도하게 칸이 늘려져 있다') — 모든 화면 공통:
      ① 머리글 칸 정렬 = 그 열 본문 칸 대부분의 정렬 ② 내용 폭이 자리의 62%도 안 되는 표는 내용 폭만큼만(카드 끝까지 늘이지 않음) */
   function tidyTables() {
     document.querySelectorAll('main table').forEach((t) => {
@@ -503,7 +503,7 @@
       t.dataset.tidy = String(t.tBodies[0].rows.length);
       const cnt = [];
       { const BR = [...t.tBodies[0].rows].slice(0, 40), bo = BR.map(() => []); BR.forEach((r, ri) => { let ci = 0; [...r.cells].forEach((c) => { while (bo[ri][ci]) ci++; for (let dr = 0; dr < (c.rowSpan || 1) && ri + dr < BR.length; dr++) for (let dc = 0; dc < (c.colSpan || 1); dc++) bo[ri + dr][ci + dc] = 1; if (c.colSpan === 1 && (c.rowSpan || 1) === 1) { const a = getComputedStyle(c).textAlign.replace('start', 'left'); (cnt[ci] = cnt[ci] || {})[a] = ((cnt[ci] || {})[a] || 0) + 1; } ci += c.colSpan || 1; }); }); }
-      if (t.tHead) {   // 11/11: 머리글 칸 위치 = 위 줄의 세로 합친 칸(rowspan)을 건너뛴 실제 열: 예전엔 0부터 세어 두 줄 머리글에서 옆 칸 정렬이 붙었음('판매계획'이 '그룹'처럼 왼쪽)
+      if (t.tHead) {   // 11/11: 머리글 칸 위치 = 위 줄의 세로 합친 칸(rowspan)을 건너뛴 실제 열 — 예전엔 0부터 세어 두 줄 머리글에서 옆 칸 정렬이 붙었음('판매계획'이 '그룹'처럼 왼쪽)
         const HR = [...t.tHead.rows], occ = HR.map(() => []); const colOf = new Map();
         HR.forEach((r, ri) => { let ci = 0; [...r.cells].forEach((c) => { while (occ[ri][ci]) ci++; colOf.set(c, ci); for (let dr = 0; dr < (c.rowSpan || 1) && ri + dr < HR.length; dr++) for (let dc = 0; dc < (c.colSpan || 1); dc++) occ[ri + dr][ci + dc] = 1; ci += c.colSpan || 1; }); });
         const r = HR[HR.length - 1]; [...r.cells].forEach((c) => { const ci = colOf.get(c); if (c.colSpan === 1 && cnt[ci]) { const m = Object.entries(cnt[ci]).sort((a, b) => b[1] - a[1])[0][0]; if (getComputedStyle(c).textAlign.replace('start', 'left') !== m) c.style.setProperty('text-align', m, 'important'); } }); }
@@ -512,14 +512,14 @@
       if (getComputedStyle(t).tableLayout === 'fixed') return;
       const ncol = Math.max(0, ...[...t.rows].slice(0, 6).map((r) => [...r.cells].reduce((n, c) => n + (c.colSpan || 1), 0)));
       if (ncol >= 5) { t.style.setProperty('width', '100%', 'important'); return; }
-      if (ncol === 4) { t.style.setProperty('min-width', Math.round(full * 0.5) + 'px'); }   // 11/11 사용자 '칸 일부러 좁게 쓰냐': 칸 5개 이상 표는 카드 폭 그대로(넓은 화면·배율 축소에서 1,066px 로 뭉치던 원인): 줄이는 건 2~4칸 작은 표만   // 칸 폭 고정 표(가동 캘린더 등)는 내용 폭이 의미 없음: 넓은 화면에서 좁게 뭉치던 원인
+      if (ncol === 4) { t.style.setProperty('min-width', Math.round(full * 0.5) + 'px'); }   // 11/11 사용자 '칸 일부러 좁게 쓰냐': 칸 5개 이상 표는 카드 폭 그대로(넓은 화면·배율 축소에서 1,066px 로 뭉치던 원인) — 줄이는 건 2~4칸 작은 표만   // 칸 폭 고정 표(가동 캘린더 등)는 내용 폭이 의미 없음 — 넓은 화면에서 좁게 뭉치던 원인
       const old = t.style.width; t.style.setProperty('width', 'auto', 'important');
       const nat = t.getBoundingClientRect().width;
       if (nat > full * 0.62) { if (old) t.style.width = old; else t.style.removeProperty('width'); }
     });
   }
   /* 긴 표 머리글 붙박이(11/10): 화면 높이보다 긴 표는 스크롤해도 머리글이 위에 남음.
-     ① 표가 가로로 넘치지 않으면 CSS sticky: 표를 감싼 가로 스크롤 상자(.scroll)·카드(overflow hidden)가 있으면 sticky 가 그 상자 기준이 되므로 그 상자를 clip 으로 바꿈
+     ① 표가 가로로 넘치지 않으면 CSS sticky — 표를 감싼 가로 스크롤 상자(.scroll)·카드(overflow hidden)가 있으면 sticky 가 그 상자 기준이 되므로 그 상자를 clip 으로 바꿈
      ② 가로로 넘치는 표(가로 스크롤 상자 안 = 좁은 화면 대부분)는 CSS 로 안 되어, 스크롤할 때 머리글 줄을 그만큼 내려 줌(transform)
      세로로 따로 스크롤하는 상자 안의 표는 건드리지 않음. 좁은 화면은 위 막대(.topbar) 높이만큼 내려 붙임. 끄려면 표나 상자에 data-nostick */
   const stkJs = new Set(); let stkTop = 0, stkRaf = 0;
@@ -559,7 +559,7 @@
   /* 새 양식(V2): 숫자 칸 오른쪽 정렬 표시(n), 날짜 열이 많은 격자 표(캘린더)는 양식 적용 제외(v2-grid), 한 공장만 다루는 화면은 머리 전환 단추 숨김, 미리보기 표시 */
   const NUMRE = /^[−\-+▲▼△▽±]?\s?[\d][\d,]*(\.\d+)?\s?(t|%|%p|건|일|h|개|천t|톤|t\/h|만)?$/;
   function v2Tidy() {
-    if (!V2) {   // 11/13 사용자 '되돌리는 기능은 왜 없냐': 이전 양식에서도 새 양식으로 돌아가는 단추
+    if (!V2) {   // 11/13 사용자 '되돌리는 기능은 왜 없냐' — 이전 양식에서도 새 양식으로 돌아가는 단추
       const h0 = document.querySelector('.h1row');
       if (h0 && !document.getElementById('v2-back')) h0.insertAdjacentHTML('beforeend', '<a id="v2-back" class="noprint" href="?ui=v2" title="새 양식으로 돌아가기" style="margin-left:14px;align-self:center;font-size:14px;font-weight:700;color:#fff;background:#1f5fae;border-radius:999px;padding:4px 14px;text-decoration:none">새 양식으로</a>');
       return;
@@ -587,7 +587,7 @@
   const boot = () => { build(); fresh(); watchExport(); ctlStrip(); tidySoon(); try { new MutationObserver(tidySoon).observe(document.querySelector('main') || document.body, { childList: true, subtree: true }); } catch (e) { /* 무시 */ } addEventListener('resize', () => { document.querySelectorAll('main table[data-tidy]').forEach((t) => delete t.dataset.tidy); tidySoon(); }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 
-  /* 표 줄 번호(--ri): 줄 나타나기 애니메이션 순서. 새로 그려지는 표도 자동 */
+  /* 표 줄 번호(--ri) — 줄 나타나기 애니메이션 순서. 새로 그려지는 표도 자동 */
   function tagRows(root) { (root || document).querySelectorAll('table tbody').forEach((tb) => { if (tb.dataset.ri) return; tb.dataset.ri = '1'; [...tb.rows].forEach((r, i) => r.style.setProperty('--ri', i)); }); }
   const mo = new MutationObserver((ms) => { for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1) tagRows(n.tagName === 'TBODY' ? n.parentNode : n); });
   document.addEventListener('DOMContentLoaded', () => { tagRows(); mo.observe(document.body, { childList: true, subtree: true }); });
@@ -630,16 +630,7 @@
   let tsT = null; const tsGo = () => { tableSeps(document); new MutationObserver(() => { clearTimeout(tsT); tsT = setTimeout(() => tableSeps(document), 150); }).observe(document.body, { childList: true, subtree: true }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tsGo); else tsGo();
 
-  /* 11/23 수정 방: 게시 자료(Python 이 만든 글)의 긴 줄표 ' — ' 를 화면 글자에서만 ': ' 로(AI스러운 글 U16 — 화면 코드 문구는 원본에서 바꿈) */
-  const DASH = / \u2014 /g, dashFix = (root) => {
-    const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let nd;
-    while ((nd = tw.nextNode())) { const v = nd.nodeValue; if (v.indexOf(' \u2014 ') >= 0 && !(nd.parentElement && nd.parentElement.closest('script,style,textarea,code,pre'))) nd.nodeValue = v.replace(DASH, ': '); }
-    root.querySelectorAll && root.querySelectorAll('[title]').forEach((e) => { if (e.title.indexOf(' \u2014 ') >= 0) e.title = e.title.replace(DASH, ': '); });
-  };
-  let dsT = null; const dsGo = () => { dashFix(document.body); new MutationObserver(() => { clearTimeout(dsT); dsT = setTimeout(() => dashFix(document.body), 120); }).observe(document.body, { childList: true, subtree: true, characterData: true }); };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', dsGo); else dsGo();
-
-  /* 칸이 좁아 잘린 글자(… 처리): 마우스를 올리면 전체 글자를 말풍선으로(docs/16 잘림 금지, 10/30 재검토) */
+  /* 칸이 좁아 잘린 글자(… 처리) — 마우스를 올리면 전체 글자를 말풍선으로(docs/16 잘림 금지, 10/30 재검토) */
   document.addEventListener('mouseover', (ev) => {
     for (let e = ev.target, k = 0; e && e.nodeType === 1 && k < 3; e = e.parentElement, k++) {
       if (e.title || e.dataset.clipT) continue;
