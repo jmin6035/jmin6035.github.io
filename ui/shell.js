@@ -25,10 +25,7 @@
   /* 11/10 사용자 '관리 탭에 왜 전부 몰아놨냐 — 각 탭 성격에 맞게': 관리에 모았던 화면을 성격에 맞는 묶음으로 되돌림.
      표시 'd' = 세부 화면 — 화면 위 탭에는 늘 보이고, 왼쪽 메뉴에는 그 묶음에 들어가 있을 때만 펼침(메뉴가 길어지지 않게) */
   /* 11/23 04 기타 통합 1단계(docs/34 §4, 사용자 11/23 지휘 방 승인 '추천안대로'): 같은 화면·같은 표는 넘김(REDIR), 계산·설정 화면 13개는 '관리'(접힘)로. 화면 파일·주소는 그대로 */
-  const MENU = PV ? [] : V2 ? [   // 11/23 통합 2단계: 기타에 남은 것 = 3단계(02 현황 '그룹별'·03 편성·01 조정)로 옮길 화면과 계획 규칙
-    ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '주문 확보율']]],
-    ['ct3', '생산 일정', 'supply', [['plan7', 'ct_plan.html', '생산 일정'], ['plan7', 'ct_plan.html#cmp', '계획 변경']]],
-    ['ct6', '계획 기준', 'rules', [['rules', 'rules.html', '계획 규칙']]],
+  const MENU = PV ? [] : V2 ? [   // 11/23 통합 3단계: 기타 없음 — 모든 화면이 01~06 탭이나 관리로
   ] : [
     ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '주문 확보율'], ['suju', 'suju.html#mat', '소재']]],
     ['ct1', '통합 관제', 'home', [['board', 'board.html', '판매그룹 관제판']]],
@@ -42,18 +39,18 @@
       ['status', 'status.html', '도금 가동 현황', 'd'], ['prodsum', 'ct_prod.html#run', '가동·휴지', 'd'], ['perf', 'ct_perf.html#cause', '미달 원인', 'd']]],
     ['ct6', '계획 기준', 'rules', [['rules', 'rules.html', '계획 규칙']]],
   ];
-  const ADMIN = PV ? PV.admin : [['plancalc', 'plan_calc.html', '계획 계산'], ['analysis', 'analysis.html', '조건 분석'], ['rolling', 'rolling.html', '도금 다시 계산'], ['colorcalc', 'color_calc.html', '컬러 다시 계산'],
+  const ADMIN = PV ? PV.admin : [...(V2 ? [['rules', 'rules.html', '계획 규칙']] : []), ['plancalc', 'plan_calc.html', '계획 계산'], ['analysis', 'analysis.html', '조건 분석'], ['rolling', 'rolling.html', '도금 다시 계산'], ['colorcalc', 'color_calc.html', '컬러 다시 계산'],
     ['colorstat', 'color_status.html', '컬러 가동 현황'], ['leadtime', 'leadtime.html', '리드타임 기준'], ['health', 'health.html', '자료 상태'], ['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'],
     ['docs', 'docs.html', '문서'], ['report', 'report.html', '주간 보고'], ['suju', 'suju.html#close', '월 실적 마감'], ['issues', 'ct_issue.html#now', '이슈 현황']];
   /* 넘김(docs/34 단계 1): 같은 화면·같은 표·빈 화면 → 남는 화면. 화면 파일은 그대로(되돌리기 = 이 표에서 한 줄 지움) */
   if (!PV && !window.__PVDOC) { const f0 = location.pathname.split('/').pop() || 'index.html', h0 = (location.hash || '').slice(1);
-    const RD = { 'index.html#': 'hy.html', ...(V2 ? { 'supply.html#': 'gyehoek.html' } : {}), 'ct_issue.html#req': 'ct_issue.html#now', 'suju.html#prod': 'plating_actual.html', 'suju.html#stock': 'integrated.html',
+    const RD = { 'index.html#': 'hy.html', ...(V2 ? { 'supply.html#': 'gyehoek.html', ...(/[?&]ins\b/.test(location.search) ? {} : { 'ct_plan.html#': 'pyeonseong.html', 'ct_plan.html#cg': 'pyeonseong.html', 'ct_plan.html#cc': 'pyeonseong.html', 'ct_plan.html#week': 'pyeonseong.html' }) } : {}), 'ct_issue.html#req': 'ct_issue.html#now', 'suju.html#prod': 'plating_actual.html', 'suju.html#stock': 'integrated.html',
       'ct_prod.html#': 'ct_prod.html#ship', 'ct_prod.html#perf': 'plating_actual.html', 'ct_perf.html#': 'plating_actual.html', 'ct_perf.html#ops': 'plating_actual.html' };
     const go = () => { const t = f0 === 'index.html' || f0 === '' ? 'hy.html' : RD[f0 + '#' + ((location.hash || '').slice(1))]; if (t) { if (t.split('#')[0] === f0) { location.replace('#' + (t.split('#')[1] || '')); return false; } document.documentElement.style.visibility = 'hidden'; location.replace(t + location.search.replace(/^\?$/, '')); return true; }   /* 같은 화면 안 넘김은 가리지 않음 */ return false; };
     if (go()) return; addEventListener('hashchange', go, true); }
   /* 11/23 통합 2단계: 합친 탭은 그 탭 몫의 칸만 보임(나머지 칸은 다른 탭에 같은 숫자 — docs/34 §2). 예시 사이트 preview/pv.js KEEP 과 같은 규칙. 칸을 지우지 않고 숨김만 */
-  if (!PV && V2) { const KP = { 'board.html': /4분기 생산·재고 전망/, 'suju.html#mat': /포스코 Room|장납기 월차/, 'status.html': /강종 전환 일정|부서별 월 생산량/ };
-    const kOf = () => { const f = location.pathname.split('/').pop() || 'index.html'; return KP[f] || KP[f + '#' + (location.hash || '').slice(1)] || null; };
+  if (!PV && V2) { const KP = { 'board.html': /4분기 생산·재고 전망/, 'suju.html#mat': /포스코 Room|장납기 월차/, 'suju.html#order': /수출 선적/, 'ct_plan.html?ins': /미편성 주문/, 'status.html': /강종 전환 일정|부서별 월 생산량/ };
+    const kOf = () => { const f = location.pathname.split('/').pop() || 'index.html'; if (f === 'ct_plan.html' && /[?&]ins\b/.test(location.search)) return KP['ct_plan.html?ins']; return KP[f] || KP[f + '#' + (location.hash || '').slice(1)] || null; };
     const keep1 = () => { const re = kOf(), m0 = document.getElementById('ct-main'), main = m0 && m0.querySelector('h2') ? m0 : document.querySelector('main') || m0; if (!main) return;
       const C = [...main.querySelectorAll('section, details.card, .sj-h, .ct-kpis, .b-kpi')];
       if (!re) { C.forEach((c) => { if (c.dataset.kp) { c.style.display = ''; delete c.dataset.kp; } }); return; }
@@ -66,9 +63,9 @@
     document.addEventListener('DOMContentLoaded', () => { keep1(); new MutationObserver(kl).observe(document.body, { childList: true, subtree: true }); }); addEventListener('hashchange', kl); }
   const ADMN = '관리';
   /* 11/12 회의: 메뉴 순서 = 보고 순서 ① 계획 → ② 관제 → ③ 편성(docs/16 ★2). 새 양식 미리보기(V2)에서만 맨 위, 기존 메뉴는 '기타'(접힘) 아래 — 기본 화면 메뉴는 그대로 */
-  const MV2 = PV ? PV.menu : V2 ? [['v1', '계획', 'supply', [['gyehoek', 'gyehoek.html', '일별 가동계획'], ['gyehoek', 'gyehoek.html#mat', '소재'], ['status', 'status.html', '강종 전환']]]   /* 11/17 사용자: 계획 규칙은 일별 가동계획 맨 아래 단추 · 11/23 통합 2단계: 도금 가동 현황의 강종 전환·부서별 표 */,
-    ['v2', '현황', 'home', [['hy', 'hy.html', '현황'], ['board', 'board.html', '4분기 전망']]],
-    ['v3', '생산 편성', 'weekseq', [['wk', 'wk.html', '주간 관제'], ['pyeonseong', 'pyeonseong.html', '주간 편성'], ['weekseq', 'week_seq.html', '작업 순서'], ['seqview', 'seq_view.html', '작업 순서 조회']]],
+  const MV2 = PV ? PV.menu : V2 ? [['v1', '계획', 'supply', [['gyehoek', 'gyehoek.html', '일별 가동계획'], ['gyehoek', 'gyehoek.html#mat', '소재'], ['plan7', 'ct_plan.html#cmp', '조정'], ['status', 'status.html', '강종 전환']]]   /* 11/17 사용자: 계획 규칙은 일별 가동계획 맨 아래 단추 · 11/23 통합 2단계: 도금 가동 현황의 강종 전환·부서별 표 */,
+    ['v2', '현황', 'home', [['hy', 'hy.html', '현황'], ['suju', 'suju.html#dash', '그룹별'], ['suju', 'suju.html#order', '수출 선적'], ['board', 'board.html', '4분기 전망']]],
+    ['v3', '생산 편성', 'weekseq', [['wk', 'wk.html', '주간 관제'], ['pyeonseong', 'pyeonseong.html', '주간 편성'], ['weekseq', 'week_seq.html', '작업 순서'], ['seqview', 'seq_view.html', '작업 순서 조회'], ['plan7', 'ct_plan.html?ins#cg', '미편성 넣기', 'd']]],
     /* 11/23 04 기타 통합 2단계(docs/34 §3, 예시 사이트 preview/pv.js 와 같은 묶음): 기타 42개 → 주문·납기 4 · 소재·재고 6 · 생산 실적 5 */
     ['v4', '주문·납기', 'cgorder', [['risk', 'risk.html', '납기 위험'], ['cgorder', 'cg_order.html', '도금 주문진도'], ['ccorder', 'cc_order.html', '컬러 주문진도'], ['orders', 'ct_orders.html#cal', '납기 캘린더'], ['orders', 'ct_orders.html#track', '주문진도(전체)', 'd']]],
     ['v5', '소재·재고', 'matcal', [['matcal', 'matcal.html', '부족·발주'], ['procure', 'procure.html', '발주'], ['planstock', 'planstock.html', '계획재'], ['integrated', 'integrated.html', '제품 재고'], ['prodsum', 'ct_prod.html#ship', '출하'], ['suju', 'suju.html#mat', '포스코 룸·장납기 입력', 'd']]],
@@ -198,9 +195,9 @@
       return L.length > 1 ? `<div class="nv-sub">${L.map((t) => `<a href="${t[1]}" data-tab="${tabKey(t)}"${only(t)}>${esc(t[2])}</a>`).join('')}</div>` : ''; };
     const eOpen = (curM && MENU.includes(curM)) || (PV && inAdm);   // 11/17 사용자: 04 기타는 접어 둠(지금 화면이 그 안일 때만 펼침)   // V2 '기타': 지금 화면이 그 안이거나 펼쳐 둔 경우만 열림
     const nav = V2 ? MV2.map((m, i) => mlink(m, i) + subs(m)).join('')
-      + `<div class="nv-sec${eOpen ? ' open' : ''}" data-g="${ETC}"><button type="button" class="nv-grp nv-tg" aria-expanded="${eOpen}"><small class="nv-no">${String(MV2.length + 1).padStart(2, '0')}</small>${ETC}<svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">`
-      + MENU.map((m) => (mOK(m) ? mlink(m, null) + subs(m) : '')).join('') + (adm.length && PV ? adm.map(link).join('') : '') + '</div></div>'
-      + (adm.length && !PV ? `<div class="nv-sec${aOpen ? ' open' : ''}" data-g="${ADMN}"><button type="button" class="nv-grp nv-tg" aria-expanded="${aOpen}"><small class="nv-no">${String(MV2.length + 2).padStart(2, '0')}</small>${ADMN}<span class="nv-n">${adm.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${adm.map(link).join('')}</div></div>` : '')   /* 11/23 통합 1단계: 관리는 기타와 따로 접힘 */
+      + (!MENU.length && !(PV && adm.length) ? '' : `<div class="nv-sec${eOpen ? ' open' : ''}" data-g="${ETC}"><button type="button" class="nv-grp nv-tg" aria-expanded="${eOpen}"><small class="nv-no">${String(MV2.length + 1).padStart(2, '0')}</small>${ETC}<svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">`
+      + MENU.map((m) => (mOK(m) ? mlink(m, null) + subs(m) : '')).join('') + (adm.length && PV ? adm.map(link).join('') : '') + '</div></div>')
+      + (adm.length && !PV ? `<div class="nv-sec${aOpen ? ' open' : ''}" data-g="${ADMN}"><button type="button" class="nv-grp nv-tg" aria-expanded="${aOpen}"><small class="nv-no">${String(MV2.length + (MENU.length ? 2 : 1)).padStart(2, '0')}</small>${ADMN}<span class="nv-n">${adm.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${adm.map(link).join('')}</div></div>` : '')   /* 11/23 통합 1단계: 관리는 기타와 따로 접힘 */
       : MENU.map((m, i) => (mOK(m) ? mlink(m, i) + subs(m) : '')).join('')
       + (adm.length ? `<div class="nv-sec${aOpen ? ' open' : ''}" data-g="${ADMN}"><button type="button" class="nv-grp nv-tg" aria-expanded="${aOpen}"><small class="nv-no">${String(MENU.length + 1).padStart(2, '0')}</small>${ADMN}<span class="nv-n">${adm.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${adm.map(link).join('')}</div></div>` : '');
     // 화면 위 탭: 메뉴 묶음의 칸들. 관리 화면은 같은 파일의 하위 화면이 여럿일 때만(예: 생산 실적 · 가동·휴지 · 제품 재고 · 출하)
