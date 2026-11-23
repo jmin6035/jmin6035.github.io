@@ -630,6 +630,15 @@
   let tsT = null; const tsGo = () => { tableSeps(document); new MutationObserver(() => { clearTimeout(tsT); tsT = setTimeout(() => tableSeps(document), 150); }).observe(document.body, { childList: true, subtree: true }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tsGo); else tsGo();
 
+  /* 11/23 수정 방: 게시 자료(Python 이 만든 글)의 긴 줄표 ' — ' 를 화면 글자에서만 ': ' 로(AI스러운 글 U16 — 화면 코드 문구는 원본에서 바꿈) */
+  const DASH = / \u2014 /g, dashFix = (root) => {
+    const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let nd;
+    while ((nd = tw.nextNode())) { const v = nd.nodeValue; if (v.indexOf(' \u2014 ') >= 0 && !(nd.parentElement && nd.parentElement.closest('script,style,textarea,code,pre'))) nd.nodeValue = v.replace(DASH, ': '); }
+    root.querySelectorAll && root.querySelectorAll('[title]').forEach((e) => { if (e.title.indexOf(' \u2014 ') >= 0) e.title = e.title.replace(DASH, ': '); });
+  };
+  let dsT = null; const dsGo = () => { dashFix(document.body); new MutationObserver(() => { clearTimeout(dsT); dsT = setTimeout(() => dashFix(document.body), 120); }).observe(document.body, { childList: true, subtree: true, characterData: true }); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', dsGo); else dsGo();
+
   /* 칸이 좁아 잘린 글자(… 처리): 마우스를 올리면 전체 글자를 말풍선으로(docs/16 잘림 금지, 10/30 재검토) */
   document.addEventListener('mouseover', (ev) => {
     for (let e = ev.target, k = 0; e && e.nodeType === 1 && k < 3; e = e.parentElement, k++) {

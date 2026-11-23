@@ -141,7 +141,7 @@
     const lday = !ls.length ? '' : (() => {   // 11/11 회의: 라인 하나를 골라도 그 라인 작업가능일을 보여 줌
  const ks = [[KP, mtR], ...mtS.map((c) => [c.k, c.rs]), [KW, w.rs]];   // 11/13: 매치 후 아래 단계가 하나뿐이면(도금) 같은 줄 두 번 안 씀
       return `<h4 class="ps-h">라인별 작업가능일</h4><div class="ct-wrap"><table class="ct-t pos-t"><thead><tr><th></th>${ls.map((l) => `<th class="r">${l}</th>`).join('')}</tr></thead><tbody>`
-        + ks.map(([k, rs]) => { const h = byLine(rs, k); return `<tr><td class="nw">${MATCHED.includes(k) ? '└ ' : ''}${esc(lab(d.pl, k)).replace(/\(/, '<br>(')}</td>${ls.map((l) => `<td class="r">${h[l] >= 0.5 ? `<span class="nw1"><b>${(h[l] / 24).toFixed(1)}</b>일 <small class="mu2 il">(${n0(h[l])}시간)</small></span>` : '<span class="mu">–</span>'}</td>`).join('')}</tr>`; }).join('') + '</tbody></table></div>'; })();
+        + ks.map(([k, rs]) => { const h = byLine(rs, k); return `<tr><td class="nw">${MATCHED.includes(k) ? '└ ' : ''}${esc(lab(d.pl, k))}</td>${ls.map((l) => `<td class="r">${h[l] >= 0.5 ? `<span class="nw1"><b>${(h[l] / 24).toFixed(1)}</b>일 <small class="mu2 il">(${n0(h[l])}시간)</small></span>` : '<span class="mu">–</span>'}</td>`).join('')}</tr>`; }).join('') + '</tbody></table></div>'; })();
     // 도금: 소재 매치 전(소재 입고 전) 물량의 포스코 진행 단계(11/5 사용자)
     const pos = d.pl !== 'G' ? '' : (() => {
       const rs = cat(K0).rs, cols = [['미발주'], ['포스코 접수 전'], ['포스코 착수 전'], ...CT.PH.slice(0, 5).map(([nm]) => [nm]), ['포스코 생산 끝 · 입고 전']], v = Object.fromEntries(cols.map(([k]) => [k, { t: 0, n: 0 }]));
@@ -150,7 +150,7 @@
         if (P.pre && v[P.pre]) { v[P.pre].t += o.remT || 0; v[P.pre].n++; nIn++; continue; }
         let hit = 0; CT.PH.slice(0, 5).forEach(([nm], i) => { if (P.pt[i] >= 0.05) { v[nm].t += P.pt[i]; v[nm].n++; hit = 1; } }); nIn += hit; }
       const sh = cols.filter(([k]) => v[k].n);
-      return sh.length ? `<h4 class="ps-h">포스코 진행 단계 <small title="한 주문의 F/H 가 여러 공정에 나뉘면 공정마다 셈, 칸 건수 합이 주문 수보다 큼">소재 매치 전 ${n0(rs.length)}건 중 ${n0(nIn)}건 · 공정별 F/H 톤(여러 공정에 걸친 주문은 공정마다)</small></h4><div class="ct-wrap"><table class="ct-t pos-t"><thead><tr>${sh.map(([k]) => `<th class="r">${esc(k)}</th>`).join('')}</tr></thead>`
+      return sh.length ? `<h4 class="ps-h">포스코 진행 단계 <small title="한 주문의 F/H 가 여러 공정에 나뉘면 공정마다 셈, 칸 건수 합이 주문 수보다 큼">소재 매치 전 ${n0(rs.length)}건 중 ${n0(nIn)}건 · 공정별 F/H 톤(여러 공정에 걸친 주문은 공정마다)</small></h4><div class="ct-wrap"><table class="ct-t pos-t pos-st"><thead><tr>${sh.map(([k]) => `<th class="r">${esc(k)}</th>`).join('')}</tr></thead>`
         + `<tbody><tr>${sh.map(([k]) => `<td class="r"><b>${n0(v[k].t)}</b>t</td>`).join('')}</tr><tr class="mu2">${sh.map(([k]) => `<td class="r">${n0(v[k].n)}건</td>`).join('')}</tr></tbody></table></div>` : '';
     })();
     // 펼친 목록(11/5 컬러 담당 '각 항목 선택하면 데이터 펼쳐서 · 항목별 그룹별도'): 판매그룹 → 계약

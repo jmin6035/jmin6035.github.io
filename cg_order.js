@@ -66,9 +66,10 @@
       word = x.purT ? '접수 전' : '-'; tone = old ? 'warn' : '';
       note = `<span class="sub" title="F/H 발주 완료 · 포스코 주문진행 미등록(최근 발주는 수일 소요)">포스코 접수 전</span>${old ? '<div class="rem">발주 2주 경과 · 확인</div>' : ''}`;
     }
-    return { st, pt, note, word, tone };
+    return { st, pt, note, word, tone, s };
   }
-  const pTip = (P, i) => `${PH[i][0]}${i < 5 && PH[i][1].length ? `(${PH[i][1].join('·')})` : ''}${P.pt[i] >= 0.05 ? `: ${n1(P.pt[i])}t` : ''}`;
+  /* 11/23 수정 방: 단계 말풍선 = 그 단계 톤 + 물량 있는 세부 공정만(세부 공정 이름 전부 나열하지 않음, AI스러운 글 U16) */
+  const pTip = (P, i) => { if (!(P.pt[i] >= 0.05)) return PH[i][0]; const sub = i < 5 ? PH[i][1].filter((nm) => ((P.s || {})[nm] || 0) >= 0.05) : []; return `${PH[i][0]} ${n1(P.pt[i])}t${sub.length ? `(${sub.map((nm) => `${nm} ${n1(P.s[nm])}t`).join(', ')})` : ''}`; };
   function stages(x) {
     const P = poscoSt(x);
     return `<div class="pbar">${PH.map(([nm], i) => `<span class="ps ${P.st[i]}" title="${esc(pTip(P, i))}"></span>`).join('')}</div>${P.note}`;   // 단계 이름은 머리글 한 줄(같은 칸 너비로 맞춤)
