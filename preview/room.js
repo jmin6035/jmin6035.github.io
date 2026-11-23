@@ -135,7 +135,8 @@
     const tb = `<div class="op-w"><table class="op-t"><thead><tr><th class="l">순</th><th>지금 내수</th><th>순 평균 내수</th><th>수출·가전</th><th>1·3·4CCL 능력(t)</th><th>여유</th><th>2CCL 필요</th><th>지금 여유</th></tr></thead><tbody>`
       + R.map((r) => `<tr><td class="l">${sunLab(r.s)}</td><td>${n0(r.d0)}</td><td><b>${n0(r.d1)}</b></td><td>${n0(r.x)}</td><td>${n0(r.cap)}</td><td>${r.room >= 0.5 ? n0(r.room) : '–'}</td><td class="${r.u2 >= 0.5 ? 'bad' : 'z'}">${r.u2 >= 0.5 ? n0(r.u2) : '–'}</td><td class="z">${n0(r.roomNow)}</td></tr>`).join('')
       + `<tr class="tot"><td class="l">합계</td><td>${n0(sum('d0'))}</td><td>${n0(sum('d1'))}</td><td>${n0(sum('x'))}</td><td>${n0(sum('cap'))}</td><td>${n0(roomT)}</td><td>${u2 >= 0.5 ? n0(u2) : '–'}</td><td>${n0(sum('roomNow'))}</td></tr>${(() => { const need = sum('d1') + sum('x'), gap = need - sum('cap'), by = sum('beyAbs'), rs = gap - (u2 + by - roomT); return gap >= 0.5 || roomT >= 0.5 ? `<tr class="tot"><td class="l">맞춤</td><td colspan="7">물량 ${n0(need)}t − 능력 ${n0(sum('cap'))}t = ${sg(gap)}t: 2CCL ${n0(u2)}t, 다음 달로 ${n0(by)}t, 여유 ${n0(roomT)}t, 내수·수출 속도 차이 ${sg(rs)}t</td></tr>` : ''; })()}</tbody></table></div>`;
-    $('tc-r').innerHTML = ans + tb + ``;
+    const hd = (() => { const need = sum('d1') + sum('x'), cap = sum('cap'), gap = need - cap, by = sum('beyAbs'); return `<div class="tch" role="group" aria-label="이 달 한눈에"><div><span>${+m.slice(5)}월 물량</span><b>${n0(need)}<i>t</i></b></div><div><span>1·3·4CCL 능력</span><b>${n0(cap)}<i>t</i></b></div><div class="${gap >= 0.5 ? 'bad' : 'ok'}"><span>${gap >= 0.5 ? '넘치는 양' : '남는 능력'}</span><b>${n0(Math.abs(gap))}<i>t</i></b><small>${gap >= 0.5 ? `2CCL ${n0(u2)}t, 다음 달로 ${n0(by)}t로 맞춤` : '그대로 소화'}</small></div></div>`; })();   /* 11/23 검수 어긋남 5(규칙 27): 첫 화면에 '이 달 물량이 능력보다 얼마 넘치고 어떻게 맞추나'를 먼저 */
+    $('tc-r').innerHTML = hd + ans + tb + ``;
   }
 
   /* ---------- 판매그룹별 ---------- */

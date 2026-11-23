@@ -631,3 +631,20 @@ input.why.lf { display: block; width: 100%; max-width: 420px; height: 40px; marg
 /* 11/23 회의 한 장 */
 .mtg tr.gsum th, .mtg tr.gsum td { font-weight: 700; background: var(--c3); } .mtg tr.use td:nth-child(5) { font-weight: 700; color: var(--tx); } .mtg td.warn { color: var(--warn, #ffbd5c); font-weight: 600; } .mtg th small { display: block; font-size: 13.5px; color: var(--tx3); font-weight: 400; } .mtg .sub { font-size: 13.5px; color: var(--tx3); margin: 8px 0 0; text-align: left; }
 .fc2 td small, .fc2 th small { display: block; font-size: 13.5px; color: var(--tx3); font-weight: 400; } .fc2 td.warn { color: var(--warn, #ffbd5c); font-weight: 600; } .fc2 .sub { font-size: 13.5px; color: var(--tx3); margin: 8px 0 0; text-align: left; } .fc2 tr.gsum td { font-weight: 700; background: var(--c3); }
+.fql tr.acr td { color: var(--tx2); } .fql tr.acr td small { display: block; } .fql header .x0 + .x0 { margin-left: 6px; } .dw tr.fqr td { background: var(--c3); font-weight: 600; } .dw .sqh small { margin-left: 8px; font-size: 13.5px; color: var(--tx3); }
+/* 11/23 주문 표 목적지가 길면 계약번호 칸을 덮던 것(LAZARO CARDENAS): 목적지 칸만 줄바꿈 */
+.t.ot td:nth-child(2) { white-space: normal; overflow-wrap: anywhere; max-width: 130px; line-height: 1.3; }
+/* 11/23 디테일: 실적 미달, 휴지 사유, 목적지 입력 */
+.cal0 .cl.ac0.lo em { color: var(--warn, #ffbd5c); } .cal0 .ws .wo small { display: block; font-size: 13.5px; color: var(--tx3); } .cal0 .ws .wo small.lo { color: var(--warn, #ffbd5c); }
+.cal0 .cl.dn small { display: block; font-size: 13.5px; color: var(--tx3); font-weight: 400; } .fqs input { font: inherit; font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--bd2); background: var(--c2); color: var(--tx); width: 300px; }
+.fql tr.rk td { color: var(--warn, #ffbd5c); font-weight: 600; } .fql .sqh { margin: 14px 0 6px; font-size: 15px; } .fql .sqh small { margin-left: 8px; font-size: 13.5px; color: var(--tx3); }
+.fc2 tr.mtr td { text-align: left; font-size: 14px; color: var(--tx2); padding-top: 4px; } .fc2 tr.mtr .x0 { margin-left: 12px; }
+.fc2 tr.mtr td { text-align: left; font-size: 14px; color: var(--tx2); padding-top: 4px; } .fc2 tr.mtr .x0 { margin-left: 12px; }
+.mtg td.mm input { width: 100%; min-width: 150px; font: inherit; font-size: 14px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--bd2); background: var(--c2); color: var(--tx); } .mtg th small { display: block; }
+/* 11/23 엑셀 대조 단추 접기 */
+.pt .xlk { margin-top: var(--space-3xs); } .pt .xlk > summary { cursor: pointer; color: var(--tx2); font-size: 13.5px; width: max-content; } .pt .xlk[open] > summary { color: var(--tx); }
+@media print { .xlk { display: none !important; } }
+/* 11/23 주 합계 칸이 달력 밖으로 나가던 것(11월 실적 줄) · 주문표 긴 목적지 줄바꿈 */
+.cal0 .cal .cg .ws { min-width: 0; overflow: hidden; } .cal0 .cal .cg .ws > span { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 4px; min-width: 0; white-space: normal; } .cal0 .cal .cg .ws .wo small { display: block; width: 100%; text-align: center; }
+.L3 .ordc .t.ot tbody td:nth-child(2), .t.ot tbody td:nth-child(2) { white-space: normal !important; word-break: keep-all; overflow-wrap: anywhere; }
+.cal0 .cl.dn { white-space: normal; flex-wrap: wrap; text-align: center; row-gap: 0; }   /* 11/23 추가정지 1,440분 칸 잘림 */

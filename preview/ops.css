@@ -107,3 +107,7 @@ ul.todo .when { font-weight: 800; white-space: nowrap; } ul.todo .what { line-he
 p.bad, li.bad { color: var(--bad); }
 .wd ul { list-style: none; padding: 0; }
 .lnk { all: unset; cursor: pointer; color: var(--brand-2); font-weight: 700; text-decoration: underline; }
+/* 11/23 시험 계산 첫 줄 한눈에 */
+.tch { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; } .tch > div { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--line, #dbe2ea); border-radius: 10px; }
+.tch span { font-size: 13.5px; color: var(--muted, #5b6b82); } .tch b { font-size: 24px; font-variant-numeric: tabular-nums; } .tch b i { font-style: normal; font-size: 13.5px; margin-left: 2px; color: var(--muted, #5b6b82); } .tch small { font-size: 13.5px; } .tch .bad b { color: var(--danger, #b42318); }
+@media (max-width: 40rem) { .tch { grid-template-columns: 1fr; } }
