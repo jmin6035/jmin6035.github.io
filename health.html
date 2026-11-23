@@ -11,6 +11,7 @@
 .ageb { display: inline-block; min-width: 74px; text-align: center; font-weight: 800; border-radius: 999px; padding: 3px 10px; font-size: 14.5px; }
 .ageb.ok { background: var(--good-bg); color: var(--good); } .ageb.warn { background: var(--warn-bg); color: var(--warn); } .ageb.bad { background: var(--bad-bg); color: var(--bad); }
 ol.fix li { margin: 8px 0; font-size: 16px; } ol.fix code { background: var(--tint-2); padding: 2px 6px; border-radius: 5px; font-size: 14px; }
+.card.hold { border-left: 4px solid var(--warn, #b45309); }
 </style>
 </head>
 <body>
@@ -52,6 +53,18 @@ ol.fix li { margin: 8px 0; font-size: 16px; } ol.fix code { background: var(--ti
       <li>작업 스케줄러에 등록됐는지: 명령 프롬프트에서 <code>schtasks /Query /TN "CGL 자동수집"</code>: 없으면 설치 폴더의 <code>register_task.bat</code> 실행</li>
       <li>직접 한 번 실행: <code>run_auto.bat</code> → 끝나고 이 화면 새로고침</li>
       <li>실패 기록: 설치 폴더 <code>out\\auto_log.txt</code> 마지막 줄(‘실패:’로 시작): MES 화면 변경·암호 만료가 흔한 원인</li></ol></section>`;
+    /* 11/23 수정 방(장치 방 넘김, docs/35 '공개본은 검사 통과 때만'): 2시간 갱신이 검사에서 막혀 직전 공개 판을 유지 중이면 맨 위에 한 줄. 파일이 없거나 hold 거짓이면 안 보임 */
+    try {
+      let pw = null; try { pw = localStorage.getItem('cgl-analysis-pw'); } catch (e) { /* 무시 */ }
+      const he = pw && await get('published/refresh_hold.enc.json'), H = he && await GP.decryptJSON(he, pw).catch(() => null);
+      if (H && (H.hold || H.stale)) {
+        const md = (d) => { const m = String(d || '').match(/^\d{4}-(\d{2})-(\d{2})/); return m ? `${+m[1]}/${+m[2]}` : ''; };
+        const why = (Array.isArray(H.why) ? H.why : [H.why]).filter(Boolean);
+        h = `<section class="card hold"><h2>${H.hold ? `직전 판 유지 <small>${kst(H.since || H.at)}부터${H.count > 1 ? `, ${H.count}회 이어짐` : ''}</small>` : '실적 자료 묵음'}</h2>`
+          + (H.hold ? `<p class="lead">이번 2시간 갱신이 검사에서 막혀 공개 화면은 직전 판 그대로입니다. 사유: ${esc(why[0] || '검사 실패')}${why.length > 1 ? ` 외 ${why.length - 1}건` : ''} (판정 ${kst(H.at)})</p>` : '')
+          + (H.stale ? `<p class="lead">도금 실적이 ${md(H.actAsOf)} 기준에 머물러 있습니다(하루 넘게 새 실적 없음).</p>` : '') + '</section>' + h;
+      }
+    } catch (e) { /* 표시만 빠짐 */ }
     $('h-main').innerHTML = h; UI.reveal($('h-main'));
   })();
 })();
