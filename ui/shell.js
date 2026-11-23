@@ -24,21 +24,29 @@
      메뉴에서 뺀 화면은 지우지 않고 '관리'에 둠 — 모든 화면이 메뉴로 닿음. 화면 제목(h1) = 메뉴 이름 */
   /* 11/10 사용자 '관리 탭에 왜 전부 몰아놨냐 — 각 탭 성격에 맞게': 관리에 모았던 화면을 성격에 맞는 묶음으로 되돌림.
      표시 'd' = 세부 화면 — 화면 위 탭에는 늘 보이고, 왼쪽 메뉴에는 그 묶음에 들어가 있을 때만 펼침(메뉴가 길어지지 않게) */
+  /* 11/23 04 기타 통합 1단계(docs/34 §4, 사용자 11/23 지휘 방 승인 '추천안대로'): 같은 화면·같은 표는 넘김(REDIR), 계산·설정 화면 13개는 '관리'(접힘)로. 화면 파일·주소는 그대로 */
   const MENU = PV ? [] : [
-    ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '주문 확보율'], ['suju', 'suju.html#prod', '생산'], ['suju', 'suju.html#mat', '소재'], ['suju', 'suju.html#stock', '재고'], ['suju', 'suju.html#close', '월 실적 마감']]],
-    ['ct1', '통합 관제', 'home', [['home', 'index.html', '통합 관제', 't'],
-      ['board', 'board.html', '판매그룹 관제판', 'd'], ['issues', 'ct_issue.html#now', '이슈 현황', 'd'], ['issues', 'ct_issue.html#req', '조정 요청', 'd']]],
-    ['ct2', '주문·납기', 'cgorder', [['risk', 'risk.html', '납기 위험'], ['orders', 'ct_orders.html#track', '주문진도(전체)'], ['orders', 'ct_orders.html#cal', '납기 캘린더'],
+    ['ct0', '수주 관제', 'cgorder', [['suju', 'suju.html#dash', '종합 관제판'], ['suju', 'suju.html#order', '주문 확보율'], ['suju', 'suju.html#mat', '소재']]],
+    ['ct1', '통합 관제', 'home', [['board', 'board.html', '판매그룹 관제판']]],
+    ['ct2', '주문·납기', 'cgorder', [['risk', 'risk.html', '납기 위험'], ['orders', 'ct_orders.html#cal', '납기 캘린더'], ['orders', 'ct_orders.html#track', '주문진도(전체)', 'd'],
       ['cgorder', 'cg_order.html', '도금 주문진도', 'd'], ['ccorder', 'cc_order.html', '컬러 주문진도', 'd']]],
     ['ct3', '생산계획', 'supply', [['supply', 'supply.html', '월간 가동'], ['plan7', 'ct_plan.html', '생산 일정'], ['weekseq', 'week_seq.html', '작업 순서'],
       ['plan7', 'ct_plan.html#load', '라인 부하', 'd'], ['plan7', 'ct_plan.html#cmp', '계획 변경', 'd']]],
-    ['ct4', '소재·재고', 'matcal', [['matcal', 'matcal.html', '소재 관제'], ['procure', 'procure.html', '발주'], ['integrated', 'integrated.html', '제품 재고'], ['leadtime', 'leadtime.html', '리드타임 기준'],
-      ['planstock', 'planstock.html', '계획재', 'd']]],
-    ['ct5', '실적·보고', 'platact', [['platact', 'plating_actual.html', '도금 실적'], ['coloract', 'color_actual.html', '컬러 실적'], ['prodsum', 'ct_prod.html#ship', '출하'], ['perf', 'ct_perf.html#ops', '계획 대비 실적'], ['report', 'report.html', '주간 보고'],
-      ['status', 'status.html', '도금 가동 현황', 'd'], ['colorstat', 'color_status.html', '컬러 가동 현황', 'd'], ['prodsum', 'ct_prod.html#perf', '생산 실적', 'd'], ['prodsum', 'ct_prod.html#run', '가동·휴지', 'd'], ['perf', 'ct_perf.html#cause', '미달 원인', 'd']]],
-    ['ct6', '계획 기준', 'rules', [['rules', 'rules.html', '계획 규칙'], ['plancalc', 'plan_calc.html', '계획 계산'], ['analysis', 'analysis.html', '조건 분석'], ['rolling', 'rolling.html', '도금 다시 계산', 'd'], ['colorcalc', 'color_calc.html', '컬러 다시 계산', 'd']]],
+    ['ct4', '소재·재고', 'matcal', [['matcal', 'matcal.html', '소재 관제'], ['procure', 'procure.html', '발주'], ['integrated', 'integrated.html', '제품 재고'],
+      ['planstock', 'planstock.html', '계획재', 'd'], ['prodsum', 'ct_prod.html#ship', '출하', 'd']]],
+    ['ct5', '실적·보고', 'platact', [['platact', 'plating_actual.html', '도금 실적'], ['coloract', 'color_actual.html', '컬러 실적'],
+      ['status', 'status.html', '도금 가동 현황', 'd'], ['prodsum', 'ct_prod.html#run', '가동·휴지', 'd'], ['perf', 'ct_perf.html#cause', '미달 원인', 'd']]],
+    ['ct6', '계획 기준', 'rules', [['rules', 'rules.html', '계획 규칙']]],
   ];
-  const ADMIN = PV ? PV.admin : [['health', 'health.html', '자료 상태'], ['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'], ['docs', 'docs.html', '문서']];
+  const ADMIN = PV ? PV.admin : [['plancalc', 'plan_calc.html', '계획 계산'], ['analysis', 'analysis.html', '조건 분석'], ['rolling', 'rolling.html', '도금 다시 계산'], ['colorcalc', 'color_calc.html', '컬러 다시 계산'],
+    ['colorstat', 'color_status.html', '컬러 가동 현황'], ['leadtime', 'leadtime.html', '리드타임 기준'], ['health', 'health.html', '자료 상태'], ['decisions', 'decisions.html', '결정 기록'], ['cgtasks', 'cg_tasks.html', '업무 캘린더'],
+    ['docs', 'docs.html', '문서'], ['report', 'report.html', '주간 보고'], ['suju', 'suju.html#close', '월 실적 마감'], ['issues', 'ct_issue.html#now', '이슈 현황']];
+  /* 넘김(docs/34 단계 1): 같은 화면·같은 표·빈 화면 → 남는 화면. 화면 파일은 그대로(되돌리기 = 이 표에서 한 줄 지움) */
+  if (!PV && !window.__PVDOC) { const f0 = location.pathname.split('/').pop() || 'index.html', h0 = (location.hash || '').slice(1);
+    const RD = { 'index.html#': 'hy.html', 'ct_issue.html#req': 'ct_issue.html#now', 'suju.html#prod': 'plating_actual.html', 'suju.html#stock': 'integrated.html',
+      'ct_prod.html#': 'ct_prod.html#ship', 'ct_prod.html#perf': 'plating_actual.html', 'ct_perf.html#': 'plating_actual.html', 'ct_perf.html#ops': 'plating_actual.html' };
+    const go = () => { const t = f0 === 'index.html' || f0 === '' ? 'hy.html' : RD[f0 + '#' + ((location.hash || '').slice(1))]; if (t) { if (t.split('#')[0] === f0) { location.replace('#' + (t.split('#')[1] || '')); return false; } document.documentElement.style.visibility = 'hidden'; location.replace(t + location.search.replace(/^\?$/, '')); return true; }   /* 같은 화면 안 넘김은 가리지 않음 */ return false; };
+    if (go()) return; addEventListener('hashchange', go, true); }
   const ADMN = '관리';
   /* 11/12 회의: 메뉴 순서 = 보고 순서 ① 계획 → ② 관제 → ③ 편성(docs/16 ★2). 새 양식 미리보기(V2)에서만 맨 위, 기존 메뉴는 '기타'(접힘) 아래 — 기본 화면 메뉴는 그대로 */
   const MV2 = PV ? PV.menu : V2 ? [['v1', '계획', 'supply', [['gyehoek', 'gyehoek.html', '일별 가동계획'], ['gyehoek', 'gyehoek.html#mat', '소재']]]   /* 11/17 사용자: 계획 규칙은 메뉴에서 빼고 일별 가동계획 맨 아래 '일일 가동 계획 규칙' 단추로 */,
@@ -46,7 +54,7 @@
     ['v3', '생산 편성', 'weekseq', [['wk', 'wk.html', '주간 관제'], ['pyeonseong', 'pyeonseong.html', '주간 편성'], ['weekseq', 'week_seq.html', '작업 순서'], ['seqview', 'seq_view.html', '작업 순서 조회']]]] : [];   // 11/17 사용자 '01 계획 · 02 현황 · 03 생산 편성, 작업은 편성 하위로 · 수주 화면은 현황(hy)으로 대체'
   const ETC = PV ? '관리' : '기타', MENUS = [...MV2, ...MENU];
   const ALL = [...MENUS.flatMap((m) => m[3]), ...ADMIN];
-  const DEFV = { home: 'day', suju: 'dash', orders: 'status', prodsum: 'perf', perf: 'ops', issues: 'now' };   // 주소에 #이 없을 때 화면이 여는 하위 화면
+  const DEFV = { home: 'day', suju: 'dash', orders: 'status', prodsum: 'ship', perf: 'cause', issues: 'now' };   // 11/23 통합 1단계: 넘긴 하위 화면 대신 남는 화면   // 주소에 #이 없을 때 화면이 여는 하위 화면
   const NAV = [...ALL.filter((t, k, A) => A.findIndex((u) => u[1].split('#')[0] === t[1].split('#')[0]) === k).map((t) => [t[0], t[1].split('#')[0], t[2]])];
   /* 공개 화면 제한(11/2 사용자 'IT 보안 검토 동안 가동 캘린더·소재 캘린더·재고 추이만 남기고 나머지 숨김').
      되돌리려면 SHOW = null. 목록에 없는 화면을 직접 열면 가동 캘린더로 보내고, 남긴 화면 안의 다른 화면 링크는 글자만 남김 */
@@ -167,10 +175,11 @@
     // 메뉴 밑 세부 탭(11/4 사용자 '탭 밑에 세부탭이 뜨게') — 화면에 들어가지 않고 바로 이동
     const subs = (m) => { const L = m[3].filter((t) => t[3] !== 't' && (t[3] !== 'd' || m === curM) && okT(t));
       return L.length > 1 ? `<div class="nv-sub">${L.map((t) => `<a href="${t[1]}" data-tab="${tabKey(t)}"${only(t)}>${esc(t[2])}</a>`).join('')}</div>` : ''; };
-    const eOpen = (curM && MENU.includes(curM)) || inAdm;   // 11/17 사용자: 04 기타는 접어 둠(지금 화면이 그 안일 때만 펼침)   // V2 '기타': 지금 화면이 그 안이거나 펼쳐 둔 경우만 열림
+    const eOpen = (curM && MENU.includes(curM)) || (PV && inAdm);   // 11/17 사용자: 04 기타는 접어 둠(지금 화면이 그 안일 때만 펼침)   // V2 '기타': 지금 화면이 그 안이거나 펼쳐 둔 경우만 열림
     const nav = V2 ? MV2.map((m, i) => mlink(m, i) + subs(m)).join('')
       + `<div class="nv-sec${eOpen ? ' open' : ''}" data-g="${ETC}"><button type="button" class="nv-grp nv-tg" aria-expanded="${eOpen}"><small class="nv-no">${String(MV2.length + 1).padStart(2, '0')}</small>${ETC}<svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">`
-      + MENU.map((m) => (mOK(m) ? mlink(m, null) + subs(m) : '')).join('') + (adm.length ? `${PV ? '' : `<div class="nv-grp">${ADMN}</div>`}${adm.map(link).join('')}` : '') + '</div></div>'
+      + MENU.map((m) => (mOK(m) ? mlink(m, null) + subs(m) : '')).join('') + (adm.length && PV ? adm.map(link).join('') : '') + '</div></div>'
+      + (adm.length && !PV ? `<div class="nv-sec${aOpen ? ' open' : ''}" data-g="${ADMN}"><button type="button" class="nv-grp nv-tg" aria-expanded="${aOpen}"><small class="nv-no">${String(MV2.length + 2).padStart(2, '0')}</small>${ADMN}<span class="nv-n">${adm.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${adm.map(link).join('')}</div></div>` : '')   /* 11/23 통합 1단계: 관리는 기타와 따로 접힘 */
       : MENU.map((m, i) => (mOK(m) ? mlink(m, i) + subs(m) : '')).join('')
       + (adm.length ? `<div class="nv-sec${aOpen ? ' open' : ''}" data-g="${ADMN}"><button type="button" class="nv-grp nv-tg" aria-expanded="${aOpen}"><small class="nv-no">${String(MENU.length + 1).padStart(2, '0')}</small>${ADMN}<span class="nv-n">${adm.length}</span><svg class="nv-ch" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button><div class="nv-items">${adm.map(link).join('')}</div></div>` : '');
     // 화면 위 탭: 메뉴 묶음의 칸들. 관리 화면은 같은 파일의 하위 화면이 여럿일 때만(예: 생산 실적 · 가동·휴지 · 제품 재고 · 출하)
