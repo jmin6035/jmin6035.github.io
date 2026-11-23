@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>조건 분석</title>
-<meta name="description" content="도금·컬러 조건 분석 — 속도·M/C·손실·휴지를 MES 실적으로 다시 재서 계획 조건과 비교">
+<meta name="description" content="도금·컬러 조건 분석: 속도·M/C·손실·휴지를 MES 실적으로 다시 재서 계획 조건과 비교">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="style.css?v=2611230303">
 <link rel="stylesheet" href="dashboard.css?v=2611230303">
@@ -21,7 +21,7 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
 .an-sum .warn { color: var(--warn); } .an-sum .ok { color: var(--good); }
 .an-sum .lst { flex-basis: 100%; color: var(--ink-2); font-size: 14px; }
 .ref { margin: 8px 0 0; padding-left: 18px; line-height: 1.8; font-size: 14px; }
-/* 11/17 검토: '근거' 칸(긴 문장)이 한 줄로 늘어 표가 1,268px > 1,020 — 오른쪽 '판정' 칸이 잘림 → 근거만 줄바꿈 */
+/* 11/17 검토: '근거' 칸(긴 문장)이 한 줄로 늘어 표가 1,268px > 1,020: 오른쪽 '판정' 칸이 잘림 → 근거만 줄바꿈 */
 html body main #a-cands td.l.muted { white-space: normal !important; word-break: keep-all; min-width: 240px; }
 html body main #a-events :is(th, td) { padding-left: 8px !important; padding-right: 8px !important; }
 </style>
@@ -86,14 +86,14 @@ html body main #a-events :is(th, td) { padding-left: 8px !important; padding-rig
       <section class="card">
         <h2>강종 전환(M/C) 실적</h2>
         <div class="scroll"><table class="data" id="a-events"></table></div>
-        <p class="hint">정지 = 라인이 멈춘 시간(휴지 기록의 강종 전환 휴지 합). 손실 = 정지 시작부터 새 강종 첫 제품 코일이 돌기 시작할 때까지 — 재가동 후 더미 코일로 조건을 맞추는 시간까지 포함. 계획 조건의 M/C 손실과 비교하는 값은 손실입니다.</p>
+        <p class="hint">정지 = 라인이 멈춘 시간(휴지 기록의 강종 전환 휴지 합). 손실 = 정지 시작부터 새 강종 첫 제품 코일이 돌기 시작할 때까지: 재가동 후 더미 코일로 조건을 맞추는 시간까지 포함. 계획 조건의 M/C 손실과 비교하는 값은 손실입니다.</p>
       </section>
     </div>
 
     <section class="card" id="a-reason-card" hidden>
       <h2>휴지 사유 <small class="muted">— 휴지 쿼리 기준, 많은 순</small></h2>
       <div class="scroll"><table class="data" id="a-reasons"></table></div>
-      <p class="hint">M/C = 강종 전환 휴지, 계획 = 정기수리 등 계획휴지(싱크롤 교체 포함 — 계획 조건의 “설비정지”에 들어감), 비계획 = 설비고장·운전이상.</p>
+      <p class="hint">M/C = 강종 전환 휴지, 계획 = 정기수리 등 계획휴지(싱크롤 교체 포함: 계획 조건의 “설비정지”에 들어감), 비계획 = 설비고장·운전이상.</p>
     </section>
 
     <details class="card more">
@@ -139,7 +139,7 @@ html body main #a-events :is(th, td) { padding-left: 8px !important; padding-rig
       <h2>계획 속도 점검 <small class="muted" id="ca-cand-sub">— 계획 계산에 쓰는 속도가 최근 실적과 맞는지 · 라인 카드를 누르면 그 라인 품명</small></h2>
       <p class="lead-note">계획 계산은 라인·품명별 <b>속도(t/시간)</b>로 하루에 몇 톤을 만들지 정합니다. 이 속도는 <span id="ca-plan-per"></span> 실적으로 정한 값이라, 최근 실적과 비교해 차이가 크면 다음 계획 계산 때 속도를 바꾸자는 <b>제안</b>입니다(자동으로 바뀌지 않음). <b>계획</b> = 지금 계획에 쓰는 속도, <b>실제</b> = 최근 실적 속도.</p>
       <div id="ca-cands"></div>
-      <p class="hint">속도 = 생산 톤 ÷ (작업 + 정지) 시간 — 색상교체·청소·테스트 정지 포함. 라인 카드 = 최근 실적 기간에 실제로 만든 품목을 계획 속도로 만들었다면 걸렸을 시간과 실제 걸린 시간 비교(품목 구성 차이는 빼고 속도만 비교).</p>
+      <p class="hint">속도 = 생산 톤 ÷ (작업 + 정지) 시간: 색상교체·청소·테스트 정지 포함. 라인 카드 = 최근 실적 기간에 실제로 만든 품목을 계획 속도로 만들었다면 걸렸을 시간과 실제 걸린 시간 비교(품목 구성 차이는 빼고 속도만 비교).</p>
     </section>
 
     <section class="card">
@@ -163,7 +163,7 @@ html body main #a-events :is(th, td) { padding-left: 8px !important; padding-rig
     <section class="card" id="ca-reason-card" hidden>
       <h2>휴지 사유 <small class="muted" id="ca-rs-sub">— 라인별 많은 순 8개</small></h2>
       <div class="scroll"><table class="data" id="ca-reasons"></table></div>
-      <p class="hint" id="ca-rs-note">구분 = 휴지 메모 키워드로 분류(색상교체·청소 / 테스트·도막조정 / 폭·롤·두께 전환 / 기타) — 사유 하나에 구분 하나(시간이 가장 많은 구분).</p>
+      <p class="hint" id="ca-rs-note">구분 = 휴지 메모 키워드로 분류(색상교체·청소 / 테스트·도막조정 / 폭·롤·두께 전환 / 기타): 사유 하나에 구분 하나(시간이 가장 많은 구분).</p>
     </section>
 
   </div>
@@ -175,8 +175,8 @@ html body main #a-events :is(th, td) { padding-left: 8px !important; padding-rig
       <ul class="ref">
         <li>원자료 = MES 도금·컬러 코일 생산 실적 + 휴지 실적(매일 갱신)</li>
         <li>도금 속도(t/시간) = 제품 톤 ÷ 가동 시간(더미 코일 제외) · M/C 손실 = 정지 시작 ~ 새 강종 첫 제품 코일 · 설비정지·비강종 더미 = 하루 평균 분</li>
-        <li>컬러 속도(t/시간) = 생산 톤 ÷ (작업 + 정지) 시간 — 색상교체·청소·테스트 정지 포함, 계획에서 따로 빼지 않음</li>
-        <li>반영 권장 = 차이 5% 이상 · 표본 충분(도금 28일 이상, 컬러 150t·4주 이상)일 때만 — 자동으로 바뀌지 않음</li>
+        <li>컬러 속도(t/시간) = 생산 톤 ÷ (작업 + 정지) 시간: 색상교체·청소·테스트 정지 포함, 계획에서 따로 빼지 않음</li>
+        <li>반영 권장 = 차이 5% 이상 · 표본 충분(도금 28일 이상, 컬러 150t·4주 이상)일 때만: 자동으로 바뀌지 않음</li>
         <li>엔진 값 바꾸기 → <a href="rules.html#edit">계획 규칙 → 규칙 수치 바꾸기</a> · 지금 계획 조건 → <a href="rules.html">계획 규칙</a></li>
       </ul>
     </details>
@@ -193,7 +193,7 @@ html body main #a-events :is(th, td) { padding-left: 8px !important; padding-rig
 <script src="analysis.js?v=2611230303"></script>
 <script src="color_analysis.js?v=2611230303"></script>
 <script>
-(function () {   // 도금 / 컬러 전환(11/11 — 옛 color_analysis.html 은 여기 #cc 로)
+(function () {   // 도금 / 컬러 전환(11/11: 옛 color_analysis.html 은 여기 #cc 로)
   const B = document.querySelectorAll('.an-seg button');
   function go(p, push) {
     p = p === 'cc' ? 'cc' : 'cg';

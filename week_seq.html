@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>작업 순서</title>
-<meta name="description" content="도금·컬러 라인별 작업 순서 — 주간 순서를 고쳐 저장·확정·점검, 작업지시 제안과 근거">
+<meta name="description" content="도금·컬러 라인별 작업 순서: 주간 순서를 고쳐 저장·확정·점검, 작업지시 제안과 근거">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/theme.css?v=2611230303">
 <style>
@@ -44,7 +44,7 @@ table.ws { width: 100%; border-collapse: collapse; font-size: 14.5px; table-layo
 html body table.ws td { padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; line-height: 1.5; text-align: left !important; white-space: normal; }
 table.ws tr.dh td { background: var(--sub); border-top: 2px solid var(--line); padding: 10px 12px; }
 html:root body main .cp.al.sts { background: #8ccbc1 !important; color: #000 !important; }   /* AL-STS 작업(11/13) */
-.dhh span.stsc { background: #8ccbc1; color: #000; font-weight: 700; border-radius: 5px; padding: 0 7px; }   /* AL-STS(11/13 — 01 가동 캘린더 청록) */
+.dhh span.stsc { background: #8ccbc1; color: #000; font-weight: 700; border-radius: 5px; padding: 0 7px; }   /* AL-STS(11/13: 01 가동 캘린더 청록) */
 .dhh { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; } .dhh b { font-size: 16px; white-space: nowrap; } .dhh span { color: var(--ink-2); font-size: 14px; white-space: nowrap; } .dhh em { font-style: normal; color: var(--warn); font-weight: 700; white-space: nowrap; }
 .dbar { position: relative; height: 12px; margin-top: 7px; background: var(--grid); border-radius: 3px; overflow: hidden; max-width: 900px; }
 .dbar i { position: absolute; top: 0; bottom: 0; } .dbar .r { background: var(--brand-2); } .dbar .d { background: var(--warn); } .dbar .p { background: var(--steel-3); } .dbar .g { background: var(--bad); }
@@ -100,7 +100,7 @@ table.ws td.c-sp { overflow: hidden; }
 /* 컬러: 줄 단추(↑↓·날·라인·+휴지·✕)를 두 줄로 접어 사양 칸을 넓힘(1366 에서 사양 칩이 톤 칸 위로 겹치던 것) */
 html body #ws-main:not(.cmp) table.ws td.ac .acd { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 4px; white-space: normal; max-width: 100%; }
 html body #ws-main:not(.cmp) table.ws td.ac { white-space: normal !important; line-height: 1.4; } .wk3 > div { min-width: 0; } .nw { white-space: nowrap; }
-/* 11/15 사용자 '톤·예정·납기를 밑 칸과 조화롭게 크게' — 미편성 목록 머리줄·사양 칸 */
+/* 11/15 사용자 '톤·예정·납기를 밑 칸과 조화롭게 크게': 미편성 목록 머리줄·사양 칸 */
 .pl-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; } .pl-h .cn { font-size: 17px; }
 .pl-m { font-size: 15.5px; font-weight: 600; color: var(--ink-2); } .pl-m .pl-t { font-size: 20px; color: var(--ink); margin-right: 2px; } .pl-m .pl-t small { font-size: 14px; margin-left: 1px; }
 .pl-i .sp .cp { font-size: 14.5px; padding: 1px 7px; } .pl-i .wk3 > i, .pl-i .wk3 em.lb { font-size: 14.5px; } .pl-i .wk3 { grid-template-columns: 38px minmax(0, 1fr); }
@@ -133,7 +133,7 @@ html body #ws-main.cmp table.ws tr.dh td { position: static; flex: 1 1 100%; }
 #ws-main.cmp table.ws tr.j.hl { background: var(--warn-bg); } #ws-main.cmp table.ws tr.j.bad { background: color-mix(in srgb, var(--bad-bg) 60%, var(--surface)); }
 html body #ws-main.cmp table.ws tr.j td.no { order: 1; min-width: 20px; line-height: 1.5; } #ws-main.cmp table.ws tr.j td.tm { order: 2; width: auto; }
 #ws-main.cmp table.ws tr.j td.c-con { order: 4; flex: 1 1 100%; } html body #ws-main.cmp table.ws td.ac { order: 3; margin-left: auto; line-height: 1; }
-html body #ws-main.cmp table.ws td .cn { overflow: visible; text-overflow: clip; } html body #ws-main.cmp table.ws td.c-con { text-align: center !important; } #ws-main.cmp table.ws td.c-con .sub { text-align: center; }   /* 11/17 검토 390: 계약번호 말줄임 금지 — 시각·⋯ 아래 줄 전체 폭 */
+html body #ws-main.cmp table.ws td .cn { overflow: visible; text-overflow: clip; } html body #ws-main.cmp table.ws td.c-con { text-align: center !important; } #ws-main.cmp table.ws td.c-con .sub { text-align: center; }   /* 11/17 검토 390: 계약번호 말줄임 금지: 시각·⋯ 아래 줄 전체 폭 */
 #ws-main.cmp table.ws tr.j td.c-sp { order: 5; flex: 1 1 100%; }
 html body #ws-main.cmp table.ws tr.j td.nm { order: 6; flex: 1 1 100%; text-align: center !important; justify-content: center; display: flex; flex-wrap: wrap; gap: 0 10px; align-items: baseline; }
 #ws-main.cmp table.ws tr.ch { padding: 5px 10px 5px 38px; font-size: 13.5px; color: var(--warn); border-bottom: 1px dashed var(--line); background: color-mix(in srgb, var(--warn-bg) 35%, var(--surface)); }
@@ -263,7 +263,7 @@ table.t.cond.wb-t { margin: 4px 0; } table.t.cond.wb-t td.num { text-align: righ
   .gbv{font-size:13.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
   .gbt .gbr{height:20px} .gbt{padding-bottom:6px;border-bottom:1px solid var(--line,#e5e7eb)}
   @media (max-width:640px){.gb{grid-template-columns:56px minmax(0,1fr)}.gbv{grid-column:2}}
-/* 11/11 작업 순서 통합 — 작업지시 제안(도금 cg_wo.js · 컬러 wo.js, 아래 css 는 두 화면 것) · 오늘 순서 · 기준·사양 */
+/* 11/11 작업 순서 통합: 작업지시 제안(도금 cg_wo.js · 컬러 wo.js, 아래 css 는 두 화면 것) · 오늘 순서 · 기준·사양 */
 .ws-md .seg button { font-size: 14.5px; }
 .ws-k .td { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); font-size: 13.5px; line-height: 1.6; }
 .ws-k .td > div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); } .ws-k .td > div b { color: var(--ink); font-variant-numeric: tabular-nums; margin-right: 4px; } .ws-k .td em { font-style: normal; font-weight: 700; color: var(--ink-2); }
@@ -271,7 +271,7 @@ table.t.cond.wb-t { margin: 4px 0; } table.t.cond.wb-t td.num { text-align: righ
 /* 11/13 서식 통일(04 수주 카드 기준): 라인 카드 가운데 · 보조 글 15px · 공통 관제 알약 줄 숨김(01·04 와 같게) */
 html.v2 #ui-ctl { display: none !important; }
 .ws-k { text-align: center; } .ws-k .b { font-size: 15px; } .ws-k .td { font-size: 15px; } .ws-k .ln { font-size: 18px; }
-/* 11/13 사용자 '1,2,3,4가 두 줄 — 칸 줄여서 한 줄로': 1920(본문 약 1660px)에서 컬러 4장·도금 2장 한 줄, 좁으면 2×2 */
+/* 11/13 사용자 '1,2,3,4가 두 줄: 칸 줄여서 한 줄로': 1920(본문 약 1660px)에서 컬러 4장·도금 2장 한 줄, 좁으면 2×2 */
 .ws-kpis { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 10px; }
 .ws-k { padding: 10px 12px; } .ws-k[aria-pressed="true"] { padding: 9px 11px; }
 .ws-k .ln { font-size: 17px; margin-bottom: 4px; }
@@ -291,7 +291,7 @@ table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px 
 </style>
 </head>
 <body>
-<header id="shell" data-page="weekseq" data-crumb="생산계획" data-title="작업 순서" data-sub="라인별 작업 순서 — 수정·저장·확정"></header>
+<header id="shell" data-page="weekseq" data-crumb="생산계획" data-title="작업 순서" data-sub="라인별 작업 순서: 수정·저장·확정"></header>
 <main class="wrap">
   <div class="docmeta" id="ws-meta"></div>
   <section class="card lock" id="ws-lock">
@@ -302,7 +302,7 @@ table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px 
   <div id="ws-main" hidden>
     <div class="ws-bar">
       <div class="seg" id="ws-plant"><button type="button" data-p="cg">도금</button><button type="button" data-p="cc">컬러</button></div>
-      <div class="seg ws-md" id="ws-mode"><button type="button" data-m="ed">주간 순서</button><button type="button" data-m="wo" title="MES 작업지시 대상 코일을 어떤 순서로 돌릴지 제안 — 선정 이유·예상 더미(휴지)·MES 순서 대비">작업지시 제안</button></div>
+      <div class="seg ws-md" id="ws-mode"><button type="button" data-m="ed">주간 순서</button><button type="button" data-m="wo" title="MES 작업지시 대상 코일을 어떤 순서로 돌릴지 제안: 선정 이유·예상 더미(휴지)·MES 순서 대비">작업지시 제안</button></div>
       <span class="ws-wk" id="ws-wk"></span>
       <span class="ws-ver" id="ws-ver"></span>
     </div>
@@ -310,8 +310,8 @@ table.ws-tr { width: auto; } table.ws-tr td, table.ws-tr th { padding: 6px 10px 
     <div class="ws-act">
       <input id="ws-who" placeholder="이름" maxlength="40" aria-label="이름">
       <input id="ws-memo" placeholder="메모(선택)" maxlength="200" aria-label="메모">
-      <button type="button" class="btn primary" id="ws-save" title="버전 이력만 남김 — 생산 일정에는 반영 안 됨">저장</button>
-      <button type="button" class="btn" id="ws-conf" title="그 주 약속본 — 다음 포털 갱신 때 생산 일정(도금·컬러 캘린더)에 이 라인·날짜로 고정">확정</button>
+      <button type="button" class="btn primary" id="ws-save" title="버전 이력만 남김: 생산 일정에는 반영 안 됨">저장</button>
+      <button type="button" class="btn" id="ws-conf" title="그 주 약속본: 다음 포털 갱신 때 생산 일정(도금·컬러 캘린더)에 이 라인·날짜로 고정">확정</button>
       <button type="button" class="btn" id="ws-chk">점검</button>
       <button type="button" class="btn" id="ws-reset">초안으로 되돌리기</button>
       <select id="ws-vers" aria-label="저장 버전"></select>

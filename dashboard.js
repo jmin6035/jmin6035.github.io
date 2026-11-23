@@ -13,7 +13,7 @@
     pendingEnv = env;
     $('d-empty-title').textContent = '게시된 최신 계획';
     $('d-empty-text').textContent = '암호를 넣으면 게시된 계획 결과가 열립니다. 암호 해제는 이 브라우저 안에서만 합니다.';
-    const lbl = String(env.label || '계획 결과').replace(/\(MES 실적 ~\d{4}-(\d{2})-(\d{2}),?\s*([^)]*)\)/, (_, m, d, x) => `· 재계획(실적 ~${+m}/${+d}${x ? ` · ${x}` : ''})`);   // 11/9: 재계획 표기 통일 '재계획(실적 ~M/D)' — 가동 캘린더와 같게
+    const lbl = String(env.label || '계획 결과').replace(/\(MES 실적 ~\d{4}-(\d{2})-(\d{2}),?\s*([^)]*)\)/, (_, m, d, x) => `· 재계획(실적 ~${+m}/${+d}${x ? ` · ${x}` : ''})`);   // 11/9: 재계획 표기 통일 '재계획(실적 ~M/D)': 가동 캘린더와 같게
     $('d-pubinfo').innerHTML = `<b>${esc(lbl)}</b> · 게시 ${UI.fmtDateTime(new Date(env.created))}`;
     $('d-unlock').hidden = false;
     let saved = null; try { saved = localStorage.getItem(PW_KEY) || localStorage.getItem('cgl-analysis-pw'); } catch (e) { saved = null; }
@@ -44,7 +44,7 @@
     $('d-date').value = today < H.D0 ? H.D0 : today > H.D1 ? H.D1 : today;
     render();
   }
-  // 지난 날짜 가동시간 = MES 도금 실적(사내 PC 게시 plating_actual.enc.json 의 dayMin) — 없으면 환산값(최대 24h)
+  // 지난 날짜 가동시간 = MES 도금 실적(사내 PC 게시 plating_actual.enc.json 의 dayMin): 없으면 환산값(최대 24h)
   async function accFromPortal(pw) {
     try { const e = await GP.latest('portal.enc.json'); if (!e || !A) return; const o = await GP.decryptJSON(e, pw);
       const L = Object.values((o && o.acc) || {}).flatMap((x) => x.last || []); if (L.length) { A.accLast = L; render(); } } catch (err) { /* 없으면 재계획 비교 */ }
@@ -57,10 +57,10 @@
       const e = await GP.latest('plating_actual.enc.json'); if (!e || !A) return;
       const x = await GP.decryptJSON(e, pw); if (!x || !x.dayMin) return;
       A.actMin = {}; for (const [d, L] of Object.entries(x.dayMin)) for (const [l, m] of Object.entries(L)) A.actMin[`${l}|${d}`] = m;
-      A.actStops = x.dayStops || null; A.actDummy = x.dayDummy || null;   // 24시간 구성(10/22 사용자: 24시간 안 되는 날 이유) — 설치 묶음 v69 이상
+      A.actStops = x.dayStops || null; A.actDummy = x.dayDummy || null;   // 24시간 구성(10/22 사용자: 24시간 안 되는 날 이유): 설치 묶음 v69 이상
       A.actTon = {}; for (const r of x.daily || []) for (const [l, t] of Object.entries(r)) if (l !== 'd') A.actTon[`${l}|${r.d}`] = t;   // 11/10: 재계획 기준일 다음 날은 계획 톤에 '실적' 표시가 붙던 문제 → MES 일 실적 톤
       A.accHist = x.accHist || null;
-      A.mcAct = x.mc || null;                                     // 11/13 점검: 지난 M/C 손실 = MES 실적(도금 실적 화면 'M/C 실적'과 같은 값) — 계획 손실(0)을 쓰던 것                              // 날마다 '그날 아침 계획 vs 실적'(사내 PC 매일 기록) — 계획 대비 실적 표
+      A.mcAct = x.mc || null;                                     // 11/13 점검: 지난 M/C 손실 = MES 실적(도금 실적 화면 'M/C 실적'과 같은 값): 계획 손실(0)을 쓰던 것                              // 날마다 '그날 아침 계획 vs 실적'(사내 PC 매일 기록): 계획 대비 실적 표
       render();
     } catch (err) { /* 실적 자료 없으면 환산값 */ }
   }
@@ -106,7 +106,7 @@
       const cp = A.campaigns.find((q) => q.line === l && q.start <= d && d <= q.end);
       const next = A.events.find((e) => e.line === l && e.date > d);
       const sdNext = P.shutdowns.find((q) => q.line === l && q.start > d);
-      const t0_ = (R.replan || {}).t0 || d, dA = d < t0_ ? d : t0_;   // 진도 = 실적(재계획 기준일까지) ÷ 월 계획(지금 계획의 그 달 합 = 실적 + 앞날 계획) — 11/13 사용자 결정
+      const t0_ = (R.replan || {}).t0 || d, dA = d < t0_ ? d : t0_;   // 진도 = 실적(재계획 기준일까지) ÷ 월 계획(지금 계획의 그 달 합 = 실적 + 앞날 계획): 11/13 사용자 결정
       // 11/13 사용자 '모든 화면 같은 값': 날마다 강종 계열(AZ·AL·MAC)별 정수 반올림 뒤 더함 = 01 일별 가동계획 칸·계
       const dayT = {}; for (const r of R.rows) if (r[1] === l && A.mIdx(r[0]) === mi) { const f = /^AZ/.test(r[2]) ? 'AZ' : /^MAC/.test(r[2]) ? 'MAC' : 'AL', z = (dayT[r[0]] = dayT[r[0]] || {}); z[f] = (z[f] || 0) + r[4]; }
       const dayR = (z) => { const t = Object.values(z).reduce((a, v) => a + v, 0); return t < 0.5 ? 0 : Object.values(z).reduce((a, v) => a + (v >= 0.5 ? Math.round(v) : 0), 0); };
@@ -146,7 +146,7 @@
     }).join('');
   }
   $('d-date').onchange = () => R && renderNow();
-  // 계획 대비 실적(사용자 10/21): 최근 7일, 날마다 '그날 아침 계획 vs 실적'(사내 PC 매일 기록 accHist, 없으면 재계획 비교) — 라인마다 계획·실적·차이 줄, 부서별 비교는 뺌(계획상 그날 부서는 정해지지 않음)
+  // 계획 대비 실적(사용자 10/21): 최근 7일, 날마다 '그날 아침 계획 vs 실적'(사내 PC 매일 기록 accHist, 없으면 재계획 비교): 라인마다 계획·실적·차이 줄, 부서별 비교는 뺌(계획상 그날 부서는 정해지지 않음)
   function renderReplan() {
     const el = $('d-replan'), rp = R.replan || {};
     const nd = (L) => new Set((L || []).map((r) => r[0])).size;
@@ -246,7 +246,7 @@
 
   // ---------------- HTML 간트: 라인별 강종 행 + 부서 행 + 가동시간 ----------------
   let gMonth = null;
-  // 가동시간(h) — 01 일별 가동계획과 같은 정의: 지난 날 = MES 실적 가동 분, 앞날 = 24 − 계획 정지(정지 + M/C 분), 생산·M/C 없는 날 = 빈칸
+  // 가동시간(h): 01 일별 가동계획과 같은 정의: 지난 날 = MES 실적 가동 분, 앞날 = 24 − 계획 정지(정지 + M/C 분), 생산·M/C 없는 날 = 빈칸
   const hfmt = (h) => { const r = Math.round(h * 10) / 10; return Number.isInteger(r) ? String(r) : r.toFixed(1); };
   function hrsOf(l, d, c, t0) {
     const am = A.actMin && A.actMin[`${l}|${d}`];
@@ -263,13 +263,13 @@
     const fam = {}, dep = {};
     for (const [d, l, a, c, t] of R.rows) { if (A.mIdx(d) !== mi) continue; fam[`${l}|${d}|${FAM[a]}`] = (fam[`${l}|${d}|${FAM[a]}`] || 0) + t; dep[`${l}|${d}|${c}`] = (dep[`${l}|${d}|${c}`] || 0) + t; }
     const today = localToday();
-    // 11/13 사용자 '생긴 걸 똑같이(01 과)': 01 일별 가동계획 표와 같은 모양(ui/optable.js·css — 머리 2줄·왼쪽 두 칸·강종 줄 → M/C 줄 → 다음 강종 줄·정기수리 남색 합친 칸·
+    // 11/13 사용자 '생긴 걸 똑같이(01 과)': 01 일별 가동계획 표와 같은 모양(ui/optable.js·css: 머리 2줄·왼쪽 두 칸·강종 줄 → M/C 줄 → 다음 강종 줄·정기수리 남색 합친 칸·
     //   가동시간 줄·도금 합계 줄·지난 날 덮개·오늘 틀·범례 아래). 이 화면만의 줄(부서별 톤·비가동)은 가동시간 줄 앞뒤에 그대로
     const t0 = (R.replan || {}).t0 || '', FN = { MAC: 'MACOSTA' }, daySum = ds.map(() => 0), ti = ds.indexOf(today);
     let h = OPT.head(ds, today, '', '', ti) + '<tbody>';
     for (const l of P.lines) {
       const f0 = GP.famOrder(P, l), fd = (f) => { const i = ds.findIndex((d) => (fam[`${l}|${d}|${f}`] || 0) >= 0.5); return i < 0 ? 99 : i; };
-      const fams = f0.slice().sort((a, b) => fd(a) - fd(b) || f0.indexOf(a) - f0.indexOf(b));   // 11/13: 강종 줄 = 그 달 먼저 생산하는 순(01 일별 가동계획과 같게 — 2CGL AL 위)
+      const fams = f0.slice().sort((a, b) => fd(a) - fd(b) || f0.indexOf(a) - f0.indexOf(b));   // 11/13: 강종 줄 = 그 달 먼저 생산하는 순(01 일별 가동계획과 같게: 2CGL AL 위)
       const deps = GP.DEPTS.filter((c) => ds.some((d) => (dep[`${l}|${d}|${c}`] || 0) > 0.5));
       const hasStop = ds.some((d) => { const x = mix(l, d); return x && (x.sm + x.dm + x.gap) >= 30; });
       const rows = fams.slice(0, 1).map((f) => ({ kind: 'fam', f })).concat([{ kind: 'ev' }], fams.slice(1).map((f) => ({ kind: 'fam', f })), deps.map((c) => ({ kind: 'dep', c })), [{ kind: 'hrs' }], hasStop ? [{ kind: 'stop' }] : []);

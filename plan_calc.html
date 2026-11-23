@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>계획 계산</title>
-<meta name="description" content="이번 달 도금·컬러 계획이 어떻게 계산됐는지 — 그룹 월 계획(판매 + 목표 − 기초), 수요, M/C, 그날 그 라인 이유">
+<meta name="description" content="이번 달 도금·컬러 계획이 어떻게 계산됐는지: 그룹 월 계획(판매 + 목표 − 기초), 수요, M/C, 그날 그 라인 이유">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/theme.css?v=2611230303">
 <style>
@@ -59,7 +59,7 @@ html body main table :is(td, th, #al-c) { text-align: center !important; }   /* 
 </style>
 </head>
 <body>
-<header id="shell" data-page="plancalc" data-crumb="계획 기준" data-title="계획 계산" data-sub="이번 달 계획이 어떻게 계산됐는지 — 숫자로"></header>
+<header id="shell" data-page="plancalc" data-crumb="계획 기준" data-title="계획 계산" data-sub="이번 달 계획이 어떻게 계산됐는지: 숫자로"></header>
 <main class="wrap">
   <section class="card" id="c-lock" style="margin-top:12px" hidden>
     <h2>분석 암호 입력 필요</h2>
@@ -80,7 +80,7 @@ html body main table :is(td, th, #al-c) { text-align: center !important; }   /* 
     <section class="card" id="x-sec"><h2>왜 그날, 그 라인에서? <small>지금 게시 계획 기준</small></h2>
       <div class="rl-pick"><label>라인 <select id="x-line"></select></label><label>날짜 <input type="date" id="x-date"></label></div>
       <div id="x-out"><p class="muted">불러오는 중…</p></div>
-      <h3 style="margin-top:22px">소재 — 부족 시작 → 입고 필요일 → 발주 마감</h3>
+      <h3 style="margin-top:22px">소재: 부족 시작 → 입고 필요일 → 발주 마감</h3>
       <div class="rl-pick"><label>소재 <select id="x-mat"></select></label></div>
       <div id="x-mout"></div>
     </section>

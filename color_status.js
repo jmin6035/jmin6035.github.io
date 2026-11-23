@@ -1,4 +1,4 @@
-/* 컬러 가동 현황 — 도금 가동 현황(status.html · dashboard.js)과 같은 양식·같은 클래스
+/* 컬러 가동 현황: 도금 가동 현황(status.html · dashboard.js)과 같은 양식·같은 클래스
    자료: published/integrated.enc.json 의 컬러 부분(tools/integrated_web.py)
    요약 줄 → 핵심 지표 4 → 월별 가동계획 표(라인 합계·그룹·가동시간) → 라인별 편성 | 월별 부하 → 기준일 라인 현황 → 그룹별 월 생산량 → 상세(미편성) */
 (function () {
@@ -14,7 +14,7 @@
   const CG = ['계획재', '주문재', '건재수출', '가전수출', '가전내수', '수요개발'];
   const GL = (g) => (g === '주문재' ? '건재 주문재' : g);          // 판매계획 '③ 주문재' = 컬러건재(국내) 고객 주문 생산분(계획재 아님)
   const GVAR = Object.fromEntries(CG.map((g, i) => [g, `var(--s${i + 1})`]));
-  let MONTHS = ['2026-10', '2026-11', '2026-12'], D0 = '2026-10-01', D1 = '2026-12-31';   // 11/9: render 에서 자료(colorLines·color)의 달로 바꿈 — 이 값은 자료 없을 때만
+  let MONTHS = ['2026-10', '2026-11', '2026-12'], D0 = '2026-10-01', D1 = '2026-12-31';   // 11/9: render 에서 자료(colorLines·color)의 달로 바꿈: 이 값은 자료 없을 때만
   const sum = (a, f = (x) => x) => a.reduce((s, x) => s + (f(x) || 0), 0);
   let O = null, by = {}, gMonth = null, lastAct = '', dn = {}, dnP = {};
   const KN = { plan: '계획휴지', sd: 'S/D', repair: '수리', clean: '청소', test: '시험', sample: '샘플', color: '색상교체·청소', roll: '폭·롤 전환', etc: '기타 정지', gap: '기록 없는 정지(TEST 등)' };
@@ -23,7 +23,7 @@
   const dnTxt = (l, d) => (dn[`${l}|${d}`] || []).map((x) => `${KN[x[0]]} ${fmt(x[1])}분`).join(', ');
 
   const tot = (c) => sum(Object.values(c.g));
-  // 11/13 사용자 '모든 화면 같은 값': 칸(라인·날) = 정수 반올림, 월 합 = 칸 합(01 일별 가동계획 계와 같은 값). 그룹 = 칸 정수를 그룹 비율로 나눔(큰 나머지 순 — 그룹 합 = 칸)
+  // 11/13 사용자 '모든 화면 같은 값': 칸(라인·날) = 정수 반올림, 월 합 = 칸 합(01 일별 가동계획 계와 같은 값). 그룹 = 칸 정수를 그룹 비율로 나눔(큰 나머지 순: 그룹 합 = 칸)
   const cellR = (c) => { const t = tot(c); return t < 0.5 ? 0 : Math.round(t); };
   const cellG = (c) => { const T = cellR(c), E = Object.entries(c.g || {}).filter(([, v]) => v > 0), o = {}; let k = T;
     for (const [g, v] of E) { o[g] = Math.floor(v); k -= o[g]; }
@@ -53,7 +53,7 @@
       if (d > DA.asOf || d < D0) continue;   // 11/9: D0 = 자료 첫날
       for (const l of LINES) { const k = `${l}|${d}`, act = (DA.days[d] || {})[l] || [], gap = sum(act.filter((x) => x[0] === 'gap'), (x) => x[1]), plan = (dn[k] || []).filter((x) => HARD.includes(x[0]));
         if (gap >= 1439 && plan.length) dn[k] = plan; else if (act.length) dn[k] = act.map((x) => [x[0], x[1]]); else delete dn[k];
-        if (by[k] && by[k].act) by[k] = Object.assign({}, by[k], { min: Math.max(0, 1440 - sum(act, (x) => x[1])) }); }   // 가동시간 = 24h − 실제 휴지(코일 작업 시간) — 휴지와 합이 24h
+        if (by[k] && by[k].act) by[k] = Object.assign({}, by[k], { min: Math.max(0, 1440 - sum(act, (x) => x[1])) }); }   // 가동시간 = 24h − 실제 휴지(코일 작업 시간): 휴지와 합이 24h
     }
     lastAct = O.color.filter((c) => c.act).reduce((a, c) => (c.d > a ? c.d : a), '');
     $('d-empty').hidden = true; $('d-body').hidden = false;
@@ -77,7 +77,7 @@
     gMonth = mi;
     document.querySelectorAll('#g-tabs button').forEach((b) => b.classList.toggle('on', +b.dataset.g === mi));
     const m = MONTHS[mi], ds = daysOf(m), today = localToday();
-    // 11/13 사용자 '생긴 걸 똑같이(01 과)': 01 일별 가동계획 표와 같은 모양(ui/optable.js·css) — 컬러 라인 = 생산 줄 + 정지 줄(하루 안 S/D·청소·수리 노랑,
+    // 11/13 사용자 '생긴 걸 똑같이(01 과)': 01 일별 가동계획 표와 같은 모양(ui/optable.js·css): 컬러 라인 = 생산 줄 + 정지 줄(하루 안 S/D·청소·수리 노랑,
     //   종일 정지 남색 합친 칸 '휴지 (19일)'), 머리 2줄·왼쪽 두 칸·컬러 합계 줄·지난 날 덮개·오늘 틀·범례 아래. 이 화면만의 줄(그룹별 톤·가동시간·휴지 시간)은 그 아래 그대로
     const SHN = { plan: '휴지', sd: 'S/D', repair: '수리', clean: '청소', jr: '정기수리' }, YK = ['sd', 'clean', 'repair'], daySum = ds.map(() => 0), ti = ds.indexOf(today);
     let h = OPT.head(ds, today, '', '', ti) + '<tbody>';
@@ -134,7 +134,7 @@
     $('d-load').innerHTML = LINES.map((l) => `<div class="load-grp"><b>${l}</b>` + MONTHS.map((m) => {
       const v = load(m, l), c = cap(m, l);
       return `<div class="load-row"><span>${+m.slice(5)}월</span><div class="load-track"><div class="load-fill ${v >= 0.995 ? 'full' : ''}" style="width:${Math.min(100, v * 100)}%"></div><div class="load-100"></div></div><span class="n${v > 1.005 ? ' neg' : ''}">${c ? fmt(v * 100, 1) + '%' : '-'}</span></div>`;
-    }).join('') + '</div>').join('') + '<p class="hint">부하 = 편성 ÷ MES 월차 한도(이번 달만 있음 — 다른 달 \'-\'). 강조 색 막대 = 한도까지 채움(100%), 빨간 숫자 = 한도 초과.</p>';
+    }).join('') + '</div>').join('') + '<p class="hint">부하 = 편성 ÷ MES 월차 한도(이번 달만 있음: 다른 달 \'-\'). 강조 색 막대 = 한도까지 채움(100%), 빨간 숫자 = 한도 초과.</p>';
   }
 
   function renderNow() {
@@ -146,7 +146,7 @@
       const gs = c ? Object.entries(c.g).filter(([, v]) => v > 0.5).sort((a, b) => b[1] - a[1]) : [];
       const pa = {}; if (c) for (const r of c.rows) pa[r[1]] = (pa[r[1]] || 0) + (+r[5] || 0);
       const items = Object.entries(pa).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `<li><span>${esc(k)}</span><b>${fmt(v)}t</b></li>`).join('');
-      const toDate = O.color.filter((x) => x.l === l && x.d.startsWith(m) && x.d <= d && x.act).reduce((a, x) => a + Math.round(tot(x)), 0), mPlan = O.color.filter((x) => x.l === l && x.d.startsWith(m)).reduce((a, x) => a + Math.round(tot(x)), 0), mc = cap(m, l);   // 월 계획·실적 = 아래 표 '생산' 칸 정수 합(11/13 사용자: 일별 반올림 뒤 합 = 01 계)   // 11/10 점검: 진도 = 실적(MES)만 — 오늘 계획을 더해 3,585(실적 3,360)로 보이던 것
+      const toDate = O.color.filter((x) => x.l === l && x.d.startsWith(m) && x.d <= d && x.act).reduce((a, x) => a + Math.round(tot(x)), 0), mPlan = O.color.filter((x) => x.l === l && x.d.startsWith(m)).reduce((a, x) => a + Math.round(tot(x)), 0), mc = cap(m, l);   // 월 계획·실적 = 아래 표 '생산' 칸 정수 합(11/13 사용자: 일별 반올림 뒤 합 = 01 계)   // 11/10 점검: 진도 = 실적(MES)만: 오늘 계획을 더해 3,585(실적 3,360)로 보이던 것
       const hd = new Set((O.colorDown || []).filter((x) => x[1] === l && HARD.includes(x[2])).map((x) => x[0])), nd1 = (x) => new Date(Date.parse(x + 'T00:00:00Z') + 864e5).toISOString().slice(0, 10);
       let runEnd = null; if (hd.has(d)) { runEnd = d; while (hd.has(nd1(runEnd))) runEnd = nd1(runEnd); }   // 진행 중인 수리·계획휴지의 끝
       const ck = (dnP[`${l}|${d}`] || []).find((x) => HARD.includes(x[0]));

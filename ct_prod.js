@@ -1,4 +1,4 @@
-/* 05 생산·출하(11/4 2차 진단 8장): 하위 화면 = 주소 # (#perf 생산 실적 · #run 가동·차질 · #ship 출하 실적 · #stock → 재고 전망으로 넘김) — 화면 안 탭 없음
+/* 05 생산·출하(11/4 2차 진단 8장): 하위 화면 = 주소 # (#perf 생산 실적 · #run 가동·차질 · #ship 출하 실적 · #stock → 재고 전망으로 넘김): 화면 안 탭 없음
    원천: portal(lines·groups·acc·sr·shipDay·stockTrend·stockRoll·week) · plating_actual(daily·dayMin·dayStops·dayDummy·accHist) · color_actual(daily·downAct·lines) · 주문(CT.orders) */
 (function () {
   'use strict';
@@ -9,7 +9,7 @@
   const VIEWS = ['perf', 'run', 'ship'];
   const gnm = (s) => String(s == null ? '' : s).replace(/^자동차강판(판매)?/, '자동차').replace(/^도금판매(\(국내\))?/, '도금국내');   // 11/17 용어 기준: 그룹 이름(표시만)
   let bound = false;
-  /* 11/11 소재·재고 개편: '제품 재고'(#stock)는 재고 전망(integrated.html) 맨 위 '제품 재고 목표 대비'로 합침 — 옛 주소는 넘김 */
+  /* 11/11 소재·재고 개편: '제품 재고'(#stock)는 재고 전망(integrated.html) 맨 위 '제품 재고 목표 대비'로 합침: 옛 주소는 넘김 */
   const toStock = () => { if (location.hash === '#stock') { location.replace('integrated.html'); return true; } return false; };
   if (toStock()) return;
   addEventListener('hashchange', toStock);
@@ -70,7 +70,7 @@
     const mPlan = Gs.reduce((a, g) => a + (g.prod.month || 0), 0), mAct = Gs.reduce((a, g) => a + (g.prod.actual || 0), 0);
     const carryOf = (g) => Math.max(0, (g.prod.month || 0) - (g.prod.actual || 0) - (g.prod.after || 0));
     const carry = Gs.reduce((a, g) => a + carryOf(g), 0);
-    // 11/13 사용자 결정: 월 계획 = 지금 계획의 이달 합계(지난 날 실적 + 앞날 계획) · 계획 대비 = 전일까지 월차(이달 첫 계획) 누계 — 6라인 같은 식(UI.prodMon, 통합 관제·수주 관제와 같은 값)
+    // 11/13 사용자 결정: 월 계획 = 지금 계획의 이달 합계(지난 날 실적 + 앞날 계획) · 계획 대비 = 전일까지 월차(이달 첫 계획) 누계: 6라인 같은 식(UI.prodMon, 통합 관제·수주 관제와 같은 값)
     const SJ = X.D.suju, PM = SJ && SJ.daily ? UI.prodMon(SJ, lines.map((l) => l.line)) : null;
     const L = lines.map((l) => {
       const act = daily(l.pl).filter((r) => String(r.d).slice(0, 7) === mon && r.d <= l.asOfL).reduce((a, r) => a + (+r[l.line] || 0), 0);
@@ -86,14 +86,14 @@
       { label: '생산실적(누계)', v: n0(PM.act), unit: 't', tone: 'info', sub: `월 계획의 ${pc(PM.act, PM.mon)}% · MES ${md(asOfG)}까지${asOfC && asOfC !== asOfG ? ` · 컬러 ${md(asOfC)}까지` : ''}` },
       { label: '월차 대비 차이', v: sgn(PM.act - PM.due0), unit: 't', tone: UI.rate(PM.pct0), sub: `${md(SJ.asOf)}까지 월차 계획 ${n0(PM.due0)}t 대비 ${pc(PM.act, PM.due0)}%` },
     ] : [
-      { label: `${+mon.slice(5)}월 생산계획`, v: n0(mPlan), unit: 't', tone: 'info', sub: '그룹 월 계획 합(도금 TF · 컬러 월간 계획)' },   // 11/9: 값 = 확정(기준) 계획 월 물량(pages.py groups.prod.month) — '최신 가동계획' 아님
+      { label: `${+mon.slice(5)}월 생산계획`, v: n0(mPlan), unit: 't', tone: 'info', sub: '그룹 월 계획 합(도금 TF · 컬러 월간 계획)' },   // 11/9: 값 = 확정(기준) 계획 월 물량(pages.py groups.prod.month): '최신 가동계획' 아님
       { label: '생산실적(누계)', v: n0(mAct), unit: 't', tone: 'info', sub: `MES ${md(asOfG)}까지${Lc.length && asOfC !== asOfG ? ` · 컬러 ${md(asOfC)}까지` : ''}` },
       { label: '계획 대비 차이', v: Lp.length ? sgn(dAct - dPlan) : '-', unit: 't', tone: !Lp.length ? '' : dAct >= dPlan ? 'ok' : dAct >= dPlan * 0.95 ? 'warn' : 'bad', sub: Lp.length ? `일정 누계 대비 ${pc(dAct, dPlan)}%` : '라인 계획 없음' },
     ];
     k.push(
       { label: '이월 예상', v: n0(carry), unit: 't', tone: carry >= 1 ? 'warn' : 'ok', sub: '그룹 월 계획 − 실적 − 남은 계획' });
     const scope = PM ? `<p class="pp-scope"><b>계획 대비</b> 6라인 전일까지 월차(이달 첫 계획) 누계 ${n0(dPlan)}t · 월 계획 = 지금 계획의 이달 합계 · 판생속보 월차·일정 누계는 참고(라인 줄에 마우스)</p>` : `<p class="pp-scope"><b>계획 대비 산출 범위</b> ${Lp.length ? `도금 ${Lp.length}라인(${Lp.map((x) => x.line).join('·')}, 판매생산속보 일정 누계 ${n0(dPlan)}t)` : '도금 제외(범위 밖)'}`
-      + `${Lc.length ? ` · 컬러 ${Lc.length}라인 제외 — 라인 계획 없어 판매그룹 편성 기준(월 계획·이월에만 포함)` : ''}</p>`;
+      + `${Lc.length ? ` · 컬러 ${Lc.length}라인 제외: 라인 계획 없어 판매그룹 편성 기준(월 계획·이월에만 포함)` : ''}</p>`;
     const row = (x) => { const d = x.plan != null ? x.act - x.plan : null, r = x.plan ? x.act / x.plan : null;
       return `<tr class="ck" data-l="${esc(x.line)}" title="판생속보 월차 ${n0(x.srMonth)}t · 일정 누계 ${n0(x.sched)}t(참고)"><td class="id">${esc(x.line)}<small>${x.pl === 'G' ? '도금' : '컬러'}${x.fam ? ` · ${esc(x.fam)}` : ''}</small></td>`
         + `<td class="r">${x.pl === 'G' || PM ? n0(x.month) : '<span class="sub">없음</span>'}</td><td class="r">${x.plan != null ? n0(x.plan) : '<span class="sub">없음</span>'}</td><td class="r"><b>${n0(x.act)}</b></td>`
@@ -160,7 +160,7 @@
     const { P, mon } = X, SD = (P.shipDay && P.shipDay.g) || {};
     return ((P.sr && P.sr.ship) || []).filter((s) => SHIPK[s.name] && CT.inScope(SHIPK[s.name][0])).map((s) => {
       const k = SHIPK[s.name], mes = SD[k] ? Object.entries(SD[k]).filter(([d]) => d.slice(0, 7) === mon).reduce((x, [, v]) => x + v, 0) : null, g_ = (P.groups || []).find((x) => x.key === k), a = g_ && g_.ship ? g_.ship.actual : mes != null ? mes : s.actual;   // 11/10 점검(F8 출하 실적 = MES 영업매출 1300): 관제 칩·그룹 표와 같은 값(속보 4,885 vs 일별 합 5,203 이던 것)
-      const due = g_ && g_.ship && g_.ship.due != null ? g_.ship.due : null;   // 11/13 점검: 오늘까지 기준 = 통합 관제·관제판과 같은 값(월 계획 × 그룹 출하 실적 패턴) — 속보 일정 누계(도금수출 13,740t 등)는 참고로만
+      const due = g_ && g_.ship && g_.ship.due != null ? g_.ship.due : null;   // 11/13 점검: 오늘까지 기준 = 통합 관제·관제판과 같은 값(월 계획 × 그룹 출하 실적 패턴): 속보 일정 누계(도금수출 13,740t 등)는 참고로만
       return { ...s, name: { 도금판매: '도금국내', 자동차강판: '자동차' }[s.name] || s.name, key: k, pl: k[0], a, mes, srSched: s.sched, srAct: s.actual, sched: due != null ? due : s.sched };
     });
   }
@@ -181,7 +181,7 @@
       return `<tr><td class="id">${esc(s.name)}</td><td class="r">${n0(s.month)}</td><td class="r" title="판매생산속보 일정 누계 ${n0(s.srSched)}t(참고)">${n0(s.sched)}</td><td class="r" title="판매생산속보 출하 실적(모든 화면 같은 값) · MES 영업매출 ${n0(s.mes ?? 0)}t(참고)"><b>${n0(s.a)}</b></td><td class="r ${d >= 0 ? 'pos' : 'neg'}">${sgn(d)}</td>`
         + `<td class="r">${pc(s.a, s.month)}%</td><td class="r">${s.sched ? `<b class="${{ ok: 'pos', warn: 'wrn', bad: 'neg' }[UI.rate(s.a / s.sched * 100)]}">${pc(s.a, s.sched)}%</b>` : '<span class="sub">일정 0</span>'}</td><td class="pp-bar"><i style="width:${Math.min(100, s.month ? s.a / s.month * 100 : 0).toFixed(1)}%"></i></td></tr>`; };
     const tbl = t([th('판매그룹'), th('월 출하계획', 1), th('오늘까지 기준', 1, '월 계획 × 그룹 월중 출하 실적 패턴 누계(통합 관제·관제판과 같은 값)'), th('출하 실적', 1, '판매생산속보 출하 누계(내수 송장·수출 B/L)'), th('기준 대비', 1), th('월 진도', 1, '실적 ÷ 월 계획'), th('기준 대비 달성률', 1, '실적 ÷ 오늘까지 기준'), th('')], S.map(row));
-    // 일별 출하(이번 달) — 일별 계획 자료 없음
+    // 일별 출하(이번 달): 일별 계획 자료 없음
     const SD = (P.shipDay && P.shipDay.g) || {}, ds = [...new Set(S.flatMap((s) => Object.keys(SD[s.key] || {})))].filter((d) => d.slice(0, 7) === mon).sort().reverse();
     const dr = ds.map((d) => `<tr><td class="id">${md(d)}</td>${S.map((s) => `<td class="r">${(SD[s.key] || {})[d] ? n0(SD[s.key][d]) : '<span class="sub">0</span>'}</td>`).join('')}<td class="r"><b>${n0(S.reduce((a, s) => a + ((SD[s.key] || {})[d] || 0), 0))}</b></td></tr>`);
     // 미출하·지연 예상 주문(도금): 납기 경과 미출하 + 7일 안 납기 위험

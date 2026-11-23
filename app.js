@@ -13,7 +13,7 @@
   const worker = new Worker('worker.js');
 
   // ---------------- 파라미터 폼 ----------------
-  const LOSS = [['switchDummy', '강종 전환(M/C) 손실, 분/회'], ['nonfamDummy', '비강종 더미, 분/일'], ['equipDown', '설비정지, 분/일'], ['restartFamchg', 'S/D 재가동 — 강종 바뀜, 분'], ['restartSame', 'S/D 재가동 — 같은 강종, 분']];
+  const LOSS = [['switchDummy', '강종 전환(M/C) 손실, 분/회'], ['nonfamDummy', '비강종 더미, 분/일'], ['equipDown', '설비정지, 분/일'], ['restartFamchg', 'S/D 재가동: 강종 바뀜, 분'], ['restartSame', 'S/D 재가동: 같은 강종, 분']];
   function renderParams() {
     $('p-year').value = P.year;
     $('p-q').value = String(P.months[0]);
@@ -68,13 +68,13 @@
   // ---------------- 파일 → 해석 ----------------
   // 기준 자료(기준 계획 입력 = 컬러 계산 기준 자료 묶음 안의 엑셀) + 바꿀 자료(올린 파일이 우선)
   const BASE = { sales: 'data/ctx_가동_판매자가재.xlsx', sail: 'data/ctx_배선일정분석.xlsx' };
-  const SRC = { sales: ['판매계획 · 자가재계획', '판매계획 · 자가재생산계획 시트'], sail: ['배선일정', '정리_배선일정 시트 — 없으면 내장 배선일정'] };
+  const SRC = { sales: ['판매계획 · 자가재계획', '판매계획 · 자가재생산계획 시트'], sail: ['배선일정', '정리_배선일정 시트: 없으면 내장 배선일정'] };
   const base = {}, upl = {};
   let baseInfo = null;
   const b64buf = (b) => { const s_ = atob(b), u = new Uint8Array(s_.length); for (let i = 0; i < s_.length; i++) u[i] = s_.charCodeAt(i); return u.buffer; };
   function srcTiles() {
-    const t = (k) => { const u = upl[k], b = base[k]; return `<div class="cc-src"><b>${SRC[k][0]}</b><small>${u ? `올린 파일: ${esc(u.name)}` : b ? `기준: ${esc(BASE[k].split('/').pop())} (세부판매계획 — 11월 판생 결과 '26.10.25 반영)` : '기준 자료 없음 — 파일 업로드 필요'} · ${SRC[k][1]}</small><span class="st ${u || b ? 'ok' : 'warn'}">${u ? '올린 파일 사용' : b ? '사용' : '없음'}</span></div>`; };
-    $('g-src').innerHTML = t('sales') + t('sail') + `<div class="cc-src"><b>계획 조건</b><small>속도·시간손실·첫날 강종·정기수리 — ③에서 확인·변경${baseInfo ? '' : ''}</small><span class="st ok">${JSON.stringify(P) === JSON.stringify(GP.DEFAULT_PARAMS) ? '기본값 = 게시 계획과 같음' : '바꾼 값'}</span></div>`;
+    const t = (k) => { const u = upl[k], b = base[k]; return `<div class="cc-src"><b>${SRC[k][0]}</b><small>${u ? `올린 파일: ${esc(u.name)}` : b ? `기준: ${esc(BASE[k].split('/').pop())} (세부판매계획: 11월 판생 결과 '26.10.25 반영)` : '기준 자료 없음: 파일 업로드 필요'} · ${SRC[k][1]}</small><span class="st ${u || b ? 'ok' : 'warn'}">${u ? '올린 파일 사용' : b ? '사용' : '없음'}</span></div>`; };
+    $('g-src').innerHTML = t('sales') + t('sail') + `<div class="cc-src"><b>계획 조건</b><small>속도·시간손실·첫날 강종·정기수리: ③에서 확인·변경${baseInfo ? '' : ''}</small><span class="st ok">${JSON.stringify(P) === JSON.stringify(GP.DEFAULT_PARAMS) ? '기본값 = 게시 계획과 같음' : '바꾼 값'}</span></div>`;
     ['sales', 'sail'].forEach((k) => { const L = $('u-' + k); if (L) { L.classList.toggle('on', !!upl[k]); L.querySelector('em').textContent = upl[k] ? `✓ ${upl[k].name}` : ''; } });
   }
   function useFiles() { files = ['sales', 'sail'].map((k) => upl[k] || base[k]).filter(Boolean); srcTiles(); if (files.length) parse(); }
@@ -161,7 +161,7 @@
       if (/^2단계/.test(m.msg)) { setStage(2); worker._onStage(); }
     } else if (m.type === 'solver') {
       const f = (v) => (isFinite(parseFloat(v)) ? GP.fmt(parseFloat(v), parseFloat(v) < 100 ? 3 : 0) : '없음');
-      $('solver').textContent = `탐색 중 — 하한 ${f(m.bound)} · 현재 최선 ${f(m.best)} · 격차 ${/%$/.test(m.gap || '') ? m.gap : '-'}`;
+      $('solver').textContent = `탐색 중: 하한 ${f(m.bound)} · 현재 최선 ${f(m.best)} · 격차 ${/%$/.test(m.gap || '') ? m.gap : '-'}`;
     } else if (m.type === 'done') {
       finish(); result = m.result; result.savedAt = new Date().toISOString(); renderResult(); window._autoPublish && window._autoPublish();
     } else if (m.type === 'error') {
@@ -208,7 +208,7 @@
     if (!rp) { box.hidden = true; return; }
     const ev = (x) => { const [d, l, e] = x.split('|'); return `${GP.md(d)} ${l} ${e}`; };
     box.hidden = false;
-    box.innerHTML = `<p><b>재계획 결과</b> — 실적 기준일 ${GP.md(rp.t0)}, 강종 동결 ~${rp.freezeUntil ? GP.md(rp.freezeUntil) : '없음'}${rp.optimal === true ? ' · 최적 증명 완료' : rp.optimal === false ? ' · ⚠ 최적 미증명(시간 제한)' : ''}</p>`
+    box.innerHTML = `<p><b>재계획 결과</b>: 실적 기준일 ${GP.md(rp.t0)}, 강종 동결 ~${rp.freezeUntil ? GP.md(rp.freezeUntil) : '없음'}${rp.optimal === true ? ' · 최적 증명 완료' : rp.optimal === false ? ' · ⚠ 최적 미증명(시간 제한)' : ''}</p>`
       + rp.notes.concat(GP.lockLines ? GP.lockLines(rp) : []).map((n) => `<p>· ${esc(n)}</p>`).join('')
       + `<p>· 전환 일정 변경: ${rp.removed.length || rp.added.length ? `없어짐 [${rp.removed.map(ev).join(', ') || '-'}] / 새로 생김 [${rp.added.map(ev).join(', ') || '-'}]` : '없음(기존 전환 일정 유지)'}</p>`
       + `<p>· 납기 지연 ${GP.fmt(GP.dueLate ? GP.dueLate(result) : rp.late)}톤·일${rp.shortBy.length ? `, 결품: ${rp.shortBy.map(esc).join(', ')}` : ', 결품 없음'}${rp.over.length ? `, 초과 생산: ${rp.over.map(esc).join(', ')}` : ''}</p>`;
@@ -320,7 +320,7 @@
       <input type="date" data-rp="${i}" data-k="from" value="${e.from}" aria-label="시작일">
       ${e.type === 'down' ? `<input type="date" data-rp="${i}" data-k="to" value="${e.to}" aria-label="종료일"><input type="number" data-rp="${i}" data-k="minutes" value="${e.minutes}" placeholder="분/일(빈칸=종일)" min="0" max="1440">`
         : `<input type="number" data-rp="${i}" data-k="tons" value="${e.tons}" placeholder="불량 톤" min="0">`}
-      <button type="button" class="ghost x" data-rpdel="${i}" aria-label="삭제">✕</button></div>`).join('') || '<p class="hint">사건 없음 — 계획대로 생산했다고 보고 재계산</p>';
+      <button type="button" class="ghost x" data-rpdel="${i}" aria-label="삭제">✕</button></div>`).join('') || '<p class="hint">사건 없음: 계획대로 생산했다고 보고 재계산</p>';
   }
   $('rp-events').addEventListener('change', (ev) => {
     const t = ev.target, i = t.dataset.rp; if (i == null) return;

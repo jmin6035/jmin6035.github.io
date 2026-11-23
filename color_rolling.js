@@ -1,4 +1,4 @@
-/* 컬러 가동 현황 — 월 계획 vs 롤링(11/9 사용자 승인): published/color_rolling.enc.json(tools/color_rolling.py)
+/* 컬러 가동 현황: 월 계획 vs 롤링(11/9 사용자 승인): published/color_rolling.enc.json(tools/color_rolling.py)
    그룹별 진도 막대(실적 · 확정 작업지시 · 남은 배치 vs 월 계획) → 알람 → 라인×날짜 원본·롤링 */
 (function () {
   'use strict';
@@ -18,10 +18,10 @@
   function render() {
     const el = $('r-sec'); if (!el || !R) return;
     el.hidden = false;
-    $('r-meta').textContent = `확정 창 ${md(R.window[0])}~${md(R.window[1])} · 작업지시 ${String(R.woNow || '').slice(5).replace('-', '/')} · 확정 ${fmt(R.conf.t)}t${R.actTo ? ` · 실적 = MES ${md(R.actTo)}까지${R.actTo >= R.asOf ? '(오늘 진행분 포함)' : ''}` : ''}`;   // 11/10 점검: 실적 6,104(오늘 진행분 포함) vs 다른 화면 ~11/8 5,921 — 기준일 표시
+    $('r-meta').textContent = `확정 창 ${md(R.window[0])}~${md(R.window[1])} · 작업지시 ${String(R.woNow || '').slice(5).replace('-', '/')} · 확정 ${fmt(R.conf.t)}t${R.actTo ? ` · 실적 = MES ${md(R.actTo)}까지${R.actTo >= R.asOf ? '(오늘 진행분 포함)' : ''}` : ''}`;   // 11/10 점검: 실적 6,104(오늘 진행분 포함) vs 다른 화면 ~11/8 5,921: 기준일 표시
     $('r-tabs').innerHTML = R.months.map((m, i) => `<button type="button" data-m="${i}" aria-pressed="${i === mi}">${+m.slice(5)}월</button>`).join('');
     const m = R.months[mi];
-    // 11/13 사용자 결정: 월 계획 = 지금 판의 그 달 합(지난 날 실적 + 앞날 계획 = 01 컬러 합계 계) — 롤링 원본(고정 판) 대신. 비교용 월차(그 달 첫 판)는 합계 줄에만
+    // 11/13 사용자 결정: 월 계획 = 지금 판의 그 달 합(지난 날 실적 + 앞날 계획 = 01 컬러 합계 계): 롤링 원본(고정 판) 대신. 비교용 월차(그 달 첫 판)는 합계 줄에만
     const GP_ = window.CSGRP ? window.CSGRP(m) : null;
     const G = (GP_ ? CG.map((g) => { const x = R.groups.find((y) => y.ym === m && y.g === g) || { g, ym: m, act: 0, conf: 0, roll: 0 }; const plan = GP_[g] || 0, diff = x.act + x.conf + x.roll - plan; return Object.assign({}, x, { plan, diff, pct: plan ? diff / plan * 100 : null }); }) : R.groups.filter((x) => x.ym === m))
       .filter((x) => x.plan > 0.5 || x.act + x.conf + x.roll > 0.5);
@@ -35,7 +35,7 @@
       const bad = Math.abs(x.diff) >= 10 && Math.abs(x.pct || 0) > 5;
       return `<div class="rg-row${x.g === '합계' ? ' rg-tot' : ''}"><div class="rg-n">${x.g === '합계' ? '' : `<i style="background:${GVAR[x.g]}"></i>`}<b>${esc(GL(x.g))}</b></div>
         <div class="rg-bar">${seg(x.act, 'a', '실적')}${seg(x.conf, 'c', '확정 작업지시')}${seg(x.roll, 'p', '남은 배치')}<u style="left:${w(x.plan)}%" title="월 계획 ${fmt(x.plan)}t"></u></div>
-        <div class="rg-t"><b>${fmt(got)} / ${fmt(x.plan)}t</b>${x.m0 ? `<small class="rg-m0" title="월차 = 그 달 첫 게시 계획(01 판별 표 월차) — 비교용">월차 ${fmt(x.m0)}</small>` : ''}<span class="st ${bad ? (x.diff < 0 ? 'bad' : 'warn') : 'good'}">${x.diff > 0 ? '+' : ''}${fmt(x.diff)}t${x.pct == null ? '' : ` · ${x.diff > 0 ? '+' : ''}${(+x.pct).toFixed(1)}%`}</span></div>
+        <div class="rg-t"><b>${fmt(got)} / ${fmt(x.plan)}t</b>${x.m0 ? `<small class="rg-m0" title="월차 = 그 달 첫 게시 계획(01 판별 표 월차): 비교용">월차 ${fmt(x.m0)}</small>` : ''}<span class="st ${bad ? (x.diff < 0 ? 'bad' : 'warn') : 'good'}">${x.diff > 0 ? '+' : ''}${fmt(x.diff)}t${x.pct == null ? '' : ` · ${x.diff > 0 ? '+' : ''}${(+x.pct).toFixed(1)}%`}</span></div>
         <div class="rg-p" title="진도 = 실적 ÷ 월 계획(지금 판 그 달 합)">${x.plan ? `진도 ${Math.round(x.act / x.plan * 100)}%` : ''}</div></div>`;
     };
     $('r-groups').innerHTML = `<div class="rg-leg"><span><i class="a"></i>실적</span><span><i class="c"></i>확정 작업지시</span><span><i class="p"></i>남은 배치</span><span><u></u>월 계획(지금 판 합)</span></div>`
@@ -50,7 +50,7 @@
   function renderTable(m) {
     const n = new Date(+m.slice(0, 4), +m.slice(5), 0).getDate(), ds = Array.from({ length: n }, (_, i) => `${m}-${String(i + 1).padStart(2, '0')}`);
     const today = R.asOf;
-    // 11/13 사용자 '생긴 걸 똑같이(01 과)': 01 일별 가동계획 표와 같은 모양(ui/optable.js·css — 머리 2줄·왼쪽 두 칸·라인 묶음 굵은 선·컬러 가동 색·지난 날 덮개·오늘 틀·범례 아래)
+    // 11/13 사용자 '생긴 걸 똑같이(01 과)': 01 일별 가동계획 표와 같은 모양(ui/optable.js·css: 머리 2줄·왼쪽 두 칸·라인 묶음 굵은 선·컬러 가동 색·지난 날 덮개·오늘 틀·범례 아래)
     const ti = ds.indexOf(today);
     let h = OPT.head(ds, today, '', '', ti) + '<tbody>';
     for (const l of LINES) {

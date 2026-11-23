@@ -25,7 +25,7 @@
   const hrs = (m0) => { const m = Math.round(m0); return m >= 60 ? `${Math.floor(m / 60)}시간${m % 60 ? ' ' + (m % 60) + '분' : ''}` : `${m}분`; };   // 11/17 검토: 분 먼저 반올림('49시간 60분' 방지)
   const LINES = { cg: ['1CGL', '2CGL'], cc: ['1CCL', '2CCL', '3CCL', '4CCL'] };
   const POOLNM = { pre: '기간 시작 전에 끝날 작업', over: '기간 내 시간 부족(순연)', later: '미편성 작업', out: '직접 제외 작업', new: '신규 작업' };
-  // 11/15 사용자 'VA·CQ·CSP1-HG 전부 한글로' — MES 코드 마스터(ORD_COT_QTY_CLS·COT_AFT_TRE_CLS_CD·PRC_AFT_TRE_CLS_CD) 이름
+  // 11/15 사용자 'VA·CQ·CSP1-HG 전부 한글로': MES 코드 마스터(ORD_COT_QTY_CLS·COT_AFT_TRE_CLS_CD·PRC_AFT_TRE_CLS_CD) 이름
   const GR = { CQ: '일반용', DQ: '가공용', DDQ: '심가공용', EDDQ: '초심가공용', LFQ: '성형용', GRA: '구조용 A', GRB: '구조용 B', GRC: '구조용 C', GRD: '구조용 D', GRE: '구조용 E(극저탄)', GREL: '구조용 E(저탄)' };
   const COTG = { AA: 40, AB: 60, AC: 80, AD: 100, AE: 120, AF: 160, AR: 30, GC: 90, JC: 80, ME: 120, O6: 430, OB: 80, OC: 90, OD: 100, OE: 120, OF: 180, OH: 220, OJ: 250, OK: 275, OL: 350, OP: 300, OQ: 140, OY: 160, VA: 70, VB: 90, VC: 120, VD: 150, VE: 170, VF: 185, VJ: 100, XX: 150 };
   const COTN = { O3: '패턴맥 로고', OT: '패턴맥 격자', OW: '패턴맥 격자' };
@@ -43,16 +43,16 @@
   let VERS = [], cur = null, dirty = false, CK = null, gapN = 0, hl = null;
   const DATA = {};
 
-  // ───────── 전환 휴지(분) — 도금: 학습 1년 조건표(cg_wo_sequence.pfeats·cost) / 컬러: 조건표 × 라인 보정(wo_cost.parts) + 블록 바뀜 실측
+  // ───────── 전환 휴지(분): 도금: 학습 1년 조건표(cg_wo_sequence.pfeats·cost) / 컬러: 조건표 × 라인 보정(wo_cost.parts) + 블록 바뀜 실측
   const sk = (c) => { c = String(c || ''); return c.includes('·') ? c.split('·')[1] : c.length >= 7 ? c.slice(3, 7) : c; };
   const kNm = (s) => String(s).replace('Lami', '라미').replace(/이면/g, '뒷면').replace(/~(\d+mm)/, '$1 이하');   // 화면 이름만(기준표 키는 그대로)
   const evNm = (s) => String(s == null ? '' : s).replace(/test/gi, '시험').replace(/sample/gi, '샘플');   // 11/17 용어 기준: 자료 값 'Test' → 시험(화면 글자만)
   // 담당자 - 목적지: 모르는 쪽은 뺌('담당 미상' 금지) · 칸 안에서 줄바꿈
-  // 그룹 이름 = 현황·관제·편성과 같게(docs/32 · pyeonseong.js GNM 과 같은 묶음) — 화면 글자만
+  // 그룹 이름 = 현황·관제·편성과 같게(docs/32 · pyeonseong.js GNM 과 같은 묶음): 화면 글자만
   const GNM = { 수출: '도금수출', 국내: '도금국내', 도금판매: '도금국내', 자동차강판: '자동차', 자동차내수: '자동차', 자동차수출: '자동차', 건재수출: '컬러수출', 가전수출: '컬러수출', 가전내수: '컬러수출', 주문재: '컬러건재', 계획재: '컬러건재', 부원료: '부자재' };
   const gnm = (g) => { const k = String(g || '').replace(/(판매)?그룹$/, ''); return GNM[k] || k; };
   const manDst = (x) => { const a = [x.man, x.dst].filter((v) => v && v !== '미상'); return a.length ? `<span class="cp md" title="담당자 - 목적지(내수는 고객사)">${esc(a.join(' - '))}</span>` : ''; };
-  // 11/10 사용자: 컬러 전환 휴지 = 1년 실적 평균(라인 × 바뀜 종류, 색상교체·롤 교체·청소·더미만) — Python week_seq.cc_cat 과 같은 규칙
+  // 11/10 사용자: 컬러 전환 휴지 = 1년 실적 평균(라인 × 바뀜 종류, 색상교체·롤 교체·청소·더미만): Python week_seq.cc_cat 과 같은 규칙
   const catOf = (a, b) => { const s = [];
     if ((a.primer || '') !== (b.primer || '')) s.push('하도');
     if ((a.code || a.top || a.color || '') !== (b.code || b.top || b.color || '')) s.push('상도');
@@ -62,7 +62,7 @@
   function chgCC(a, b, l) {
     if (!a) return { m: 0, parts: [] };
     if (a.dummy || b.dummy) return { m: 0, parts: [] };
-    if (R.topSame && R.topSame[l] != null && catOf(a, b) === '상도' && a.thk === b.thk && a.wdt === b.wdt) {   // 11/16 사용자: 1·2CCL 두께·폭 같고 상도만 — 앞 작업 40분 이상 0분(표시 없음), 미만 실적 평균
+    if (R.topSame && R.topSame[l] != null && catOf(a, b) === '상도' && a.thk === b.thk && a.wdt === b.wdt) {   // 11/16 사용자: 1·2CCL 두께·폭 같고 상도만: 앞 작업 40분 이상 0분(표시 없음), 미만 실적 평균
       if (runMin(a, l) >= 40) return { m: 0, parts: [] };
       return { m: R.topSame[l], parts: [{ c: '상도 바뀜(앞 작업 40분 미만) · 실적 평균', m: R.topSame[l] }] }; }
     if (R.trans && R.trans[l]) { const k = catOf(a, b), m = R.trans[l][k];
@@ -95,7 +95,7 @@
       if (ta.aft && tb.aft && ta.aft !== tb.aft) fs.push(tfam(ta.aft) !== tfam(tb.aft) ? '후처리 계열 바뀜' : '후처리 바뀜(같은 계열)');
       if (ta.oil && tb.oil && ta.oil !== tb.oil) fs.push(String(ta.oil)[0] !== String(tb.oil)[0] ? '도유 종류 바뀜' : '도유 양만 바뀜');
     }
-    // 11/10: 실적은 바뀜의 0.7~1% 에만 더미 코일(10~65분) — 1년 실적에서 더미 비율 ≥ dummyP 인 바뀜만 '들어갈 때 길이'를 넣고, 나머지는 0분 + '더미 가능 n%'
+    // 11/10: 실적은 바뀜의 0.7~1% 에만 더미 코일(10~65분): 1년 실적에서 더미 비율 ≥ dummyP 인 바뀜만 '들어갈 때 길이'를 넣고, 나머지는 0분 + '더미 가능 n%'
     const pt = R.pt[l] || {}, P = R.dummyP || 50, parts = fs.map((f) => pt[f]).map((x, i) => x && (x.p >= P ? { c: `더미 ${kNm(fs[i])}(실적 ${n0(x.p)}%) · 약 ${n0(x.t)}t`, m: x.m }
       : x.p >= 5 ? { c: `더미 가능(${n0(x.p)}%, ${n0(x.m)}분)`, f: kNm(fs[i]), m: 0, may: true } : null)).filter(Boolean);
     if (a.sur !== b.sur) parts.unshift({ c: `표면사상 ${a.sur} → ${b.sur}`, m: 0 });
@@ -134,13 +134,13 @@
       const ev = sim(l), js = ev.filter((v) => v.k === 'j');
       const load = {};
       ev.forEach((v) => { if (v.k === 'w') return; const d = dayOf(v.s); const m = v.k === 'j' ? v.e - v.ds : (v.e2 || v.e) - v.s; load[d] = (load[d] || 0) + m; });   // 그날 시작한 작업·휴지 합(기다림 제외)
-      Object.entries(load).forEach(([d, m]) => { if (m > 1440.5 && tms(d + ' 07:00') < W1) add('warn', '하루 1,440분 초과', l, null, `${l} ${dnm(d)} 그날 시작한 작업·휴지 ${n0(m)}분 — 다음날로 ${n0(m - 1440)}분 넘어감`); });
-      js.forEach((v) => { if (v.e > W1) add('warn', '기간 초과', l, v.x, `${l} ${conOf(v.x)} 끝 ${md(iso(v.e))} ${hhmm(v.e)} — 기간 끝 ${md(iso(W1))} 07:00 초과`); });
+      Object.entries(load).forEach(([d, m]) => { if (m > 1440.5 && tms(d + ' 07:00') < W1) add('warn', '하루 1,440분 초과', l, null, `${l} ${dnm(d)} 그날 시작한 작업·휴지 ${n0(m)}분: 다음날로 ${n0(m - 1440)}분 넘어감`); });
+      js.forEach((v) => { if (v.e > W1) add('warn', '기간 초과', l, v.x, `${l} ${conOf(v.x)} 끝 ${md(iso(v.e))} ${hhmm(v.e)}: 기간 끝 ${md(iso(W1))} 07:00 초과`); });
       js.forEach((v) => {
         const x = v.x, end = dayOf(v.e), due = plant === 'cg' ? x.dlv : x.due;
         if (due && due < end) {
           if (due >= dayOf(tms(D.w0))) add('bad', '지연 예상', l, x, `${l} ${conOf(x)} 납기 ${md(due)} → 끝 ${dnm(end)}`);
-          else add('info', '납기 경과', l, x, `${l} ${conOf(x)} 납기 ${md(due)}(오늘 전) — 끝 ${dnm(end)}`);
+          else add('info', '납기 경과', l, x, `${l} ${conOf(x)} 납기 ${md(due)}(오늘 전): 끝 ${dnm(end)}`);
         }
       });
       if (plant === 'cg') checkCG(l, js, add); else checkCC(l, js, ev, add);
@@ -159,13 +159,13 @@
     const ga = a.grade, gb = b.grade;
     if (ga && gb && ga !== gb && ((R.matNo || {})[b.al] || []).some((p) => p.includes(ga) && p.includes(gb) && ga !== gb)) {
       const br = (R.matBridge || {})[[ga, gb].sort().join('|')];
-      o.push(['bad', '재질 연속 불가', `재질 ${GR[ga] || ga} → ${GR[gb] || gb} 연속 불가${br ? ' — 사이에 ' + br : ''}`]);
+      o.push(['bad', '재질 연속 불가', `재질 ${GR[ga] || ga} → ${GR[gb] || gb} 연속 불가${br ? ': 사이에 ' + br : ''}`]);
     }
     if (a.ind && b.ind && a.ind !== b.ind && Math.min(a.thick, b.thick) < R.indThin) o.push(['bad', '내경', `내경 ${IND[a.ind] || a.ind} → ${IND[b.ind] || b.ind}(0.6t 미만)`]);
     const ta = (a.trt || {}).aft, tb = (b.trt || {}).aft, g = tgrp(ta);
     if (l === '2CGL' && g != null && ta !== tb && g === tgrp(tb)) o.push(['bad', '후처리 같은 층', `후처리 ${ta} → ${tb} 같은 층 바로 이음`]);
     const dw = b.width - a.width;
-    if (dw > R.widenLim + 1e-6) o.push(['warn', '폭 넓힘 한도', `폭 ${n0(dw)}mm 넓어짐(한도 ${R.widenLim}mm) — 현장 협의`]);
+    if (dw > R.widenLim + 1e-6) o.push(['warn', '폭 넓힘 한도', `폭 ${n0(dw)}mm 넓어짐(한도 ${R.widenLim}mm): 현장 협의`]);
     else if (Math.abs(a.thick - b.thick) < 1e-6 && dw > 5) o.push(['warn', '같은 두께 폭 넓힘', `같은 두께에서 폭 ${n0(dw)}mm 넓어짐`]);
     return o;
   }
@@ -181,7 +181,7 @@
       const g = tgrp((x.trt || {}).aft);
       if (l === '2CGL' && g != null) { const lg = lastG[g]; if (lg && lg.aft !== x.trt.aft && lg.i !== i - 1 && (v.s - lg.e < R.trtGap || coil - lg.c < R.trtGapN)) add('bad', '후처리 간격', l, x, `${l} ${conOf(x)} 후처리 ${lg.aft} → ${x.trt.aft} 같은 층 사이 ${coil - lg.c}코일·${n0(v.s - lg.e)}분(2코일·1시간 필요)`); lastG[g] = { aft: x.trt.aft, e: v.e, c: coil + x.n, i }; }
       const pf = plan[d];
-      if (pf && pf.length && x.al && !pf.map(famOf).includes(famOf(x.al))) add('bad', '계획 강종 아님', l, x, `${l} ${conOf(x)} ${x.al} — ${dnm(d)} 계획 강종 ${pf.join('·')}(M/C 날짜 확인)`);
+      if (pf && pf.length && x.al && !pf.map(famOf).includes(famOf(x.al))) add('bad', '계획 강종 아님', l, x, `${l} ${conOf(x)} ${x.al}: ${dnm(d)} 계획 강종 ${pf.join('·')}(M/C 날짜 확인)`);
       if (mcDay[d]) { const k = dayCoil[d] || 0; if (k < R.mcHead && x.ge) add('bad', 'M/C 첫 10코일 가전', l, x, `${l} ${conOf(x)} ${dnm(d)} M/C 날 첫 ${R.mcHead}코일 안 가전(용도 ${x.usg || 'GE'})`); dayCoil[d] = k + x.n; }
       const sts = (R.sts || {})[l];
       if (sts && prev && prev.sur === sts && x.sur === sts && (x.thick > prev.thick + 1e-6 || (Math.abs(x.thick - prev.thick) < 1e-6 && x.width > prev.width + 5))) add('warn', 'AL-STS 순서', l, x, `${l} ${conOf(x)} AL-STS 안은 두꺼운·넓은 → 얇은·좁은(${prev.thick}×${n0(prev.width)} → ${x.thick}×${n0(x.width)})`);
@@ -194,8 +194,8 @@
     let pb = (D.lines[l].prev0 || {}).block;
     js.forEach((v) => {
       const x = v.x, d = dayOf(v.s);
-      if (x.allow && !x.allow.includes(l)) add('bad', x.block === 'print' || /^PP[GKHF]/.test(x.item) ? '프린트는 4CCL' : '라인 규칙', l, x, `${l} ${x.con} ${x.item} — ${x.must ? '필수' : '가능'} 라인 ${x.allow.join('·')}`);
-      if (l === '2CCL' && (!x.allow || x.allow.some((y) => y !== '2CCL'))) add('warn', '2CCL 최후', l, x, `2CCL ${x.con} ${x.item} — 다른 라인 ${(x.allow || ['1CCL', '3CCL', '4CCL']).filter((y) => y !== '2CCL').join('·')} 가능(2CCL 은 다른 라인이 찰 때만)`);
+      if (x.allow && !x.allow.includes(l)) add('bad', x.block === 'print' || /^PP[GKHF]/.test(x.item) ? '프린트는 4CCL' : '라인 규칙', l, x, `${l} ${x.con} ${x.item}: ${x.must ? '필수' : '가능'} 라인 ${x.allow.join('·')}`);
+      if (l === '2CCL' && (!x.allow || x.allow.some((y) => y !== '2CCL'))) add('warn', '2CCL 최후', l, x, `2CCL ${x.con} ${x.item}: 다른 라인 ${(x.allow || ['1CCL', '3CCL', '4CCL']).filter((y) => y !== '2CCL').join('·')} 가능(2CCL 은 다른 라인이 찰 때만)`);
       if (pb && pb !== x.block) blk[d] = (blk[d] || 0) + 1;
       pb = x.block;
       if (x.fixed && x.ready && dayOf(v.s) < x.ready) add('bad', '도료·필름 입고 전 작업', l, x, `${l} ${x.con} 준비일 ${md(x.ready)} 전 ${dnm(d)} 작업(확정 대기열)`);
@@ -269,7 +269,7 @@
       + `${lsel}<button data-a="gap" data-i="${v.i}" title="이 작업 앞에 휴지·더미 넣기">+휴지</button><button class="x" data-a="del" data-i="${v.i}" title="빼기(빠진 작업으로)">✕</button></span>${MO(v.i)}</td></tr>`;
   }
   function draw() {
-    const W0 = tms(D.w0), W1 = tms(D.w1), days = Array.from({ length: Math.max(1, Math.round((W1 - W0) / 1440)) }, (_, i) => dayOf(W0 + i * 1440));   // 11/10 사용자 '수요일로 자르지 마' — 오늘부터 1030 확정이 끝날 때까지
+    const W0 = tms(D.w0), W1 = tms(D.w1), days = Array.from({ length: Math.max(1, Math.round((W1 - W0) / 1440)) }, (_, i) => dayOf(W0 + i * 1440));   // 11/10 사용자 '수요일로 자르지 마': 오늘부터 1030 확정이 끝날 때까지
     $('ws-wk').textContent = `오늘부터 ${md(days[0])}~${md(days[days.length - 1])}`;
     $('ws-wk').title = `${iso(W0)} ~ ${iso(W1)} (하루 = 07시 ~ 다음날 07시)`;
     const v = $('ws-ver'); v.title = '';
@@ -297,7 +297,7 @@
       return `<button type="button" class="ws-k" data-l="${l}" aria-pressed="${l === line}"><div class="ln">${l}</div><div class="kb"><div class="v2"><i>${nA}</i><span>${jA.length}<small>건</small></span><span>${tt(jA)}<small>t</small></span><i>${nB}</i><span>${jB.length}<small>건</small></span><span>${tt(jB)}<small>t</small></span></div>`
         + `<div class="kr"><div class="b">생산 <b>${hrs(run)}</b></div><div class="b">전환 휴지 <b>${hrs(ch)}</b></div><div class="b">계획 휴지 <b>${hrs(pl)}</b>${wt ? ` · 기다림 <b>${hrs(wt)}</b>` : ''}</div>`
         + `<div class="b">${left >= 0 ? `남는 시간 <b>${hrs(left)}</b>` : `<span class="w">기간 초과 ${hrs(-left)}</span>`}</div></div></div>`
-        + `<div class="kc" title="작업 순서가 편성 규칙(납기·소재 입고·라인·강종·후처리 간격 등)을 위반한 작업 수, 아래 '점검'을 누르면 목록">${nb ? `<span class="w">규칙 위반 ${nb}건</span> — ${bTxt}` : '<span class="ok">규칙 위반 없음</span>'}</div></button>`;
+        + `<div class="kc" title="작업 순서가 편성 규칙(납기·소재 입고·라인·강종·후처리 간격 등)을 위반한 작업 수, 아래 '점검'을 누르면 목록">${nb ? `<span class="w">규칙 위반 ${nb}건</span>: ${bTxt}` : '<span class="ok">규칙 위반 없음</span>'}</div></button>`;
     }).join('');
     $('ws-kpis').querySelectorAll('.ws-k').forEach((b) => (b.onclick = () => { line = b.dataset.l; draw(); }));
     // 순서 표(요일별)
@@ -307,7 +307,7 @@
     ev.forEach((q) => { const d = q.s >= W1 ? 'over' : dayOf(q.s); const o = dsum[d] = dsum[d] || { n: 0, t: 0, run: 0, dn: 0, seg: [] }; if (q.k === 'j') { o.n++; o.t += q.x.t; o.run += q.rm; o.dn += q.ch.m; } else o.dn += (q.e2 || q.e) - q.s; });
     const bar = (d) => { const b0 = tms(d + ' 07:00'); const seg = (a, z, c) => { const x0 = Math.max(0, a - b0), x1 = Math.min(1440, z - b0); return x1 > x0 ? `<i class="${c}" style="left:${(x0 / 14.4).toFixed(2)}%;width:${((x1 - x0) / 14.4).toFixed(2)}%"></i>` : ''; };
       return `<div class="dbar">${ev.map((q) => (q.k === 'j' ? seg(q.ds, q.s, 'd') + seg(q.s, q.e, 'r') : seg(q.s, q.e2 || q.e, q.k === 'p' ? (/샘플|test|시험/i.test(q.ev) ? 'p sm' : 'p') : q.k === 'g' ? (q.e.sm ? 'p sm' : 'd') : 'g'))).join('')}</div>`; };
-    const stsH = (d) => { const x = (((R && R.stsPlan) || {})[line] || {})[d]; if (!x || !(x[0] >= 0.5)) return '';   // AL-STS 날(재계획, 11/13) — 청록 칩 + 예약(판매계획 물량, 주문 D-3 확정)
+    const stsH = (d) => { const x = (((R && R.stsPlan) || {})[line] || {})[d]; if (!x || !(x[0] >= 0.5)) return '';   // AL-STS 날(재계획, 11/13): 청록 칩 + 예약(판매계획 물량, 주문 D-3 확정)
       return `<span class="stsc" title="재계획 AL-STS ${n0(x[0])}t${x[1] >= 0.5 ? ` · 그중 예약 ${n0(x[1])}t = 판매계획 물량(외부 소재처 주문 D-3 확정)` : ' · 주문'}">AL-STS ${n0(x[0])}t${x[1] >= 0.5 ? ` · 예약 ${n0(Math.min(x[1], x[0]))}t(D-3 확정)` : ''}</span>`; };
     const dayHead = (d) => { const o = dsum[d] || { n: 0, t: 0, run: 0, dn: 0 }; const over = o.run + o.dn > 1440.5;
       return `<tr class="dh" data-d="${d}"><td colspan="7"><div class="dhh"><b>${d === 'over' ? `기간 끝(${md(iso(W1))} 07:00) 초과` : dnm(d)}</b><span>작업 ${o.n}건 · ${n0(o.t)}t</span><span>생산 ${hrs(o.run)} · 휴지 ${hrs(o.dn)}</span>${stsH(d)}${over && d !== 'over' ? `<em title="그날 시작한 작업·휴지 합이 1,440분 초과"> 다음날로 ${hrs(o.run + o.dn - 1440)}</em>` : ''}</div>${d === 'over' ? '' : bar(d)}</td></tr>`; };
@@ -316,7 +316,7 @@
       const d = q.s >= W1 ? 'over' : dayOf(q.s);
       if (d !== curD) { days.filter((x) => x > (curD || '') && x < d && !shown.has(x)).forEach((x) => { h += dayHead(x); shown.add(x); }); h += dayHead(d); shown.add(d); curD = d; }
       if (q.k === 'p') { const sm = /샘플|test|시험/i.test(q.ev), nm = q.ev === 'plan' || q.ev === '휴지계획' ? '' : q.ev;   // 11/10 사용자 '샘플 부분 잘 보이게'
-        h += `<tr class="ev pz${sm ? ' sm' : ''}"><td></td><td></td><td class="tm">${q.e - q.s >= 1440 ? '<b>종일</b>' : `<b>${hhmm(q.s)}</b>–${hhmm(q.e)}`}</td><td colspan="4">${nm ? `<span class="pk">${esc(evNm(nm))}</span> ` : ''}${sm ? '' : '계획 휴지 '}<b>${hrs(q.e - q.s)}</b>${sm ? ' — 이 시간엔 생산 작업 안 넣음' : ''}</td></tr>`; }
+        h += `<tr class="ev pz${sm ? ' sm' : ''}"><td></td><td></td><td class="tm">${q.e - q.s >= 1440 ? '<b>종일</b>' : `<b>${hhmm(q.s)}</b>–${hhmm(q.e)}`}</td><td colspan="4">${nm ? `<span class="pk">${esc(evNm(nm))}</span> ` : ''}${sm ? '' : '계획 휴지 '}<b>${hrs(q.e - q.s)}</b>${sm ? ': 이 시간엔 생산 작업 안 넣음' : ''}</td></tr>`; }
       else if (q.k === 'w') h += `<tr class="ev w"><td></td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e)}</td><td colspan="4">기다림 <b>${hrs(q.e - q.s)}</b> · ${esc(q.x.con)} 도료·PF 준비 ${md(q.x.ready)} 07:00</td></tr>`;
       else if (q.k === 'g' && q.e.sm) h += `<tr class="ev g sm" draggable="true" data-i="${q.i}"><td class="hd" title="끌어서 옮기기">⋮⋮</td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e2)}</td><td colspan="3"><span class="pk">${esc(evNm(q.e.note || '샘플'))}</span> <input type="number" min="0" max="2880" step="10" data-a="gmin" data-i="${q.i}" value="${q.e.min}" title="시간(분) 바꾸기">분 <span class="hint">— 끌거나 ↑↓로 시각을 옮기고, 분을 바꿀 수 있음 · 이 시간엔 생산 안 넣음</span></td><td class="ac"><span class="acd"><button data-a="up" data-i="${q.i}" title="앞으로">↑</button><button data-a="dn" data-i="${q.i}" title="뒤로">↓</button><select data-a="day" data-i="${q.i}" title="다른 날로"><option value="">날</option>${days.map((d) => `<option value="${d}">${dnm(d)}</option>`).join('')}</select><button class="x" data-a="del" data-i="${q.i}" title="빼기">✕</button></span>${MO(q.i)}</td></tr>`;
       else if (q.k === 'g') h += `<tr class="ev g" draggable="true" data-i="${q.i}"><td class="hd">⋮⋮</td><td></td><td class="tm"><b>${hhmm(q.s)}</b>–${hhmm(q.e2)}</td><td colspan="3">직접 넣은 휴지·더미 <input type="number" min="0" max="2880" step="5" data-a="gmin" data-i="${q.i}" value="${q.e.min}">분 <input class="nt" data-a="gnote" data-i="${q.i}" placeholder="사유(롤 교체·더미 등)" value="${esc(q.e.note || '')}"></td><td class="ac"><span class="acd"><button data-a="up" data-i="${q.i}" title="앞으로">↑</button><button data-a="dn" data-i="${q.i}" title="뒤로">↓</button><button class="x" data-a="del" data-i="${q.i}" title="빼기">✕</button></span>${MO(q.i)}</td></tr>`;
@@ -328,11 +328,11 @@
       }
     });
     days.filter((x) => !shown.has(x)).forEach((x) => { h += dayHead(x); });
-    if (!ev.length) h += `<tr><td colspan="7" class="muted">이 라인에 기간 안 작업이 없습니다${D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}. 오른쪽 빠진 작업에서 넣을 수 있습니다.</td></tr>`;
+    if (!ev.length) h += `<tr><td colspan="7" class="muted">이 라인에 기간 안 작업이 없습니다${D.lines[line].stop ? ': ' + esc(D.lines[line].stop.note || '') : ''}. 오른쪽 빠진 작업에서 넣을 수 있습니다.</td></tr>`;
     $('ws-tbl').innerHTML = `<colgroup><col style="width:30px"><col style="width:44px"><col style="width:118px"><col style="width:196px"><col><col style="width:${plant === 'cc' ? 150 : 170}px"><col style="width:${plant === 'cc' ? 224 : 280}px"></colgroup>` + h;
     drawPool(); drawCk(); bind(); fit(); find();
   }
-  // 11/15 사용자 '담당자나 계약번호 검색' — 표 줄은 노란 칠, 미편성 목록은 맞는 것만, 다른 라인에 있으면 라인 단추
+  // 11/15 사용자 '담당자나 계약번호 검색': 표 줄은 노란 칠, 미편성 목록은 맞는 것만, 다른 라인에 있으면 라인 단추
   function find(go) {
     const q = ($('ws-find').value || '').trim().toLowerCase(), out = $('ws-fres');
     document.querySelectorAll('tr.j.fd').forEach((r) => r.classList.remove('fd'));
@@ -349,7 +349,7 @@
     out.querySelectorAll('a[data-fl]').forEach((a) => (a.onclick = (e) => { e.preventDefault(); line = a.dataset.fl; draw(); }));
     if (go && first) first.scrollIntoView({ block: 'center' });
   }
-  document.addEventListener('input', (e) => { if (e.target && e.target.id === 'ws-find') find(true); });   // seq_view 도 이 파일을 읽음(ws-find 없음) — 직접 연결하면 오류
+  document.addEventListener('input', (e) => { if (e.target && e.target.id === 'ws-find') find(true); });   // seq_view 도 이 파일을 읽음(ws-find 없음): 직접 연결하면 오류
   // 본문이 좁으면(820px 미만) 묶음 배치(.cmp) · 날짜 머리줄 고정 위치 = 위 막대 높이
   function fit() {
     const m = $('ws-main'); if (!m || !m.clientWidth) return;
@@ -372,7 +372,7 @@
     P.forEach((p) => { (G[p.r] = G[p.r] || []).push(p.x); });
     const ord = ['out', 'new', 'over', 'later'];
     const nm = POOLNM;
-    // 11/10 사용자 '왜 못 들어가냐 — 납기·부원료·규칙 뭐냐' → 작업마다 이유: 부원료 입고 · 라인 규칙 · 시간 부족(라인 정지·꽉 참) + 넣을 수 있는 다른 라인
+    // 11/10 사용자 '왜 못 들어가냐: 납기·부원료·규칙 뭐냐' → 작업마다 이유: 부원료 입고 · 라인 규칙 · 시간 부족(라인 정지·꽉 참) + 넣을 수 있는 다른 라인
     const W1 = tms(D.w1), left = {}, stopD = {};
     LINES[plant].forEach((l) => { const ev = sim(l); const end = ev.length ? Math.max(...ev.map((q) => q.e2 || q.e)) : tms(D.lines[l].from); left[l] = W1 - Math.max(end, tms(D.lines[l].from));
       const dd = Object.entries((R.down || {})[l] || {}).filter(([, v]) => (v.min || v) >= 1440); stopD[l] = dd.length ? `${md(dd[0][0])}~${md(dd[dd.length - 1][0])} ${[...new Set(dd.flatMap(([, v]) => (v.ev === 'plan' || v.ev === '휴지계획' ? '계획 휴지' : String(v.ev)).split('·')))].join('·')} ${dd.length}일` : ''; });
@@ -408,7 +408,7 @@
       + Object.entries(by).map(([k, o]) => `<details class="ck-g"${o.lv === 'bad' && o.xs.length <= 12 ? ' open' : ''}><summary>${LV[o.lv][1]} · ${esc(k)} ${o.xs.length}건</summary><ul>${o.xs.slice(0, 80).map((c) => `<li>${esc(c.t)}${c.id ? ` <a data-go="${esc(c.id)}" data-l="${c.l}">보기</a>` : ''}</li>`).join('')}${o.xs.length > 80 ? `<li>외 ${o.xs.length - 80}건</li>` : ''}</ul></details>`).join('') + '</section>';
     $('ws-ck').querySelectorAll('a[data-go]').forEach((a) => (a.onclick = () => { line = a.dataset.l; hl = a.dataset.go; draw(); const r = document.querySelector(`tr.j[data-id="${CSS.escape(hl)}"]`); if (r) r.scrollIntoView({ block: 'center' }); }));
   }
-  // 줄 동작(넓은 화면 단추 · 좁은 화면 ⋯ 가 같이 씀) — 바뀌었으면 true
+  // 줄 동작(넓은 화면 단추 · 좁은 화면 ⋯ 가 같이 씀): 바뀌었으면 true
   function act(a, i, val) {
     const S = L[line];
     if (a === 'up' && i > 0) [S[i - 1], S[i]] = [S[i], S[i - 1]];
@@ -477,7 +477,7 @@
     const P = $('ws-pool');
     P.querySelectorAll('.pl-i').forEach((d) => { d.ondragstart = (e) => { drag = { from: 'pool', id: d.dataset.id }; try { e.dataTransfer.setData('text/plain', 'x'); } catch (er) { /* 무시 */ } }; });
     P.querySelectorAll('button[data-a="add"]').forEach((b) => (b.onclick = () => {
-      const x = J[b.dataset.id], d = prompt(`넣을 날 — 예: ${md(dayOf(tms(D.w0)))}`, md(dayOf(tms(D.w0))));
+      const x = J[b.dataset.id], d = prompt(`넣을 날: 예: ${md(dayOf(tms(D.w0)))}`, md(dayOf(tms(D.w0))));
       if (d == null) return;
       const m = String(d).match(/(\d+)\/(\d+)/); const day = m ? `${D.week.slice(0, 4)}-${String(m[1]).padStart(2, '0')}-${String(m[2]).padStart(2, '0')}` : dayOf(tms(D.w0));
       insertAtDay(plant === 'cc' ? line : x.line, { k: 'j', id: x.id }, day); touch();
@@ -510,7 +510,7 @@
     let nSm = 0; smNew.forEach(([l, e, d]) => { if (!L[l].some((q) => q.k === 'g' && q.sm && q.note === e.note)) { insertAtDay(l, e, d); nSm++; } });
     const known = new Set(x.p.known || []), P = placed(), nNew = D.jobs.filter((j) => j.why === 'week' && !P.has(j.id) && !known.has(j.id)).length;
     res.textContent = (msg || '') + (gone.length ? ` · 저장본 ${gone.length}건은 최신 자료에 없음(생산·취소)` : '')
-      + (nNew ? ` · 저장 후 신규 작업 ${nNew}건 — 아래 목록에서 추가` : '') + (nSm ? ` · 새 샘플·테스트 일정 ${nSm}건 반영` : '');
+      + (nNew ? ` · 저장 후 신규 작업 ${nNew}건: 아래 목록에서 추가` : '') + (nSm ? ` · 새 샘플·테스트 일정 ${nSm}건 반영` : '');
   }
   async function save(state) {
     const who = $('ws-who').value.trim();
@@ -523,15 +523,15 @@
       const q = await fetch(`${API}?select=id,who,at&plant=eq.${plant}&week=gte.${wkFrom()}&order=id.desc&limit=1`, { headers: H });   // 11/10: 내가 연 뒤 다른 사람이 저장했으면 묻기
       const top = q.ok ? (await q.json())[0] : null, mine = VERS.length ? VERS[VERS.length - 1].id : 0;
       if (top && top.id > mine && !confirm(`${top.who} 님이 ${kst(top.at)} 에 먼저 저장했습니다. 그 뒤 내용을 보지 않고 내 것으로 저장할까요?\n(취소하면 '버전 고르기'에서 최신본을 확인할 수 있습니다)`)) {
-        await loadVers(); $('ws-res').textContent = '저장하지 않았습니다 — 버전 고르기에서 최신본 확인';
+        await loadVers(); $('ws-res').textContent = '저장하지 않았습니다: 버전 고르기에서 최신본 확인';
         ['ws-save', 'ws-conf', 'ws-reset'].forEach((id) => ($(id).disabled = false)); return;
       }
       const env = await GP.encryptJSON(p, PW, 'week_seq');
       const r = await fetch(API, { method: 'POST', headers: Object.assign({ Prefer: 'return=minimal' }, H), body: JSON.stringify({ who: who.slice(0, 40), plant, week: D.week, state, payload: JSON.stringify(env) }) });
       if (!r.ok) throw new Error('저장 실패 ' + r.status + ' ' + (await r.text()).slice(0, 120));
       try { localStorage.setItem('cgl-me', who); } catch (e) { /* 무시 */ }
-      if (state === 'confirm') {                                   // 11/11 사용자 '저장은 생산 일정에 반영 말고, 확정은 반영 — 컬러도': 확정만 생산 일정이 읽는 확정본(cgl_week_confirm)에도
-        // 한 줄 = [계약, 톤, 종류, 작업 id] · 종류 '확정' = MES 작업지시(도금 1030 지시·컬러 1030 작업대기, 이미 고정 — 생산 일정이 다시 고정 안 함), '편성' = 이 확정으로 그 라인·날짜에 고정
+      if (state === 'confirm') {                                   // 11/11 사용자 '저장은 생산 일정에 반영 말고, 확정은 반영: 컬러도': 확정만 생산 일정이 읽는 확정본(cgl_week_confirm)에도
+        // 한 줄 = [계약, 톤, 종류, 작업 id] · 종류 '확정' = MES 작업지시(도금 1030 지시·컬러 1030 작업대기, 이미 고정: 생산 일정이 다시 고정 안 함), '편성' = 이 확정으로 그 라인·날짜에 고정
         //   (11/11 점검: 예전엔 도금도 전부 '확정'으로 보내 생산 캘린더가 하나도 고정하지 않았음)
         const cl = {}, done = (x) => (plant === 'cg' ? x.issued : x.fixed);
         LINES[plant].forEach((l) => { cl[l] = {}; sim(l).filter((v) => v.k === 'j' && v.x.con && !v.x.dummy).forEach((v) => { const d = dayOf(v.s); (cl[l][d] = cl[l][d] || []).push([v.x.con, +(+v.x.t).toFixed(1), done(v.x) ? '확정' : '편성', v.x.id]); }); });
@@ -605,7 +605,7 @@
   const hashOf = (p, m) => '#' + p + (m === 'wo' ? '-wo' : '');
   $('ws-plant').querySelectorAll('button').forEach((b) => (b.onclick = () => { if (b.dataset.p !== plant) location.hash = hashOf(b.dataset.p, mode); }));
   $('ws-mode').querySelectorAll('button').forEach((b) => (b.onclick = () => { if (b.dataset.m !== mode) location.hash = hashOf(plant, b.dataset.m); }));
-  /* 위 보기(전체·도금·컬러)와 맞춤 — 컬러를 골랐는데 도금이 나오던 문제(11/10 사용자) */
+  /* 위 보기(전체·도금·컬러)와 맞춤: 컬러를 골랐는데 도금이 나오던 문제(11/10 사용자) */
   const scopeGo = () => { const sc = window.UI && UI.scope ? UI.scope() : 'all', want = sc === 'C' ? 'cc' : sc === 'G' ? 'cg' : null; if (want && want !== plant) location.hash = hashOf(want, mode); };
   if (window.UI && UI.onScope) UI.onScope(scopeGo);
   if (!location.hash || /^#(cg|cc)?-?rules$/.test(location.hash)) { if (window.UI && UI.scope && UI.scope() === 'C') plant = 'cc';   /* 11/17 검토: ?pl=C 로 처음 열 때 컬러부터(조회 화면과 같게) */ if (/rules/.test(location.hash)) { $('ws-fold').open = true; toRules = true; history.replaceState(null, '', location.pathname + location.search + hashOf(plant, 'ed')); } scopeGo(); }
@@ -628,7 +628,7 @@
     if (!D) return '';
     const W = `<ul class="ws-ul"><li>하루 = 07시 ~ 다음날 07시(MES 일수) · 기간 = ${dnm(dayOf(tms(D.w0)))} 07시 ~ ${dnm(dayOf(tms(D.w1) - 1))} 다음날 07시(오늘부터 7일, 컬러는 확정 지시가 끝날 때까지)</li>`
       + (plant === 'cg' ? '<li>생산 시간 = 코일 무게 ÷ 시간당 생산량(같은 두께·폭 2026년 실적) · 그날 처음 닿을 때 계획 휴지</li>' : '<li>생산 시간 = 길이 ÷ L/S(26년 1월부터 실적) × 라인 보정 · 도료·필름 입고 전이면 기다림 · 그날 처음 닿을 때 계획 휴지</li>')
-      + `<li>초안 = 작업지시 제안 규칙(아래 편성 조건)을 이 기간으로 넓힌 것 · 저장 = 버전 이력(암호화) · 확정 = 그 주 약속본 — 생산 일정에 반영(다음 갱신 때, MES 작업지시 전 작업을 확정한 라인·날짜에 고정) · 저장은 반영 안 됨</li></ul>`;
+      + `<li>초안 = 작업지시 제안 규칙(아래 편성 조건)을 이 기간으로 넓힌 것 · 저장 = 버전 이력(암호화) · 확정 = 그 주 약속본: 생산 일정에 반영(다음 갱신 때, MES 작업지시 전 작업을 확정한 라인·날짜에 고정) · 저장은 반영 안 됨</li></ul>`;
     let T = '';
     if (plant === 'cc' && R.trans) {
       const K = [...new Set(Object.values(R.trans).flatMap((x) => Object.keys(x)))].sort((a, b) => (a === '사양 같음') - (b === '사양 같음') || a.split('+').length - b.split('+').length || a.localeCompare(b));
@@ -637,7 +637,7 @@
     }
     if (plant === 'cg' && R.pt) {
       const K = [...new Set(Object.values(R.pt).flatMap((x) => Object.keys(x)))];
-      T = `<h4>도금 더미 기준 <small>바뀜별 1년 실적 더미 비율 · 들어갈 때 분 · 톤 — ${R.dummyP || 50}% 이상만 시간에 넣음, 그 아래는 '더미 가능' 표시</small></h4><div class="ct-wrap"><table class="ct-t ws-tr"><thead><tr><th class="l">바뀌는 것</th>${LINES.cg.map((l) => `<th class="r">${l} 비율</th><th class="r">분</th><th class="r">톤</th>`).join('')}</tr></thead><tbody>`
+      T = `<h4>도금 더미 기준 <small>바뀜별 1년 실적 더미 비율 · 들어갈 때 분 · 톤: ${R.dummyP || 50}% 이상만 시간에 넣음, 그 아래는 '더미 가능' 표시</small></h4><div class="ct-wrap"><table class="ct-t ws-tr"><thead><tr><th class="l">바뀌는 것</th>${LINES.cg.map((l) => `<th class="r">${l} 비율</th><th class="r">분</th><th class="r">톤</th>`).join('')}</tr></thead><tbody>`
         + K.map((k) => `<tr><td class="l">${esc(k)}</td>${LINES.cg.map((l) => { const x = (R.pt[l] || {})[k]; return x ? `<td class="r">${x.p >= (R.dummyP || 50) ? `<b>${n0(x.p)}%</b>` : n0(x.p) + '%'}</td><td class="r">${n0(x.m)}</td><td class="r">${n1(x.t)}</td>` : '<td class="r"><span class="sub">-</span></td><td></td><td></td>'; }).join('')}</tr>`).join('') + '</tbody></table></div>'
         + `<h4>점검 규칙</h4><ul class="ws-ul"><li>두께 차 ${R.thkStep}mm 이내(${Object.entries(R.thkStepThin || {}).map(([l, v]) => `${l} 0.4t 미만 ${v}mm`).join(' · ')}) · 두께비 ${R.thkRatio}배 이내 · 내경 바뀜은 ${R.indThin}t 미만 금지</li><li>폭 넓힘 ${R.widenLim}mm 까지(같은 두께는 넓히지 않음) · 재질 바로 못 잇는 짝 금지(사이 재질)</li><li>2CGL 후처리 같은 층 다른 약액 = 사이 ${R.trtGapN}코일·${n0(R.trtGap)}분 · M/C 날 첫 ${R.mcHead}코일 가전 금지 · 계획 강종 아닌 코일 · 소재 입고 전 작업</li></ul>`;
     }

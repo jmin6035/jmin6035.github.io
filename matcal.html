@@ -127,7 +127,7 @@ table.fm tr.unk td { color: var(--ink-3); }
 .mv-h em { font-style: normal; font-size: 13.5px; font-weight: 800; border-radius: 10px; padding: 0 6px; }
 
 .mv-s { width: 100%; font-size: 13.5px; color: var(--ink-3); } .mv-s .n, .mv-r.n b { color: var(--bad); font-weight: 700; }
-/* 소재 캘린더 표(2026-10-21 사용자: 가동 현황 캘린더처럼 색, 기울임 없이, 고급스럽게 — 가동 캘린더 표와 같은 서식) */
+/* 소재 캘린더 표(2026-10-21 사용자: 가동 현황 캘린더처럼 색, 기울임 없이, 고급스럽게: 가동 캘린더 표와 같은 서식) */
 :root { --pt-act: #f3f6fa; --pt-sat: #fdebd0; --pt-sun: #fbdada; --pt-ord: #fde6c4; --pt-ordT: #8a4d00; --pt-inb: #d9f0de; --pt-inbT: #17652c; --pt-use: #eef1f5; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pt-act: #18202a; --pt-sat: #3d3220; --pt-sun: #402629; --pt-ord: #4a3415; --pt-ordT: #ffcf8a; --pt-inb: #1c3a24; --pt-inbT: #8fe0a2; --pt-use: #1f2731; } }
 :root[data-theme="dark"] { --pt-act: #18202a; --pt-sat: #3d3220; --pt-sun: #402629; --pt-ord: #4a3415; --pt-ordT: #ffcf8a; --pt-inb: #1c3a24; --pt-inbT: #8fe0a2; --pt-use: #1f2731; }
@@ -155,7 +155,7 @@ table.sc td.lo { background: var(--warn-bg); color: var(--warn); font-weight: 80
 table.sc td.neg { background: var(--bad-bg); color: var(--bad); font-weight: 800; }
 table.sc td.dl { outline: 2px solid var(--bad); outline-offset: -2px; }
 
-/* 소재 캘린더 왼쪽 칸이 첫 날짜 칸과 겹치던 것(10/21) — 고정 폭(표 고정 배치는 첫 줄 폭을 따름) */
+/* 소재 캘린더 왼쪽 칸이 첫 날짜 칸과 겹치던 것(10/21): 고정 폭(표 고정 배치는 첫 줄 폭을 따름) */
 /* 발주 → 판매그룹·목적지(10/29) */
 table.t.mt td.wfor { text-align: left !important; white-space: normal !important; min-width: 420px; word-break: keep-all; }
 .fw { font-size: 13.5px; line-height: 1.5; white-space: normal; word-break: keep-all; } .fw b { font-size: 14px; }
@@ -169,12 +169,12 @@ table.t.fwt { margin: 4px 0 0; font-size: 13.5px; width: auto; } table.t.fwt td 
 #mt-orders .card .hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-right: 96px; } #mt-orders .card .hd .ct-seg { margin: 0; }
 #mt-orders .sub-i { font-size: 13.5px; color: var(--ink-2); } #mt-orders .hd h2 small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 6px; } #mt-orders table.mt td, #mt-orders table.mt th { white-space: nowrap; }
 .mt-ul { margin: 4px 0 8px; padding-left: 20px; font-size: 13.5px; line-height: 1.7; color: var(--ink-2); }
-/* 11/13 소재 캘린더·재고 표 = 01 표 모양(ui/optable.css) — 숫자 색만 이 화면 것: 발주 주황 · 입고 초록 · 마감 지남 빨강 · 아직 발주 안 함 초록 테 */
+/* 11/13 소재 캘린더·재고 표 = 01 표 모양(ui/optable.css): 숫자 색만 이 화면 것: 발주 주황 · 입고 초록 · 마감 지남 빨강 · 아직 발주 안 함 초록 테 */
 html:root body main table.gk.tcal td.v { cursor: pointer; font-weight: 700; }
 html:root body main table.gk.tcal tr.m-ord td.v, html:root body main table.gk.tcal th.c1.m-ord { color: #b45f06 !important; }
 html:root body main table.gk.tcal tr.m-inb td.v, html:root body main table.gk.tcal th.c1.m-inb { color: #1e7b3a !important; }
 html:root body main table.gk.tcal tr.m-use td.v { color: #000 !important; font-weight: 400; }
-html:root body main table.gk.tcal tr td.v.late { color: #c00000 !important; font-weight: 800; }   /* tr 포함 — 'tr.m-ord td.v' 주황보다 앞서게(11/17 빨강이 안 보이던 것)
+html:root body main table.gk.tcal tr td.v.late { color: #c00000 !important; font-weight: 800; }   /* tr 포함: 'tr.m-ord td.v' 주황보다 앞서게(11/17 빨강이 안 보이던 것)
 html:root body main table.gk.tcal td.v.nw { box-shadow: inset 0 0 0 2px #1e7b3a; }
 .gk-lg i.o-ord, .gk-lg i.o-late, .gk-lg i.o-inb, .gk-lg i.o-nw, .gk-lg i.o-use { width: 14px; height: 14px; border-radius: 50%; box-shadow: none; }
 .gk-lg i.o-ord { background: #b45f06; } .gk-lg i.o-late { background: #c00000; } .gk-lg i.o-inb { background: #1e7b3a; } .gk-lg i.o-use { background: #000; } .gk-lg i.o-nw { background: #fff; border-radius: 3px; box-shadow: inset 0 0 0 2px #1e7b3a; }
@@ -199,7 +199,7 @@ h3.oj-h{margin:14px 0 4px;padding:4px 8px;border-radius:6px;font-size:15px}.oj-s
 .oj-t.oj-st{table-layout:auto}.oj-t.oj-mx{table-layout:auto}.oj-t.oj-mx th{word-break:keep-all;vertical-align:bottom}.oj-t.oj-mx td.nw .oj-nx,.oj-t.oj-mx td.nw .oj-now{white-space:nowrap}
 .oj-nx{font-size:13.5px;color:var(--ink-2,#555);font-weight:600}.oj-now{display:inline-block;margin-top:2px;font-size:13.5px;font-weight:800;color:#fff;background:var(--bad,#c92a2a);border-radius:999px;padding:0 8px}.oj-def{display:inline-block;font-size:13.5px;font-weight:700;color:var(--warn,#b35c00);background:var(--warn-bg,#fff3e0);border-radius:6px;padding:0 5px}
 .oj-t{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}.oj-t th{background:var(--surface-2,#f4f6f8);font-weight:600;color:var(--ink-2,#555)}.oj-t th,.oj-t td{border-bottom:1px solid var(--grid,#e8ebef);text-align:center}.oj-t td.r,.oj-t th.r{text-align:right}.oj-t caption{text-align:left;padding:4px 2px}.oj-t td,.oj-t th{padding:5px 8px;vertical-align:middle}.nw{white-space:nowrap}.neg{color: var(--bad)}
-/* 11/17 검토: 1366 에서 소재 표(도금 1,144 · 컬러 1,356px > 1,020)의 판매그룹·리드타임 칸이 잘림 — 위 1700/1500 여백 규칙이 v2 여백(!important)에 눌려 안 먹던 것 · 머리와 그룹 상태 칩 줄바꿈 허용 */
+/* 11/17 검토: 1366 에서 소재 표(도금 1,144 · 컬러 1,356px > 1,020)의 판매그룹·리드타임 칸이 잘림: 위 1700/1500 여백 규칙이 v2 여백(!important)에 눌려 안 먹던 것 · 머리와 그룹 상태 칩 줄바꿈 허용 */
 @media (max-width: 1700px) { html body main table.oj-t.oj-mx.oj-mx :is(th, td) { padding-left: 4px !important; padding-right: 4px !important; } }
 html body main table.oj-t.oj-mx thead th { white-space: normal !important; word-break: keep-all; }
 html body main table.oj-t.oj-mx tr.oj-gst td { white-space: normal !important; } html body main table.oj-t.oj-mx tr.oj-gst .oj-dot { white-space: normal; word-break: keep-all; display: inline-block; line-height: 1.25; }
@@ -222,10 +222,10 @@ html body main table :is(td, th, #al-c) { text-align: center !important; }   /* 
     <div id="mt-orders"></div>
     <div class="sbar"><span id="s-meta"></span><div class="tabs" id="s-mon" role="group" aria-label="월"></div></div>
     <section class="card" id="s-msum"></section>
-    <section class="card matcal"><h2>소재 캘린더 <small>소재 유형별 발주 → 입고 → 생산 투입 — 칸을 누르면 업체·양·용도</small><span class="unit">톤</span></h2>
+    <section class="card matcal"><h2>소재 캘린더 <small>소재 유형별 발주 → 입고 → 생산 투입: 칸을 누르면 업체·양·용도</small><span class="unit">톤</span></h2>
       <div id="s-mcal"></div>
       <div id="s-cal3"></div>
-      <details class="tv"><summary>자가재·구매 소재 일별 재고 표 보기 <small class="muted">기말 재고(천t) — 자가재는 계획 기준, 구매 소재는 추가 발주 없음 가정. 초록 칸 = 입고 예정(발주 완료), 붉은 테 = 발주 마감</small></summary>
+      <details class="tv"><summary>자가재·구매 소재 일별 재고 표 보기 <small class="muted">기말 재고(천t): 자가재는 계획 기준, 구매 소재는 추가 발주 없음 가정. 초록 칸 = 입고 예정(발주 완료), 붉은 테 = 발주 마감</small></summary>
       <div id="s-cal2"></div>
       <div class="lg"><span><i style="background:var(--pt-inb)"></i>입고 예정(발주 완료)</span><span><i style="background:#fff;box-shadow:inset 0 0 0 2px var(--bad)"></i>발주 마감</span><span><i style="background:var(--warn-bg)"></i>재고 부족 주의(자가재 3일분 · 구매 소재 7일분 미만)</span><span><i style="background:var(--bad-bg)"></i>재고 소진·목표 130% 초과</span></div>
       </details>
@@ -236,7 +236,7 @@ html body main table :is(td, th, #al-c) { text-align: center !important; }   /* 
       <div data-ref="lt"></div>
       <h3 class="ref-h">재고 기준</h3>
       <ul class="mt-ul">
-        <li>소재 재고 상한 = '27 판생 월말 최대(판매생산속보) — 맨 위 '소재 재고' 줄.</li>
+        <li>소재 재고 상한 = '27 판생 월말 최대(판매생산속보): 맨 위 '소재 재고' 줄.</li>
         <li>재고 부족 주의(캘린더 주황 칸) = 자가재 3일분 · 구매 소재 7일분 미만. 붉은 칸 = 재고 소진 또는 목표 130% 초과.</li>
         <li>발주 마감 = 정해진 발주일(P-FH 화 · 그 외 월 · 수입 10~20일). 발주 지연 = 원래 발주 마감이 지난 부족량(오늘 발주해도 필요일보다 늦게 들어옴) · 3달 발주 필요 = 3달 필요 − 재고 − 입고 예정(경고 아님).</li>
       </ul>
@@ -263,7 +263,7 @@ html body main table :is(td, th, #al-c) { text-align: center !important; }   /* 
 <script src="ui/ct.js?v=2611230303"></script>
 <script src="ct_mat.js?v=2611230303"></script>
 <script src="matref.js?v=2611230303"></script>
-<script>/* 11/17 검토: 소재 재고 한 줄 = 02 현황과 같은 출처(MES 소재재고 — suju.enc.json hy.stockMat) · 같은 상한에 퍼센트 하나만. 판생속보 재고는 퍼센트 없이 옆에 */
+<script>/* 11/17 검토: 소재 재고 한 줄 = 02 현황과 같은 출처(MES 소재재고: suju.enc.json hy.stockMat) · 같은 상한에 퍼센트 하나만. 판생속보 재고는 퍼센트 없이 옆에 */
 (function () {
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   async function fill(pw) {

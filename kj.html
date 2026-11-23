@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>수주</title>
-<meta name="description" content="도금·컬러 전체와 그룹별 판매계획·수주·생산·출하·재고 — 이번 달 실적, 다음 두 달 계획 대비 주문">
+<meta name="description" content="도금·컬러 전체와 그룹별 판매계획·수주·생산·출하·재고: 이번 달 실적, 다음 두 달 계획 대비 주문">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/theme.css?v=2611230303">
 <link rel="stylesheet" href="ui/optable.css?v=2611230303">
 <style>
-/* 관제(5차) — 글자 3단계만: 큰 숫자 34 · 제목 18 · 본문 16(표·그래프 라벨·캘린더·범례 모두) / 간격 16px / 모든 글자 가운데 */
+/* 관제(5차): 글자 3단계만: 큰 숫자 34 · 제목 18 · 본문 16(표·그래프 라벨·캘린더·범례 모두) / 간격 16px / 모든 글자 가운데 */
 main.wrap { max-width: none; }
-#ui-ctl, html.v2 #ui-ctl { display: none !important; }   /* 공통 관제 알약 줄 — 이 화면 내용과 겹침 */
+#ui-ctl, html.v2 #ui-ctl { display: none !important; }   /* 공통 관제 알약 줄: 이 화면 내용과 겹침 */
 :root { --kj-ac: #2a6fc9; --kj-stk: #4a5561; --kj-ov: #eb6834; --kj-ovt: #c2410c; --kj-tk: #101828; --kj-sl: #98a2b3; --kj-g: 16px; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --kj-ac: #3a7fe0; --kj-stk: #aab3be; --kj-ov: #d95926; --kj-ovt: #f2884f; --kj-tk: #f2f5f8; --kj-sl: #667085; } }
 :root[data-theme="dark"] { --kj-ac: #3a7fe0; --kj-stk: #aab3be; --kj-ov: #d95926; --kj-ovt: #f2884f; --kj-tk: #f2f5f8; --kj-sl: #667085; }
@@ -25,7 +25,7 @@ main.wrap { max-width: none; }
 .bad { color: var(--bad) !important; } .ov { color: var(--kj-ovt) !important; }
 .kj-c .na, .kj-c td.na, .kj-k .na { color: var(--ink-2); font-weight: 500; }
 
-/* 0. 달 탭 + 기준 한 줄 — 가운데 */
+/* 0. 달 탭 + 기준 한 줄: 가운데 */
 .kj-top { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 4px 0 var(--kj-g); }
 .kj-tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--v2-line, var(--line)); border-radius: 12px; background: var(--surface); }
 #ct-main .kj-tabs button { font: inherit; font-size: 18px; font-weight: 800; color: var(--ink-2); background: none; border: 0; border-radius: 9px; padding: 9px 28px; cursor: pointer; white-space: nowrap; }
@@ -59,7 +59,7 @@ html.v2 main .ct-kpi.kj-k > .v { font-size: 34px !important; color: var(--ink); 
 html.v2 main .ct-kpi.kj-k > .v small { font-size: 16px !important; }
 html.v2 main .ct-kpi.kj-k > .v.bad { color: var(--bad) !important; } html.v2 main .ct-kpi.kj-k > .v.ov { color: var(--kj-ovt) !important; }
 html.v2 main .ct-kpi.kj-k > .s, .kj-wh { font-size: 16px !important; color: var(--ink-2) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-html.v2 main .ct-kpi.kj-k > .s { white-space: normal; word-break: keep-all; line-height: 1.6; text-overflow: clip; }   /* 11/13 점검: 생산 달성 두 줄(월 계획 · 월차 대비) — 잘림 없음 */
+html.v2 main .ct-kpi.kj-k > .s { white-space: normal; word-break: keep-all; line-height: 1.6; text-overflow: clip; }   /* 11/13 점검: 생산 달성 두 줄(월 계획 · 월차 대비): 잘림 없음 */
 html.v2 main .ct-kpi.kj-k > .s b { color: var(--ink); } html.v2 main .ct-kpi.kj-k > .s b.bad { color: var(--bad) !important; }
 .kj-wh { line-height: 1.6; font-variant-numeric: tabular-nums; } .kj-wh b { color: var(--ink); }
 
@@ -113,7 +113,7 @@ html.v2 body main .kj-mx tr.tot :is(th, td) { font-weight: 800 !important; borde
 .kj-c td.kp { font-weight: 700; }
 html.v2 body main .kj-mx tbody th, html.v2 body main .kj-mx thead tr:first-child th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface) !important; box-shadow: inset -1px 0 0 var(--v2-line, var(--line)); }
 html.v2 body main .kj-mx thead tr:first-child th:first-child { background: var(--v2-th, var(--sub)) !important; }
-html.v2 body main .kj-mx thead th { z-index: 3; } html.v2 body main .kj-mx thead tr:first-child th:first-child { z-index: 5; } html.v2 body main .kj-mx tbody th { z-index: 2; }   /* 11/13 점검: 모서리 '구분' 칸이 맨 위 — 내릴 때 줄 이름이 머리 위로 겹치지 않게 */
+html.v2 body main .kj-mx thead th { z-index: 3; } html.v2 body main .kj-mx thead tr:first-child th:first-child { z-index: 5; } html.v2 body main .kj-mx tbody th { z-index: 2; }   /* 11/13 점검: 모서리 '구분' 칸이 맨 위: 내릴 때 줄 이름이 머리 위로 겹치지 않게 */
 html.v2 body main .kj-mx tr.self :is(th, td) { color: var(--ink-2); }
 html.v2 body main .kj-mx tr.pt th { background: color-mix(in srgb, var(--ink) 4%, var(--surface)) !important; }
 html.v2 body main .kj-mx td.ov { font-weight: 700; }
@@ -137,7 +137,7 @@ html.v2 body main #ct-main .kj-mx td small.kj-mna { display: block; white-space:
 .kj-risk > b { color: var(--ink); } .kj-risk span { white-space: nowrap; }
 .kj-tv { margin: 12px 0 0; } .kj-tv summary { cursor: pointer; font-weight: 600; color: var(--ink-2); text-align: center; } .kj-tv table { margin-top: 8px; }
 
-/* 7. 캘린더 — 16px · 31일이 1920 폭에 들어가게(첫 열 좁게, 칸 여백 최소) */
+/* 7. 캘린더: 16px · 31일이 1920 폭에 들어가게(첫 열 좁게, 칸 여백 최소) */
 html body main table.kj-cal { border-collapse: collapse; table-layout: fixed; width: 100%; min-width: 1560px; font-variant-numeric: tabular-nums; }
 html body main table.kj-cal :is(th, td) { border: 1px solid var(--v2-line, var(--line)); padding: 0 1px; text-align: center; font-size: 16px !important; line-height: 1.2; overflow: hidden; }
 html body main table.kj-cal thead th { height: 44px; background: var(--v2-th, var(--sub)); font-weight: 700; color: var(--ink); }
@@ -171,7 +171,7 @@ html body main table.kj-cal :is(td, th):is(.wst, .gsep) { border-left: 1px solid
 html body main table.kj-cal.kjpa tbody tr.r2 > :is(td, th), html body main table.kj-cal:not(.kjpa) tbody tr:not(.sec) > :is(td, th) { border-bottom: 2px solid color-mix(in srgb, var(--ink) 45%, var(--surface)) !important; }
 /* 오늘 = 칸마다 테두리 말고 한 줄 통째로 진한 파랑 바탕 */
 html body main table.kj-cal :is(td, th).now { background: color-mix(in srgb, var(--kj-ac) 26%, var(--surface)) !important; box-shadow: none !important; border-left: 2px solid var(--kj-ac) !important; border-right: 2px solid var(--kj-ac) !important; } html body main table.kj-cal thead th.now { background: var(--kj-ac) !important; } .kj-cal thead th.now :is(b, span) { color: #fff !important; }
-/* 11/13 통일 — 가동표(라인 × 날짜)는 01 일별 가동계획(gyehoek) 엑셀 색감 그대로: 흰 머리 · 주말 노랑/빨강 · 이름 칸 연두 · 회색 가는 선 · 합계 #f2f2f2 · 지난 날 옅은 음영 · 오늘 남색 틀 · 정지 남색 · M/C 노랑 */
+/* 11/13 통일: 가동표(라인 × 날짜)는 01 일별 가동계획(gyehoek) 엑셀 색감 그대로: 흰 머리 · 주말 노랑/빨강 · 이름 칸 연두 · 회색 가는 선 · 합계 #f2f2f2 · 지난 날 옅은 음영 · 오늘 남색 틀 · 정지 남색 · M/C 노랑 */
 html:root body main table.kj-cal :is(td, th) { border-color: #808080 !important; }
 html:root body main table.kj-cal thead th, html:root body main table.kj-cal thead th.now { background: #fff !important; color: #000 !important; }
 html:root body main table.kj-cal thead th :is(b, span), html:root body main .kj-cal thead th.now :is(b, span) { color: #000 !important; }

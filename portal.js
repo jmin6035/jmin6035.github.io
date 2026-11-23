@@ -1,4 +1,4 @@
-/* 판매그룹 관제판(board.html, 11/11 전면 개편 — 사용자 '들어가자마자 판매그룹별로 지금 문제·이번 달 진도·재고가 한 화면에'):
+/* 판매그룹 관제판(board.html, 11/11 전면 개편: 사용자 '들어가자마자 판매그룹별로 지금 문제·이번 달 진도·재고가 한 화면에'):
    첫 화면 = 판매그룹 줄 × [납기 위험 · 주요 원인 · 생산 · 출하 · 재고 · 소재]. 값은 모두 ui/ctl.js UI.ctlRows(관제 띠·통합 관제와 같은 계산)
      납기 위험 = risk.enc.json(납기 위험 화면과 같은 판정) · 생산·출하·재고 = portal.enc.json(groups·stockRoll) · 재고 목표 = integrated(통합 계획 월말 목표) · 소재 = mat_order
    오른쪽 = 4분기 생산·재고 전망(11/11 회의 '줄여서 위 오른쪽') · 아래(접기) = 다른 달(지난 달 결산·다음 달 계획) · 기준·사양(그룹별 판매계획 → 필요 생산) */
@@ -21,7 +21,7 @@
     const cell = (href, tone, html, title) => `<td class="bc ${tone || ''}"${title ? ` title="${esc(title)}"` : ''}><a href="${href}">${html}</a></td>`;
     const row = (r) => {
       const { due, prod, ship, stock } = r.d;
-      // 11/12 사용자 '이렇게 보면 뭘 이해하라는 거냐 — 규칙': 칸마다 큰 숫자 하나 + 기준 한 줄, 막대·바탕색·설명 문구 없음, 상태는 숫자 색으로만
+      // 11/12 사용자 '이렇게 보면 뭘 이해하라는 거냐: 규칙': 칸마다 큰 숫자 하나 + 기준 한 줄, 막대·바탕색·설명 문구 없음, 상태는 숫자 색으로만
       const c1 = (href, tone, big, sub, title) => `<td class="bc"${title ? ` title="${esc(title)}"` : ''}><a href="${href}"><span class="bv ${tone || ''}">${big}</span><span class="bs">${sub}</span></a></td>`;
       const cDue = !due ? c1('risk.html', 'na', '–', '자료 없음')
         : c1('risk.html', due.tone, `${n0(due.risk >= 0.5 ? due.risk : 0)}<small>t</small>`, `미결 ${n0(due.t)}t의 ${PCT(due.risk, due.t) || 0}%`, `정상 ${n0(due.ok)}t · 점검 ${n0(due.warn)}t · 지연 예상 ${n0(due.will)}t · 납기 지남 ${n0(due.past)}t`);
@@ -41,7 +41,7 @@
     const exRow = (x) => { const tn = UI.riskTone(x.risk, x.t); return `<tr class="na"><th scope="row" class="bg"><span class="cdot na"></span><b>${esc(x.g)}</b></th>`
       + `<td class="bc"><a href="risk.html"><span class="bv ${tn}">${n0(x.risk >= 0.5 ? x.risk : 0)}<small>t</small></span><span class="bs">미결 ${n0(x.t)}t의 ${PCT(x.risk, x.t) || 0}%</span></a></td>`
       + `<td class="bw">${x.risk >= 0.5 ? `<a href="risk.html">${UI.causeHtml(RK, x.cz, 2, 0)}</a>` : '<span class="ok-t">위험 없음</span>'}</td>`
-      + `<td class="bc" colspan="3"><span class="bs">판매그룹을 정하지 못한 주문 — 생산·출하·재고는 그룹별로 나누지 않음</span></td></tr>`; };
+      + `<td class="bc" colspan="3"><span class="bs">판매그룹을 정하지 못한 주문: 생산·출하·재고는 그룹별로 나누지 않음</span></td></tr>`; };
     const sec = (pl, nm) => { const rs = R.filter((r) => r.pl === pl), ex = EX.filter((x) => x.pl === pl); return rs.length || ex.length ? `<tr class="bsec"><td colspan="6">${nm}</td></tr>${rs.map(row).join('')}${ex.map(exRow).join('')}` : ''; };
     const cnt = (t) => R.filter((r) => r.w4 === t).length;
     const rk = R.filter((r) => r.d.due), rT = rk.reduce((a, r) => a + r.d.due.risk, 0) + EX.reduce((a, x) => a + (x.risk || 0), 0), oT = rk.reduce((a, r) => a + r.d.due.t, 0) + EX.reduce((a, x) => a + (x.t || 0), 0);
@@ -57,7 +57,7 @@
       + `<tbody>${sec('G', '도금')}${sec('C', '컬러')}</tbody></table></div>`;
   }
 
-  /* 다른 달: 지난 달 결산 · 다음 달 계획(UI.ctlMonth) — 지난 달 실적은 최신 재계획·컬러 실적에서(펼칠 때 받음) */
+  /* 다른 달: 지난 달 결산 · 다음 달 계획(UI.ctlMonth): 지난 달 실적은 최신 재계획·컬러 실적에서(펼칠 때 받음) */
   function monthSec(O) {
     const cur = String(O.today || O.asOf).slice(0, 7), ms = ((D.integrated && D.integrated.months) || O.months || [cur]).filter((m) => m !== cur);
     if (!ms.length) return '';
@@ -74,7 +74,7 @@
     const mpl = (m, p) => Object.entries(MP[m] || {}).filter(([g]) => g[0] === p).reduce((a, [, x]) => a + (x.prod || 0), 0);
     const G = O.groups || [], pm = O.planMonth, pl = O.plating || {}, cl = IG.colorLines || (O.color || {}).lines || {};
     const fc = (p) => { const L = G.filter((g) => g.pl === p && g.prod); return { a: L.reduce((s, g) => s + (g.prod.actual || 0), 0), f: L.reduce((s, g) => s + (g.prod.actual || 0) + (g.prod.after || 0), 0), m: L.reduce((s, g) => s + (g.prod.month || 0), 0) }; };
-    const rows = [], sp = (m, p) => ((O.srProd || {})[m] || {})[p] || 0;   // 분모 = 판생속보 월차계획(02 현황과 같은 기준, 11/18 결정전달 6) — 속보 없는 달만 계획
+    const rows = [], sp = (m, p) => ((O.srProd || {})[m] || {})[p] || 0;   // 분모 = 판생속보 월차계획(02 현황과 같은 기준, 11/18 결정전달 6): 속보 없는 달만 계획
     const CAm = (m) => { const r = ((X && X.CA && X.CA.monthly) || []).find((x) => x.m === m); return r ? Object.entries(r).filter(([k]) => k !== 'm').reduce((s, [, v]) => s + (v || 0), 0) : null; };   // 지난 달 컬러 = 컬러 실적
     if (pm && UI.inScope('G')) { const F = fc('G'); rows.push(['도금', M.map((m, i) => (i === CMi ? [F.f, sp(m, 'G') || F.m] : [pm.g1[i] + pm.g2[i], sp(m, 'G') || mpl(m, 'G') || (pl.g1 || [])[i] + (pl.g2 || [])[i]]))]); }
     if (UI.inScope('C') && Object.keys(cl).length) { const F = fc('C'), tot = (m, k) => Object.values(cl[m] || {}).reduce((a, x) => a + (x[k] || 0), 0); rows.push(['컬러', M.map((m, i) => (i === CMi ? [F.f, sp(m, 'C') || F.m] : [(m < cur ? CAm(m) : null) ?? tot(m, 'placed'), sp(m, 'C') || mpl(m, 'C') || tot(m, 'plan')]))]); }
@@ -100,7 +100,7 @@
       + `</tbody></table></div>` : '';
     const RK = D.risk || {};
     return `<details class="fold"><summary>기준·사양 <small>숫자 정의 · 그룹별 판매계획 → 필요 생산 · 원인 이름</small></summary><ul class="b-ul">`
-      + `<li><b>납기 위험</b> = 지연 예상 + 납기 지남(미결 주문, 종결 확인 제외) — 납기 위험 화면과 같은 판정 ${RK.asOf ? `(${md(RK.asOf)})` : ''}. 색: 위험 ÷ 미결 30% 이상 조치 · 15% 이상 주의</li>`
+      + `<li><b>납기 위험</b> = 지연 예상 + 납기 지남(미결 주문, 종결 확인 제외): 납기 위험 화면과 같은 판정 ${RK.asOf ? `(${md(RK.asOf)})` : ''}. 색: 위험 ÷ 미결 30% 이상 조치 · 15% 이상 주의</li>`
       + `<li><b>주요 원인</b> = 위험 톤이 큰 원인 2개, 원인 옆 = 언제 풀리는지(다음 생산일·입고 예정일)<ul>${Object.entries(RK.causeNm || {}).map(([k, v]) => `<li><b>${esc(v)}</b>${(RK.causeDef || {})[k] ? ` = ${esc(RK.causeDef[k])}` : ''} → ${esc((RK.dept || {})[k] || '')}</li>`).join('')}</ul></li>`
       + `<li><b>생산</b> = 월말 예상(이번 달 실적 + 남은 계획) ÷ 월 계획(TF 월 생산량). 98% 이상 정상 · 90% 이상 주의</li>`
       + `<li><b>출하</b> = 이번 달 출하 실적(MES) ÷ 오늘까지 기준(월 계획 × 그룹 월중 출하 실적 패턴 누계 비율)</li>`

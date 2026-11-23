@@ -1,4 +1,4 @@
-/* 납기 위험(11/10 사용자 '새로 다시 만들어 — 항상 전체 먼저, 그룹별로 뭐가 문제인지, 계약 나열은 상세가 아니다')
+/* 납기 위험(11/10 사용자 '새로 다시 만들어: 항상 전체 먼저, 그룹별로 뭐가 문제인지, 계약 나열은 상세가 아니다')
    published/risk.enc.json(tools/risk_build.py): 전체 → 판매그룹 → 원인·강종(품명) × 납기월 → (접힘) 계약 */
 (() => {
   const $ = (id) => document.getElementById(id), PW_KEY = 'cgl-analysis-pw';
@@ -34,7 +34,7 @@
         ${g.rows.slice(0, 300).map((r) => `<tr><td class="l"><span class="rk-chip ${r[6]}">${STN[r[6]]}</span></td><td class="l">${esc(r[0])}</td><td class="l">${esc(r[1])}</td><td class="l">${esc(r[2])}</td><td>${md(r[4])}</td><td><b>${n0(r[5])}t</b></td><td class="w"><div class="rk-w">${r[7] ? `<b>${esc(D.causeNm[r[7]])}</b> ` : ''}${esc(r[8] || '')}</div></td><td>${r[9] ? md(r[9]) : '-'}</td></tr>`).join('')}
         </tbody></table></div>${g.rows.length > 300 ? `<p class="rk-rule">큰 순 300건만 표시 · 전체 ${g.rows.length}건</p>` : ''}</details>`;
   }
-  /* 11/11 회의 '전월 미생산 14,000t 퉁으로 치지 말고 도금·컬러 → 그룹별 → 품목별로, 원인까지' — 납기월별 표 '전월 이전' 줄을 누르면 펼침 */
+  /* 11/11 회의 '전월 미생산 14,000t 퉁으로 치지 말고 도금·컬러 → 그룹별 → 품목별로, 원인까지': 납기월별 표 '전월 이전' 줄을 누르면 펼침 */
   function oldDetail(G) {
     const chips = (o) => Object.entries(o || {}).filter(([, t]) => t >= 0.5).map(([c, t]) => `<span class="rk-chip rk-oc">${esc(D.causeNm[c] || c)} <b>${n0(t)}t</b></span>`).join('');
     const blk = (pl) => {
@@ -46,7 +46,7 @@
     };
     return `<div class="rk-og">${blk('G')}${blk('C')}</div><p class="rk-rule">그룹 이름을 누르면 위 판매그룹별 표에서 그 그룹 상세(원인별 내역 · 계약)로 이동 · 품목에 마우스를 올리면 원인별 톤</p>`;
   }
-  /* ── 새 양식(UI.v2, ?ui=v2) — 11/12 사용자 '표 구성 자체를 다시': 한 칸 한 값, 공통 그룹 순서, 설명 문장은 title, 빨강은 위험 숫자에만 ── */
+  /* ── 새 양식(UI.v2, ?ui=v2): 11/12 사용자 '표 구성 자체를 다시': 한 칸 한 값, 공통 그룹 순서, 설명 문장은 title, 빨강은 위험 숫자에만 ── */
   const ORD = ['도금수출', '도금국내', '자동차', '자가재', '건재수출', '가전수출', '가전내수', '컬러건재', '수요개발'];
   const GN = { 자동차: '자동차', 자가재: '도금 자가재', 건재수출: '컬러수출(건재)', 가전수출: '컬러수출(가전)', 가전내수: '컬러수출(가전내수)' };   // 11/13: 판매그룹 이름 = 관제판·관제 띠와 같게(컬러수출그룹 안 세 갈래는 괄호)
   const gnm = (g) => GN[g] || g;
@@ -89,7 +89,7 @@
   }
   function drawV2() {
     const sc = scope(), T = D.tot[sc] || D.tot.all, CZ = D.cause[sc] || {};
-    const GA = D.groups.filter((g) => sc === 'all' || g.pl === sc).sort((a, b) => ordIx(a) - ordIx(b)), G = GA.filter((g) => g.t >= 0.5);   // 미결 0 그룹(컬러공장)은 줄만 뺌 — 합계(종결 확인 포함)는 전부
+    const GA = D.groups.filter((g) => sc === 'all' || g.pl === sc).sort((a, b) => ordIx(a) - ordIx(b)), G = GA.filter((g) => g.t >= 0.5);   // 미결 0 그룹(컬러공장)은 줄만 뺌: 합계(종결 확인 포함)는 전부
     const risk = T.will + T.past, mx = Math.max(1, ...Object.values(CZ));
     $('rk-meta').textContent = `기준 ${md(D.asOf)} · 도금 주문 ${md(D.cgAt)} · 컬러 주문 ${md(D.ccAt)}`;
     const ymAll = {}; GA.forEach((g) => Object.entries(g.ym).forEach(([y, v]) => { const a = (ymAll[y] = ymAll[y] || [0, 0, 0]); a[0] += v[0]; a[1] += v[1]; a[2] += v[2] || 0; }));
@@ -118,7 +118,7 @@
         <div class="scroll"><table class="v2t rk2-m"><colgroup><col style="width:200px"><col style="width:110px"><col style="width:110px"><col style="width:76px"><col style="width:130px"><col style="width:190px"></colgroup>
         <thead><tr><th>납기월</th><th class="n">미결(t)</th><th class="n">위험(t)</th><th class="n">비율</th><th class="n" title="${esc(STT.stale)}">종결 확인(t)</th><th class="n">납기 내 가능·주의(t)</th></tr></thead><tbody>${cols.map(([nm, v]) => { const ok = Math.max(0, v[0] - v[1] - v[2]), op = Math.max(0, v[0] - v[2]), p = pct(v[1], op);
           const isOld = nm === '전월 이전' && G.some((g) => g.old);
-          return `<tr${isOld ? ` class="rk2-x rk-old${oldOpen ? ' on' : ''}" tabindex="0" title="지난 달까지 생산했어야 할 물량 — 누르면 판매그룹별"` : ''}><td>${isOld ? '<i class="ch">▸</i>' : ''}${nm}</td><td class="n">${n0(op)}</td><td class="n">${v[1] >= 0.5 ? `<b class="rk-bad">${n0(v[1])}</b>` : '-'}</td><td class="n">${v[1] >= 0.5 ? pc(p) : '-'}</td><td class="n">${v[2] >= 0.5 ? n0(v[2]) : '-'}</td><td class="n">${ok >= 0.5 ? n0(ok) : '-'}</td></tr>`
+          return `<tr${isOld ? ` class="rk2-x rk-old${oldOpen ? ' on' : ''}" tabindex="0" title="지난 달까지 생산했어야 할 물량: 누르면 판매그룹별"` : ''}><td>${isOld ? '<i class="ch">▸</i>' : ''}${nm}</td><td class="n">${n0(op)}</td><td class="n">${v[1] >= 0.5 ? `<b class="rk-bad">${n0(v[1])}</b>` : '-'}</td><td class="n">${v[1] >= 0.5 ? pc(p) : '-'}</td><td class="n">${v[2] >= 0.5 ? n0(v[2]) : '-'}</td><td class="n">${ok >= 0.5 ? n0(ok) : '-'}</td></tr>`
             + (isOld && oldOpen ? `<tr class="rk2-sub"><td colspan="6">${oldDetailV2(G)}</td></tr>` : ''); }).join('')}</tbody></table></div></section>`;
     const M = $('rk-main');
     const bind = (el, f) => { el.onclick = f; el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); f(); } }; };

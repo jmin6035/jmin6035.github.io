@@ -70,7 +70,7 @@ td.up1 { color: var(--good); font-weight: 700; } td.dn1 { color: var(--bad); fon
 
     <section class="card" id="c-cal">
       <h2>캘린더에서 일정 옮기기 <small>사양 칸을 끌어 다른 날에 놓으면 그 사양·톤이 옮겨짐 → 계산 시작</small></h2>
-      <p class="hint">옮긴 몫은 그 날에 고정하고, 나머지는 연속 공정대로 다시 채웁니다(넘친 일은 뒷날로, 빈 시간은 바로 뒤 일을 당겨 채움 · 휴지 덩어리는 그대로). 시간은 사양별 속도로 다시 셈 — 예) 1CCL PES 11t/시간 · PGS 20t/시간 라 같은 100t 이라도 시간이 다릅니다. 실적이 있는 날은 이동 불가.</p>
+      <p class="hint">옮긴 몫은 그 날에 고정하고, 나머지는 연속 공정대로 다시 채웁니다(넘친 일은 뒷날로, 빈 시간은 바로 뒤 일을 당겨 채움 · 휴지 덩어리는 그대로). 시간은 사양별 속도로 다시 셈: 예) 1CCL PES 11t/시간 · PGS 20t/시간 라 같은 100t 이라도 시간이 다릅니다. 실적이 있는 날은 이동 불가.</p>
       <div class="dv-bar"><div class="seg" id="dv-line"></div><div class="seg" id="dv-mon"></div><span class="hint" id="dv-src"></span></div>
       <div id="dv-grid" class="dv-grid" aria-label="컬러 일별 계획 캘린더"></div>
       <div class="dv-moves" id="dv-moves"></div>
@@ -81,10 +81,10 @@ td.up1 { color: var(--good); font-weight: 700; } td.dn1 { color: var(--bad); fon
       <div class="up">
         <label id="u-sales"><b>판매계획(TF 일별가동계획 엑셀)</b><span>컬러_판매계획 · 컬러건재수출 · 컬러가전수출 시트를 읽음</span><em></em><input type="file" accept=".xlsx" data-k="sales"><button type="button" class="dl-tpl" data-dl="sales">지금 쓰는 파일 받기 (양식 겸 예시)</button></label>
         <label id="u-r15"><b>계획재 운영안(R15 엑셀)</b><span>일자별상세내역 시트(사양·물량·라인·순서)를 읽음</span><em></em><input type="file" accept=".xlsx" data-k="r15"><button type="button" class="dl-tpl" data-dl="r15">지금 쓰는 파일 받기 (양식 겸 예시)</button></label>
-        <label id="u-lines"><b>품목별 적용라인(세부판매기준 엑셀)</b><span>품목마다 <b>필수라인</b>이 있으면 그 라인에서만, 없으면 <b>우선라인1 → 2 → 3</b> 순서로 배치. <b>양식</b>: 첫 시트, 머리줄에 '필수라인' 칸 — 그 왼쪽 6칸 = 부서 · 용도 · 지역 · 소재 · 기타 · 품목구분1(품명), 오른쪽 3칸 = 우선라인1~3(1CCL~4CCL)</span><em></em><input type="file" accept=".xlsx" data-k="lines"></label>
-        <label id="u-down"><b>컬러 휴지계획 엑셀</b><span>계획휴지·S/D·수리 = 라인 정지, 청소·시험·샘플 = 평소보다 많은 만큼만 반영. <b>양식</b>: 2행 = 월('26.10월 …), 3행 = 라인(1CCL~4CCL, 두 칸씩), 4행 = 일자 / 시간(min), 5행부터 = 구분(계획휴지 · S/D · 수리/보수 · 청소(오븐 등) · 시험 · 샘플). 일자는 '19일' 또는 '13일~16일'(여러 날이면 시간을 날짜 수로 나눔) — 생산팀 휴지계획 엑셀 그대로</span><em></em><input type="file" accept=".xlsx" data-k="down"></label>
+        <label id="u-lines"><b>품목별 적용라인(세부판매기준 엑셀)</b><span>품목마다 <b>필수라인</b>이 있으면 그 라인에서만, 없으면 <b>우선라인1 → 2 → 3</b> 순서로 배치. <b>양식</b>: 첫 시트, 머리줄에 '필수라인' 칸: 그 왼쪽 6칸 = 부서 · 용도 · 지역 · 소재 · 기타 · 품목구분1(품명), 오른쪽 3칸 = 우선라인1~3(1CCL~4CCL)</span><em></em><input type="file" accept=".xlsx" data-k="lines"></label>
+        <label id="u-down"><b>컬러 휴지계획 엑셀</b><span>계획휴지·S/D·수리 = 라인 정지, 청소·시험·샘플 = 평소보다 많은 만큼만 반영. <b>양식</b>: 2행 = 월('26.10월 …), 3행 = 라인(1CCL~4CCL, 두 칸씩), 4행 = 일자 / 시간(min), 5행부터 = 구분(계획휴지 · S/D · 수리/보수 · 청소(오븐 등) · 시험 · 샘플). 일자는 '19일' 또는 '13일~16일'(여러 날이면 시간을 날짜 수로 나눔): 생산팀 휴지계획 엑셀 그대로</span><em></em><input type="file" accept=".xlsx" data-k="down"></label>
       </div>
-      <label class="idle-box" for="c-idle"><b>휴지일 지정(선택)</b><span>비워 두면 자동: 쉬는 시간을 최대한 며칠짜리 덩어리로 모음(앞날부터 꽉 채움, 최대 30일 앞당김). 날짜를 적으면 그 날 라인을 비우고 나머지 날을 채움. 줄마다 라인 하나 — 예) <code>1CCL 10/30, 10/31</code> · <code>2CCL 12/24~12/26</code></span>
+      <label class="idle-box" for="c-idle"><b>휴지일 지정(선택)</b><span>비워 두면 자동: 쉬는 시간을 최대한 며칠짜리 덩어리로 모음(앞날부터 꽉 채움, 최대 30일 앞당김). 날짜를 적으면 그 날 라인을 비우고 나머지 날을 채움. 줄마다 라인 하나: 예) <code>1CCL 10/30, 10/31</code> · <code>2CCL 12/24~12/26</code></span>
         <textarea id="c-idle" rows="3" placeholder="1CCL 10/30, 10/31&#10;2CCL 12/24~12/26" style="width:100%;font:inherit;margin-top:6px"></textarea></label>
       <p class="hint">판매계획·계획재 운영안은 '지금 쓰는 파일 받기'로 받은 엑셀의 숫자만 바꿔 올리면 됩니다(계산에 쓰는 시트만 들어 있음, 시트 이름·제목 줄은 그대로).</p>
       <div class="runbar"><button type="button" class="btn primary" id="c-run">계산 시작</button><div class="prog" id="c-prog" hidden><i></i></div><span class="hint" id="c-msg">처음 계산은 엔진을 불러오느라 1~2분 걸립니다. 계산 중 이 탭을 닫지 마십시오.</span></div>
@@ -93,7 +93,7 @@ td.up1 { color: var(--good); font-weight: 700; } td.dn1 { color: var(--bad); fon
     </section>
 
     <section class="card" id="c-res" hidden>
-      <h2>3. 결과 — 현재 게시 계획과 비교 <span class="unit">단위: 톤</span></h2>
+      <h2>3. 결과: 현재 게시 계획과 비교 <span class="unit">단위: 톤</span></h2>
       <div class="kpis" id="c-kpi"></div>
       <div id="c-mv"></div>
       <h3>라인 · 월별 생산</h3>

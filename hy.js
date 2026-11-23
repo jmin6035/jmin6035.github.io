@@ -1,22 +1,22 @@
-/* 02 현황(11/17 사용자 '수주 화면을 이 화면으로 대체' — 사장님용 한 장, '깔끔하게 · 한 화면에 다 크게 박지 말고')
-   도금 | 컬러 × 판매 · 생산 · 소재 · 출하 · 소재 재고 · 제품 재고 · 주문충당량 — 숫자(톤 · %)와 막대만, 설명 문구 없음
+/* 02 현황(11/17 사용자 '수주 화면을 이 화면으로 대체': 사장님용 한 장, '깔끔하게 · 한 화면에 다 크게 박지 말고')
+   도금 | 컬러 × 판매 · 생산 · 소재 · 출하 · 소재 재고 · 제품 재고 · 주문충당량: 숫자(톤 · %)와 막대만, 설명 문구 없음
    숫자 = suju.enc.json 의 hy(tools/suju_build.py hyeonhwang, 2시간 갱신마다 계산)
    · 판매 = 수주 ÷ 판매계획(컬러는 계획재 제외) · 생산 = 판생속보 누계 실적 ÷ 월차계획, 옅은 막대 = 남은 계획(01 일별 가동계획), 이달 예상 = 실적 + 남은 계획(도금은 최근 2주 편차만큼 범위)
    · 소재 = 이달 입고 ÷ 이달 입고 발주 · 출하 = 판매생산속보 출하(내수 송장·수출 B/L) ÷ 이달 출하 계획
    · 다음 달 탭: 판매 = 납기월 확정 주문 ÷ 판매계획(도금 재계획 · 컬러 3개월 계획), 생산 = 월 계획, 제품 재고 = 월말 예상
    · 재고 = 지금(●) → 월말 예상(○), 세로선 = '27 판생 월말 최대 · 주문충당량 = 소재 매치된 주문(컬러 = 판생속보 충당량·작업지시 가능일)
-   막대·글자는 HTML(div) — SVG 글자는 공통 테마(svg text 13.5px)에 덮이고 폭 따라 작아져서 쓰지 않음(검토 11/17) */
+   막대·글자는 HTML(div): SVG 글자는 공통 테마(svg text 13.5px)에 덮이고 폭 따라 작아져서 쓰지 않음(검토 11/17) */
 (function () {
   'use strict';
   const { esc, n0 } = CT;
   const pct = (a, b) => (a != null && b ? Math.round(a / b * 100) : null);
   const W = (x) => `${Math.max(0, Math.min(100, x)).toFixed(1)}%`;
-  const r100 = (x, f = Math.round) => n0(f(x / 100) * 100);   // 범위는 바깥으로(하한 내림 · 상한 올림 — 11/17 검토: 하한 43,300 이 01 현재 계획 43,254 보다 크던 것)
+  const r100 = (x, f = Math.round) => n0(f(x / 100) * 100);   // 범위는 바깥으로(하한 내림 · 상한 올림: 11/17 검토: 하한 43,300 이 01 현재 계획 43,254 보다 크던 것)
 
   const sg = (x) => (x > 0 ? '+' : x < 0 ? '−' : '±') + n0(Math.abs(x));
   let PV = '전일';
   const d1 = (v) => (v && v.d1 != null && v.d1 !== 0 ? `<span class="d1">${PV} ${sg(v.d1)}</span>` : '');
-  // 그룹별(판매 = 판매 그룹 · 생산 = 라인 · 출하 = 출하 그룹) — 늘 펼쳐 보임(11/17 사용자 '이 화면에 적용')
+  // 그룹별(판매 = 판매 그룹 · 생산 = 라인 · 출하 = 출하 그룹): 늘 펼쳐 보임(11/17 사용자 '이 화면에 적용')
   function sub(p, L, td) {
     if (!L || L.length < 2) return '';
     const ORD = ['도금수출', '도금국내', '도금판매', '자동차', '자동차강판', '컬러수출', '가전내수', '컬러건재', '수요개발', '컬러공장'];   // 11/17 검토: 화면·달마다 같은 순서
@@ -38,8 +38,8 @@ ${td != null ? `<i class="td" style="left:${W((opt.tdBase || pl) / mx * td * 100
     const est = lo == null ? null : lo === hi ? `${r100(lo)}톤` : `${r100(lo, Math.floor)}~${r100(hi, Math.ceil)}톤`;
     return bar(p, v, '판생 계획', td, { max: mx, rem, tgt: true, tdBase: pl, est, grp: v.lines });
   }
-  // 다음 달 소재(11/17 사용자 '12월·1월 소재 — 이미 나간 발주'): 확보 = 월초 재고(이달 월말 예상) + 이미 나간 발주 입고 예정 · 대비 = 그 달 사용 계획
-  // 11/17 사용자 '재고는 재고대로 발주는 발주대로 구분': 다음 달 소재를 두 행으로 — 소재별(도금 F/H·SUS / 컬러 CGI·AZ·EGI·SUS…)
+  // 다음 달 소재(11/17 사용자 '12월·1월 소재: 이미 나간 발주'): 확보 = 월초 재고(이달 월말 예상) + 이미 나간 발주 입고 예정 · 대비 = 그 달 사용 계획
+  // 11/17 사용자 '재고는 재고대로 발주는 발주대로 구분': 다음 달 소재를 두 행으로: 소재별(도금 F/H·SUS / 컬러 CGI·AZ·EGI·SUS…)
   const SN = (n) => ({ 'GALVALUME(AZ)': 'AZ', 'PosMAC1.5': 'MAC1.5', 'PosMAC3.0': 'MAC3.0', 'ALUMINIUM': 'AL', 'F/H(GI/GL용)': 'F/H GI·GL', 'F/H(AL용)': 'F/H AL', 'F/H(Ti용)': 'F/H Ti' }[n] || n);
   const TD = new Date().toLocaleDateString('sv-SE');
   const mdd = (d) => (d ? `${+d.slice(5, 7)}/${+d.slice(8)}${d === TD ? '(오늘)' : ''}` : '');   // 마감이 오늘이면 '(오늘)'(11/17 검토)
@@ -134,7 +134,7 @@ ${R.map(([a, b, u, f]) => `${sec(a, b, u)}${PS.map((p) => cell(p, a, f(p))).join
   let LD = null, SUB = false;
   // 11/18 결정(검수 결정전달 기준 2): '작업 가능 주문 n일치' = 03 주간 편성 라인별 작업가능일(ct_orders.js CTORD.lineDays) 그대로
   let WD = null, NW = null;
-  /* 이달 소재 입고 실적·입고 계획 = 01 소재와 같은 함수·같은 입력(11/19 검수 틀림 1 — Python 묶음은 기준 시점·수동 입고 입력이 달라 계속 어긋남):
+  /* 이달 소재 입고 실적·입고 계획 = 01 소재와 같은 함수·같은 입력(11/19 검수 틀림 1: Python 묶음은 기준 시점·수동 입고 입력이 달라 계속 어긋남):
      실입고 = 포털 matAct.inb(오늘 전) · 입고 예정·지연 = ProcCalc.autoArr + 이 브라우저 입고 입력(S.arr) · 미발주 = ProcCalc 부족분(입고 필요일이 이달) */
   const nwLoad = async () => { if (NW || !window.ProcCalc || !window.GP || !LD || !LD.suju) return; try {
     let pw = null; try { pw = localStorage.getItem('cgl-analysis-pw'); } catch (x) { /* 무시 */ } if (!pw) return;

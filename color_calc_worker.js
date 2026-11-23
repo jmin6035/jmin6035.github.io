@@ -1,4 +1,4 @@
-/* 컬러 계획 계산 전용 Web Worker — 서버와 같은 Python 계산 코드(pycalc/code.zip)를 Pyodide 로 브라우저 안에서 실행.
+/* 컬러 계획 계산 전용 Web Worker: 서버와 같은 Python 계산 코드(pycalc/code.zip)를 Pyodide 로 브라우저 안에서 실행.
    자료는 이 브라우저 밖으로 나가지 않는다. 월 물량 LP 는 사이트의 HiGHS(vendor/highs.js)로 푼다(tools/pyodide_shim/pulp.py). */
 importScripts('vendor/pyodide/pyodide.js', 'vendor/highs.js');
 const post = (type, data) => self.postMessage(Object.assign({ type }, data));
@@ -14,7 +14,7 @@ async function init() {
   py.unpackArchive(code, 'zip', { extractDir: '/calc' });
   await py.runPythonAsync(`
 import sys, builtins
-def _sum(it, start=0):                 # 서버(Python 3.11)와 같은 순서대로 더하기 — 3.12 의 보정 합산은 반올림 경계에서 1t 차이를 냄
+def _sum(it, start=0):                 # 서버(Python 3.11)와 같은 순서대로 더하기: 3.12 의 보정 합산은 반올림 경계에서 1t 차이를 냄
     r = start
     for x in it:
         r = r + x

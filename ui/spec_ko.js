@@ -6,14 +6,14 @@
   'use strict';
   const UI = window.UI = window.UI || {};
   const REG = { KS: '한국', JS: '일본', JIS: '일본', EN: '유럽', AS: '미국', ASTM: '미국', IS: '인도', BS: '영국', DN: '독일' };
-  const STD = [   // 규격 번호(마우스 올림) — 코드표 ORD_SPEC_STD 설명·A10C 속성2 의 규격 번호
+  const STD = [   // 규격 번호(마우스 올림): 코드표 ORD_SPEC_STD 설명·A10C 속성2 의 규격 번호
     [/^EN.*(DX5|S\d{3}GD|HX\d{3})/, 'EN 10346 연속 용융도금 강판'], [/A463/, 'ASTM A463 알루미늄 도금 강판'], [/A792/, 'ASTM A792 55% 알루미늄-아연 도금 강판'], [/A653/, 'ASTM A653 아연도금 강판'],
     [/^KS-S?A1/, 'KS D 3544 알루미늄 도금 강판'], [/^JS-SA1/, 'JIS G 3314 알루미늄 도금 강판'], [/^KS-SGM/, 'KS D 3030 아연-알루미늄-마그네슘 도금 강판'], [/^KS-CGM/, '도장 아연-알루미늄-마그네슘 도금 강판'],
     [/^KS-CGL/, 'KS D 3862 도장 55% 알루미늄-아연 도금 강판'], [/^(KS|JS)-SGL/, '55% 알루미늄-아연 도금 강판(KS D 3770 · JIS G 3321)'], [/^KS-CGC/, 'KS D 3520 도장 아연도금 강판'], [/^KS-SECC|^IS-17404/, '전기아연도금 강판(KS D 3528 · IS 17404)'],
     [/STS|FSS/, '스테인리스 강판'], [/A3003/, '알루미늄 판(3003 합금)'], [/IZM/, 'IS 18513'], [/IS-14246/, 'IS 14246 연속 도장 아연도금 강판'],
   ];
   const GR = { CQ: '일반용', DQ: '가공용', DDQ: '심가공용', EDDQ: '초심가공용', XDDQ: '극심가공용', LFQ: '성형용' };
-  const OVR = {   // 코드표 ORD_SPEC_STD 속성1(품질 등급)이 규격 체계와 다른 코드 — 코드표를 따름
+  const OVR = {   // 코드표 ORD_SPEC_STD 속성1(품질 등급)이 규격 체계와 다른 코드: 코드표를 따름
     'EN-DX51D AL': ['DQ', '코드표: ALCOSTA EN-DX51D DQ급'], 'EN-DX52D W04': ['CQ', '코드표 등급 CQ'], 'KS-SGMCC(SGM1CC)': ['DQ', '현대자동차 특별규격(극저) · 코드표 등급 DQ'],
   };
   function grade(c) {   // [한글 등급, 마우스 올림 설명]

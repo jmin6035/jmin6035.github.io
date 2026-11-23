@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>작업 순서 조회</title>
-<meta name="description" content="도금·컬러 라인별 작업 순서 조회(보기 전용) — 확정본(없으면 초안)의 순번·계약·사양·시작·종료 시각">
+<meta name="description" content="도금·컬러 라인별 작업 순서 조회(보기 전용): 확정본(없으면 초안)의 순번·계약·사양·시작·종료 시각">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/theme.css?v=2611230303">
 <style>
@@ -29,7 +29,7 @@ table.sv thead th { position: sticky; top: 0; z-index: 2; background: #1f3864; c
 table.sv tr.z td { background: var(--zebra); }
 table.sv td.ds, table.sv td.mn { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
 table.sv td.cn { font-weight: 700; letter-spacing: .1px; }
-/* 11/15 사용자 '열 맞추던지' — 주·날·정지 줄 글자를 왼쪽 첫 칸에 맞추고 가로로 밀어도 같은 자리(가운데 정렬이라 표 폭 따라 제각각이었음) */
+/* 11/15 사용자 '열 맞추던지': 주·날·정지 줄 글자를 왼쪽 첫 칸에 맞추고 가로로 밀어도 같은 자리(가운데 정렬이라 표 폭 따라 제각각이었음) */
 html body main table.sv td.ds, html body main table.sv td.mn { white-space: normal !important; word-break: keep-all !important; overflow-wrap: anywhere !important; } html body main table.sv thead th { white-space: normal !important; }   /* 긴 목적지가 앞면 색 칸에 붙던 것 */
 html:root body main table.sv.sv tr:is(.wh, .dh, .stp) > td[colspan] { text-align: center !important; padding-left: 14px !important; padding-right: 14px !important; }   /* 11/22 사용자 '바꿔라': 주·날짜·정지 띠 줄도 가운데(docs/16 규칙 13) */
 table.sv .stk { display: inline-block; white-space: nowrap; }

@@ -1,4 +1,4 @@
-/* 컬러 계획 계산 화면 — 기준 자료(암호화 게시본) + 올린 엑셀 → Web Worker(color_calc_worker.js, Pyodide)에서 서버와 같은 계산 → 현재 게시 계획과 비교 → 게시
+/* 컬러 계획 계산 화면: 기준 자료(암호화 게시본) + 올린 엑셀 → Web Worker(color_calc_worker.js, Pyodide)에서 서버와 같은 계산 → 현재 게시 계획과 비교 → 게시
    게시 = published/integrated.enc.json(화면 자료) + published/color_prev.enc.json(다음 계산이 지난 자리를 먼저 쓰도록) */
 (function () {
   'use strict';
@@ -14,7 +14,7 @@
 
   // 11/17 검토: color_prev(지난 컬러 계획)는 이 화면에서 GitHub 에 게시할 때만 생김 → 게시 폴더 목록(GitHub)에 있을 때만 받음(없는 파일 404·400 방지).
   //   목록을 못 받으면(네트워크·한도) 예전처럼 그냥 받아 봄
-  const prevListed = () => Promise.resolve(null);   // 11/17 재검토: GitHub API(로그인 없이 시간당 한도) 호출 안 함 — 게시본에 자리표시 파일(absent)을 둬서 404 없이 '없음'을 앎
+  const prevListed = () => Promise.resolve(null);   // 11/17 재검토: GitHub API(로그인 없이 시간당 한도) 호출 안 함: 게시본에 자리표시 파일(absent)을 둬서 404 없이 '없음'을 앎
   const envs = Promise.all(['color_calc_files.enc.json', 'color_calc_mes.enc.json', 'integrated.enc.json'].map((n) => GP.latest(n)).concat([prevListed()]))
     .then(async ([files, mes, cur, has]) => {
       const p0 = has === false ? null : has ? await GP.fetchPublished(['published/color_prev.enc.json']) : await GP.latest('color_prev.enc.json'), prev = p0 && p0.absent ? null : p0;
@@ -84,7 +84,7 @@
     const m = ev.data;
     if (m.type === 'step') { const w = /확인:/.test(m.msg); $('c-steps').insertAdjacentHTML('beforeend', `<div${w ? ' class="warn"' : ''}>${esc(m.msg.trim())}</div>`); log('· ' + m.msg); }
     else if (m.type === 'log') { if (m.msg.trim()) log(m.msg, m.err); }
-    else if (m.type === 'error') { stop(); $('c-msg').textContent = '⚠ 계산 실패 — 아래 기록 확인 필요(올린 파일 양식이 다를 수 있음)'; log(m.msg, true); $('c-steps').insertAdjacentHTML('beforeend', `<div class="err">${esc(m.msg.split('\n').slice(-1)[0])}</div>`); }
+    else if (m.type === 'error') { stop(); $('c-msg').textContent = '⚠ 계산 실패: 아래 기록 확인 필요(올린 파일 양식이 다를 수 있음)'; log(m.msg, true); $('c-steps').insertAdjacentHTML('beforeend', `<div class="err">${esc(m.msg.split('\n').slice(-1)[0])}</div>`); }
     else if (m.type === 'done') { stop(); const r = JSON.parse(m.json); result = r; window.CC_LAST = r; /* 검증 스크립트가 서버 결과와 비교할 때 씀 */ $('c-msg').textContent = `계산 완료(${m.sec}초)`; render(r); }
   }
   function stop() { clearInterval(tick); $('c-run').disabled = false; $('c-prog').hidden = true; }
@@ -105,7 +105,7 @@
     const k = (tone, l, v, u, b) => `<div class="kpi tone-${tone}"><div class="l">${l}</div><div class="v">${v}<small>${u}</small></div><div class="b">${b}</div></div>`;
     $('c-kpi').innerHTML = k('brand', '4분기 컬러 생산', n0(N.tot), 't', C ? `현재 게시 대비 ${sg(N.tot - C.tot)}t` : '')
       + k(N.unT > 0.5 ? 'warn' : 'good', '미편성', n0(N.unT), 't', C ? `현재 게시 대비 ${sg(N.unT - C.unT)}t` : '')
-      + k(N.self.AZ < 0 ? 'bad' : 'good', '자가재 AZ 최저 재고', n0(N.self.AZ), 't', N.self.AZ < 0 ? '컬러 소재 부족 — 도금 계획 확인 필요' : `MAC ${n0(N.self.MAC)}t · AL ${n0(N.self.AL)}t (부족 없음)`)
+      + k(N.self.AZ < 0 ? 'bad' : 'good', '자가재 AZ 최저 재고', n0(N.self.AZ), 't', N.self.AZ < 0 ? '컬러 소재 부족: 도금 계획 확인 필요' : `MAC ${n0(N.self.MAC)}t · AL ${n0(N.self.AL)}t (부족 없음)`)
       + k(changed ? 'warn' : 'good', '바뀐 날짜·라인 칸', changed == null ? '-' : n0(changed), '칸', '현재 게시 계획과 생산량이 다른 칸');
     const cell = (a, b) => { const d = a - (b || 0); return `<td><b>${n0(a)}</b></td>${C ? `<td>${n0(b)}</td><td class="${Math.abs(d) < 0.5 ? 'muted' : d > 0 ? 'up1' : 'dn1'}">${sg(d)}</td>` : ''}`; };
     $('c-lines').innerHTML = `<thead><tr><th rowspan="2">라인</th>${MONTHS.map((m) => `<th colspan="${C ? 3 : 1}">${+m.slice(5)}월</th>`).join('')}</tr><tr>${MONTHS.map(() => (C ? '<th>새 계산</th><th>현재</th><th>차이</th>' : '<th>새 계산</th>')).join('')}</tr></thead><tbody>`
@@ -154,7 +154,7 @@
   };
 
 
-  /* 캘린더 끌어 옮기기 — 사양 칸(그 날 같은 그룹·품명·고객·목적지·선적 묶음)을 다른 날에 놓으면 그 사양·톤을 옮김.
+  /* 캘린더 끌어 옮기기: 사양 칸(그 날 같은 그룹·품명·고객·목적지·선적 묶음)을 다른 날에 놓으면 그 사양·톤을 옮김.
      계산은 서버와 같은 Python(tools/color_pack.apply_moves): 옮긴 몫 고정 → 그 뒤는 연속 공정대로 다시 채움 → 영향(밀린 사양·납기·소재·도금) */
   const GC = { 수출벌크: 'var(--s2)', 건재수출: 'var(--s2)', 가전수출: 'var(--s5)', 가전내수: 'var(--s4)', 수요개발: 'var(--s3)', 주문재: 'var(--s6)', 계획재: 'var(--s1)' };
   const WD = ['월', '화', '수', '목', '금', '토', '일'];
@@ -196,7 +196,7 @@
       const ds = ds0(d), c = by[ds] || { rows: [], min: 0 }, past = ds <= act, wd = (lead + d - 1) % 7;
       const chips = chipsOf(c).map((x, j) => {
         const pv = pend.some((v) => (v.from === ds || v.to === ds) && v.p === x.p && (v.dest || '') === x.dest && (v.c || '') === x.c && (v.s == null || v.s === x.spec));
-        return `<button type="button" class="dv-c ${past ? 'fixed' : ''} ${x.moved ? 'moved' : ''} ${x.hit ? 'hit' : ''} ${pv ? 'pend' : ''}" style="--gc:${GC[x.g] || 'var(--s1)'}" data-d="${ds}" data-j="${j}" title="${esc(`${GL(x.g)} ${x.p} ${x.c} ${x.dest} ${x.ship} — ${Math.round(x.t)}t · ${(x.min / 60).toFixed(1)}시간${x.moved ? ' · 옮긴 몫' : ''}${x.hit ? ' · 옮기기 영향으로 날짜 바뀜' : ''}`)}"><b>${esc(x.p)}</b> ${n0(x.t)}t<small>${esc([GL(x.g), x.dest || x.c].filter(Boolean).join(' · '))}</small></button>`;
+        return `<button type="button" class="dv-c ${past ? 'fixed' : ''} ${x.moved ? 'moved' : ''} ${x.hit ? 'hit' : ''} ${pv ? 'pend' : ''}" style="--gc:${GC[x.g] || 'var(--s1)'}" data-d="${ds}" data-j="${j}" title="${esc(`${GL(x.g)} ${x.p} ${x.c} ${x.dest} ${x.ship}: ${Math.round(x.t)}t · ${(x.min / 60).toFixed(1)}시간${x.moved ? ' · 옮긴 몫' : ''}${x.hit ? ' · 옮기기 영향으로 날짜 바뀜' : ''}`)}"><b>${esc(x.p)}</b> ${n0(x.t)}t<small>${esc([GL(x.g), x.dest || x.c].filter(Boolean).join(' · '))}</small></button>`;
       }).join('');
       const hh = Math.min(24, (c.min || 0) / 60);
       const ad = pend.filter((v) => v.to === ds).reduce((a, v) => a + (+v.t || 0), 0), rm = pend.filter((v) => v.from === ds).reduce((a, v) => a + (+v.t || 0), 0);
@@ -208,9 +208,9 @@
   }
   function movesRender() {
     $('dv-moves').innerHTML = moves.length
-      ? `<b>${result && JSON.stringify(((result.o.moves || {}).items) || []) === JSON.stringify(moves) ? `계산에 반영한 옮기기 ${moves.length}건 — 아래 결과 확인 후 게시하면 확정` : `옮길 일정 ${moves.length}건`}</b>` + moves.map((v, i) => `<span class="mv">${esc(v.line)} ${esc(v.p)}${v.dest ? ' · ' + esc(v.dest) : ''} <b>${n0(v.t)}t</b> ${md(v.from)} → ${md(v.to)}<button type="button" data-i="${i}" aria-label="취소">✕</button></span>`).join('')
+      ? `<b>${result && JSON.stringify(((result.o.moves || {}).items) || []) === JSON.stringify(moves) ? `계산에 반영한 옮기기 ${moves.length}건: 아래 결과 확인 후 게시하면 확정` : `옮길 일정 ${moves.length}건`}</b>` + moves.map((v, i) => `<span class="mv">${esc(v.line)} ${esc(v.p)}${v.dest ? ' · ' + esc(v.dest) : ''} <b>${n0(v.t)}t</b> ${md(v.from)} → ${md(v.to)}<button type="button" data-i="${i}" aria-label="취소">✕</button></span>`).join('')
         + '<button type="button" class="btn primary" id="dv-go">옮기기 반영해서 계산</button><button type="button" class="btn" id="dv-clear">모두 취소</button>'
-      : '<span class="hint">옮긴 일정 없음 — 사양 칸을 끌어 다른 날에 놓습니다(휴대폰은 칸을 누른 채 끌기).</span>';
+      : '<span class="hint">옮긴 일정 없음: 사양 칸을 끌어 다른 날에 놓습니다(휴대폰은 칸을 누른 채 끌기).</span>';
     $('dv-moves').querySelectorAll('.mv button').forEach((b) => b.onclick = () => { moves.splice(+b.dataset.i, 1); calRender(); });
     if ($('dv-go')) $('dv-go').onclick = () => { $('c-run').click(); $('c-prog').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
     if ($('dv-clear')) $('dv-clear').onclick = () => { if (confirm('옮긴 일정을 모두 취소할까요? (계산 시작을 눌러야 계획에 반영)')) { moves = []; calRender(); } };
@@ -247,7 +247,7 @@
   function ask(x, from, to) {
     const dlg = $('dv-dlg'), n = $('dv-dlg-n'), max = Math.round(x.t * 10) / 10;
     $('dv-dlg-t').textContent = `${cv.line} ${x.p}  ${md(from)} → ${md(to)}`;
-    $('dv-dlg-s').textContent = `${GL(x.g)} · ${[x.c, x.dest, x.ship].filter(Boolean).join(' · ')} — 그 날 ${n0(x.t)}t (${(x.min / 60).toFixed(1)}시간, ${(x.t / x.min * 60).toFixed(1)}t/시간)`;
+    $('dv-dlg-s').textContent = `${GL(x.g)} · ${[x.c, x.dest, x.ship].filter(Boolean).join(' · ')}: 그 날 ${n0(x.t)}t (${(x.min / 60).toFixed(1)}시간, ${(x.t / x.min * 60).toFixed(1)}t/시간)`;
     $('dv-dlg-max').textContent = `최대 ${max}t`;
     n.max = max; n.value = max;
     dlg.onclose = () => {
@@ -264,13 +264,13 @@
     const im = mv.impact || {}, li = (a, f) => (a && a.length ? `<ul>${a.map(f).join('')}</ul>` : '<p class="hint">없음</p>');
     box.innerHTML = `<div class="mv-imp"><h3>옮긴 일정과 영향</h3>`
       + li(mv.applied, (v) => `<li>✓ ${esc(v.line)} ${esc(v.p)}${v.dest ? ' · ' + esc(v.dest) : ''} <b>${n0(v.t)}t</b> ${md(v.from)} → ${md(v.to)}${v.fromActual ? ` <small class="hint">(다시 계산한 계획에선 그 사양이 ${md(v.fromActual)}에 있어 거기서 옮김)</small>` : ''}</li>`)
-      + (mv.skipped && mv.skipped.length ? `<ul>${mv.skipped.map((v) => `<li class="warn">⚠ 이동 불가: ${esc(v.move.line)} ${esc(v.move.p)} ${md(v.move.from)} → ${md(v.move.to)} — ${esc(v.why)}</li>`).join('')}</ul>` : '')
+      + (mv.skipped && mv.skipped.length ? `<ul>${mv.skipped.map((v) => `<li class="warn">⚠ 이동 불가: ${esc(v.move.line)} ${esc(v.move.p)} ${md(v.move.from)} → ${md(v.move.to)}: ${esc(v.why)}</li>`).join('')}</ul>` : '')
       + `<h3>같이 날짜가 바뀐 사양 <small>${n0(im.shiftT || 0)}t${im.shiftLast ? ` · ${md(im.shiftLast)}까지 영향` : ''}</small></h3>`
       + li(im.shifts, (v) => `<li>${esc(v.line)} ${esc(v.p)}${v.dest ? ' · ' + esc(v.dest) : ''} ${n0(v.t)}t ${md(v.from)} → ${md(v.to)} ${v.to > v.from ? '(순연)' : '(당겨짐)'}</li>`)
-      + `<h3>납기(선적 완료기한)</h3>` + (im.newLate && im.newLate.length ? li(im.newLate, (v) => `<li class="warn">⚠ ${esc(v.line)} ${esc(v.p)} ${esc(v.dest)} ${n0(v.t)}t — 기한 ${md(v.due)} 초과</li>`) : '<p class="hint">신규 기한 초과 없음</p>')
+      + `<h3>납기(선적 완료기한)</h3>` + (im.newLate && im.newLate.length ? li(im.newLate, (v) => `<li class="warn">⚠ ${esc(v.line)} ${esc(v.p)} ${esc(v.dest)} ${n0(v.t)}t: 기한 ${md(v.due)} 초과</li>`) : '<p class="hint">신규 기한 초과 없음</p>')
       + (im.fixedLate && im.fixedLate.length ? li(im.fixedLate, (v) => `<li>✓ ${esc(v.p)} ${esc(v.dest)} ${n0(v.t)}t 기한 내 복귀</li>`) : '')
       + `<h3>구매 소재</h3>` + (im.mat && im.mat.length ? li(im.mat, (v) => `<li class="${v.after > v.before ? 'warn' : ''}">${esc(v.code)} 부족 ${n0(v.before)}t → ${n0(v.after)}t${v.first ? ` (첫 부족 ${md(v.first)})` : ''}</li>`) : '<p class="hint">부족 변화 없음(입고 예정 기준, 6주 뒤는 신규 발주로 맞춤)</p>')
-      + `<h3>도금(자가재)</h3>` + (im.plating && im.plating.length ? `<p class="warn">⚠ 자가재 반순 마감이 바뀜 → 도금 기준 계획 재계산 필요(관리자, 약 30분)</p>` + li(im.plating, (v) => `<li>${esc(v.sec)} ${esc(v.alloy)} 마감 ${md(v.due)}: ${n0(v.before)}t → ${n0(v.after)}t</li>`) : '<p class="hint">영향 없음 — 자가재 필요일이 같은 반순(10·20·말일) 안</p>')
+      + `<h3>도금(자가재)</h3>` + (im.plating && im.plating.length ? `<p class="warn">⚠ 자가재 반순 마감이 바뀜 → 도금 기준 계획 재계산 필요(관리자, 약 30분)</p>` + li(im.plating, (v) => `<li>${esc(v.sec)} ${esc(v.alloy)} 마감 ${md(v.due)}: ${n0(v.before)}t → ${n0(v.after)}t</li>`) : '<p class="hint">영향 없음: 자가재 필요일이 같은 반순(10·20·말일) 안</p>')
       + (im.spill && im.spill.length ? `<h3>계획 기간 밖 순연</h3>` + li(im.spill, (v) => `<li class="warn">${esc(v.line)} ${esc(v.p)} ${n0(v.t)}t → 미편성</li>`) : '')
       + '</div>';
   }

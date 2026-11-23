@@ -1,7 +1,7 @@
-/* 소재·재고 화면 맨 아래 '기준·사양' 첨부(11/11 사용자 '리드타임·계획재 사양이 궁금한 사람들이 있다 — 항상 첨부'):
-   <div data-ref="lt"></div>      → 소재 유형별 리드타임 표 + 입고 뒤 투입 여유(published/leadtime.enc.json, 읽기 전용 — 고치기는 리드타임 기준 화면)
+/* 소재·재고 화면 맨 아래 '기준·사양' 첨부(11/11 사용자 '리드타임·계획재 사양이 궁금한 사람들이 있다: 항상 첨부'):
+   <div data-ref="lt"></div>      → 소재 유형별 리드타임 표 + 입고 뒤 투입 여유(published/leadtime.enc.json, 읽기 전용: 고치기는 리드타임 기준 화면)
    <div data-ref="spec"></div>    → 계획재 사양표(TF 계획재 운영안 R15, published/planstock.enc.json specs)
-   <div data-ref="stkmat"></div>  → 소재 재고 목표 대비 한 줄(published/portal.enc.json sr.stock — 도금 F/H · 컬러 소재)
+   <div data-ref="stkmat"></div>  → 소재 재고 목표 대비 한 줄(published/portal.enc.json sr.stock: 도금 F/H · 컬러 소재)
    화면 스크립트가 암호를 저장(cgl-analysis-pw)하면 그때 불러옴. 같은 파일은 한 번만 풂(MatRef.load) */
 (function () {
   'use strict';
@@ -11,7 +11,7 @@
   const cache = {};
   const wd_ = (t) => String(t == null ? '' : t).replace('새 발주로 맞출 수 있는 최소 일수', '발주 후 투입까지 최소 일수').replace(/새 발주로 맞춤/g, '발주로 맞춤').replace('동종 AZ와 같게 봄(표에 없음)', '동종AZ와 같음');   // 화면 문구(용어 기준 11/17)
   const MatRef = window.MatRef = {};
-  const css = document.createElement('style');   // 첨부 표 서식 — 이 파일을 쓰는 화면(소재 관제·발주·재고 전망·계획재)만
+  const css = document.createElement('style');   // 첨부 표 서식: 이 파일을 쓰는 화면(소재 관제·발주·재고 전망·계획재)만
   css.textContent = `.ref-h { font-size: 15px; margin: 14px 0 6px; } .ref-h small { font-size: 13.5px; font-weight: 500; color: var(--ink-2); margin-left: 6px; }
     table.t.ref-t { width: auto; min-width: min(100%, 720px); } html body table.t.ref-t :is(td, th).l { text-align: left !important; } html body table.t.ref-t :is(td, th):not(.l) { text-align: right !important; }
     details.ref-spec { margin: 14px 0 6px; } details.ref-spec > summary { padding-left: 0; } table.t.ref-t td, table.t.ref-t th { padding: 6px 12px; } table.t.ref-t td.nw { white-space: nowrap; }
@@ -61,7 +61,7 @@
   };
 
   const F = { lt: ['leadtime.enc.json', MatRef.ltHtml], spec: ['planstock.enc.json', MatRef.specHtml],
-    stkmat: ['portal.enc.json', (PT) => { const h = MatRef.stkHtml(PT, /소재/); return h ? `<span class="ref-l" title="판매생산속보 소재 재고 — 계획 > 소재 화면 '지금 재고'(MES 소재재고 목록 + F/H 추정)와 출처가 달라 값이 다름">소재 재고 <small>판생속보 ${esc(UI.fmtDate(String((PT.sr || {}).asOf || '').slice(0, 10)))}</small></span>${h}` : ''; }] };   // 11/13 점검: 01 소재 '지금 재고'와 출처가 달라 값이 다름 — 출처를 숫자 옆에
+    stkmat: ['portal.enc.json', (PT) => { const h = MatRef.stkHtml(PT, /소재/); return h ? `<span class="ref-l" title="판매생산속보 소재 재고: 계획 > 소재 화면 '지금 재고'(MES 소재재고 목록 + F/H 추정)와 출처가 달라 값이 다름">소재 재고 <small>판생속보 ${esc(UI.fmtDate(String((PT.sr || {}).asOf || '').slice(0, 10)))}</small></span>${h}` : ''; }] };   // 11/13 점검: 01 소재 '지금 재고'와 출처가 달라 값이 다름: 출처를 숫자 옆에
   async function fill(pw) {
     for (const el of document.querySelectorAll('[data-ref]')) {
       const f = F[el.dataset.ref]; if (!f) continue;

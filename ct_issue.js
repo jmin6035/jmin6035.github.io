@@ -1,13 +1,13 @@
-/* 06 이슈·조정(11/4 2차 진단 9장): 자동 탐지 후보와 관리 이슈를 나눔 — #now 이슈 현황 · #req 조정 요청
+/* 06 이슈·조정(11/4 2차 진단 9장): 자동 탐지 후보와 관리 이슈를 나눔: #now 이슈 현황 · #req 조정 요청
    후보: 납기 지연 예상 주문(원인×판매그룹) · 소재 발주 마감 · 화면 예외 → 번호 CT.issueId(키) 고정
-   상태: 공유 저장소(결정 기록과 같은 곳) 이벤트 {t:'issue', id, st, note?, owner?, due?, title?} 를 번호별로 접어 마지막 값 사용 — st ∈ 신규/접수/조치 중/완료/보류 */
+   상태: 공유 저장소(결정 기록과 같은 곳) 이벤트 {t:'issue', id, st, note?, owner?, due?, title?} 를 번호별로 접어 마지막 값 사용: st ∈ 신규/접수/조치 중/완료/보류 */
 (function () {
   'use strict';
   const { esc, n0, n1, md } = CT;
   const TYPE = { mat: '소재', match: '생산', paint: '소재', plate: '생산', cap: '생산', ship: '출하', data: '자료' };
   const ST = ['신규', '접수', '조치 중', '완료', '보류'];
   const STC = { 신규: 'na', 접수: 'warn', '조치 중': 'mid', 완료: 'ok', 보류: 'pre' };
-  // 화면 표시(11/5 사용자 '미처리·조치 중으로는 뭘 했는지 모름') — 저장 값(st)은 그대로
+  // 화면 표시(11/5 사용자 '미처리·조치 중으로는 뭘 했는지 모름'): 저장 값(st)은 그대로
   const STN = { 신규: '담당 미지정(접수 전)', 접수: '접수됨(조치 전)', '조치 중': '조치 진행 중', 완료: '종결', 보류: '보류' };
   // 원인별 해야 할 조치
   const ACT = { mat: '소재 발주·입고 앞당김 요청', match: '규격 재고 매치·편성', paint: '도료 입고 앞당김 요청', cap: '생산 순서·편성 조정', plate: '자가재(도금) 생산 앞당김', ship: '선적·배차 일정 확인', data: 'MES 주문 종결·자료 정정' };
@@ -41,7 +41,7 @@
       if (!['late', 'soon'].includes(m.st) || !CT.inScope(m.plant)) continue;
       const gs = (MO.groups || []).filter((g) => g.mats.some((x) => x.key === m.key)).map((g) => g.group);
       const L = M.all.filter((o) => o.pl === m.plant && !o.closed && gs.some((g) => CT.grpName(g) === o.grp || g.startsWith(o.grp)) && (!m.first || !o.needProd || o.needProd >= m.first));
-      out.push({ key: 'mat|' + m.key, no: `소재-${CT.matNm(m.name)}`, act: m.st === 'late' ? '소재 즉시 발주(발주 지연) — 부족분 대체 소재 검토' : `소재 발주(마감 ${md(m.deadline)} 전)`, type: '소재', cause: 'mat', pl: m.plant, title: `${CT.matNm(m.name)} ${m.st === 'late' ? '발주 지연' : '발주 2주 안 마감'}`, text: `${m.st === 'late' ? `발주 지연 ${n0(m.lateT)}t · 3달 ` : ''}부족 ${n0(m.short)}t · ${md(m.first)}부터 · 리드타임 ${m.lt}일`,
+      out.push({ key: 'mat|' + m.key, no: `소재-${CT.matNm(m.name)}`, act: m.st === 'late' ? '소재 즉시 발주(발주 지연): 부족분 대체 소재 검토' : `소재 발주(마감 ${md(m.deadline)} 전)`, type: '소재', cause: 'mat', pl: m.plant, title: `${CT.matNm(m.name)} ${m.st === 'late' ? '발주 지연' : '발주 2주 안 마감'}`, text: `${m.st === 'late' ? `발주 지연 ${n0(m.lateT)}t · 3달 ` : ''}부족 ${n0(m.short)}t · ${md(m.first)}부터 · 리드타임 ${m.lt}일`,
         t: m.st === 'late' ? m.lateT : m.short, n: L.length, dept: CT.DEPT.mat, due: m.deadline, orders: L.sort(CT.riskSort), grps: gs, why: m.st === 'late' ? `발주 지연 ${n0(m.lateT)}t` : `소재 부족 ${n0(m.short)}t`, src: '소재 관제', nOrdEst: true });
     }
     const AREA = { 재고: '소재', 소재: '소재', 납기: '납기', 자료: '자료', 도금: '생산', 컬러: '생산', 출하: '출하' };
@@ -49,7 +49,7 @@
       if (CT.idleSkip(D, e.text)) continue;                   // 계획 휴지 라인 경보 제외(11/8)
       const pl = /컬러/.test(e.area + e.text) ? 'C' : /도금|CGL|F\/H/.test(e.area + e.text) ? 'G' : '';
       if (pl && !CT.inScope(pl)) continue;
-      // 11/13 점검: 글에 있는 기한('11/15까지')·물량('몫 1,546t', '작업지시 514t')을 칸으로 — '즉시 확인'·'-' 이던 것
+      // 11/13 점검: 글에 있는 기한('11/15까지')·물량('몫 1,546t', '작업지시 514t')을 칸으로: '즉시 확인'·'-' 이던 것
       const dm = /(\d{1,2})\/(\d{1,2})까지/.exec(e.text), tm = /(?:몫|작업지시|물량)\s*([\d,]+(?:\.\d+)?)t/.exec(e.text);
       const eDue = dm ? `${asOf.slice(0, 4)}-${String(dm[1]).padStart(2, '0')}-${String(dm[2]).padStart(2, '0')}` : null, eT = tm ? +tm[1].replace(/,/g, '') : null;
       const eAct = e.text.split(' — ')[1] || (/발주/.test(e.text) ? `${(/중 (.+?) 몫/.exec(e.text) || [])[1] || '업체'} 발주${eDue ? `(${md(eDue)}까지)` : ''}` : '내용 확인 후 조치');
@@ -70,7 +70,7 @@
       return x;
     };
     out.forEach(fold);
-    // 읽을 수 있는 이슈번호(같은 번호가 겹치면 -2, -3) — 저장은 내부 번호(x.id)
+    // 읽을 수 있는 이슈번호(같은 번호가 겹치면 -2, -3): 저장은 내부 번호(x.id)
     const seen = {};
     out.forEach((x) => { const b = x.no || x.id; seen[b] = (seen[b] || 0) + 1; x.no = seen[b] > 1 ? `${b}-${seen[b]}` : b; });
     // 후보에서 사라졌지만 기록이 남은 이슈(자료가 바뀌어 탐지 안 됨)
@@ -82,10 +82,10 @@
   function draw() {
     if (!DD) return;
     const m = document.getElementById('ct-main'), v = CT.view('now', VIEWS), B = build(DD);
-    const err = EV == null ? '<p class="is-err">조치 상태 불러오는 중…</p>' : evErr ? `<p class="is-err bad">⚠ 조치 상태 읽기 실패(${esc(evErr)}) — 후보만 표시, 상태 변경 불가</p>` : '';
+    const err = EV == null ? '<p class="is-err">조치 상태 불러오는 중…</p>' : evErr ? `<p class="is-err bad">⚠ 조치 상태 읽기 실패(${esc(evErr)}): 후보만 표시, 상태 변경 불가</p>` : '';
     m.innerHTML = CT.basis([{ name: '주문 납기', at: B.asOf, kind: '실적+재계획' }, { name: '소재 관제', at: DD.mat_order && DD.mat_order.today, kind: '재계획' }, { name: '화면 예외', at: DD.portal && DD.portal.built, kind: '자동 점검' }]) + err + (v === 'req' ? req(B) : now(B));
-    /* 11/19 수정 방: 게시 자료 문구의 금지어를 화면 글자에서만 바꿈(docs/32 — 늦음 → 지연, 기발주 → 발주 완료) */
-    { const tw = document.createTreeWalker(m, NodeFilter.SHOW_TEXT); let nd; while ((nd = tw.nextNode())) { const s = nd.nodeValue, t = s.replace(/지금 발주하면 늦음/g, '지금 발주해도 지연').replace(/늦음/g, '지연').replace(/기발주/g, '발주 완료'); if (t !== s) nd.nodeValue = t; } }
+    /* 11/19 수정 방: 게시 자료 문구의 금지어를 화면 글자에서만 바꿈(docs/32: 늦음 → 지연, 기발주 → 발주 완료) */
+    { const tw = document.createTreeWalker(m, NodeFilter.SHOW_TEXT); let nd; while ((nd = tw.nextNode())) { const s = nd.nodeValue, t = s.replace(/지금 발주하면 늦음/g, '지금 발주해도 지연').replace(/늦음/g, '지연').replace(/기발주/g, '발주 완료').replace(/(\d)h(?![A-Za-z])/g, '$1시간'); if (t !== s) nd.nodeValue = t; } }
     m.querySelectorAll('#is-fil button').forEach((b) => b.onclick = () => { fil = b.dataset.k; draw(); });
     m.querySelectorAll('[data-i]').forEach((t) => t.onclick = (e) => { if (e.target.closest('a')) return; openIssue(B.list.find((x) => x.id === t.dataset.i), B.asOf); });
     CT.keyRows(m);
@@ -115,7 +115,7 @@
       + (deps.length ? deps.map(sec).join('') : '<p class="ct-note">해당 이슈 없음</p>') + '</section>';
   }
 
-  // 11/17 검토: 현장 예외는 '문제 — 조치' 한 줄이라 문제 칸 작은 글씨·원인이 조치와 같은 글 → 조치와 다를 때만 보임
+  // 11/17 검토: 현장 예외는 '문제: 조치' 한 줄이라 문제 칸 작은 글씨·원인이 조치와 같은 글 → 조치와 다를 때만 보임
   /* #req 조정 요청: 접수·조치 중·보류 */
   function req(B) {
     const { asOf, list } = B, R = list.filter((x) => ['접수', '조치 중', '보류'].includes(x.st)).sort((a, b) => ST.indexOf(a.st) - ST.indexOf(b.st) || String(a.dueEff || '9').localeCompare(String(b.dueEff || '9')));
@@ -123,8 +123,8 @@
       + `<div class="ct-kv"><span>해당 주문</span><b>${x.n ? n0(x.n) + '건' : '-'}</b></div><div class="ct-kv"><span>해당 물량</span><b>${x.t != null ? n0(x.t) + 't' : '-'}</b></div>${(x.why || x.text) && (x.why || x.text) !== x.act ? `<div class="ct-kv"><span>원인</span><b>${esc(x.why || x.text)}</b></div>` : ''}<div class="ct-kv"><span>해야 할 조치</span><b>${esc(x.act || '-')}</b></div>`
       + `${x.orders.length ? `<div class="rq-o">${x.orders.slice(0, 4).map((o) => `<span>${esc(o.id)} <b>${n1(o.remT)}t</b> ${md(o.due)}</span>`).join('')}${x.orders.length > 4 ? `<span class="sub">외 ${x.orders.length - 4}건</span>` : ''}</div>` : ''}</div>`
       + `<div class="rq-r"><div class="ct-kv"><span>요청사항</span><b>${esc(x.note || '-')}</b></div><div class="ct-kv"><span>담당</span><b>${esc(x.owner || x.dept)}</b></div><div class="ct-kv"><span>요청일</span><b>${md(x.at0)}</b></div><div class="ct-kv"><span>기한</span><b>${dueTd(x, asOf)}</b></div>`
-      + `<div class="ct-kv"><span>결과</span><b>${esc(STN[x.st] || x.st)}</b></div><ol class="rq-h2">${x.hist.slice(-3).reverse().map((e) => `<li>${md(String(e.at).slice(0, 10))} ${esc(e.by || '')} · ${esc(STN[e.st] || e.st || '')}${e.note ? ` — ${esc(e.note)}` : ''}</li>`).join('')}</ol></div></article>`;
-    return `<section class="card"><h2>조정 요청 <small>접수됨·조치 진행 중·보류 ${R.length}건</small></h2>${R.length ? R.map(one).join('') : '<p class="ct-note">조정 중인 이슈 없음 — 이슈 현황에서 담당이 접수하면 여기에 표시</p>'}</section>`;
+      + `<div class="ct-kv"><span>결과</span><b>${esc(STN[x.st] || x.st)}</b></div><ol class="rq-h2">${x.hist.slice(-3).reverse().map((e) => `<li>${md(String(e.at).slice(0, 10))} ${esc(e.by || '')} · ${esc(STN[e.st] || e.st || '')}${e.note ? `: ${esc(e.note)}` : ''}</li>`).join('')}</ol></div></article>`;
+    return `<section class="card"><h2>조정 요청 <small>접수됨·조치 진행 중·보류 ${R.length}건</small></h2>${R.length ? R.map(one).join('') : '<p class="ct-note">조정 중인 이슈 없음: 이슈 현황에서 담당이 접수하면 여기에 표시</p>'}</section>`;
   }
 
   function openIssue(x, asOf) {

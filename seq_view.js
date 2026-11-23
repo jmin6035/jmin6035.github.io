@@ -1,4 +1,4 @@
-/* 작업 순서 조회(11/15 사용자 '우리가 순서 바꾸는 화면을 1030 화면처럼 쫙 — 다른 부서가 조회하는 화면'): 보기 전용.
+/* 작업 순서 조회(11/15 사용자 '우리가 순서 바꾸는 화면을 1030 화면처럼 쫙: 다른 부서가 조회하는 화면'): 보기 전용.
    자료·시각 계산 = 02 작업(week_seq.js)을 WS_HEADLESS 로 불러 그대로(WS_CORE.view: 게시 week_seq 자료 + 공유 저장소 확정본 → sim).
    칸(사용자 지정 순서 그대로) = 순번 · 계약번호 · 행번 · 두께 · 폭 · 중량 · 길이 · 부서 · 담당자 · 목적지 · L/S · t/hr · 시작시간 · 종료시간 · 상태(11/15 사용자 '작업대기/지시대기까지').
    부서·목적지 = 주문진도(cg/cc_order_progress)에서 계약번호로(없으면 작업 자료 값). 정지(M/C·S/D·청소·휴지)·더미는 한 줄로 끼움(01 일별 가동계획 색) */
@@ -35,7 +35,7 @@
     return (OP[p] = m);
   }
 
-  // ───────── 한 라인의 줄 목록(작업·더미·정지) — 시각은 02 작업 sim 그대로
+  // ───────── 한 라인의 줄 목록(작업·더미·정지): 시각은 02 작업 sim 그대로
   function rowsOf(l) {
     const O = OP[plant] || {}, out = [];
     const st = (lab, s, e, yel) => out.push({ k: 's', lab, s, e, yel, d: C.dayOf(s) });
@@ -43,7 +43,7 @@
     const sp = (V.D.lines[l] || {}).stopUntil;
     if (sp) st(`계획 휴지 · ${+sp.slice(5, 7)}/${+sp.slice(8, 10)} 재가동`, C.tms(V.D.w0), C.tms(V.D.lines[l].from), false);
     (V.ev[l] || []).forEach((q) => {
-      if (q.k === 'w') return;                                     // 도료·PF 기다림(내부 정보) — 시작 시각에만 반영
+      if (q.k === 'w') return;                                     // 도료·PF 기다림(내부 정보): 시작 시각에만 반영
       if (q.k === 'p') { const nm = !q.ev ? '휴지' : q.ev === 'plan' || q.ev === '휴지계획' ? '계획 휴지' : q.ev; return st(`${evNm(nm)} ${hrs(q.e - q.s)}`, q.s, q.e, yel(nm)); }
       if (q.k === 'g') {
         const nt = q.e.note || '';
@@ -64,7 +64,7 @@
         k: x.dummy ? 'd' : 'j', s: q.s, e: q.e, d: C.dayOf(q.s), cn, sq,
         thk: cg ? x.thick : x.thk, wdt: cg ? x.width : x.wdt, t: x.t, len: x.dummy ? null : x.len,
         grp: x.dummy ? '더미' : o.grp || (cg ? x.grp : x.g), man: unk(x.man) || unk(o.man), dst: cg ? unk(o.dst) || unk(x.dst) : unk(x.cus) || unk(o.cus) || unk(x.dst),
-        top: cg || x.dummy ? null : x.code || x.color, back: cg || x.dummy ? null : x.codeBack || x.back,   // 11/15 사용자 'top·back color 추가' — 컬러만(상도·이면 풀 코드, 없으면 도료 종류)
+        top: cg || x.dummy ? null : x.code || x.color, back: cg || x.dummy ? null : x.codeBack || x.back,   // 11/15 사용자 'top·back color 추가': 컬러만(상도·이면 풀 코드, 없으면 도료 종류)
         ls: x.dummy ? null : cg ? x.ls : (x.ls || {})[l], tph: x.dummy ? null : tph,
         stt: cg ? (x.issued ? ['fx', '작업대기'] : ['wt', '지시대기']) :   /* 11/17 검토: 도금도 컬러·편성과 같은 이름 */ x.fixed ? ['kw', '작업대기'] : ['kj', '지시대기'],
       });
@@ -78,7 +78,7 @@
     const cf = V.cur;
     $('sv-st').className = 'sv-st ' + (cf ? 'cf' : 'dr');
     $('sv-st').textContent = cf ? `확정 ${tm(Math.round(Date.parse(cf.at) / 6e4) + 540)}` : '초안(확정 전)';
-    $('sv-st').title = cf ? `${cf.who} 확정(v${cf.v})` : '03 생산 편성 · 작업 순서에서 아직 확정하지 않음 — 지금 초안 순서';
+    $('sv-st').title = cf ? `${cf.who} 확정(v${cf.v})` : '03 생산 편성 · 작업 순서에서 아직 확정하지 않음: 지금 초안 순서';
     $('sv-wk').innerHTML = `<b class="dt">${dnm(D.w0.slice(0, 10))} 07:00~${dnm(D.w1.slice(0, 10))} 07:00</b> · 자료 ${mmdd(D.now.slice(0, 10))} ${D.now.slice(11, 16)}`;
     $('sv-plant').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.p === plant)));
     const R = {}; Ls.forEach((l) => { R[l] = rowsOf(l); });
@@ -92,7 +92,7 @@
     const CW0 = innerWidth < 1500 ? [44, 128, 44, 50, 54, 50, 64, 76, 60, 112, 84, 84, 56, 50, 100, 100, 80] : [52, 136, 58, 62, 68, 66, 72, 110, 80, 210, 104, 104, 58, 62, 112, 112, 96];   // 1366px: 목적지까지 보이고 시작·종료·상태는 오른쪽 고정
     const HID = plant === 'cg' ? [10, 11, 12] : [], vis = (a) => a.filter((_, i) => !HID.includes(i)), NC = 17 - HID.length;   // 11/17 검토: 도금은 색 칸 없음 → 숨김, 목적지 폭 고정
     const CW = vis(CW0);
-    $('sv-tbl').dataset.stk = plant === 'cc' && innerWidth >= 1500 ? '1' : '';   // 11/17 검토: 도금은 한 화면에 다 들어감 — 오른쪽 고정은 컬러 넓은 화면만(1366 에선 앞면·뒷면 색이 고정 칸 밑에 가려짐 → 가로로 넘김)
+    $('sv-tbl').dataset.stk = plant === 'cc' && innerWidth >= 1500 ? '1' : '';   // 11/17 검토: 도금은 한 화면에 다 들어감: 오른쪽 고정은 컬러 넓은 화면만(1366 에선 앞면·뒷면 색이 고정 칸 밑에 가려짐 → 가로로 넘김)
     let h = `<colgroup>${CW.map((w) => (w ? `<col style="width:${w}px">` : '<col>')).join('')}</colgroup><thead><tr>${vis(COLS).map((c) => `<th scope="col">${c}</th>`).join('')}</tr></thead><tbody>`, n = 0, cw = null, cd = null, z = 0;
     rs.forEach((r) => {
       const w = wkOf(r.d);
@@ -105,7 +105,7 @@
       const c0 = cellsOf(r, n), c = vis(c0);
       h += `<tr class="${r.k === 'd' ? 'dm' : 'j'}${z % 2 === 0 ? ' z' : ''}"${r.note ? ` title="${esc(r.note)}"` : ''}>${c.map((v, i) => `<td${i === 1 ? ' class="cn"' : i === 7 || i === 8 ? ' class="mn"' : i === 9 ? ` class="ds" title="${esc(v)}"` : ''}>${esc(v)}</td>`).join('')}<td>${r.k === 'd' || !r.stt ? '-' : `<span class="chip ${r.stt[0]}">${r.stt[1]}</span>`}</td></tr>`;
     });
-    if (!rs.length) h += `<tr><td colspan="${NC}" class="sv-empty">${line} 기간 안 작업 없음${D.lines[line] && D.lines[line].stop ? ' — ' + esc(D.lines[line].stop.note || '') : ''}</td></tr>`;
+    if (!rs.length) h += `<tr><td colspan="${NC}" class="sv-empty">${line} 기간 안 작업 없음${D.lines[line] && D.lines[line].stop ? ': ' + esc(D.lines[line].stop.note || '') : ''}</td></tr>`;
     $('sv-tbl').innerHTML = h + '</tbody>';
     find();
   }
@@ -151,7 +151,7 @@
       document.querySelector('#sv-lock h2').textContent = '분석 암호';
     }
   }
-  // 11/15 사용자 '담당자나 계약번호 검색' — 맞는 작업 줄만 남김(정지·날 머리는 그대로)
+  // 11/15 사용자 '담당자나 계약번호 검색': 맞는 작업 줄만 남김(정지·날 머리는 그대로)
   function find() {
     const q = ($('sv-find').value || '').trim().toLowerCase(); let n = 0;
     document.querySelectorAll('#sv-tbl tr.j, #sv-tbl tr.dm').forEach((r) => { r.classList.remove('fd', 'nf'); if (!q) return; const c = r.cells; const ok = [c[1], c[8]].some((td) => td && td.innerText.toLowerCase().includes(q)); r.classList.add(ok ? 'fd' : 'nf'); n += ok; });

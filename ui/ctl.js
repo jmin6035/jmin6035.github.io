@@ -1,4 +1,4 @@
-/* 관제 공용(11/3 → 11/11 개편): 판매그룹 신호 한 곳 — 관제판(board.html) · 통합 관제(ct_home.js) · 모든 화면 위 관제 띠(ui/shell.js)가 같은 값을 씀
+/* 관제 공용(11/3 → 11/11 개편): 판매그룹 신호 한 곳: 관제판(board.html) · 통합 관제(ct_home.js) · 모든 화면 위 관제 띠(ui/shell.js)가 같은 값을 씀
    UI.ctlRows(O, MO, IG, RK) → 그룹마다 { key, pl, name, w(가장 나쁜 신호), cells[5], vals[5], d{due, prod, ship, stock, mat} }
      납기 = risk.enc.json(납기 위험 화면과 같은 판정) · 생산·출하·재고 = portal.enc.json · 재고 목표 = integrated(통합 계획 월말 목표) · 소재 = mat_order
    UI.ctlStrip(O, MO) → 관제 띠 HTML. 납기 위험·재고 목표 자료는 여기서 뒤에서 받아 오고, 받으면 띠를 다시 그림 */
@@ -10,10 +10,10 @@
   const md = (s) => { const p = String(s).slice(5, 10).split('-'); return `${+p[0]}/${+p[1]}`; };
   const dim = (m) => new Date(+m.slice(0, 4), +m.slice(5, 7), 0).getDate();
   let MO = null, IGc = null, RKc = null;
-  const TFD = { G수출: 15, G국내: 20, G자동차: 30, C수출: 15, C건재: 20 };   // 상한 일수 — 엔진 값(integrated tfRules.days)이 없을 때만
+  const TFD = { G수출: 15, G국내: 20, G자동차: 30, C수출: 15, C건재: 20 };   // 상한 일수: 엔진 값(integrated tfRules.days)이 없을 때만
   const TFK = { G수출: 'G수출', G국내: 'G국내', G자동차: 'AL-STS', C수출: '건재수출', C건재: '주문재' };
   UI.ctlTfd = (k, IG) => { const v = (((IG || IGc || {}).tfRules || {}).days || {})[TFK[k]]; return v != null ? v : TFD[k]; };
-  const GNM = (g) => ({ G국내: '도금국내', G자동차: '자동차' }[g.key] || g.name.replace(/\(.*\)/, ''));   // 11/11: 화면 전체 그룹 이름 통일(도금판매 → 도금국내 — ui/ct.js GN 과 같게)
+  const GNM = (g) => ({ G국내: '도금국내', G자동차: '자동차' }[g.key] || g.name.replace(/\(.*\)/, ''));   // 11/11: 화면 전체 그룹 이름 통일(도금판매 → 도금국내: ui/ct.js GN 과 같게)
   const MOG = { G수출: ['도금수출'], G국내: ['도금국내'], G자동차: ['자동차'], G자가재: ['자가재'], C수출: ['컬러수출(건재)', '컬러수출(가전)', '가전내수'], C건재: ['컬러건재 주문재', '컬러건재 계획재'], C수요: ['수요개발'] };
   /* 판매그룹(portal) → 납기 위험 그룹(risk.enc.json). 컬러수출 = 건재수출 + 가전수출 + 가전내수 */
   const RKN = UI.ctlRiskGroups = { G수출: ['도금수출'], G국내: ['도금국내'], G자동차: ['자동차'], G자가재: ['자가재'], C수출: ['건재수출', '가전수출', '가전내수'], C건재: ['컬러건재'], C수요: ['수요개발'] };
@@ -56,7 +56,7 @@
       const P = g.prod || {}, act0 = gm ? gm.act : (P.actual || 0), fin = gm ? gm.mon : (P.actual || 0) + (P.after || 0), pp = P.month > 0 ? fin / P.month : null;
       const prod = { actual: act0, month: P.month || 0, fin, pct: pp, tone: pp == null ? 'na' : UI.rate(pp * 100), note: P.note };
       prod.v = pp == null ? (P.note ? ['na', '계획 0', `실적 ${n0(P.actual || 0)}t`] : ['na', '–', '']) : [prod.tone, `${Math.round(pp * 100)}%`, `월말 예상 ${n0(fin)} / ${n0(P.month)}t`];
-      // 출하: 실적 ÷ 오늘까지 기준선(그룹 출하 실적 패턴, portal ship.due — 없으면 일정 누계)
+      // 출하: 실적 ÷ 오늘까지 기준선(그룹 출하 실적 패턴, portal ship.due: 없으면 일정 누계)
       const S = g.ship, base = S ? (S.due != null ? S.due : S.sched) : null, sp = S && base >= 1 ? S.actual / base : null;
       const ship = S ? { actual: S.actual || 0, base: base || 0, month: S.month || 0, pct: sp, by: S.due != null ? (S.dueBy || '출하 실적 패턴') : '판생 일정 누계', to: S.dueTo, tone: base < 1 ? 'ok' : UI.rate(sp * 100) } : null;
       if (ship) ship.v = [ship.tone, S.month > 0 ? `${Math.round(S.actual / S.month * 100)}%` : `${n0(S.actual)}t`, `실적 ${n0(S.actual)} / 월 ${n0(S.month)}t · 기준 대비 ${sp != null ? Math.round(sp * 100) + '%' : '–'}`];   // 11/13: 관제판과 같은 표기(큰 숫자 = 월 대비, 색 = 오늘까지 기준 대비)
@@ -75,11 +75,11 @@
       const gu = {}; mg.forEach((x) => (x.mats || []).forEach((m) => { gu[m.key] = (gu[m.key] || 0) + (m.use || 0); }));
       const ma = mg.flatMap((x) => x.mats || []).filter((x) => !(x.use < 1)).filter((x, i, A) => A.findIndex((y) => y.key === x.key) === i).map((x) => { const v = VM.get(x.key) || x; return Object.assign({}, v, { lateT: Math.round((v.lateT || 0) * (UT[x.key] ? gu[x.key] / UT[x.key] : 1)) }); }).sort((a, b) => SR_[a.st] - SR_[b.st] || (b.lateT || 0) - (a.lateT || 0) || String(a.deadline || '9').localeCompare(String(b.deadline || '9')))[0];
       const mat = { m: ma, v: !mg.length ? ['na', '–', ''] : !ma || ma.st === 'ok' ? ['ok', '충분', ''] : [{ late: 'bad', soon: 'warn', plan: 'ok' }[ma.st], { late: '발주 지연', soon: '2주 안 발주', plan: '발주 예정' }[ma.st], ma.st === 'late' ? `${CT.matNm(ma.name)} ${n0(ma.lateT)}t` : `${CT.matNm(ma.name)} ${md(ma.deadline)}까지`] };
-      // 납기: 납기 위험(위험 = 지연 예상 + 납기 지남) — 자료 없으면 '–'
+      // 납기: 납기 위험(위험 = 지연 예상 + 납기 지남): 자료 없으면 '–'
       const due = UI.ctlRisk(RKc, g.key);
       const dv = due ? [due.tone, due.risk >= 0.5 ? `위험 ${n0(due.risk)}t` : '위험 0', due.t ? `미결 ${n0(due.t)}t 중 ${Math.round(due.risk / due.t * 100)}%` : ''] : ['na', '–', ''];
       const all = [prod.v, ship ? ship.v : ['na', '–', ''], stock.v, mat.v, dv];
-      const w4 = [all[0], all[1], all[2], all[4]].reduce((a, x) => (rank[x[0]] < rank[a] ? x[0] : a), 'na');   // 관제판 줄 색 = 납기·생산·출하·재고(소재는 소재 화면 신호 — 같은 F/H 부족이 모든 그룹을 빨갛게 덮던 것)
+      const w4 = [all[0], all[1], all[2], all[4]].reduce((a, x) => (rank[x[0]] < rank[a] ? x[0] : a), 'na');   // 관제판 줄 색 = 납기·생산·출하·재고(소재는 소재 화면 신호: 같은 F/H 부족이 모든 그룹을 빨갛게 덮던 것)
       return { key: g.key, pl: g.pl, name: GNM(g), w: w4, w4, w5: all.reduce((a, x) => (rank[x[0]] < rank[a] ? x[0] : a), 'na'), cells: all.map((x) => x[0]), vals: all.map((x) => [x[1], x[2]]), d: { due, prod, ship, stock, mat }, g };
     });
   }

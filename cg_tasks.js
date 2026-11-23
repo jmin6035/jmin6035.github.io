@@ -50,7 +50,7 @@
     const col = (h) => { const L = [...itemsOf(d, h, mon), ...O.tasks.filter((t) => t.when[0] === 'D' && t.when[1] === h)].sort(byTime); return `<div><h3>${HALF[h]} <small>${L.length}건</small></h3>${L.map((t) => card(t, true)).join('')}</div>`; };
     return `<section class="card"><h2>${lab} 할 일 <small>${d.getMonth() + 1}/${d.getDate()}(${DOW[wd(d)]}) · 시각 순 · 누르면 상세</small></h2><div class="today">${col('am')}${col('pm')}</div></section>`;
   }
-  function weekGrid() {                                                     // 이번 주(월~금) × 오전·오후 — 매일 할 일은 위 띠 한 줄
+  function weekGrid() {                                                     // 이번 주(월~금) × 오전·오후: 매일 할 일은 위 띠 한 줄
     const base = new Date(Y, M, Math.min(DAY, new Date(Y, M + 1, 0).getDate())), mon0 = new Date(base); mon0.setDate(base.getDate() - wd(base));
     const days = Array.from({ length: 5 }, (_, i) => { const d = new Date(mon0); d.setDate(mon0.getDate() + i); return d; }), today = iso(new Date());
     const mm = {}; days.forEach((d) => { const k = `${d.getFullYear()}-${d.getMonth()}`; mm[k] = mm[k] || monthMap(d.getFullYear(), d.getMonth()); });

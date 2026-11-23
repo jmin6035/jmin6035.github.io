@@ -43,7 +43,7 @@
     const RS = a.reasons || [];
     $('a-reason-card').hidden = !RS.length;
     const days = Object.fromEntries(Object.entries(a.lines).map(([l, x]) => [l, x.opDays || x.days || 1]));
-    $('a-reasons').innerHTML = '<tr><th>라인</th><th>구분</th><th>사유</th><th>분</th><th title="휴지 기록 줄 수 — M/C 한 번이 여러 줄로 기록되기도 함">기록 수</th><th>분/일</th></tr>' + RS.map((x) =>
+    $('a-reasons').innerHTML = '<tr><th>라인</th><th>구분</th><th>사유</th><th>분</th><th title="휴지 기록 줄 수: M/C 한 번이 여러 줄로 기록되기도 함">기록 수</th><th>분/일</th></tr>' + RS.map((x) =>
       `<tr><td>${x.line}</td><td>${esc(x.kind)}</td><td class="l">${esc(x.reason)}</td><td class="n">${GP.fmt(x.minutes)}</td><td class="n">${x.n}</td><td class="n">${GP.fmt(x.minutes / days[x.line], 1)}</td></tr>`).join('');
     $('a-checks').innerHTML = (a.checks || []).map((c) => `<li class="${c.level}">${{ error: '오류', warn: '경고', info: '정보' }[c.level]} · ${esc(c.msg)}</li>`).join('');
     $('a-msg').textContent = '';
@@ -64,7 +64,7 @@
       : '<tr><td class="muted">주별 자료 없음</td></tr>';
     const lines = [...new Set(W.map((r) => r[1]))].sort();
     $('a-wtons').innerHTML = weeks.length ? `<tr><th>주</th>${lines.map((l) => `<th>${l}</th>`).join('')}</tr>` + weeks.map((w) => `<tr><td>${GP.md(w)}~</td>${lines.map((l) => `<td class="n">${GP.fmt(GP.sum(W.filter((r) => r[0] === w && r[1] === l), (r) => r[4]))}</td>`).join('')}</tr>`).join('')
-      + (() => { const wt = (l) => GP.sum(W.filter((r) => r[1] === l), (r) => r[4]), lt = (l) => ((a.lines || {})[l] || {}).tons;   // 11/10 점검: 주별 합(27,504)과 라인 요약(27,593)이 달라 보이던 것 — 차이 = 강종·부서 미분류 코일
+      + (() => { const wt = (l) => GP.sum(W.filter((r) => r[1] === l), (r) => r[4]), lt = (l) => ((a.lines || {})[l] || {}).tons;   // 11/10 점검: 주별 합(27,504)과 라인 요약(27,593)이 달라 보이던 것: 차이 = 강종·부서 미분류 코일
         const df = lines.map((l) => [l, lt(l) != null ? lt(l) - wt(l) : 0]).filter((x) => Math.abs(x[1]) >= 1);
         return `<tr class="tot"><td><b>합계</b></td>${lines.map((l) => `<td class="n"><b>${GP.fmt(wt(l))}</b></td>`).join('')}</tr>` + (df.length ? `<tr><td colspan="${lines.length + 1}" class="l wrap muted">라인 요약과 차이 = 강종·부서 미분류 코일(${df.map(([l, v]) => `${l} ${GP.fmt(v)}t`).join(', ')})</td></tr>` : ''); })() : '';
   }
@@ -147,7 +147,7 @@
       for (const f of fl) { const wb = new ExcelJS.Workbook(); await wb.xlsx.load(await f.arrayBuffer()); wbs.push(wb); }
       const { clean, an } = GP.mesFromWorkbooks(wbs, planParams());
       $('a-file-name').textContent = fl.map((f) => f.name).join(', ');
-      if (!an) { $('a-file-name').textContent += ' — ⚠ ' + clean.checks.filter((c) => c.level === 'error').map((c) => c.msg).join(' / '); return; }
+      if (!an) { $('a-file-name').textContent += ': ⚠ ' + clean.checks.filter((c) => c.level === 'error').map((c) => c.msg).join(' / '); return; }
       render(Object.assign(GP.mesExport(an, clean, clean.coils), { analyzedAt: new Date().toISOString() }), '직접 올린 엑셀');
       $('a-body').scrollIntoView({ behavior: 'smooth' });
     } catch (e) { $('a-file-name').textContent = '⚠ 읽기 실패: ' + e.message; console.error(e); }

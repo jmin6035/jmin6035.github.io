@@ -14,7 +14,7 @@
   const KEYS = ['p', 'o', 'dl', 'ok', 'on', 'late', 'wait', 'none', 'so', 'sw', 'sb', 'sn'];
   const tot = (L) => Object.fromEntries(KEYS.map((k) => [k, L.reduce((a, x) => a + (x[k] || 0), 0)]));
   const DEPT = [['도금수출', ['도금수출'], 'G'], ['도금국내', ['도금국내'], 'G'], ['자동차', ['자동차'], 'G'], ['컬러수출', ['컬러수출', '가전내수'], 'C'], ['컬러건재', ['컬러건재'], 'C'], ['수요개발', ['수요개발'], 'C']];   // 판매그룹 그대로(11/17 사용자 '그룹별로')
-  /* 11/17 검토: 같은 값은 한 번 반올림해 같이 씀(표 401 · 위 402 어긋남) — 주문 부족 합계 = 라인 줄 부족(반올림 전) 합을 한 번 반올림 */
+  /* 11/17 검토: 같은 값은 한 번 반올림해 같이 씀(표 401 · 위 402 어긋남): 주문 부족 합계 = 라인 줄 부족(반올림 전) 합을 한 번 반올림 */
   const gapI = (p, o) => Math.max(0, (p || 0) - (o || 0));
   const GMAP = { 가전내수: '컬러수출' };
   const addc0 = (a_, c_) => { for (const [k_, v_] of Object.entries(c_ || {})) if (typeof v_ === 'number') a_[k_] = (a_[k_] || 0) + v_; return a_; };   // docs/32 그룹 이름: 컬러수출(가전 포함)
@@ -35,12 +35,12 @@
     const DP = DEPT.filter((d) => PS.includes(d[2]));
     const dv = (w, d) => { const L = w.g.filter((x) => d[1].includes(x.g)); return { ...tot(L), iss: L.flatMap((x) => (x.iss || []).map((it) => ({ ...it, dept: d[0] }))), rows: L.flatMap((x) => (x.rows || []).map((r) => ({ ...r, dept: d[0] }))), mkt: L.flatMap((x) => x.mkt || []), pl: d[2], ln: L.reduce((a_, x) => { Object.entries(x.ln || {}).forEach(([l, t]) => { a_[l] = (a_[l] || 0) + t; }); return a_; }, {}) }; };
     const wk = (w) => tot(DP.map((d) => dv(w, d)));
-    // 주 고르기(칩) — 칩마다 계획·주문%·소재%
+    // 주 고르기(칩): 칩마다 계획·주문%·소재%
     const chips = `<div class="k-wk">${W.map((w, i) => { const v = wk(w), f = pc(v.o, v.p), ms = pc(v.ok + v.on, v.o); return `<button type="button" data-i="${i}" class="${i === SEL ? 'on' : ''}"><b class="dt">${md(w.from)}~${md(w.to)}</b><div class="mm">${v.p ? `<span>${n0(v.p)}t</span><span class="${f < 90 ? 'bad' : ''}">주문 ${f}%</span><span class="${ms < 50 ? 'bad' : ms < 80 ? 'warn' : ''}">소재 ${ms}%</span>` : '<span>계획 없음</span>'}</div></button>`; }).join('')}</div>`;
     const w = W[SEL], V = DP.map((d) => [d, dv(w, d)]), T = tot(V.map(([, v]) => v));
     const sub = T.so + T.sw + T.sb + T.sn;
     const lnGap = (() => { const A = {}; w.g.filter((x) => PS.includes(x.pl)).forEach((x) => Object.entries(x.byLn || {}).forEach(([l, c]) => { const a = A[l] = A[l] || { p: 0, o: 0 }; a.p += c.p || 0; a.o += c.o || 0; })); return Object.values(A).reduce((s_, a) => s_ + gapI(a.p, a.o), 0); })();
-    const SELF_T = w.g.filter((x) => PS.includes(x.pl)).reduce((a_, x) => a_ + Object.values(x.byLn || {}).reduce((b_, c_) => b_ + (c_.noneSelf || 0), 0), 0);   // 자가재 대기(도금 생산) — 미발주와 나눔
+    const SELF_T = w.g.filter((x) => PS.includes(x.pl)).reduce((a_, x) => a_ + Object.values(x.byLn || {}).reduce((b_, c_) => b_ + (c_.noneSelf || 0), 0), 0);   // 자가재 대기(도금 생산): 미발주와 나눔
     const kpi = T.p < 0.5 && T.o < 0.5 ? `<div class="k-card"><div class="k-more" style="font-size:16px;padding:6px 0"><b class="dt">${md(w.from)}~${md(w.to)}</b> <b>판매재 생산 계획 없음</b></div></div>` : `<div class="k-kpi${PS.includes('C') ? '' : ' n3'}">
 <div><div class="l">판매재 생산 계획<small> (자가재 제외)</small></div><div class="v">${n0(T.p)}<small>톤</small></div><div class="s">${DP.map(([n], i) => `${n} ${n0(V[i][1].p)}`).filter((_, i) => V[i][1].p).join(' · ')}</div></div>
 <div><div class="l">주문 확보율</div><div class="v ${pc(T.o, T.p) < 90 ? 'bad' : ''}">${pc(T.o, T.p) ?? '–'}<small>%</small></div><div class="s">${n0(T.o)}톤 · 주문 부족 ${n0(lnGap)}톤</div></div>
@@ -62,10 +62,10 @@ ${PS.includes('C') ? `<div><div class="l">부자재 준비(컬러)</div><div cla
       addc(TT, LT);
       return `<tr class="lnh ${pl}"><th><b>${esc(l)}</b><small>${esc(lnInfo(l))}</small></th>${cells(LT, pl)}</tr>${gs.map((x) => `<tr class="gr"><th>${esc(x.g)}</th>${cells(x.byLn[l], pl)}</tr>`).join('')}`;
     }).join('');
-    // 11/18 사용자 '이 주 판매재 계획 없음 — 무슨 말이야': 도금 라인이 그 주에 무엇을 하는지(정지·자가재)를 같이 적음
+    // 11/18 사용자 '이 주 판매재 계획 없음: 무슨 말이야': 도금 라인이 그 주에 무엇을 하는지(정지·자가재)를 같이 적음
     const gWhy = () => { const L = (w.lines || []).filter((y) => /CGL/.test(y.line));
       const t = L.map((y) => (!y.runD ? `${y.line} 정지` : `${y.line} ${(y.fams || []).join('·')}${(y.fams || []).some((f) => /AZ/.test(f)) ? '(컬러 소재용)' : ''}`)).join(' · ');
-      return GS.some((y) => y.pl === 'G' && y.p) || !t ? '이 주 생산 계획 없음' : `이 주 생산 계획 없음 — ${t}`; };   // 도금 판매재가 그 주에 하나도 없을 때만 라인 사정
+      return GS.some((y) => y.pl === 'G' && y.p) || !t ? '이 주 생산 계획 없음' : `이 주 생산 계획 없음: ${t}`; };   // 도금 판매재가 그 주에 하나도 없을 때만 라인 사정
     const none_ = GS.filter((x) => !x.p).map((x) => { const lt = Object.entries(K.left || {}).filter(([g]) => (GMAP[g] || g) === x.g).reduce((a_, [, v]) => a_ + v, 0); return `<tr class="gr"><th>${esc(x.g)}</th><td colspan="${PS.includes('C') ? 13 : 11}" class="na">${x.pl === 'G' ? gWhy() : `이 주 계획 없음${lt >= 50 ? ` · 미계획 주문 ${n0(lt)}t` : ''}`}</td></tr>`; }).join('');
     const dtab = `<div class="k-card"><h2><b class="dt">${md(w.from)}~${md(w.to)}</b> 라인별 생산 계획(톤)</h2><div class="k-dscroll"><table class="k-d k-dl">
 <thead><tr class="grp"><th></th><th class="gs">생산</th><th colspan="2" class="gs">주문</th><th colspan="7" class="gs">소재</th>${PS.includes('C') ? '<th colspan="2" class="gs">부자재(컬러)</th>' : ''}<th class="gs">납기</th></tr>
@@ -82,11 +82,11 @@ ${((he) => `<div class="k-con ${he ? '' : 'ne'}" id="${id}" hidden><div class="r
     const list = (L, extra, empty) => (L.length ? L.slice(0, 8).map((g) => li(g, extra)).join('') + (L.length > 8 ? `<div class="k-more">외 ${L.length - 8}곳 · ${n0(L.slice(8).reduce((a, g) => a + g.t, 0))}t</div>` : '') : `<div class="k-more">${empty}</div>`);
     const GAPS = V.flatMap(([d, v]) => (d[2] === 'G' ? v.rows.filter((r) => r.p - r.o > 0.5).map((r) => ({ dept: d[0], dst: r.d, t: r.p - r.o, p: r.p })) : (v.p - v.o > 0.5 ? [{ dept: d[0], dst: `시장 ${v.mkt.slice(0, 3).map(([a]) => a).join('·')}`, t: v.p - v.o, p: v.p }] : []))).sort((a, b) => b.t - a.t);
     const gapT = GAPS.reduce((a, g) => a + g.t, 0);
-    const MAT = grp(ALL.filter((it) => ['none', 'late', 'wait'].includes(it.k) && !it.self && !it.rcv)),   // 배정 전(자가재 재고·입고분 매치 안 됨)은 입고 독촉 대상 아님 — 표 '배정 전' 칸
+    const MAT = grp(ALL.filter((it) => ['none', 'late', 'wait'].includes(it.k) && !it.self && !it.rcv)),   // 배정 전(자가재 재고·입고분 매치 안 됨)은 입고 독촉 대상 아님: 표 '배정 전' 칸
     matT = MAT.reduce((a, g) => a + g.t, 0);
     const SUBs = grp(ALL.filter((it) => it.k === 'sub')), subT = SUBs.reduce((a, g) => a + g.t, 0);
     const DLs = grp(ALL.filter((it) => it.k === 'dl' && it.due >= K.today)), dlT = DLs.reduce((a, g) => a + g.t, 0);   // 계획 때문에 새로 납기 넘김
-    const OLDs = grp(ALL.filter((it) => it.k === 'dl' && it.due < K.today)), oldT = OLDs.reduce((a, g) => a + g.t, 0);   // 이미 납기 지난 주문 — 출하 일정 안내
+    const OLDs = grp(ALL.filter((it) => it.k === 'dl' && it.due < K.today)), oldT = OLDs.reduce((a, g) => a + g.t, 0);   // 이미 납기 지난 주문: 출하 일정 안내
     const sumD = (o) => DP.map((d) => [d[0], d[1].reduce((a_, g) => a_ + ((o || {})[g] || 0), 0)]).filter(([, t]) => t >= 50).sort((a_, b_) => b_[1] - a_[1]);
     const LF = sumD(K.left), ST = sumD(K.stale);
     const outL = (A, c, sb) => `<div class="tt">${n0(A.reduce((a_, z_) => a_ + z_[1], 0))}<small>톤</small></div><div class="k-more" style="padding:0 0 4px">${sb}</div>${A.map(([n, t]) => `<div class="k-li"><div class="n">${esc(n)}</div><div class="t ${c}">${n0(t)}t</div></div>`).join('')}`;
@@ -97,17 +97,17 @@ ${list(DLs, (g) => `납기 <b class="dt">${rng(g.due)}</b> → 생산 <b class="
 <div class="k-card k-side"><h2>마케팅: 주문 확보 요청<span class="who">주문 부족</span></h2><div class="tt">${n0(gapT)}<small>톤 · ${GAPS.length}곳</small></div>
 ${GAPS.length ? GAPS.slice(0, 8).map((g) => `<div class="k-li"><div class="n"><span class="k-tag none">주문 부족</span>${esc(g.dept)} · ${esc(g.dst)}</div><div class="t bad">${n0(g.t)}t</div><div class="d">계획 ${n0(g.p)}t 중 주문 ${n0(g.p - g.t)}t</div></div>`).join('') + (GAPS.length > 8 ? `<div class="k-more">외 ${GAPS.length - 8}곳 · ${n0(GAPS.slice(8).reduce((a, g) => a + g.t, 0))}t</div>` : '') : '<div class="k-more">주문 부족 없음</div>'}</div>
 <div class="k-card k-side"><h2>소재: 입고 요청<span class="who">소재·구매</span></h2><div class="tt">${n0(matT)}<small>톤 · ${MAT.length}곳</small></div>
-${list(MAT, (g) => { const old = g.eta.filter((e) => e < addd(K.today, -30)), ov = g.eta.filter((e) => e < K.today && e >= addd(K.today, -30)), fu = g.eta.filter((e) => e >= K.today); return `필요 <b class="dt">${rng(g.pd.map((d) => addd(d, -1)))}</b>${old.length ? ' · <b class="bad">인도기한 30일 넘게 지남, 발주 잔량 확인</b>' : ''}${ov.length ? ` · <b class="bad">인도기한 ${rng(ov)} 지남</b>` : ''}${fu.length ? ` · 입고 예정 <b class="dt">${rng(fu)}</b>` : ''}${g.k === 'none' ? (g.items.some((it) => it.rcv) ? ' · 발주량 입고 완료 — 소재 배정 확인' : g.items.some((it) => it.self) ? ' · 자가재 — 도금 생산 대기' : '') : ''}`; }, '소재 문제 없음')}</div>
+${list(MAT, (g) => { const old = g.eta.filter((e) => e < addd(K.today, -30)), ov = g.eta.filter((e) => e < K.today && e >= addd(K.today, -30)), fu = g.eta.filter((e) => e >= K.today); return `필요 <b class="dt">${rng(g.pd.map((d) => addd(d, -1)))}</b>${old.length ? ' · <b class="bad">인도기한 30일 넘게 지남, 발주 잔량 확인</b>' : ''}${ov.length ? ` · <b class="bad">인도기한 ${rng(ov)} 지남</b>` : ''}${fu.length ? ` · 입고 예정 <b class="dt">${rng(fu)}</b>` : ''}${g.k === 'none' ? (g.items.some((it) => it.rcv) ? ' · 발주량 입고 완료: 소재 배정 확인' : g.items.some((it) => it.self) ? ' · 자가재: 도금 생산 대기' : '') : ''}`; }, '소재 문제 없음')}</div>
 <div class="k-card k-side"><h2>공정·출하: 부자재<span class="who">도료·필름</span></h2><div class="tt">${n0(subT)}<small>톤 · ${SUBs.length}곳</small></div>
 ${list(SUBs, (g) => `생산 <b class="dt">${rng(g.pd)}</b> · 납기 <b class="dt">${rng(g.due)}</b>`, PS.includes('C') ? '부자재 대기 없음' : '도금은 주문 단위 부자재 없음')}</div></div>
-${false && (LF.length || ST.length) ? `<div class="k-ask">${LF.length ? `<div class="k-card k-side"><h2>생산계획: 계획 없는 주문<span class="who">9주 합</span></h2>${outL(LF, 'bad', '9주 안 생산 계획 칸이 없음 — 판매계획·생산계획 협의@@PULL@@')}</div>` : ''}${ST.length ? `<div class="k-card k-side"><h2>마케팅: 오래 밀린 주문<span class="who">취소·재납기</span></h2>${outL(ST, 'dlc', '납기 30일 넘게 지났고 9주 계획에 없음(생산 중 잔량 포함) — 취소·재납기·잔량 정리 확인')}</div>` : ''}</div>` : ''}`;
-    // 대응안(11/17 사용자 '생산이 계획대로 안 되거나, 주문 충당이 안 되거나, 소재가 결국 안 들어오면 — 차주 작업 당기기')
+${false && (LF.length || ST.length) ? `<div class="k-ask">${LF.length ? `<div class="k-card k-side"><h2>생산계획: 계획 없는 주문<span class="who">9주 합</span></h2>${outL(LF, 'bad', '9주 안 생산 계획 칸이 없음: 판매계획·생산계획 협의@@PULL@@')}</div>` : ''}${ST.length ? `<div class="k-card k-side"><h2>마케팅: 오래 밀린 주문<span class="who">취소·재납기</span></h2>${outL(ST, 'dlc', '납기 30일 넘게 지났고 9주 계획에 없음(생산 중 잔량 포함): 취소·재납기·잔량 정리 확인')}</div>` : ''}</div>` : ''}`;
+    // 대응안(11/17 사용자 '생산이 계획대로 안 되거나, 주문 충당이 안 되거나, 소재가 결국 안 들어오면: 차주 작업 당기기')
     const SW = (w.swap || []).filter((x) => PS.includes(x.pl));
     const PLN = { G: '도금', C: '컬러' };
     const GN = (g) => { const d = DEPT.find((d_) => d_[1].includes(g)); return d ? d[0] : g; };   // 그룹 → 표와 같은 부서 이름(가전내수 → 컬러수출)   // 한 그룹 = 한 부서면 표의 부서 이름, 여러 그룹이 한 부서면 그룹 이름(가전내수)   // 그룹 → 표와 같은 부서 이름
     const crow = (e, kind) => `<div class="r"><span title="${esc(e.con || '')}">${esc(e.con || '–')}</span><span>${n0(e.t)}</span><span>${esc(GN(e.g))} · ${esc(e.dst || '')}</span><span>${e.pd ? `${md(e.pd)}${e.ln ? ` ${esc(e.ln)}` : ''}` : '계획 없음'}</span><span class="${e.pd && e.due < e.pd ? 'dlc' : ''}">${md(e.due)}</span></div>`;
     const clist = (L, kind, n) => `<div class="k-con sw"><div class="r h"><span>계약번호</span><span>톤</span><span>부서 · 목적지</span><span>${kind === 'pull' ? '원래 생산' : '생산'}</span><span>납기</span></div>${L.slice(0, n).map((e) => crow(e, kind)).join('')}${L.length > n ? `<div class="k-more">외 ${L.length - n}건 · ${n0(L.slice(n).reduce((a_, e) => a_ + e.t, 0))}톤</div>` : ''}</div>`;
-    // 빈 곳 메우기(11/17 사용자 '이번 주 부족하면 다음 주, 없으면 다다음 주 — 재고가 많아지면 휴지가 낫다는 판단도'):
+    // 빈 곳 메우기(11/17 사용자 '이번 주 부족하면 다음 주, 없으면 다다음 주: 재고가 많아지면 휴지가 낫다는 판단도'):
     // 판정 규칙: W+1·W+2 = 당김 · W+3 이후 = 납기 2주 안 급한 주문만 · 어느 주든 납기가 달을 넘겨 재고로 남는 주문은 공장 재고 상한을 넘기면 안 당김 · 그래도 남으면 휴지 검토
     const H = S.hy || {};
     const stockOf = (p) => { const ym = w.from.slice(0, 7), cur = H.asOf && H.asOf.slice(0, 7) === ym; const M_ = (H.months || []).find((x) => x.ym === ym); const sp = cur ? (H[p] || {}).stockPdt : M_ && M_[p] && M_[p].stockPdt; const e = sp ? (cur ? (sp.end ?? sp.now) : sp.end) : null; return { v: e ?? null, cap: (sp && sp.cap) || (H[p] || {}).stockPdt?.cap, cur }; };
@@ -152,14 +152,14 @@ ${false && (LF.length || ST.length) ? `<div class="k-ask">${LF.length ? `<div cl
       const hoW = Object.entries(ho.reduce((a_, [k_, v]) => { const n_ = +k_.split('|')[1]; a_[n_] = (a_[n_] || 0) + v; return a_; }, {})).sort((a_, b_) => a_[0] - b_[0]);
       if (l.need < 0.5) return `<div><div class="h">${esc(l.line)} <small>판매재 ${n0(l.plan)}t</small></div><div class="v ok">문제 없음</div><div class="s">계획대로 생산, ${l.sel > 0.5 ? `소재 배정 전 ${n0(l.sel)}t 배정 확인` : '소재·주문 모두 있음'}</div></div>`;
       const acts = [];
-      if (pu > 0.5) acts.push(`<li><b>당겨 생산 ${n0(pu)}t</b> — ${Object.entries(PW[l.line] || {}).sort((a_, b_) => (a_[0] < b_[0] ? -1 : 1)).map(([k_, t]) => `${esc(k_.split('|')[1])} ${n0(t)}t`).join(' · ')} <span class="who">편성</span></li>`);
+      if (pu > 0.5) acts.push(`<li><b>당겨 생산 ${n0(pu)}t</b>: ${Object.entries(PW[l.line] || {}).sort((a_, b_) => (a_[0] < b_[0] ? -1 : 1)).map(([k_, t]) => `${esc(k_.split('|')[1])} ${n0(t)}t`).join(' · ')} <span class="who">편성</span></li>`);
       if (l.out > 0.5) acts.push(`<li><b>소재 지연 주문 ${n0(l.out)}t → 입고 후로 연기</b> <span class="who">소재</span></li>`);
-      if (l.gap > 0.5) acts.push(`<li><b>주문 부족 ${n0(l.gap)}t</b> — 주문 확보 요청 <span class="who">마케팅</span></li>`);
-      acts.push(rem > 0.5 ? (small ? `<li class="last">남는 ${n0(rem)}t는 하루치가 안 됨 → <b>작업 순서 조정</b> <span class="who">편성</span></li>` : `<li class="last bad"><b>${n0(rem)}t 부족 → 휴지 약 ${d.toFixed(1)}일 검토</b> <span class="who">생산계획</span></li>`) : '<li class="last ok"><b>다 채움</b> — 휴지 없음</li>');
+      if (l.gap > 0.5) acts.push(`<li><b>주문 부족 ${n0(l.gap)}t</b>: 주문 확보 요청 <span class="who">마케팅</span></li>`);
+      acts.push(rem > 0.5 ? (small ? `<li class="last">남는 ${n0(rem)}t는 하루치가 안 됨 → <b>작업 순서 조정</b> <span class="who">편성</span></li>` : `<li class="last bad"><b>${n0(rem)}t 부족 → 휴지 약 ${d.toFixed(1)}일 검토</b> <span class="who">생산계획</span></li>`) : '<li class="last ok"><b>다 채움</b>: 휴지 없음</li>');
       if (l.sel > 0.5) acts.push(`<li class="note">소재 배정 전 ${n0(l.sel)}t는 부족량에서 제외</li>`);
       const hoX = ho.filter(([k_]) => k_.split('|')[2] === 'x').reduce((a_, [k_, v]) => { const [, n_, , t_] = k_.split('|'); (a_[t_] = a_[t_] || {})[n_] = (a_[t_][n_] || 0) + v; return a_; }, {});   // 다른 라인이 이 라인 주문을 옮겨 감(주별)
       const outX = Object.entries(HOLE).filter(([k_, v]) => k_.split('|')[2] === 'x' && k_.split('|')[3] === l.line && v > 0.5).reduce((a_, [k_, v]) => { const f_ = k_.split('|')[0]; a_[f_] = (a_[f_] || 0) + v; return a_; }, {});
-      if (hoW.length) acts.push(`<li class="note">앞당겨 여유 생기는 주: ${hoW.map(([n_, v]) => `${lab(SEL + +n_)} ${n0(v)}t`).join(' · ')}${Object.keys(hoX).length ? ` — 이 중 ${Object.entries(hoX).map(([t_, W_]) => `${esc(t_)}로 이동 ${Object.entries(W_).sort((a_, b_) => a_[0] - b_[0]).map(([n_, v]) => `${lab(SEL + +n_)} ${n0(v)}t`).join('·')}`).join(' · ')}` : ''}</li>`);
+      if (hoW.length) acts.push(`<li class="note">앞당겨 여유 생기는 주: ${hoW.map(([n_, v]) => `${lab(SEL + +n_)} ${n0(v)}t`).join(' · ')}${Object.keys(hoX).length ? `: 이 중 ${Object.entries(hoX).map(([t_, W_]) => `${esc(t_)}로 이동 ${Object.entries(W_).sort((a_, b_) => a_[0] - b_[0]).map(([n_, v]) => `${lab(SEL + +n_)} ${n0(v)}t`).join('·')}`).join(' · ')}` : ''}</li>`);
       if (Object.keys(outX).length) acts.push(`<li class="note">${Object.entries(outX).map(([f_, v]) => `${esc(f_)} 주문 ${n0(v)}t 이동 → ${esc(f_)} 해당 주 여유 생김`).join(' · ')}</li>`);
       return `<div class="${rem > 0.5 && !small ? 'idle' : ''}"><div class="h">${esc(l.line)} <small>${l.fams && l.fams.length ? `${l.fams.join('·')} · ` : ''}판매재 ${n0(l.plan)}t${l.runD < 7 ? ` · 가동 ${l.runD}일` : ''}</small></div>
 <div class="v">부족량 ${n0(l.need)}t</div><div class="s flow">소재 지연·미확보 ${n0(l.out)}t${l.gap > 0.5 ? ` + 주문 부족 ${n0(l.gap)}t` : ''} → 앞당겨 ${n0(pu)}t 보충 → ${rem > 0.5 ? `<b class="bad">${n0(rem)}t 부족</b>` : '<b>다 채움</b>'}</div><ol class="k-act">${acts.join('')}</ol></div>`;
@@ -184,7 +184,7 @@ ${false && (LF.length || ST.length) ? `<div class="k-ask">${LF.length ? `<div cl
     // 일정 지연 대비(11/17 사용자 '수리나 test, 작업이 예상보다 늦게 진행되면')
     const DL = (K.delay || []).slice().sort((a_, b_) => (a_.from < b_.from ? -1 : a_.from > b_.from ? 1 : a_.line.localeCompare(b_.line))).filter((e) => !/재가동/.test(e.ev) && PS.includes(/CGL/.test(e.line) ? 'G' : 'C') && e.to >= (SEL === 0 ? K.today : w.from) && e.from <= W[Math.min(SEL + 3, W.length - 1)].to);
     const dlHtml = DL.length ? DL.map((e, i) => `<div class="k-li op" data-x="dl${i}"><div class="n"><span class="k-tag wait">${esc(e.line)}</span>${esc(e.ev)} · <b class="dt">${md(e.from)}${e.to !== e.from ? `~${md(e.to)}` : ''}</b></div><div class="t">1일 늦으면 −${n0(e.lost1)}t <span class="cv">▾</span></div>
-<div class="d">2일 늦으면 −${n0(e.lost2)}t · 7일간 영향 주문 ${n0(e.totT ?? 0)}t${e.riskT ? ` · <b class="bad">추가 납기 지연 ${n0(e.riskT)}t</b>` : ''}${e.lateT ? ` · <span class="dlc">납기 경과 ${n0(e.lateT)}t</span>` : ''}${!e.orders.length ? ' · 판매 주문 없음 — 자가재 생산(지연 시 컬러 소재 영향)' : ''}</div></div>
+<div class="d">2일 늦으면 −${n0(e.lost2)}t · 7일간 영향 주문 ${n0(e.totT ?? 0)}t${e.riskT ? ` · <b class="bad">추가 납기 지연 ${n0(e.riskT)}t</b>` : ''}${e.lateT ? ` · <span class="dlc">납기 경과 ${n0(e.lateT)}t</span>` : ''}${!e.orders.length ? ' · 판매 주문 없음: 자가재 생산(지연 시 컬러 소재 영향)' : ''}</div></div>
 <div class="k-con sw" id="dl${i}" hidden><div class="r h"><span>계약번호</span><span>톤</span><span>부서 · 목적지</span><span>생산</span><span>납기</span></div>${e.orders.map((z) => `<div class="r"><span>${esc(z.con || '–')}</span><span>${n0(z.t)}</span><span>${esc(GN(z.g))} · ${esc(z.dst || '')}</span><span>${md(z.pd)}</span><span class="${z.risk ? 'bad' : z.late ? 'dlc' : ''}">${md(z.due)}</span></div>`).join('')}
 </div>`).join('') : '<div class="k-more">이 기간 수리·M/C·휴지 일정 없음</div>';
     const dlSec = `<div class="k-h">수리·M/C·휴지 지연 대비<b class="dt">${md(w.from)}~${md(W[Math.min(SEL + 3, W.length - 1)].to)}</b></div><div class="k-card k-side">${dlHtml}</div>`;

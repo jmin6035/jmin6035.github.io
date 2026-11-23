@@ -1,8 +1,8 @@
-/* 편성(11/12 회의: 1주 작업지시 편성) — 11/12 사용자 '편성도 더 이쁘게 간략하게': 위 = 이번 생산주(수~화) 라인별 캘린더(생산 일정 화면 칸 그대로 — cg_calendar.js·cc_calendar.js 의 표를 불러 씀, 지난 날 = MES 실적),
+/* 편성(11/12 회의: 1주 작업지시 편성): 11/12 사용자 '편성도 더 이쁘게 간략하게': 위 = 이번 생산주(수~화) 라인별 캘린더(생산 일정 화면 칸 그대로: cg_calendar.js·cc_calendar.js 의 표를 불러 씀, 지난 날 = MES 실적),
    칸을 누르면 그날 그 라인 작업 순서가 아래에 펼쳐짐, 맨 아래 = 작업 순서 수정(week_seq.html iframe).
    작업 순서 자료 = week_seq 와 같은 게시본(published/week_seq_cg·cc.enc.json) + 같은 저장소(cgl_week_seq)의 최근 저장·확정본(읽기만).
-   지시 여부 = 도금 issued(MES 1030 지시)·컬러 fixed(MES 1030 작업대기) — week_seq.js 와 같은 기준.
-   시각 흘리기(sim)·전환 휴지(chgCG·chgCC)·바뀜 이름(catOf·fsCG)은 week_seq.js 와 같은 식(복사 — 바꾸면 둘 다). */
+   지시 여부 = 도금 issued(MES 1030 지시)·컬러 fixed(MES 1030 작업대기): week_seq.js 와 같은 기준.
+   시각 흘리기(sim)·전환 휴지(chgCG·chgCC)·바뀜 이름(catOf·fsCG)은 week_seq.js 와 같은 식(복사: 바꾸면 둘 다). */
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
@@ -23,7 +23,7 @@
   const SC = { cg: 'G', cc: 'C' };
   const X = {};                                                    // 공장별 { D, R, J, L, ver }
   let PW = '', line = null;
-  const SEL = { cg: null, cc: null };                              // 누른 칸 { l, d } — 그날 작업 순서 펼침
+  const SEL = { cg: null, cc: null };                              // 누른 칸 { l, d }: 그날 작업 순서 펼침
 
   // ───────── 전환 휴지·바뀜 이름 (week_seq.js 와 같은 식)
   const sk = (c) => { c = String(c || ''); return c.includes('·') ? c.split('·')[1] : c.length >= 7 ? c.slice(3, 7) : c; };
@@ -133,28 +133,28 @@
     return { n: js.length, t: js.reduce((s, q) => s + q.x.t, 0), avail, busy, fill: avail ? busy / avail : 0, stop: !js.length && D.lines[l].stop };
   }
   const plants = () => ['cg', 'cc'].filter((p) => X[p] && UI.inScope(SC[p]));
-  const done = (p, x) => !!(p === 'cg' ? x.issued : x.fixed);                // 작업지시 내려감(MES 1030) — week_seq.js 와 같은 기준
+  const done = (p, x) => !!(p === 'cg' ? x.issued : x.fixed);                // 작업지시 내려감(MES 1030): week_seq.js 와 같은 기준
   // 위 한 줄: 주문 마감 → 다음 마감 · 이번 주 배분 · 지시
   function drawLine() {
     const P = plants(), D0 = X[P[0] || 'cg'].D;
     const nF = { cg: 0, cc: 0 };
     P.forEach((p) => LINES[p].forEach((l) => { sim(p, l).forEach((q) => { if (q.k === 'j' && done(p, q.x)) nF[p]++; }); }));
     /* 11/17 검토: '편성량'이 작업 순서 기간(오늘부터 7일) 합이라 아래 수~화 주와 안 맞던 것 → 아래 '다음 주' 표 합계(수~화, 다음 마감 뒤 주)와 같은 값 ·
-       작업대기 = MES 작업지시가 내려간 작업 순서 줄(납기 전체 — 위 주문진도 '작업지시량'은 고른 납기 달만) */
+       작업대기 = MES 작업지시가 내려간 작업 순서 줄(납기 전체: 위 주문진도 '작업지시량'은 고른 납기 달만) */
     const nx = P.reduce((s, p) => s + ((WKT[p] || {}).nxt || 0), 0), w1 = addD(D0.week, 6);
     $('ps-line').innerHTML = `<span>지난 마감 <b class="dt">${dnm(addD(D0.week, -7))}</b></span><span class="ar">→</span><span>다음 마감 <b class="dt">${dnm(D0.week)}</b></span><span class="nw">다음 주 <b class="dt">${md(D0.week)}~${md(w1)}</b> 편성 <b>${n0(nx)}t</b></span><span class="nw" title="MES 작업지시가 내려간 작업(납기 전체)">작업대기${P.includes('cg') ? ` 도금 <b>${n0(nF.cg)}건</b>` : ''}${P.includes('cc') ? `${P.includes('cg') ? ' ·' : ''} 컬러 <b>${n0(nF.cc)}건</b>` : ''}</span>`;
   }
-  // 캘린더 — 표 양식(행 = 라인·하루 합, 열 = 수~화)은 생산 일정 화면과 같고, 칸 안은 편성 화면용으로 다시 그림
+  // 캘린더: 표 양식(행 = 라인·하루 합, 열 = 수~화)은 생산 일정 화면과 같고, 칸 안은 편성 화면용으로 다시 그림
   // 11/12 사용자 '자가재 빼고, 막대그래프 필요없다, 날짜 누르면 그날 작업, 컬러랑 도금 양식 똑같이, 이어짐 쓰지 말고 전날로 넘겨라'
   const CAL = { cg: () => window.CGCAL, cc: () => window.CCCAL };
-  const HOL = new Set(['2026-12-25', '2027-01-01']);   // 공휴일 — 01 gyehoek.js 와 같은 목록(머리 노랑·빨강)
+  const HOL = new Set(['2026-12-25', '2027-01-01']);   // 공휴일: 01 gyehoek.js 와 같은 목록(머리 노랑·빨강)
   const DOWS = '일월화수목금토';
   const mdw = (d) => `${md(d)}(${DOWS[new Date(d + 'T00:00:00Z').getUTCDay()]})`;
   const tsum = (a) => a.reduce((s, i) => s + (+i.t || 0), 0);
   const famC = (f) => (f ? `<span class="fam fam-${f === 'AL-STS' ? 'STS' : esc(String(f).split('-')[0].replace(/[^A-Z]/g, ''))}">${esc(f)}</span>` : '');
   const spans = (a) => a.filter(Boolean).map((x) => `<span>${x}</span>`).join('');
 
-  /* 컬러 '이어짐' 없앰: 작업대기를 끊지 않고 이어 돌림(현장 방식) — 칸 편성 규칙(계약이 그날 남은 시간보다 길면 다음 날)이 남긴 빈 시간을
+  /* 컬러 '이어짐' 없앰: 작업대기를 끊지 않고 이어 돌림(현장 방식): 칸 편성 규칙(계약이 그날 남은 시간보다 길면 다음 날)이 남긴 빈 시간을
      다음 작업대기 계약 앞부분으로 채움(톤 = 그 계약 t/h 비례). cc_calendar flow() 의 woC(연속 기준 작업대기 시간)와 같은 식.
      작업대기 끝 날(woUntil)까지만, 지시대기·도료 미입고·계획편성·확정본은 제자리 */
   let CCF = null;
@@ -193,7 +193,7 @@
   }
 
   /* 칸 한 양식(도금·컬러·지난 날 같음): ① 큰 톤 + 강종/품명 칩 + 시간 부하 % ② 상태 톤 ③ 그룹 톤 ④ 경고 칩 · 정지/비가동 = 글자만 가운데 */
-  const pctB = (r, tip, h) => (r == null || r <= 1.005 || (h != null && h < 0.05) ? '' : `<span class="ld ov" title="${esc(tip)}">${h != null ? `${n1(h)}시간 초과` : `${Math.round(r * 100)}%`}</span>`);   // 11/12 사용자 '글 많다' — 넘칠 때만
+  const pctB = (r, tip, h) => (r == null || r <= 1.005 || (h != null && h < 0.05) ? '' : `<span class="ld ov" title="${esc(tip)}">${h != null ? `${n1(h)}시간 초과` : `${Math.round(r * 100)}%`}</span>`);   // 11/12 사용자 '글 많다': 넘칠 때만
   /* 그룹 이름 = 관제 판매그룹(kj.js GRP 와 같은 묶음): 컬러수출 = 건재수출·가전수출·가전내수 · 컬러건재 = 주문재+계획재 · 도금 = 도금수출·도금국내·자동차·도금 자가재 */
   const GNM = { 수출: '도금수출', 도금수출: '도금수출', 국내: '도금국내', 도금국내: '도금국내', 자동차: '자동차', 자동차내수: '자동차', 자동차수출: '자동차', 자가재: '도금 자가재',
     건재수출: '컬러수출', 가전수출: '컬러수출', 가전내수: '컬러수출', 주문재: '컬러건재', 계획재: '컬러건재', 수요개발: '수요개발' };
@@ -210,7 +210,7 @@
       + (o.sts ? `<div class="wn"><span class="wst">${esc(o.sts)}</span></div>` : '')
       + '</div></button>';
   }
-  function cgCell(c, ln, rem, st) {                         // st = 그날 AL-STS {t, res}(재계획 — cg_calendar.js raw().sts, 11/13)
+  function cgCell(c, ln, rem, st) {                         // st = 그날 AL-STS {t, res}(재계획: cg_calendar.js raw().sts, 11/13)
     const fill = c.conf + c.plan + c.fcst, cap = c.cap || 0;
     const mc = /M\/C/.test(c.event || ''), ev = String(c.event || '').replace(/\s*\(([^)]*)\)/, ' $1');
     if (cap < 1) return cellH({ ln, d: c.d, off: String(c.event || '').replace(/\s*\(.*\)$/, '') || '정지', tip: `${ln} ${mdw(c.d)} ${c.event || '정지'}` });   // 01 일별 가동계획과 같은 이름(정기수리·수리·휴지)
@@ -218,10 +218,10 @@
     const sr = st ? Math.min(st.res || 0, st.t) : 0;
     const pt = PLT ? (PLT[`${ln}|${c.d}`] || 0) : null;   // 01 계획 톤(배정 주문 톤 fill 은 툴팁)
     return cellH({ ln, d: c.d, rem, fl: !!c.flag, band: c.event ? ev : '', mc, t: pt != null ? pt : fill, chips: famC(c.fam) + (st && c.fam !== 'AL-STS' ? famC('AL-STS') : ''),
-      pct: pctB(r, `이 날 배정 주문을 실적 속도(같은 두께·폭 t/시간)로 돌리면 ${n1(c.hrs)}시간 — 가동 가능 ${n1(c.hAvail)}시간을 넘어 다음 날로 밀림`, (c.hrs || 0) - c.hAvail),
+      pct: pctB(r, `이 날 배정 주문을 실적 속도(같은 두께·폭 t/시간)로 돌리면 ${n1(c.hrs)}시간: 가동 가능 ${n1(c.hAvail)}시간을 넘어 다음 날로 밀림`, (c.hrs || 0) - c.hAvail),
       st: [['작업대기', c.conf], ['지시대기', c.plan], ['입고예정', c.fcst]], G: c.grp,
       sts: sr >= 0.5 ? `AL-STS 예약 ${n0(sr)}t(D-3 확정)` : '', wn: [c.flag && (c.flagS || c.flag), c.gap >= 0.5 && c.hAvail - (c.hrs || 0) >= 0.5 && `빈 시간 ${n1((c.hAvail - (c.hrs || 0)) / (c.eff || 1))}시간`,   /* 11/13 점검: '빈칸 Xt'(남은 시간 × 평균 속도)는 계획 톤과 안 맞아 보임 → 컬러와 같은 '빈 시간' */ c.lateE && `출항일 초과 ${c.lateE}건`, c.late - c.lateE > 0 && `납기 초과 ${c.late - c.lateE}건`],
-      tip: `${ln} ${mdw(c.d)}${st ? ` · AL-STS ${n0(st.t)}t${sr >= 0.5 ? ` (예약 ${n0(sr)}${st.t - sr >= 0.5 ? ` · 주문 ${n0(st.t - sr)}` : ''} — 주문 D-3 확정)` : ' (주문)'}` : ''} · 계획 ${n0(pt != null ? pt : fill)}t(01 계획과 같은 값) · 배정 주문 ${n0(fill)}t · 작업대기 ${n0(c.conf)} · 지시대기 ${n0(c.plan)} · 입고예정 ${n0(c.fcst)} · ${Object.entries(regroup(c.grp)).filter(([, v]) => v >= 0.5).map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
+      tip: `${ln} ${mdw(c.d)}${st ? ` · AL-STS ${n0(st.t)}t${sr >= 0.5 ? ` (예약 ${n0(sr)}${st.t - sr >= 0.5 ? ` · 주문 ${n0(st.t - sr)}` : ''}: 주문 D-3 확정)` : ' (주문)'}` : ''} · 계획 ${n0(pt != null ? pt : fill)}t(01 계획과 같은 값) · 배정 주문 ${n0(fill)}t · 작업대기 ${n0(c.conf)} · 지시대기 ${n0(c.plan)} · 입고예정 ${n0(c.fcst)} · ${Object.entries(regroup(c.grp)).filter(([, v]) => v >= 0.5).map(([g, v]) => `${g} ${n0(v)}`).join(' · ')}${c.mvIn || c.mvOut ? ` · 이동 전입 ${c.mvIn || 0} 전출 ${c.mvOut || 0}` : ''}${c.flag ? ` · 확인: ${c.flag}` : ''} · 누르면 그날 작업 순서` });
   }
   function ccCell(x, ln, KD, rem) {
     const c = x.c;
@@ -244,7 +244,7 @@
     return cellH({ ln, d, past: 1, t: a.t, chips, G: a.grp, band: fams.length > 1 ? `M/C ${fams.join('·')}` : '', mc: fams.length > 1, tip: `${ln} ${mdw(d)} 생산 실적(MES) ${n0(a.t)}t${a.h ? ` · ${n1(a.h)}시간` : ''}${a.pr ? ` · 품명 ${a.pr.map(([q, v]) => `${q} ${n0(v)}`).join(' · ')}` : ''}` });
   }
   /* 2주 표(11/12 사용자 '편성은 2주치로 늘려, 칸 좀 줄여서'): 열 = 이번 생산주(수~화) + 다음 생산주 14일 · 이번 주 지난 날 = 실적 · 창(월말) 밖 = 빈 칸 */
-  const WKT = {};                                                   // 공장별 { cur, nxt } = 아래 두 표의 합계(수~화) — 위 한 줄 '다음 주 편성'
+  const WKT = {};                                                   // 공장별 { cur, nxt } = 아래 두 표의 합계(수~화): 위 한 줄 '다음 주 편성'
   function grid(p) {
     const C = CAL[p](), R = C && C.raw && C.raw(); if (!R) return '';
     const { w0, days } = R, today = UI.today(), LN = LINES[p], plan = days.concat(R.days2 || []);
@@ -261,7 +261,7 @@
     const dayT = (ln, d) => (kind(d) === 'pst' ? pastT(ln, d) || 0 : kind(d) === 'pl' ? planT(ln, d) : 0);
     const wT = (ln, W) => W.reduce((s, d) => s + dayT(ln, d), 0);
     const pad = () => '<td class="pad" aria-hidden="true"></td>';
-    /* 11/12 사용자 '이번 주·다음 주를 아래로 내려 더 직관적으로, 글 줄여' — 주마다 7칸 표 하나, 위 = 이번 주 · 아래 = 다음 주 */
+    /* 11/12 사용자 '이번 주·다음 주를 아래로 내려 더 직관적으로, 글 줄여': 주마다 7칸 표 하나, 위 = 이번 주 · 아래 = 다음 주 */
     const week = (W, nm) => {
       const rows = LN.map((ln) => {
         const idle = W.every((d) => kind(d) === 'pad' || (kind(d) === 'pst' ? !pastT(ln, d) : (p === 'cg' ? (R.cell(ln, d).cap || 0) < 1 : R.cell(ln, d).stop)));
@@ -372,7 +372,7 @@
     box.hidden = false;
     box.querySelector('button[data-x]').onclick = () => { SEL[p] = null; drawCal(p); drawDay(p); };
   }
-  /* 맨 위 = 주문진도 화면(ct_orders.js)의 '컬러·도금 전체 주문진도' 그대로(CTORD.mount — 같은 함수·같은 자료, 라인별 미생산 카드만 뺌) */
+  /* 맨 위 = 주문진도 화면(ct_orders.js)의 '컬러·도금 전체 주문진도' 그대로(CTORD.mount: 같은 함수·같은 자료, 라인별 미생산 카드만 뺌) */
   let ORD = null;
   // 11/18 결정(검수 결정전달 기준 3): 03 캘린더 칸 톤 = 01 계획(게시 계획 latest.plan) 같은 날·같은 라인 숫자 그대로
   let PLT = null;
@@ -398,7 +398,7 @@
     P.forEach((p) => { drawCal(p); drawDay(p); }); drawLine(); syncFrame();
   }
 
-  // ───────── 아래 '작업 순서 수정' = 작업 순서 화면(week_seq.html) 그대로(iframe, 높이 = 화면 높이 · 안에서 넘김 — 날짜 머리줄 고정이 그대로 동작). 머리·메뉴·공장/방식 고르기·라인 요약 칸(위와 같은 내용)은 숨기고, 라인은 위 선택을 따라감
+  // ───────── 아래 '작업 순서 수정' = 작업 순서 화면(week_seq.html) 그대로(iframe, 높이 = 화면 높이 · 안에서 넘김: 날짜 머리줄 고정이 그대로 동작). 머리·메뉴·공장/방식 고르기·라인 요약 칸(위와 같은 내용)은 숨기고, 라인은 위 선택을 따라감
   const FR = $('ps-frame');
   const FCSS = `#shell, header.topbar, .topbar, nav, aside, .side, .sidebar, footer.foot, #ui-ctl, #ui-scope-note, #ui-stale, #v2-flag, .docmeta, #ws-plant, #ws-mode, #ws-kpis, .ws-hint { display: none !important; }
 html, body { background: transparent !important; min-height: 0 !important; height: auto !important; }
@@ -417,7 +417,7 @@ table.ws tr[draggable], .pl-i { cursor: default !important; }`;
   function frameLoaded() {
     const d = FR.contentDocument; if (!d) return;
     const st = d.createElement('style'); st.textContent = FCSS; d.head.appendChild(st);
-    d.addEventListener('dragstart', (e) => e.preventDefault(), true);   // 보기 전용 — 끌어 옮기기 막음
+    d.addEventListener('dragstart', (e) => e.preventDefault(), true);   // 보기 전용: 끌어 옮기기 막음
     frReady = true; syncFrame(); fitFrame();
   }
   let syncT = null;

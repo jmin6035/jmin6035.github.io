@@ -108,7 +108,7 @@ table.hm-rk td { padding-top: 9px; padding-bottom: 9px; vertical-align: middle; 
 
 /* 11/12 금일·7일·월간 한 카드 */ .kp3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; width: 100%; } .kp3 > span { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; } .kp3 i { font-style: normal; font-size: 13.5px; color: var(--ink-2); font-weight: 600; } .kp3 b { font-size: 22px; } .kp3 em { font-style: normal; white-space: nowrap; } .kp3 u { text-decoration: none; font-size: 13.5px; color: var(--ink-2); margin-left: 2px; } .kp3 .bad b { color: var(--bad); } .kp3 .warn b { color: var(--warn); } .kp3 .ok b { color: var(--good); }
 
-/* 새 양식(?ui=v2) — 통합 관제 전용 */
+/* 새 양식(?ui=v2): 통합 관제 전용 */
 html.v2 .k2-kp { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 html.v2 .k2-k { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px !important; min-width: 0; }
 html.v2 .k2-k > .l { font-size: 15px !important; color: var(--ink) !important; }
@@ -120,7 +120,7 @@ html.v2 .k2-c b u { text-decoration: none; font-size: 14px; font-weight: 600; co
 html.v2 .k2-c.bad b { color: var(--bad); } html.v2 .k2-c.warn b { color: var(--warn); }
 html.v2 .k2-k > .s { margin: auto 0 0 !important; padding-top: 8px; border-top: 1px solid var(--v2-line); white-space: normal; overflow-wrap: anywhere; }
 @media (max-width: 1700px) { html.v2 .k2-c b { font-size: 23px; } html.v2 .k2-n { gap: 6px; } }
-/* 세 값 카드(어제·이번 주·이달): 칸 사이 선 + 작은 숫자 — 좁은 폭에서 '105%58%'처럼 붙지 않게 */
+/* 세 값 카드(어제·이번 주·이달): 칸 사이 선 + 작은 숫자: 좁은 폭에서 '105%58%'처럼 붙지 않게 */
 html.v2 .k2-n.m3 { gap: 0; } html.v2 .k2-n.m3 .k2-c { padding: 0 6px; overflow: hidden; } html.v2 .k2-n.m3 .k2-c:first-child { padding-left: 0; } html.v2 .k2-n.m3 .k2-c + .k2-c { border-left: 1px solid var(--v2-line); }
 @media (max-width: 1700px) { html.v2 .k2-n.m3 .k2-c b { font-size: 19px; letter-spacing: -.3px; } html.v2 .k2-n.m3 .k2-c b u { font-size: 13.5px; margin-left: 1px; } }
 @media (max-width: 760px) { html.v2 .k2-n.m3 .k2-c b { font-size: 22px; } }

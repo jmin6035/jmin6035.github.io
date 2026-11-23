@@ -1,18 +1,18 @@
-/* 가동표 공통(11/13 사용자 '생긴 걸 똑같이 맞추라고') — 01 일별 가동계획(gyehoek.js) 표를 그리던 코드를 떼어 낸 것.
+/* 가동표 공통(11/13 사용자 '생긴 걸 똑같이 맞추라고'): 01 일별 가동계획(gyehoek.js) 표를 그리던 코드를 떼어 낸 것.
    01(gyehoek.js)·월간 가동(supply.js)이 같은 함수로 그림 → 칸·줄·색·범례 위치가 같음. 서식 = ui/optable.css
-   OPT.table(ds, V, P, o) — ds = 그 달 날짜들, V = 보일 판 { kind:'now'|…, get(l, d) → 칸 }, P = 비교할 판(월차, 없으면 null)
+   OPT.table(ds, V, P, o): ds = 그 달 날짜들, V = 보일 판 { kind:'now'|…, get(l, d) → 칸 }, P = 비교할 판(월차, 없으면 null)
      칸 = { t 톤, act 실적 날, fam 대표 강종, al {강종: 톤}, mc M/C 날, sd S/D 날, stop '정기수리'|'수리'|'S/D'|'휴지'|'', sts {t, res} AL-STS 톤·그중 예약(OPT.sts) }
      AL-STS(11/13 사용자 '칸을 늘리지 말고 색깔을'): AL 줄 칸 중 AL-STS 가 절반 이상인 날 = 청록 칸(kSTS), 툴팁 'AL-STS ○t (예약/주문)'
      o = { today, hrs(l, d, c) → 가동시간(없으면 가동시간 줄 없음), cEv(l, d) → [글, 툴팁] 컬러 부분 정지(노랑 칸), tip(l, d, c) → 칸 툴팁 }
      도금 라인 = 첫 강종 행 → 이벤트 행(M/C·S/D 노랑) → 다음 강종 행 → 가동시간 행. 여러 날 정지 = 직전 강종 행에 남색 합친 칸 '이름 (N일)'
      컬러 라인 = 생산 행 + 이벤트 행(부분 정지 노랑, 정지·휴지 남색 합친 칸). 도금·컬러 합계 행. 31일 칸 고정(짧은 달은 끝에 빈 칸)
-   OPT.legend(V, P, ds, o) — 표 아래 가운데 범례 · OPT.snap() — 지난 날 덮개·오늘 틀 자리 맞춤(표가 바뀌거나 창 크기가 바뀌면 자동) */
+   OPT.legend(V, P, ds, o): 표 아래 가운데 범례 · OPT.snap(): 지난 날 덮개·오늘 틀 자리 맞춤(표가 바뀌거나 창 크기가 바뀌면 자동) */
 (function () {
   'use strict';
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const n0 = (v) => Math.round(v || 0).toLocaleString('en-US');
   const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8, 10)}`;
-  /* 11/18 검수: 달을 넘는 정지(2CGL 정기수리 11/23~12/6)를 달마다 '(8일)'·'(6일)'로 나눠 쓰지 않게 — window.OPT_STOPEV = {'라인|날짜': 이름}(gyehoek.js 가 계획 전체 날짜로 채움) */
+  /* 11/18 검수: 달을 넘는 정지(2CGL 정기수리 11/23~12/6)를 달마다 '(8일)'·'(6일)'로 나눠 쓰지 않게: window.OPT_STOPEV = {'라인|날짜': 이름}(gyehoek.js 가 계획 전체 날짜로 채움) */
   const addD1 = (d, k) => { const x = new Date(d + 'T00:00:00Z'); x.setUTCDate(x.getUTCDate() + k); return x.toISOString().slice(0, 10); };
   const stopNm = (l, k, a0, z0, n) => { const E = window.OPT_STOPEV, nz = (v) => String(v || '').replace(/\s*\(.*\)$/, '');
     let a = a0, z = z0;
@@ -35,7 +35,7 @@
     const df = Math.abs(c.t - p.t);
     return df >= 50 && (p.t < 0.5 || df / p.t >= 0.2);
   }
-  // 머리 2줄(날짜 · 요일) + 열 너비 — 다른 '구분 × 날짜' 표도 이 머리를 씀. lab0·lab1 = 왼쪽 두 칸 글(01 은 빈 칸)
+  // 머리 2줄(날짜 · 요일) + 열 너비: 다른 '구분 × 날짜' 표도 이 머리를 씀. lab0·lab1 = 왼쪽 두 칸 글(01 은 빈 칸)
   function head(ds, today, lab0, lab1, ti) {
     const dc = (i) => (i === ti ? ' tdy' : '');
     return `<colgroup><col class="c0"><col class="c1">${ds.map(() => '<col>').join('')}<col class="tot"></colgroup><thead>`
@@ -52,7 +52,7 @@
     return `<div class="gk-wrap"><table class="gk${cls ? ' ' + cls : ''}">${inner}</table>${np ? `<i class="gk-past" data-n="${np}" aria-hidden="true"></i>` : ''}${ti >= 0 ? '<i class="gk-tdy" aria-hidden="true"></i>' : ''}</div>`;
   }
 
-  // AL-STS 날별 톤(재계획 R.rows 강종 AL-STS — 지난 날 = MES 실적) + 그중 예약(R.replan.sts.days — 판매계획 보충, 주문은 D-3 확정) → {'라인|날짜': {t, res, act}}
+  // AL-STS 날별 톤(재계획 R.rows 강종 AL-STS: 지난 날 = MES 실적) + 그중 예약(R.replan.sts.days: 판매계획 보충, 주문은 D-3 확정) → {'라인|날짜': {t, res, act}}
   function sts(R) {
     const m = {}, t0 = ((R && R.replan) || {}).t0 || '';
     for (const [d, l, a, , t] of (R && R.rows) || []) if (a === 'AL-STS') { const x = (m[`${l}|${d}`] = m[`${l}|${d}`] || { t: 0, res: 0, act: d <= t0 }); x.t += t; }
@@ -64,7 +64,7 @@
     const x = c && c.sts; if (!x || x.t < 0.5) return '';
     if (x.act) return `AL-STS ${n0(x.t)}t (실적)`;
     const r = Math.min(x.res || 0, x.t), o = x.t - r;
-    return `AL-STS ${n0(x.t)}t (${r >= 0.5 && o >= 0.5 ? `예약 ${n0(r)} · 주문 ${n0(o)}` : r >= 0.5 ? '예약 — 주문 D-3 확정' : '주문'})`;
+    return `AL-STS ${n0(x.t)}t (${r >= 0.5 && o >= 0.5 ? `예약 ${n0(r)} · 주문 ${n0(o)}` : r >= 0.5 ? '예약: 주문 D-3 확정' : '주문'})`;
   }
   function table(ds, V, P, o) {
     const today = o.today || '';
@@ -159,7 +159,7 @@
       h += `<tr class="sum"><th class="c0" colspan="2">컬러 합계</th>${day.map((v, i) => `<td class="${dc(i).trim()}">${v ? n0(v) : ''}</td>`).join('')}<td class="tot">${n0(day.reduce((a, v) => a + v, 0))}</td></tr>`;
     }
     h = pad31(h, ds.length);
-    const np = ds.filter((d) => d < today).length;   // 11/12 사용자 '지난 날은 음영, 미래는 흰색' — 지난 날 열 위에 회색 막(합친 칸도 끊지 않음)
+    const np = ds.filter((d) => d < today).length;   // 11/12 사용자 '지난 날은 음영, 미래는 흰색': 지난 날 열 위에 회색 막(합친 칸도 끊지 않음)
     return wrap(h + '</tbody>', np, ti);
   }
   // 범례(표 아래 가운데): 지난 날이 없는 달은 '지난 날' 뺌 · 가동시간 줄은 색이 없어 뺌
@@ -171,7 +171,7 @@
   // 다른 표용 범례: items = [[class, 글], …] (같은 네모·같은 자리)
   const lg = (items) => `<div class="gk-lg">${items.filter(Boolean).map(([c, t]) => (c === 'sep' ? '<span class="sep"></span>' : c ? `<span><i class="${c}"></i>${t}</span>` : `<span>${t}</span>`)).join('')}</div>`;
 
-  // 오늘 틀(오늘 열 전체 굵은 테두리) · 지난 날 덮개 자리 맞춤 · 좁은 화면(표가 가로로 밀릴 때 — 첫 두 열 고정): 오늘 앞 2일부터 보이게
+  // 오늘 틀(오늘 열 전체 굵은 테두리) · 지난 날 덮개 자리 맞춤 · 좁은 화면(표가 가로로 밀릴 때: 첫 두 열 고정): 오늘 앞 2일부터 보이게
   function snap() {
     document.querySelectorAll('.gk-wrap').forEach((w) => {
       if (!w.offsetParent) return;
@@ -183,7 +183,7 @@
       if (th && fr) { const a = th.getBoundingClientRect(); Object.assign(fr.style, { left: (a.left - W.left - w.clientLeft + w.scrollLeft) + 'px', top: (T.top - W.top - w.clientTop + w.scrollTop) + 'px', width: a.width + 'px', height: T.height + 'px' }); }   // 소수점 픽셀까지(offsetLeft 반올림 → 칸 선과 어긋남, 11/12 사용자)
       if (w.scrollWidth <= w.clientWidth + 1) return;
       if (w.dataset.snapped != null && Math.abs(w.scrollLeft - +w.dataset.snapped) > 1) return;   // 사람이 옮겼으면 그대로
-      // 처음 위치: 오늘 2일 앞 날짜 칸이 고정 칸(라인·구분) 바로 오른쪽에 딱 붙게(칸 폭이 소수라 '칸 수 × 폭'은 앞 칸이 잘려 비침 — 11/17 검토)
+      // 처음 위치: 오늘 2일 앞 날짜 칸이 고정 칸(라인·구분) 바로 오른쪽에 딱 붙게(칸 폭이 소수라 '칸 수 × 폭'은 앞 칸이 잘려 비침: 11/17 검토)
       const days = [...w.querySelectorAll('thead tr:first-child th.dn')], i0 = days.findIndex((x) => x.classList.contains('tdy')), c1 = tb.querySelector('thead th.c1');
       const mx = w.scrollWidth - w.clientWidth, at = (k) => Math.ceil(w.scrollLeft + days[k].getBoundingClientRect().left - c1.getBoundingClientRect().right);   // c1 은 고정 칸이라 오른쪽 끝 자리가 그대로
       const k = i0 < 0 || !c1 ? -1 : Math.max(0, i0 - 2), x = k < 0 ? 0 : Math.max(0, at(k));
@@ -202,7 +202,7 @@
   new MutationObserver((ms) => { if (ms.some((m) => [...m.addedNodes].some((x) => x.nodeType === 1 && (x.matches('.gk-wrap') || x.querySelector('.gk-wrap'))))) { snap(); requestAnimationFrame(snap); } }).observe(document.documentElement, { childList: true, subtree: true });   // 표를 새로 그리면 바로 자리 맞춤
   document.addEventListener('toggle', later, true);                      // 접힌 칸(details)을 펼칠 때
 
-  // 이름 칸(64px)에 안 들어가는 긴 그룹 이름: 앞의 '도금'·'컬러'를 뗌(구분 띠·툴팁에 전체 이름) — 예: 컬러건재수출 → 건재수출
+  // 이름 칸(64px)에 안 들어가는 긴 그룹 이름: 앞의 '도금'·'컬러'를 뗌(구분 띠·툴팁에 전체 이름): 예: 컬러건재수출 → 건재수출
   const short = (nm) => { const s = String(nm || ''); return s.replace(/\s/g, '').length > 4 && /^(도금|컬러)\s?\S{2}/.test(s) ? s.replace(/^(도금|컬러)\s?/, '') : s; };
   window.OPT = { short, sts, stsTip, table, legend, lg, head, pad31, wrap, snap, differs, hfmt, red, LINES, WD };
 })();

@@ -1,12 +1,12 @@
 /* 임원 보고용 주간 보고서: published/weekly_report.enc.json(분석 암호).
    구성: ① 한 장 요약(구분별 상태·핵심 수치·판단·조치) + 결정 필요 사항
-         ② 도금 ③ 컬러 ④ 출하 ⑤ 재고 — 각 절은 "결론 한 줄 → 핵심 그래프 2개 → 상세(접힘)"
+         ② 도금 ③ 컬러 ④ 출하 ⑤ 재고: 각 절은 "결론 한 줄 → 핵심 그래프 2개 → 상세(접힘)"
    데이터는 tools/weekly_build.py(cgl-weekly v2), 해설은 notes(summary·decisions·plating·color·ship·stock·ops). */
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
   const PW_KEY = 'cgl-analysis-pw';
-  // 11/17 검토: 게시된 보고 글(11/9 작성)의 옛 말을 화면 용어로(docs/32) — 계산·숫자는 그대로
+  // 11/17 검토: 게시된 보고 글(11/9 작성)의 옛 말을 화면 용어로(docs/32): 계산·숫자는 그대로
   const WORDS = [[/t\/hr/g, 't/시간'], [/(\d)h\/일/g, '$1시간/일'], [/사내 PC 자동 실행/g, '자동 갱신'], [/사내 PC 멈춤/g, '자동 갱신 멈춤'], [/사내 PC/g, '자동 갱신'], [/도금판매/g, '도금국내'], [/롤링 월말 예상/g, '재계획 월말 예상'], [/월간 계획 vs 롤링/g, '월간 계획 vs 재계획'], [/롤링/g, '재계획']];
   const esc = (s) => WORDS.reduce((a, [r, t]) => a.replace(r, t), String(s == null ? '' : s)).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const n0 = (v) => (v == null || isNaN(v) ? '-' : Math.round(v).toLocaleString('ko-KR'));
@@ -98,7 +98,7 @@
     let g = '';
     for (let v = 0; v <= top + 1e-9; v += step) g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end" font-size="13" fill="var(--ink-3)">${fmt(v)}</text>`;
     const every = Math.ceil(x.length / 8);
-    const keep = new Set(); { let nx = Infinity; for (let i = x.length - 1; i >= 0; i--) if ((i % every === 0 || i === x.length - 1 || hi.includes(i)) && nx - X(i) >= 38) { keep.add(i); nx = X(i); } }   // 11/10 점검: 날짜 글자 겹침('10/20/21') — 뒤에서부터 간격 38 이상만
+    const keep = new Set(); { let nx = Infinity; for (let i = x.length - 1; i >= 0; i--) if ((i % every === 0 || i === x.length - 1 || hi.includes(i)) && nx - X(i) >= 38) { keep.add(i); nx = X(i); } }   // 11/10 점검: 날짜 글자 겹침('10/20/21'): 뒤에서부터 간격 38 이상만
     const LBL = (i) => keep.has(i);
     data.forEach((row, i) => {
       let acc = 0;
@@ -155,7 +155,7 @@
     const asOf = (M && M.asOf) || (ST_ && ST_.asOf);
     const asOfS = asOf ? md(asOf) : md(P.to);
     const MN = (() => { const a_ = String((M && M.asOf) || P.to || ''), m_ = +a_.slice(5, 7), d_ = +a_.slice(8, 10); return d_ > 1 ? m_ : (m_ + 10) % 12 + 1; })();   // 11/10 점검: '10월' 고정 글자 → 속보 달(속보는 전날까지)
-    const h1 = document.querySelector('.shell-head h1'); if (h1) h1.textContent = `주간 보고 — ${o.title || w1}`;
+    const h1 = document.querySelector('.shell-head h1'); if (h1) h1.textContent = `주간 보고: ${o.title || w1}`;
     document.title = `주간 보고 ${o.title || w1}`;
     UI.sub(`주간 실적 ${w1} · 월 진도·재고 ${asOfS} 기준 · 작성 ${UI.fmtDate(o.createdAt)}`);
     const sm = {}; (N.summary || []).forEach((x) => { sm[x.area] = x; });
@@ -175,14 +175,14 @@
       stock: { name: '재고', key: [cp ? `컬러 제품 <b>${n0(cp.current)}</b>t · 목표의 <b>${rate(cp.current, cp.target)}%</b>` : '', gm ? `도금 소재 ${n0(gm.current)}t · 목표의 ${rate(gm.current, gm.target)}%` : ''], st: ST_ && ST_.now ? (ST_.now.some((x) => x.target && x.current / x.target > 1.3) ? 'bad' : ST_.now.some((x) => x.target && x.current / x.target > 1.1) ? 'warn' : 'good') : null },
     };
     let h = '';
-    // 11/17 검토: 지난 보고가 그대로 보일 때 — 끝난 최신 주(어제까지)가 보고 주보다 뒤면 위에 알림
+    // 11/17 검토: 지난 보고가 그대로 보일 때: 끝난 최신 주(어제까지)가 보고 주보다 뒤면 위에 알림
     const wkGap = (() => {
       const e0 = new Date(String(P.w1[1]).slice(0, 10) + 'T00:00:00'), y = new Date(); y.setHours(0, 0, 0, 0); y.setDate(y.getDate() - 1);
       const n = Math.floor((y - e0) / 864e5 / 7); if (!(n >= 1)) return null;
       const e = new Date(e0); e.setDate(e.getDate() + 7 * n); const s0 = new Date(e); s0.setDate(e.getDate() - 6);
       const f = (d) => `${d.getMonth() + 1}/${d.getDate()}`; return `${f(s0)}~${f(e)}`;
     })();
-    if (wkGap) h += `<div class="stale">⚠ ${wkGap} 주간 보고는 아직 게시되지 않았습니다 — 아래는 지난 보고(${w1}, 작성 ${UI.fmtDate(o.createdAt)})입니다.</div>`;
+    if (wkGap) h += `<div class="stale">⚠ ${wkGap} 주간 보고는 아직 게시되지 않았습니다: 아래는 지난 보고(${w1}, 작성 ${UI.fmtDate(o.createdAt)})입니다.</div>`;
     if (o.status && o.status.stale) h += `<div class="stale">⚠ 자동 갱신이 하루 넘게 멈춰 있습니다(마지막 자료 ${UI.fmtDateTime(new Date(o.status.savedAt))}).</div>`;
 
     // ① 한 장 요약: 구분별 타일(상태 · 대표 수치 1개 · 진도 막대 · 조치 한 줄) + 결정 필요 사항 카드
@@ -212,7 +212,7 @@
     if (M) b += `<div><p class="ttl">${MN}월 진도 <span class="muted">MES 월차계획 · ${asOfS} 기준</span></p>` +
       bullets(M.prod.filter((x) => x.plant === '도금').map((x) => ({ name: x.line, v: x.actual, ref: x.sched, total: /계$/.test(x.line) })), { mode: 'prod' }) +
       `<p class="hint">막대 = 실적 누계 · 세로선 = ${asOfS}까지 일정 · ${MN}월 계획 ${n0(pG && pG.month)}t</p></div>`;
-    if (pa) b += box('c-pl-plan', '4분기 누적 생산 — 기준 계획 vs 실적', 't');
+    if (pa) b += box('c-pl-plan', '4분기 누적 생산: 기준 계획 vs 실적', 't');
     b += '</div>';
     let d = '<div class="scroll"><table class="t"><thead><tr><th>라인</th><th>앞 ' + ((o.period && o.period.nW0) || 12) + '주 평균 t/일</th><th>보고 주 t/일</th><th>증감</th><th>속도 t/시간 <span class="muted">정지 포함</span></th><th>평균 두께 mm</th><th>가동일당 휴지 시간</th></tr></thead><tbody>' +
       pl.rows.map((r, k) => `<tr><td class="l"><span class="sw" style="background:var(${SER[k]})"></span>${r.line}</td><td>${n0(r.w0.tpd)}</td><td><b>${n0(r.w1.tpd)}</b></td><td>${delta(r.dTpd)}</td><td>${n1(r.w0.tph)} → ${n1(r.w1.tph)}</td><td>${n3(r.w0.thick)} → ${n3(r.w1.thick)}</td><td>${n1(r.w0.stopH)} → ${n1(r.w1.stopH)}</td></tr>`).join('') + '</tbody></table></div>';
@@ -227,7 +227,7 @@
     d += '<p class="ttl" style="margin-top:12px">계획 조건 vs 13주 실적</p><div class="scroll"><table class="t"><thead><tr><th>항목</th>' + Object.keys(pr).map((l) => `<th>${l} 현재 조건</th><th>${l} 실적</th>`).join('') + '</tr></thead><tbody>' +
       [['강종 전환 손실 (분/회)', 'mc'], ['설비정지 (분/일)', 'equipDown'], ['비강종 더미 (분/일)', 'dummy']].map(([nm, k]) =>
         `<tr><td class="l">${nm}</td>` + Object.keys(pr).map((l) => `<td>${n1(pr[l].cur && pr[l].cur[k])}</td><td><b>${n1(pr[l][k])}</b></td>`).join('') + '</tr>').join('') + '</tbody></table></div>';
-    b += notes(N.plating) + more('상세 — 라인별 실적·강종 전환 일정·부서별·계획 조건', d);
+    b += notes(N.plating) + more('상세: 라인별 실적·강종 전환 일정·부서별·계획 조건', d);
     h += section('1', '도금 생산 (1·2CGL)', sm.plating || { status: K.plating.st }, b, 'G');
 
     // ③ 컬러
@@ -240,7 +240,7 @@
         co.rows.map((r, k) => `<tr><td class="l"><span class="sw" style="background:var(${SER[k]})"></span>${r.line}</td><td>${n0(r.w0.tpd)}</td><td><b>${n0(r.w1.tpd)}</b></td><td>${delta(r.dTpd)}</td><td>${r.w1.days}/7</td><td>${n1(r.w0.tph)} → ${n1(r.w1.tph)}</td><td>${n1(r.w0.stopH)} → ${n1(r.w1.stopH)}</td><td class="l">${r.top.map((x) => `${esc(x[0])} ${n0(x[1])}`).join(' · ')}</td></tr>`).join('') + '</tbody></table></div>';
       d += '<div class="grid2">' + box('c-co-stop', '주별 휴지 구성 (4라인 합)', '시간/일') + '<div><p class="ttl">휴지 구성 (4라인 합, 시간/일)</p><div class="scroll"><table class="t"><thead><tr><th>구분</th><th>12주 평균</th><th>보고 주</th><th>증감</th></tr></thead><tbody>' +
         co.stops.map((s, k) => `<tr><td class="l"><span class="sw" style="background:var(${SER[k]})"></span>${esc(s.cat)}</td><td>${n1(s.w0)}</td><td><b>${n1(s.w1)}</b></td><td>${delta(pct(s.w1, s.w0), false)}</td></tr>`).join('') + '</tbody></table></div></div></div>';
-      b += notes(N.color) + more('상세 — 라인별 실적·휴지 구성', d);
+      b += notes(N.color) + more('상세: 라인별 실적·휴지 구성', d);
       h += section('2', '컬러 생산 (1~4CCL)', sm.color || { status: K.color.st }, b, 'C');
     }
 
@@ -256,7 +256,7 @@
         sh.monthly.map((m) => `<tr><td class="l">${+m.month.slice(5)}월</td><td>${n0(m.total)}</td><td>${n0(m.first5)}</td><td><b>${n0(m.lastDay)}</b></td><td><b>${rate(m.lastDay, m.total)}%</b></td></tr>`).join('') + '</tbody></table></div>';
       if (sh) d += '<div class="grid2">' + box('c-ship', '주별 출하', 't/일') + '<div><div class="scroll"><table class="t"><thead><tr><th>구분</th><th>12주 평균 t/일</th><th>보고 주 t/일</th><th>증감</th></tr></thead><tbody>' +
         sh.rows.map((r, k) => `<tr><td class="l"><span class="sw" style="background:var(${SER[k]})"></span>${esc(r.kind)}</td><td>${n0(r.w0)}</td><td><b>${n0(r.w1)}</b></td><td>${delta(r.d)}</td></tr>`).join('') + '</tbody></table></div></div></div>';
-      b += notes(N.ship) + (d ? more('상세 — 월말 출하 집중·주별 추이', d) : '');
+      b += notes(N.ship) + (d ? more('상세: 월말 출하 집중·주별 추이', d) : '');
       h += section('3', '출하', sm.ship || { status: K.ship.st }, b);
     }
 
@@ -267,7 +267,7 @@
         b += `<p class="ttl">현재 재고 vs 목표 <span class="muted">판매생산속보 ${asOfS} 기준</span></p>` +
           bullets(ST_.now.filter((x) => UI.inScope(plN(x.name))).map((x) => ({ name: x.name, v: x.current, ref: x.target })), { mode: 'stock' }) +
           '<p class="hint">막대 = 현재 재고 · 세로선 = 목표 재고 · 빨강 = 목표의 130% 초과, 주황 = 110% 초과 또는 80% 미만</p>';
-        if (ST_.longTerm) b += `<p class="hint">장기재고(3개월 이상) <b>${n0(ST_.longTerm.total)}</b>t — 컬러 ${n0(ST_.longTerm['컬러'])}t · 도금 ${n0(ST_.longTerm['도금'])}t (전월 대비 제품 ${sgn(ST_.longTerm.momProduct)}t)</p>`;
+        if (ST_.longTerm) b += `<p class="hint">장기재고(3개월 이상) <b>${n0(ST_.longTerm.total)}</b>t: 컬러 ${n0(ST_.longTerm['컬러'])}t · 도금 ${n0(ST_.longTerm['도금'])}t (전월 대비 제품 ${sgn(ST_.longTerm.momProduct)}t)</p>`;
       }
       if (ST_.monthly && ST_.monthly.length) {
         b += '<p class="ttl" style="margin-top:14px">재고 추이 <span class="muted">월말 재고 + 현재, 점선 = 목표</span></p><div class="minis">' +
@@ -277,14 +277,14 @@
         d = '<div class="scroll"><table class="t"><thead><tr><th>구분</th><th>세부</th><th>목표 t</th><th>현재 t</th><th>차이 t</th></tr></thead><tbody>' +
           ST_.now.filter((x) => UI.inScope(plN(x.name))).map((x) => [`<tr><td class="l"><b>${esc(x.name)}</b></td><td class="l">계</td><td>${n0(x.target)}</td><td><b>${n0(x.current)}</b></td><td>${sgn(x.diff)}</td></tr>`]
             .concat((x.sub || []).map((s) => `<tr><td></td><td class="l">${esc(s.name)}</td><td>${n0(s.target)}</td><td>${n0(s.current)}</td><td>${sgn(s.diff)}</td></tr>`)).join('')).join('') + '</tbody></table></div>';
-        b += notes(N.stock) + more('상세 — 강종·부서별 재고', d);
+        b += notes(N.stock) + more('상세: 강종·부서별 재고', d);
       } else b += notes(N.stock);
       h += section('4', '재고', sm.stock || { status: K.stock.st }, b);
     }
 
     if (N.ops && N.ops.length) h += `<section class="card ops"><h2><span class="n">참고</span>운영 메모</h2>${notes(N.ops)}</section>`;
     $('r-main').innerHTML = h;
-    /* 11/19 수정 방: 보고 자료 문구 표기만 화면에서 맞춤(docs/32 — 'h' → 시간, '~n/n' → 'n/n까지', 늦음 → 지연) */
+    /* 11/19 수정 방: 보고 자료 문구 표기만 화면에서 맞춤(docs/32: 'h' → 시간, '~n/n' → 'n/n까지', 늦음 → 지연) */
     { const tw = document.createTreeWalker($('r-main'), NodeFilter.SHOW_TEXT); let nd; while ((nd = tw.nextNode())) { if (nd.parentElement && nd.parentElement.closest('svg')) continue; const s = nd.nodeValue, t = s.replace(/(\d(?:\.\d+)?)\s?h\b/g, '$1시간').replace(/(^|[^0-9/])~\s?(\d{1,2}\/\d{1,2})/g, '$1$2까지').replace(/늦음/g, '지연'); if (t !== s) nd.nodeValue = t; } }
     UI.reveal($('r-main'));
 
@@ -343,7 +343,7 @@
   const src = new URLSearchParams(location.search).get('src') || 'published/weekly_report.enc.json';
   fetch(src, { cache: 'no-store' }).then((r) => { if (!r.ok) throw new Error('보고서 파일 없음'); return r.json(); }).then((e) => {
     env = e;
-    document.querySelector('#r-lock h2').textContent = '주간 보고서 — 분석 암호 입력 필요';
+    document.querySelector('#r-lock h2').textContent = '주간 보고서: 분석 암호 입력 필요';
     $('r-form').hidden = false;
     let saved = null; try { saved = localStorage.getItem(PW_KEY); } catch (x) { saved = null; }
     if (saved) open(saved);

@@ -1,4 +1,4 @@
-/* 새 디자인(셸)이 아직 안 들어간 페이지용 '홈' 버튼 — 오른쪽 아래 고정. 셸이 있는 페이지에서는 아무것도 하지 않음 */
+/* 새 디자인(셸)이 아직 안 들어간 페이지용 '홈' 버튼: 오른쪽 아래 고정. 셸이 있는 페이지에서는 아무것도 하지 않음 */
 (function () {
   function add() {
     if (document.getElementById('shell') || document.getElementById('ui-home')) return;

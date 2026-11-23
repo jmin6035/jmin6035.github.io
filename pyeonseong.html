@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>편성</title>
-<meta name="description" content="맨 위 = 컬러·도금 전체 주문진도 · 이번 주 + 다음 주 라인별 편성(지난 날 = 실적) — 칸을 누르면 그날 작업 순서 · 아래 = 작업 순서(보기 전용)">
+<meta name="description" content="맨 위 = 컬러·도금 전체 주문진도 · 이번 주 + 다음 주 라인별 편성(지난 날 = 실적): 칸을 누르면 그날 작업 순서 · 아래 = 작업 순서(보기 전용)">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="ui/theme.css?v=2611230303">
 <link rel="stylesheet" href="ui/ord_prog.css?v=2611230303">
@@ -13,12 +13,12 @@ main.wrap { max-width: none; }
 html.v2 #ui-ctl { display: none !important; }   /* 11/12: 공통 관제 알약 줄은 편성과 상관없어 숨김 */
 /* 11/12 사용자 '편성 더 이쁘게 간략하게' → '맨 위에 주문진도 그대로(미생산 빼고) · 편성은 2주치로, 칸 줄여서':
    맨 위 = 주문진도 화면 '컬러·도금 전체 주문진도'(ct_orders.js CTORD · ui/ord_prog.css 같이 씀) · 가운데 = 이번 주 + 다음 주(수~화 14일) 라인별 캘린더 · 칸 누르면 그날 작업 순서 · 아래 = 작업 순서 수정
-   편성 표 글자 2단계: 큰 톤·라인 16px 굵게 · 나머지 14px · 칸 안 여백 6px · 줄바꿈 허용 — 1920 폭에서 가로 스크롤 없음 */
+   편성 표 글자 2단계: 큰 톤·라인 16px 굵게 · 나머지 14px · 칸 안 여백 6px · 줄바꿈 허용: 1920 폭에서 가로 스크롤 없음 */
 #ps-main { font-size: 16px; text-align: center; }
 :root { --c-conf: #2e7d32; --c-plan: #3774a1; --c-fcst: #8fb8dc; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-conf: #4caf50; --c-plan: #5b9bd0; --c-fcst: #2f4f6c; } }
 :root[data-theme="dark"] { --c-conf: #4caf50; --c-plan: #5b9bd0; --c-fcst: #2f4f6c; }
-/* 주문진도(주문진도 화면과 같은 모양 — 그 화면 본문 = 왼쪽 정렬 16px) */
+/* 주문진도(주문진도 화면과 같은 모양: 그 화면 본문 = 왼쪽 정렬 16px) */
 #ps-ordc { text-align: left; }
 #ps-ordc .mu { color: var(--ink-2); }
 #ps-ordc .ps-et th button { all: unset; cursor: pointer; display: inline-flex; gap: 3px; align-items: center; min-height: 30px; } #ps-ordc .ps-et th button:focus-visible { outline: 2px solid var(--brand-2, #1f5fae); outline-offset: 2px; } #ps-ordc .ps-et th i { font-style: normal; font-size: 13.5px; color: var(--brand-2, #1f5fae); min-width: 9px; }
@@ -27,7 +27,7 @@ html.v2 #ui-ctl { display: none !important; }   /* 11/12: 공통 관제 알약 �
 html.v2 main #ps-main .xbtn { font-size: 14px !important; }
 .ps-line { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 22px; margin: 4px 0 16px; font-size: 16px; color: var(--ink-2); }
 .ps-line b { color: var(--ink); font-weight: 800; } .ps-line .ar { color: var(--ink-3); }
-/* 캘린더 — 표 양식은 생산 일정 화면과 같고 칸 안은 편성 화면용(pyeonseong.js cellH — 도금·컬러·지난 날 한 양식). 막대 없음, 글자만 · 16/14 · 모두 가운데 · 빨강 = 확인 필요 줄에만 */
+/* 캘린더: 표 양식은 생산 일정 화면과 같고 칸 안은 편성 화면용(pyeonseong.js cellH: 도금·컬러·지난 날 한 양식). 막대 없음, 글자만 · 16/14 · 모두 가운데 · 빨강 = 확인 필요 줄에만 */
 :root { --c-ov: #c2410c; --c-act: #5b6573; --c-today: color-mix(in srgb, var(--brand-2) 7%, var(--surface)); --c-past: color-mix(in srgb, var(--ink) 4%, var(--surface)); --c-mc: #ffe066; --c-rule: color-mix(in srgb, var(--ink) 30%, var(--surface)); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-ov: #ff8c42; --c-act: #8a96a3; --c-mc: #8a6d00; } }
 :root[data-theme="dark"] { --c-ov: #ff8c42; --c-act: #8a96a3; --c-mc: #8a6d00; }
@@ -83,10 +83,10 @@ button.cell.stp .off { font-size: 14px; font-weight: 800; color: var(--ink-3); p
 .ld.ov { color: var(--c-ov); font-weight: 800; }
 .fam, .ac { display: inline-block; border-radius: 6px; padding: 0 5px; font-size: 14px; font-weight: 800; line-height: 1.6; white-space: nowrap; background: var(--tint-2); color: var(--ink-2); }
 .ac { background: var(--c-act); color: #fff; }
-.fam-AL { background: #e6f0fb; color: #1d5a96; } .fam-AZ { background: #eef6e8; color: #3d6b1f; } .fam-MAC { background: #f3ecfb; color: #5b2f8f; } .fam-STS { background: #8ccbc1 !important; color: #000 !important; }   /* AL-STS(11/13 — 01 가동 캘린더 청록과 같음) */
+.fam-AL { background: #e6f0fb; color: #1d5a96; } .fam-AZ { background: #eef6e8; color: #3d6b1f; } .fam-MAC { background: #f3ecfb; color: #5b2f8f; } .fam-STS { background: #8ccbc1 !important; color: #000 !important; }   /* AL-STS(11/13: 01 가동 캘린더 청록과 같음) */
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .fam-AL { background: #1d3550; color: #9cc6f0; } :root:not([data-theme="light"]) .fam-AZ { background: #23381a; color: #b5dc95; } :root:not([data-theme="light"]) .fam-MAC { background: #34244a; color: #d2b6f2; } }
 :root[data-theme="dark"] .fam-AL { background: #1d3550; color: #9cc6f0; } :root[data-theme="dark"] .fam-AZ { background: #23381a; color: #b5dc95; } :root[data-theme="dark"] .fam-MAC { background: #34244a; color: #d2b6f2; }
-/* ② 상태 톤 · ③ 그룹 톤 — 14px(넘치면 항목·낱말 단위로 줄바꿈) */
+/* ② 상태 톤 · ③ 그룹 톤: 14px(넘치면 항목·낱말 단위로 줄바꿈) */
 .ln2 { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 8px; font-size: 14px; line-height: 1.35; }
 .ln2 span { white-space: normal; word-break: keep-all; }
 .ln2.ss { color: var(--ink); font-weight: 600; } .ln2.gl { color: var(--ink-2); }
@@ -137,7 +137,7 @@ html body main #ps-main table.psw tbody tr.dsum .tv { padding: 8px 0; }
 html body main #ps-main table.psw thead tr.wh th small { display: block; margin: 0; }
 html body main #ps-main table.psw thead tr.wh th.td { background: var(--brand) !important; }
 button.cell { min-height: 76px; }
-/* 11/17 사용자 '캘린더 양식 다시 — 아마추어 색 말고, 구분 잘 되게, S/D·M/C 특이사항 같이' — 차분한 회색 선 · 오늘 파랑 · 주말은 글자색만 · 정지는 빗금 한 칸(이어진 날 합침) · M/C 등 특이사항은 칸 위 띠 */
+/* 11/17 사용자 '캘린더 양식 다시: 아마추어 색 말고, 구분 잘 되게, S/D·M/C 특이사항 같이': 차분한 회색 선 · 오늘 파랑 · 주말은 글자색만 · 정지는 빗금 한 칸(이어진 날 합침) · M/C 등 특이사항은 칸 위 띠 */
 :root { --pz-line: #e5e7eb; --pz-head: #f8fafc; --pz-past: #f8fafc; --pz-today: #eff6ff; --pz-brand: #1f5fae; --pz-sat: #2563eb; --pz-sun: #dc2626; --pz-stop1: #eef2f7; --pz-stop2: #e2e8f0; --pz-stopt: #334155; --pz-mc: #fef3c7; --pz-mct: #92400e; --pz-ev: #e0e7ff; --pz-evt: #3730a3; --pz-sum: #f3f4f6; --pz-wn: #fff7ed; --pz-wnt: #c2410c; }
 :root[data-theme="dark"] { --pz-line: #2b3440; --pz-head: #161c24; --pz-past: #141a21; --pz-today: #13243a; --pz-sat: #7aa7ff; --pz-sun: #ff7b7b; --pz-stop1: #1b222c; --pz-stop2: #232c38; --pz-stopt: #cbd5e1; --pz-mc: #3d2f0b; --pz-mct: #fcd77f; --pz-ev: #23264a; --pz-evt: #c7cbff; --pz-sum: #1a2029; --pz-wn: #3a2414; --pz-wnt: #ffb27a; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pz-line: #2b3440; --pz-head: #161c24; --pz-past: #141a21; --pz-today: #13243a; --pz-sat: #7aa7ff; --pz-sun: #ff7b7b; --pz-stop1: #1b222c; --pz-stop2: #232c38; --pz-stopt: #cbd5e1; --pz-mc: #3d2f0b; --pz-mct: #fcd77f; --pz-ev: #23264a; --pz-evt: #c7cbff; --pz-sum: #1a2029; --pz-wn: #3a2414; --pz-wnt: #ffb27a; } }
@@ -173,7 +173,7 @@ button.cell.fl { box-shadow: inset 3px 0 0 var(--bad); }
 .tv { font-size: 17px; }
 .ps-lg i.mc { background: var(--pz-mc); box-shadow: inset 0 0 0 1px #f2d48a; } .ps-lg i.ev { background: var(--pz-ev); } .ps-lg i.sp { background: repeating-linear-gradient(135deg, var(--pz-stop1) 0 4px, var(--pz-stop2) 4px 8px); box-shadow: inset 0 0 0 1px var(--pz-line); } .ps-lg i.pst { background: var(--pz-past); box-shadow: inset 0 0 0 1px var(--pz-line); } .ps-lg i.tdy { background: var(--pz-today); box-shadow: inset 0 0 0 1px #bfd4f2; }
 .ps-lg span.src { color: var(--ink-2); }
-/* 11/17 사용자 '이번 주·다음 주 같은 표 두 개라 헷갈림' — 표 위 제목 띠 + 이번 주 = 파랑 머리 · 다음 주 = 회색 머리 + 왼쪽 색 막대 */
+/* 11/17 사용자 '이번 주·다음 주 같은 표 두 개라 헷갈림': 표 위 제목 띠 + 이번 주 = 파랑 머리 · 다음 주 = 회색 머리 + 왼쪽 색 막대 */
 .pz-cap { display: flex; align-items: baseline; gap: 12px; margin: 0 0 8px; padding: 8px 14px; border-radius: 10px; text-align: left; }
 .pz-cap b { font-size: 18px; font-weight: 800; } .pz-cap span { font-size: 15px; font-weight: 700; } .pz-cap em { font-style: normal; font-size: 14px; color: var(--ink-2); margin-left: auto; }
 .pz-cap { flex-wrap: wrap; row-gap: 2px; } .pz-cap b, .pz-cap span { white-space: nowrap; }   /* 11/19: 390 폭 '이번 주'·기간이 낱말 중간에서 갈라지던 것 */
@@ -185,13 +185,13 @@ html:root body main #ps-main table.psw.cur thead tr.wh th:not(.td) { background:
 html:root body main #ps-main table.psw.nxt thead tr.wh th:not(.td) { background: color-mix(in srgb, #7c3aed 6%, var(--surface)) !important; }
 .ps-gap { height: 28px; }
 .ps-lg span.src { white-space: normal; text-align: center; flex-basis: 100%; justify-content: center; } html body main #ps-main table.psw thead th.cn { white-space: nowrap; }
-/* 11/17 검토: 상세표 — 사양 칩은 칸 안에서 줄바꿈(옆 칸 침범 금지) · 지난/늦은 납기 빨강 · 맨 아래 작업 순서 = 보기 전용 + 고치는 화면 링크 */
+/* 11/17 검토: 상세표: 사양 칩은 칸 안에서 줄바꿈(옆 칸 침범 금지) · 지난/늦은 납기 빨강 · 맨 아래 작업 순서 = 보기 전용 + 고치는 화면 링크 */
 table.ps-seq td.sp { white-space: normal !important; overflow: hidden; word-break: keep-all; line-height: 1.9 !important; }
 table.ps-seq th { word-break: keep-all; }
 html.v2 body main table.ps-seq tr.pdue td.dl { color: var(--bad) !important; font-weight: 800; }
 .ps-go { margin-left: 14px; font-size: 15px; font-weight: 700; color: var(--brand-2, #1f5fae); text-decoration: none; white-space: nowrap; } .ps-go:hover { text-decoration: underline; }
 .ps-line .nw { white-space: nowrap; } #ps-ordc .pt .s .nw, #ps-ordc .pt .s .bad { white-space: nowrap; }
-/* 11/17 검토 390: 주문진도 카드 큰 숫자·그룹 톤이 칸 밖으로 — 좁은 화면은 한 줄에 카드 하나 */
+/* 11/17 검토 390: 주문진도 카드 큰 숫자·그룹 톤이 칸 밖으로: 좁은 화면은 한 줄에 카드 하나 */
 @media (max-width: 640px) { #ps-ordc .pts, #ps-ordc .pts.p5, #ps-ordc .pts.p6, #ps-ordc .pts.p7 { grid-template-columns: minmax(0, 1fr) !important; } #ps-ordc .pts.p7 .pt .v { font-size: 26px; } }
 /* 11/17 용어 기준: 날짜·기간 = 굵은 진한 파랑 */
 .dt { font-weight: 800; color: var(--brand-2, #1f5fae); } .ps-line b.dt { color: var(--brand-2, #1f5fae); }

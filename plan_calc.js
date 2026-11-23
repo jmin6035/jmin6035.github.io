@@ -1,8 +1,8 @@
-/* 계획 계산(11/11 계획 기준 탭 개편 — 옛 '도금 계획 계산'·'컬러 계획 계산' 화면의 결과 부분을 합침, 계산 도구는 rolling.html·color_calc.html 그대로):
+/* 계획 계산(11/11 계획 기준 탭 개편: 옛 '도금 계획 계산'·'컬러 계획 계산' 화면의 결과 부분을 합침, 계산 도구는 rolling.html·color_calc.html 그대로):
    이번 달 계획이 어떻게 계산됐는지 숫자로. 도금(#cg) / 컬러(#cc) 전환.
-   자료: integrated.enc.json(variants.V1.plan = 그룹 월 계획 판매·목표·기초 — cglplan/pages.py f3_month_plan 과 같은 값),
+   자료: integrated.enc.json(variants.V1.plan = 그룹 월 계획 판매·목표·기초: cglplan/pages.py f3_month_plan 과 같은 값),
         latest.plan.enc.json(orderDemand = 부서·강종·월 주문/판매계획 보충, cal = 강종·M/C, replan.options.lockTo),
-        portal.enc.json(plating.now = 결품·지연 — 홈과 같은 정의, color.unplaced), color_rolling.enc.json(컬러 이번 달 롤링). */
+        portal.enc.json(plating.now = 결품·지연: 홈과 같은 정의, color.unplaced), color_rolling.enc.json(컬러 이번 달 롤링). */
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
@@ -51,7 +51,7 @@
     $('k-h').innerHTML = `도금 계산 결과 <small>실적 <b class="dt">${md(rp.t0)}</b>까지 · 재계획 ${esc(kst((LP && LP.savedAt) || PO.built))}</small>`;
     $('k-row').innerHTML = kpi('남은 M/C', `${n0(nmc)}<small>회</small>`, `고정 ${md(lockTo())}까지 · 그 뒤 엔진이 정함`, '')
       + kpi('결품', `${n0(now.short)}<small>t</small>`, `주문 ${n0(now.orderShort)}t · 판매계획 보충 ${n0(now.fillShort)}t`, now.orderShort > 0 ? 'bad' : now.short > 0 ? 'warn' : 'ok', (now.shortBy || []).join(' · '))
-      + kpi('납기 지연', `${n0(now.late)}<small>톤·일</small>`, `${now.orderLateT >= 0.5 ? `늦게 만드는 주문 ${n0(now.orderLateT)}t` : '주문 지연 0t — 지연은 판매계획 보충분(주문 연결 전)'} → <a href="risk.html">납기 위험</a>`, now.late > 0 ? 'warn' : 'ok', '원래 납기 기준 — 홈·가동 현황과 같은 값')
+      + kpi('납기 지연', `${n0(now.late)}<small>톤·일</small>`, `${now.orderLateT >= 0.5 ? `늦게 만드는 주문 ${n0(now.orderLateT)}t` : '주문 지연 0t: 지연은 판매계획 보충분(주문 연결 전)'} → <a href="risk.html">납기 위험</a>`, now.late > 0 ? 'warn' : 'ok', '원래 납기 기준: 홈·가동 현황과 같은 값')
       + kpi('빼고 계산한 잔량', `${n0(Object.values((R.orderDemand || {}).skip || {}).reduce((a, v) => a + v, 0))}<small>t</small>`, Object.keys((R.orderDemand || {}).skip || {}).map(esc).join(' · ') || '없음', '');
     // 그룹 월 계획 + 수요 구성
     const OD = R.orderDemand || {}, sumOD = (src, cls) => Object.entries(OD[src] || {}).filter(([k]) => cls.includes(k.split('|')[0]) && k.split('|')[2] === ym).reduce((a, [, v]) => a + v, 0);
@@ -62,7 +62,7 @@
       ['s', 'tg', 'b', 'p'].forEach((k) => { tot[k] += x[k] || 0; }); tot.o += o; tot.f += f;
       return `<tr><td class="l"><b>${esc(nm)}</b></td><td class="n">${n0(x.s)}</td><td class="op">+</td><td class="n" title="${x.days != null ? `월말 목표 = ${x.days}일치` : ''}">${n0(x.tg)}</td><td class="op">−</td><td class="n">${n0(x.b)}</td><td class="op">=</td><td class="n eq">${n0(x.p)}</td><td class="n">${n0(o)}</td><td class="n">${n0(f)}</td><td class="nt">${esc(x.note ? x.note.replace(/^월 계획 [\d,]+t\(.*?\) · /, '') : '')}</td></tr>`;
     }).join('');
-    $('f-tab').innerHTML = `<thead><tr><th class="l">그룹</th><th class="n" title="판매생산속보 월 판매 · 자가재 = 컬러 사용량">판매</th><th></th><th class="n" title="다음 달 하루 판매 × 목표 일수(상한)">목표 재고</th><th></th><th class="n" title="전달 말 MES 재고현황">기초 재고</th><th></th><th class="n">월 계획</th><th class="n" title="생산 안 된 주문 잔량 — 필요일이 이번 달인 것">남은 주문</th><th class="n" title="주문이 판매계획보다 적은 만큼 채운 양">판매계획 보충</th><th class="l">비고</th></tr></thead><tbody>${rows}`
+    $('f-tab').innerHTML = `<thead><tr><th class="l">그룹</th><th class="n" title="판매생산속보 월 판매 · 자가재 = 컬러 사용량">판매</th><th></th><th class="n" title="다음 달 하루 판매 × 목표 일수(상한)">목표 재고</th><th></th><th class="n" title="전달 말 MES 재고현황">기초 재고</th><th></th><th class="n">월 계획</th><th class="n" title="생산 안 된 주문 잔량: 필요일이 이번 달인 것">남은 주문</th><th class="n" title="주문이 판매계획보다 적은 만큼 채운 양">판매계획 보충</th><th class="l">비고</th></tr></thead><tbody>${rows}`
       + `<tr class="gh"><td class="l">합계</td><td class="n">${n0(tot.s)}</td><td class="op">+</td><td class="n">${n0(tot.tg)}</td><td class="op">−</td><td class="n">${n0(tot.b)}</td><td class="op">=</td><td class="n eq">${n0(tot.p)}</td><td class="n">${n0(tot.o)}</td><td class="n">${n0(tot.f)}</td><td></td></tr></tbody>`;
     $('f-lg').innerHTML = `월 계획 = 그룹 생산 목표(한 달 고정) · 도금 일정은 남은 주문 + 판매계획 보충을 필요일 순으로 깔고 결품 → 지연 → M/C → 앞당김 생산 최소로 정함 · 진도 → <a href="supply.html">월간 가동</a>`;
     // M/C
@@ -88,7 +88,7 @@
     const byG = Object.fromEntries(G.map((x) => [x.g, x]));
     const rows = CG.map(([g, nm, subs]) => {
       const x = f3(g) || {}, S = subs.map((k) => byG[k]).filter(Boolean), sp = S.reduce((a, y) => a + (y.plan || 0), 0);
-      const hd = `<tr class="gh"><td class="l">${esc(nm)}</td><td class="n">${n0(x.s)}</td><td class="op">+</td><td class="n" title="${x.days != null ? `월말 목표 = ${x.days}일치` : ''}">${n0(x.tg)}</td><td class="op">−</td><td class="n">${n0(x.b)}</td><td class="op">=</td><td class="n eq">${n0(x.p)}</td><td class="n" title="${Math.abs(sp - (x.p || 0)) > 50 ? '그룹 월 계획과 다름 — 비고' : ''}">${n0(sp)}</td><td class="n">${n0(S.reduce((a, y) => a + (y.act || 0), 0))}</td><td class="n">${n0(S.reduce((a, y) => a + (y.conf || 0), 0))}</td><td class="n">${n0(S.reduce((a, y) => a + (y.roll || 0), 0))}</td><td class="n">${n0(S.reduce((a, y) => a + (y.unpl || 0), 0))}</td><td class="nt">${esc(g === 'C건재' && (x.p || 0) < 0.5 && sp > 0 ? '그룹 계획 0(과재고)이어도 주문재 주문·계획재 안전재고 몫은 생산' : x.note ? x.note.replace(/^월 계획 [\d,]+t\(.*?\) · /, '') : '')}</td></tr>`;
+      const hd = `<tr class="gh"><td class="l">${esc(nm)}</td><td class="n">${n0(x.s)}</td><td class="op">+</td><td class="n" title="${x.days != null ? `월말 목표 = ${x.days}일치` : ''}">${n0(x.tg)}</td><td class="op">−</td><td class="n">${n0(x.b)}</td><td class="op">=</td><td class="n eq">${n0(x.p)}</td><td class="n" title="${Math.abs(sp - (x.p || 0)) > 50 ? '그룹 월 계획과 다름: 비고' : ''}">${n0(sp)}</td><td class="n">${n0(S.reduce((a, y) => a + (y.act || 0), 0))}</td><td class="n">${n0(S.reduce((a, y) => a + (y.conf || 0), 0))}</td><td class="n">${n0(S.reduce((a, y) => a + (y.roll || 0), 0))}</td><td class="n">${n0(S.reduce((a, y) => a + (y.unpl || 0), 0))}</td><td class="nt">${esc(g === 'C건재' && (x.p || 0) < 0.5 && sp > 0 ? '그룹 계획 0(과재고)이어도 주문재 주문·계획재 안전재고 몫은 생산' : x.note ? x.note.replace(/^월 계획 [\d,]+t\(.*?\) · /, '') : '')}</td></tr>`;
       return hd + (S.length < 2 ? '' : S.map((y) => `<tr class="sub"><td class="l">${esc(y.g === '주문재' ? '건재 주문재' : y.g)}</td><td colspan="7"></td><td class="n">${n0(y.plan)}</td><td class="n">${n0(y.act)}</td><td class="n">${n0(y.conf)}</td><td class="n">${n0(y.roll)}</td><td class="n">${n0(y.unpl)}</td><td></td></tr>`).join(''));
     }).join('');
     $('f-tab').innerHTML = `<thead><tr><th class="l">그룹</th><th class="n" title="판매생산속보 월 판매">판매</th><th></th><th class="n" title="다음 달 하루 판매 × 목표 일수(상한)">목표 재고</th><th></th><th class="n" title="전달 말 MES 재고현황">기초 재고</th><th></th><th class="n">월 계획</th><th class="n" title="품목·계획재까지 나눈 이번 달 롤링 기준량">롤링 계획</th><th class="n">실적</th><th class="n" title="확정 창 안 작업지시(1030 작업대기 · 1020 지시대기)">확정</th><th class="n" title="남은 양을 내일부터 다시 배치한 양">다시 배치</th><th class="n">미편성</th><th class="l">비고</th></tr></thead><tbody>${rows}</tbody>`;
@@ -101,10 +101,10 @@
     $('r-asof').textContent = `자료 ${kst((PO || {}).built)}`;
     $('r-ref').innerHTML = [
       '그룹 월 계획 = 판매(판매생산속보 월 판매, 자가재 = 컬러 사용량) + 목표 재고(다음 달 하루 판매 × 목표 일수, 상한) − 기초 재고(전달 말 MES 재고현황). 0 미만 = 0',
-      '남은 주문 = 생산 안 된 주문 잔량 중 필요일이 이번 달 — 수출 = 출항 − 1일, 내수 = 납기월 말일, 자가재 = 컬러 사용일 − 1일',
+      '남은 주문 = 생산 안 된 주문 잔량 중 필요일이 이번 달: 수출 = 출항 − 1일, 내수 = 납기월 말일, 자가재 = 컬러 사용일 − 1일',
       '판매계획 보충 = 부서 누계로 판매계획 − 주문, 모자란 만큼(강종 = 판매계획 비율)',
-      `도금 속도(t/시간) = 1CGL AL ${(rb['1CGL|AL'] * 60).toFixed(1)} · AZ ${(rb['1CGL|AZ'] * 60).toFixed(1)} · 2CGL AL ${(rb['2CGL|AL'] * 60).toFixed(1)} · MAC ${(rb['2CGL|MAC'] * 60).toFixed(1)} — 실적 하루 생산량 기준`,
-      LT ? `리드타임 — 자가재 도금 생산 = 컬러 사용일 −${LT.selfLead} ~ −${LT.selfLeadMin}일 · 구매 소재 투입 여유 컬러 ${LT.safetyC} · 도금 ${LT.safetyG}일 → <a href="leadtime.html">리드타임 기준</a>` : '',
+      `도금 속도(t/시간) = 1CGL AL ${(rb['1CGL|AL'] * 60).toFixed(1)} · AZ ${(rb['1CGL|AZ'] * 60).toFixed(1)} · 2CGL AL ${(rb['2CGL|AL'] * 60).toFixed(1)} · MAC ${(rb['2CGL|MAC'] * 60).toFixed(1)}: 실적 하루 생산량 기준`,
+      LT ? `리드타임: 자가재 도금 생산 = 컬러 사용일 −${LT.selfLead} ~ −${LT.selfLeadMin}일 · 구매 소재 투입 여유 컬러 ${LT.safetyC} · 도금 ${LT.safetyG}일 → <a href="leadtime.html">리드타임 기준</a>` : '',
       '규칙 전체 → <a href="rules.html">계획 규칙</a> · 실측 속도·손실 → <a href="analysis.html">조건 분석</a> · 결정 → <a href="decisions.html">결정 기록</a>',
     ].filter(Boolean).map((x) => `<li>${x}</li>`).join('');
   }

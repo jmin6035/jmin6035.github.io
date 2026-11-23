@@ -1,5 +1,5 @@
 /* 컬러 주문진도(11/11 '컬러 주문·납기'에서 이름 통일): published/cc_order_progress.enc.json (tools/cc_order_progress.py)
-   11/3 사용자 '주문 납기 컬러 버전 — 재고기반 주문서·소재발주·자가재 구분, 소재 매치 됐다/안 됐다를 주문·납기 탭과 최대한 똑같이'
+   11/3 사용자 '주문 납기 컬러 버전: 재고기반 주문서·소재발주·자가재 구분, 소재 매치 됐다/안 됐다를 주문·납기 탭과 최대한 똑같이'
    원천 = MES 작업지시대상선정(SSCHC1010) 라인별(주문·생산·지시·잔여·매치·소재량·작업예정) + 가동편성(가동가능일) + 주문서 소재 연결 */
 (function () {
   'use strict';
@@ -25,7 +25,7 @@
     stale: ['종결 확인', (x) => x.stale],
     all: ['전체', () => true],
   };
-  const BY = { cus: ['고객사', (x) => x.cus || (O.cusLoaded ? '고객사 미확인' : '고객사 — 다음 자동 실행부터')], man: ['담당자', (x) => x.man || '담당자 미확인'], route: ['소재 경로', (x) => x.route] };
+  const BY = { cus: ['고객사', (x) => x.cus || (O.cusLoaded ? '고객사 미확인' : '고객사: 다음 자동 실행부터')], man: ['담당자', (x) => x.man || '담당자 미확인'], route: ['소재 경로', (x) => x.route] };
   if (!BY[by]) by = 'cus';
   const ST = { '매치 완료': 'ok', '소재 있음': 'mid', '입고 대기': 'hurry', '소재 없음': 'late' };
   const stBadge = (x) => `<span class="st ${ST[x.st] || 'na'}">${esc(x.st)}</span>` + (x.lateDue ? '<div class="sub" style="color:var(--bad);font-weight:700">납기 경과</div>' : '');
@@ -53,12 +53,12 @@
       + `<td class="num"><b>${n1(x.remT)}t</b><div class="sub">주문 ${n1(x.ordT)} · 생산 ${n1(x.prodT)}</div><div class="hb" style="--gc:var(--g3a);margin-top:4px" title="생산 ${Math.round(pct)}%"><i style="width:${pct.toFixed(1)}%"></i></div></td>`
       + `<td class="num">${x.mchT > 0.0005 ? `<b>${n1(x.mchT)}t</b>` : '<span class="sub">매치 0</span>'}${x.woT ? `<div class="sub">지시 ${n1(x.woT)}t</div>` : ''}</td>`
       + `<td>${matCell(x)}</td>`
-      + `<td class="num">${x.sche ? `<div>예정 <b>${md(x.sche)}</b></div>` : '<span class="sub">-</span>'}${x.can ? (x.can <= O.asOf ? `<div class="sub" title="가동가능일(도료·PF·잉크·라미 입고 중 가장 늦은 날) ${md(x.can)} — 경과">가동 가능</div>` : `<div class="${x.lateCan ? 'rem' : 'sub'}" title="가동가능일 = 도료·PF·잉크·라미 입고 중 가장 늦은 날">가능 ${md(x.can)}${x.canBy ? ` · ${esc(String(x.canBy).replace('입고예정일', '').replace('생산일', ''))}` : ''}</div>`) : ''}</td></tr>`;
+      + `<td class="num">${x.sche ? `<div>예정 <b>${md(x.sche)}</b></div>` : '<span class="sub">-</span>'}${x.can ? (x.can <= O.asOf ? `<div class="sub" title="가동가능일(도료·PF·잉크·라미 입고 중 가장 늦은 날) ${md(x.can)}: 경과">가동 가능</div>` : `<div class="${x.lateCan ? 'rem' : 'sub'}" title="가동가능일 = 도료·PF·잉크·라미 입고 중 가장 늦은 날">가능 ${md(x.can)}${x.canBy ? ` · ${esc(String(x.canBy).replace('입고예정일', '').replace('생산일', ''))}` : ''}</div>`) : ''}</td></tr>`;
   }
   const COLS = '<colgroup>' + [8, 14, 13, 8.5, 11, 9, 21.5, 15].map((w) => `<col style="width:${w}%">`).join('') + '</colgroup>';
   const HEAD = '<thead><tr><th>상태</th><th>계약번호-행번</th><th>두께×폭 · 색</th><th>납기</th><th class="num" title="미생산 = 주문량 − 생산량">미생산 · 주문 · 생산</th><th class="num">매치 · 지시</th><th>소재 연결</th><th class="num">작업 예정 · 가동가능</th></tr></thead>';
   const sumOf = (L) => ({ n: L.length, rem: L.reduce((s, x) => s + x.remT, 0), late: L.filter((x) => x.lateDue).length, none: L.filter((x) => x.st === '소재 없음').length, nomch: L.filter((x) => x.st !== '매치 완료').length });
-  /* 11/11 회의 '누르면 그것만 나올 줄 알았는데 전부 나온다 — 컬러도 똑같다': 묶음 머리 칩 = 그 묶음 안 거르기('N건' = 전체) */
+  /* 11/11 회의 '누르면 그것만 나올 줄 알았는데 전부 나온다: 컬러도 똑같다': 묶음 머리 칩 = 그 묶음 안 거르기('N건' = 전체) */
   const stat = (S) => `<button type="button" class="gs gf" data-sf="" title="이 묶음 전체"><b>${n0(S.n)}</b>건</button><span class="gs">미생산 <b>${n0(S.rem)}</b>t</span>`
     + (S.nomch ? `<button type="button" class="gs gf warn" data-sf="nomch" title="이 묶음에서 미매치만">미매치 <b>${S.nomch}</b></button>` : '') + (S.none ? `<button type="button" class="gs gf bad" data-sf="none" title="이 묶음에서 소재 없음만">소재 없음 <b>${S.none}</b></button>` : '') + (S.late ? `<button type="button" class="gs gf bad" data-sf="late" title="이 묶음에서 납기 경과만">납기 경과 <b>${S.late}</b></button>` : '');
   function grpChart(byG) {                                    // 판매그룹별 잔량 = 매치 완료 + 소재 있음 + 입고 대기 + 소재 없음(t)
@@ -73,7 +73,7 @@
       + '<div class="scroll"><table class="t gtab"><thead><tr><th>그룹</th><th>건</th><th>미생산 t</th><th>매치 완료 t</th><th>소재 있음 t</th><th>입고 대기 t</th><th>소재 없음 t</th><th>납기 경과 건</th></tr></thead>'
       + `<tbody>${R.map((x, i) => tr(x, i)).join('')}</tbody></table></div></div>`;
   }
-  /* ── 새 양식(UI.v2, ?ui=v2) — 도금 주문진도(cg_order.js)와 같은 칸 순서·이름: 계약 한 줄 = 한 줄 높이, 세부는 줄을 누르면 펼침. 숫자·계산은 그대로(표시만) ── */
+  /* ── 새 양식(UI.v2, ?ui=v2): 도금 주문진도(cg_order.js)와 같은 칸 순서·이름: 계약 한 줄 = 한 줄 높이, 세부는 줄을 누르면 펼침. 숫자·계산은 그대로(표시만) ── */
   const V2 = () => !!(window.UI && UI.v2);
   const dPast = (a) => Math.round((Date.parse(O.asOf) - Date.parse(a)) / 864e5);
   const s2 = (t, c, tip) => `<span class="s2${c ? ' ' + c : ''}"${tip ? ` title="${esc(tip)}"` : ''}>${t}</span>`;
@@ -96,16 +96,16 @@
       + `<td class="n">${can}</td></tr>`
       + `<tr class="dt ${fc}" hidden><td colspan="9">${detailV2(x)}</td></tr>`;
   }
-  /* 주문 상세(11/13 사용자 '구분이라도 좀 더 잘되게 · 정리 좀 잘해봐라' — 도금 주문진도와 같은 양식): 판정 한 줄 → ① 주문 | ② 납기 → ③ 흐름(소재 → 매치 → 작업 지시 → 생산 → 출하) */
+  /* 주문 상세(11/13 사용자 '구분이라도 좀 더 잘되게 · 정리 좀 잘해봐라': 도금 주문진도와 같은 양식): 판정 한 줄 → ① 주문 | ② 납기 → ③ 흐름(소재 → 매치 → 작업 지시 → 생산 → 출하) */
   const dI = (k, v, cls) => (v ? `<div class="dx-i"><div class="k">${k}</div><div class="v${cls ? ' ' + cls : ''}">${v}</div></div>` : '');
   const dS = (nm, st, word, v, lines = []) => `<div class="dx-s ${st}"><div class="h">${nm}${word ? `<span class="w">${word}</span>` : ''}</div><div class="v">${v}</div>${lines.filter(Boolean).map((l) => (typeof l === 'string' ? `<div class="l">${l}</div>` : `<div class="l ${l[1]}">${l[0]}</div>`)).join('')}</div>`;
   function detailV2(x) {
     const a = O.asOf, ordT = x.ordT || 0, rem = x.remT || 0, done = rem <= 0.5;
     const V = [];
-    if (x.st === '소재 없음') V.push(['bad', '소재 없음 — 규격 재고·발주·자가재 모두 없음 → 소재 발주 필요']);
+    if (x.st === '소재 없음') V.push(['bad', '소재 없음: 규격 재고·발주·자가재 모두 없음 → 소재 발주 필요']);
     if (x.lateDue) V.push(['bad', `납기 ${dPast(x.due)}일 지남 · 미생산 ${n1(rem)}t`]);
     if (x.stale) V.push(['warn', `납기 60일 넘게 지남 · MES 종결 확인`]);
-    if (x.lateCan) V.push(['warn', `가동 가능 ${md(x.can)} — 납기 뒤(${String(x.canBy || '').replace('입고예정일', '').replace('생산일', '')})`]);
+    if (x.lateCan) V.push(['warn', `가동 가능 ${md(x.can)}: 납기 뒤(${String(x.canBy || '').replace('입고예정일', '').replace('생산일', '')})`]);
     if (!V.length) V.push(['ok', `${x.st}${x.sche ? ` · 작업 예정 ${md(x.sche)}` : ''}`]);
     const tone = V.some((v) => v[0] === 'bad') ? 'bad' : V.some((v) => v[0] === 'warn') ? 'warn' : 'ok';
     const chips = [x.pdtNm && `<b>${esc(x.pdtNm)}</b>${x.pdt ? ` ${esc(x.pdt)}` : ''}`, x.top && `상도 <b>${esc(x.top)}</b>`, x.pri && `P ${esc(x.pri)}`, x.back && `B ${esc(x.back)}`].filter(Boolean).map((t) => `<span class="dx-c">${t}</span>`).join('');
@@ -180,7 +180,7 @@
       + `<div class="og-b">${subs.map(([k, v], i) => sub(k, v, i)).join('')}</div></section>`;
   }
   /* 첫 화면 결론(11/11): 조치가 필요한 묶음(건·미생산 t)을 크게 → 누르면 아래 목록이 그 묶음만 · 이번 주(수~화) 납기 한 줄 */
-  const TOP = ['none', 'late', 'wait', 'stock', 'act'], TIP = { none: '규격 재고·발주·자가재 모두 없음 — 소재 발주 필요', late: '납기일 지남 · 생산 남음(60일 넘게 지난 미종결은 종결 확인으로 따로)', wait: '소재 발주·자가재 입고 대기', stock: '규격 맞는 재고 있음 — 매치만 하면 됨', act: '소재 없음 + 도료·소재 준비가 납기 이후 + 납기 경과 미매치' };
+  const TOP = ['none', 'late', 'wait', 'stock', 'act'], TIP = { none: '규격 재고·발주·자가재 모두 없음: 소재 발주 필요', late: '납기일 지남 · 생산 남음(60일 넘게 지난 미종결은 종결 확인으로 따로)', wait: '소재 발주·자가재 입고 대기', stock: '규격 맞는 재고 있음: 매치만 하면 됨', act: '소재 없음 + 도료·소재 준비가 납기 이후 + 납기 경과 미매치' };
   const wed = (s) => { const d = new Date(s + 'T00:00:00Z'); return new Date(d.getTime() - ((d.getUTCDay() + 4) % 7) * 864e5).toISOString().slice(0, 10); };
   const addD = (s, n) => new Date(Date.parse(s + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10);
   function topCard(R) {
@@ -195,12 +195,12 @@
     const li = (a, b) => `<dt>${a}</dt><dd>${b}</dd>`;
     return `<details class="fold od-fold"><summary>기준·사양</summary><dl class="od-def">`
       + li('기준일', `${UI.fmtDate(O.asOf)} · ${O.lines.map((l) => `${l} ${md(O.srcs[l].date)}`).join(' · ')}${O.missing.length ? ` · ${O.missing.join('·')} 자료 없음` : ''}`)
-      + li('대상', 'MES 작업지시대상선정 라인별 주문 — 미생산 0 이하·1,000kg 이하 제외(계약번호 5번째 T·Q 는 포함)')
+      + li('대상', 'MES 작업지시대상선정 라인별 주문: 미생산 0 이하·1,000kg 이하 제외(계약번호 5번째 T·Q 는 포함)')
       + li('미생산', '주문량 − 생산량')
       + li('소재 경로', '계약번호 6번째 C = 재고기반(규격상 재고), M = 소재 발주 + 고객주문 · 자가재 = 도금 주문 연결')
       + li('매치', 'MES 작업지시대상선정 매치량 · 소재 있음(매치 전) = 규격 맞는 재고가 있으나 매치 전')
       + li('가동 가능일', '도료·PF·잉크·라미 입고 중 가장 늦은 날')
-      + li('규격 이름', 'MES 코드표(주문규격기준·컬러소재규격)의 규격 번호·품질 등급(CQ 일반용 · DQ 가공용 · DDQ 심가공용 · EDDQ 초심가공용 · Gr 구조용)으로 붙인 이름 — 마우스를 올리면 원코드')
+      + li('규격 이름', 'MES 코드표(주문규격기준·컬러소재규격)의 규격 번호·품질 등급(CQ 일반용 · DQ 가공용 · DDQ 심가공용 · EDDQ 초심가공용 · Gr 구조용)으로 붙인 이름: 마우스를 올리면 원코드')
       + li('참고', '<a href="leadtime.html">소재 리드타임 표 →</a> · <a href="risk.html">납기 위험 →</a> · <a href="ct_orders.html#track">주문진도(작업지시대상 단계) →</a>')
       + '</dl></details>';
   }
@@ -214,9 +214,9 @@
     const byG = groups.map((g) => [g, L.filter((x) => x.grp === g)]).filter((e) => e[1].length);
     const S = sumOf(L);
     $('od-meta').textContent = `${UI.fmtDate(O.asOf)} 기준 · ${O.lines.map((l) => `${l} ${md(O.srcs[l].date)}`).join(' · ')}${O.missing.length ? ` · ${O.missing.join('·')} 자료 없음` : ''}`;
-    const scN = window.UI && UI.scope && UI.scope() === 'G' ? '<p class="od-wait">이 화면은 컬러 주문입니다 — <a href="cg_order.html?pl=G">도금 주문진도 →</a></p>' : '';
+    const scN = window.UI && UI.scope && UI.scope() === 'G' ? '<p class="od-wait">이 화면은 컬러 주문입니다: <a href="cg_order.html?pl=G">도금 주문진도 →</a></p>' : '';
     $('od-main').innerHTML = scN + topCard(R) + `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 주문진도</h2>`
-      + (O.missing.length ? `<p class="od-wait">⏳ ${O.missing.join('·')}: 작업지시대상선정 자료 없음 — 라인별 내려받기 수신 시 같은 화면에 표시</p>` : '')
+      + (O.missing.length ? `<p class="od-wait">⏳ ${O.missing.join('·')}: 작업지시대상선정 자료 없음: 라인별 내려받기 수신 시 같은 화면에 표시</p>` : '')
       + `<div class="od-flt"><span class="lb">묶음</span><span class="seg" id="od-by">${Object.keys(BY).map((b) => `<button type="button" data-b="${b}" aria-pressed="${b === by}">${BY[b][0]}별</button>`).join('')}</span>`
       + `<select id="od-f" aria-label="상태">${Object.keys(F).map((f) => `<option value="${f}"${f === flt ? ' selected' : ''}>${F[f][0]} ${n0(R.filter(F[f][1]).length)}</option>`).join('')}</select>`
       + `<select id="od-ln" aria-label="라인"><option value="">라인 전체</option>${['1CCL', '2CCL', '3CCL', '4CCL'].map((l) => `<option${ln === l ? ' selected' : ''}${O.lines.includes(l) ? '' : ' disabled'}>${l}</option>`).join('')}</select>`
@@ -249,14 +249,14 @@
     }); }
     if (window.UI) UI.reveal($('od-main'));
   }
-  // 11/11 회의 '도금·컬러 나누는 거 — 눌러도 똑같다': 위 보기에서 도금을 누르면 도금 주문진도로
+  // 11/11 회의 '도금·컬러 나누는 거: 눌러도 똑같다': 위 보기에서 도금을 누르면 도금 주문진도로
   if (window.UI && UI.onScope) UI.onScope(() => { if (UI.scope() === 'G') location.href = 'cg_order.html?pl=G'; });
   const envReady = GP.latest('cc_order_progress.enc.json');
   async function unlock(pw) {
     const env = await envReady;
     if (!env) { $('od-msg').textContent = '게시된 자료가 없습니다.'; return; }
     try { O = await GP.decryptJSON(env, pw);
-      // 11/13 점검: 납기 60일 넘게 지난 미종결 = '종결 확인'(주문진도(전체)·납기 위험과 같은 기준, ui/ct.js STALE) — 납기 경과에서 뺌
+      // 11/13 점검: 납기 60일 넘게 지난 미종결 = '종결 확인'(주문진도(전체)·납기 위험과 같은 기준, ui/ct.js STALE): 납기 경과에서 뺌
       { const td = window.UI && UI.today ? UI.today(O.asOf) : O.asOf; for (const x of O.rows || []) if (x.lateDue && x.due && (Date.parse(String(x.due).slice(0, 10)) - Date.parse(String(td).slice(0, 10))) / 864e5 < -60) { x.stale = true; x.lateDue = false; } }
       try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
     catch (e) { $('od-form').hidden = false; $('od-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }

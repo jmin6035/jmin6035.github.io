@@ -1,5 +1,5 @@
 /* 도금 작업지시 순서 제안: published/cg_wo_proposal.enc.json (tools/cg_wo_sequence.py)
-   라인 탭 → 요약(1010 대상 · 제안대로면 · 예상 더미 · MES 비교) → 표면사상 묶음 → 날짜별 제안 순서(하루 띠, 계약번호-행번 단위 — 10/28 사용자) → 현장 시계 */
+   라인 탭 → 요약(1010 대상 · 제안대로면 · 예상 더미 · MES 비교) → 표면사상 묶음 → 날짜별 제안 순서(하루 띠, 계약번호-행번 단위: 10/28 사용자) → 현장 시계 */
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
@@ -19,7 +19,7 @@
   const tabs = () => '';
   const bindTabs = () => {};
 
-  // 표 열(10/28 사용자 '다시 재구성': 어떤 조건으로 골랐나 · 몇 톤 몇 분 · 더미 얼마) — 순서·시간 | 계약 | 사양 | 생산 예상 | 선정 조건 | 예상 더미
+  // 표 열(10/28 사용자 '다시 재구성': 어떤 조건으로 골랐나 · 몇 톤 몇 분 · 더미 얼마): 순서·시간 | 계약 | 사양 | 생산 예상 | 선정 조건 | 예상 더미
   const IND = { A: '508', B: '610', C: '305' };
   function gatesHtml(x) {
     const G = x.gates || [];
@@ -34,7 +34,7 @@
     if (none.length) h += `<div class="wo-g na" title="내경 = 제품 내경코드 조회는 다음 자동 실행부터 반영 · 재질 = 소재 입고 표에 이 코일 규격이 없음">– 미확인 ${esc(none.join('·'))}</div>`;
     return h;
   }
-  const GR = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E 극저', GREL: 'Gr.E 저탄', GRA: 'Gr.A', GRB: 'Gr.B' };   // 재질(열처리 등급) — 주문 제품 규격 우선, 없으면 소재 규격
+  const GR = { CQ: 'CQ', DQ: 'DQ', DDQ: 'DDQ', EDDQ: 'EDDQ', LFQ: 'LFQ', GRC: 'Gr.C', GRD: 'Gr.D', GRE: 'Gr.E 극저', GREL: 'Gr.E 저탄', GRA: 'Gr.A', GRB: 'Gr.B' };   // 재질(열처리 등급): 주문 제품 규격 우선, 없으면 소재 규격
   function row(x, day) {
     const dn = x.exp >= 1;                                         // 1분 미만은 '거의 없음'(사양이 안 바뀌어도 생기는 수준)
     const t = x.trt || {};
@@ -42,10 +42,10 @@
     return `<tr${dn ? ' class="hasdn"' : ''}>`
       + `<td class="tm"><div class="wo-no">${x.seq}</div><b>${String(x.start || '').slice(6)}</b>–${String(x.end || '').slice(6)}${day && x.start && x.start.slice(0, 5) !== day.slice(5) ? '<div class="bk">다음날</div>' : ''}${dn ? `<div class="bk">더미 ${String(x.downStart || '').slice(6)}부터</div>` : ''}</td>`
       + `<td class="l">${x.con ? `<b class="wo-con">${esc(x.con)}</b>` : '<span class="bk">계약 미연결</span>'}${x.dummy ? ' <span class="gt gt3" title="계약번호 PGXXD… = 더미 코일(주문 아님)">더미</span>' : ''}${x.conf ? '' : '<span class="gt gt3">미확정</span>'}<div class="bk">소재 ${esc(x.raw)}${x.req ? ` · 예정 ${md(x.req)}` : ''}${x.dlv ? ` · 납기 ${md(x.dlv)}` : ''}</div></td>`
-      + `<td class="l"><b class="wo-sz">${(+x.thick).toFixed(2)} × ${n0(x.width)}</b>${x.grade ? ` <span class="wo-gr" title="열처리 등급 — ${esc(x.pspec || x.spec || '')}">${esc(GR[x.grade] || x.grade)}</span>` : ''}<div class="bk">${esc(x.sur)}${sp.length ? ' · ' + esc(sp.join(' · ')) : (x.con ? ' · 후처리 조회 대기' : '')}</div></td>`
+      + `<td class="l"><b class="wo-sz">${(+x.thick).toFixed(2)} × ${n0(x.width)}</b>${x.grade ? ` <span class="wo-gr" title="열처리 등급: ${esc(x.pspec || x.spec || '')}">${esc(GR[x.grade] || x.grade)}</span>` : ''}<div class="bk">${esc(x.sur)}${sp.length ? ' · ' + esc(sp.join(' · ')) : (x.con ? ' · 후처리 조회 대기' : '')}</div></td>`
       + `<td class="num" title="${x.wgt ? '톤 = 소재 입고 무게' : '톤 = 추정(같은 두께·폭 보통 무게)'} · 시간당 생산량 = ${esc(x.tphSrc)}"><b>${n1(x.t)}t</b> · <b>${n0(x.runMin)}분</b><div class="bk nw">${n1(x.tph)}t/시간${x.cnt ? ` · 제품 ${esc(x.cnt)}코일` : ''}${x.wgt ? '' : ' · 톤 추정'}</div></td>`
       + `<td class="l wr">${gatesHtml(x)}</td>`
-      + `<td class="l wr">${dn ? `<div class="wo-dum"><b>${n1(x.exp)}분</b>${x.dumT >= 0.05 ? ` · 약 ${n1(x.dumT)}t` : ''}</div>` + (x.downs || []).map((d) => `<div class="bk">${esc(d.c)} ${n1(d.m)}분 — ${esc(d.b)}</div>`).join('') : (x.exp >= 0.05 ? `<span class="bk">거의 없음(${n1(x.exp)}분)</span>` : '<span class="bk">없음</span>')}</td></tr>`;
+      + `<td class="l wr">${dn ? `<div class="wo-dum"><b>${n1(x.exp)}분</b>${x.dumT >= 0.05 ? ` · 약 ${n1(x.dumT)}t` : ''}</div>` + (x.downs || []).map((d) => `<div class="bk">${esc(d.c)} ${n1(d.m)}분: ${esc(d.b)}</div>`).join('') : (x.exp >= 0.05 ? `<span class="bk">거의 없음(${n1(x.exp)}분)</span>` : '<span class="bk">없음</span>')}</td></tr>`;
   }
   const HEAD = '<thead><tr><th class="l">순서 · 시간</th><th class="l">계약번호-행번 · 소재</th><th class="l">사양</th><th>생산 예상<br><small class="bk">톤 · 분</small></th><th class="l">선정 이유 · 조건 <small class="bk">앞 코일 대비</small></th><th class="l">예상 더미<br><small class="bk">분 · 톤 · 근거</small></th></tr></thead>';
   const NC = 6;
@@ -77,7 +77,7 @@
     const pc = (no, what) => (K[no] == null ? '<span class="bk">—</span>' : `<b>${(+K[no]).toFixed(K[no] >= 99.95 ? 0 : 1)}%</b><div class="bk">${what}</div>`);
     const na = '<span class="bk">해당 없음(2CGL만)</span>';
     const sts = l === '2CGL';
-    // 작업지시서 우선순위 차례(두께·폭 > 재질 > 도금량 > 후처리 > 내경). 모든 조건은 '관문' — 하나라도 못 맞추면 다음 순서로 못 옴(10/27 사용자). 한눈에 보이게 한 줄씩(10/27 사용자)
+    // 작업지시서 우선순위 차례(두께·폭 > 재질 > 도금량 > 후처리 > 내경). 모든 조건은 '관문': 하나라도 못 맞추면 다음 순서로 못 옴(10/27 사용자). 한눈에 보이게 한 줄씩(10/27 사용자)
     const ok1 = l === '1CGL' ? '97' : '94';
     const C = [
       ['순서', '아래 조건을 <b>모두</b> 지키는 코일 중 <b>지금 폭에 가장 가까운 코일</b>(광폭 → 소폭을 길게) · 같은 폭이면 같은 계약 → 두께 → 재질 → 도금량 → 후처리 → 내경', '하나라도 위반 시 후속 불가. 이을 코일이 없으면 가장 넓은 폭으로 새 단위, 두께 묶음이 끝나면 가장 가까운 두께 묶음으로 ⚠', `<b>${ok1}%</b><div class="bk">1년 모두 지킨 이음</div>`],
@@ -85,9 +85,9 @@
       ['① 강종', '가동계획 그대로(M/C 날짜 유지)', 'M/C는 가동계획에서 정함', pc('1', '같은 강종 연속')],
       ['② 두께', '차 <b>0.3mm</b>(2CGL 박물 0.2) · 비 <b>1.3배</b> 이내', '용접부 파단', '<b>99%</b><div class="bk">1.0t 미만 0.3mm 안</div>'],
       ['③ 폭', '넓은 폭 → 좁은 폭. 넓힘은 <b>모든 강종 300mm</b>까지, 같은 두께면 안 넓힘', '롤 가장자리 자국', pc('2', '넓어지지 않은 이음')],
-      ['④ 재질', '같은 재질(CQ·DQ·DDQ·EDDQ·Gr.C·Gr.E 극저·Gr.E 저탄)끼리 묶음 — 폭보다 재질 먼저 · 0.6t 이하 DQ·DDQ(극저 = ULC, 극저탄소강)는 꼭 묶음. 연속 불가 조합(올리든 내리든 같음): <b>AZ</b> CQ↔EDDQ(사이 DQ·DDQ) · <b>CQ↔Gr.E 저탄</b>(사이 Gr.E 극저 1개) · LFQ·DQ·DDQ·EDDQ↔Gr.E · Gr.C/D↔EDDQ / <b>PosMAC</b> Gr.C↔LFQ·DQ·DDQ·EDDQ · CQ↔DDQ·EDDQ · Gr.E↔DQ·DDQ·EDDQ · CQ↔Gr.E 저탄 / 바로 이어도 됨: CQ↔Gr.E 극저 · Gr.B→Gr.E 저탄 · AL(알코스타)은 온도가 비슷해 묶기만. Gr.E 저탄/극저 = 소재강종(CSP1-FL = 저탄 · CSP570-HG = 극저, 공정출하 10/29)', '노 온도 차(녹취 10/27: 저탄 550℃·Gr.C 650℃ vs DQ계 780~850℃)', '<b>적용</b> <span class="bk">등급 = 주문 제품 규격(KS-SA1C·SGLCC = CQ, A463DQ = DQ, DX53D·A463DDS = DDQ, DX54D·SA1E = EDDQ, A792Gr.550·SGLC570 = Gr.E → 소재강종으로 저탄/극저, S350GD·SGMC400 = Gr.C), 없으면 소재 규격 코드표</span>'],
+      ['④ 재질', '같은 재질(CQ·DQ·DDQ·EDDQ·Gr.C·Gr.E 극저·Gr.E 저탄)끼리 묶음: 폭보다 재질 먼저 · 0.6t 이하 DQ·DDQ(극저 = ULC, 극저탄소강)는 꼭 묶음. 연속 불가 조합(올리든 내리든 같음): <b>AZ</b> CQ↔EDDQ(사이 DQ·DDQ) · <b>CQ↔Gr.E 저탄</b>(사이 Gr.E 극저 1개) · LFQ·DQ·DDQ·EDDQ↔Gr.E · Gr.C/D↔EDDQ / <b>PosMAC</b> Gr.C↔LFQ·DQ·DDQ·EDDQ · CQ↔DDQ·EDDQ · Gr.E↔DQ·DDQ·EDDQ · CQ↔Gr.E 저탄 / 바로 이어도 됨: CQ↔Gr.E 극저 · Gr.B→Gr.E 저탄 · AL(알코스타)은 온도가 비슷해 묶기만. Gr.E 저탄/극저 = 소재강종(CSP1-FL = 저탄 · CSP570-HG = 극저, 공정출하 10/29)', '노 온도 차(녹취 10/27: 저탄 550℃·Gr.C 650℃ vs DQ계 780~850℃)', '<b>적용</b> <span class="bk">등급 = 주문 제품 규격(KS-SA1C·SGLCC = CQ, A463DQ = DQ, DX53D·A463DDS = DDQ, DX54D·SA1E = EDDQ, A792Gr.550·SGLC570 = Gr.E → 소재강종으로 저탄/극저, S350GD·SGMC400 = Gr.C), 없으면 소재 규격 코드표</span>'],
       ['⑤ 도금량', '같은 도금량끼리 되도록 묶음', '바뀌면 더미(아래 기준표)', '<span class="bk">—</span>'],
-      ['⑥ 후처리', sts ? '같은 층 약액 바로 안 이음, 사이 <b>2코일</b> — 1층 TX·SX·RX·QX·MX·GX·DP·DA·BX·BP / 2층 KX·IX / LX·NX' : '연결 큰 상관 없음(AL·AZ)', sts ? '코터 청소 약 2시간' : '', sts ? pc('15', '같은 층 바로 이음 1년 1번') : na],
+      ['⑥ 후처리', sts ? '같은 층 약액 바로 안 이음, 사이 <b>2코일</b>: 1층 TX·SX·RX·QX·MX·GX·DP·DA·BX·BP / 2층 KX·IX / LX·NX' : '연결 큰 상관 없음(AL·AZ)', sts ? '코터 청소 약 2시간' : '', sts ? pc('15', '같은 층 바로 이음 1년 1번') : na],
       ['⑦ 내경', '<b>508·610</b> 같은 것끼리. 0.6t 미만은 유지, 후물만 한두 번', '슬리브 교체 · 주문 내경 조회 추가', '<span class="bk">자료 대기</span>'],
       ['⑧ 표면사상', '같은 표면사상끼리 묶음', sts ? '451일 중 431일' : '1CGL은 ①과 같음', sts ? '<b>96%</b>' : '<b>100%</b>'],
       ['⑨ AL-STS', 'AL 기간 안에만, 두껍고 넓은 것 → 얇고 좁은 것', '1년 25번 모두', sts ? pc('13', 'AL-STS 25번') : na],
@@ -113,7 +113,7 @@
     const small = T.filter((x) => x.c !== '새 생산번호' && x.exp < 1);
     const sh = (X.share || []).slice().sort((a, b) => b.t - a.t);
     const tot = sh.reduce((s, r) => s + r.t, 0);
-    const CAN = (c) => (c.startsWith('두께') ? '<b>예</b> — 아래 (나)' : c.startsWith('강종') ? '아니오 — M/C(가동계획에서 정함)' : c.startsWith('긴 휴지') ? '아니오 — 휴지 뒤라 불가피' : '아니오 — 불량·설비 문제 등');
+    const CAN = (c) => (c.startsWith('두께') ? '<b>예</b>: 아래 (나)' : c.startsWith('강종') ? '아니오: M/C(가동계획에서 정함)' : c.startsWith('긴 휴지') ? '아니오: 휴지 뒤라 불가피' : '아니오: 불량·설비 문제 등');
     const sCan = sh.filter((r) => r.cat.startsWith('두께')).reduce((s, r) => s + r.pct_t, 0);
     const cv = (O.condVal || {})[l];
     let h = `<section class="card"><h2>더미 기준표 <small class="bk">${l} · 지난 1년 실적</small></h2>`;
@@ -123,7 +123,7 @@
         + sh.map((r) => `<tr><td class="l">${esc(r.cat)}</td><td class="num">${n0(r.events)}번</td><td class="num">${n0(r.coils)}코일 · ${n0(r.t)}t</td><td class="num"><b>${n0(r.pct_t)}%</b></td><td class="l">${CAN(r.cat)}</td></tr>`).join('')
         + '</tbody></table></div>';
     }
-    h += `<h3>(나) 순서 계산에 쓰는 값 — 사양이 이렇게 바뀌면</h3><p class="hint">같은 강종 안에서 앞 코일 → 다음 코일 사이에 이것이 바뀌었을 때 지난 1년 실적. 여러 개가 같이 바뀌면 더함. 매일 새 실적으로 다시 계산(바뀐 값은 아래 '기준 변경 이력').</p>`
+    h += `<h3>(나) 순서 계산에 쓰는 값: 사양이 이렇게 바뀌면</h3><p class="hint">같은 강종 안에서 앞 코일 → 다음 코일 사이에 이것이 바뀌었을 때 지난 1년 실적. 여러 개가 같이 바뀌면 더함. 매일 새 실적으로 다시 계산(바뀐 값은 아래 '기준 변경 이력').</p>`
       + `<div class="scroll"><table class="t cond dtab"><thead><tr><th class="l">바뀌는 것</th><th>${pt ? '지난 1년' : '최근 3개월'} 횟수</th><th>더미가 들어간 비율</th><th>들어가면 보통</th><th>계산에 쓰는 값<br><small class="bk">한 번 바뀔 때 평균</small></th></tr></thead><tbody>`
       + big.map((x) => { const r = x.rate || 0; return `<tr><td class="l">${esc(NAME[x.c] || x.c)}</td><td class="num">${n0(x.n)}번</td><td class="num">${(r * 100).toFixed(0)}%</td><td class="num">${pt && r > 0 ? `${n1(x.dn / r)}코일 · ${n1(x.dt / r)}t` : (x.minIf ? `${n0(x.minIf)}분` : '-')}</td><td class="num"><b>${n1(x.exp)}분</b></td></tr>`; }).join('')
       + '</tbody></table></div>'
@@ -138,7 +138,7 @@
     return h + learnBox() + '</section>';
   }
 
-  // 현장 시계 · 지난 작업 돌아보기(10/27 사용자 '패치 시작해' — 작업순서 분석 화면에서 옮김): 강종 연속 생산 며칠째·AL-STS 다음 예상 / 제안 vs 실제 / 규칙과 다르게 넘어간 곳
+  // 현장 시계 · 지난 작업 돌아보기(10/27 사용자 '패치 시작해': 작업순서 분석 화면에서 옮김): 강종 연속 생산 며칠째·AL-STS 다음 예상 / 제안 vs 실제 / 규칙과 다르게 넘어간 곳
   function boardCard(l) {
     const B = O.board;
     if (!B) return '';
@@ -152,7 +152,7 @@
       + '<table class="t cond wb-t"><thead><tr><th class="l"></th><th>이 화면 제안</th><th>화면에 올라온 순서</th></tr></thead><tbody>'
       + `<tr><td class="l">바로 다음 코일을 맞힌 비율</td><td class="num"><b>${pc(ev.next_p)}</b></td><td class="num">${pc(ev.next_m)}</td></tr>`
       + `<tr><td class="l">실제 지시된 코일이 앞쪽에 든 비율</td><td class="num"><b>${pc(ev.top_p)}</b></td><td class="num">${pc(ev.top_m)}</td></tr></tbody></table>`
-      + `<p class="hint">${(ev.next_p ?? 0) < (ev.next_m ?? 0) ? '화면 등록 순서보다 적중률 낮음 — 어떤 주문을 먼저 지시할지(납기·주문 사정)는 순서 계산에 들어 있지 않음.' : '화면 등록 순서보다 적중률 높음.'}</p>` : '<p class="bk">작업지시 3코일 이상인 날 없음</p>'}</div>`;
+      + `<p class="hint">${(ev.next_p ?? 0) < (ev.next_m ?? 0) ? '화면 등록 순서보다 적중률 낮음: 어떤 주문을 먼저 지시할지(납기·주문 사정)는 순서 계산에 들어 있지 않음.' : '화면 등록 순서보다 적중률 높음.'}</p>` : '<p class="bk">작업지시 3코일 이상인 날 없음</p>'}</div>`;
     h += '</div>';
     if (ux && ux.items && ux.items.length) {
       h += `<h3>${md(ux.date)} 규칙과 다르게 넘어간 곳 <small class="bk">${ux.items.length}곳 · 이유별 (괄호 = 지난 1년)</small></h3><div class="wb-cats">`
@@ -207,21 +207,21 @@
     const gain = (v.mes || 0) - (v.ours || 0);
     const plan = v.plan ? Object.entries(v.plan).map(([a, t]) => `${a} ${n0(t)}t`).join(' · ') : '-';
     const blk = (v.blocks || []).map((b) => `<span class="cgb"><b>${esc(b.sur)}</b> ${n0(b.n)}코일 · ${n0(b.t)}t</span>`).join('<span class="cga">→</span>');
-    $('wo-main').innerHTML = tabs() + (O.missing && O.missing.length ? `<div class="miss"><b>미반영 조건</b> — ${O.missing.map(esc).join(' / ')}</div>` : '')
+    $('wo-main').innerHTML = tabs() + (O.missing && O.missing.length ? `<div class="miss"><b>미반영 조건</b>: ${O.missing.map(esc).join(' / ')}</div>` : '')
       + `<section class="card"><div class="seg" id="wo-lines">${L.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === line}">${l} <small>${O.lines[l].n}코일</small></button>`).join('')}</div>`
       + '<div class="kpis" style="margin-top:12px">'
       + `<div class="kpi"><div class="l">돌릴 대상</div><div class="v">${n0(v.n)}<small>코일 · ${n0(v.tSum)}t</small></div><div class="b">대상 선정 화면 · 그중 확정 ${n0(v.nConf)}코일 · 가동계획상 ${esc(md(v.day))} 강종 ${esc(plan)}</div></div>`
       + `<div class="kpi"><div class="l">제안 순서대로면</div><div class="v">${v.until ? esc(tm(v.until)) : '-'}<small>까지</small></div><div class="b">${esc(tm(v.from))} 출발${v.after1030 ? `(이미 지시된 코일 ${n1(v.after1030)}시간 뒤)` : ''} · 생산 ${hm(v.runSum || 0)}${v.ours >= 0.5 ? ` + 예상 더미 ${n0(v.ours)}분` : ''}</div></div>`
       + `<div class="kpi"><div class="l">예상 더미 (제안 순서)</div><div class="v wv">${n1(v.ours)}<small>분</small></div><div class="b">더미 약 ${n1(v.oursDumT)}t · 사양 바뀜 ${n0(v.oursChg)}번</div></div>`
       + '</div>' + grpBars(v)
-      + (v.n ? `<div class="wo-cmp${gain < 0 ? ' bad' : ''}"><b>화면에 올라온 순서와 비교</b> — 같은 ${n0(v.n)}코일을 대상 선정 화면에 올라온 순서대로 돌리면 예상 더미 ${n1(v.mes)}분 (사양 바뀜 ${n0(v.mesChg)}번) → 제안이 <b>${gain >= 0 ? `${n1(gain)}분 짧음` : `${n1(-gain)}분 김`}</b></div>` : '')
+      + (v.n ? `<div class="wo-cmp${gain < 0 ? ' bad' : ''}"><b>화면에 올라온 순서와 비교</b>: 같은 ${n0(v.n)}코일을 대상 선정 화면에 올라온 순서대로 돌리면 예상 더미 ${n1(v.mes)}분 (사양 바뀜 ${n0(v.mesChg)}번) → 제안이 <b>${gain >= 0 ? `${n1(gain)}분 짧음` : `${n1(-gain)}분 김`}</b></div>` : '')
       + (blk ? `<div class="cgbs"><span class="bk">표면사상 묶음</span> ${blk}</div>` : '')
       + '</section>'
-      + (v.n ? `<section class="card"><h2>${v.issued ? `이미 지시된 순서 점검 <small class="bk">대상 선정 화면 자료 없음(작업지시 전량 완료) — 지시 후 생산 대기 코일을 MES 지시 순서대로 조건 점검</small>` : '제안 순서'}</h2>`
+      + (v.n ? `<section class="card"><h2>${v.issued ? `이미 지시된 순서 점검 <small class="bk">대상 선정 화면 자료 없음(작업지시 전량 완료): 지시 후 생산 대기 코일을 MES 지시 순서대로 조건 점검</small>` : '제안 순서'}</h2>`
         + ((v.runs || []).length ? `<details class="wo-runs"><summary><b>짜는 방식</b> · 폭 내려가는 단위 ${v.runs.length}개</summary>조건(두께·폭·재질·후처리·내경)을 모두 지키는 코일 중 <b>지금 폭에 가장 가까운 코일</b>을 다음으로 → 넓은 폭에서 좁은 폭으로 길게 내려감. 더 내려갈 코일이 없으면 남은 코일 중 가장 넓은 폭으로 새 단위.<ol>`
-          + v.runs.map((r) => `<li><b>${r.from}번부터 ${n0(r.n)}코일 · ${n0(r.t)}t</b> — 폭 ${n0(r.w0)} → ${n0(r.w1)} · 두께 ${r.th0 === r.th1 ? r.th0 : `${r.th0}~${r.th1}`}t${r.down >= 1 ? ` · 예상 더미 ${n1(r.down)}분` : ''}</li>`).join('') + '</ol></details>' : '')
-        + `<div class="strip-lg"><span>날짜 줄 아래 막대 = 그날 07시~다음날 07시 라인 사용:</span><span><i class="sr"></i>생산(코일)</span><span><i class="sd"></i>예상 더미</span><span>빈 칸 = 제안 대상 아닌 시간(앞 지시 작업·대기)</span></div>${table(v)}</section>` : (O.schOld ? `<section class="card"><p><b>${esc(line)} 대상 선정 목록 — 다음 자동 실행부터 나옵니다.</b> 지금까지 받은 목록이 '담당자가 편성해 둔 소재'로 걸러져 있어 ${esc(line)}가 빠졌음(10/28 조회 고침: 작업지시 대상 선정 화면 목록 = 도금생산예정일 표 전부).</p></section>`
-        : `<section class="card"><p>지금 대상 선정 목록에 ${esc(line)} 코일이 없습니다(생산예정일 내일까지 · 이미 지시된 소재 제외)${v.issuedWait ? ` — 지시 후 생산 대기 <b>${n0(v.issuedWait)}코일</b>` : ''}.</p></section>`))
+          + v.runs.map((r) => `<li><b>${r.from}번부터 ${n0(r.n)}코일 · ${n0(r.t)}t</b>: 폭 ${n0(r.w0)} → ${n0(r.w1)} · 두께 ${r.th0 === r.th1 ? r.th0 : `${r.th0}~${r.th1}`}t${r.down >= 1 ? ` · 예상 더미 ${n1(r.down)}분` : ''}</li>`).join('') + '</ol></details>' : '')
+        + `<div class="strip-lg"><span>날짜 줄 아래 막대 = 그날 07시~다음날 07시 라인 사용:</span><span><i class="sr"></i>생산(코일)</span><span><i class="sd"></i>예상 더미</span><span>빈 칸 = 제안 대상 아닌 시간(앞 지시 작업·대기)</span></div>${table(v)}</section>` : (O.schOld ? `<section class="card"><p><b>${esc(line)} 대상 선정 목록: 다음 자동 실행부터 나옵니다.</b> 지금까지 받은 목록이 '담당자가 편성해 둔 소재'로 걸러져 있어 ${esc(line)}가 빠졌음(10/28 조회 고침: 작업지시 대상 선정 화면 목록 = 도금생산예정일 표 전부).</p></section>`
+        : `<section class="card"><p>지금 대상 선정 목록에 ${esc(line)} 코일이 없습니다(생산예정일 내일까지 · 이미 지시된 소재 제외)${v.issuedWait ? `: 지시 후 생산 대기 <b>${n0(v.issuedWait)}코일</b>` : ''}.</p></section>`))
       + boardCard(line);
     $('wo-lines').querySelectorAll('button').forEach((b) => b.onclick = () => { line = b.dataset.l; render(); });
     bindTabs();
@@ -233,10 +233,10 @@
     if (!env) { $('wo-msg').textContent = '게시된 제안이 없습니다.'; return; }
     try { O = await GP.decryptJSON(env, pw); }
     catch (e) { $('wo-msg').textContent = '⚠ 암호가 맞지 않습니다'; return; }
-    if (!O.lines || !Object.values(O.lines).every((v) => !v.n || v.events)) { $('wo-msg').textContent = '예전 형식의 제안입니다 — 다시 계산 후 게시가 필요합니다.'; return; }
+    if (!O.lines || !Object.values(O.lines).every((v) => !v.n || v.events)) { $('wo-msg').textContent = '예전 형식의 제안입니다: 다시 계산 후 게시가 필요합니다.'; return; }
     render();
   }
-  /* 작업 순서 화면(week_seq.html)이 필요할 때 불러 붙임 — 암호는 그 화면이 이미 받아 저장해 둔 것 */
+  /* 작업 순서 화면(week_seq.html)이 필요할 때 불러 붙임: 암호는 그 화면이 이미 받아 저장해 둔 것 */
   let pend = null;
   const ready = envReady.then(() => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } return unlock(s || ''); }).then(() => { if (pend) rulesInto(pend); });
   window.WO_CG = { rules: (el) => { pend = el; if (O) rulesInto(el); return ready; } };

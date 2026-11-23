@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>도금 다시 계산</title>
-<meta name="description" content="도금 1·2CGL 분기 일별 가동계획 — 브라우저 안에서만 계산">
+<meta name="description" content="도금 1·2CGL 분기 일별 가동계획: 브라우저 안에서만 계산">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><defs><clipPath id='c'><rect width='40' height='40' rx='11'/></clipPath></defs><g clip-path='url(%23c)'><rect width='40' height='40' fill='%231b3f5f'/><path d='M-6 30 30-6h9L3 30z' fill='%233774a1'/><path d='M4 40 40 4v9L13 40z' fill='%236cb1d8'/><path d='M17 40 40 17v8L25 40z' fill='%23fff'/></g></svg>">
 <link rel="stylesheet" href="style.css?v=2611230303">
 <link rel="stylesheet" href="ui/theme.css?v=2611230303">
@@ -20,7 +20,7 @@
 <main class="wrap">
   <p class="small" style="margin:12px 0 0"><a href="plan_calc.html">← 계획 계산</a></p>
   <section class="card" id="sec-files">
-    <h2><span class="num">1</span>기준 자료 <small>파일을 올리지 않으면 아래 기준 · 분기 처음(10/1)부터 다시 짜 보기용 — 매일 실적·주문 반영 계획은 <a href="status.html">도금 가동 현황</a></small></h2>
+    <h2><span class="num">1</span>기준 자료 <small>파일을 올리지 않으면 아래 기준 · 분기 처음(10/1)부터 다시 짜 보기용: 매일 실적·주문 반영 계획은 <a href="status.html">도금 가동 현황</a></small></h2>
     <div class="cc-steps" id="g-src"><p class="muted">기준 자료 불러오는 중…</p></div>
     <div class="row"><button type="button" class="ghost" id="g-pub">지금 게시 계획 불러오기</button> <span class="muted" id="g-pub-msg">결과·간트를 보거나 ⑤ 재계획의 기준으로</span></div>
     <form class="unlock" id="g-unlock" hidden><input type="password" id="g-pw" placeholder="분석 암호" autocomplete="current-password" aria-label="분석 암호"><button type="submit">기준 자료 열기</button> <span class="hint" id="g-msg">기준 자료(확정 계획 입력 파일)는 분석 암호로 잠겨 있습니다. 직접 파일을 올리면 암호 없이도 계산됩니다.</span></form>
@@ -41,7 +41,7 @@
   </section>
 
   <section class="card" id="sec-params">
-    <details class="more" id="p-more"><summary><h2 style="display:inline"><span class="num">3</span>계획 조건 <small>기본값 = 게시 계획 조건(실적 속도 10/30) — 바꿀 때만 펼치기</small></h2></summary>
+    <details class="more" id="p-more"><summary><h2 style="display:inline"><span class="num">3</span>계획 조건 <small>기본값 = 게시 계획 조건(실적 속도 10/30): 바꿀 때만 펼치기</small></h2></summary>
     <div class="grid">
       <label>연도 <input type="number" id="p-year" min="2024" max="2035"></label>
       <label>분기
@@ -110,11 +110,11 @@
         <label>설명(선택) <input type="text" id="pub-label" placeholder="예: 11월 판생 반영안"></label>
       </div>
       <details>
-        <summary>사이트에 바로 게시(관리자) — 토큰 필요</summary>
+        <summary>사이트에 바로 게시(관리자): 토큰 필요</summary>
         <label>게시 토큰 <input type="password" id="pub-token" autocomplete="off" placeholder="github_pat_..."></label>
         <p class="hint">토큰 만들기: GitHub → Settings → Developer settings → Fine-grained tokens → Generate new token. Repository access = Only select repositories → <b>jmin6035.github.io</b>, Permissions → Repository → <b>Contents: Read and write</b>. 토큰은 저장하지 않으며 이 창을 닫으면 사라집니다.</p>
       </details>
-      <label class="check"><input type="checkbox" id="pub-save" checked> 이 기기에 게시 설정(암호·토큰) 저장 — 담당자 개인 PC에서만</label>
+      <label class="check"><input type="checkbox" id="pub-save" checked> 이 기기에 게시 설정(암호·토큰) 저장: 담당자 개인 PC에서만</label>
       <label class="check"><input type="checkbox" id="pub-auto" checked> 계산·재계획이 끝나면 자동으로 게시</label>
       <div class="row">
         <button type="button" class="primary" id="pub-go">사이트에 바로 게시</button>
@@ -124,7 +124,7 @@
     </div>
     <div id="replan-box" class="lines" hidden></div>
     <details class="detail-results">
-      <summary>상세 결과 보기(요약·간트·전환 사유·앞당김 생산) — 전체 화면은 대시보드에서</summary>
+      <summary>상세 결과 보기(요약·간트·전환 사유·앞당김 생산): 전체 화면은 대시보드에서</summary>
     <div id="summary-lines" class="lines"></div>
     <h3>월별 간트</h3>
     <div class="tabs" id="gantt-tabs"></div>
@@ -146,13 +146,13 @@
       <label>지연과 M/C 맞교환 기준 <span class="inline">M/C 1회 = 지연 <input type="number" id="rp-tradeoff" value="100" min="1" step="10"> 톤·일</span><small class="muted">작을수록 납기 우선(M/C 늘려서라도 지연 축소), 클수록 M/C 우선</small></label>
       <label>기존 일정 유지 강도 <span class="inline">강종이 바뀐 라인·일 <input type="number" id="rp-stab" value="10" min="1" step="1"> 일 = M/C 1회</span><small class="muted">작을수록 기존 일정을 강하게 유지(현장 혼란↓), 클수록 자유롭게 재배치</small></label>
     </div>
-    <h3>방법 1 — 실적 엑셀 <small>(이 양식 또는 MES 실적 쿼리 엑셀 그대로 — 자동 인식, 기준일은 실적이 다 들어온 날까지로 맞춤)</small></h3>
+    <h3>방법 1: 실적 엑셀 <small>(이 양식 또는 MES 실적 쿼리 엑셀 그대로: 자동 인식, 기준일은 실적이 다 들어온 날까지로 맞춤)</small></h3>
     <div class="row">
       <button type="button" class="ghost" id="rp-template">양식 받기(기존 계획으로 채움)</button>
       <label class="ghost btnlike">실적 파일 업로드<input type="file" id="rp-file" accept=".xlsx" hidden></label>
       <span id="rp-file-name" class="muted"></span>
     </div>
-    <h3>방법 2 — 간단 입력 <small>(엑셀 없이: 기존 계획대로 생산했다고 보고 아래 사건만 반영)</small></h3>
+    <h3>방법 2: 간단 입력 <small>(엑셀 없이: 기존 계획대로 생산했다고 보고 아래 사건만 반영)</small></h3>
     <div id="rp-events"></div>
     <button type="button" class="ghost" id="rp-add">+ 사건 추가</button>
     <div class="row"><button type="button" class="primary" id="rp-run">재계획 실행</button></div>

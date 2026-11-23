@@ -14,7 +14,7 @@
   const big = (p, cls, s) => `<div class="pf-big ${cls}">${p == null ? '-' : p}<span class="u">%</span><span class="pf-s">${s}</span></div>`;
   const MN = (m) => `${+m.slice(5)}월`;
   const lastDay = (m) => { const d = new Date(Date.UTC(+m.slice(0, 4), +m.slice(5), 0)); return d.toISOString().slice(0, 10); };
-  // 월 안을 수요일 시작 2주 단위로(11/5 사용자 '월 단위로 끊고 그 안에서 수요일 기준 2주') — 기준 수요일 = 그 달 1일이 속한 주의 수요일
+  // 월 안을 수요일 시작 2주 단위로(11/5 사용자 '월 단위로 끊고 그 안에서 수요일 기준 2주'): 기준 수요일 = 그 달 1일이 속한 주의 수요일
   const buckets = (m) => { const a = m + '-01', z = lastDay(m), out = []; let s0 = CT.wed(a); while (s0 <= z) { const e0 = CT.addD(s0, 13); out.push([s0 < a ? a : s0, e0 > z ? z : e0]); s0 = CT.addD(s0, 14); } return out; };
   const LV = { ok: ['확인된 원인', 'c1'], rel: ['연관 가능 요인', 'c2'], chk: ['추가 확인 필요', 'c3'] };
 
@@ -29,7 +29,7 @@
     const P = D.portal || {}, cg = D.cg_order_progress || {}, GA = D.plating_actual || {}, CA = D.color_actual || {}, LP = D['latest.plan'];
     const M = CT.orders(D), cards = [], why = [];   // why: [지표, 등급, 문장]
     const mon = String(P.asOf || '').slice(0, 7);
-    // ① 납기 내 생산: 월별 · 그 안 수요일 시작 2주 — 주문 생산 완료일(마지막 생산일) 기준, 생산 필요일 안이면 기한 안
+    // ① 납기 내 생산: 월별 · 그 안 수요일 시작 2주: 주문 생산 완료일(마지막 생산일) 기준, 생산 필요일 안이면 기한 안
     const months = [...new Set([String(P.asOf || M.asOf).slice(0, 7), CT.addD(String(P.asOf || M.asOf).slice(0, 7) + '-01', -1).slice(0, 7)])].sort();
     const done = M.G.filter((o) => CT.inScope('G') && o.src.prodLast && o.prodT > 0.5 && o.ful !== '생산 전' && o.ful !== '생산 중' && o.needProd);
     if (done.length) {
@@ -59,10 +59,10 @@
         cz.forEach((o) => { cc[o.cause] = (cc[o.cause] || 0) + (o.remT || 0); });
         const top = Object.entries(cc).sort((a, b) => b[1] - a[1])[0];
         why.push(['납기 내 생산', `${MN(cm)} ${gnm(gn)} ${pc(g1[1][1], g1[1][0])}% 가장 낮음`, top ? 'rel' : 'chk',
-          top ? `지금 같은 그룹 지연 예상 주문의 주원인 ${CT.CAUSE[top[0]]} ${n0(top[1])}t — 지금 상태 기준이라 지난 미준수의 직접 원인은 아님` : '같은 그룹 지연 예상 주문 없음 — 미준수 주문별 지연 사유 자료 없음']);
+          top ? `지금 같은 그룹 지연 예상 주문의 주원인 ${CT.CAUSE[top[0]]} ${n0(top[1])}t: 지금 상태 기준이라 지난 미준수의 직접 원인은 아님` : '같은 그룹 지연 예상 주문 없음: 미준수 주문별 지연 사유 자료 없음']);
       }
     }
-    // ② 생산계획 정확도: 월별(11/5 사용자 '누계 말고 10월·11월') — 지난 달 = 기준 계획 월 생산 vs 실적, 이번 달 = 오늘까지 일정 vs 실적
+    // ② 생산계획 정확도: 월별(11/5 사용자 '누계 말고 10월·11월'): 지난 달 = 기준 계획 월 생산 vs 실적, 이번 달 = 오늘까지 일정 vs 실적
     const acc = Object.entries(P.acc || {}).filter(([l]) => CT.inScope(/CGL/.test(l) ? 'G' : 'C'));
     const MP = P.monthPlan || {}, cm2 = String(P.asOf || '').slice(0, 7);
     const mSum = (m, pl) => Object.entries(MP[m] || {}).filter(([g]) => g[0] === pl).reduce((a, [, x]) => a + (x.prod || 0), 0);
@@ -82,7 +82,7 @@
         accRows.push(`<tr><td class="id"><b>${MN(m)}</b> ${pl === 'G' ? '도금' : '컬러'}<small>${esc(how)}</small></td><td class="r">${n0(plan)}</td><td class="r"><b>${n0(act)}</b></td><td class="r"><b class="${q == null ? '' : Math.abs(q - 100) <= 5 ? 'pos' : Math.abs(q - 100) <= 15 ? 'wrn' : 'neg'}">${q == null ? '-' : q + '%'}</b></td></tr>`);
       }
     }
-    // 그날 아침 계획 대비(도금, 월별) — GA.accHist [날짜, 라인, 계획, 실적]
+    // 그날 아침 계획 대비(도금, 월별): GA.accHist [날짜, 라인, 계획, 실적]
     const AH = (GA.accHist || []).filter((a) => CT.inScope('G'));
     const dayRows = [];
     for (const m of months) for (const l of ['1CGL', '2CGL']) {
@@ -104,8 +104,8 @@
         const st = H.map((a) => [a[0], a[3] - a[2], (((GA.dayStops || {})[a[0]] || {})[l] || [])]);
         const withS = st.filter((s) => s[2].length), noS = st.filter((s) => !s[2].length);
         withS.slice(0, 3).forEach((s) => why.push(['생산계획', `${l} ${md(s[0])} 계획 대비 ${n0(s[1])}t`, 'ok', `MES 휴지 ${s[2].map((z) => `${z[2] || z[0]} ${n0(z[1])}분`).join(' · ')}`]));
-        if (noS.length) why.push(['생산계획', `${l} 미달 ${noS.length}일(${noS.slice(0, 4).map((s) => md(s[0])).join('·')})`, 'chk', '그날 휴지 기록 없음 — 속도·두께·폭 등 확인 필요']);
-        if (x.bias > 15) why.push(['생산계획', `${l} 실적이 계획보다 ${n1(x.bias)}% 많음`, 'chk', '초과 생산 근거 자료 없음 — 아침 계획 속도 설정 확인 필요']);
+        if (noS.length) why.push(['생산계획', `${l} 미달 ${noS.length}일(${noS.slice(0, 4).map((s) => md(s[0])).join('·')})`, 'chk', '그날 휴지 기록 없음: 속도·두께·폭 등 확인 필요']);
+        if (x.bias > 15) why.push(['생산계획', `${l} 실적이 계획보다 ${n1(x.bias)}% 많음`, 'chk', '초과 생산 근거 자료 없음: 아침 계획 속도 설정 확인 필요']);
       }
     }
     // ③ 생산능력: 가용 능력(캘린더 가동시간 × t/h) vs 계획 부하(최신 계획) vs 실제 생산
@@ -135,11 +135,11 @@
       cards.push(card('생산능력', `${+mon.slice(5)}월 · 도금 능력 = 계획 캘린더 가동시간 × 판생 t/시간 · 컬러 = (1,440분 − 계획 휴지) × 계획 평균 t/시간`,
         `<div class="pf-two">${sub('G').length ? big(pg, tn(pg), `도금 부하율 · ${n0(lg)} / ${n0(cgc)}t`) : ''}${sub('C').length ? big(pcc, tn(pcc), `컬러 부하율 · ${n0(lc)} / ${n0(ccc)}t`) : ''}</div>`
         + tbl(['라인', '가동시간(시간)', '가용 능력(t)', '계획 부하(t)', '부하율', '실적(t)'], capL.filter((x) => !x.na).map((x) => (`<tr><td class="id">${esc(x.l.line)}</td><td class="r">${n0(x.h)}</td><td class="r">${n0(x.cap)}</td><td class="r">${n0(x.load)}</td><td class="r"><b class="${pc(x.load, x.cap) > 100 ? 'neg' : pc(x.load, x.cap) >= 90 ? 'wrn' : 'pos'}">${pc(x.load, x.cap)}%</b></td><td class="r">${x.act == null ? '-' : n0(x.act)}</td></tr>`)).concat(capL.some((x) => x.na) ? [`<tr><td class="id">${capL.filter((x) => x.na).map((x) => x.l.line).join('·')}</td><td class="r" colspan="5"><span class="sub">이번 달 계획 편성 없음</span></td></tr>`] : []))));
-      G.filter((x) => x.l.pl === 'G' && x.load > x.cap).forEach((x) => why.push(['생산능력', `${x.l.line} 계획 부하가 능력의 ${pc(x.load, x.cap)}%`, 'chk', `계획 엔진 속도(제품별)와 판생 t/시간 ${n1(x.l.tph)} 차이 가능 — 같은 속도 기준 확인 필요`]));
+      G.filter((x) => x.l.pl === 'G' && x.load > x.cap).forEach((x) => why.push(['생산능력', `${x.l.line} 계획 부하가 능력의 ${pc(x.load, x.cap)}%`, 'chk', `계획 엔진 속도(제품별)와 판생 t/시간 ${n1(x.l.tph)} 차이 가능: 같은 속도 기준 확인 필요`]));
       const cst = CA.stops && CA.stops.w1 && CT.inScope('C') ? Object.entries(CA.stops.w1).map(([l, v]) => [l, Object.entries(v).sort((a, b) => b[1] - a[1])[0]]).sort((a, b) => b[1][1] - a[1][1])[0] : null;
       if (cst) why.push(['생산능력', `컬러 ${cst[0]} 지난주 ${cst[1][0]} 하루 ${n1(cst[1][1])}시간`, 'ok', `MES 휴지 기록 유형 1위(라인 휴지 전체 아님)`]);   // 11/10 점검: '휴지 하루 6h'가 전체 휴지(12.5h)처럼 읽힘
     }
-    // ④ 주문 소재 지연 비중(도금): 필요 입고일보다 소재 입고(예정)가 늦은 미완료 주문 비중 — 입고 정시율 아님
+    // ④ 주문 소재 지연 비중(도금): 필요 입고일보다 소재 입고(예정)가 늦은 미완료 주문 비중: 입고 정시율 아님
     const G = CT.inScope('G') ? M.G.filter((o) => !o.closed && !CT.isStale(o) && o.remT > 0.5) : [];
     if (G.length) {
       const by = {}; G.forEach((o) => { const b = by[o.grp] = by[o.grp] || { n: 0, t: 0, ln: 0, lt: 0 }; b.n++; b.t += o.remT; if (o.src.lateIn) { b.ln++; b.lt += o.remT; } });
@@ -150,7 +150,7 @@
       if (wz && wz[1].lt) why.push(['소재 지연', `${wz[0]} 지연 잔량 ${n0(wz[1].lt)}t 가장 큼`, 'ok', `F/H 입고 이력·예정일이 필요 입고일 지남(${wz[1].ln}건)`]);
       const MO = (D.mat_order && D.mat_order.groups && D.mat_order.groups.mats) || [];
       const late = (window.UI && UI.matView ? UI.matView(D.mat_order, D.portal) : MO).filter((x) => x.st === 'late' && CT.inScope(x.plant || 'G'));   // 11/10 점검: 소재 화면과 같은 공통 기준(마감 지남 4개 vs 6개)
-      if (late.length) { const ls = late.slice().sort((a, b) => (b.lateT || 0) - (a.lateT || 0)); why.push(['소재 지연', `소재 발주 지연 ${late.length}개`, 'rel', `${ls.map((x) => `${x.name}${x.lateT >= 0.5 ? ` ${n0(x.lateT)}t` : ''}`).join(' · ')} — 발주 지연이 입고 지연으로 이어질 수 있음`]); }   // 11/13 점검: 5개 중 3개만 쓰던 것 → 전부(큰 순)
+      if (late.length) { const ls = late.slice().sort((a, b) => (b.lateT || 0) - (a.lateT || 0)); why.push(['소재 지연', `소재 발주 지연 ${late.length}개`, 'rel', `${ls.map((x) => `${x.name}${x.lateT >= 0.5 ? ` ${n0(x.lateT)}t` : ''}`).join(' · ')}: 발주 지연이 입고 지연으로 이어질 수 있음`]); }   // 11/13 점검: 5개 중 3개만 쓰던 것 → 전부(큰 순)
     }
     // ⑤ 제품 재고
     const stk = ((P.sr && P.sr.stock) || []).filter((s) => !/소재/.test(s.name) && CT.inScope(/^도금/.test(s.name) ? 'G' : 'C'));
@@ -162,7 +162,7 @@
         const dim = new Date(+mon.slice(0, 4), +mon.slice(5), 0).getDate(), el = +String(P.asOf).slice(8, 10) / dim;
         const ov = (P.groups || []).filter((g) => g.pl === pl && g.ship && g.prod && g.prod.month && g.prod.actual > g.prod.month * el * 1.1);
         const ev = sh.map((g) => `${gnm(g.name)} 출하 일정 미달 ${n0(g.ship.sched - g.ship.actual)}t`).concat(ov.map((g) => `${gnm(g.name)} 생산 진도 초과 ${n0(g.prod.actual - g.prod.month * el)}t`));
-        why.push(['제품 재고', `${s.name} 목표의 ${pc(s.current, s.target)}%`, ev.length ? 'rel' : 'chk', ev.length ? ev.join(' · ') : '같은 공정 출하 미달·생산 초과 없음 — 재고 구성(장기·대기재) 확인 필요']);
+        why.push(['제품 재고', `${s.name} 목표의 ${pc(s.current, s.target)}%`, ev.length ? 'rel' : 'chk', ev.length ? ev.join(' · ') : '같은 공정 출하 미달·생산 초과 없음: 재고 구성(장기·대기재) 확인 필요']);
       });
     }
     // ⑥ 출하
@@ -175,7 +175,7 @@
     return { P, M, LP, cards, why };
   }
 
-  /* #cause 편차 원인 — 근거 등급 표시 */
+  /* #cause 편차 원인: 근거 등급 표시 */
   function cause(A) {
     const n = (k) => A.why.filter((w) => w[2] === k).length;
     const ks = Object.keys(LV);

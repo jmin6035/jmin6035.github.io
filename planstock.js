@@ -15,7 +15,7 @@
   };
   const ORDER = ['short', 'low', 'shortNext', 'behind', 'over', 'fcHigh'];
   let O = null, flt = 'risk', sortK = 'end';
-  const PS_TARGET = 5100;   // 11/18 사용자 '안전재고 빼고, 목표 5,100t으로 바꿔라' — 계획재 전체 목표(사양별 목표 합 대신). cglplan/planstock.py 와 같은 값
+  const PS_TARGET = 5100;   // 11/18 사용자 '안전재고 빼고, 목표 5,100t으로 바꿔라': 계획재 전체 목표(사양별 목표 합 대신). cglplan/planstock.py 와 같은 값
   const card = (id, title, sm, unit, body) => `<section class="card" id="${id}"><h2>${esc(title)} ${sm ? `<small>${esc(sm)}</small>` : ''}${unit ? `<span class="unit">${unit}</span>` : ''}</h2>${body}</section>`;
   const tip = () => $('ca-tip');
   function bindTip(root) {
@@ -28,7 +28,7 @@
 
   // ---------- ② 계획재 캘린더 ----------
   const KIND = { order: { name: '소재 발주 마감', color: 'var(--bad)' }, arrive: { name: '소재 입고 필요', color: 'var(--s3)' }, prod: { name: '생산 계획', color: 'var(--s1)' }, done: { name: '생산 실적', color: 'var(--plan)' } };
-  const ST = { past: ['발주 기간 지남 — 발주 여부 확인', 'bad'], soon: ['2주 내 마감', 'warn'], later: ['예정', ''] };
+  const ST = { past: ['발주 기간 지남: 발주 여부 확인', 'bad'], soon: ['2주 내 마감', 'warn'], later: ['예정', ''] };
   function orderRow(o, mode) {
     const left = Math.max(0, o.t - (o.ordered || 0));
     return `<tr><td><b>${esc(o.kind)}</b></td><td>${esc(o.sup)}</td><td>${o.o0 === o.o1 ? md(o.o1) : `${md(o.o0)}~${md(o.o1)}`}</td><td>${md(o.arr)}</td><td>${md(o.prodFrom)}~${md(o.prodTo)}</td>`
@@ -45,7 +45,7 @@
     });
     const months = [...new Set(ev.map((e) => e.d.slice(0, 7)))].sort().filter((m) => m >= '2026-09');
     UI.cal($('ps-calbox'), { months, kinds: KIND, events: ev, today: UI.today(O.today && O.today > O.asOf ? O.today : O.asOf),
-      note: '발주 마감 = 팀 소재 리드타임 표로 생산일 기준 역산(GI 매주 발주 +5주 → 투입 7일 / FH 매주 발주 +5주 → 도금 5일 → 컬러 입고 1일 → 투입 7일 / 수입 FH 전전월 10~20일 발주 → 7일경 입고 / 서림 GI 27년 입고분부터). 필요량은 소재 재고를 빼기 전 값 — 발주 전 소재 재고 확인.',
+      note: '발주 마감 = 팀 소재 리드타임 표로 생산일 기준 역산(GI 매주 발주 +5주 → 투입 7일 / FH 매주 발주 +5주 → 도금 5일 → 컬러 입고 1일 → 투입 7일 / 수입 FH 전전월 10~20일 발주 → 7일경 입고 / 서림 GI 27년 입고분부터). 필요량은 소재 재고를 빼기 전 값: 발주 전 소재 재고 확인.',
       detail: (d, evs) => {
         let h = '';
         const ords = evs.filter((e) => e.kind === 'order'), arr = evs.filter((e) => e.kind === 'arrive'), pr = evs.filter((e) => e.kind === 'prod' || e.kind === 'done');
@@ -61,10 +61,10 @@
     const rows = K.filter((k) => S[k]).map((k) => { const x = S[k]; const sup = (O.orders.find((o) => o.kind === k) || {}).sup || '';
       return `<tr><td><b>${k}</b></td><td>${esc(sup.replace(/\s*\(자가 도금\)/, ''))}</td><td>${n0(x.past)}</td><td class="${x.soon > 0.5 ? 'warn' : ''}"><b>${n0(x.soon)}</b></td><td>${n0(x.t - x.past - x.soon)}</td><td><b>${n0(x.t)}</b></td></tr>`; }).join('');
     const next = O.orders.filter((o) => o.state === 'soon').sort((a, b) => (a.o1 < b.o1 ? -1 : 1));
-    const LT = UI.matLate(MO && MO.late);   // 소재 '발주 마감 지남' 공통 기준(ui/shell.js UI.matLate, 11/8) — 부족·조치·소재 수급·수주 관제와 같은 값
+    const LT = UI.matLate(MO && MO.late);   // 소재 '발주 마감 지남' 공통 기준(ui/shell.js UI.matLate, 11/8): 부족·조치·소재 수급·수주 관제와 같은 값
     return card('ps-osum', '소재 발주 요약', `생산 일정(10월 ~ 3월) 기준 · ${md(UI.today(O.today))} 현재`, '단위: 톤',
       (LT ? `<p class="ps-late" title="${esc(LT.tip)}">발주 지연 <b>${n0(LT.t)}t</b> <span>${LT.items.map((x) => esc(x.name)).join(' · ')}</span></p>` : '')
-      + `<div class="scroll"><table class="t big"><thead><tr><th>소재</th><th>업체</th><th title="발주 기간이 지난 생산분 필요량(재고 차감 전) — 경고 아님, 실제 부족은 위 '발주 지연'">기간 지남</th><th>2주 내 마감</th><th>이후</th><th>합계</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      + `<div class="scroll"><table class="t big"><thead><tr><th>소재</th><th>업체</th><th title="발주 기간이 지난 생산분 필요량(재고 차감 전): 경고 아님, 실제 부족은 위 '발주 지연'">기간 지남</th><th>2주 내 마감</th><th>이후</th><th>합계</th></tr></thead><tbody>${rows}</tbody></table></div>`
       + (next.length ? `<p class="small"><b>최우선 발주:</b> ${next.slice(0, 3).map((o) => `${md(o.o1)}까지 ${o.kind} ${n0(o.t - (o.ordered || 0))}t(${md(o.arr)} 입고)`).join(' · ')}</p>` : '')
       );   // 11/17 검토: '기간 지남' 설명 줄 삭제(머리 칸 마우스 올림에 같은 설명)
   }
@@ -72,10 +72,10 @@
     const today = UI.today(O.today);   // 공통 기준일(11/8)
     const win = (m) => { const y = +m.slice(0, 4), mm = +m.slice(5); const om = mm - 2 <= 0 ? mm + 10 : mm - 2, oy = mm - 2 <= 0 ? y - 1 : y; return [`${oy}-${String(om).padStart(2, '0')}-10`, `${oy}-${String(om).padStart(2, '0')}-20`]; };
     const rows = Object.entries(O.fh).filter(([m]) => m >= '2026-10').map(([m, [need, have, cov]]) => {
-      const left = Math.max(0, need - (cov != null ? cov : have)), [o0, o1] = win(m);   // 11/10: 앞 달에 남은 발주 완료분은 뒤 달에 씀(cov = 누적 충당, planstock.py) — 예전엔 달마다 따로 빼 '기간 지남' 4,123t(발주 요약 703t 과 다름)
+      const left = Math.max(0, need - (cov != null ? cov : have)), [o0, o1] = win(m);   // 11/10: 앞 달에 남은 발주 완료분은 뒤 달에 씀(cov = 누적 충당, planstock.py): 예전엔 달마다 따로 빼 '기간 지남' 4,123t(발주 요약 703t 과 다름)
       const st = left < 0.5 ? ['충분', 'good'] : today > o1 ? ['기간 지남', 'bad'] : today >= o0 ? ['발주 기간 중', 'warn'] : [`${md(o0)}부터`, ''];
       return `<tr><td><b>${+m.slice(5)}월적</b>${m.slice(0, 4) !== '2026' ? ` <small>'${m.slice(2, 4)}</small>` : ''}</td><td>${md(o0)}~${+o1.slice(8)}</td><td>${md(`${m}-07`)}</td><td>${n0(need)}</td><td>${n0(have)}</td><td class="${st[1] === 'bad' ? 'bad' : st[1] === 'warn' ? 'warn' : ''}"><b>${n0(left)}</b></td><td><span class="tag ${st[1]}">${st[0]}</span></td></tr>`; }).join('');
-    return card('ps-fh', '수입 FH 월적', '계획재용 수입 FH — 필요량 · 발주 완료분 · 남은 발주', '단위: 톤',
+    return card('ps-fh', '수입 FH 월적', '계획재용 수입 FH: 필요량 · 발주 완료분 · 남은 발주', '단위: 톤',
       `<div class="scroll"><table class="t big"><thead><tr><th>월적</th><th>발주 기간</th><th>입고</th><th>필요</th><th>발주 완료분</th><th>남은 발주</th><th>판정</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="small">남은 발주 = 필요 − 발주 완료분(앞 달 남은 몫 포함)</p>`);
   }
@@ -123,7 +123,7 @@
     const rows = O.byMat.map((b) => `<tr><td class="l nm">${esc(b.mat)}</td><td>${b.n}</td><td><b>${n0(b.stock)}</b></td><td>${n0(b.target)}</td><td>${n0(b.prodM)} / ${n0(b.planM)}</td><td>${n0(b.shipM)} / ${n0(b.fcM)}</td><td><b>${n0(b.end)}</b></td></tr>`).join('');
     return card('ps-mat', '소재 구분별', `운영안 소재발주구분 · ${mon(O.month)} 진도`, '단위: 톤',
       `<div class="scroll"><table class="t big"><thead><tr><th class="l">소재</th><th>사양</th><th>현재 재고</th><th>목표</th><th>생산 / 계획</th><th>출하 / 예측</th><th>${mon(O.month)}말 예상</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="small">서림 GI 사양은 서림 공급이 27년부터라 현재는 다른 GI(주로 포스코 광양)로 만들고 있음 — 구분은 운영안 표기 그대로.</p>`);
+      <p class="small">서림 GI 사양은 서림 공급이 27년부터라 현재는 다른 GI(주로 포스코 광양)로 만들고 있음: 구분은 운영안 표기 그대로.</p>`);
   }
 
   function specs() {
@@ -154,10 +154,10 @@
     const T = O.tot;
     const sh = Object.entries(O.shipHist).map(([m, v]) => `${mon(m)} ${n0(v)}t`).join(' · '), pr = Object.entries(O.prodHist).map(([m, v]) => `${mon(m)} ${n0(v)}t`).join(' · ');
     return card('ps-basis', '산출 기준 및 유의사항', '', '', `<ul class="small" style="line-height:1.8;margin:0;padding-left:20px">
-      <li><b>대상</b> 계획재 운영안(TF) 사양 중 계획재로 정한 ${O.n}개 사양(컬러건재판매그룹, 수입 F/H·서림 GI 소재). 사양 = '두께 폭 상도색상' — 운영안 '제품재고' 시트 정의 그대로(품명 무관). 생산 실적은 실측 두께라 ±0.03mm 안에서 가장 가까운 사양으로 봄.</li>
-      <li><b>운영안 시작 재고</b> 운영안의 '9월말 재고' ${n0(T.stock0R15)}t 는 실제로는 <b>9/14 기준</b> 재고 목록(코일별 재고일수가 MES 8월말보다 14일 많고 9월말보다 16일 적음). MES 9월말 같은 정의 재고는 <b>${n0(T.stock0Mes)}t</b>(+${n0(T.stock0Mes - T.stock0R15)}t) — 이 화면은 MES ${+String(O.stockMonth).slice(4)}월말(최근 월말 재고)에서 시작.</li>
+      <li><b>대상</b> 계획재 운영안(TF) 사양 중 계획재로 정한 ${O.n}개 사양(컬러건재판매그룹, 수입 F/H·서림 GI 소재). 사양 = '두께 폭 상도색상': 운영안 '제품재고' 시트 정의 그대로(품명 무관). 생산 실적은 실측 두께라 ±0.03mm 안에서 가장 가까운 사양으로 봄.</li>
+      <li><b>운영안 시작 재고</b> 운영안의 '9월말 재고' ${n0(T.stock0R15)}t 는 실제로는 <b>9/14 기준</b> 재고 목록(코일별 재고일수가 MES 8월말보다 14일 많고 9월말보다 16일 적음). MES 9월말 같은 정의 재고는 <b>${n0(T.stock0Mes)}t</b>(+${n0(T.stock0Mes - T.stock0R15)}t): 이 화면은 MES ${+String(O.stockMonth).slice(4)}월말(최근 월말 재고)에서 시작.</li>
       <li><b>현재 재고</b> MES ${+String(O.stockMonth).slice(4)}월말 재고 + 이후 생산 − 이후 출하(출하 코일번호를 재고·생산 코일과 이어 사양 판정, 판매·이송 모두). 다음 월말 재고 수신 시 해당 값으로 보정.</li>
-      <li><b>판매 진도</b> 계획재 출하는 월말에 집중 — 최근 3개월(${O.paceFrom.map(mon).join('·')}) 같은 사양 출하 기준 ${md(O.asOf)}까지 통상 월 출하량의 <b>${Math.round(O.pace * 100)}%</b>가 출하됨. 일수 비례로 판정할 때 생기는 과소 판정을 보정.</li>
+      <li><b>판매 진도</b> 계획재 출하는 월말에 집중: 최근 3개월(${O.paceFrom.map(mon).join('·')}) 같은 사양 출하 기준 ${md(O.asOf)}까지 통상 월 출하량의 <b>${Math.round(O.pace * 100)}%</b>가 출하됨. 일수 비례로 판정할 때 생기는 과소 판정을 보정.</li>
       <li><b>최근 실적</b> 출하 ${sh} / 생산 ${pr} (같은 ${O.n}개 사양). MES 출하 기록이 속보보다 늦게 반영되는 날이 있어 이번 주 출하는 과소 집계될 수 있음.</li>
       <li><b>판정</b> 월말 결품 예상 = 예상 &lt; 0 · 안전재고 미만 = 0 ≤ 예상 &lt; 안전재고 · 생산 일정 지연 = 일정 대비 30%·5t 이상 부족 · 목표 2배 초과 = 예상 &gt; 목표×2(차이 10t 이상) · 판매 예측 초과 = 출하가 통상 진도의 1.5배+5t 초과(10일 이후).</li></ul>`);
   }
@@ -168,7 +168,7 @@
       + `<section class="card" id="ps-cal"><h2>계획재 캘린더 <small>사양별 생산 일정과 소재 발주(업체·수량·기한) · 날짜 선택 시 상세</small><span class="unit">단위: 톤</span></h2><div id="ps-calbox"></div></section>`
       + `<div class="grid2 rowc">${orderSum()}${fhCard()}</div>`
       + `<div class="grid2 rowc">${months()}${byMat()}</div>`
-      + `<details class="card more" id="ps-more"><summary><h2>사양별 상세 <small>${O.n}개 사양 — 진도·월말 예상·판정</small></h2></summary>${specDiv()}</details>`
+      + `<details class="card more" id="ps-more"><summary><h2>사양별 상세 <small>${O.n}개 사양: 진도·월말 예상·판정</small></h2></summary>${specDiv()}</details>`
 ;
     const bx = $('ps-basis-box'); if (bx) bx.innerHTML = basis().replace(/^<section[^>]*>/, '').replace(/<\/section>$/, '').replace(/<h2>[^]*?<\/h2>/, '<h3 class="ref-h">계산 기준</h3>');   // 11/11: 맨 아래 '기준·사양' 접기 한 곳에(사양표·리드타임과 같이)
     $('ca-meta').innerHTML = `<span><b>실적</b>${UI.fmtDate(O.asOf)}까지</span><span><b>시작 재고</b>${+O.stockMonth.slice(4)}월 말</span><span><b>기준</b>계획재 운영안 ${O.n}개 사양</span><span><b>계산</b>${UI.fmtDateTime(O.built)}</span>`;

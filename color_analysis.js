@@ -1,4 +1,4 @@
-/* 컬러 조건 분석 — 도금 조건 분석(analysis.html · analysis.js)과 같은 양식·같은 클래스
+/* 컬러 조건 분석: 도금 조건 분석(analysis.html · analysis.js)과 같은 양식·같은 클래스
    자료: published/color_cond.enc.json (cglplan/color_cond.py, 매일 재계산) */
 (function () {
   'use strict';
@@ -22,13 +22,13 @@
       <dt>작업 비율</dt><dd>${x.util != null ? fmt(x.util * 100, 1) + '%' : '-'} <small class="muted">(작업 ÷ 작업 + 정지)</small></dd>
       <dt>속도</dt><dd>${fmt(x.tph13, 2)} t/시간 <small class="muted">(계획 조건 ${fmt(x.tphPlan, 2)})</small></dd>
       <dt>최근 ${N4}주</dt><dd>${fmt(x.tph4, 2)} t/시간 · 품목 구성 감안 <b>${pc(x.idx4 - 1)}</b></dd>
-      <dt>휴지</dt><dd>${fmt(x.stopPerDay, 1)}시간/가동일 <small class="muted">(생산한 날 하루 평균 정지 — 속도에 이미 포함)</small></dd>
+      <dt>휴지</dt><dd>${fmt(x.stopPerDay, 1)}시간/가동일 <small class="muted">(생산한 날 하루 평균 정지: 속도에 이미 포함)</small></dd>
       <dt>휴지 구성</dt><dd>${x.stops.map(([c, h]) => `${esc(c)} ${fmt(h, 1)}h`).join(' · ') || '-'}</dd></dl></div>`).join('');
-    const warn = Object.entries(a.lines).filter(([, x]) => x.idx4 != null && Math.abs(x.idx4 - 1) >= 0.05).map(([l, x]) => `${l} 최근 ${N4}주 속도가 계획 속도보다 ${pc(x.idx4 - 1)} — 계획 속도 조정 검토${N4 < 4 ? ' (자료 ' + N4 + '주뿐 — 더 쌓인 뒤 판단)' : ''}`);
+    const warn = Object.entries(a.lines).filter(([, x]) => x.idx4 != null && Math.abs(x.idx4 - 1) >= 0.05).map(([l, x]) => `${l} 최근 ${N4}주 속도가 계획 속도보다 ${pc(x.idx4 - 1)}: 계획 속도 조정 검토${N4 < 4 ? ' (자료 ' + N4 + '주뿐: 더 쌓인 뒤 판단)' : ''}`);
     $('ca-warns').innerHTML = warn.map((m) => `<li class="warn">경고 · ${esc(m)}</li>`).join('');
     { const ln = Object.entries(a.lines).filter(([, x]) => x.idx4 != null && Math.abs(x.idx4 - 1) >= 0.05), ap = (a.cands || []).filter((c) => c.kind !== 'line' && c.apply);   // 11/11 첫 화면 판정
       $('ca-sum').innerHTML = `<span><span class="big ${ln.length ? 'warn' : 'ok'}">${ln.length}</span> 라인 ±5% 넘음</span><span><span class="big ${ap.length ? 'warn' : ''}">${ap.length}</span> 품명 반영 권장</span>`
-        + `<span class="lst">${ln.length ? ln.map(([l, x]) => `${l} ${pc(x.idx4 - 1)}`).join(' · ') + ' — 계획 속도 조정 검토' : '라인 속도 = 계획 ±5% 안'} · 품명별은 아래 '계획 속도 점검'</span>`; }
+        + `<span class="lst">${ln.length ? ln.map(([l, x]) => `${l} ${pc(x.idx4 - 1)}`).join(' · ') + ': 계획 속도 조정 검토' : '라인 속도 = 계획 ±5% 안'} · 품명별은 아래 '계획 속도 점검'</span>`; }
     renderCands(a);
     renderWeekly(a);
     const RS = a.reasons || [];
@@ -58,7 +58,7 @@
       .filter((x) => cf === 'all' || (cf === 'act' ? x.flag : cf === 'apply' ? x.apply : !x.flag))
       .sort((p, q) => Math.abs(q.h || 0) - Math.abs(p.h || 0) || q.t - p.t);
     const big = P.filter((x) => x.t >= 150), small = P.filter((x) => x.t < 150);
-    const row = (x) => { const d = Math.max(-0.4, Math.min(0.4, x.diff)), w = Math.abs(d) / 0.4 * 34, vd = verdict(x);   // 막대 반폭 최대 34% — 끝에 붙는 % 글자가 옆 칸을 넘지 않게
+    const row = (x) => { const d = Math.max(-0.4, Math.min(0.4, x.diff)), w = Math.abs(d) / 0.4 * 34, vd = verdict(x);   // 막대 반폭 최대 34%: 끝에 붙는 % 글자가 옆 칸을 넘지 않게
       return `<div class="cp-row ${x.apply ? 'ap' : x.flag ? '' : 'ok'}"><div class="cp-n"><b>${esc(x.prod)}</b><small>${A.N4}주 ${fmt(x.t)}t</small></div>
         <div class="cp-bar"><span class="mid"></span><span class="band"></span><i class="${x.diff >= 0 ? 'p' : 'n'}" style="${x.diff >= 0 ? 'left:50%' : `left:${50 - w}%`};width:${w}%"></i><em style="${x.diff >= 0 ? `left:calc(${50 + w}% + 6px)` : `right:calc(${50 + w}% + 6px)`}">${x.diff >= 0 ? '+' : ''}${fmt(x.diff * 100, 1)}%</em></div>
         <div class="cp-v">${fmt(x.cur, 2)} → <b>${fmt(x.act, 2)}</b> <small>t/시간</small>${x.v12 != null ? `<small class="muted"> · 앞 ${A.N12}주 ${fmt(x.v12, 2)}</small>` : ''}</div>
@@ -68,19 +68,19 @@
       <div class="cp-bar0"><b>${cl} 품명별 속도</b><div class="seg" id="ca-cf">${F.map(([k, n]) => `<button type="button" data-f="${k}" aria-pressed="${k === cf}">${n}</button>`).join('')}</div></div>
       <div class="cp-head"><span>품명</span><span>계획 대비 실제 속도 <small>(왼쪽 = 느림, 오른쪽 = 빠름 · 회색 띠 = ±5%)</small></span><span>계획 속도 → 실제 속도</span><span>시간 차이 (${A.N4}주)</span><span>판정</span></div>
       ${big.map(row).join('') || '<p class="hint" style="padding:12px 0">해당 품명 없음</p>'}
-      ${small.length ? `<details class="cp-more"><summary>${A.N4}주 물량 150t 미만 품명 ${small.length}개 — 표본이 작아 참고만</summary>${small.map(row).join('')}</details>` : ''}
+      ${small.length ? `<details class="cp-more"><summary>${A.N4}주 물량 150t 미만 품명 ${small.length}개: 표본이 작아 참고만</summary>${small.map(row).join('')}</details>` : ''}
       <p class="hint"><b>시간 차이</b> = 최근 ${A.N4}주에 만든 물량이 실제로 걸린 시간 − 계획 속도였다면 걸렸을 시간. 예: −5.1h = 실제가 더 빨라 5.1시간 덜 걸림(계획이 속도를 낮게 잡음), +2.4h = 2.4시간 더 걸림(계획이 너무 빠르게 잡음). <b>반영 권장</b> = 차이 5% 이상 · 150t 이상 · 그 이전 기간도 같은 방향 · 자료 4주 이상일 때. 반영은 다음 계획 계산 때 함께 합니다.</p>`;
     $('ca-cands').querySelectorAll('.cc-line').forEach((b) => b.onclick = () => { cl = b.dataset.l; renderCands(a); });
     $('ca-cands').querySelectorAll('#ca-cf button').forEach((b) => b.onclick = () => { cf = b.dataset.f; renderCands(a); });
   }
 
-  /* 11/10 점검: 월별 제품 생산량 = 모든 품명(mtons) — 100t 이상 품명만 더하면 실적보다 작음 */
+  /* 11/10 점검: 월별 제품 생산량 = 모든 품명(mtons): 100t 이상 품명만 더하면 실적보다 작음 */
   function renderWeekly(a) {                                      // 월 단위(이번 달 = 누계, 잘린 첫 달 제외)
     const W = a.monthly || [], ms = a.months || [], mn = (m) => `${+m.slice(5)}월${m === a.asOf.slice(0, 7) ? ` <small class="muted">(${md(a.asOf)}까지)</small>` : ''}`;
     const keys = [...new Set(W.map((r) => `${r[1]}|${r[2]}`))].sort((x, y) => (x.split('|')[0] === y.split('|')[0] ? 0 : x < y ? -1 : 1));
     const cell = (k, m) => {
       const r = W.find((x) => x[0] === m && `${x[1]}|${x[2]}` === k);
-      if (!r || !(r[4] > 0) || r[3] < 20) return `<td class="n muted"${r && r[3] > 0 ? ` title="${fmt(r[3], 1)}t — 20t 미만이라 속도 생략"` : ''}>-</td>`;   // 11/10 점검: 몇 톤짜리 달이 0.0·0.9 t/hr 로 보이던 것
+      if (!r || !(r[4] > 0) || r[3] < 20) return `<td class="n muted"${r && r[3] > 0 ? ` title="${fmt(r[3], 1)}t: 20t 미만이라 속도 생략"` : ''}>-</td>`;   // 11/10 점검: 몇 톤짜리 달이 0.0·0.9 t/hr 로 보이던 것
       const rate = r[3] / r[4], c = a.cur[k], d = c ? rate / c - 1 : 0;
       return `<td class="n ${d <= -0.05 ? 'neg' : d >= 0.05 ? 'pos' : ''}" title="${fmt(r[3])}t · ${r[5]}코일">${fmt(rate, 1)}</td>`;
     };
