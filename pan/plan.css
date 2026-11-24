@@ -703,3 +703,5 @@ td.nw { white-space: nowrap; }   /* 11/23 검수 1855: AL-STS 가 칸에서 꺾�
 .btn.steps button b { font-weight: 700; } .btn.steps button small { font-size: 14px; color: var(--tx3); font-weight: 400; } .btn.steps button.pri small { color: inherit; opacity: .8; }
 .btn.steps button + button { position: relative; }
 .btn.steps button::before { display: none; }
+
+.hint.ordmore { display: flex; gap: 10px; align-items: center; justify-content: center; }
