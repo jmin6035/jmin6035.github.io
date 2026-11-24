@@ -84,7 +84,7 @@
     return GP.diffDays(b.due, d) <= GP.releaseDaysFor(P, b) + ext;
   }
   // 생산 상한 일수: 강종(AL-STS 30) → 부서(자동차 45) → 기본(15) 순 — cglplan/model.py release_days 와 같게
-  GP.releaseDaysFor = (P, b) => { const a = (P.releaseDaysAlloy || {})[b.alloy], c = (P.releaseDaysCls || {})[b.cls]; return a != null ? a : c != null ? c : P.releaseDays; };
+  GP.releaseDaysFor = (P, b) => { const g = (P.releaseDaysGrade || {})[`${b.cls}|${b.alloy}`]; if (g != null) return g; const a = (P.releaseDaysAlloy || {})[b.alloy], c = (P.releaseDaysCls || {})[b.cls]; return a != null ? a : c != null ? c : P.releaseDays; };   // 11/24: 부서|강종 세분 일수가 먼저
   // AL-STS 칸당 최대 톤(O.slots.cap[칸]) — cglplan/model.py slot_cons 와 같은 순서
   function slotCons(lp, x, O) {
     const sl = O.slots; if (!sl) return;

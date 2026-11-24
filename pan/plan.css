@@ -663,3 +663,35 @@ td.nw { white-space: nowrap; }   /* 11/23 검수 1855: AL-STS 가 칸에서 꺾�
 .pn.todo li small { position: absolute; width: 1px; height: 1px; overflow: visible; clip-path: inset(50%); white-space: nowrap; }
 .pn.todo .chg { margin: 0 0 6px; font-size: 13.5px; }
 .pn.todo li i.n { font-style: normal; font-size: 13.5px; font-weight: 700; color: var(--tx); }
+/* 11/24 사용자 '전면 개편: 달력이 스크롤 없이 보이게, 그룹 고르기 · 접기 · 검색' */
+.top { margin-bottom: 6px; } .top .ph { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+.top .pt { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; } .top .pt h1 { font-size: 22px; } .top .pt p { margin: 0; } .top .pt .xlk { margin: 0; }
+.top .seg button { display: flex; align-items: baseline; gap: 6px; padding: 3px 12px; }
+.top .stp { flex: 1 1 380px; width: auto; justify-self: auto; } .top .stp li { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 6px; padding-top: 12px; }
+.top .prg { flex: 1 1 380px; } .top .prg > div { padding: 4px 12px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 0 8px; }
+.top .ugs { margin-left: auto; } .top .ug0 { padding: 6px 12px; }
+.pn.todo { padding: 6px 12px; margin-bottom: 8px; } .pn.todo.one { display: flex; align-items: center; gap: 10px; } .pn.todo.one > header { margin: 0; flex: none; display: flex; align-items: center; gap: 8px; } .pn.todo.one ol { flex: 1 1 auto; flex-wrap: nowrap; min-width: 0; }
+.pn.todo.one ol li:nth-child(n+5), .pn.todo.one .chg { display: none; } .pn.todo #tdx { margin-left: 6px; } .pn.todo:not(.one) > header { display: flex; align-items: center; gap: 8px; }
+@media (max-width: 100rem) { .pn.todo.one ol li:nth-child(n+4) { display: none; } } @media (max-width: 60rem) { .pn.todo.one { flex-wrap: wrap; } .pn.todo.one ol li:nth-child(n+2) { display: none; } }
+.pn.cal0 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-top: 10px; } .pn.cal0 > header { flex: 0 0 auto; margin: 0; display: flex; align-items: baseline; gap: 8px; } .pn.cal0 > header h2 { font-size: 17px; }
+.pn.cal0 > .scb { flex: 0 0 auto; margin: 0; } .pn.cal0 > .calbar { flex: 1 1 320px; margin: 0; justify-content: flex-end; } .pn.cal0 > .lg, .pn.cal0 > .alm, .pn.cal0 > .cal, .pn.cal0 > #scm { flex: 1 1 100%; min-width: 0; } .pn.cal0 > .lg { margin: 0; } .pn.cal0 > .alm { margin: 0; }
+.pn.cal0 > #scm:empty { display: none; }
+.pn > header .fold { margin-left: auto; padding: 2px 10px; font-size: 13.5px; } .pn.fd > :not(header) { display: none !important; } .pn.fd { padding-bottom: 8px; }
+.fqs2 { font: inherit; font-size: 13.5px; padding: 4px 10px; border: 1px solid var(--bd); border-radius: 8px; background: var(--c2); color: var(--tx); min-width: 220px; }
+.t.fqt tbody.fg tr.gh { cursor: pointer; } .t.fqt tbody.fg tr.gh th { text-align: left; padding: 6px 10px; background: var(--c2); } .t.fqt tr.gh b { margin-right: 10px; } .t.fqt tr.gh span { color: var(--tx2); font-weight: 400; } .t.fqt tr.gh em { font-style: normal; color: var(--warn); font-weight: 700; }
+.t.fqt tr.gh .ghx::before { content: "▸"; display: inline-block; width: 1.2em; color: var(--tx3); } .t.fqt tbody.op tr.gh .ghx::before { content: "▾"; } .t.fqt tbody.fg:not(.op) tr:not(.gh) { display: none; }
+.top .stp { flex: 1 1 300px; } .top .stp li { flex-wrap: nowrap; white-space: nowrap; font-size: 13.5px; } .top .stp li span { overflow: visible; }
+@media (max-width: 100rem) { .top .stp li span { display: none; } .top .stp li.now span { display: inline; } }
+.pn.todo h2 { white-space: nowrap; font-size: 15px; margin: 0; } .pn.todo.one > header .u { white-space: nowrap; }
+.pn.cal0 > .lg { flex: 1 1 420px; justify-content: flex-start; } .pn.cal0 > .alm { flex: 0 1 auto; } .pn.cal0 > .alm details:not([open]) { display: inline-block; } .pn.cal0 > .alm:has(details[open]) { flex: 1 1 100%; }
+.pn > header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; } .lft .pn > header h2 { margin: 0; }
+.pn.todo #tdx { width: auto; display: inline-block; padding: 2px 10px; font-size: 13.5px; margin: 0; } .pn.todo.one > header { flex-wrap: nowrap; }
+.pn.todo.one ol li:nth-child(n+4) { display: none; } @media (max-width: 100rem) { .pn.todo.one ol li:nth-child(n+3) { display: none; } }
+.pn.todo.one ol { overflow: visible; flex-wrap: wrap; }
+.pn.todo.one ol li:nth-child(n+3) { display: none; }
+.pn.cal0 > .alm details:not([open]) > :not(summary) { display: none; }
+
+/* 11/24 묶음 줄: 좁은 화면에서 잘리지 않게 줄바꿈, 늦은 건은 빨강 */
+.t.fqt tr.gh .ghx { position: sticky; left: 10px; display: inline-block; max-width: calc(100vw - 76px); white-space: normal; text-align: left; }
+.t.fqt tr.gh em.bad { color: var(--danger); background: none; box-shadow: none; }
+.t.fqt tr.gh em { white-space: nowrap; }
