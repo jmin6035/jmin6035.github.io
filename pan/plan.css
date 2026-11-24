@@ -695,3 +695,11 @@ td.nw { white-space: nowrap; }   /* 11/23 검수 1855: AL-STS 가 칸에서 꺾�
 .t.fqt tr.gh .ghx { position: sticky; left: 10px; display: inline-block; max-width: calc(100vw - 76px); white-space: normal; text-align: left; }
 .t.fqt tr.gh em.bad { color: var(--danger); background: none; box-shadow: none; }
 .t.fqt tr.gh em { white-space: nowrap; }
+
+/* 11/24 선행관리 순서 단계 줄: 번호 · 이름 · 엑셀 시트 이름, 머리 바로 아래 한 줄(좁으면 옆으로 밀기) */
+.btn.steps { justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin: 0 0 var(--space-sm); padding-bottom: 2px; scrollbar-width: thin; }
+.btn.steps button { display: inline-flex; align-items: baseline; gap: 8px; padding: 8px 14px; font-size: 15px; white-space: nowrap; flex: 0 0 auto; }
+.btn.steps button i { font-style: normal; font-variant-numeric: tabular-nums; color: var(--tx3); font-size: 14px; } .btn.steps button.pri i { color: inherit; opacity: .8; }
+.btn.steps button b { font-weight: 700; } .btn.steps button small { font-size: 14px; color: var(--tx3); font-weight: 400; } .btn.steps button.pri small { color: inherit; opacity: .8; }
+.btn.steps button + button { position: relative; }
+.btn.steps button::before { display: none; }
