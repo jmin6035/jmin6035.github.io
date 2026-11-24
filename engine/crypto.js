@@ -106,11 +106,14 @@
    본 화면만(판생 pan/ 은 판생 관문 대상이라 제외). 공통으로 읽히는 파일이 이것뿐이라 여기 둠(ui/shell.js 는 작업 방이 고치는 중) */
 (function () {
   if (typeof document === 'undefined' || typeof location === 'undefined' || /\/pan\//.test(location.pathname)) return;
+  /* 11/24: 자료 글의 단위 'h'(669h → 669시간) · 앞에 붙은 물결(실적 ~11/21 → 실적 11/21까지)도 같이(검수 U7). 기간 'A~B' 는 그대로 */
+  const HT = /\d(\.\d+)?h(?![A-Za-z])/, TL = /(^|[\s(])~(\d{1,2}\/\d{1,2})/;
+  const fx = (v) => v.replace(DASH, ': ').replace(/(\d(?:\.\d+)?)h(?![A-Za-z])/g, '$1시간').replace(/(^|[\s(])~(\d{1,2}\/\d{1,2})/g, '$1$2까지');
   const DASH = / \u2014 /g, dashFix = (root) => {
     if (!root) return;
     const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let nd;
-    while ((nd = tw.nextNode())) { const v = nd.nodeValue; if (v.indexOf(' \u2014 ') >= 0 && !(nd.parentElement && nd.parentElement.closest('script,style,textarea,code,pre'))) nd.nodeValue = v.replace(DASH, ': '); }
-    root.querySelectorAll('[title]').forEach((e) => { if (e.title.indexOf(' \u2014 ') >= 0) e.title = e.title.replace(DASH, ': '); });
+    while ((nd = tw.nextNode())) { const v = nd.nodeValue; if ((v.indexOf(' \u2014 ') >= 0 || HT.test(v) || TL.test(v)) && !(nd.parentElement && nd.parentElement.closest('script,style,textarea,code,pre,input'))) nd.nodeValue = fx(v); }
+    root.querySelectorAll('[title]').forEach((e) => { const v = e.title; if (v.indexOf(' \u2014 ') >= 0 || HT.test(v) || TL.test(v)) { const w = fx(v); if (w !== v) e.title = w; } });
   };
   let t = null; const go = () => { dashFix(document.body); new MutationObserver(() => { clearTimeout(t); t = setTimeout(() => dashFix(document.body), 120); }).observe(document.body, { childList: true, subtree: true, characterData: true }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();

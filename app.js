@@ -266,7 +266,7 @@
       if (!o) { const pw = prompt('게시 계획 암호'); if (!pw) { msg.textContent = ''; return; } o = await GP.decryptJSON(env, pw); }
       result = o.result; meta = o.meta || {}; renderResult();
       const t0 = (result.replan || {}).t0;
-      msg.textContent = `게시 계획 열림 · ${t0 ? '실적 ~' + t0.slice(5) : ''} · 저장 ${String(o.savedAt || env.created || '').slice(0, 16).replace('T', ' ')}`;
+      msg.textContent = `게시 계획 열림 · ${t0 ? '실적 ' + t0.slice(5) + '까지' : ''} · 저장 ${String(o.savedAt || env.created || '').slice(0, 16).replace('T', ' ')}`;
     } catch (e) { msg.textContent = '⚠ ' + (/암호|decrypt|OperationError/i.test(String(e.message || e.name)) ? '암호가 맞지 않습니다' : e.message); }
   };
 

@@ -543,7 +543,7 @@
         if (x.offNo >= 1) add('주의', '수주', `${G.nm} 미발주 ${n0(x.offNo)}t: 주문은 등록, 소재 발주 확정 안 됨`, '소재 발주 확정 요청', nextDl, A.dept[G.k]);
         }   // 미수주 조치는 뺌(매트릭스에서 미수주 칸 없앰: 11/12 사용자 '단순하게')
       for (const G of Gs) { const x = A.grp[G.k][m];
-        if (x.pAct != null && x.pDue && x.pAct + 0.5 < x.pDue) add(x.pAct < x.pDue * 0.9 ? '경고' : '주의', '생산', `${G.nm} 생산 ${P0(pctOf(x.pAct, x.pPlan))}: 실적 ${n0(x.pAct)} / 월 계획 ${n0(x.pPlan)}t, ~${md(A.S.asOf)} 월차 계획 ${n0(x.pDue)}t보다 ${n0(x.pDue - x.pAct)}t 적음`, '생산 순서 당김', null, '수주팀·공정출하'); }
+        if (x.pAct != null && x.pDue && x.pAct + 0.5 < x.pDue) add(x.pAct < x.pDue * 0.9 ? '경고' : '주의', '생산', `${G.nm} 생산 ${P0(pctOf(x.pAct, x.pPlan))}: 실적 ${n0(x.pAct)} / 월 계획 ${n0(x.pPlan)}t, ${md(A.S.asOf)}까지 월차 계획 ${n0(x.pDue)}t보다 ${n0(x.pDue - x.pAct)}t 적음`, '생산 순서 당김', null, '수주팀·공정출하'); }
       // 재고: 매트릭스와 같은 값(그룹 실재고 ÷ 재고 목표): 목표를 넘은 그룹
       for (const G of Gs) { const x = A.grp[G.k][m]; if (x.stk != null && x.cap && x.stk > x.cap) add('주의', '재고', `${G.nm} 제품 재고 ${n0(x.stk)}t: 제품 목표 ${n0(x.cap)}t의 ${P0(pctOf(x.stk, x.cap))}`, G.self ? '컬러 투입 당김 검토' : '출하 당김 · 생산 조정 검토', null, G.self ? '수주팀' : A.dept[G.k]); }
       // 창고: 카드·매트릭스와 같은 값(소재 + 제품 / 목표 합)

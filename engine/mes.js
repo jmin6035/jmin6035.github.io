@@ -387,7 +387,7 @@
       state[l] = cs.length ? cs[cs.length - 1].fam : (c ? c.fam : P.initFamily[l]);
     }
     const planT = GP.sum(R.rows.filter((r) => r[0] <= t0), (r) => r[4]), actT = GP.sum(rows, (r) => r[4]);
-    const notes = [`MES 실적 ~${GP.md(t0)}: ${GP.fmt(actT)}t (계획 ${GP.fmt(planT)}t, 차이 ${GP.fmt(actT - planT)}t)`];
+    const notes = [`MES 실적 ${GP.md(t0)}까지: ${GP.fmt(actT)}t (계획 ${GP.fmt(planT)}t, 차이 ${GP.fmt(actT - planT)}t)`];
     checks.push({ level: 'info', msg: `MES 실적 기준일 ${t0}, 현재 강종 ` + P.lines.map((l) => `${l} ${state[l]}`).join('·') });
     return { t0, rows, state, extraDown: {}, notes, checks };
   };
