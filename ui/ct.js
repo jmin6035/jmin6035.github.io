@@ -7,8 +7,9 @@
   const CT = window.CT = {};
   const PW_KEY = 'cgl-analysis-pw';
   const esc = CT.esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  CT.n0 = (v) => (v == null || isNaN(v) ? '-' : Math.round(v).toLocaleString('ko-KR'));
-  CT.n1 = (v) => (v == null || isNaN(v) ? '-' : (+v).toLocaleString('ko-KR', { maximumFractionDigits: 1 }));
+  const NF0 = new Intl.NumberFormat('ko-KR'), NF1 = new Intl.NumberFormat('ko-KR', { maximumFractionDigits: 1 });   /* 11/24: toLocaleString 을 부를 때마다 형식을 새로 만들어 느림(판생 첫 화면에서 0.5초) → 한 번 만든 형식을 다시 씀, 결과 글자는 같음 */
+  CT.n0 = (v) => (v == null || isNaN(v) ? '-' : NF0.format(Math.round(v)));
+  CT.n1 = (v) => (v == null || isNaN(v) ? '-' : NF1.format(+v));
   CT.md = (s) => (s ? `${+String(s).slice(5, 7)}/${+String(s).slice(8, 10)}` : '');
   const ymd8 = (s) => (s && /^\d{8}$/.test(String(s)) ? `${String(s).slice(0, 4)}-${String(s).slice(4, 6)}-${String(s).slice(6, 8)}` : s || null);
   const addD = CT.addD = (s, n) => { if (!s) return null; const d = new Date(String(s).slice(0, 10) + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
