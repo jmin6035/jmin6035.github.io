@@ -168,6 +168,8 @@ tr.idle .stopc .sl { min-height: 40px; }
 button.cell.stp { background: transparent !important; } button.cell.stp .off { color: var(--pz-stopt) !important; font-size: 15px; }
 .band { background: var(--pz-ev) !important; color: var(--pz-evt) !important; font-size: 13.5px; flex-basis: 22px; line-height: 22px; letter-spacing: -.2px; }
 .band.mc { background: var(--pz-mc) !important; color: var(--pz-mct) !important; }
+/* 11/25 수정 방 2: 휴대폰 칸(110px)에서 'S/D 재가동 MAC→AL' 띠 글자가 칸을 넘던 것: 좁은 화면만 두 줄 허용(글자 크기 그대로) */
+@media (max-width: 640px) { .band { flex: 0 0 auto !important; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.3 !important; padding: 2px 4px; text-align: center; } }
 .wc { background: var(--pz-wn) !important; color: var(--pz-wnt) !important; font-weight: 700; font-size: 13.5px; }
 button.cell.fl { box-shadow: inset 3px 0 0 var(--bad); }
 .tv { font-size: 17px; }
