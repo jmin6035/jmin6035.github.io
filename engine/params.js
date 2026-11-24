@@ -27,6 +27,7 @@
     initFamily: { '1CGL': 'AL', '2CGL': 'AL' },          // 첫날 강종. '' = 자유
     releaseDays: 15,                                     // 마감 N일 전부터 생산 가능 = 상한(11/9 회의 15일, 25일 폐기) — 대수리 등 정지 직전은 정지 일수만큼 예외
     releaseDaysCls: { '자동차수출': 45, '자동차내수': 45 },  // 부서별 상한(TF 목표 일수 — 11/9 회의 '그대로 둠'), 없으면 releaseDays
+    releaseDaysGrade: {'도금수출|AL': 15, '도금수출|AL-LG': 15, '도금수출|AZ': 8, '도금수출|MAC': 8, '도금국내|AL': 25, '도금국내|AL-LG': 25, '도금국내|AZ': 13, '도금국내|MAC': 13, '자동차수출|AL': 35, '자동차수출|AL-LG': 35, '자동차수출|AZ': 35, '자동차수출|MAC': 40, '자동차수출|AL-STS': 40, '자동차내수|AL': 35, '자동차내수|AL-LG': 35, '자동차내수|AZ': 35, '자동차내수|MAC': 40, '자동차내수|AL-STS': 40},   // 11/24 사용자 '세분한 값으로 통일': 부서|강종 세분 일수(월말 목표와 같은 값 = cglplan/tf_rules.json grade, tfrules.release_grade) — 가장 먼저
     releaseDaysAlloy: { 'AL-STS': 30 },                  // 강종별 상한(TF AL-STS 30일) — 부서보다 먼저
     releaseExempt: ['자가재'],                            // 제한 없는 부서
     firstWindowPrevMonth: true,                          // 첫 달 1~5일 선적분은 전월 생산으로 가정
