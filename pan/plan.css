@@ -705,3 +705,15 @@ td.nw { white-space: nowrap; }   /* 11/23 검수 1855: AL-STS 가 칸에서 꺾�
 .btn.steps button::before { display: none; }
 
 .hint.ordmore { display: flex; gap: 10px; align-items: center; justify-content: center; }
+/* 11/25 판생 줄 대조(월 숫자 단계) */
+.prw .seg { margin: 0 0 var(--space-sm); } .t.gt tr[data-pro] { cursor: pointer; } .t.gt tr[data-pro]:hover td, .t.gt tr[data-pro]:hover th, .t.gt tr.on td, .t.gt tr.on th { background: var(--brand-t); }
+.t.gt tr.pr-c > td { background: var(--c2); padding: var(--space-sm) var(--space-lg); } .t.gt tr.pr-c .t { margin: 0 auto; }
+.pr-bar { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; justify-content: center; margin: 0 0 var(--space-sm); } .pr-bar .seg { margin: 0; }
+.pr-bar input { min-width: 240px; padding: 8px 12px; border: 1px solid var(--bd2); border-radius: var(--r2); background: var(--card); color: var(--tx); font-size: var(--fb); }
+.t.pr-ct { max-width: 860px; margin: 0 auto; } .t.pr-ct th, .t.pr-ct td { text-align: center; } .pr-hit { margin: 0 0 var(--space-md); }
+.t.gt tr.pr-c > td { padding: var(--space-sm); }
+.prw { container-type: inline-size; }
+@container (max-width: 760px) { .pr-bar input { min-width: 0; width: 100%; } .prw .t.gt > thead > tr > th:nth-child(2), .prw .t.gt > tbody > tr:not(.pr-c) > :nth-child(2) { display: none; }
+  .t.pr-ct th:nth-child(3), .t.pr-ct td:nth-child(3), .t.pr-ct th:nth-child(5), .t.pr-ct td:nth-child(5) { display: none; } .prw .t th, .prw .t td { padding-left: 2px; padding-right: 2px; white-space: normal; word-break: keep-all; } .prw .t { width: 100%; max-width: 100%; box-sizing: border-box; } .prw .t.pr-ct td:first-child { word-break: break-all; } .t.gt tr.pr-c > td { padding: 4px 0; }
+  .prw .seg button { padding-left: 10px; padding-right: 10px; } }
+.prw .t th small.pr-ex { display: none; } .t.pr-ct td:first-child { white-space: nowrap; } @container (max-width: 760px) { .prw .t th small.pr-ex { display: block; font-weight: 400; color: var(--tx3); } .t.pr-ct td:first-child { white-space: normal; } }
