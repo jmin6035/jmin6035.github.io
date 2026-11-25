@@ -966,10 +966,25 @@ def main():
                 els = driver.find_elements(By.ID, 'SEARCH_VAL')
                 if els and els[0].is_displayed():
                     break
+        # 11/25 장치 방(11/24 17:35 · 19:35 연속 실패 — 원인을 기록에서 못 봄): 실패 때 지금 화면(주소 · 제목 · 글 앞부분)을 실행 기록에 남기고,
+        # 로그인 화면으로 돌아가 있으면(세션 만료) 다시 로그인한 뒤 한 번 더
+        try:
+            body_ = driver.execute_script("return (document.body && document.body.innerText || '').slice(0, 200)") or ''
+            print(f"  · 메뉴 검색창 없음 — 지금 화면: {driver.current_url[:120]} · 제목 '{driver.title[:60]}' · 글 '{' '.join(body_.split())[:160]}'")
+            if diag is not None:
+                diag.append(['menu_panel_fail', f'{driver.current_url[:120]} | {driver.title[:60]} | {" ".join(body_.split())[:160]}'])
+        except Exception as e_:
+            print(f'  · 지금 화면을 못 읽음: {type(e_).__name__}')
         if again:
             print('  메뉴 검색창이 안 열려 첫 화면을 다시 엶')
             driver.get(mes_url)
             time.sleep(8)
+            try:
+                if driver.find_elements(By.ID, 'username'):
+                    print('  로그인 화면으로 돌아가 있음(세션 만료) → 다시 로그인')
+                    login()
+            except Exception as e_:
+                print(f'  · 다시 로그인 실패: {str(e_).splitlines()[0][:120] if str(e_) else type(e_).__name__}')
             return menu_panel(diag, again=False)
         raise RuntimeError('좌측 메뉴 검색창이 열리지 않음')
 
