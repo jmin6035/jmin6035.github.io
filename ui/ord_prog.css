@@ -44,7 +44,7 @@ table.pdt tr.lv0 td { border-bottom: 2px solid var(--line); } table.pdt tr.mu td
 .lg2 { grid-template-columns: minmax(0, 1fr) minmax(500px, 33%); column-gap: 24px; }
 .lg2 .lg2r table.pos-t { width: 100%; table-layout: fixed; }
 .lg2 .lg2r table.pos-t :is(th, td) { padding-left: 10px !important; padding-right: 10px !important; }
-.lg2 .lg2r table.pos-t th:first-child, .lg2 .lg2r table.pos-t td:first-child { width: 210px; }
+.lg2 .lg2r table.pos-t th:first-child, .lg2 .lg2r table.pos-t td:first-child { width: 150px; white-space: normal; word-break: keep-all; }   /* 11/25: 오른쪽 좁은 칸(1500 폭)에서는 이름 두 줄 허용 — 210px 고정이 숫자 칸을 넘치게 했음 */
 table.pl-t td.mu2 { min-width: 0; }
 @media (max-width: 1400px) { .lg2 { grid-template-columns: minmax(0, 1fr); } }
 /* 11/13 서식 통일(04 수주 결론 카드 기준): 제목·카드 가운데 · 카드 이름 16px · 값 30px · 색 띠는 위쪽 */
@@ -68,8 +68,10 @@ table.pl-t td.mu2 { min-width: 0; }
 table.pos-t small.mu2.il { display: inline; font-size: 13.5px; color: var(--ink-2); } table.pos-t .nw1 { white-space: nowrap; }
 /* 11/23 수정 방(검수 U18 칸 폭): 넓은 화면에서 상태표 숫자 칸 같은 폭 · 포스코 진행 단계 칸 고르게(휴대폰은 그대로) */
 @media (min-width: 1100px) {
-  table.ct-t.pl-t { table-layout: fixed; }
-  table.ct-t.pl-t th:first-child { width: 22%; }
-  table.ct-t.pl-t :is(th, td) { white-space: nowrap; }
   table.ct-t.pos-st :is(th, td) { width: 12.5%; }
-}
+}   /* 11/25: 상태표(pl-t) 고정 비율은 뺌 — 1500 폭 두 칸 배치에서 '최대 9.6일(1CGL)' 등이 넘쳤음(검수 0855) */
+/* 11/25 수정 방 2(검수 0855, 1500 폭 넘침): 오른쪽 좁은 칸의 라인별 작업가능일은 '9.6일 / (229시간)' 두 줄 허용, 상태 이름은 칸 안에서 줄바꿈 */
+.lg2 .lg2r table.pos-t .nw1 { white-space: normal; } .lg2 .lg2r table.pos-t small.mu2.il { display: block; }
+table.pos-t td:first-child { overflow-wrap: anywhere; }
+.lg2 .lg2r table.pos-t td:first-child { white-space: normal !important; }
+.lg2 > div:first-child table.pl-t td:nth-child(n+5) { white-space: normal !important; word-break: keep-all; }   /* 11/25: 1500 폭 두 칸 배치에서 '최대 9.6일(1CGL)' 이 표 밖으로 잘리던 것 */
