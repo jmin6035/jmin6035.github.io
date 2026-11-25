@@ -48,6 +48,7 @@ html body main table :is(td, th, #al-c) { text-align: center !important; }   /* 
 /* 11/25 수정 방 2: 반반 카드(480px)에 7칸 표가 들어가 머리('발주 완료분' · '11월말 예상' 등)가 두 줄로 꺾이던 것: 1500px 아래는 한 줄에 하나씩, 머리는 한 줄 */
 @media (max-width: 1500px) { #ca-main .grid2.rowc { grid-template-columns: minmax(0, 1fr); } }
 #ca-main table.t.big thead th { white-space: nowrap; }
+html body main #ps-spec table.t tbody td:nth-child(2) { white-space: nowrap !important; } @media (max-width: 1499px) { html body main #ps-spec table.t tbody td:nth-child(2) { font-size: 14px !important; padding-left: 5px !important; padding-right: 5px !important; letter-spacing: -.2px; } }   /* 11/25 수정 방 2(검수 1655): 사양 '0.37 1040 GB1EC60A' 가 119px 칸에서 꺾이던 것 — 한 줄(판정 칸이 대신 줄어듦) */
 </style>
 </head>
 <body>
