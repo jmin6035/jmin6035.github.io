@@ -717,3 +717,6 @@ td.nw { white-space: nowrap; }   /* 11/23 검수 1855: AL-STS 가 칸에서 꺾�
   .t.pr-ct th:nth-child(3), .t.pr-ct td:nth-child(3), .t.pr-ct th:nth-child(5), .t.pr-ct td:nth-child(5) { display: none; } .prw .t th, .prw .t td { padding-left: 2px; padding-right: 2px; white-space: normal; word-break: keep-all; } .prw .t { width: 100%; max-width: 100%; box-sizing: border-box; } .prw .t.pr-ct td:first-child { word-break: break-all; } .t.gt tr.pr-c > td { padding: 4px 0; }
   .prw .seg button { padding-left: 10px; padding-right: 10px; } }
 .prw .t th small.pr-ex { display: none; } .t.pr-ct td:first-child { white-space: nowrap; } @container (max-width: 760px) { .prw .t th small.pr-ex { display: block; font-weight: 400; color: var(--tx3); } .t.pr-ct td:first-child { white-space: normal; } }
+.prw .t.gt > thead th { position: sticky; top: var(--hd-h); z-index: 3; background: var(--card); box-shadow: 0 1px 0 var(--bd); }
+.prw .t.pr-ct thead th { position: static; }
+.L3 .btm > .pn.prw, .L3 .mid > .pn.prw, .pn.prw { overflow: visible; }
