@@ -29,6 +29,7 @@ table.sv thead th { position: sticky; top: 0; z-index: 2; background: #1f3864; c
 table.sv tr.z td { background: var(--zebra); }
 table.sv td.ds, table.sv td.mn { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
 table.sv td.cn { font-weight: 700; letter-spacing: .1px; }
+@media (min-width: 1500px) { table.sv > colgroup > col:nth-child(2) { width: 152px !important; } table.sv > colgroup > col:nth-child(7) { width: 80px !important; } html body main table.sv :is(td, th) { padding-left: 6px !important; padding-right: 6px !important; } }   /* 11/25 수정 방 2(검수 1455): 1500 폭에서 계약번호(15자)가 칸 135px 에 꽉 차 넘치던 것 */
 /* 11/15 사용자 '열 맞추던지': 주·날·정지 줄 글자를 왼쪽 첫 칸에 맞추고 가로로 밀어도 같은 자리(가운데 정렬이라 표 폭 따라 제각각이었음) */
 html body main table.sv td.ds, html body main table.sv td.mn { white-space: normal !important; word-break: keep-all !important; overflow-wrap: anywhere !important; } html body main table.sv thead th { white-space: normal !important; }   /* 긴 목적지가 앞면 색 칸에 붙던 것 */
 html:root body main table.sv.sv tr:is(.wh, .dh, .stp) > td[colspan] { text-align: center !important; padding-left: 14px !important; padding-right: 14px !important; }   /* 11/22 사용자 '바꿔라': 주·날짜·정지 띠 줄도 가운데(docs/16 규칙 13) */
