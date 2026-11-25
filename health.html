@@ -36,8 +36,8 @@ ol.fix li { margin: 8px 0; font-size: 16px; } ol.fix code { background: var(--ti
     ['latest.plan.enc.json', '가동 현황(도금 계획·재계획)', '매일 자동'], ['analysis.enc.json', '도금 실적 분석', '매일 자동', 'remote'], ['weekly_report.enc.json', '주간 보고', '주 1회(수동)'],
     ['integrated.enc.json', '통합 가동계획', '계획 변경 시(수동)']];
   (async () => {
-    const st = (await Promise.all([get(SUPA + 'status.json'), get('published/status.json')])).filter(Boolean).sort((a, b) => (String(a.runAt) < String(b.runAt) ? 1 : -1))[0];
-    const envs = await Promise.all(PAGES.map(async ([n, , , only]) => { const [a, b] = await Promise.all([GP.REMOTE && !GP.REMOTE.has(n) ? null : get(SUPA + n), only === 'remote' ? null : get('published/' + n)]);   /* 11/22 수정 방: 원격에 올리지 않는 파일은 원격에 묻지 않음(콘솔 400) */ /* remote = 사내 PC 가 Supabase 에만 올리는 파일(사이트 쪽 요청은 404) */ const ca = a && (a.created || a.savedAt), cb = b && (b.created || b.savedAt); return ca && (!cb || ca > cb) ? { src: '자동 갱신', at: ca } : cb ? { src: '수동 게시', at: cb } : null; }));
+    const st = (await Promise.all([UI.statusP.then(() => UI.statusRemote || null).catch(() => null), get('published/status.json')])).filter(Boolean).sort((a, b) => (String(a.runAt) < String(b.runAt) ? 1 : -1))[0];
+    const envs = await Promise.all(PAGES.map(async ([n, , , only]) => { if (GP.REMOTE && GP.REMOTE.has(n)) { const e = await GP.latest(n).catch(() => null), c = e && (e.created || e.savedAt); return c ? { src: e.__src === 'remote' ? '자동 갱신' : '수동 게시', at: c } : null; }   /* 11/25: 원격은 사이트 사본보다 새로울 때만 받음(GP.latest, Supabase 전송량) */ const [a, b] = await Promise.all([null, only === 'remote' ? null : get('published/' + n)]);   /* 11/22 수정 방: 원격에 올리지 않는 파일은 원격에 묻지 않음(콘솔 400) */ /* remote = 사내 PC 가 Supabase 에만 올리는 파일(사이트 쪽 요청은 404) */ const ca = a && (a.created || a.savedAt), cb = b && (b.created || b.savedAt); return ca && (!cb || ca > cb) ? { src: '자동 갱신', at: ca } : cb ? { src: '수동 게시', at: cb } : null; }));
     let h = '';
     if (st) {
       const fs = st.feeds || [];

@@ -76,9 +76,27 @@
      사내 PC 가 새 파일을 원격에 올리게 되면 이 목록에 이름을 더할 것(없으면 사이트 게시본만 읽음) */
   GP.REMOTE = new Set(['latest.plan.enc.json', 'analysis.enc.json', 'mesdata.enc.json', 'extradata.enc.json', 'color_actual.enc.json', 'plating_actual.enc.json', 'procure.enc.json', 'portal.enc.json', 'planstock.enc.json', 'color_cond.enc.json', 'act_detail.enc.json', 'color_calc_mes.enc.json']);
   const LATEST = new Map();
+  /* 11/25 장치 방 넘김(Supabase 전송량 한도): 원격 파일은 사이트 사본을 먼저 받고, 원격 status.json 저장 시각(runAt)이 사이트 사본보다 새로울 때만 원격에서도 받음
+     (사내 PC 가 방금 올린 더 새 자료가 있으면 지금처럼 그쪽을 보여 줌). status.json 은 공통 머리(UI.statusP)가 받은 것을 같이 씀, 없으면 여기서 한 번만 */
+  let RS = null, RST = 0; const T0 = Date.now();
+  const remoteStatus = () => {   // 화면을 연 뒤 5분 안 = 공통 머리가 받은 값, 그 뒤(상시 화면 자동 새로 고침)는 5분마다 한 번 다시 받음
+    if (Date.now() - T0 < 3e5 && typeof UI !== 'undefined' && UI && UI.statusP) return UI.statusP.then(() => UI.statusRemote || null).catch(() => null);
+    if (!RS || Date.now() - RST > 3e5) { RST = Date.now(); RS = fetch(GP.SUPABASE_URL + '/storage/v1/object/public/published/status.json?v=' + Date.now(), { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null); }
+    return RS;
+  };
+  const tms = (s) => { const t = Date.parse(String(s || '').replace(/\+00:00$/, 'Z')); return isNaN(t) ? 0 : t; };
+  const remoteLatest = async (name) => {
+    const site = await GP.fetchPublished(['published/' + name]), st = await remoteStatus();
+    if (!st || !st.runAt) return site;                                                   // 원격 상태를 못 받음(402 등) = 사이트 사본만
+    if (site && tms(st.runAt) <= tms(site.created || site.savedAt)) return site;          // 사이트 사본이 같거나 더 새로움
+    const rem = await GP.fetchPublished([GP.SUPABASE_URL + '/storage/v1/object/public/published/' + name]);
+    const stamp = (e) => (e && (e.created || e.savedAt)) || '';
+    if (rem) rem.__src = 'remote';   // 자료 상태 화면이 '자동 갱신 · 수동 게시' 출처를 보임
+    return [rem, site].filter(Boolean).sort((a, b) => (stamp(a) < stamp(b) ? 1 : -1))[0] || null;
+  };
   GP.latest = (name) => {
     const c = LATEST.get(name); if (c && Date.now() - c.t < 20000) return c.p;
-    const p0 = GP.fetchPublished(GP.REMOTE.has(name.replace(/^test\./, '')) ? [GP.SUPABASE_URL + '/storage/v1/object/public/published/' + name, 'published/' + name] : ['published/' + name]);
+    const p0 = GP.REMOTE.has(name.replace(/^test\./, '')) ? remoteLatest(name) : GP.fetchPublished(['published/' + name]);
     const p = p0.then((e) => { if (e && typeof e === 'object') e.__nm = name; return e; });   // 파일 이름 표시(주문 자료 거르기용)
     LATEST.set(name, { t: Date.now(), p }); return p;
   };

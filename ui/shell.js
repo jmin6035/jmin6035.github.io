@@ -267,7 +267,8 @@
   UI.today = (fb) => (UI.basis() || {}).day || (fb ? String(fb).slice(0, 10) : clockDay());
   UI.statusP = (async () => {
     const urls = ['https://gatcqxrzaonjsixajrwd.supabase.co/storage/v1/object/public/published/status.json?v=' + Date.now(), 'published/status.json'];
-    const got = (await Promise.all(urls.map((u) => fetch(u, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)))).filter(Boolean);
+    const all = await Promise.all(urls.map((u) => fetch(u, { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null))), got = all.filter(Boolean);
+    UI.statusRemote = all[0] || null;   // 11/25: 원격(Supabase) 자료가 사이트 사본보다 새로운지 GP.latest 가 이 값으로 판단(status.json 을 두 번 받지 않게)
     if (got.length) UI.status = got.sort((a, b) => (String(a.runAt) < String(b.runAt) ? 1 : -1))[0];
     return UI.status || null;
   })();

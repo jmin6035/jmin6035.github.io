@@ -348,7 +348,7 @@
   try { handoff = sessionStorage.getItem('cgl-dash-handoff'); } catch (e) { handoff = null; }
   if (src) fetch(src, { cache: 'no-store' }).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }).then(load).catch((e) => { $('d-empty').insertAdjacentHTML('beforeend', `<p class="hint" style="color:var(--err)">주소에서 결과를 읽지 못함: ${esc(e.message)}</p>`); });
   else if (handoff) { try { load(JSON.parse(handoff)); } catch (e) { /* 무시 */ } }
-  else GP.fetchPublished().then((env) => {
+  else GP.latest('latest.plan.enc.json').then((env) => {
     if (env && env.app === 'cgl-plan') { shownCreated = env.savedAt || 'plain'; load(env); }   // 사내 서버: 평문 결과 → 바로 표시
     else if (env) askPassword(env);
     else { $('d-empty-title').textContent = '게시된 계획이 없습니다'; $('d-empty-text').textContent = '계획이 게시되면 여기에 자동으로 표시됩니다. 결과 파일(.json)이 있으면 위 “결과 파일 열기”로 볼 수도 있습니다.'; }
@@ -357,7 +357,7 @@
   setInterval(async () => {
     if (!shownCreated || document.hidden) return;
     try {
-      const env = await GP.fetchPublished(); if (!env) return;
+      const env = await GP.latest('latest.plan.enc.json'); if (!env) return;
       const stamp = env.created || env.savedAt; if (stamp === shownCreated) return;
       const o = env.app === 'cgl-plan' ? env : await GP.decryptJSON(env, $('d-pw').value);
       shownCreated = stamp; load(o);
