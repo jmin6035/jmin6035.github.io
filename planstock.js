@@ -145,7 +145,7 @@
     const m1 = O.months.indexOf(O.month);
     return card('ps-spec', '사양별 진도·예측', '위험 사양 우선 표시 · 정렬 기준: 월말 예상(안전재고 대비) / 재고 / 커버 일수', '단위: 톤',
       `<div class="seg" id="ps-f">${seg}</div><div class="seg" id="ps-s" style="margin-top:8px">${[['end', '월말 예상 낮은 순'], ['cover', '커버 일수 짧은 순'], ['stock', '재고 많은 순']].map(([k, l]) => `<button type="button" data-s="${k}" aria-pressed="${k === sortK}">${l}</button>`).join('')}</div>
-      <div class="scroll" style="margin-top:12px"><table class="t"><thead><tr><th class="l">품명</th><th class="l">사양</th><th class="l">소재</th><th class="l">담당</th><th>현재 재고</th><th>안전 / 목표</th><th>${mon(O.month)} 생산 <small>실적 / 일정 / 월계획</small></th><th>${mon(O.month)} 출하 <small>실적 / 예측</small></th>
+      <div class="scroll" style="margin-top:12px"><table class="t"><thead><tr><th class="l">품명</th><th class="l">사양</th><th class="l">소재</th><th class="l">담당</th><th>재고<br><small>현재</small></th><th>안전 / 목표</th><th>${mon(O.month)} 생산 <small>실적 / 일정 / 월계획</small></th><th>${mon(O.month)} 출하 <small>실적 / 예측</small></th>
       <th>${mon(O.months[m1])}말</th><th>${mon(O.months[m1 + 1] || '')}말</th><th>${mon(O.months[m1 + 2] || '')}말</th><th>커버 <small>일</small></th><th class="l">판정</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="small">커버 일수 = 현재 재고 ÷ (이번 달 판매 예측 ÷ 30). 일정 = 운영안 생산 배치를 월 전체에 펼친 날짜로 오늘까지 만들었어야 할 양(통합 계획과 같은 규칙).</p>`);
   }
