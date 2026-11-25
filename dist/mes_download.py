@@ -832,6 +832,7 @@ def main():
         once_max = int(cfg.get('remote_once_max', 20)) if a.remote_only else 0   # 11/9: 아침 전체 실행은 매일 조회만(빠르게) — 한 번만 받는 옛 자료는 2시간 원격 조회가 나눠 받음
         qs = sorted(Q.get('queries', []), key=lambda q: q.get('mode', 'once') == 'once')
         n_once, left, n_run = 0, 0, [0]
+        got_rows = {}   # 11/23 장치 방: 이번 실행에서 받은 행 수(나눠 받기 뒤쪽을 미리 건너뛰는 데 씀)
         if not a.remote_only:                                        # 아침 실행은 앞에서 분석용 조회를 이미 돌려 메모리가 차 있음 → 원격 조회 전에 새로
             try:
                 revive(force=True)
@@ -866,10 +867,20 @@ def main():
                 done[name] = h                                     # 끊긴 실행이 이미 받아 저장한 것(기록만 못 함) — 다시 돌지 않음(2026-10-20)
                 continue
             fl = done.setdefault('_fail', {}).get(name)              # 2026-10-21: 같은 조회문이 연속 2번 시간초과·0행이면 건너뜀(매 실행 10분씩 멈추던 문제) — 조회문을 고치면 다시 돎
-            if fl and fl[0] == h and fl[1] >= 2:
-                print(f'  · {name}: 같은 조회문이 {fl[1]}번 연속 실패해 건너뜀(조회문을 고치면 다시 실행)')
-                note(name, mode, 0, time.time(), f'건너뜀(연속 {fl[1]}번 실패)')
+            today_ = time.strftime('%Y-%m-%d')
+            if fl and fl[0] == h and fl[1] >= 2 and not (mode == 'daily' and (fl[2] if len(fl) > 2 else '') != today_):   # 11/12: 매일 조회는 날이 바뀌면 다시 시도(아직 자료가 없던 이번 달 뒤 보름 등)
+                print(f'  · {name}: 같은 조회문이 {fl[1]}번 연속 실패해 건너뜀(조회문을 고치면 다시 실행){" — " + fl[3] if len(fl) > 3 and fl[3] else ""}')
+                note(name, mode, 0, time.time(), f'건너뜀(연속 {fl[1]}번 실패){": " + fl[3][:200] if len(fl) > 3 and fl[3] else ""}')   # 11/12: 처음 실패 사유를 남김(원인 찾기)
                 continue
+            if '__p' in name:   # 11/23 장치 방(자동 점검 방 '0행 조회 3개'): 앞 쪽이 1만 행 미만이면 이 쪽은 받을 행이 없음 — 60초 기다려 '0행'으로 적던 것을 건너뜀
+                b_, k_ = name.split('__p', 1)
+                pv = b_ if k_ == '2' else f'{b_}__p{int(k_) - 1}' if k_.isdigit() else ''
+                if pv in got_rows and got_rows[pv] < 10000:
+                    note(name, mode, 0, time.time(), f'건너뜀(정상): 앞 쪽 {got_rows[pv]}행 — 1만 행 미만이라 더 받을 행 없음')
+                    got_rows[name] = 0
+                    done[name] = h
+                    done.setdefault('_fail', {}).pop(name, None)
+                    continue
             if mode == 'once':
                 if n_once >= once_max:
                     left += 1
@@ -899,16 +910,20 @@ def main():
                     if o and len(o['rows']) >= 10000:
                         print('  ⚠ 10,000행 — 잘렸을 수 있음(조회문을 나눠야 함)')
                     nrows = len(o['rows']) if o else 0
+                    got_rows[name] = nrows
                     ok = save(o, name, xdir) if o else False
                     if not o:
                         print(f"  ⚠ {name}: 결과 0행(조회 결과가 없거나 {int(q.get('timeout', 180))}초 안에 안 끝남)")
                 note(name, mode, nrows, t0, (f'1만 행(잘렸을 수 있음 — 조회 나눠야 함)' if (nrows or 0) >= 10000 else 'ok') if ok else (f"실패: 쿼리 오류 — {qerr['msg'][:250]}" if qerr.get('msg') else f"0행 또는 시간초과({int(q.get('timeout', 180))}초)"))   # 2026-10-21: 1만 행 = MES 쿼리 화면 한도
+                if not ok and '__p' in name and not nrows and not qerr.get('msg'):   # 11/12: 나눠 받기 뒤쪽 조각 0행 = 더 받을 행이 없음(실패 아님)
+                    ok = True
                 if ok:
                     done[name] = h
                     done['_fail'].pop(name, None)
                 else:
                     f0 = done['_fail'].get(name)
-                    done['_fail'][name] = [h, (f0[1] + 1) if f0 and f0[0] == h else 1]
+                    why = (f"쿼리 오류 — {qerr['msg'][:200]}" if qerr.get('msg') else f'0행 또는 {int(q.get("timeout", 180))}초 안에 안 끝남')
+                    done['_fail'][name] = [h, (f0[1] + 1) if f0 and f0[0] == h else 1, time.strftime('%Y-%m-%d'), why]
                 json.dump(done, open(dp, 'w', encoding='utf-8'))          # 바로 기록(중간에 끊겨도 다음 실행이 다시 돌지 않게)
             except Exception as e:
                 msg = str(e).splitlines()[0][:150] if str(e) else type(e).__name__
