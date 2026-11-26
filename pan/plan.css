@@ -781,3 +781,25 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 .dpl { margin: 0 0 var(--space-md); border: 1px solid #f3b7ba; border-radius: var(--r2); background: #fff7f7; padding: var(--space-sm) var(--space-md); }
 .dpl summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); cursor: pointer; font-weight: 700; color: #101828; } .dpl summary b { color: #c8282f; } .dpl summary small { color: #5b6779; font-weight: 400; } .dpl summary .x0 { margin-left: auto; }
 .dpl .t { margin-top: var(--space-sm); } .dpl .t th[scope=rowgroup] { text-align: center; }
+
+/* 11/26 사용자 '탭 누르면 화면이 바뀌어야지 · 칸 구분 선 · 숫자 고치기' */
+.L3.tabv { display: block; } .L3.tabv > .lft, .L3.tabv > .rgt { display: none !important; } .L3.tabv .mid > :not(.btm) { display: none !important; }
+.L3.tabv .btm > .pn { overflow: visible; } .L3.tabv .btm > [hidden] { display: none !important; }
+.subt { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; background: #e9eef7; border-radius: var(--r2); position: sticky; top: calc(var(--hd-h, 56px) + 4px); z-index: 6; }
+.subt button { font: inherit; font-weight: 600; padding: 8px 16px; min-height: 40px; border: 0; border-radius: calc(var(--r2) - 2px); background: transparent; color: #344054; cursor: pointer; }
+.subt button:hover { background: #ffffff; } .subt button.on { background: #2f5bd3; color: #ffffff; }
+.t { border-collapse: collapse; } .t th, .t td { border: 1px solid #cfd7e4 !important; }
+.t thead th { box-shadow: inset 0 -1px 0 #b8c3d6 !important; }
+.t.dt td.ed { padding: 0; } .t.dt input.dn0 { width: 100%; min-width: 56px; box-sizing: border-box; border: 0; background: transparent; font: inherit; color: inherit; text-align: center; padding: 6px 4px; font-variant-numeric: tabular-nums; }
+.t.dt input.dn0:hover { background: #f2f6ff; } .t.dt input.dn0:focus { outline: 2px solid #2f5bd3; outline-offset: -2px; background: #ffffff; }
+.t.dt td.e1 { background: #fff4d6 !important; } .t.dt td.e1 input { font-weight: 700; color: #8a4b00; } .t.dt td.e2 { background: #fffaeb !important; }
+.dly header .dbt { margin-left: auto; display: flex; gap: 8px; align-items: center; } .dly header .dedn { color: #8a4b00; }
+
+/* 11/26 사용자 '만들다 만 디테일': 빈 가동 · 수주 전 부분 위 글자는 진한 색(흰 글자가 흰 바탕에 묻히던 것), 2차 시작일 왼쪽 보라 선 없앰(2차 표시는 날짜 옆 배지) */
+.cal0 .cl.tl > .ln0, .cal0 .cl.tb > b, .cal0 .cl.te > em { color: #101828 !important; -webkit-text-fill-color: #101828 !important; text-shadow: 0 0 2px #fff, 0 0 2px #fff !important; opacity: 1 !important; }
+.cal0 .cd.c2s { box-shadow: none !important; }
+.cal0 .cl:not(.tl):not(.e0):not(.dn):not(.ev):not(.ac0):not(.fqoff) > .ln0 { color: rgb(255 255 255 / .85) !important; }
+.L3.tabv > :not(.mid) { display: none !important; }
+/* 11/26 머리 줄 단계: 지금 단계 글자가 칸을 넘어 옆 날짜(24일)와 겹치던 것 — 날짜 아래 줄로 내려 칸 안에 */
+.top .stp li { display: grid !important; justify-items: center; align-content: start; white-space: normal !important; word-break: keep-all; text-align: center; min-width: 0; }
+.top .stp li span, .top .stp li em { font-size: 12.5px; line-height: 1.25; }
