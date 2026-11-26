@@ -798,8 +798,19 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 /* 11/26 사용자 '만들다 만 디테일': 빈 가동 · 수주 전 부분 위 글자는 진한 색(흰 글자가 흰 바탕에 묻히던 것), 2차 시작일 왼쪽 보라 선 없앰(2차 표시는 날짜 옆 배지) */
 .cal0 .cl.tl > .ln0, .cal0 .cl.tb > b, .cal0 .cl.te > em { color: #101828 !important; -webkit-text-fill-color: #101828 !important; text-shadow: 0 0 2px #fff, 0 0 2px #fff !important; opacity: 1 !important; }
 .cal0 .cd.c2s { box-shadow: none !important; }
-.cal0 .cl:not(.tl):not(.e0):not(.dn):not(.ev):not(.ac0):not(.fqoff) > .ln0 { color: rgb(255 255 255 / .85) !important; }
 .L3.tabv > :not(.mid) { display: none !important; }
 /* 11/26 머리 줄 단계: 지금 단계 글자가 칸을 넘어 옆 날짜(24일)와 겹치던 것 — 날짜 아래 줄로 내려 칸 안에 */
 .top .stp li { display: grid !important; justify-items: center; align-content: start; white-space: normal !important; word-break: keep-all; text-align: center; min-width: 0; }
 .top .stp li span, .top .stp li em { font-size: 12.5px; line-height: 1.25; }
+
+/* 11/26 사용자 '흰 바탕에 어떤 건 흰 글자 어떤 건 검은 글자면 알아보냐 · 빗금 위 숫자 안 보임': 막대 글자는 전부 진한 한 색. 주문 채움은 강종 색 옅은 칠, 수주 전은 옅은 빗금, 빈 가동은 흰 칸 */
+.cal0 .cl:not(.ev):not(.dn) { --t1: color-mix(in srgb, var(--c) 34%, #ffffff); --t2: color-mix(in srgb, var(--c) 18%, #ffffff); border: 1px solid color-mix(in srgb, var(--c) 70%, #ffffff) !important; box-shadow: none !important; text-shadow: none !important;
+  background: linear-gradient(var(--t1), var(--t1)) 0 0 / calc(var(--o, 0) * 100%) 100% no-repeat, linear-gradient(var(--t2), var(--t2)) 0 0 / calc(var(--o2, 0) * 100%) 100% no-repeat, #ffffff !important; }
+.cal0 .cl:not(.ev):not(.dn)::after { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--c) 26%, #ffffff) 0 2px, transparent 2px 7px) !important; }
+.cal0 .cl:not(.ev):not(.dn) b, .cal0 .cl:not(.ev):not(.dn) em, .cal0 .cl:not(.ev):not(.dn) > .ln0 { color: #101828 !important; -webkit-text-fill-color: #101828 !important; text-shadow: 0 0 3px #fff, 0 0 2px #fff !important; opacity: 1 !important; }
+.cal0 .cl:not(.ev):not(.dn) > .ln0 { color: #475467 !important; -webkit-text-fill-color: #475467 !important; }
+.opk.oo { background: color-mix(in srgb, var(--fam-al) 34%, #ffffff) !important; outline: 1px solid color-mix(in srgb, var(--fam-al) 70%, #ffffff) !important; outline-offset: -1px; }
+.opk.pp { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--fam-al) 26%, #ffffff) 0 2px, #ffffff 2px 7px) !important; outline: 1px solid color-mix(in srgb, var(--fam-al) 70%, #ffffff) !important; outline-offset: -1px; }
+.lg i.pill:not(.w):not(.d) { background: #ffffff !important; box-shadow: inset 0 0 0 1px #98a2b3 !important; }
+.cal0 .cd.wk { background: #e4e8ef !important; } .lg i.pill.w { background: #e4e8ef !important; box-shadow: inset 0 0 0 1px #c3cddd !important; }
+.cal0 .cl.ev:not(.df) { box-shadow: none !important; } .cal0 .cl.ev { background: #ffffff !important; border: 1px solid #98a2b3 !important; }
