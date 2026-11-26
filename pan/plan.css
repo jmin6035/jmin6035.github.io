@@ -942,3 +942,38 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 .t.pr-ct.dlo th, .t.pr-ct.dlo td { display: table-cell !important; white-space: nowrap !important; padding: 3px 8px !important; }
 .t.pr-ct.dlo tr.sum th, .t.pr-ct.dlo tr.sum td { font-weight: 700; background: #eef2f8; }
 .t.pr-ct.dlo th, .t.pr-ct.dlo td { padding: 3px 5px !important; } .t.pr-ct.dlo td.cu { white-space: normal !important; word-break: keep-all; min-width: 110px; }
+/* 11/26 검수 어긋남 2(길이): 소재 단계 발주 판단 · 그룹별 소재 · 미발주를 한 줄 세 칸, 수급 표 줄 높이 촘촘히 */
+.L3.tabv .btm .mgrid.m3 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.L3.tabv .btm .mgrid.m3 > section { margin: 0; min-width: 0; }
+.t.pmt th, .t.pmt td { padding-top: 1px !important; padding-bottom: 1px !important; line-height: 1.35; }
+.L3.tabv .btm .mgrid.m3 > section.fcp { grid-column: auto !important; }
+.L3.tabv .btm .mgrid.m3 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.L3.tabv .btm .mgrid.m3 > section:nth-child(1) { grid-column: 1 !important; grid-row: 1; }
+.L3.tabv .btm .mgrid.m3 > section:nth-child(2) { grid-column: 2; grid-row: 1 / span 2; }
+.L3.tabv .btm .mgrid.m3 > section:nth-child(3) { grid-column: 1; grid-row: 2; }
+/* 11/26 소재 단계 길이: 수급 표 오른쪽에 그룹별 소재 · 미발주(같은 높이 안) */
+.pmat .pmg { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 16px; align-items: start; }
+.pmat .pmg-r > section { margin: 0 0 12px; box-shadow: none; border: 1px solid #cfd7e4; } .pmat .pmg-r > section:last-child { margin-bottom: 0; }
+.pmat .pmg-r .t td, .pmat .pmg-r .t th { padding-top: 2px !important; padding-bottom: 2px !important; }
+.t.pmt th.pm1 { width: 120px; } 
+@media (max-width: 1250px) { .pmat .pmg { grid-template-columns: minmax(0, 1fr); } }
+.pmat .pmg { grid-template-columns: minmax(0, 1fr) minmax(0, 460px); }
+.t.pmt th, .t.pmt td { padding-left: 4px !important; padding-right: 4px !important; }
+@media (max-width: 1450px) { .pmat .pmg-r .t td, .pmat .pmg-r .t th { padding-left: 3px !important; padding-right: 3px !important; } }
+.t.pml td.why { border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
+.t.pml col.c-n { width: 170px; } .t.pml col.c-m { width: 86px; } .t.pml col.c-d { width: 96px; }
+/* 11/26 검수 어긋남 2(길이): 자가재 두 표 줄 높이 촘촘히, 재고 · 적정비 한 줄 */
+.cslp .t.csl th, .cslp .t.csl td { padding-top: 2px !important; padding-bottom: 2px !important; line-height: 1.35; }
+.cslp .t.csl td small.cin { display: inline !important; margin-left: 4px; }
+.cslp .t.csl td input.de { height: 26px; padding: 0 6px; }
+.cslp .t.csl th.dfam small { display: inline; margin-left: 4px; }
+/* 11/26 왼쪽 판(그룹 · 라인 · 강종별 계)이 높이 제한 상자에 갇혀 아래가 잘리던 것 — 끝까지 */
+.L3 > aside.lft { max-height: none !important; overflow: visible !important; position: static !important; }
+.L3 .ordp .ordw { max-height: none !important; overflow: visible !important; }   /* 안쪽 스크롤 상자 없이(C13) — 대신 처음엔 접음 */
+/* 11/26 검수 어긋남 2(길이): 월 숫자 생산 계획 및 실적 표 줄 높이 촘촘히(담당자 표처럼) */
+.dly .t.dt tbody th, .dly .t.dt tbody td { padding-top: 2px !important; padding-bottom: 2px !important; }
+.dly .t.dt td input.dn0 { height: 24px; }
+.t.glt td, .t.glt th { vertical-align: middle !important; }   /* 11/26 검수 다듬기 4: 두 줄 칸 · 한 줄 칸 세로 맞춤 */
+.cslp .t.csl th.dfam small { display: block !important; margin: 0; font-weight: 400; color: var(--tx3); font-size: 13.5px; }
+.pn.todo:not(.one), .pn.glw { overflow: visible !important; max-height: none !important; }
+.pn.glw > header { flex-wrap: wrap; } .pn.glw > header .u { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
