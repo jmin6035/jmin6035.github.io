@@ -43,7 +43,7 @@
         <div class="scroll"><table class="t"><thead><tr><th class="l">소재 유형</th><th>리드타임</th><th class="l" style="min-width:260px"></th><th class="l">발주 방식</th></tr></thead><tbody>
         ${D.types.map((t) => `<tr><td class="l"><b>${esc(t[0])}</b></td><td class="d">${num('t:' + t[0], t[1])} 일</td><td class="l"><i class="lt-bar" style="width:${Math.max(4, t[1] / mx * 240)}px"></i></td><td class="l">${esc(wd_(t[2]))}</td></tr>`).join('')}
         </tbody></table></div></section>
-      <section class="card lt-edit"><h2>고치기 <small>위 숫자를 바꾸고 '적용' · 2시간 안에 발주·소재·계획 화면 반영</small></h2>
+      <section class="card lt-edit"><h2>조정 <small>위 숫자를 바꾸고 '적용' · 2시간 안에 발주·소재·계획 화면 반영</small></h2>
         <div class="lt-bar2"><input id="lt-who" placeholder="이름" maxlength="40" aria-label="이름"><input id="lt-memo" placeholder="바꾸는 이유(선택)" maxlength="200" aria-label="바꾸는 이유"><button type="button" class="btn primary" id="lt-apply" disabled>적용</button><span id="lt-n" class="lt-n"></span><span id="lt-res" class="small"></span></div>
         ${D.src ? `<p class="small">지금 값: ${esc(D.src.who || '')} ${esc(fd(D.src.at))}${D.src.memo ? ' · ' + esc(D.src.memo) : ''}</p>` : ''}
         ${(D.log || []).length ? `<details class="small"><summary>바꾼 이력 ${D.log.length}건</summary>${D.log.map((g) => `<p>${esc(fdt(g.at))} ${esc(g.who)}: ${esc((g.chg || []).join(' · '))}${g.memo ? ' (' + esc(g.memo) + ')' : ''}</p>`).join('')}</details>` : ''}</section>

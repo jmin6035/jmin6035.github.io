@@ -97,8 +97,8 @@
     rs.forEach((r) => {
       const w = wkOf(r.d);
       if (w !== cw) { cw = w; const W = rs.filter((x) => wkOf(x.d) === w), [k, t] = sum(W), a = W[0].d, z2 = W[W.length - 1].d, md2 = (d) => mmdd(d).replace(/^0/, '');
-        /* 11/17 검토: 표가 오늘부터라 '이번 주 11/11~11/17'인데 실제는 오늘 남은 분 → 표에 든 날짜 그대로(주 일부면 '남은 날') */
-        h += `<tr class="wh"><td colspan="${NC}"><div class="stk">${wkNm(w)}${a > w ? ' 남은 날' : ''} ${md2(a)}${z2 > a ? '~' + md2(z2) : ''}<span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
+        /* 11/17 검토: 표가 오늘부터라 '이번 주 11/11~11/17'인데 실제는 오늘 남은 분 → 표에 든 날짜 그대로(주 일부면 '잔여일') */
+        h += `<tr class="wh"><td colspan="${NC}"><div class="stk">${wkNm(w)}${a > w ? ' 잔여일' : ''} ${md2(a)}${z2 > a ? '~' + md2(z2) : ''}<span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
       if (r.d !== cd) { cd = r.d; z = 0; const [k, t] = sum(rs.filter((x) => x.d === r.d)); const we = /[토일]/.test(dnm(r.d)); h += `<tr class="dh"><td colspan="${NC}"><div class="stk"><b${we ? ' class="we"' : ''}>${dnm(r.d)}</b><span>${k}건 · ${n0(t)}t</span></div></td></tr>`; }
       if (r.k === 's') { h += `<tr class="stp ${r.yel ? 'y' : 'n'}"><td colspan="${NC - 3}"><div class="stk">${esc(r.lab)}</div></td><td>${tm(r.s)}</td><td>${tm(r.e)}</td><td></td></tr>`; return; }
       n++; z++;

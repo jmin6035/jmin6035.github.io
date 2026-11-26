@@ -699,7 +699,7 @@
   // ---------- 일정 흐름(칩 → 칩): 지난 날짜 = 완료(회색 ✓), 오늘 생산 = 강조 ----------
   const dueChip = (du, txt, d) => (!du && (!txt || txt === '-') ? ['납기', '당월 내 출고', null, 'due'] : du && du < d ?   // 11/17 사용자 '납기 - 이건 뭔데': 주문이 아직 없는 월 판매계획 물량 = '주문 전'
     [`납기 · ${Math.round((new Date(d) - new Date(du)) / 864e5)}일 지연`, txt, du, 'warn'] : ['납기', txt, du || null, 'due']);   // 납기가 생산보다 앞서면 빨강
-  // 칩 하나 = '›' + 칩(한 덩어리로 줄바꿈: '›'만 혼자 남지 않게) · 지난 날짜 단계(발주 마감 포함) = 모두 완료(흐림 + ✓), 11/17 검토
+  // 칩 하나 = '›' + 칩(한 묶음으로 줄바꿈: '›'만 혼자 남지 않게) · 지난 날짜 단계(발주 마감 포함) = 모두 완료(흐림 + ✓), 11/17 검토
   const flowHtml = (steps0) => { const steps = steps0.filter(Boolean); return `<div class="flw">${steps.map(([lb, v, dt, cl], i) => `<span class="fu">${i ? '<i>›</i>' : ''}<span class="fs ${cl || ''} ${dt && dt < today && (!cl || cl === 'due') ? 'done' : ''}"><small>${esc(lb)}</small><b>${v}</b></span></span>`).join('')}</div>`; };
   // 도금 소재(F/H): 강종 → 소재 코드, 입고 필요 = 생산일 − 투입 여유(팀 리드타임 표 1일: 11/9 회의, 예전 5일), 발주 마감 = 입고 필요 − 업체 유형별 리드타임(27년 배정 업체)
   const SAFE_G = 1;
@@ -961,7 +961,7 @@
   }
 
   // ---------- 이번 달 진행(2026-10-20 회의: 도금 생산·출하, 컬러 생산·출하 4개 그래프) ----------
-  /* 11/3 사용자 '10월 고르면 10월 말 기준, 12월은 실적 0·월 계획만': 이번 달이 아닌 달 = 그 달 일별 자료(지난 날 실적 + 남은 날 계획)와 월 물량 계획(LP)으로 */
+  /* 11/3 사용자 '10월 고르면 10월 말 기준, 12월은 실적 0·월 계획만': 이번 달이 아닌 달 = 그 달 일별 자료(지난 날 실적 + 잔여일 계획)와 월 물량 계획(LP)으로 */
   const GMAP = { 도금수출: 'G수출', 도금국내: 'G국내', 자동차내수: 'G자동차', 자동차수출: 'G자동차', 자가재: 'G자가재', 건재수출: 'C수출', 가전수출: 'C수출', 가전내수: 'C수출', 주문재: 'C건재', 계획재: 'C건재', 수요개발: 'C수요' };
   const GNM = { G수출: '도금수출', G국내: '도금국내', G자동차: '자동차', G자가재: '자가재', C수출: '컬러수출', C건재: '컬러건재', C수요: '수요개발' };
   function progressMonth() { progress(); }
@@ -1044,7 +1044,7 @@
     const L = kind === 'past' ? [['a', '실적'], ['p', '월 계획']] : kind === 'cur' ? [['a', '실적'], ['b', '남은 계획'], ['p', '월 계획']] : [['b', '계획'], ['p', '월 계획']];
     if (V2()) {   // 새 양식: 공장·지표별 표 + 그룹별 표(같은 숫자 한 번), 그래프는 접기
       const ms = D.days.filter((d) => d.slice(0, 7) === m), dash = '<td class="n mu">-</td>';
-      const shipE = (pl) => keys(pl, 'ship').reduce((s, g) => s + ms.reduce((a, d) => a + gshipF(g, d).t, 0), 0);   // 실적 + 남은 날 계획 출고 = 아래 출하 캘린더 '계'
+      const shipE = (pl) => keys(pl, 'ship').reduce((s, g) => s + ms.reduce((a, d) => a + gshipF(g, d).t, 0), 0);   // 실적 + 잔여일 계획 출고 = 아래 출하 캘린더 '계'
       const bpOf = (pl, k) => { const p = tot(pl, k)[2]; if (kind !== 'cur' || !p) return null; return k === 'prod' ? pace : Math.round(keys(pl, k).reduce((s, g) => s + due(g), 0) / p * 100); };
       const prog = (a, p, bp) => { if (kind === 'fut' || !p) return dash; const pc = Math.round(a / p * 100), low = kind === 'cur' ? bp != null && pc - bp < -5 : a < p * 0.95;
         return `<td class="n"><span class="${low ? 'neg' : ''}">${pc}%</span>${kind === 'cur' && bp != null ? `<small class="mu l2">기준 ${bp}%</small>` : ''}</td>`; };
@@ -1062,7 +1062,7 @@
             + `<td class="n" title="${esc(M0 ? `월차 = ${M0.at.slice(5, 10).replace('-', '/')} 첫 게시 계획의 ${+m.slice(5)}월 합계` : '이 달 월차(첫 게시 계획) 자료 없음')}">${m0 != null ? `<small class="mu">월차</small> ${n0(m0)}` : '-'}</td><td class="n" title="지금 월 계획 − 월차">${df != null ? sg(df, '') : '-'}</td></tr>`; }
         const [a, b, p] = tot(pl, k), bp = bpOf(pl, k);
         const e = kind === 'past' ? a : shipE(pl), df = e - p;
-        const et = '출하 실적 + 남은 날 계획 출고(아래 출하 캘린더 계와 같은 값)';
+        const et = '출하 실적 + 잔여일 계획 출고(아래 출하 캘린더 계와 같은 값)';
         return `<tr><td>${pl === 'G' ? '도금' : '컬러'} 출하</td><td class="n" title="${esc(shipSrc)} 월 계획">${n0(p)}</td>${kind === 'fut' ? dash : `<td class="n">${n0(a)}</td>`}${prog(a, p, bp)}`
           + `<td class="n" title="${et}"><small class="mu">전망</small> ${n0(e)}</td><td class="n" title="전망 − 월 계획"><span class="${p && df < -p * 0.05 ? 'neg' : ''}">${sg(df, '')}</span></td></tr>`; };
       const PLs = ['G', 'C'].filter((pl) => UI.inScope(pl));

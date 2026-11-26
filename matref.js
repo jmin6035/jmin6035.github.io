@@ -1,5 +1,5 @@
 /* 소재·재고 화면 맨 아래 '기준·사양' 첨부(11/11 사용자 '리드타임·계획재 사양이 궁금한 사람들이 있다: 항상 첨부'):
-   <div data-ref="lt"></div>      → 소재 유형별 리드타임 표 + 입고 뒤 투입 여유(published/leadtime.enc.json, 읽기 전용: 고치기는 리드타임 기준 화면)
+   <div data-ref="lt"></div>      → 소재 유형별 리드타임 표 + 입고 뒤 투입 여유(published/leadtime.enc.json, 읽기 전용: 조정은 리드타임 기준 화면)
    <div data-ref="spec"></div>    → 계획재 사양표(TF 계획재 운영안 R15, published/planstock.enc.json specs)
    <div data-ref="stkmat"></div>  → 소재 재고 목표 대비 한 줄(published/portal.enc.json sr.stock: 도금 F/H · 컬러 소재)
    화면 스크립트가 암호를 저장(cgl-analysis-pw)하면 그때 불러옴. 같은 파일은 한 번만 풂(MatRef.load) */

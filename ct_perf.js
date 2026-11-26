@@ -113,7 +113,7 @@
     const IW = D.integrated || {}, CDN = {};
     for (const [d, l, , mn] of IW.colorDown || []) CDN[`${d}|${l}`] = (CDN[`${d}|${l}`] || 0) + (+mn || 0);
     const capL = (P.lines || []).filter((l) => CT.inScope(l.pl)).map((l) => {
-      if (l.pl !== 'G') {   // 컬러: 능력 = (1,440분 − 계획 휴지) × 계획 평균 t/h, 부하 = 지난 날 실적 + 남은 날 계획 편성
+      if (l.pl !== 'G') {   // 컬러: 능력 = (1,440분 − 계획 휴지) × 계획 평균 t/h, 부하 = 지난 날 실적 + 잔여일 계획 편성
         const days = []; for (let d = mon + '-01'; d <= lastDay(mon); d = CT.addD(d, 1)) days.push(d);
         const C = (IW.color || []).filter((c) => c.l === l.line && String(c.d).slice(0, 7) === mon);
         if (!C.length) return { l, na: true };

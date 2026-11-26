@@ -35,7 +35,7 @@
     const DP = DEPT.filter((d) => PS.includes(d[2]));
     const dv = (w, d) => { const L = w.g.filter((x) => d[1].includes(x.g)); return { ...tot(L), iss: L.flatMap((x) => (x.iss || []).map((it) => ({ ...it, dept: d[0] }))), rows: L.flatMap((x) => (x.rows || []).map((r) => ({ ...r, dept: d[0] }))), mkt: L.flatMap((x) => x.mkt || []), pl: d[2], ln: L.reduce((a_, x) => { Object.entries(x.ln || {}).forEach(([l, t]) => { a_[l] = (a_[l] || 0) + t; }); return a_; }, {}) }; };
     const wk = (w) => tot(DP.map((d) => dv(w, d)));
-    /* 11/24 사용자 '도금수출 103톤 실화냐': 이번 주는 남은 날 계획만 세고 지난 날 실적을 빼고 있었음 → 주 생산 = 지난 날 실적(그룹 일별 실적 gdaily) + 남은 날 계획 */
+    /* 11/24 사용자 '도금수출 103톤 실화냐': 이번 주는 잔여일 계획만 세고 지난 날 실적을 빼고 있었음 → 주 생산 = 지난 날 실적(그룹 일별 실적 gdaily) + 잔여일 계획 */
     const ASO = String(S.asOf || '').slice(0, 10), GD = S.gdaily || {}, GK = { 도금수출: ['도금수출'], 도금국내: ['도금국내'], 자동차: ['자동차'], 컬러수출: ['건재수출', '가전수출', '가전내수'], 컬러건재: ['주문재'], 수요개발: ['수요개발'] };
     const actD = (w, d) => (GK[d[0]] || []).reduce((q, k) => q + (GD[k] || []).filter((x) => x[0] >= w.from && x[0] <= w.to && x[0] <= ASO).reduce((a_, x) => a_ + (+x[2] || 0), 0), 0);
     const actW = (w) => (w.from <= ASO ? DP.reduce((q, d) => q + actD(w, d), 0) : 0), part = (w) => w.from <= ASO && ASO < w.to;
@@ -83,7 +83,7 @@ ${PS.includes('C') ? `<div><div class="l">부자재 준비(컬러)</div><div cla
       const t = L.map((y) => (!y.runD ? `${y.line} 정지` : `${y.line} ${(y.fams || []).join('·')}${(y.fams || []).some((f) => /AZ/.test(f)) ? '(컬러 소재용)' : ''}`)).join(' · ');
       return GS.some((y) => y.pl === 'G' && y.p) || !t ? '이 주 생산 계획 없음' : `이 주 생산 계획 없음: ${t}`; };   // 도금 판매재가 그 주에 하나도 없을 때만 라인 사정
     const none_ = GS.filter((x) => !x.p).map((x) => { const lt = Object.entries(K.left || {}).filter(([g]) => (GMAP[g] || g) === x.g).reduce((a_, [, v]) => a_ + v, 0); return `<tr class="gr"><th>${esc(x.g)}</th><td colspan="${PS.includes('C') ? 13 : 11}" class="na">${x.pl === 'G' ? gWhy() : `이 주 계획 없음${lt >= 50 ? ` · 미계획 주문 ${n0(lt)}t` : ''}`}</td></tr>`; }).join('');
-    const dtab = `<div class="k-card"><h2><b class="dt">${part(w) ? `${md(restFrom(w))}~${md(w.to)}` : `${md(w.from)}~${md(w.to)}`}</b> ${part(w) ? '남은 날 ' : ''}라인별 생산 계획(톤)${part(w) ? `<small style="font-weight:400;margin-left:8px">${md(w.from)}~${md(ASO)} 실적 ${n0(actW(w))}톤은 위 주 생산에 포함</small>` : ''}</h2><div class="k-dscroll"><table class="k-d k-dl">
+    const dtab = `<div class="k-card"><h2><b class="dt">${part(w) ? `${md(restFrom(w))}~${md(w.to)}` : `${md(w.from)}~${md(w.to)}`}</b> ${part(w) ? '잔여일 ' : ''}라인별 생산 계획(톤)${part(w) ? `<small style="font-weight:400;margin-left:8px">${md(w.from)}~${md(ASO)} 실적 ${n0(actW(w))}톤은 위 주 생산에 포함</small>` : ''}</h2><div class="k-dscroll"><table class="k-d k-dl">
 <thead><tr class="grp"><th></th><th class="gs">생산</th><th colspan="2" class="gs">주문</th><th colspan="7" class="gs">소재</th>${PS.includes('C') ? '<th colspan="2" class="gs">부자재(컬러)</th>' : ''}<th class="gs">납기</th></tr>
 <tr><th></th><th>계획</th><th>주문</th><th>주문 부족</th><th class="sep">소재 확보율</th><th>확보</th><th>입고 예정</th><th>입고 지연</th><th>입고일 미정<small>발주함</small></th><th>소재 배정 전<small>자가재·입고분</small></th><th>미발주</th>${PS.includes('C') ? '<th class="sep">준비</th><th>대기</th>' : ''}<th>납기 지연(신규)</th></tr></thead>
 <tbody>${body_}${none_}<tr class="tot"><th>합계</th>${cells({ ...TT, ...Object.fromEntries(['p', 'o', 'ok', 'on', 'late', 'wait', 'none', 'so', 'sw', 'sb', 'sn'].map((k_) => [k_, T[k_] || 0])) }, PS.includes('C') ? 'C' : 'G', lnGap)}</tr></tbody></table></div>
