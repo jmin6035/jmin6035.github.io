@@ -165,9 +165,9 @@
   function sub(name, L, i) {
     const S = sumOf(L);
     L.sort((a, b) => (ORD[a.st] - ORD[b.st]) || (b.lateDue - a.lateDue) || String(a.due || '9').localeCompare(String(b.due || '9')) || a.con.localeCompare(b.con));
-    if (V2()) return `<details class="sg sg2${S.nomch ? ' h-nomch' : ''}${S.none ? ' h-none' : ''}${S.late ? ' h-late' : ''}"${S.none && L.length <= 40 && i < 2 ? ' open' : ''}><summary><span class="sn" title="${esc(name)}">${esc(name)}</span>${statV2(S, L)}</summary>`
+    if (V2()) return `<details class="sg sg2${S.nomch ? ' h-nomch' : ''}${S.none ? ' h-none' : ''}${S.late ? ' h-late' : ''}"${S.none && L.length <= 40 && i < 1 ? ' open' : ''}><summary><span class="sn" title="${esc(name)}">${esc(name)}</span>${statV2(S, L)}</summary>`
       + `<div class="scroll od-wrap2"><table class="t od2">${COLS2}${HEAD2}<tbody>${L.map(rowV2).join('')}</tbody></table></div></details>`;
-    return `<details class="sg${S.nomch ? ' h-nomch' : ''}${S.none ? ' h-none' : ''}${S.late ? ' h-late' : ''}"${S.none && L.length <= 40 && i < 2 ? ' open' : ''}><summary><span class="sn">${esc(name)}</span><span class="ss">${stat(S)}</span></summary>`
+    return `<details class="sg${S.nomch ? ' h-nomch' : ''}${S.none ? ' h-none' : ''}${S.late ? ' h-late' : ''}"${S.none && L.length <= 40 && i < 1 ? ' open' : ''}><summary><span class="sn">${esc(name)}</span><span class="ss">${stat(S)}</span></summary>`
       + `<div class="scroll od-wrap"><table class="t od">${COLS}${HEAD}<tbody>${L.map(row).join('')}</tbody></table></div></details>`;
   }
   function group(g, L, gi) {
