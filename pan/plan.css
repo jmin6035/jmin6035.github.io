@@ -913,3 +913,4 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 .t.dt tbody th, .t.csl tbody th, .t.csl tbody th[scope=row], .t.csl tbody.csf tr:not(.cshd) th, .t.pmt th.pm1, .t.pmt th.pm2, .t.pml th[scope=row], .t.pml td.why, .t.capt tbody th[scope=row], .t.glt tbody th[scope=row], .prw .t.gt tbody th, .dpl .t th, .t.dlo td, .t.pr-ct td { text-align: center !important; }
 .t.dt tbody th { padding-left: 4px !important; }
 .lft .glw { margin-top: var(--space-md); } .lft .t.glt td b { font-size: 15px; } .lft .t.glt td small { white-space: nowrap; }
+.t.pmt tr.chg0 th, .t.pmt tr.chg0 td { border-top: 2px solid #2f5bd3 !important; } .t.pmt tr.chg th.pm1 { color: #2449ad; }
