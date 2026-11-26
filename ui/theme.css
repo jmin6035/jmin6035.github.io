@@ -520,7 +520,7 @@ body.dash h2 { font-size: 20px; } body.dash .hint { font-size: 13.5px; } body.da
 body.dash .line-card dl { font-size: 15px; } body.dash .line-card h3 { font-size: 17px; }
 body.dash .kpi b { font-size: 34px; } body.dash .kpi .kl { font-size: 14px; } body.dash .kpi .ks { font-size: 13.5px; }
 /* 표 줄 나타나기(줄마다 조금씩 늦게) — 번호(--ri)는 ui/shell.js 가 붙임 */
-@keyframes rowIn { from { opacity: 0; transform: translateY(4px); } }
+@keyframes rowIn { from { opacity: 0; transform: translateY(-4px); } }   /* 11/26 수정 방 2: 아래로 4px 나와 있던 마지막 줄이 표 상자 높이를 넘겨 '상자 안에 갇혀 잘림'으로 잡히던 것 → 위에서 내려오게
 table tbody tr { animation: rowIn .38s var(--ease) backwards; animation-delay: calc(min(var(--ri, 0), 24) * 16ms); }
 table.gtable tbody tr { animation-duration: .3s; }
 /* 막대 자라기 — 모든 가로 막대 */
@@ -1055,7 +1055,7 @@ table.ct-t th.r, table.ct-t td.r { text-align: right; } table.ct-t td.w { white-
 table.ct-t tbody tr.ck { cursor: pointer; } table.ct-t tbody tr.ck:hover { background: var(--hover, rgba(0,0,0,.035)); }
 table.ct-t td.id { font-weight: 800; font-size: 13.5px; }
 table.ct-t td small, table.ct-t td .sub { display: block; font-size: 13.5px; color: var(--ink-2); font-weight: 500; }
-.ct-wrap { overflow-x: auto; padding-bottom: 4px; margin-bottom: -4px; }   /* 11/26 관문: 접힌 칸 테두리가 마지막 줄 아래로 3~4px 나와 세로로 갇혀 잘리던 것(390 폭 그룹 관제 · 라인별 부하) */
+.ct-wrap { overflow-x: auto; }
 .ct-panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); background: var(--surface); border-left: 1px solid var(--line); box-shadow: -8px 0 24px rgba(0,0,0,.12); transform: translateX(105%); transition: transform .2s ease; z-index: 60; display: flex; flex-direction: column; }
 .ct-panel.open { transform: none; }
 .ct-ph { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 16px; } .ct-ph b { flex: 1; font-variant-numeric: tabular-nums; }

@@ -398,7 +398,7 @@
     const P = plants(); if (!P.length) return;
     if (!P.some((p) => LINES[p].includes(line))) line = LINES[P[0]].find((l) => lineSum(P[0], l).n) || LINES[P[0]][0];
     $('ps-cgc').hidden = !P.includes('cg'); $('ps-ccc').hidden = !P.includes('cc');
-    P.forEach((p) => { drawCal(p); drawDay(p); }); drawLine(); syncFrame();
+    P.forEach((p) => { drawCal(p); drawDay(p); }); drawLine(); chgChip(); syncFrame();
   }
 
   // ───────── 아래 '작업 순서 수정' = 작업 순서 화면(week_seq.html) 그대로(iframe, 높이 = 화면 높이 · 안에서 넘김: 날짜 머리줄 고정이 그대로 동작). 머리·메뉴·공장/방식 고르기·라인 요약 칸(위와 같은 내용)은 숨기고, 라인은 위 선택을 따라감
@@ -449,7 +449,7 @@ table.ws tr[draggable], .pl-i { cursor: default !important; }`;
     const box = $('ps-chgc'); if (!box) return;
     const E0 = (CHG && CHG.events) || [], sc = window.UI && UI.scope ? UI.scope() : 'all';
     const E = E0.filter((e) => sc === 'all' || (sc === 'C') === (e[1] === 'cc'));
-    if (!E0.length) { box.hidden = true; return; }
+    if (!E0.length) return;
     const dd = (e) => (e[3] === 'sche' && e[4] && e[5] ? Math.round((Date.parse(e[5]) - Date.parse(e[4])) / 864e5) : 0);
     const cnt = (L) => ({ n: L.length, late: L.filter((e) => dd(e) > 0).length, early: L.filter((e) => dd(e) < 0).length, ln: L.filter((e) => e[3] === 'line').length, t: L.reduce((a, e) => a + (+e[8] || 0), 0) });
     const G = new Map(); E.forEach((e) => { const g = ({ 도금판매: '도금국내', 자동차강판판매: '자동차', 컬러건재판매: '컬러건재' })[e[7]] || e[7] || '그룹 미상'; if (!G.has(g)) G.set(g, []); G.get(g).push(e); });
@@ -460,10 +460,19 @@ table.ws tr[draggable], .pl-i { cursor: default !important; }`;
     const groups = [...G.entries()].sort((a, b) => b[1].length - a[1].length).map(([g, L]) => { const c = cnt(L);
       L.sort((a, b) => dd(b) - dd(a) || String(b[0]).localeCompare(String(a[0])));
       return `<details class="chg-g"><summary><span class="gn">${esc(g)}</span><span>${n0(c.n)}건 · ${n0(c.t)}t</span><span>순연 <b class="${c.late ? 'neg' : ''}">${n0(c.late)}</b></span><span>선행 <b>${n0(c.early)}</b></span><span>라인 바뀜 <b>${n0(c.ln)}</b></span></summary><div class="scroll"><table class="t chg-t">${HD}<tbody>${L.map(row).join('')}</tbody></table></div></details>`; }).join('');
-    box.innerHTML = `<h2>생산일 변경 내역 <small>마지막 변경 ${at ? md(at.slice(0, 10)) + ' ' + at.slice(11, 16) : '-'} · 갱신마다 이전 판과 비교 · 사유 입력 전</small></h2>`
+    box.innerHTML = `<section class="card"><button type="button" class="chg-x" aria-label="닫기" title="닫기">×</button><h2>생산일 변경 내역 <small>마지막 변경 ${at ? md(at.slice(0, 10)) + ' ' + at.slice(11, 16) : '-'} · 갱신마다 이전 판과 비교 · 사유 입력 전</small></h2>`
       + `<div class="chg-k"><span>바뀜 <b>${n0(T.n)}</b>건</span><span>순연 <b class="${T.late ? 'neg' : ''}">${n0(T.late)}</b>건</span><span>선행 <b>${n0(T.early)}</b>건</span><span>라인 바뀜 <b>${n0(T.ln)}</b>건</span><span>${n0(T.t)}t</span></div>`
-      + (E.length ? groups : '<p class="ps-empty">이 범위에 바뀐 것 없음</p>');
-    box.hidden = false;
+      + (E.length ? groups : '<p class="ps-empty">이 범위에 바뀐 것 없음</p>') + '</section>';
+    box.querySelector('.chg-x').onclick = () => box.close();
+    CHG.T = T; chgChip();
+  }
+  function chgChip() {                                               // 상태 띠의 단추(화면 길이를 늘리지 않게 내용은 대화 상자)
+    const bar = $('ps-line'), box = $('ps-chgc'); if (!bar || !box || !CHG || !CHG.T) return;
+    const old = bar.querySelector('.chg-b'); if (old) old.remove();
+    const T = CHG.T, b = document.createElement('button'); b.type = 'button'; b.className = 'chg-b'; b.title = '갱신마다 이전 판과 비교한 생산일 · 라인 변경(판매그룹별 · 엑셀)';
+    b.innerHTML = `생산일 변경 <b>${n0(T.n)}건</b> · 순연 <b class="${T.late ? 'neg' : ''}">${n0(T.late)}</b> ›`;
+    b.onclick = () => { if (box.showModal) box.showModal(); else box.setAttribute('open', ''); };
+    bar.appendChild(b);
   }
   async function unlock(pw) {
     try {
@@ -485,7 +494,7 @@ table.ws tr[draggable], .pl-i { cursor: default !important; }`;
       document.querySelector('#ps-lock h2').textContent = '분석 암호';
     }
   }
-  if (window.UI && UI.onScope) UI.onScope(() => { if (X.cg) drawAll(); drawChg(); });
+  if (window.UI && UI.onScope) UI.onScope(() => { if (X.cg) { drawChg(); drawAll(); } });
   $('ps-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('ps-pw').value); });
   let s = ''; try { s = localStorage.getItem(PW_KEY) || ''; } catch (e) { /* 무시 */ }
   if (s) unlock(s); else { $('ps-form').hidden = false; document.querySelector('#ps-lock h2').textContent = '분석 암호'; }
