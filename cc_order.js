@@ -12,6 +12,18 @@
   const md = (s) => { if (!s) return ''; s = String(s); const y = O && O.asOf && (s.slice(0, 4) < O.asOf.slice(0, 4) || Math.abs(Date.parse(s.slice(0, 10)) - Date.parse(String(O.asOf).slice(0, 10))) > 183 * 864e5);   // 기준일보다 앞 해 · 반년 넘게 떨어진 날이면 YY/MM/DD(다음 해 가까운 날 1/5 등은 M/D)(11/17 검토: 납기 1/23·3/31 = 올해 1·3월로 지난 주문인데 연도가 없어 내년처럼 읽힘)
     return y ? `${s.slice(2, 4)}/${s.slice(5, 7)}/${s.slice(8, 10)}` : `${+s.slice(5, 7)}/${+s.slice(8, 10)}`; };
   let flt = 'act', q = '', ln = '', by = 'cus';
+
+  const ogOpen = new Set();   // 11/26 검수 2304: 판매그룹 머리 줄만 보이고 목록은 접음(누르면 펼침, 찾기 · 상태 고르면 전부 펼침)
+  function foldOg() {
+    const auto = !!q || flt !== 'act';
+    document.querySelectorAll('#od-main section.og').forEach((s) => {
+      const h = s.querySelector(':scope > .og-h'), set = (c) => { s.classList.toggle('og-c', c); h.setAttribute('aria-expanded', String(!c)); };
+      set(!auto && !ogOpen.has(s.dataset.g));
+      h.tabIndex = 0; h.setAttribute('role', 'button');
+      h.onclick = (e) => { if (e.target.closest('button, a, input, select')) return; const c = !s.classList.contains('og-c'); set(c); if (c) ogOpen.delete(s.dataset.g); else ogOpen.add(s.dataset.g); };
+      h.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); h.onclick(e); } };
+    });
+  }
   try { by = localStorage.getItem(BY_KEY) || 'cus'; } catch (e) { /* 무시 */ }
   const act = (x) => x.st === '소재 없음' || x.lateCan || (x.lateDue && x.st !== '매치 완료');
   const F = {
@@ -259,23 +271,25 @@
       + (V2() ? grpChartV2(byG) : grpChart(byG)) + byG.map(([g, v], gi) => group(g, v, gi)).join('') + '</section>' + basisFold();
     $('od-kpi').querySelectorAll('button').forEach((b) => b.onclick = () => { flt = flt === b.dataset.f ? 'all' : b.dataset.f; render(); });
     $('od-f').onchange = (e) => { flt = e.target.value; render(); };
+    foldOg();
     $('od-main').querySelectorAll('.gf').forEach((b) => b.onclick = (e) => {
       e.preventDefault(); e.stopPropagation();
       const box = b.closest('details.sg') || b.closest('section.og'), f = box.dataset.sf === b.dataset.sf ? '' : b.dataset.sf;
       box.dataset.sf = f;
+      const og = b.closest('section.og'); if (og) { ogOpen.add(og.dataset.g); og.classList.remove('og-c'); og.querySelector(':scope > .og-h').setAttribute('aria-expanded', 'true'); }
       box.querySelectorAll(':scope > summary .gf, :scope > header .gf').forEach((x) => x.setAttribute('aria-pressed', String(!!f && x.dataset.sf === f)));
       if (box.tagName === 'DETAILS') box.open = true; else if (f) box.querySelectorAll(`details.sg.h-${f}`).forEach((d) => { d.open = true; });
     });
     $('od-main').querySelectorAll('.gcn').forEach((b) => b.onclick = () => {
-      const g = b.dataset.g; flt = b.dataset.gf; render();
+      const g = b.dataset.g; if (g) ogOpen.add(g); flt = b.dataset.gf; render();
       const sec = g ? [...document.querySelectorAll('section.og')].find((x) => x.dataset.g === g) : null;
       if (sec) { sec.querySelectorAll('details.sg').forEach((d) => { d.open = true; }); sec.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
     });
     $('od-by').querySelectorAll('button').forEach((b) => b.onclick = () => { by = b.dataset.b; try { localStorage.setItem(BY_KEY, by); } catch (e) { /* 무시 */ } render(); });
     $('od-q').oninput = (e) => { q = e.target.value; clearTimeout(render.t); render.t = setTimeout(() => { render(); const i = $('od-q'); i.focus(); i.setSelectionRange(q.length, q.length); }, 250); };
     $('od-ln').onchange = (e) => { ln = e.target.value; render(); };
-    $('od-open').onclick = () => document.querySelectorAll('details.sg').forEach((d) => { d.open = true; });
-    $('od-close').onclick = () => document.querySelectorAll('details.sg').forEach((d) => { d.open = false; });
+    $('od-open').onclick = () => { document.querySelectorAll('#od-main section.og').forEach((x) => ogOpen.add(x.dataset.g)); foldOg(); document.querySelectorAll('details.sg').forEach((d) => { d.open = true; }); };
+    $('od-close').onclick = () => { ogOpen.clear(); foldOg(); document.querySelectorAll('details.sg').forEach((d) => { d.open = false; }); };
     if (V2() && !render.tg) { render.tg = 1; $('od-main').addEventListener('click', (e) => {   // 계약 줄 누르면 상세 줄 펼침
       const tr = e.target.closest('table.od2 tr.r'); if (!tr || e.target.closest('a, button')) return;
       const d = tr.nextElementSibling; if (d && d.classList.contains('dt')) { d.hidden = !d.hidden; tr.classList.toggle('on', !d.hidden); }

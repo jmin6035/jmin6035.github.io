@@ -34,6 +34,12 @@ button.lnk { font: inherit; font-size: 14px; border: 1px solid var(--line); back
 .og-s { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 15px; }
 .gs { white-space: nowrap; } .gs.est { color: var(--ink-2); }
 .og-b { padding: 6px 10px 10px; }
+.og.og-c > .og-b { display: none; }
+.og.og-c > .og-h { border-bottom: 0; }
+.og > .og-h { cursor: pointer; }
+.og > .og-h h2::before { content: '▾'; display: inline-block; width: 1em; color: var(--ink-2); font-size: 0.8em; }
+.og.og-c > .og-h h2::before { content: '▸'; }
+.og > .og-h:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: -2px; }
 details.sg { border-bottom: 1px solid var(--line); }
 details.sg:last-child { border-bottom: 0; }
 details.sg > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; padding: 10px 8px; cursor: pointer; font-size: 15px; list-style: none; }
