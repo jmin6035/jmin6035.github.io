@@ -801,7 +801,7 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 .L3.tabv > :not(.mid) { display: none !important; }
 /* 11/26 머리 줄 단계: 지금 단계 글자가 칸을 넘어 옆 날짜(24일)와 겹치던 것 — 날짜 아래 줄로 내려 칸 안에 */
 .top .stp li { display: grid !important; justify-items: center; align-content: start; white-space: normal !important; word-break: keep-all; text-align: center; min-width: 0; }
-.top .stp li span, .top .stp li em { font-size: 12.5px; line-height: 1.25; }
+.top .stp li span, .top .stp li em { font-size: 13.5px; line-height: 1.25; }
 
 /* 11/26 사용자 '흰 바탕에 어떤 건 흰 글자 어떤 건 검은 글자면 알아보냐 · 빗금 위 숫자 안 보임': 막대 글자는 전부 진한 한 색. 주문 채움은 강종 색 옅은 칠, 수주 전은 옅은 빗금, 빈 가동은 흰 칸 */
 .cal0 .cl:not(.ev):not(.dn) { --t1: color-mix(in srgb, var(--c) 34%, #ffffff); --t2: color-mix(in srgb, var(--c) 18%, #ffffff); border: 1px solid color-mix(in srgb, var(--c) 70%, #ffffff) !important; box-shadow: none !important; text-shadow: none !important;
@@ -816,7 +816,7 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 .cal0 .cl.ev:not(.df) { box-shadow: none !important; } .cal0 .cl.ev { background: #ffffff !important; border: 1px solid #98a2b3 !important; }
 /* 11/26 사용자 '1, 2라인 구분되게 옆 칸으로 · M/C나 수리는 더 진하게': 라인 번호는 막대 왼쪽 따로 칸, M/C · S/D · 정기수리 · 휴지는 진한 회색 칠(글자는 같은 진한 색) */
 .cal0 .cl { position: relative; } .cal0 .cl > .ln0 { position: absolute; left: 0; top: 0; bottom: 0; width: 20px; display: flex; align-items: center; justify-content: center; margin: 0; padding: 0 !important;
-  background: #344054 !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; text-shadow: none !important; font-style: normal; font-weight: 700; font-size: 12.5px; border-radius: 3px 0 0 3px; z-index: 2; }
+  background: #344054 !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; text-shadow: none !important; font-style: normal; font-weight: 700; font-size: 13.5px; border-radius: 3px 0 0 3px; z-index: 2; }
 .cal0 .cl:has(> .ln0) { padding-left: 24px !important; justify-content: center; }
 .cal0 .cl.ev, .cal0 .cl.dn:not(.ac0) { background: #aeb7c6 !important; border: 1px solid #667085 !important; box-shadow: none !important; }
 .cal0 .cl.ev b, .cal0 .cl.ev em, .cal0 .cl.dn:not(.ac0) b, .cal0 .cl.dn:not(.ac0) small { color: #101828 !important; -webkit-text-fill-color: #101828 !important; text-shadow: none !important; font-weight: 700; }
