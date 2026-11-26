@@ -844,3 +844,48 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 /* 11/26 사용자 '줄바꿈 — 날짜 안 적으면 한 줄': 사유 글자는 한 줄, 안 들어가면 짧은 이름(대수리 · 휴지 N시간) */
 .cal0 .cd .cl.dn b, .cal0 .cd .cl.dn.nt b, .cal0 .cd .cl.dn[data-run] b { white-space: nowrap !important; overflow: hidden; line-height: 1.3; }
 .cal0 .runov b, .cal0 .cd .cl.dn b { min-width: 0; }
+/* 11/26 월 숫자 디테일(지휘 방 10:55 8건): 강종 칸 · 진행 월 표시 · 강종별 전망 · 과부족 기준 설명 · 고정 머리 비침 */
+.t th.dfam { background: #e9eef7 !important; color: #101828; font-weight: 700; text-align: center !important; vertical-align: middle; writing-mode: horizontal-tb; min-width: 84px; }
+.pn h2 small.mo { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: #e8efff; color: #2449ad; font-size: 13.5px; font-weight: 700; vertical-align: middle; }
+.dcd small.dfm { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; } .dcd small.dfm em { font-style: normal; font-weight: 700; color: #344054; } .dcd small.dfm em.bad { color: #c8282f; }
+.t.dt thead th small { display: block; font-weight: 400; font-size: 13.5px; color: #5b6779; white-space: nowrap; }
+.t.dt, .prw .t.gt, .mtg .t { border-collapse: separate !important; border-spacing: 0; }
+.t.dt th, .t.dt td, .prw .t.gt th, .prw .t.gt td, .mtg .t th, .mtg .t td { border: 0 !important; border-right: 1px solid #cfd7e4 !important; border-bottom: 1px solid #cfd7e4 !important; }
+.t.dt, .prw .t.gt, .mtg .t { border-top: 1px solid #cfd7e4; border-left: 1px solid #cfd7e4; }
+.t.dt thead th, .prw .t.gt thead th { background: #f2f5fb !important; background-clip: padding-box; z-index: 3; }
+.mtg .t thead th { white-space: nowrap; padding-left: 8px; padding-right: 8px; } .mtg .t td { white-space: nowrap; }
+.subt { position: static !important; }
+.t.dt input.dn0 { min-width: 68px; }
+.t.dt td, .t.dt tbody th { padding-top: 5px !important; padding-bottom: 5px !important; white-space: nowrap; }
+.t.dt td small.pc { display: inline; font-size: 13.5px; color: #5b6779; } .t.dt td.bad small.pc { color: #c8282f; }
+.t.dt th small.dfc { display: inline; margin-left: 6px; }
+.dpl .t { width: 100%; }
+.t.dt td { white-space: normal !important; } .t.dt tbody th { white-space: nowrap; }
+.t.dt input.dn0 { padding-top: 2px; padding-bottom: 2px; min-width: 64px; }
+.t.dt { width: 100%; }
+.L3.tabv .mid { width: auto !important; max-width: none !important; grid-column: auto !important; }
+.t.dt input.dn0 { min-width: 52px; padding-left: 1px; padding-right: 1px; } .t th.dfam { min-width: 0; padding-left: 4px; padding-right: 4px; }
+.t.dt th small.dfc { display: block; margin-left: 0; }
+.t.dt td, .t.dt th { padding-left: 4px !important; padding-right: 4px !important; }
+.L3.tabv .btm { grid-template-columns: minmax(0, 1fr) !important; }
+.t.dt input.dn0 { min-width: 58px; }
+.t.dt th, .t.dt td, .t.dt input.dn0 { font-size: 13.5px !important; } .t.dt input.dn0 { min-width: 50px; }
+.t.dt thead th { padding-left: 3px !important; padding-right: 3px !important; }
+.t.dt thead th small { white-space: normal !important; word-break: keep-all; }
+.t.dt tr.hid { display: none; } .t.dt .dsb { margin-left: 8px; padding: 1px 8px; min-height: 0; font-size: 13.5px; font-weight: 600; }
+.t.dt td.dnt { white-space: nowrap !important; }
+.t.dt td.ed, .t.dt td.dk { width: 1%; } .t.dt td small.pc { white-space: nowrap; }
+/* 11/26 자가재 계획(그룹별) — 컬러소재수급 시트 해당 */
+.t.csl { width: 100%; border-collapse: separate !important; border-spacing: 0; border-top: 1px solid #cfd7e4; border-left: 1px solid #cfd7e4; }
+.t.csl th, .t.csl td { border: 0 !important; border-right: 1px solid #cfd7e4 !important; border-bottom: 1px solid #cfd7e4 !important; padding: 6px 8px; white-space: nowrap; }
+.t.csl th.dfam small { display: block; font-weight: 400; color: #5b6779; font-size: 13.5px; }
+.t.csl td.cst { color: #344054; font-size: 13.5px; } .t.csl td.cst.bad { color: #c8282f; } .t.csl td small { display: block; font-size: 13.5px; }
+.t.csl tr.cshd th { background: #e9eef7 !important; font-weight: 700; } .t.csl tbody.csf tr:not(.cshd) th { text-align: left; }
+.t.csl td.ed2 input.de { width: 90px; text-align: center; }
+.cslp h3.csh { margin: 18px 0 8px; font-size: 16px; font-weight: 700; color: #101828; } .cslp h3.csh small { display: block; font-weight: 400; font-size: 13.5px; color: #5b6779; margin-top: 2px; }
+.t.csl tbody th[scope=row] { text-align: left; }
+.cslp h3.csh { max-width: none !important; width: auto !important; display: block; }
+/* 11/26 길이(창 2장 안): 카드 · 회의 한 장 줄 높이 줄임 */
+.dly .dcd > div { padding: 6px 8px; } .dly .dcd b { font-size: 24px; line-height: 1.2; } .dly .dcd { margin-bottom: 10px; }
+.dpl { padding-top: 6px; padding-bottom: 6px; } .dpl .t td, .dpl .t th { padding-top: 4px !important; padding-bottom: 4px !important; }
+.mtg .t td, .mtg .t th { padding-top: 4px !important; padding-bottom: 4px !important; } .mtg .t td input { padding-top: 2px; padding-bottom: 2px; }
