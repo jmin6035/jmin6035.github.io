@@ -913,4 +913,8 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 .t.dt tbody th, .t.csl tbody th, .t.csl tbody th[scope=row], .t.csl tbody.csf tr:not(.cshd) th, .t.pmt th.pm1, .t.pmt th.pm2, .t.pml th[scope=row], .t.pml td.why, .t.capt tbody th[scope=row], .t.glt tbody th[scope=row], .prw .t.gt tbody th, .dpl .t th, .t.dlo td, .t.pr-ct td { text-align: center !important; }
 .t.dt tbody th { padding-left: 4px !important; }
 .lft .glw { margin-top: var(--space-md); } .lft .t.glt td b { font-size: 15px; } .lft .t.glt td small { white-space: nowrap; }
-.t.pmt tr.chg0 th, .t.pmt tr.chg0 td { border-top: 2px solid #2f5bd3 !important; } .t.pmt tr.chg th.pm1 { color: #2449ad; }
+.t.pmt tr.pchg0 th, .t.pmt tr.pchg0 td { border-top: 2px solid #2f5bd3 !important; } .t.pmt tr.pchg th.pm1 { color: #2449ad; }
+.t.csl td small { white-space: normal; }
+.t.pmt input.pmstd { width: 74px; height: 28px; padding: 0 4px; text-align: center; font-size: 13.5px; }
+.t.capt td.mvc { padding: 2px 6px; } .t.capt td.mvc input { width: 90px; height: 30px; text-align: center; } .t.capt th small { display: block; font-weight: 400; font-size: 13.5px; color: #5b6779; }
+.t.capt tr.mvd td, .t.capt tr.mvd th { background: #fff4d6 !important; } .capw .capk em.sim { font-style: normal; color: #8a4b00; font-weight: 700; }
