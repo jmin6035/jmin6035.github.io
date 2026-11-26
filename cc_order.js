@@ -204,6 +204,39 @@
       + li('참고', '<a href="leadtime.html">소재 리드타임 표 →</a> · <a href="risk.html">납기 위험 →</a> · <a href="ct_orders.html#track">주문진도(작업지시대상 단계) →</a>')
       + '</dl></details>';
   }
+
+  /* 11/26 지휘 방 넘김 ③(협의표 · 1124 회의 '부원료 발주는 매일, 소재 매치 시점 정보로'): 소재 매치된 생산 전 주문의 도료 · 필름 소요를 코드별로 모아 내려받기.
+     자료 = 작업 순서 자료(week_seq_cc)의 주문별 상도 · 뒷면 · 프라이머 풀 코드 · 잔량 길이 · 도료/필름 입고(예정) + 이 화면 주문의 생산 예정일. 면적 = 길이 × 폭(한 면) */
+  let SQ = null;
+  function paintCard() {
+    const J = ((SQ && SQ.jobs) || []).filter((x) => !x.dummy && x.len > 0);
+    if (!J.length) return '';
+    const sche = {}; (O.rows || []).forEach((r) => { if (r.sche) sche[r.con] = r.sche; });
+    const fut = (at) => at && String(at).slice(0, 10) > String(O.asOf).slice(0, 10);
+    const dt = (at, sts) => (at ? md(String(at).slice(0, 10)) + (String(at).slice(11, 16) && String(at).slice(11, 16) !== '00:00' ? ' ' + String(at).slice(11, 16) : '') : sts === 'F' ? '입고 완료' : sts ? '입고일 미정' : '-');
+    const wait = (at, sts) => !(sts === 'F' && !fut(at)) && !(at && !fut(at));
+    const G = new Map();
+    const add = (kind, code, x, at, sts) => { if (!code) return; const k = kind + '|' + code; const g = G.get(k) || { kind, code, n: 0, t: 0, len: 0, area: 0, sche: '', at: '', nw: 0 };
+      g.n++; g.t += x.t || 0; g.len += x.len; g.area += x.len * (x.wdt || 0) / 1000; const sc = sche[x.con] || '';
+      if (sc && (!g.sche || sc < g.sche)) g.sche = sc;
+      if (wait(at, sts)) { g.nw++; if (at && (!g.at || at < g.at)) g.at = at; }
+      G.set(k, g); };
+    J.forEach((x) => { add('상도', x.code || x.top, x, x.paintAt, x.paintSts); add('뒷면', x.codeBack || x.back, x, x.paintAt, x.paintSts); add('프라이머', x.primer, x, x.paintAt, x.paintSts); if (x.pfNeed) add('보호필름', '필름 필요', x, x.pfAt, x.pfSts); });
+    const KO = ['상도', '뒷면', '프라이머', '보호필름'];
+    const L = [...G.values()].sort((a, b) => KO.indexOf(a.kind) - KO.indexOf(b.kind) || (b.nw > 0) - (a.nw > 0) || (a.sche || '9').localeCompare(b.sche || '9') || b.len - a.len);
+    const nW = J.filter((x) => wait(x.paintAt, x.paintSts) || (x.pfNeed && wait(x.pfAt, x.pfSts))).length, tl = J.reduce((a, x) => a + (x.t || 0), 0);
+    const tr = (g) => `<tr><td class="pw-c">${/^[A-Z]X{5,}$/.test(g.code) ? '<span class="sub">코드 미정</span>' : esc(g.code)}</td><td class="num">${n0(g.n)}</td><td class="num">${n0(g.len)}</td><td class="num">${n0(g.area)}</td><td>${g.sche ? md(g.sche) : '<span class="sub">-</span>'}</td><td>${g.nw ? `${g.at ? (g.sche && String(g.at).slice(0, 10) > g.sche ? `<b class="neg" title="입고 예정이 첫 생산 예정보다 늦음">${dt(g.at)}</b>` : dt(g.at)) : '<span class="wrn" title="입고일 미정">미정</span>'}${g.nw > 1 ? ` <span class="sub">${n0(g.nw)}건</span>` : ''}` : '<span class="sub">입고 완료</span>'}</td></tr>`;
+    const grpRows = (R) => KO.map((k) => { const X = R.filter((g) => g.kind === k); return X.length ? `<tr class="pw-g"><th colspan="6">${k} <span class="sub">${X.length}종</span></th></tr>` + X.map(tr).join('') : ''; }).join('');
+    const W0 = L.filter((g) => g.nw), D0 = L.filter((g) => !g.nw);
+    const nLate = W0.filter((g) => g.at && g.sche && String(g.at).slice(0, 10) > g.sche).length, nNo = W0.filter((g) => !g.at).length;
+    const HD = '<thead><tr><th>코드</th><th class="num">건</th><th class="num" title="잔량 길이 합">길이 m</th><th class="num" title="길이 × 폭(한 면)">면적 m²</th><th title="이 코드를 쓰는 주문 중 가장 이른 생산 예정일">첫 생산</th><th title="가장 이른 입고 예정(입고 전 주문이 여럿이면 건수)">입고 예정</th></tr></thead>';
+    const det = J.slice().sort((a, b) => (sche[a.con] || '9').localeCompare(sche[b.con] || '9')).map((x) => `<tr><td class="nw">${esc(x.con)}</td><td>${esc(x.code || x.top || '-')}</td><td>${esc(x.codeBack || x.back || '-')}</td><td>${esc(x.primer || '-')}</td><td class="num nw">${(+x.thk).toFixed(2)} × ${n0(x.wdt)}</td><td class="num">${n0(x.len)}</td><td>${sche[x.con] ? md(sche[x.con]) : '-'}</td><td>${dt(x.paintAt, x.paintSts)}</td><td>${x.pfNeed ? dt(x.pfAt, x.pfSts) : '<span class="sub">필요 없음</span>'}</td></tr>`).join('');
+    return `<section class="card pw-card"><h2>도료 · 필름 소요 <small>소재 매치 · 생산 전 ${n0(J.length)}건 ${n1(tl)}t · 입고 전 ${n0(nW)}건</small></h2>`
+      + `<details class="fold od-fold pw-f"><summary>입고 전 코드 <b>${n0(W0.length)}종</b>${nLate ? ` · 입고 예정이 첫 생산보다 늦음 <b class="neg">${n0(nLate)}종</b>` : ''}${nNo ? ` · 입고일 미정 <b class="wrn">${n0(nNo)}종</b>` : ''}</summary>`
+      + (W0.length ? `<div class="pw-2">${[W0.filter((g) => g.kind === '상도'), W0.filter((g) => g.kind !== '상도')].filter((X) => X.length).map((X) => `<div class="scroll"><table class="t pw-t">${HD}<tbody>${grpRows(X)}</tbody></table></div>`).join('')}</div>` : '<p class="od-note">입고 전 코드 없음</p>') + '</details>'
+      + (D0.length ? `<details class="fold od-fold"><summary>입고 완료 코드 ${n0(D0.length)}종</summary><div class="scroll"><table class="t pw-t">${HD}<tbody>${grpRows(D0)}</tbody></table></div></details>` : '')
+      + `<details class="fold od-fold"><summary>주문별 ${n0(J.length)}건</summary><div class="scroll"><table class="t pw-d"><thead><tr><th>계약번호-행</th><th>상도</th><th>뒷면</th><th>프라이머</th><th class="num">두께×폭</th><th class="num">길이 m</th><th>생산 예정</th><th>도료 입고</th><th>필름 입고</th></tr></thead><tbody>${det}</tbody></table></div></details></section>`;
+  }
   function render() {
     const R = O.rows;
     let L = R.filter(F[flt][1]);
@@ -215,7 +248,7 @@
     const S = sumOf(L);
     $('od-meta').textContent = `${UI.fmtDate(O.asOf)} 기준 · ${O.lines.map((l) => `${l} ${md(O.srcs[l].date)}`).join(' · ')}${O.missing.length ? ` · ${O.missing.join('·')} 자료 없음` : ''}`;
     const scN = window.UI && UI.scope && UI.scope() === 'G' ? '<p class="od-wait">이 화면은 컬러 주문입니다: <a href="cg_order.html?pl=G">도금 주문진도 →</a></p>' : '';
-    $('od-main').innerHTML = scN + topCard(R) + `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 주문진도</h2>`
+    $('od-main').innerHTML = scN + topCard(R) + paintCard() + `<section class="card"><h2>판매그룹 → ${BY[by][0]}별 주문진도</h2>`
       + (O.missing.length ? `<p class="od-wait">⏳ ${O.missing.join('·')}: 작업지시대상선정 자료 없음: 라인별 내려받기 수신 시 같은 화면에 표시</p>` : '')
       + `<div class="od-flt"><span class="lb">묶음</span><span class="seg" id="od-by">${Object.keys(BY).map((b) => `<button type="button" data-b="${b}" aria-pressed="${b === by}">${BY[b][0]}별</button>`).join('')}</span>`
       + `<select id="od-f" aria-label="상태">${Object.keys(F).map((f) => `<option value="${f}"${f === flt ? ' selected' : ''}>${F[f][0]} ${n0(R.filter(F[f][1]).length)}</option>`).join('')}</select>`
@@ -261,6 +294,7 @@
       try { localStorage.setItem(PW_KEY, pw); } catch (e) { /* 무시 */ } }
     catch (e) { $('od-form').hidden = false; $('od-msg').textContent = pw ? '⚠ 암호가 맞지 않습니다' : ''; return; }
     render();
+    try { const we = await GP.latest('week_seq_cc.enc.json'); SQ = we && await GP.decryptJSON(we, pw); if (SQ) render(); } catch (e) { console.warn('도료 · 필름 소요', e); }
   }
   $('od-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('od-pw').value); });
   envReady.then(() => { let s = null; try { s = localStorage.getItem(PW_KEY); } catch (x) { /* 무시 */ } if (s) unlock(s); else $('od-form').hidden = false; });

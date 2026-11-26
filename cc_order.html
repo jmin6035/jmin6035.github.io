@@ -238,6 +238,12 @@ html.v2 .dx-s .pbar { max-width: 230px; margin: 4px auto 0; } html.v2 .dx-s .pba
 @media (max-width: 1100px) { html.v2 .dx-top { grid-template-columns: minmax(0, 1fr); } html.v2 .dx-f { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; } html.v2 .dx-s + .dx-s::before { display: none; } }
 @media (max-width: 700px) { html.v2 .dx-g { grid-template-columns: repeat(2, minmax(0, 1fr)); } html.v2 table.od2 tr.dt > td { padding: 10px 8px !important; } }
 @media (max-width: 700px) { html.v2 .og2 .og-h, html.v2 details.sg2 > summary { grid-template-columns: minmax(0, 1fr) 64px 112px; } html.v2 :is(.og-h, details.sg2 > summary) > :is(.c2, .c4, .c5, .c6) { display: none; } html.v2 details.sg2 .sn { white-space: normal; overflow-wrap: anywhere; } }
+/* 11/26 도료 · 필름 소요(지휘 방 넘김 ③): 코드가 많아 줄을 촘촘히, 구분은 묶음 줄 */
+#od-main .pw-card table.pw-t td, #od-main .pw-card table.pw-t th, #od-main .pw-card table.pw-d td, #od-main .pw-card table.pw-d th { padding: 4px 6px !important; line-height: 1.35; white-space: nowrap; }
+#od-main .pw-card table.pw-t tr.pw-g th { text-align: left; background: var(--surface-2); font-weight: 700; }
+#od-main .pw-card .pw-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 16px; align-items: start; }
+@media (max-width: 1100px) { #od-main .pw-card .pw-2 { grid-template-columns: minmax(0, 1fr); } }
+#od-main .pw-card table.pw-t td.pw-c { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 </style>
 </head>
 <body>
