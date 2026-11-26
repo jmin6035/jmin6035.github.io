@@ -776,3 +776,8 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 .cal .wh span, .cal .wh span.we { color: #5b6779 !important; } .alm summary b, .alm summary { color: #101828 !important; } .t.gt tr.sub td, .t.gt tr.sub th { color: #5b6779 !important; }
 .top h1, #ct-main > .card.lock h2 { color: #101828 !important; -webkit-text-fill-color: #101828 !important; }
 .cal0 .cl .dn0, .cal0 .cl.we .dn0, .cal0 .cd .dn0 { color: #344054 !important; } .cal0 .cl small, .cal0 .cl .rs, .cal0 .cl i { color: #475467 !important; }
+
+/* 11/26 소재 당김 요청 */
+.dpl { margin: 0 0 var(--space-md); border: 1px solid #f3b7ba; border-radius: var(--r2); background: #fff7f7; padding: var(--space-sm) var(--space-md); }
+.dpl summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); cursor: pointer; font-weight: 700; color: #101828; } .dpl summary b { color: #c8282f; } .dpl summary small { color: #5b6779; font-weight: 400; } .dpl summary .x0 { margin-left: auto; }
+.dpl .t { margin-top: var(--space-sm); } .dpl .t th[scope=rowgroup] { text-align: center; }
