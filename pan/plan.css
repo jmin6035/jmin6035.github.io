@@ -977,3 +977,4 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 .cslp .t.csl th.dfam small { display: block !important; margin: 0; font-weight: 400; color: var(--tx3); font-size: 13.5px; }
 .pn.todo:not(.one), .pn.glw { overflow: visible !important; max-height: none !important; }
 .pn.glw > header { flex-wrap: wrap; } .pn.glw > header .u { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+.pn.ordp.fd > .blk { display: flex !important; margin-top: 8px; }   /* 접혀 있어도 주문 검색 칸은 보임 */
