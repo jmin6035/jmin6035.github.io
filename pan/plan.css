@@ -725,3 +725,54 @@ td.nw { white-space: nowrap; }   /* 11/23 검수 1855: AL-STS 가 칸에서 꺾�
 .t.dt > thead th { position: sticky; top: var(--hd-h); z-index: 3; background: var(--card); box-shadow: 0 1px 0 var(--bd); } .t.dt > thead tr:nth-child(2) th { top: calc(var(--hd-h) + 30px); }
 .t.dt tr.dsub th, .t.dt tr.dsub td { background: var(--c3); font-weight: 600; } .t.dt td.dk { font-weight: 700; } .t.dt tbody th { text-align: left; padding-left: 10px; }
 @media (max-width: 1500px) { .t.dt { font-size: 13px; } .t.dt tbody th { padding-left: 4px; } } @media (max-width: 1100px) { .pn.dly { overflow-x: auto; } }
+
+/* 11/26 결론 카드 · 줄 누르면 남은 주문 */
+.dcd { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-sm); margin: 0 0 var(--space-md); }
+.dcd > div { display: grid; justify-items: center; gap: 2px; padding: var(--space-sm); border: 1px solid var(--bd); border-radius: var(--r2); background: var(--c2); text-align: center; }
+.dcd span { color: var(--tx2); font-size: var(--fh); } .dcd b { font-size: 28px; font-variant-numeric: tabular-nums; } .dcd b i { font-style: normal; font-size: var(--fs); color: var(--tx3); margin-left: 2px; }
+.dcd small { color: var(--tx3); font-size: var(--fs); } .dcd .bad b { color: var(--danger); } .dcd .ok b { color: var(--ok, #168f52); }
+.t.dt tr[data-dlo] { cursor: pointer; } .t.dt tr[data-dlo]:hover th, .t.dt tr[data-dlo]:hover td, .t.dt tr.on th, .t.dt tr.on td { background: var(--brand-t); }
+.t.dt th small.dfc { display: block; font-weight: 400; font-size: 12px; color: var(--tx3); } .t.dlo tr.late td { color: var(--danger); } .t.dlo { white-space: nowrap; }
+@media (max-width: 700px) { .dcd { grid-template-columns: minmax(0, 1fr); } }
+
+/* 11/26 사용자 '사이트 색감 좀 더 밝게': 밝은 바탕(흰 카드 · 옅은 회청 바탕 · 진한 글자 · 파란 강조). 아래 미드나잇 층을 덮어씀 */
+:root { --bg: #eef2f8; --solid: #ffffff; --card: #ffffff; --c2: #f6f8fc; --c3: #e9eef7; --bd: #dbe2ee; --bd2: #c3cddd; --tx: #101828; --tx2: #344054; --tx3: #5b6779; --nav: #ffffff; --nav2: #e9eef7; --band: #ffffff; --band2: #eef2f8;
+  --brand: #2f5bd3; --brand2: #2449ad; --brand3: #2f5bd3; --brand-t: #e8efff; --danger: #c8282f; --danger-t: #fdecec; --danger-b: #f3b7ba; --warn: #a35f00; --warn-t: #fff6e5; --warn-b: #f1cf8c; --sky: #2f5bd3; --on: #101828; --m-in: #344054; --m-way: #8a94a6;
+  --fam-az: #c9661c; --fam-al: #2f72d6; --fam-sts: #168f52; --fam-mac: #a63a92; --ok: #11804a;
+  --sh: 0 1px 2px rgb(16 24 40 / .05), 0 4px 12px -6px rgb(16 24 40 / .08); --shk: var(--sh); --shk2: var(--sh); --sh2: -10px 0 30px -12px rgb(16 24 40 / .18); --glow: 0 0 0 3px rgb(47 91 211 / .18);
+  --color-ink: #101828; --color-muted: #5b6779; --color-focus: #2f5bd3; --color-paper: #eef2f8; }
+html { background: #eef2f8 !important; }
+body.xlb { background: #eef2f8 !important; color: #101828 !important; } body.xlb::before, body.xlb::after { display: none !important; }
+body.xlb .xl-hd { background: #ffffff !important; border-bottom: 1px solid #dbe2ee !important; box-shadow: 0 1px 0 rgb(16 24 40 / .04) !important; }
+body.xlb .xl-hd b { -webkit-text-fill-color: #101828 !important; color: #101828 !important; } body.xlb .xl-hd a { color: #5b6779 !important; } body.xlb .xl-hd a.on { color: #101828 !important; }
+.pn, .L3 .rgt .dw, details.jh, .dw, .cal0 { background: #ffffff !important; border: 1px solid #dbe2ee !important; box-shadow: var(--sh) !important; backdrop-filter: none !important; }
+.dw.wide { background: #ffffff !important; box-shadow: -10px 0 30px -12px rgb(16 24 40 / .2), 0 0 0 1px #dbe2ee !important; }
+.top h1 { color: #101828 !important; -webkit-text-fill-color: #101828 !important; } .top .pt p { color: #344054 !important; } .top .lk { color: #2f5bd3 !important; text-decoration-color: rgb(47 91 211 / .4) !important; }
+.top .stp li b, .top .stp b, .top .stp li.now b, .top .stp li.now em, .top .stp .now b, .top .stp .now em { color: #101828 !important; } .top .stp li span, .top .stp span { color: #5b6779 !important; } .stp li::before { background: #c3cddd !important; }
+.x0, .lkb.alt, .dp, .ofs button, .top .seg button, .btn.steps button { background: #ffffff !important; color: #101828 !important; border: 1px solid #c3cddd !important; box-shadow: none !important; }
+.x0:hover, .lkb.alt:hover, .dp.ok:hover, .ofs button:hover, .btn.steps button:hover { background: #f2f5fb !important; border-color: #2f5bd3 !important; }
+.ug0, .pri, .simb .sv, .lkb:not(.alt), .top .seg button.on, .ofs button.on, .btn.steps button.pri, .seg button.on { background: #2f5bd3 !important; color: #ffffff !important; border: 1px solid #2f5bd3 !important; box-shadow: 0 4px 12px -6px rgb(47 91 211 / .6) !important; }
+.top .seg button.on span, .top .seg button.on small, .ofs button.on b, .btn.steps button.pri b, .btn.steps button.pri small, .btn.steps button.pri i, .seg button.on small { color: #ffffff !important; }
+.top .seg button:not(.on) span, .top .seg button:not(.on) small, .btn.steps button:not(.pri) small, .btn.steps button:not(.pri) i { color: #5b6779 !important; } .ofs button:not(.on) b, .btn.steps button:not(.pri) b { color: #101828 !important; }
+.seg { background: #e9eef7 !important; } .seg button { color: #344054 !important; background: transparent !important; border: 0 !important; }
+.tg, .sg, .crumb span { background: #e9eef7 !important; color: #344054 !important; }
+input.de, select.de, .why, .cs, .xpt, input.dm0, .pr-bar input { background: #ffffff !important; color: #101828 !important; border: 1px solid #c3cddd !important; }
+.t thead th, .dw .t thead th, .cgd .t thead th, .alm .t thead th, .t.ot thead th, .t.sq thead th, .dw.wide .t thead th, .rgt .dw .t thead th, .t.dt > thead th, .prw .t.gt > thead th { background: #f2f5fb !important; color: #344054 !important; box-shadow: inset 0 -1px 0 #dbe2ee !important; }
+.t td, .t th { border-color: #e4e9f2 !important; color: #101828; } .t td small, .t th small { color: #5b6779; }
+.t.gt tr.on th, .t.gt tr.on td, .t.ot tr.on td { background: #e8efff !important; } .t.gt tr.on th { box-shadow: inset 3px 0 0 #2f5bd3 !important; }
+.t.gt tr[data-grp]:hover td, .t.gt tr[data-grp]:hover th, .t.gt tr[data-td]:hover td, .t.gt tr[data-td]:hover th, .t.ot tbody tr:hover td, .t.gt td[data-fc]:hover, .t.gt td[data-ms]:hover, .t.gt tr[data-pro]:hover td, .t.gt tr[data-pro]:hover th, .t.dt tr[data-dlo]:hover th, .t.dt tr[data-dlo]:hover td { background: #f2f6ff !important; }
+.t.ot .cn0, .cn0, .L3 .rgt .dw h2.cn0 { color: #2f5bd3 !important; -webkit-text-fill-color: #2f5bd3 !important; }
+.t tr.sum th, .t tr.sum td, .t.dt tr.dsub th, .t.dt tr.dsub td { background: #f2f5fb !important; } .t.gt tr.pr-c > td { background: #f8fafd !important; }
+.cgr, .alm details { background: #f6f8fc !important; border: 1px solid #dbe2ee !important; } .dp.no { color: #8a94a6 !important; } .dp.on { border-color: #2f5bd3 !important; box-shadow: inset 0 0 0 1px #2f5bd3 !important; }
+.simb { background: #101828 !important; color: #ffffff !important; } .simb b, .simb span { color: #ffffff !important; } .simb button:not(.sv) { color: #ffffff !important; border-color: rgb(255 255 255 / .35) !important; }
+.u, .pn header .u { color: #5b6779 !important; } .pn h2, .pn header h2 { color: #101828 !important; -webkit-text-fill-color: #101828 !important; }
+td.bad, .t td.bad, .bad b { color: #c8282f !important; } td.ok, .ok b { color: #11804a !important; }
+.dcd > div { background: #f6f8fc !important; border-color: #dbe2ee !important; }
+.pn header h2, .cal0 header h2, .sqh, details.jh > summary, .L3 .rgt .dw h2 { color: #101828 !important; -webkit-text-fill-color: #101828 !important; }
+.sqh small, .pn header h2 small, .dw h2 small { color: #5b6779 !important; -webkit-text-fill-color: #5b6779 !important; }
+.cd .dn0, .cal .cg .ws b { color: #344054 !important; } .cal0 .cd .dn0 small, .blk.flt b { background: #2f5bd3 !important; color: #ffffff !important; }
+select.de option { background: #ffffff !important; color: #101828 !important; }
+.warn, td.warn, .t td.warn { color: #a35f00 !important; } .opk, .am { color: inherit; }
+.cal .wh span, .cal .wh span.we { color: #5b6779 !important; } .alm summary b, .alm summary { color: #101828 !important; } .t.gt tr.sub td, .t.gt tr.sub th { color: #5b6779 !important; }
+.top h1, #ct-main > .card.lock h2 { color: #101828 !important; -webkit-text-fill-color: #101828 !important; }
+.cal0 .cl .dn0, .cal0 .cl.we .dn0, .cal0 .cd .dn0 { color: #344054 !important; } .cal0 .cl small, .cal0 .cl .rs, .cal0 .cl i { color: #475467 !important; }
