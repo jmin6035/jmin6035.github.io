@@ -903,3 +903,13 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 .t.capt { width: 100%; } .t.capt tbody th[scope=row] { text-align: left; white-space: nowrap; }
 .capw .capk em.bad { font-style: normal; font-weight: 700; color: #c8282f; }
 .t.glt { width: 100%; } .t.glt th small { font-weight: 400; color: #5b6779; font-size: 13.5px; margin-left: 6px; } .t.glt tbody th[scope=row] { text-align: left; }
+.t.glt td b { display: block; font-size: 16px; } .t.glt td small { display: block; font-size: 13.5px; color: #5b6779; white-space: nowrap; }
+
+/* 11/26 소재 조정 입력(조정 원장 한 건) · 촘촘히 */
+.pmat .pmin { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0 8px; } .pmat .pmin .de { height: 34px; padding: 0 8px; font-size: 14px; } .pmat .pmin #pa-n { width: 160px; } .pmat .pmin #pa-t { width: 110px; } .pmat .pmin .pw { flex: 1 1 220px; }
+.t.pmt th, .t.pmt td, .t.pml th, .t.pml td { padding-top: 3px !important; padding-bottom: 3px !important; }
+
+/* 11/26 사용자 '구분은 왼쪽 맞춤, 나머지는 가운데 — 이유가 있나': 판생 표는 줄 이름 칸 · 사유 칸까지 전부 가운데 맞춤 */
+.t.dt tbody th, .t.csl tbody th, .t.csl tbody th[scope=row], .t.csl tbody.csf tr:not(.cshd) th, .t.pmt th.pm1, .t.pmt th.pm2, .t.pml th[scope=row], .t.pml td.why, .t.capt tbody th[scope=row], .t.glt tbody th[scope=row], .prw .t.gt tbody th, .dpl .t th, .t.dlo td, .t.pr-ct td { text-align: center !important; }
+.t.dt tbody th { padding-left: 4px !important; }
+.lft .glw { margin-top: var(--space-md); } .lft .t.glt td b { font-size: 15px; } .lft .t.glt td small { white-space: nowrap; }
