@@ -899,3 +899,7 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 .t.pml td.why { white-space: normal; text-align: left; min-width: 260px; } .t.pml th[scope=row] { text-align: left; }
 .pmat #pm-l { margin-top: 8px; }
 .L3.tabv .btm .ordw { max-height: none !important; overflow: visible !important; }   /* 11/26 사용자 "왜 밑까지 안 내리고 중간에 막아 놓았나": 탭 화면에서는 안쪽 스크롤 상자 없이 끝까지 */
+.capw .capk { display: flex; gap: 14px; align-items: center; margin: 0 0 10px; font-size: 16px; } .capw .capk b { font-size: 22px; padding: 2px 14px; border-radius: 8px; background: #e7f6ee; color: #11804a; } .capw .capk b.bad { background: #fdecec; color: #c8282f; }
+.t.capt { width: 100%; } .t.capt tbody th[scope=row] { text-align: left; white-space: nowrap; }
+.capw .capk em.bad { font-style: normal; font-weight: 700; color: #c8282f; }
+.t.glt { width: 100%; } .t.glt th small { font-weight: 400; color: #5b6779; font-size: 13.5px; margin-left: 6px; } .t.glt tbody th[scope=row] { text-align: left; }
