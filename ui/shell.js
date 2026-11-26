@@ -365,7 +365,7 @@
     const m = document.getElementById('ui-fresh-m'); if (m) { m.hidden = false; m.className = el.className; m.title = el.title; m.innerHTML = el.innerHTML; }
     if (age >= 2 && h.dataset.page !== 'health' && !document.getElementById('ui-stale')) {
       const b = document.createElement('div'); b.id = 'ui-stale'; b.className = 'wrap stale-band';
-      b.innerHTML = `<div>⚠ <b>자료가 ${age}일 전(${mdS(B.day)} ${B.at.slice(-5)})에서 멈춰 있습니다.</b> 모든 화면은 기준일 <b>${mdS(B.day)}</b>(실적 <b>${mdS(B.act)}</b>까지) 기준입니다. <a href="health.html">자료 상태 보기 →</a></div>`;
+      b.innerHTML = `<div>⚠ <b>자료가 ${mdS(B.day)} ${B.at.slice(-5)} 뒤로 ${age}일째 멈춰 있습니다.</b> 모든 화면은 실적 <b>${mdS(B.act)}</b>까지 기준입니다. <a href="health.html">자료 상태 보기 →</a></div>`;   // 11/26 수정 방 2: 괄호 설명 두 개 → 한 문장씩(검수 AI스러운 글)
       h.after(b);
     }
   }
