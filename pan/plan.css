@@ -932,3 +932,13 @@ select.de option { background: #ffffff !important; color: #101828 !important; }
 .sq p { margin: 0; display: flex; gap: 10px; align-items: center; } .sq p b { font-size: 16px; } .sq p em { font-style: normal; font-weight: 700; font-size: 13.5px; } .sq.bad p em { color: #c8282f; } .sq.warn p em { color: #a35f00; } .sq.ok p em { color: #11804a; }
 .sq .sqk { display: flex; gap: 22px; margin-left: auto; } .sq .sqk span { display: grid; justify-items: center; } .sq .sqk b { font-size: 20px; font-variant-numeric: tabular-nums; } .sq .sqk small { font-size: 13.5px; color: #5b6779; }
 .hmg .hmt::before, .hmg .hmt::after, .hmg .hmt svg { display: none !important; }
+
+/* 11/26 사용자 '사유 칸이 넓은데 왼쪽 열을 좁게 만드는 이유' — 칸 폭을 정해 사유가 폭을 다 가져가지 않게 */
+.t.pml { table-layout: fixed; } .t.pml col.c-d { width: 120px; } .t.pml col.c-n { width: 220px; } .t.pml col.c-m { width: 110px; } .t.pml col.c-w { width: auto; }
+.t.pml td.why { min-width: 0; white-space: normal; }
+/* 11/26 줄 숫자 계약번호별로 나눠 보기 — 펼친 표가 줄 폭을 다 쓰고 줄바꿈 없이 */
+.t.dt tr.pr-c > td { padding: 6px 8px !important; background: #f6f8fb; }
+.t.pr-ct.dlo { max-width: none !important; width: 100% !important; margin: 0 !important; }
+.t.pr-ct.dlo th, .t.pr-ct.dlo td { display: table-cell !important; white-space: nowrap !important; padding: 3px 8px !important; }
+.t.pr-ct.dlo tr.sum th, .t.pr-ct.dlo tr.sum td { font-weight: 700; background: #eef2f8; }
+.t.pr-ct.dlo th, .t.pr-ct.dlo td { padding: 3px 5px !important; } .t.pr-ct.dlo td.cu { white-space: normal !important; word-break: keep-all; min-width: 110px; }
