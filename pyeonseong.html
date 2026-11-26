@@ -197,6 +197,16 @@ html.v2 body main table.ps-seq tr.pdue td.dl { color: var(--bad) !important; fon
 @media (max-width: 640px) { #ps-ordc .pts, #ps-ordc .pts.p5, #ps-ordc .pts.p6, #ps-ordc .pts.p7 { grid-template-columns: minmax(0, 1fr) !important; } #ps-ordc .pts.p7 .pt .v { font-size: 26px; } }
 /* 11/17 용어 기준: 날짜·기간 = 굵은 진한 파랑 */
 .dt { font-weight: 800; color: var(--brand-2, #1f5fae); } .ps-line b.dt { color: var(--brand-2, #1f5fae); }
+/* 11/26 생산일 변경 내역(지휘 방 넘김 ① · 협의표 8.13 · 10.15) */
+#ps-chgc .chg-k { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 2px 0 10px; font-size: 14px; }
+#ps-chgc .chg-k b { font-size: 18px; }
+#ps-chgc details.chg-g { border-top: 1px solid var(--line); }
+#ps-chgc details.chg-g > summary { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; padding: 8px 4px; cursor: pointer; }
+#ps-chgc details.chg-g > summary .gn { font-weight: 700; min-width: 8em; text-align: left; }
+#ps-chgc details.chg-g > summary::before { content: '▸'; color: var(--ink-2); width: 1em; }
+#ps-chgc details.chg-g[open] > summary::before { content: '▾'; }
+#ps-chgc details.chg-g > summary::-webkit-details-marker { display: none; }
+#ps-chgc table.chg-t td, #ps-chgc table.chg-t th { padding: 4px 8px; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -216,6 +226,7 @@ html.v2 body main table.ps-seq tr.pdue td.dl { color: var(--bad) !important; fon
     <section class="card" id="ps-ccc"><h2>컬러</h2>
       <div class="ps-lg"><span><i class="sp"></i>정지(정기수리·휴지)</span><span><i class="tdy"></i>오늘</span><span><i class="ln" style="background:var(--bad)"></i>확인 필요</span><span><i class="pst"></i>지난 날 = 실적</span></div>
       <div class="wk" id="ps-cal-cc"></div><div class="ps-day" id="ps-day-cc" hidden></div></section>
+    <section class="card" id="ps-chgc" hidden></section>
     <section class="card" id="ps-editc"><h2>작업 순서 <a class="ps-go" href="week_seq.html">작업 순서 화면에서 조정 ›</a></h2>
       <iframe id="ps-frame" title="작업 순서(보기 전용)" loading="eager"></iframe>
     </section>
