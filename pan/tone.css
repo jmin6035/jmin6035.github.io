@@ -38,3 +38,15 @@ section.xl, .counts > div { background: var(--pan-iv-l); border: 1px solid var(-
 .x td.bn, .x td.bn small { white-space: nowrap; } .x td.bn small { display: block; }
 .x th, .tab, .xl-top nav a, .counts span, .x td.sp span { white-space: nowrap; }
 .x .bt { white-space: nowrap; }
+/* 11/27 사용자 '기준값 화면은 도대체 왜 흰색으로만 하는데': 아이보리 진하기만 써서 초록이 안 보였음 — 주색(초록)을 머리 띠 · 표 머리줄 · 묶음 줄 · 숫자 카드 · 단추에 */
+body.xlb .xl-hd { background: var(--pan-g) !important; color: var(--pan-iv-l) !important; box-shadow: none !important; }
+body.xlb .xl-hd b { color: var(--pan-iv-l) !important; -webkit-text-fill-color: var(--pan-iv-l) !important; }
+body.xlb .xl-hd a { color: var(--pan-g-t) !important; } body.xlb .xl-hd a:hover { background: var(--pan-g-d) !important; }
+body.xlb .xl-hd a.on { color: var(--pan-iv-l) !important; box-shadow: inset 0 -3px 0 var(--pan-iv) !important; }
+.xl-top h1 { color: var(--pan-g-d) !important; -webkit-text-fill-color: var(--pan-g-d) !important; }
+.counts > div { border-top: 4px solid var(--pan-g) !important; } .counts b { color: var(--pan-g) !important; font-weight: 600 !important; }
+.x th { background: var(--pan-g) !important; color: var(--pan-iv-l) !important; box-shadow: inset 0 -1px 0 var(--pan-g-d) !important; } .x th small { color: var(--pan-g-t) !important; }
+.x tr.grp td, .x tr.grp:hover td { background: var(--pan-g-t2) !important; color: var(--pan-g-d) !important; } .x tr.grp td span::before { background: var(--pan-g-d) !important; }
+.x tbody tr:nth-child(even) td { background: var(--pan-iv); } .x tbody tr:hover td { background: var(--pan-g-t) !important; }
+section.xl { border-top: 4px solid var(--pan-g) !important; } .xl .no { background: var(--pan-g) !important; } .xl h2 { color: var(--pan-g-d) !important; }
+.tab { border-color: var(--pan-g-6) !important; color: var(--pan-g-d) !important; } .tab.on { background: var(--pan-g) !important; color: var(--pan-iv-l) !important; }

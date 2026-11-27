@@ -989,3 +989,10 @@ html, body.xlb { background: var(--pan-iv) !important; }
 .cmat .t.cmt td small.cin { display: inline; margin-left: 3px; }
 /* 11/27 검수 1630 다듬기 2: 13.5px 아래 글씨 없앰 */
 .t.dt th small.dfc { font-size: 13.5px !important; } .dpl summary small, h3.csh small { font-size: 13.5px !important; }
+/* 11/27 계획 화면도 같은 기준: 표 머리줄 초록 · 바탕 글 아이보리 */
+.L3 .t thead th, .home .t thead th, .hmg .t thead th { background: var(--pan-g) !important; color: var(--pan-iv-l) !important; border-color: var(--pan-g-d) !important; }
+.L3 .t thead th small, .L3 .t thead th .u { color: var(--pan-g-t) !important; }
+.L3 .t thead th.pac { background: var(--pan-g-d) !important; }
+body.xlb .xl-hd { background: var(--pan-g) !important; color: var(--pan-iv-l) !important; box-shadow: none !important; border-bottom: 0 !important; }
+body.xlb .xl-hd b { color: var(--pan-iv-l) !important; -webkit-text-fill-color: var(--pan-iv-l) !important; }
+body.xlb .xl-hd a { color: var(--pan-g-t) !important; background: none !important; } body.xlb .xl-hd a.on { color: var(--pan-iv-l) !important; box-shadow: inset 0 -3px 0 var(--pan-iv) !important; }
