@@ -244,6 +244,8 @@
     return cellH({ ln, d, past: 1, t: a.t, chips, G: a.grp, band: fams.length > 1 ? `M/C ${fams.join('·')}` : '', mc: fams.length > 1, tip: `${ln} ${mdw(d)} 생산 실적(MES) ${n0(a.t)}t${a.h ? ` · ${n1(a.h)}시간` : ''}${a.pr ? ` · 품명 ${a.pr.map(([q, v]) => `${q} ${n0(v)}`).join(' · ')}` : ''}` });
   }
   /* 2주 표(11/12 사용자 '편성은 2주치로 늘려, 칸 좀 줄여서'): 열 = 이번 생산주(수~화) + 다음 생산주 14일 · 이번 주 지난 날 = 실적 · 창(월말) 밖 = 빈 칸 */
+  const WKO = {};   // 공장별 '이번 주' 표 펼침
+  document.addEventListener('toggle', (e) => { const d = e.target; if (d.classList && d.classList.contains('pz-d')) WKO[d.dataset.p] = d.open; }, true);
   const WKT = {};                                                   // 공장별 { cur, nxt } = 아래 두 표의 합계(수~화): 위 한 줄 '다음 주 편성'
   function grid(p) {
     const C = CAL[p](), R = C && C.raw && C.raw(); if (!R) return '';
@@ -289,7 +291,9 @@
           : `<td class="${kind(d) === 'pst' ? 'pst' : tdc(d)}"><div class="tv">${n0(sumT(d))}<small>t</small></div></td>`)).join('') + '</tr>';
       const cur = nm === '이번 주';
       const cap = `<div class="pz-cap ${cur ? 'cur' : 'nxt'}"><b>${nm}</b><span>${md(W[0])}~${md(W[6])}(수~화)</span><em>${cur ? '생산 중 · 지난 날 = 실적' : '편성 계획 · 수요일 주문 마감 뒤 확정'}</em></div>`;
-      return cap + `<table class="psw v2-grid ${cur ? 'cur' : 'nxt'}"><thead><tr class="wh"><th class="cn">${nm}</th>${W.map(dh).join('')}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
+      const tbl = `<table class="psw v2-grid ${cur ? 'cur' : 'nxt'}"><thead><tr class="wh"><th class="cn">${nm}</th>${W.map(dh).join('')}</tr></thead><tbody>${rows}${tot}</tbody></table>`;
+      if (!cur) return cap + tbl;   // 11/27 검수 1448: 이번 주(지난 날 실적)는 머리 줄 + 합계만, 누르면 펼침 · 다음 주 편성은 펼친 채
+      return `<details class="pz-d" data-p="${p}"${WKO[p] ? ' open' : ''}><summary>${cap.replace('<em>', `<i class="pz-t">${n0(LN.reduce((s, l) => s + wT(l, W), 0))}t</i><em>`)}</summary>${tbl}</details>`;
     };
     const W1 = D14.slice(0, 7), W2 = D14.slice(7);
     WKT[p] = { cur: LN.reduce((s, l) => s + wT(l, W1), 0), nxt: LN.reduce((s, l) => s + wT(l, W2), 0) };
