@@ -250,8 +250,17 @@ html.v2 .dx-s .pbar { max-width: 230px; margin: 4px auto 0; } html.v2 .dx-s .pba
 #od-main .pw-card table.pw-t td, #od-main .pw-card table.pw-t th, #od-main .pw-card table.pw-d td, #od-main .pw-card table.pw-d th { padding: 4px 6px !important; line-height: 1.35; white-space: nowrap; }
 #od-main .pw-card table.pw-t tr.pw-g th { text-align: left; background: var(--surface-2); font-weight: 700; }
 #od-main .pw-card .pw-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 16px; align-items: start; }
-@media (max-width: 1100px) { #od-main .pw-card .pw-2 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1400px) { #od-main .pw-card .pw-2 { grid-template-columns: minmax(0, 1fr); } }
 #od-main .pw-card table.pw-t td.pw-c { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+/* 11/27 검수 1448: 왼쪽 · 오른쪽 표 칸 폭을 같게(고정), 숫자는 오른쪽 정렬, 입고 예정은 줄바꿈 허용(잘림 없앰) */
+#od-main .pw-card table.pw-t { table-layout: fixed; width: 100%; min-width: 540px; }
+#od-main .pw-card table.pw-t thead th:nth-child(1) { width: 20%; } #od-main .pw-card table.pw-t thead th:nth-child(2) { width: 10%; }
+#od-main .pw-card table.pw-t thead th:nth-child(3), #od-main .pw-card table.pw-t thead th:nth-child(4) { width: 16%; }
+#od-main .pw-card table.pw-t thead th:nth-child(5) { width: 13%; } #od-main .pw-card table.pw-t thead th:nth-child(6) { width: 25%; }
+#od-main .pw-card table.pw-t tbody tr:not(.pw-g) td:is(:nth-child(2), :nth-child(3), :nth-child(4)) { text-align: right !important; font-variant-numeric: tabular-nums; }
+#od-main .pw-card table.pw-t tbody tr:not(.pw-g) td:nth-child(6) { white-space: normal !important; }
+#od-main .pw-card table.pw-t td { overflow: hidden; text-overflow: ellipsis; }
+#od-main .pw-card table.pw-d tbody td:is(:nth-child(5), :nth-child(6)) { text-align: right !important; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
