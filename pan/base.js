@@ -62,7 +62,7 @@
       return `<div class="row"><b>${esc(NMK(k))}</b><span class="v">${f1(O[k])}</span><span class="who">${esc(String(h.at || '').slice(5, 16).replace('T', ' '))} ${esc(h.by || '')}</span><button type="button" class="b3" data-rst="${esc(k)}">기본값 복원</button></div>`; }).join('')
       : '<p class="none">수정한 값 없음</p>';
     $('ct-main').innerHTML = `
-      <div class="xl-top"><h1>기준값</h1><p class="lead">노란 입력란 수정 후 저장</p>
+      <div class="xl-top"><h1>기준값</h1><p class="lead">초록 입력란 수정 후 저장</p>
         <div class="counts"><div><span>배선일정 목적지</span><b>${nAll}건</b></div><div><span>T/Hr</span><b>${Object.keys(T.rate).filter((k) => k.split('|').length === 4).length}건</b></div><div><span>소재 리드타임</span><b>${LD.length}건</b></div><div class="${fixed.length ? 'on' : ''}"><span>수정한 값</span><b>${fixed.length}건</b></div></div>
         <nav><a href="pan/base.html#s1">배선일정</a><a href="pan/base.html#s2">T/Hr</a><a href="pan/base.html#s3">소재 리드타임</a><a href="pan/base.html#s4">전환 규칙값</a><a href="pan/base.html#s5">상한 일수</a><a href="pan/base.html#s6">수정 내역</a></nav></div>
       <section class="xl" id="s1"><div class="hd"><span class="no">1</span><h2>배선일정, 목적지별 출항 기간</h2></div>

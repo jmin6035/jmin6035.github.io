@@ -1,32 +1,40 @@
-/* 기준값 화면: 계획 화면과 같은 미드나잇 톤(남색 유리 카드, 밝은 글자, 인디고 강조). 넣는 입력란만 호박빛 */
-:root { --color-paper: transparent; --color-paper-2: transparent; --color-paper-3: #181e42; --color-floor-ink: #ffffff; --color-floor-mute: rgb(255 255 255 / .82);
-  --color-plate: #131836; --color-plate-2: #181e42; --color-plate-3: #222a55; --color-plate-hi: #1b2150; --color-plate-ink: #f3f5fb;
-  --color-ink: #f3f5fb; --color-ink-2: #c9cfe0; --color-muted: #a3acc4; --color-rule: rgb(255 255 255 / .1);
-  --color-gun: #1b2150; --color-gun-2: #181e42; --color-gun-hi: transparent;
-  --color-accent: #5a66f5; --color-accent-ink: #ffffff; --color-accent-deep: #3540c8; --color-focus: #8f99ff;
-  --color-edit: rgb(247 185 85 / .16); --color-edit-2: rgb(247 185 85 / .28); --color-edit-ink: #ffe2a6; --color-edit-rule: rgb(247 185 85 / .5);
+/* 판생 색(계획 · 기준값 공통): 세 색만 — 아이보리 바탕, 초록 주색, 주홍은 나쁜 것만. 입력란은 초록 엷은 바탕 */
+/* 11/27 사용자 '사이트 이 세 개 색감으로 수정 전면 진행해, 기준값 페이지도 동일': 판생 색은 세 가지만 — Warm Ivory #F9EBD7(바탕) · Emerald Green #046A38(주색) · Vermilion #E34222(나쁜 것만). 나머지는 이 셋의 진하기.
+   다른 css 의 색 값은 이 표의 값으로 바꿔 둠(tools 변환, 11/27). 새 색을 만들지 말 것 — 여기서 고르고, 바꿀 때도 여기서. */
+:root { --pan-iv: #f9ebd7; --pan-iv-l: #fcf6ed; --pan-iv-d1: #efe2ce; --pan-iv-d2: #e0d4c2; --pan-iv-d3: #c7bcac;
+  --pan-g: #046a38; --pan-g-d: #03532c; --pan-g-6: #72a480; --pan-g-t2: #c3cfb4; --pan-g-t: #dcdcc4;
+  --pan-v: #e34222; --pan-v-d: #b1331b; --pan-v-b: #f1ab92; --pan-v-t: #f6d7c1;
+  --pan-ink: #011e10; --pan-ink2: #2e4334; --pan-ink3: #5a6858;
+  /* 강종 계열(넷): 초록 진하기 셋 + 아이보리 가장 진한 것. 주홍은 쓰지 않음(나쁜 것 전용) */
+  --pan-fam-az: #046a38; --pan-fam-al: #72a480; --pan-fam-sts: #c3cfb4; --pan-fam-mac: #a8977f; }
+:root { --color-paper: var(--pan-iv); --color-paper-2: var(--pan-iv); --color-paper-3: var(--pan-iv-d1); --color-floor-ink: var(--pan-ink); --color-floor-mute: var(--pan-ink3);
+  --color-plate: var(--pan-iv-l); --color-plate-2: var(--pan-iv-d1); --color-plate-3: var(--pan-iv-d2); --color-plate-hi: var(--pan-iv-l); --color-plate-ink: var(--pan-ink);
+  --color-ink: var(--pan-ink); --color-ink-2: var(--pan-ink2); --color-muted: var(--pan-ink3); --color-rule: var(--pan-iv-d2);
+  --color-gun: var(--pan-iv-d1); --color-gun-2: var(--pan-iv-d1); --color-gun-hi: transparent;
+  --color-accent: var(--pan-g); --color-accent-ink: var(--pan-iv-l); --color-accent-deep: var(--pan-g-d); --color-focus: var(--pan-g);
+  --color-edit: var(--pan-g-t); --color-edit-2: var(--pan-g-t2); --color-edit-ink: var(--pan-ink); --color-edit-rule: var(--pan-g-6);
   --radius-card: 18px; --radius-key: 12px; --radius-well: 10px; --tracking-display: -0.02em; --display-weight: 800;
-  --lift-plate: inset 0 1px 0 rgb(255 255 255 / .08), 0 24px 48px -28px rgb(0 0 0 / .8); --lift-key: none;
-  --press-well: inset 0 0 0 1px rgb(255 255 255 / .16); --press-deep: none; --shadow-card: inset 0 1px 0 rgb(255 255 255 / .08), 0 24px 48px -28px rgb(0 0 0 / .8);
+  --lift-plate: 0 1px 2px rgb(1 30 16 / .06); --lift-key: none; --press-well: inset 0 0 0 1px var(--pan-iv-d2); --press-deep: none; --shadow-card: 0 1px 2px rgb(1 30 16 / .06);
   --shade-beam: none; --shade-dot: none; --glint: none; --shade-key: none; --texture-opacity: 0; }
-body.xlb { color: #f3f5fb; background: transparent; }
-body.xlb .xl-hd { color: #ffffff; background: transparent; box-shadow: none; } body.xlb .xl-hd b { color: #ffffff; background: none; -webkit-text-fill-color: #ffffff; } body.xlb .xl-hd b::before { display: none; }
-body.xlb .xl-hd a { color: rgb(255 255 255 / .8); opacity: 1; } body.xlb .xl-hd a:hover { background: rgb(255 255 255 / .1); } body.xlb .xl-hd a.on { background: none; color: #ffffff; box-shadow: inset 0 -2px 0 #ffffff; border-radius: 0; font-weight: 700; }
-.xl-top h1 { text-shadow: none; color: #ffffff; background: none; -webkit-text-fill-color: #ffffff; }
-section.xl, .counts > div { background: linear-gradient(180deg, rgb(28 34 78 / .78), rgb(16 20 52 / .82)); border: 1px solid rgb(255 255 255 / .1); border-radius: 18px; box-shadow: var(--shadow-card); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); }
-.counts { background: none; box-shadow: none; padding: 0; } .counts span { color: #c9cfe0; } .counts b { color: #ffffff; font-weight: 300; font-size: 34px; }
-.xl-top nav a, .tab, .b2, .b3 { background: rgb(255 255 255 / .08); color: #f3f5fb; border: 1px solid rgb(255 255 255 / .16); box-shadow: none; } .xl-top nav a:hover, .tab:hover, .b2:hover, .b3:hover { background: rgb(255 255 255 / .16); }
-.x th { text-shadow: none; background: #1b2150; color: #c9cfe0; font-weight: 600; box-shadow: inset 0 -1px 0 rgb(255 255 255 / .14); } .x th:last-child { box-shadow: inset 0 -1px 0 rgb(255 255 255 / .14); } .x th small { color: #a3acc4; font-size: 13.5px; }
-.x td { border-color: rgb(255 255 255 / .08); } .x tbody tr:hover td { background: rgb(255 255 255 / .05); }
-.xl .no { background: linear-gradient(135deg, #5a66f5, #3540c8); color: #ffffff; box-shadow: none; }
-.x tr.grp td, .x tr.grp:hover td { background: rgb(255 255 255 / .07); color: #ffffff; box-shadow: none; } .x tr.grp td span::before { background: #8f99ff; box-shadow: none; } .x tr.grp td i { color: #c9cfe0; }
-.x td.in input { background: rgb(247 185 85 / .16); color: #ffe9bd; box-shadow: inset 0 0 0 1px rgb(247 185 85 / .45); } .x tbody tr:hover td.in input { background: rgb(247 185 85 / .26); } .x td.in input:focus { background: rgb(247 185 85 / .3); outline: 2px solid #f7b955; } .x td.in.set input { background: rgb(247 185 85 / .34); color: #ffffff; } .x td.in.none input { background: rgb(255 255 255 / .05); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .14); }
-.x.rate td.nm { background: rgb(255 255 255 / .05); }
-.tb input[type="search"], .tb select { background: rgb(8 10 34 / .6); color: #ffffff; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .2); } .tb select option { background: #10143a; } .tb label { color: #c9cfe0; }
-.bb { background: rgb(255 255 255 / .1); box-shadow: none; } .tk0 { background: rgb(255 255 255 / .25); } .tk1 { background: rgb(255 255 255 / .5); } .tk2 { background: rgb(255 255 255 / .75); } .tk3 { background: #ffffff; }
-.tab.on { translate: none; background: linear-gradient(135deg, #5a66f5, #3540c8); color: #ffffff; box-shadow: 0 10px 24px -10px rgb(70 80 240 / .9); } .tab.on::before { content: none; }
-.x-toast { background: #ffffff; color: #10143a; box-shadow: 0 24px 48px -16px rgb(0 0 0 / .8); } .x-toast button { color: #10143a; border-color: rgb(16 20 58 / .3); }
-.b1, .xlb .unlock button { background: linear-gradient(135deg, #5a66f5, #3540c8); color: #ffffff; box-shadow: 0 10px 24px -10px rgb(70 80 240 / .9); } .x-act { background: #10143a; box-shadow: 0 0 0 1px rgb(255 255 255 / .12), 0 24px 48px -16px rgb(0 0 0 / .8); }
+html { background: var(--pan-iv); }
+body.xlb { color: var(--pan-ink); background: var(--pan-iv); } body.xlb::before, body.xlb::after { display: none; }
+body.xlb .xl-hd { color: var(--pan-ink); background: var(--pan-iv-l); box-shadow: inset 0 -1px 0 var(--pan-iv-d2); } body.xlb .xl-hd b { color: var(--pan-ink); background: none; -webkit-text-fill-color: var(--pan-ink); } body.xlb .xl-hd b::before { display: none; }
+body.xlb .xl-hd a { color: var(--pan-ink2); opacity: 1; } body.xlb .xl-hd a:hover { background: var(--pan-iv-d1); } body.xlb .xl-hd a.on { background: none; color: var(--pan-g); box-shadow: inset 0 -2px 0 var(--pan-g); border-radius: 0; font-weight: 700; }
+.xl-top h1 { text-shadow: none; color: var(--pan-ink); background: none; -webkit-text-fill-color: var(--pan-ink); } .xl-top p { color: var(--pan-ink2); }
+section.xl, .counts > div { background: var(--pan-iv-l); border: 1px solid var(--pan-iv-d2); border-radius: 18px; box-shadow: var(--shadow-card); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.counts { background: none; box-shadow: none; padding: 0; } .counts span { color: var(--pan-ink3); } .counts b { color: var(--pan-ink); font-weight: 300; font-size: 34px; }
+.xl-top nav a, .tab, .b2, .b3 { background: var(--pan-iv-l); color: var(--pan-ink); border: 1px solid var(--pan-iv-d2); box-shadow: none; } .xl-top nav a:hover, .tab:hover, .b2:hover, .b3:hover { background: var(--pan-iv-d1); }
+.x th { text-shadow: none; background: var(--pan-iv-d1); color: var(--pan-ink2); font-weight: 600; box-shadow: inset 0 -1px 0 var(--pan-iv-d2); } .x th:last-child { box-shadow: inset 0 -1px 0 var(--pan-iv-d2); } .x th small { color: var(--pan-ink3); font-size: 13.5px; }
+.x td { border-color: var(--pan-iv-d2); color: var(--pan-ink); } .x td small, .x td .u { color: var(--pan-ink3); } .x tbody tr:hover td { background: var(--pan-iv-d1); }
+.xl .no { background: var(--pan-g); color: var(--pan-iv-l); box-shadow: none; } .xl h2 { color: var(--pan-ink); } .xl .src, .xl p { color: var(--pan-ink3); }
+.x tr.grp td, .x tr.grp:hover td { background: var(--pan-iv-d1); color: var(--pan-ink); box-shadow: none; } .x tr.grp td span::before { background: var(--pan-g); box-shadow: none; } .x tr.grp td i { color: var(--pan-ink3); }
+.x td.in input { background: var(--pan-g-t); color: var(--pan-ink); box-shadow: inset 0 0 0 1px var(--pan-g-6); } .x tbody tr:hover td.in input { background: var(--pan-g-t2); } .x td.in input:focus { background: var(--pan-iv-l); outline: 2px solid var(--pan-g); } .x td.in.set input { background: var(--pan-g-t2); color: var(--pan-ink); font-weight: 700; } .x td.in.none input { background: var(--pan-iv-l); box-shadow: inset 0 0 0 1px var(--pan-iv-d2); }
+.x.rate td.nm { background: var(--pan-iv-d1); }
+.tb input[type="search"], .tb select { background: var(--pan-iv-l); color: var(--pan-ink); box-shadow: inset 0 0 0 1px var(--pan-iv-d3); } .tb select option { background: var(--pan-iv-l); } .tb label { color: var(--pan-ink2); }
+.bb { background: var(--pan-iv-d2); box-shadow: none; } .tk0 { background: var(--pan-g-t2); } .tk1 { background: var(--pan-g-6); } .tk2 { background: var(--pan-g); } .tk3 { background: var(--pan-g-d); }
+.tab.on { translate: none; background: var(--pan-g); color: var(--pan-iv-l); border-color: var(--pan-g); box-shadow: none; } .tab.on::before { content: none; }
+.x-toast { background: var(--pan-ink); color: var(--pan-iv-l); box-shadow: 0 12px 32px -12px rgb(1 30 16 / .4); } .x-toast button { color: var(--pan-iv-l); border-color: rgb(249 235 215 / .4); }
+.b1, .xlb .unlock button { background: var(--pan-g); color: var(--pan-iv-l); box-shadow: none; } .x-act { background: var(--pan-iv-l); box-shadow: 0 0 0 1px var(--pan-iv-d2), 0 12px 32px -12px rgb(1 30 16 / .3); }
 .x td.bn, .x td.bn small { white-space: nowrap; } .x td.bn small { display: block; }
 .x th, .tab, .xl-top nav a, .counts span, .x td.sp span { white-space: nowrap; }
 .x .bt { white-space: nowrap; }

@@ -1,6 +1,6 @@
 /* 공용 바탕: 남색 위에 인디고와 자주 빛이 번지는 미드나잇 */
-html { background: radial-gradient(ellipse 55% 75% at 8% 0%, rgb(70 76 230 / .75), transparent 70%), radial-gradient(ellipse 45% 65% at 96% 4%, rgb(170 50 140 / .6), transparent 70%), radial-gradient(ellipse 80% 50% at 50% 115%, rgb(40 60 190 / .5), transparent 70%), #070a1f; background-attachment: fixed; min-height: 100%; }
+html { background: radial-gradient(ellipse 55% 75% at 8% 0%, rgb(4 106 56 / .75), transparent 70%), radial-gradient(ellipse 45% 65% at 96% 4%, rgb(4 106 56 / .6), transparent 70%), radial-gradient(ellipse 80% 50% at 50% 115%, rgb(4 106 56 / .5), transparent 70%), #011e10; background-attachment: fixed; min-height: 100%; }
 body.xlb { background: transparent; }
 body.xlb::before, body.xlb::after { content: none; }
 body.xlb .xl-hd { background: transparent; box-shadow: none; }
-@media print { html { background: #ffffff; } }
+@media print { html { background: #fcf6ed; } }
