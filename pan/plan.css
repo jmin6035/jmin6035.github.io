@@ -981,3 +981,11 @@ select.de option { background: #fcf6ed !important; color: #011e10 !important; }
 /* 11/27 세 색(tone.css 토큰): 강종 계열색 · 바탕 */
 :root { --fam-az: var(--pan-fam-az); --fam-al: var(--pan-fam-al); --fam-sts: var(--pan-fam-sts); --fam-mac: var(--pan-fam-mac); --bg: var(--pan-iv); --color-paper: var(--pan-iv); --warn: var(--pan-v-d); --danger: var(--pan-v-d); --ok: var(--pan-g); --brand: var(--pan-g); --sky: var(--pan-g); }
 html, body.xlb { background: var(--pan-iv) !important; }
+/* 11/27 컬러 소재 수급(컬러소재수급 시트 본표) */
+.cmat .t.cmt th.pm1 small { display: block; font-weight: 400; color: var(--pan-ink3); font-size: 13.5px; }
+.cmat .t.cmt td small.cin { color: var(--pan-ink3); font-size: 13.5px; }
+.cmat .t.cmt tbody tr:has(th.pm1) th, .cmat .t.cmt tbody tr:has(th.pm1) td { border-top: 2px solid var(--pan-iv-d3) !important; }
+.L3.tabv .btm > .msub { display: block; }
+.cmat .t.cmt td small.cin { display: inline; margin-left: 3px; }
+/* 11/27 검수 1630 다듬기 2: 13.5px 아래 글씨 없앰 */
+.t.dt th small.dfc { font-size: 13.5px !important; } .dpl summary small, h3.csh small { font-size: 13.5px !important; }
