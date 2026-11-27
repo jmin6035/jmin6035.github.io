@@ -21,7 +21,7 @@
       <dt>기간</dt><dd>${GP.fmt(x.days, 1)}일 (가동 ${GP.fmt(x.opDays, 1)}일)</dd>
       <dt>제품 가동률</dt><dd>${x.util != null ? GP.fmt(x.util * 100, 1) + '%' : '-'}</dd>
       <dt>M/C</dt><dd>${x.mcN}건${x.mcMedian != null ? ` · 중앙값 ${GP.fmt(x.mcMedian)}분` : ''}</dd>
-      ${x.mcByDir && Object.keys(x.mcByDir).length ? `<dt>M/C 방향별</dt><dd>${Object.entries(x.mcByDir).map(([k, v]) => `${esc(k)} ${GP.fmt(v)}분`).join(' · ')}</dd>` : ''}
+      ${x.mcByDir && Object.keys(x.mcByDir).length ? `<dt>M/C 방향별</dt><dd>${Object.entries(x.mcByDir).map(([k, v]) => `${esc(k)} ${GP.fmt(v)}분`).join('<br>')}</dd>` : ''}
       <dt>설비정지</dt><dd>${GP.fmt(x.bgStopPerDay, 1)}분/일</dd>
       <dt>비강종 더미</dt><dd>${GP.fmt(x.bgDummyPerDay, 1)}분/일 (가동시간)</dd>
       <dt>손실 산출</dt><dd>${esc(x.basis || '-')}</dd>
@@ -32,11 +32,11 @@
       const d = c.cur && c.act != null ? c.act / c.cur - 1 : null;
       return `<tr><td><input type="checkbox" data-cand="${i}" ${c.apply ? 'checked' : ''} ${c.act != null ? '' : 'disabled'} aria-label="${esc(c.label)} 반영"></td><td class="l">${esc(c.label)} <small class="muted">${esc(String(c.unit || '').replace('t/hr', 't/시간'))}</small></td>`
         + `<td class="n">${v(c, c.cur)}</td><td class="n"><b>${v(c, c.act)}</b></td><td class="n ${c.flag ? 'neg' : ''}">${d == null ? '-' : (d > 0 ? '+' : '') + GP.fmt(d * 100, 1) + '%'}</td>`
-        + `<td class="l muted">${esc(c.basis || '').replace(/\d{4,}(?=코일)/g, (n) => GP.fmt(+n))}</td><td>${c.apply ? '<span class="pill warn">반영 권장</span>' : c.flag ? '<span class="pill">검토(표본 부족)</span>' : '유지'}</td></tr>`;
+        + `<td class="l muted">${esc(c.basis || '').replace(/\d{4,}(?=코일)/g, (n) => GP.fmt(+n)).replace(' · 방향별 ', '<br>방향별 ')}</td><td>${c.apply ? '<span class="pill warn">반영 권장</span>' : c.flag ? '<span class="pill">검토(표본 부족)</span>' : '유지'}</td></tr>`;
     }).join('');
     { const ap = a.cands.filter((c) => c.apply), fl = a.cands.filter((c) => !c.apply && c.flag);   // 11/11 첫 화면 판정
       $('a-sum').innerHTML = `<span><span class="big ${ap.length ? 'warn' : 'ok'}">${ap.length}</span> 반영 권장</span><span><span class="big">${fl.length}</span> 검토(표본 부족)</span><span><span class="big">${a.cands.length - ap.length - fl.length}</span> 유지</span>`
-        + (ap.length ? ['1CGL', '2CGL'].map((l) => { const L = ap.filter((c) => String(c.label).startsWith(l)); return L.length ? `<span class="lst"><b>${l}</b> ${L.map((c) => `${esc(String(c.label).slice(l.length).trim())} ${v(c, c.cur)} → <b>${v(c, c.act)}</b>`).join(' · ')}</span>` : ''; }).join('') + '<span class="lst">엔진 값은 <a href="rules.html#edit">계획 규칙 → 규칙 수치 바꾸기</a>에서(자동 반영 안 됨)</span>' : '<span class="lst">계획 조건이 최근 실적과 맞음</span>'); }
+        + (ap.length ? ['1CGL', '2CGL'].map((l) => { const L = ap.filter((c) => String(c.label).startsWith(l)); return L.length ? `<span class="lst"><b>${l}</b> ${L.map((c) => `<span class="lsi">${esc(String(c.label).slice(l.length).trim())} ${v(c, c.cur)} → <b>${v(c, c.act)}</b></span>`).join('')}</span>` : ''; }).join('') + '<span class="lst">엔진 값은 <a href="rules.html#edit">계획 규칙 → 규칙 수치 바꾸기</a>에서(자동 반영 안 됨)</span>' : '<span class="lst">계획 조건이 최근 실적과 맞음</span>'); }
     renderWeekly(a);
     $('a-events').innerHTML = '<tr><th>시작</th><th>라인</th><th>전환</th><th>손실(분)</th><th>정지(분)</th><th>사유</th></tr>' + (a.events.map((e) =>
       `<tr><td>${/^\d{4}-\d\d-\d\d/.test(String(e.at)) ? `${+String(e.at).slice(5, 7)}/${+String(e.at).slice(8, 10)}<br><small class="muted">${String(e.at).slice(11, 16)}</small>` : esc(e.at)}</td><td>${e.line}</td><td>${e.kind === 'M/C' ? `${e.from}→${e.to}` : esc(e.kind)}</td><td class="n"><b>${GP.fmt(e.minutes)}</b></td><td class="n">${e.stopMin != null ? GP.fmt(e.stopMin) : '-'}</td><td class="l wrap">${esc(e.reason || '')}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">기간 중 강종 전환 없음</td></tr>');

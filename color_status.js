@@ -167,7 +167,7 @@
         <div class="ln-mix">${gs.length ? gs.map(([g, v]) => `<i style="flex:${v};background:${GVAR[g]}" title="${GL(g)} ${fmt(v)}t"></i>`).join('') : '<i style="flex:1;background:var(--grid)"></i>'}</div>
         <div class="ln-mixl">${gs.map(([g, v]) => `<span><i style="background:${GVAR[g]}"></i>${GL(g)} ${fmt(v)}t</span>`).join('') || '<span class="muted">-</span>'}</div>
         ${items ? `<p class="ln-l">주요 품목</p><ul class="ln-items">${items}</ul>` : ''}
-        <p class="ln-l">${mm}월 진도 <span title="실적 ÷ 월 계획(지금 계획의 ${mm}월 합)${vsM0 != null ? ` · 월차 대비 = ${md(aTo)}까지 월차(첫 게시 계획) ${fmt(m0To)}t 대비` : ''}${mc ? ` · 참고: 판생 월차 ${fmt(mc)}t` : ''}">실적 ${fmt(toDate)} / 월 계획 ${fmt(mPlan)}t · ${Math.round(pr * 100)}%${vsM0 != null ? ` · 월차 대비 ${vsM0}%` : ''}</span></p>
+        <p class="ln-l">${mm}월 진도 <span title="실적 ÷ 월 계획(지금 계획의 ${mm}월 합)${vsM0 != null ? `\n월차 대비 = ${md(aTo)}까지 첫 게시 계획 ${fmt(m0To)}t 대비` : ''}${mc ? `\n판생 월차 ${fmt(mc)}t` : ''}">실적 ${fmt(toDate)} / 월 계획 ${fmt(mPlan)}t · ${Math.round(pr * 100)}%${vsM0 != null ? ` · 월차 대비 ${vsM0}%` : ''}</span></p>
         <div class="ln-prog" title="세로선 = 경과일 ${Math.round(el * 100)}%"><i style="width:${pr * 100}%"></i><u style="left:${el * 100}%"></u></div>
         <p class="ln-sub">세로선 = 경과일(${Math.round(el * 100)}%)</p>
         <div class="ln-chips">${chips}</div></div>`;

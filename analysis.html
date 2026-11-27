@@ -19,7 +19,8 @@ details.fold > summary small { font-weight: 500; color: var(--ink-2); font-size:
 .an-sum { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: baseline; font-size: 14.5px; line-height: 1.6; }
 .an-sum .big { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .an-sum .warn { color: var(--warn); } .an-sum .ok { color: var(--good); }
-.an-sum .lst { flex-basis: 100%; color: var(--ink-2); font-size: 14px; }
+.an-sum .lst { flex-basis: 100%; color: var(--ink-2); font-size: 14px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 16px; }
+.an-sum .lst .lsi { display: block; }
 .ref { margin: 8px 0 0; padding-left: 18px; line-height: 1.8; font-size: 14px; }
 /* 11/17 검토: '근거' 칸(긴 문장)이 한 줄로 늘어 표가 1,268px > 1,020: 오른쪽 '판정' 칸이 잘림 → 근거만 줄바꿈 */
 html body main #a-cands td.l.muted { white-space: normal !important; word-break: keep-all; min-width: 240px; }
@@ -64,7 +65,7 @@ html body main #a-events :is(th, td) { padding-left: 8px !important; padding-rig
         <button type="button" class="primary" id="a-apply">선택 항목을 다시 계산 도구 조건에 넣기</button>
         <span class="hint" id="a-msg"></span>
       </div>
-      <p class="hint">엔진 값 바꾸기 = <a href="rules.html#edit">계획 규칙 → 규칙 수치 바꾸기 ③</a>(이 버튼은 이 기기의 다시 계산 도구 조건만 바꿈). <b>M/C 손실과 비강종 더미는 같이 반영됩니다</b>(한쪽만 바꾸면 손실이 이중으로 잡힘). 속도(t/시간)는 제품 두께 구성에 크게 좌우됩니다(박물일수록 낮음). 기간이 짧거나 두께 구성이 치우치면 틀린 값이 나오므로 28일 이상·표본이 충분할 때만 “반영 권장”으로 표시합니다. 반영은 이 기기의 계획 계산 조건에 저장되고, 계산을 다시 돌려야 계획에 적용됩니다.</p>
+      <p class="hint">엔진 값 바꾸기: <a href="rules.html#edit">계획 규칙의 규칙 수치 바꾸기 ③</a><br>이 단추는 이 기기의 다시 계산 조건만 바꿈<br><b>M/C 손실 · 비강종 더미는 같이 반영</b>: 한쪽만 바꾸면 손실 이중 계상<br>반영 권장 기준: 28일 이상 · 표본 충분. 속도는 두께 구성에 따라 달라짐(박물일수록 낮음)<br>반영 뒤 계산을 다시 돌려야 계획에 적용</p>
     </section>
 
     <section class="card" id="a-weekly-report" hidden>
@@ -75,7 +76,7 @@ html body main #a-events :is(th, td) { padding-left: 8px !important; padding-rig
     <section class="card">
       <h2>주별 속도 추이 <small class="muted">(t/시간, 주 = 월요일 시작, 더미 제외)</small></h2>
       <div class="scroll"><table class="data" id="a-weekly"></table></div>
-      <p class="hint">굵은 빨강 = 현재 조건보다 5% 이상 낮음, 굵은 파랑 = 5% 이상 높음. 칸에 마우스를 올리면 그 주 물량·코일 수가 보입니다. 속도 차이는 설비보다 두께 구성(박물 비중) 변화 때문인 경우가 많습니다.</p>
+      <p class="hint">굵은 빨강 = 현재 조건보다 5% 이상 낮음, 굵은 파랑 = 5% 이상 높음<br>칸에 마우스를 올리면 그 주 물량 · 코일 수<br>속도 차이는 대개 두께 구성(박물 비중) 변화 때문</p>
     </section>
 
     <div class="two">
@@ -86,7 +87,7 @@ html body main #a-events :is(th, td) { padding-left: 8px !important; padding-rig
       <section class="card">
         <h2>강종 전환(M/C) 실적</h2>
         <div class="scroll"><table class="data" id="a-events"></table></div>
-        <p class="hint">정지 = 라인이 멈춘 시간(휴지 기록의 강종 전환 휴지 합). 손실 = 정지 시작부터 새 강종 첫 제품 코일이 돌기 시작할 때까지: 재가동 후 더미 코일로 조건을 맞추는 시간까지 포함. 계획 조건의 M/C 손실과 비교하는 값은 손실입니다.</p>
+        <p class="hint">정지 = 라인이 멈춘 시간, 휴지 기록의 강종 전환 휴지 합<br>손실 = 정지 시작부터 새 강종 첫 제품 코일까지, 재가동 뒤 더미 코일 시간 포함<br>계획 조건의 M/C 손실과 비교하는 값 = 손실</p>
       </section>
     </div>
 
@@ -103,7 +104,7 @@ html body main #a-events :is(th, td) { padding-left: 8px !important; padding-rig
   </div>
 
   <details class="card more" id="a-manual">
-    <summary><h2>엑셀로 직접 분석 <small class="muted">— MES 생산실적 파일 업로드 후 즉시 분석(자동 갱신 미포함)</small></h2></summary>
+    <summary><h2>엑셀로 직접 분석 <small class="muted">MES 생산실적 파일을 올리면 바로 분석, 자동 갱신 안 됨</small></h2></summary>
     <label class="ghost btnlike">MES 실적 파일 업로드(복수 선택 가능)<input type="file" id="a-file" accept=".xlsx" multiple hidden></label>
     <span id="a-file-name" class="muted"></span>
     <p class="hint">파일은 서버로 전송되지 않습니다. 비교 기준은 이 기기의 계획 계산 조건(없으면 기본값)입니다.</p>
@@ -137,9 +138,9 @@ html body main #a-events :is(th, td) { padding-left: 8px !important; padding-rig
 
     <section class="card">
       <h2>계획 속도 점검 <small class="muted" id="ca-cand-sub">— 계획 계산에 쓰는 속도가 최근 실적과 맞는지 · 라인 카드를 누르면 그 라인 품명</small></h2>
-      <p class="lead-note">계획 계산은 라인·품명별 <b>속도(t/시간)</b>로 하루에 몇 톤을 만들지 정합니다. 이 속도는 <span id="ca-plan-per"></span> 실적으로 정한 값이라, 최근 실적과 비교해 차이가 크면 다음 계획 계산 때 속도를 바꾸자는 <b>제안</b>입니다(자동으로 바뀌지 않음). <b>계획</b> = 지금 계획에 쓰는 속도, <b>실제</b> = 최근 실적 속도.</p>
+      <p class="lead-note">라인 · 품명별 <b>속도(t/시간)</b> 제안<br>계획 속도 = <span id="ca-plan-per"></span> 실적 기준, 최근 실적과 차이가 크면 다음 계획 계산 때 바꿀 값, 자동 반영 안 됨<br><b>계획</b> = 지금 계획에 쓰는 속도 · <b>실제</b> = 최근 실적 속도</p>
       <div id="ca-cands"></div>
-      <p class="hint">속도 = 생산 톤 ÷ (작업 + 정지) 시간: 색상교체·청소·테스트 정지 포함. 라인 카드 = 최근 실적 기간에 실제로 만든 품목을 계획 속도로 만들었다면 걸렸을 시간과 실제 걸린 시간 비교(품목 구성 차이는 빼고 속도만 비교).</p>
+      <p class="hint">속도 = 생산 톤 ÷ (작업 + 정지) 시간, 색상교체 · 청소 · 테스트 정지 포함<br>라인 카드 = 최근 실적 기간에 만든 품목을 계획 속도로 만들었을 때 시간과 실제 시간 비교, 품목 구성 차이는 뺌</p>
     </section>
 
     <section class="card">
@@ -156,7 +157,7 @@ html body main #a-events :is(th, td) { padding-left: 8px !important; padding-rig
       <section class="card">
         <h2>월별 휴지 <small class="muted">(시간/가동일)</small></h2>
         <div class="scroll"><table class="data" id="ca-events"></table></div>
-        <p class="hint">휴지 = 그 달 정지 시간 합 ÷ 가동일(생산한 날). 예: 6.1 = 생산한 날 하루 24시간 중 평균 6.1시간은 색상교체·청소·테스트 등으로 멈춰 있었다는 뜻. 이 정지는 생산속도(정지 포함 t/시간)에 이미 들어 있어서 계획에서 따로 빼지 않습니다.</p>
+        <p class="hint">휴지 = 그 달 정지 시간 합 ÷ 가동일(생산한 날)<br>예: 6.1 = 생산한 날 하루 평균 6.1시간 정지(색상교체 · 청소 · 테스트 등)<br>이 정지는 생산속도에 이미 들어 있어 계획에서 따로 빼지 않음</p>
       </section>
     </div>
 

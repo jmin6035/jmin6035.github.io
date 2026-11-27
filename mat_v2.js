@@ -125,7 +125,7 @@
       for (const C of g.cs) C.rows.forEach((t, i) => {
         const cls = C.st === 'bad' || C.st === 'warn' || t.nw >= 0.5 ? 'hot' : 'calm';
         b += `<tr class="${cls}${i === 0 ? ' c0' : ''}"><th>${esc(t.c)}</th>${nums(t)}`
-          + (i === 0 ? `<td class="stk" rowspan="${C.rows.length}"${C.names.length ? ` title="${esc(C.names.join(' · '))} 재고(${C.rows.length > 1 ? '같은 소재 코드를 쓰는 유형 공용' : '소재 코드 기준'})"` : ''}>${C.stock == null ? '–' : C.byNm ? C.byNm.map(([nm, v]) => `<span class="m4-bn">${esc(nm)} <b>${n0(v)}</b></span>`).join('') : n0(C.stock)}${C.rows.length > 1 ? `<small>${esc(C.names.join(' · '))} 공용</small>` : ''}</td><td class="jdc" rowspan="${C.rows.length}">${judge(C)}</td>` : '') + '</tr>';
+          + (i === 0 ? `<td class="stk" rowspan="${C.rows.length}"${C.names.length ? ` title="${esc(C.names.join(', '))} 재고: ${C.rows.length > 1 ? '같은 소재 코드 공용' : '소재 코드 기준'}"` : ''}>${C.stock == null ? '–' : C.byNm ? C.byNm.map(([nm, v]) => `<span class="m4-bn">${esc(nm)} <b>${n0(v)}</b></span>`).join('') : n0(C.stock)}${C.rows.length > 1 ? `<small>${esc(C.names.join(' · '))} 공용</small>` : ''}</td><td class="jdc" rowspan="${C.rows.length}">${judge(C)}</td>` : '') + '</tr>';
       });
     }
     return `<h2 class="m4-h">${M}월 소재 현황</h2><div class="m4-q" title="${esc(`${(window.SupMat.ext || []).includes(R.mon) ? '필요 = 도금 재계획 · 컬러 3개월 계획 · ' : ''}확인할 소재가 각 묶음 맨 위 · 판정 = 지금 재고 + 발주 완료분 입고 − 생산 투입(추가 발주 없음) · m/d부터 부족 = 추가 발주 없을 때 재고가 부족이 시작되는 날 · 발주 지연 n t = 발주 기한이 지난 양 · 월말 5일분 미만 = 재고 적음 · 도금 SUS = 지급재(발주 당일 입고, 판정 안 함) · 지금 재고 = MES 소재재고 목록(소재 코드별, 02 현황과 같은 출처)`)}">톤 · 기준 <b class="dt">${md(R.today)}</b></div>`
@@ -162,7 +162,7 @@
     const pdT = PD.reduce((a, z) => a + z.t, 0), pdM = [...new Set(PD.map((z) => +z.need.slice(5, 7)))].sort((a, b) => a - b);
     const pdBy = Object.entries(PD.reduce((o, z) => { o[z.mat] = (o[z.mat] || 0) + z.t; return o; }, {})).sort((a, b) => b[1] - a[1]);
     const warn = pdT >= 0.5 ? `<div class="m4-pdw" title="${esc(PD.sort((a, b) => a.need.localeCompare(b.need)).map((z) => `${z.mat} ${z.size} ${n0(z.t)}t: 필요 ${md(z.need)}`).join('\n'))}"><b>${pdM.map((m) => m + '월').join('·')} 판생 계획재 소재 부족 ${n0(pdT)}t</b><span>지금 발주해도 생산일 전에 못 들어옴, 판생 조정 필요</span><span class="by">${pdBy.map(([m, t]) => `${esc(m)} ${n0(t)}t`).join(' · ')}</span></div>` : '';
-    return `<h2 class="m4-h">발주 · 입고 캘린더</h2>${warn}${wk}<div class="m4-q" title="소재마다 위 줄 = 발주, 아래 줄 = 입고 · 발주 줄: 지난 날 = 실제 낸 발주, 오늘부터 = 해야 할 발주(생산 계획 기준) · 입고 줄: 지난 날 = 실입고, 앞날 = 입고 예정 · 숫자를 누르면 업체·양 상세">톤 · 흐린 칸 = 실적 · <b style="color:var(--bad)">빨강</b> = 발주·입고 지연 · <b style="color:var(--warn)">주황</b> = 일부 발주 지연</div>`
+    return `<h2 class="m4-h">발주 · 입고 캘린더</h2>${warn}${wk}<div class="m4-q" title="소재마다 위 줄 = 발주, 아래 줄 = 입고\n발주 줄: 지난 날 = 실제 낸 발주, 오늘부터 = 해야 할 발주(생산 계획 기준)\n입고 줄: 지난 날 = 실입고, 앞날 = 입고 예정\n숫자를 누르면 업체 · 양 상세">톤 · 흐린 칸 = 실적 · <b style="color:var(--bad)">빨강</b> = 발주·입고 지연 · <b style="color:var(--warn)">주황</b> = 일부 발주 지연</div>`
       + `<div class="m4-sc"><table class="m4-cl v2-grid" style="min-width:${210 + ds.length * 66}px"><colgroup><col style="width:104px"><col style="width:60px">${ds.map(() => '<col>').join('')}<col style="width:66px"></colgroup>`
       + `<thead><tr><th>소재</th><th></th>${hd}<th>계</th></tr></thead><tbody>${b}</tbody></table></div>`;
   }

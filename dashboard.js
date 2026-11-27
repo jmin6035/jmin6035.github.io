@@ -92,7 +92,7 @@
     return { run: Math.min(1440, run), dm, st, sm, gap, known: !!A.actStops };
   }
   const hh = (m) => (m / 60).toFixed(m % 60 ? 1 : 0);
-  const mixTxt = (x) => [`생산 ${hh(x.run)}시간`, x.dm ? `더미 코일 ${hh(x.dm)}시간` : '', ...x.st.map((s) => `${s[2]}(${s[0]}) ${hh(s[1])}시간`), x.gap >= 15 ? `기록 없음 ${hh(x.gap)}시간` : ''].filter(Boolean).join(' · ');
+  const mixTxt = (x) => [`생산 ${hh(x.run)}시간`, x.dm ? `더미 코일 ${hh(x.dm)}시간` : '', ...x.st.map((s) => { const k = String(s[0]), r = String(s[2]); const w = r.startsWith(k) ? r.slice(k.length).trim().replace(/^\((.*)\)$/, '$1') : r; return `${k}${w ? `: ${w}` : ''} ${hh(s[1])}시간`; }), x.gap >= 15 ? `기록 없음 ${hh(x.gap)}시간` : ''].filter(Boolean).join('\n');
 
   // ---------------- 기준일 현황(컬러 가동 현황과 같은 카드, 10/22 사용자) ----------------
   function renderNow() {
@@ -140,7 +140,7 @@
         <div class="ln-gauge" title="가동시간"><i style="width:${Math.min(100, hrs / 24 * 100)}%"></i></div>
         ${seg ? `<p class="ln-l">24시간 구성 ${x ? '<span>MES 실적</span>' : '<span>계획</span>'}</p><div class="ln-mix">${seg}</div><div class="ln-mixl">${leg}</div>${list}` : ''}
         <p class="ln-l">부서 구성</p><div class="ln-mixl">${deps.map(([k, v]) => `<span>${esc(DSHORT[k] || k)} ${GP.fmt(v)}t</span>`).join('') || '<span class="muted">-</span>'}</div>
-        <p class="ln-l">${mm}월 진도 <span title="실적 ÷ 월 계획(지금 계획의 ${mm}월 합)${vsM0 != null ? ` · 월차 대비 = ${GP.md(dA)}까지 월차(첫 게시 계획) ${GP.fmt(m0To)}t 대비` : ''}">실적 ${GP.fmt(toDate)} / 월 계획 ${GP.fmt(monthPlan)}t · ${Math.round(pr * 100)}%${vsM0 != null ? ` · 월차 대비 ${vsM0}%` : ''}</span></p>
+        <p class="ln-l">${mm}월 진도 <span title="실적 ÷ 월 계획(지금 계획의 ${mm}월 합)${vsM0 != null ? `\n월차 대비 = ${GP.md(dA)}까지 첫 게시 계획 ${GP.fmt(m0To)}t 대비` : ''}">실적 ${GP.fmt(toDate)} / 월 계획 ${GP.fmt(monthPlan)}t · ${Math.round(pr * 100)}%${vsM0 != null ? ` · 월차 대비 ${vsM0}%` : ''}</span></p>
         <div class="ln-prog" title="세로선 = 경과일 ${Math.round(el * 100)}%"><i style="width:${pr * 100}%"></i><u style="left:${el * 100}%"></u></div>
         <div class="ln-chips">${chips}</div></div>`;
     }).join('');

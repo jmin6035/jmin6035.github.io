@@ -627,11 +627,11 @@
     const els = [...(root.matches && root.matches(FOLD) ? [root] : []), ...(root.querySelectorAll ? root.querySelectorAll(FOLD) : [])];
     for (const el of els) {
       if (el.dataset.keep != null || el.querySelector('.fold-b, input, select, button, table')) continue;
-      const t = el.innerText.replace(/\s+/g, ' ').trim();
+      const tmp = document.createElement('div'), ls = el.innerHTML.split(/<br\s*\/?>/i).map((h) => { tmp.innerHTML = h; return tmp.textContent.replace(/\s+/g, ' ').trim(); }).filter(Boolean), t = ls.join(' ');   // 11/27: 줄바꿈(<br>)으로 나눈 설명은 첫 줄을 이름으로, 툴팁도 줄 그대로
       if (t.length <= 90) continue;
-      const head = t.split(/(?<=[.。])\s|\s[·—]\s/)[0];
+      const head = ls.length > 1 ? ls[0] : ls[0].split(/(?<=[.。])\s|\s[·—]\s/)[0];
       const lab = head.length <= 48 ? head.replace(/[.。]$/, '') : head.slice(0, 44) + '…';
-      el.innerHTML = `<button type="button" class="fold-b" title="${t.replace(/"/g, '&quot;')}">ⓘ ${lab.replace(/</g, '&lt;')} <u>자세히</u></button><span class="fold-x">${el.innerHTML}</span>`;
+      el.innerHTML = `<button type="button" class="fold-b" title="${ls.join('\n').replace(/"/g, '&quot;')}">${lab.replace(/</g, '&lt;')} <u>자세히</u></button><span class="fold-x">${el.innerHTML}</span>`;
       el.classList.add('hint-fold');
     }
   }

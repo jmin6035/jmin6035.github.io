@@ -460,7 +460,7 @@ table.ws tr[draggable], .pl-i { cursor: default !important; }`;
     const groups = [...G.entries()].sort((a, b) => b[1].length - a[1].length).map(([g, L]) => { const c = cnt(L);
       L.sort((a, b) => dd(b) - dd(a) || String(b[0]).localeCompare(String(a[0])));
       return `<details class="chg-g"><summary><span class="gn">${esc(g)}</span><span>${n0(c.n)}건 · ${n0(c.t)}t</span><span>순연 <b class="${c.late ? 'neg' : ''}">${n0(c.late)}</b></span><span>선행 <b>${n0(c.early)}</b></span><span>라인 바뀜 <b>${n0(c.ln)}</b></span></summary><div class="scroll"><table class="t chg-t">${HD}<tbody>${L.map(row).join('')}</tbody></table></div></details>`; }).join('');
-    box.innerHTML = `<section class="card"><button type="button" class="chg-x" aria-label="닫기" title="닫기">×</button><h2>생산일 변경 내역 <small>마지막 변경 ${at ? md(at.slice(0, 10)) + ' ' + at.slice(11, 16) : '-'} · 갱신마다 이전 판과 비교 · 사유 입력 전</small></h2>`
+    box.innerHTML = `<section class="card"><button type="button" class="chg-x" aria-label="닫기" title="닫기">×</button><h2>생산일 변경 내역 <small>마지막 변경 ${at ? md(at.slice(0, 10)) + ' ' + at.slice(11, 16) : '-'}</small></h2>`
       + `<div class="chg-k"><span>바뀜 <b>${n0(T.n)}</b>건</span><span>순연 <b class="${T.late ? 'neg' : ''}">${n0(T.late)}</b>건</span><span>선행 <b>${n0(T.early)}</b>건</span><span>라인 바뀜 <b>${n0(T.ln)}</b>건</span><span>${n0(T.t)}t</span></div>`
       + (E.length ? groups : '<p class="ps-empty">이 범위에 바뀐 것 없음</p>') + '</section>';
     box.querySelector('.chg-x').onclick = () => box.close();

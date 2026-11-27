@@ -32,6 +32,7 @@
      작업가능일 = 매치된 소재로 만들 수 있는 양(주문별 min(잔여, 매치)) ÷ 라인 하루 능력 */
   const CAPC = { '1CCL': 480, '2CCL': 400, '3CCL': 200, '4CCL': 250 }, CAPG = { '1CGL': 719, '2CGL': 927 };
   let PS = { line: '', open: '', sk: '', dir: 1, mon: '' };
+  let PF = true;   // 편성 화면 맨 위 상태별 표 접힘
   /* 11/12 사용자 '주문진도도 월마다 나눠, 11월 이전은 11월로': 납기 달 묶음: 이번 달(지난 납기·납기 없음 포함) · 다음 달 · 그다음 달 · 그 뒤 · 전체 */
   const addM_ = (ym, k) => { const d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + k, 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
   const monNow = () => String((M && M.asOf) || CT.today && CT.today() || '').slice(0, 7);
@@ -320,6 +321,11 @@
   }
   function bindPS(noMini) {
     const re = () => { const y = scrollY; $('co-ps').innerHTML = progSum(noMini); bindPS(noMini); scrollTo(0, y); };
+    if (noMini) {   // 11/27 검수 1035: 편성 화면 맨 위는 칸 · 막대만, 상태별 표 · 포스코 단계 · 상세 표는 접음(누르면 펼침)
+      const fold = () => document.querySelectorAll('#co-ps .pc').forEach((p) => { p.classList.toggle('pf', PF); const b = p.querySelector('.pf-b'); if (b) { b.textContent = PF ? '상태별 표 ▸' : '상태별 표 접기 ▾'; b.setAttribute('aria-expanded', String(!PF)); } });
+      document.querySelectorAll('#co-ps .pc > .pch').forEach((h) => { if (!h.querySelector('.pf-b')) h.insertAdjacentHTML('beforeend', '<button type="button" class="pf-b"></button>'); h.querySelector('.pf-b').onclick = () => { PF = !PF; fold(); }; });
+      fold();
+    }
     document.querySelectorAll('#co-ps .ps-mon button').forEach((b) => (b.onclick = () => { PS.mon = b.dataset.mon; PS.open = ''; re(); }));
     document.querySelectorAll('.ps-seg button, .pm').forEach((bt) => (bt.onclick = () => { const y = scrollY; PS.line = bt.dataset.l; PS.open = ''; TK.open = null; drawTrack(); scrollTo(0, y); }));
     document.querySelectorAll('#co-ps [data-ex]').forEach((el) => { const go = () => { PS.open = PS.open === el.dataset.ex ? '' : el.dataset.ex; re(); const e = document.querySelector('.ps-exp'); if (e && PS.open) e.scrollIntoView({ block: 'nearest' }); };

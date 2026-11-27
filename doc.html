@@ -14,6 +14,7 @@
 <script>
   (function () { // 문서 종류 → 메뉴 위치·제목
     var d = (new URLSearchParams(location.search).get('d') || '');
+    if (!d) { location.replace('docs.html'); return; }   // 11/27 검수 1035: 문서 이름 없이 열면 빈 화면(자료 없음) → 문서 목록으로
     var x = { conditions: ['conditions', '계획 조건식'], procure_guide: ['guide', '발주 검토 사용법'], requests: ['requests', '협조 요청 메일'], glossary: ['glossary', '용어·정의 · 확인 대기'], ops: ['doc', '운영 매뉴얼'], tf_review: ['doc', 'TF 계산구조 검토'], strategy: ['doc', '운영 전략'] }[d] || ['doc', '회의 자료'];
     var h = document.getElementById('shell'); h.dataset.page = x[0]; h.dataset.title = x[1];
   })();
@@ -42,7 +43,7 @@
     catch(e){document.getElementById('msg').textContent='암호가 맞지 않습니다';}
   }
   document.getElementById('f').onsubmit=e=>{e.preventDefault();open(document.getElementById('pw').value)};
-  fetch('published/docs/'+name+'.enc.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(e=>{env=e;let s=null;try{s=localStorage.getItem(KEY)}catch(x){} if(s)open(s)})
+  if(name)fetch('published/docs/'+name+'.enc.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(e=>{env=e;let s=null;try{s=localStorage.getItem(KEY)}catch(x){} if(s)open(s)})
    .catch(()=>{document.getElementById('msg').textContent='자료를 찾을 수 없습니다'});
 })();
 </script></body></html>

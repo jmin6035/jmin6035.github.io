@@ -213,6 +213,11 @@ html.v2 body main table.ps-seq tr.pdue td.dl { color: var(--bad) !important; fon
 #ps-chgc details.chg-g[open] > summary::before { content: '▾'; }
 #ps-chgc details.chg-g > summary::-webkit-details-marker { display: none; }
 #ps-chgc table.chg-t td, #ps-chgc table.chg-t th { padding: 4px 8px; white-space: nowrap; }
+#ps-ord .pc.pf > :is(.lg2, .lg2b, details.pd) { display: none; }
+#ps-ord .pch { position: relative; }
+#ps-ord .pf-b { position: absolute; right: 0; top: 50%; transform: translateY(-50%); border: 0; box-shadow: inset 0 0 0 1px var(--line); background: var(--surface, #fff); color: var(--ink-2); border-radius: 6px; padding: 0 10px; font: inherit; font-size: 13.5px; line-height: 28px; cursor: pointer; }
+#ps-ord .pf-b:hover { color: var(--ink); }
+@media (max-width: 700px) { #ps-ord .pf-b { position: static; transform: none; margin-top: 6px; } }
 </style>
 </head>
 <body>

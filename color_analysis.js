@@ -69,7 +69,7 @@
       <div class="cp-head"><span>품명</span><span>계획 대비 실제 속도 <small>(왼쪽 = 느림, 오른쪽 = 빠름 · 회색 띠 = ±5%)</small></span><span>계획 속도 → 실제 속도</span><span>시간 차이 (${A.N4}주)</span><span>판정</span></div>
       ${big.map(row).join('') || '<p class="hint" style="padding:12px 0">해당 품명 없음</p>'}
       ${small.length ? `<details class="cp-more"><summary>${A.N4}주 물량 150t 미만 품명 ${small.length}개: 표본이 작아 참고만</summary>${small.map(row).join('')}</details>` : ''}
-      <p class="hint"><b>시간 차이</b> = 최근 ${A.N4}주에 만든 물량이 실제로 걸린 시간 − 계획 속도였다면 걸렸을 시간. 예: −5.1h = 실제가 더 빨라 5.1시간 덜 걸림(계획이 속도를 낮게 잡음), +2.4h = 2.4시간 더 걸림(계획이 너무 빠르게 잡음). <b>반영 권장</b> = 차이 5% 이상 · 150t 이상 · 그 이전 기간도 같은 방향 · 자료 4주 이상일 때. 반영은 다음 계획 계산 때 함께 합니다.</p>`;
+      <p class="hint"><b>시간 차이</b> = 최근 ${A.N4}주 물량의 실제 시간 − 계획 속도로 계산한 시간<br>예: −5.1h = 실제가 5.1시간 덜 걸림, 계획 속도가 낮음 / +2.4h = 2.4시간 더 걸림, 계획 속도가 높음<br><b>반영 권장</b> = 차이 5% 이상, 150t 이상, 그 이전 기간도 같은 방향, 자료 4주 이상<br>반영은 다음 계획 계산 때</p>`;
     $('ca-cands').querySelectorAll('.cc-line').forEach((b) => b.onclick = () => { cl = b.dataset.l; renderCands(a); });
     $('ca-cands').querySelectorAll('#ca-cf button').forEach((b) => b.onclick = () => { cf = b.dataset.f; renderCands(a); });
   }

@@ -1119,7 +1119,7 @@
         + `<td class="r nw">${m.short ? n0(m.short) : '<span class="muted">–</span>'}</td>`
         + `<td class="nw muted">${m.first ? `${md(m.first)}부터` : ''}</td>`
         + gs.map((g) => cell(g, m)).join('')
-        + `<td class="r nw" title="${esc(`업체 ${(m.sup || []).filter(Boolean).join(' · ') || '정보 없음'} · 필요 ${n0(m.need)} · 재고 ${n0(m.stock)} · 입고 예정 ${n0(m.arr)} · ${m.rule || ''} · 리드타임 ${m.lt}일 + 투입 여유 ${m.safe || (pl === 'G' ? 5 : 7)}일${m.ltDef ? ' · 업체 기준정보 없음: 기본 35일' : ''}`)}">${m.lt}일${m.ltDef ? ' <span class="oj-def">기본</span>' : ''}</td></tr>`;
+        + `<td class="r nw" title="${esc(`업체 ${(m.sup || []).filter(Boolean).join(', ') || '정보 없음'}\n필요 ${n0(m.need)} · 재고 ${n0(m.stock)} · 입고 예정 ${n0(m.arr)}${m.rule ? `\n${m.rule}` : ''}\n리드타임 ${m.lt}일 + 투입 여유 ${m.safe || (pl === 'G' ? 5 : 7)}일${m.ltDef ? '\n업체 기준정보 없음: 기본 35일' : ''}`)}">${m.lt}일${m.ltDef ? ' <span class="oj-def">기본</span>' : ''}</td></tr>`;
       const head = `<tr><th>소재</th><th>상태</th><th>발주 마감</th><th class="r" title="발주 지연 = 원래 발주 마감이 지난 부족량(오늘 발주해도 필요일보다 늦게 들어옴)">발주 지연(t)</th><th class="r" title="3달 필요 − 재고 − 입고 예정. 경고 아님(11/9 회의 F13)">3달 발주 필요(t)</th><th>부족 시작</th>${gs.map((g) => `<th class="r oj-gh" title="${esc(g.group)}">${esc(short(g.group))}</th>`).join('')}<th class="r">리드타임</th></tr>`
         + `<tr class="oj-gst"><td colspan="6" class="muted">판매그룹 상태 · 3달 소재 필요(t)</td>${gs.map((g) => `<td class="r nw">${dot(gst(g))}<div class="oj-gn">${n0(g.need)}</div></td>`).join('')}<td></td></tr>`;
       return `<h3 class="oj-h">${title}</h3><div class="oj-wrap"><table class="oj-t oj-mx"><thead>${head}</thead><tbody>${rows.map(tr).join('')}</tbody></table></div>`;
